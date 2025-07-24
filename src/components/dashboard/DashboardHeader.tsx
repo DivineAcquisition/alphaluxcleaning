@@ -1,18 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
-
 export function DashboardHeader() {
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Main Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center mb-4">
-          <img 
-            src="/lovable-uploads/f10b1f5a-67c8-4702-a276-cc9dd8959a0a.png" 
-            alt="Bay Area Cleaning Professionals" 
-            className="h-24 w-auto"
-          />
+          <img src="/lovable-uploads/f10b1f5a-67c8-4702-a276-cc9dd8959a0a.png" alt="Bay Area Cleaning Professionals" className="h-24 w-auto" />
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Bay Area Cleaning Professionals
@@ -28,13 +22,9 @@ export function DashboardHeader() {
           <Badge variant="outline" className="text-sm">
             📞 (281) 201-6112
           </Badge>
-          <Badge variant="outline" className="text-sm">
-            📞 (281) 932-0616
-          </Badge>
+          
         </div>
-        <p className="text-sm text-muted-foreground">
-          www.bayareacleaningpros.com • admin1@bayareacleaningpros.com
-        </p>
+        <p className="text-sm text-muted-foreground">bayareacleaningpros.com • support@bayareacleaningpros.com</p>
       </div>
 
       {/* Service Highlights */}
@@ -75,6 +65,5 @@ export function DashboardHeader() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
