@@ -1,15 +1,11 @@
-import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Home, Phone, Mail } from "lucide-react";
-import { PostPaymentForm } from "@/components/PostPaymentForm";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const [showForm, setShowForm] = useState(true);
-  const [formCompleted, setFormCompleted] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-2 sm:p-4">
@@ -44,29 +40,27 @@ export default function PaymentSuccess() {
                 )}
               </div>
 
-              {formCompleted && (
-                <div className="border-t pt-4 sm:pt-6 space-y-4">
-                  <h4 className="font-semibold text-sm sm:text-base">What happens next?</h4>
-                  <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="font-semibold text-primary text-xs sm:text-sm">1.</span>
-                      You'll receive a confirmation email with your booking details
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-semibold text-primary text-xs sm:text-sm">2.</span>
-                      Our team will call you to schedule the cleaning appointment
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-semibold text-primary text-xs sm:text-sm">3.</span>
-                      We'll provide a 1-hour arrival window before your appointment
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="font-semibold text-primary text-xs sm:text-sm">4.</span>
-                      Our professional cleaners will arrive ready to transform your space
-                    </li>
-                  </ul>
-                </div>
-              )}
+              <div className="border-t pt-4 sm:pt-6 space-y-4">
+                <h4 className="font-semibold text-sm sm:text-base">What happens next?</h4>
+                <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-primary text-xs sm:text-sm">1.</span>
+                    Complete your service details to finalize your booking
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-primary text-xs sm:text-sm">2.</span>
+                    You'll receive a confirmation email with your booking details
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-primary text-xs sm:text-sm">3.</span>
+                    Our team will call you to schedule the cleaning appointment
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-semibold text-primary text-xs sm:text-sm">4.</span>
+                    Our professional cleaners will arrive ready to transform your space
+                  </li>
+                </ul>
+              </div>
 
               <div className="border-t pt-4 sm:pt-6 space-y-4">
                 <h4 className="font-semibold text-sm sm:text-base">Need to reach us?</h4>
@@ -82,55 +76,22 @@ export default function PaymentSuccess() {
                 </div>
               </div>
 
-              {formCompleted && (
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6">
-                  <Button asChild className="flex-1 text-sm">
-                    <Link to="/">
-                      <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      Back to Home
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="flex-1 text-sm">
-                    <a href="https://bayareacleaningpros.com" target="_blank" rel="noopener noreferrer">
-                      Visit Our Website
-                    </a>
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6">
+                <Button asChild className="flex-1 text-sm">
+                  <Link to={`/service-details?session_id=${sessionId}`}>
+                    Complete Your Service Details
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="flex-1 text-sm">
+                  <Link to="/">
+                    <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    Back to Home
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Post-Payment Form */}
-          {showForm && !formCompleted && (
-            <PostPaymentForm 
-              sessionId={sessionId || undefined}
-              onComplete={() => setFormCompleted(true)}
-            />
-          )}
-          
-          {formCompleted && (
-            <Card className="shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
-                <CardTitle className="text-lg sm:text-xl">✅ Setup Complete!</CardTitle>
-                <CardDescription className="text-primary-foreground/80 text-sm sm:text-base">
-                  Your service details have been saved
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-8 text-center space-y-4">
-                <div className="text-base sm:text-lg font-semibold text-foreground">
-                  All Done! 🎉
-                </div>
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  We have all the information we need to provide exceptional service. Our team will be in touch soon!
-                </p>
-                <div className="pt-4">
-                  <Button asChild size="sm">
-                    <Link to="/">Return to Home</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>

@@ -31,6 +31,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     // Referral & Marketing
     referralCode: "",
     hearAboutUs: "",
+    generatedReferralCode: "",
     
     // Scheduling Preferences
     preferredTimeSlot: "",
@@ -137,11 +138,40 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
           </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-        {/* Referral & Marketing */}
+          {/* Referral & Marketing */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <User className="h-5 w-5 text-primary" />
             Referral & How You Found Us
+          </div>
+          
+          {/* Referral Incentive Banner */}
+          <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-green-600 font-semibold">🎉 Referral Reward!</span>
+            </div>
+            <p className="text-green-700 text-sm mb-3">
+              Refer someone and when they book a deep clean or recurring service, you'll get <strong>50% off your next deep clean</strong>!
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const code = `REF${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+                handleInputChange("generatedReferralCode", code);
+                navigator.clipboard.writeText(code);
+                toast.success("Referral code generated and copied to clipboard!");
+              }}
+              className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+            >
+              Generate My Referral Code
+            </Button>
+            {formData.generatedReferralCode && (
+              <div className="mt-2 p-2 bg-white rounded border">
+                <span className="text-sm text-muted-foreground">Your referral code: </span>
+                <span className="font-mono font-bold text-green-600">{formData.generatedReferralCode}</span>
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -307,9 +337,9 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                   <SelectValue placeholder="Select time preference" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  <SelectItem value="morning">Morning (8 AM - 12 PM)</SelectItem>
+                  <SelectItem value="morning" className="text-muted-foreground">Morning (8 AM - 12 PM) - Unavailable</SelectItem>
                   <SelectItem value="afternoon">Afternoon (12 PM - 5 PM)</SelectItem>
-                  <SelectItem value="evening">Evening (5 PM - 8 PM)</SelectItem>
+                  <SelectItem value="evening" className="text-muted-foreground">Evening (5 PM - 8 PM) - Unavailable</SelectItem>
                   <SelectItem value="flexible">Flexible</SelectItem>
                 </SelectContent>
               </Select>
