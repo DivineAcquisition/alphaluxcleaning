@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      commercial_estimates: {
+        Row: {
+          address: string
+          alternative_date: string | null
+          alternative_time: string | null
+          business_name: string
+          business_type: string
+          city: string
+          cleaning_type: string
+          contact_person: string
+          created_at: string
+          email: string
+          frequency: string
+          id: string
+          number_of_floors: number
+          number_of_offices: number
+          number_of_restrooms: number
+          phone: string
+          preferred_time: string | null
+          preferred_walkthrough_date: string
+          preferred_walkthrough_time: string
+          service_type: string
+          special_requirements: string | null
+          square_footage: number
+          state: string
+          status: string
+          updated_at: string
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          alternative_date?: string | null
+          alternative_time?: string | null
+          business_name: string
+          business_type: string
+          city: string
+          cleaning_type: string
+          contact_person: string
+          created_at?: string
+          email: string
+          frequency: string
+          id?: string
+          number_of_floors?: number
+          number_of_offices?: number
+          number_of_restrooms?: number
+          phone: string
+          preferred_time?: string | null
+          preferred_walkthrough_date: string
+          preferred_walkthrough_time: string
+          service_type: string
+          special_requirements?: string | null
+          square_footage: number
+          state: string
+          status?: string
+          updated_at?: string
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          alternative_date?: string | null
+          alternative_time?: string | null
+          business_name?: string
+          business_type?: string
+          city?: string
+          cleaning_type?: string
+          contact_person?: string
+          created_at?: string
+          email?: string
+          frequency?: string
+          id?: string
+          number_of_floors?: number
+          number_of_offices?: number
+          number_of_restrooms?: number
+          phone?: string
+          preferred_time?: string | null
+          preferred_walkthrough_date?: string
+          preferred_walkthrough_time?: string
+          service_type?: string
+          special_requirements?: string | null
+          square_footage?: number
+          state?: string
+          status?: string
+          updated_at?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           add_ons: string[] | null
