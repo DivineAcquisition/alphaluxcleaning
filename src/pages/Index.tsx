@@ -1,6 +1,5 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
-import { ServicePricing } from "@/components/dashboard/ServicePricing";
 import { PaymentForm } from "@/components/PaymentForm";
 import { useState } from "react";
 
@@ -37,7 +36,6 @@ const Index = () => {
             />
           </div>
         </div>
-        <ServicePricing />
       </div>
     </div>
   );
