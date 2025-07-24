@@ -8,6 +8,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Create payment function called with method:", req.method);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -20,6 +22,9 @@ serve(async (req) => {
   );
 
   try {
+    const requestBody = await req.json();
+    console.log("Request body received:", requestBody);
+    
     const { 
       amount, 
       squareFootage, 
@@ -29,24 +34,38 @@ serve(async (req) => {
       customerName,
       customerEmail,
       customerPhone 
-    } = await req.json();
+    } = requestBody;
 
+    console.log("Validating required fields...");
     if (!amount || !customerEmail) {
+      console.error("Missing required fields:", { amount, customerEmail });
       throw new Error("Missing required fields: amount and customerEmail");
     }
 
+    console.log("Initializing Stripe...");
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("STRIPE_SECRET_KEY not found in environment");
+      throw new Error("Stripe configuration error");
+    }
+    
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
 
+    console.log("Checking for existing Stripe customer...");
     // Check if a Stripe customer record exists for this email
     const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      console.log("Found existing customer:", customerId);
+    } else {
+      console.log("No existing customer found, will create new one");
     }
 
+    console.log("Creating Stripe checkout session...");
     // Create a one-time payment session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -74,7 +93,10 @@ serve(async (req) => {
         addOns: addOns?.join(",") || "",
       }
     });
+    
+    console.log("Checkout session created:", session.id);
 
+    console.log("Creating order record in database...");
     // Create order record in Supabase
     const orderData = {
       stripe_session_id: session.id,
@@ -97,7 +119,14 @@ serve(async (req) => {
       created_at: new Date().toISOString()
     };
 
-    await supabaseClient.from("orders").insert(orderData);
+    const { data: orderResult, error: orderError } = await supabaseClient.from("orders").insert(orderData);
+    
+    if (orderError) {
+      console.error("Database insert error:", orderError);
+      throw new Error(`Database error: ${orderError.message}`);
+    }
+    
+    console.log("Order created successfully, returning checkout URL");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
