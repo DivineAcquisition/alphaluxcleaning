@@ -158,12 +158,112 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          current_uses: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          owner_email: string
+          owner_name: string | null
+          reward_type: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          owner_email: string
+          owner_name?: string | null
+          reward_type?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          owner_email?: string
+          owner_name?: string | null
+          reward_type?: string | null
+        }
+        Relationships: []
+      }
+      referral_uses: {
+        Row: {
+          id: string
+          order_id: string | null
+          referral_code_id: string | null
+          reward_applied: boolean | null
+          used_at: string | null
+          used_by_email: string
+          used_by_name: string | null
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          referral_code_id?: string | null
+          reward_applied?: boolean | null
+          used_at?: string | null
+          used_by_email: string
+          used_by_name?: string | null
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          referral_code_id?: string | null
+          reward_applied?: boolean | null
+          used_at?: string | null
+          used_by_email?: string
+          used_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_uses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_uses_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_referral_code: {
+        Args: {
+          p_owner_email: string
+          p_owner_name?: string
+          p_custom_code?: string
+        }
+        Returns: Json
+      }
+      validate_and_use_referral_code: {
+        Args: {
+          p_code: string
+          p_user_email: string
+          p_user_name?: string
+          p_order_id?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
