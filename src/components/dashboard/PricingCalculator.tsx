@@ -9,7 +9,7 @@ import { Calculator, Home, Building, Star, Clock } from "lucide-react";
 
 interface PricingData {
   squareFootage: number;
-  serviceType: string;
+  serviceType: string; // 'residential', 'commercial', 'office', 'carpet'
   cleaningType: string;
   frequency: string;
   addOns: string[];
@@ -56,10 +56,18 @@ const addOnPrices = {
   laundry_basket: 20
 };
 
+// Carpet cleaning pricing (per room)
+const carpetCleaningPrices = {
+  standardRoom: 35,
+  livingRoom: 50,
+  stairs: 25,
+  hallway: 20
+};
+
 export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}) {
   const [pricingData, setPricingData] = useState<PricingData>({
     squareFootage: 1000,
-    serviceType: "",
+    serviceType: "residential",
     cleaningType: "",
     frequency: "",
     addOns: []
@@ -69,21 +77,50 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
   const [priceBreakdown, setPriceBreakdown] = useState<any>({});
 
   const calculatePrice = () => {
-    if (!pricingData.cleaningType || !pricingData.frequency) {
+    if (!pricingData.serviceType || !pricingData.cleaningType || !pricingData.frequency) {
       setCalculatedPrice(0);
       return;
     }
 
-    // Handle homes over 5100 sq ft
-    if (pricingData.squareFootage > 5100) {
+    // Commercial and Office cleaning requires estimate
+    if (pricingData.serviceType === 'commercial' || pricingData.serviceType === 'office') {
       setCalculatedPrice(0);
       setPriceBreakdown({
-        requiresEstimate: true
+        requiresEstimate: true,
+        serviceType: pricingData.serviceType
       });
       return;
     }
 
-    // Find the appropriate pricing tier
+    // Handle homes over 5100 sq ft for residential
+    if (pricingData.serviceType === 'residential' && pricingData.squareFootage > 5100) {
+      setCalculatedPrice(0);
+      setPriceBreakdown({
+        requiresEstimate: true,
+        serviceType: 'residential'
+      });
+      return;
+    }
+
+    // Handle carpet cleaning
+    if (pricingData.serviceType === 'carpet') {
+      const basePrice = carpetCleaningPrices.standardRoom * Math.ceil(pricingData.squareFootage / 200); // Estimate rooms based on sq ft
+      const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
+        return total + (addOnPrices[addOn as keyof typeof addOnPrices] || 0);
+      }, 0);
+      const finalPrice = basePrice + addOnTotal;
+      
+      setPriceBreakdown({
+        basePrice: basePrice,
+        addOnTotal: addOnTotal,
+        finalPrice: finalPrice,
+        estimatedRooms: Math.ceil(pricingData.squareFootage / 200)
+      });
+      setCalculatedPrice(finalPrice);
+      return;
+    }
+
+    // Find the appropriate pricing tier for residential
     const tier = pricingTiers.find(t => 
       pricingData.squareFootage >= t.min && pricingData.squareFootage <= t.max
     );
@@ -174,68 +211,179 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
             />
           </div>
 
-
-          {/* Cleaning Type */}
+          {/* Service Type */}
           <div className="space-y-2">
-            <Label>Cleaning Type</Label>
-            <Select value={pricingData.cleaningType} onValueChange={(value) => 
-              setPricingData(prev => ({ ...prev, cleaningType: value }))
+            <Label>Service Type</Label>
+            <Select value={pricingData.serviceType} onValueChange={(value) => 
+              setPricingData(prev => ({ ...prev, serviceType: value, cleaningType: "", frequency: "" }))
             }>
               <SelectTrigger>
-                <SelectValue placeholder="Select cleaning type" />
+                <SelectValue placeholder="Select service type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">
+                <SelectItem value="residential">
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4" />
-                    General Cleaning
+                    <Home className="h-4 w-4" />
+                    Residential Cleaning
                   </div>
                 </SelectItem>
-                <SelectItem value="deep">
+                <SelectItem value="commercial">
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 fill-current" />
-                    Deep Cleaning
+                    <Building className="h-4 w-4" />
+                    Commercial Cleaning
                   </div>
                 </SelectItem>
-                <SelectItem value="moveout">
+                <SelectItem value="office">
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 fill-current" />
-                    Move-out Cleaning
+                    <Building className="h-4 w-4" />
+                    Office Cleaning
+                  </div>
+                </SelectItem>
+                <SelectItem value="carpet">
+                  <div className="flex items-center gap-2">
+                    <Home className="h-4 w-4" />
+                    Carpet Cleaning
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+
+          {/* Cleaning Type */}
+          <div className="space-y-2">
+            <Label>Cleaning Type</Label>
+            <Select 
+              value={pricingData.cleaningType} 
+              onValueChange={(value) => setPricingData(prev => ({ ...prev, cleaningType: value }))}
+              disabled={!pricingData.serviceType}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select cleaning type" />
+              </SelectTrigger>
+              <SelectContent>
+                {pricingData.serviceType === 'residential' && (
+                  <>
+                    <SelectItem value="general">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        General Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="deep">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 fill-current" />
+                        Deep Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="moveout">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 fill-current" />
+                        Move-out Cleaning
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
+                {(pricingData.serviceType === 'commercial' || pricingData.serviceType === 'office') && (
+                  <>
+                    <SelectItem value="standard">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        Standard Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="deep_commercial">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 fill-current" />
+                        Deep Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="post_construction">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 fill-current" />
+                        Post-Construction
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
+                {pricingData.serviceType === 'carpet' && (
+                  <>
+                    <SelectItem value="standard_carpet">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4" />
+                        Standard Carpet Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="deep_carpet">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4 fill-current" />
+                        Deep Carpet Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="stain_treatment">
+                      <div className="flex items-center gap-2">
+                        <Home className="h-4 w-4 fill-current" />
+                        Stain Treatment
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Frequency */}
           <div className="space-y-2">
-            <Label>Cleaning Frequency</Label>
-            <Select value={pricingData.frequency} onValueChange={(value) => 
-              setPricingData(prev => ({ ...prev, frequency: value }))
-            }>
+            <Label>Service Frequency</Label>
+            <Select 
+              value={pricingData.frequency} 
+              onValueChange={(value) => setPricingData(prev => ({ ...prev, frequency: value }))}
+              disabled={!pricingData.cleaningType}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="one_time">One-time Service</SelectItem>
-                <SelectItem value="weekly">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Weekly
-                  </div>
-                </SelectItem>
-                <SelectItem value="biweekly">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Every Other Week (EOW)
-                  </div>
-                </SelectItem>
-                <SelectItem value="monthly">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    4 Weeks/Monthly
-                  </div>
-                </SelectItem>
+                {pricingData.serviceType === 'residential' && (
+                  <>
+                    <SelectItem value="one_time">One-time Service</SelectItem>
+                    <SelectItem value="weekly">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Weekly
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="biweekly">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Every Other Week (EOW)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="monthly">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        4 Weeks/Monthly
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
+                {(pricingData.serviceType === 'commercial' || pricingData.serviceType === 'office') && (
+                  <>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="one_time">One-time</SelectItem>
+                  </>
+                )}
+                {pricingData.serviceType === 'carpet' && (
+                  <>
+                    <SelectItem value="one_time">One-time Cleaning</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="biannual">Twice a Year</SelectItem>
+                    <SelectItem value="annual">Annual</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -393,9 +541,16 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
           {priceBreakdown.requiresEstimate ? (
             <div className="text-center py-12">
               <Calculator className="h-16 w-16 mx-auto mb-4 text-primary" />
-              <h3 className="text-xl font-bold text-foreground mb-2">Custom Estimate Required</h3>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                {pricingData.serviceType === 'commercial' ? 'Commercial Estimate Required' :
+                 pricingData.serviceType === 'office' ? 'Office Estimate Required' :
+                 'Custom Estimate Required'}
+              </h3>
               <p className="text-muted-foreground mb-4">
-                Homes greater than 5,100 sq ft require an in-person estimate.
+                {pricingData.serviceType === 'commercial' || pricingData.serviceType === 'office' 
+                  ? 'Commercial and office spaces require an in-person walkthrough for accurate pricing.'
+                  : 'Homes greater than 5,100 sq ft require an in-person estimate.'
+                }
               </p>
               <Button className="w-full" size="lg">
                 Call for Estimate: (281) 201-6112
@@ -418,10 +573,13 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 <h4 className="font-semibold text-foreground">Service Details</h4>
                 <div className="space-y-2">
                   <div className="text-lg font-medium text-foreground">
-                    {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                    {pricingData.serviceType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} - {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
                   </div>
                   <div className="text-muted-foreground">
                     {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} • {pricingData.squareFootage} sq ft
+                    {pricingData.serviceType === 'carpet' && priceBreakdown.estimatedRooms && (
+                      <span> • ~{priceBreakdown.estimatedRooms} rooms</span>
+                    )}
                   </div>
                 </div>
               </div>
