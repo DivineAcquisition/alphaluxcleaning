@@ -389,18 +389,83 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 </div>
               </div>
 
-              {/* Price Breakdown */}
+              {/* Service Summary */}
+              <div className="space-y-3 mb-6">
+                <h4 className="font-semibold text-foreground">Service Details</h4>
+                <div className="space-y-2">
+                  <div className="text-lg font-medium text-foreground">
+                    {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                  </div>
+                  <div className="text-muted-foreground">
+                    {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} • {pricingData.squareFootage} sq ft
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Breakdown with Math */}
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground">Price Breakdown</h4>
                 
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-muted-foreground">Cleaning service</span>
-                  <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
-                </div>
+                {(() => {
+                  const tier = originalPricingTiers.find(t => 
+                    pricingData.squareFootage >= t.min && pricingData.squareFootage <= t.max
+                  );
+                  
+                  if (!tier) return null;
+                  
+                  let originalBasePrice = 0;
+                  const frequency = pricingData.frequency;
+                  const cleaningType = pricingData.cleaningType;
+                  
+                  if (frequency === 'weekly') {
+                    originalBasePrice = tier.weekly;
+                  } else if (frequency === 'biweekly') {
+                    originalBasePrice = tier.biweekly;
+                  } else if (frequency === 'monthly') {
+                    originalBasePrice = tier.monthly;
+                  } else if (frequency === 'one_time') {
+                    originalBasePrice = tier.oneTime;
+                  }
+                  
+                  if (cleaningType === 'deep' || cleaningType === 'moveout') {
+                    originalBasePrice = tier.deepClean;
+                  }
+                  
+                  const isRecurring = ['weekly', 'biweekly', 'monthly'].includes(frequency);
+                  const isDeepCleaning = cleaningType === 'deep' || cleaningType === 'moveout';
+                  
+                  return (
+                    <>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-muted-foreground">Original Price</span>
+                        <span className="font-medium">${originalBasePrice.toFixed(2)}</span>
+                      </div>
+                      
+                      {isRecurring && !isDeepCleaning && (
+                        <div className="flex justify-between items-center py-2 text-green-600">
+                          <span>25% Recurring Discount</span>
+                          <span>-${((originalBasePrice * 0.25)).toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      {isDeepCleaning && (
+                        <div className="flex justify-between items-center py-2 text-green-600">
+                          <span>Deep Cleaning Discount</span>
+                          <span>-$65.00</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center py-2 border-b">
+                        <span className="text-muted-foreground">Service Total</span>
+                        <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {priceBreakdown.addOnTotal > 0 && (
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-muted-foreground">Additional services</span>
+                    <span className="text-muted-foreground">Additional Services</span>
                     <span className="font-medium">+${priceBreakdown.addOnTotal?.toFixed(2)}</span>
                   </div>
                 )}
@@ -411,34 +476,18 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 </div>
               </div>
 
-              {/* Service Summary */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-foreground">Service Summary</h4>
-                <div className="space-y-2">
-                  <Badge variant="outline" className="mr-2">
-                    {pricingData.squareFootage} sq ft
-                  </Badge>
-                  <Badge variant="outline" className="mr-2">
-                    {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
-                  </Badge>
-                  <Badge variant="outline">
-                    {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </Badge>
-                </div>
-
-                {pricingData.addOns.length > 0 && (
-                  <div className="mt-3">
-                    <div className="text-sm text-muted-foreground mb-2">Add-ons:</div>
-                    <div className="space-y-1">
-                      {pricingData.addOns.map(addOn => (
-                        <Badge key={addOn} variant="secondary" className="mr-2">
-                          {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </Badge>
-                      ))}
-                    </div>
+              {pricingData.addOns.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-sm text-muted-foreground mb-2">Add-ons:</div>
+                  <div className="space-y-1">
+                    {pricingData.addOns.map(addOn => (
+                      <Badge key={addOn} variant="secondary" className="mr-2">
+                        {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* This section is now handled by PaymentForm component */}
             </div>
