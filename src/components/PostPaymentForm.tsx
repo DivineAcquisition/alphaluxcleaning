@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Calendar, Clock, MessageSquare, User, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import React from "react";
 
 interface PostPaymentFormProps {
   sessionId?: string;
@@ -38,7 +39,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     // Scheduling Preferences
     preferredTimeSlot: "",
     preferredDays: [] as string[],
-    urgency: "",
+    serviceType: "", // one-time, weekly, bi-weekly, monthly
     
     // Access & Special Instructions
     accessInstructions: "",
@@ -63,15 +64,43 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     isChecking: false
   });
 
+  // Fetch order details to get service type
+  React.useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (sessionId) {
+        try {
+          const { data, error } = await supabase
+            .from("orders")
+            .select("frequency")
+            .eq("stripe_session_id", sessionId)
+            .single();
+
+          if (data && !error) {
+            handleInputChange("serviceType", data.frequency || "one-time");
+          }
+        } catch (error) {
+          console.error("Error fetching order details:", error);
+        }
+      }
+    };
+    fetchOrderDetails();
+  }, [sessionId]);
+
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleDayToggle = (day: string) => {
-    const newDays = formData.preferredDays.includes(day)
-      ? formData.preferredDays.filter(d => d !== day)
-      : [...formData.preferredDays, day];
-    handleInputChange("preferredDays", newDays);
+    // For one-time services, only allow one day selection
+    if (formData.serviceType === "one-time") {
+      handleInputChange("preferredDays", [day]);
+    } else {
+      // For recurring services, allow multiple days
+      const newDays = formData.preferredDays.includes(day)
+        ? formData.preferredDays.filter(d => d !== day)
+        : [...formData.preferredDays, day];
+      handleInputChange("preferredDays", newDays);
+    }
   };
 
   const validateReferralCode = async (code: string) => {
@@ -187,8 +216,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             },
             scheduling: {
               preferredTimeSlot: formData.preferredTimeSlot,
-              preferredDays: formData.preferredDays,
-              urgency: formData.urgency
+              preferredDays: formData.preferredDays
             },
             instructions: {
               access: formData.accessInstructions,
@@ -470,7 +498,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             Scheduling Preferences
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Preferred Time Slot</Label>
               <Select value={formData.preferredTimeSlot} onValueChange={(value) => handleInputChange("preferredTimeSlot", value)}>
@@ -485,24 +513,12 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label>Service Urgency</Label>
-              <Select value={formData.urgency} onValueChange={(value) => handleInputChange("urgency", value)}>
-                <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="How soon do you need service?" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="asap">ASAP (within 24-48 hours)</SelectItem>
-                  <SelectItem value="week">Within this week</SelectItem>
-                  <SelectItem value="flexible">Flexible scheduling</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           
           <div className="space-y-2">
-            <Label>Preferred Days (select all that work)</Label>
+            <Label>
+              Preferred Days {formData.serviceType === "one-time" ? "(select one)" : "(select all that work)"}
+            </Label>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
                 <Button
@@ -516,6 +532,11 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                 </Button>
               ))}
             </div>
+            {formData.serviceType === "one-time" && (
+              <p className="text-xs text-muted-foreground">
+                For one-time services, please select your preferred day for the cleaning.
+              </p>
+            )}
           </div>
         </div>
 
