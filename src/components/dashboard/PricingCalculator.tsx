@@ -15,6 +15,10 @@ interface PricingData {
   addOns: string[];
 }
 
+interface PricingCalculatorProps {
+  onPriceUpdate?: (data: PricingData, price: number, breakdown: any) => void;
+}
+
 // Bay Area Cleaning Pros pricing structure (reduced by 10%)
 const pricingTiers = [
   { min: 0, max: 1000, weekly: 87.75, biweekly: 106.73, monthly: 154.13, oneTime: 202.78, deepClean: 274.55 },
@@ -37,7 +41,7 @@ const addOnPrices = {
   windows: 50
 };
 
-export function PricingCalculator() {
+export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}) {
   const [pricingData, setPricingData] = useState<PricingData>({
     squareFootage: 1000,
     serviceType: "",
@@ -112,7 +116,10 @@ export function PricingCalculator() {
 
   useEffect(() => {
     calculatePrice();
-  }, [pricingData]);
+    if (onPriceUpdate) {
+      onPriceUpdate(pricingData, calculatedPrice, priceBreakdown);
+    }
+  }, [pricingData, calculatedPrice, priceBreakdown, onPriceUpdate]);
 
   const toggleAddOn = (addOn: string) => {
     setPricingData(prev => ({
@@ -326,10 +333,7 @@ export function PricingCalculator() {
                 )}
               </div>
 
-              {/* CTA Button */}
-              <Button className="w-full" size="lg">
-                Book with Bay Area Cleaning Pros
-              </Button>
+              {/* This section is now handled by PaymentForm component */}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
