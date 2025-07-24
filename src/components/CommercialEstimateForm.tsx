@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText } from "lucide-react";
+import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,6 +41,12 @@ interface CommercialEstimateData {
   alternativeTime: string;
 }
 
+interface AvailabilitySlot {
+  date: string;
+  time: string;
+  available: boolean;
+}
+
 interface CommercialEstimateFormProps {
   serviceType: 'commercial' | 'office';
   cleaningType: string;
@@ -51,6 +57,8 @@ interface CommercialEstimateFormProps {
 export function CommercialEstimateForm({ serviceType, cleaningType, frequency, squareFootage }: CommercialEstimateFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [formData, setFormData] = useState<CommercialEstimateData>({
     businessName: "",
     businessType: "",
@@ -96,6 +104,43 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
     "Evening (5-8 PM)",
     "After Hours (8 PM+)"
   ];
+
+  // Check calendar availability when date changes
+  const checkAvailability = async (date: string) => {
+    if (!date) return;
+    
+    setIsCheckingAvailability(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
+        body: { date, timeSlots }
+      });
+
+      if (error) throw error;
+      setAvailability(data.availability || []);
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      toast({
+        title: "Availability Check Failed",
+        description: "Unable to check calendar availability. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  // Check availability when preferred date changes
+  useEffect(() => {
+    if (formData.preferredWalkthroughDate) {
+      checkAvailability(formData.preferredWalkthroughDate);
+    }
+  }, [formData.preferredWalkthroughDate]);
+
+  // Get availability status for a time slot
+  const getTimeSlotAvailability = (timeSlot: string) => {
+    const slot = availability.find(a => a.time === timeSlot);
+    return slot ? slot.available : true; // Default to available if not checked
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -423,7 +468,15 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="preferredWalkthroughTime">Preferred Time *</Label>
+                <Label htmlFor="preferredWalkthroughTime">
+                  Preferred Time * 
+                  {isCheckingAvailability && (
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      <Clock className="inline h-3 w-3 animate-spin mr-1" />
+                      Checking availability...
+                    </span>
+                  )}
+                </Label>
                 <Select 
                   value={formData.preferredWalkthroughTime} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, preferredWalkthroughTime: value }))}
@@ -432,9 +485,26 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
                     <SelectValue placeholder="Select preferred time" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
-                    {timeSlots.map(slot => (
-                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                    ))}
+                    {timeSlots.map(slot => {
+                      const isAvailable = getTimeSlotAvailability(slot);
+                      return (
+                        <SelectItem 
+                          key={slot} 
+                          value={slot}
+                          className={`flex items-center justify-between ${!isAvailable ? 'opacity-50' : ''}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {isAvailable ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <X className="h-4 w-4 text-red-500" />
+                            )}
+                            {slot}
+                            {!isAvailable && <span className="text-xs text-muted-foreground">(Unavailable)</span>}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

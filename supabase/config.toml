@@ -2,3 +2,6 @@ project_id = "kqoezqzogleaaupjzxch"
 
 [functions.create-payment]
 verify_jwt = false
+
+[functions.check-calendar-availability]
+verify_jwt = false
