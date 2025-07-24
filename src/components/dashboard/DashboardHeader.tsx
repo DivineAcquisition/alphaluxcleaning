@@ -8,27 +8,27 @@ export function DashboardHeader() {
       {/* Main Header */}
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          CleanPrice Pro
+          Bay Area Cleaning Pros
         </h1>
         <p className="text-xl text-muted-foreground">
-          Instant pricing calculator for professional cleaning services
+          Professional Cleaning Services in Bay Area - Get Your Instant Quote
         </p>
         <Badge variant="secondary" className="mt-2">
           <Sparkles className="h-3 w-3 mr-1" />
-          Real-time calculations
+          Baytown, TX • (281) 201-6112
         </Badge>
       </div>
 
-      {/* Stats Cards */}
+      {/* Service Highlights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mr-4">
-              <DollarSign className="h-6 w-6 text-primary" />
+              <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">$2,450</p>
-              <p className="text-sm text-muted-foreground">Avg Monthly Revenue</p>
+              <p className="text-lg font-bold text-foreground">Quality Focused</p>
+              <p className="text-sm text-muted-foreground">Precision & Professionalism</p>
             </div>
           </CardContent>
         </Card>
@@ -39,8 +39,8 @@ export function DashboardHeader() {
               <Users className="h-6 w-6 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">127</p>
-              <p className="text-sm text-muted-foreground">Active Clients</p>
+              <p className="text-lg font-bold text-foreground">Trusted Service</p>
+              <p className="text-sm text-muted-foreground">Serving Bay Area</p>
             </div>
           </CardContent>
         </Card>
@@ -48,11 +48,11 @@ export function DashboardHeader() {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-accent/10 rounded-lg mr-4">
-              <TrendingUp className="h-6 w-6 text-accent" />
+              <DollarSign className="h-6 w-6 text-accent" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">18%</p>
-              <p className="text-sm text-muted-foreground">Growth This Month</p>
+              <p className="text-lg font-bold text-foreground">Fair Pricing</p>
+              <p className="text-sm text-muted-foreground">Transparent Quotes</p>
             </div>
           </CardContent>
         </Card>

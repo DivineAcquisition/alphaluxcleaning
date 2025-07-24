@@ -15,30 +15,18 @@ interface PricingData {
   addOns: string[];
 }
 
-const servicePrices = {
-  residential: {
-    basic: 0.15,
-    deep: 0.25,
-    moveout: 0.35
-  },
-  commercial: {
-    basic: 0.12,
-    deep: 0.20,
-    moveout: 0.30
-  },
-  office: {
-    basic: 0.10,
-    deep: 0.18,
-    moveout: 0.25
-  }
-};
-
-const frequencyMultipliers = {
-  one_time: 1.0,
-  weekly: 0.85,
-  biweekly: 0.90,
-  monthly: 0.95
-};
+// Bay Area Cleaning Pros pricing structure (reduced by 10%)
+const pricingTiers = [
+  { min: 0, max: 1000, weekly: 87.75, biweekly: 106.73, monthly: 154.13, oneTime: 202.78, deepClean: 274.55 },
+  { min: 1001, max: 1400, weekly: 104.35, biweekly: 113.02, monthly: 167.93, oneTime: 211.58, deepClean: 294.99 },
+  { min: 1401, max: 1800, weekly: 113.10, biweekly: 126.05, monthly: 203.16, oneTime: 229.74, deepClean: 320.35 },
+  { min: 1801, max: 2400, weekly: 119.53, biweekly: 135.14, monthly: 211.38, oneTime: 238.87, deepClean: 346.62 },
+  { min: 2401, max: 2800, weekly: 142.43, biweekly: 157.63, monthly: 221.18, oneTime: 256.75, deepClean: 364.51 },
+  { min: 2801, max: 3300, weekly: 151.86, biweekly: 169.76, monthly: 259.13, oneTime: 267.71, deepClean: 413.24 },
+  { min: 3301, max: 3900, weekly: 160.94, biweekly: 177.85, monthly: 277.03, oneTime: 311.71, deepClean: 430.55 },
+  { min: 3901, max: 4500, weekly: 193.76, biweekly: 208.42, monthly: 331.82, oneTime: 340.80, deepClean: 461.34 },
+  { min: 4501, max: 5100, weekly: 205.70, biweekly: 217.85, monthly: 385.35, oneTime: 415.23, deepClean: 507.82 }
+];
 
 const addOnPrices = {
   inside_fridge: 25,
@@ -62,27 +50,61 @@ export function PricingCalculator() {
   const [priceBreakdown, setPriceBreakdown] = useState<any>({});
 
   const calculatePrice = () => {
-    if (!pricingData.serviceType || !pricingData.cleaningType || !pricingData.frequency) {
+    if (!pricingData.cleaningType || !pricingData.frequency) {
       setCalculatedPrice(0);
       return;
     }
 
-    const baseRate = servicePrices[pricingData.serviceType as keyof typeof servicePrices]?.[pricingData.cleaningType as keyof typeof servicePrices.residential] || 0;
-    const basePrice = pricingData.squareFootage * baseRate;
-    const frequencyMultiplier = frequencyMultipliers[pricingData.frequency as keyof typeof frequencyMultipliers];
-    const adjustedPrice = basePrice * frequencyMultiplier;
+    // Handle homes over 5100 sq ft
+    if (pricingData.squareFootage > 5100) {
+      setCalculatedPrice(0);
+      setPriceBreakdown({
+        requiresEstimate: true
+      });
+      return;
+    }
+
+    // Find the appropriate pricing tier
+    const tier = pricingTiers.find(t => 
+      pricingData.squareFootage >= t.min && pricingData.squareFootage <= t.max
+    );
+
+    if (!tier) {
+      setCalculatedPrice(0);
+      return;
+    }
+
+    let basePrice = 0;
+    const frequency = pricingData.frequency;
+    const cleaningType = pricingData.cleaningType;
+
+    // Get base price based on frequency and cleaning type
+    if (frequency === 'weekly') {
+      basePrice = tier.weekly;
+    } else if (frequency === 'biweekly') {
+      basePrice = tier.biweekly;
+    } else if (frequency === 'monthly') {
+      basePrice = tier.monthly;
+    } else if (frequency === 'one_time') {
+      basePrice = tier.oneTime;
+    }
+
+    // Adjust for deep clean/move out
+    if (cleaningType === 'deep' || cleaningType === 'moveout') {
+      basePrice = tier.deepClean;
+    }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
       return total + (addOnPrices[addOn as keyof typeof addOnPrices] || 0);
     }, 0);
 
-    const finalPrice = adjustedPrice + addOnTotal;
+    const finalPrice = basePrice + addOnTotal;
     
     setPriceBreakdown({
       basePrice: basePrice,
-      frequencyDiscount: basePrice - adjustedPrice,
       addOnTotal: addOnTotal,
-      finalPrice: finalPrice
+      finalPrice: finalPrice,
+      tierInfo: `${tier.min === 0 ? 'Under' : tier.min}-${tier.max} sq ft`
     });
     
     setCalculatedPrice(finalPrice);
@@ -130,37 +152,6 @@ export function PricingCalculator() {
             />
           </div>
 
-          {/* Service Type */}
-          <div className="space-y-2">
-            <Label>Property Type</Label>
-            <Select value={pricingData.serviceType} onValueChange={(value) => 
-              setPricingData(prev => ({ ...prev, serviceType: value }))
-            }>
-              <SelectTrigger>
-                <SelectValue placeholder="Select property type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="residential">
-                  <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    Residential Home
-                  </div>
-                </SelectItem>
-                <SelectItem value="commercial">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Commercial Space
-                  </div>
-                </SelectItem>
-                <SelectItem value="office">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Office Building
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           {/* Cleaning Type */}
           <div className="space-y-2">
@@ -172,10 +163,10 @@ export function PricingCalculator() {
                 <SelectValue placeholder="Select cleaning type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="basic">
+                <SelectItem value="general">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4" />
-                    Basic Cleaning
+                    General Cleaning
                   </div>
                 </SelectItem>
                 <SelectItem value="deep">
@@ -208,19 +199,19 @@ export function PricingCalculator() {
                 <SelectItem value="weekly">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Weekly (15% discount)
+                    Weekly
                   </div>
                 </SelectItem>
                 <SelectItem value="biweekly">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Bi-weekly (10% discount)
+                    Every Other Week (EOW)
                   </div>
                 </SelectItem>
                 <SelectItem value="monthly">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Monthly (5% discount)
+                    4 Weeks/Monthly
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -261,7 +252,18 @@ export function PricingCalculator() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          {calculatedPrice > 0 ? (
+          {priceBreakdown.requiresEstimate ? (
+            <div className="text-center py-12">
+              <Calculator className="h-16 w-16 mx-auto mb-4 text-primary" />
+              <h3 className="text-xl font-bold text-foreground mb-2">Custom Estimate Required</h3>
+              <p className="text-muted-foreground mb-4">
+                Homes greater than 5,100 sq ft require an in-person estimate.
+              </p>
+              <Button className="w-full" size="lg">
+                Call for Estimate: (281) 201-6112
+              </Button>
+            </div>
+          ) : calculatedPrice > 0 ? (
             <div className="space-y-6">
               {/* Main Price */}
               <div className="text-center p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
@@ -269,7 +271,7 @@ export function PricingCalculator() {
                   ${calculatedPrice.toFixed(2)}
                 </div>
                 <div className="text-muted-foreground">
-                  Total estimated cost
+                  {priceBreakdown.tierInfo}
                 </div>
               </div>
 
@@ -278,16 +280,9 @@ export function PricingCalculator() {
                 <h4 className="font-semibold text-foreground">Price Breakdown</h4>
                 
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-muted-foreground">Base cleaning service</span>
+                  <span className="text-muted-foreground">Cleaning service</span>
                   <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
                 </div>
-
-                {priceBreakdown.frequencyDiscount > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b text-success">
-                    <span>Frequency discount</span>
-                    <span className="font-medium">-${priceBreakdown.frequencyDiscount?.toFixed(2)}</span>
-                  </div>
-                )}
 
                 {priceBreakdown.addOnTotal > 0 && (
                   <div className="flex justify-between items-center py-2 border-b">
@@ -308,9 +303,6 @@ export function PricingCalculator() {
                 <div className="space-y-2">
                   <Badge variant="outline" className="mr-2">
                     {pricingData.squareFootage} sq ft
-                  </Badge>
-                  <Badge variant="outline" className="mr-2">
-                    {pricingData.serviceType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </Badge>
                   <Badge variant="outline" className="mr-2">
                     {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
@@ -336,7 +328,7 @@ export function PricingCalculator() {
 
               {/* CTA Button */}
               <Button className="w-full" size="lg">
-                Book This Service
+                Book with Bay Area Cleaning Pros
               </Button>
             </div>
           ) : (

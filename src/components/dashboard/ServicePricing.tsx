@@ -2,110 +2,196 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Home, Building, Star, Clock } from "lucide-react";
 
+// Bay Area Cleaning Pros pricing structure by square footage
 const pricingTiers = [
   {
-    type: "Residential",
+    range: "Under 1,000 sq ft",
     icon: Home,
-    description: "Perfect for homes and apartments",
-    services: [
-      { name: "Basic Cleaning", price: "0.15", features: ["Dusting", "Vacuuming", "Bathroom clean", "Kitchen clean"] },
-      { name: "Deep Cleaning", price: "0.25", features: ["Everything in Basic", "Inside appliances", "Baseboards", "Light fixtures"] },
-      { name: "Move-out Clean", price: "0.35", features: ["Everything in Deep", "Inside cabinets", "Detailed scrubbing", "Window cleaning"] }
-    ]
+    description: "Cozy homes and apartments",
+    pricing: {
+      weekly: "$87.75",
+      biweekly: "$106.73", 
+      monthly: "$154.13",
+      oneTime: "$202.78",
+      deepClean: "$274.55"
+    }
   },
   {
-    type: "Commercial",
-    icon: Building,
-    description: "For retail and commercial spaces",
-    services: [
-      { name: "Basic Cleaning", price: "0.12", features: ["Floor cleaning", "Trash removal", "Surface wiping", "Restroom clean"] },
-      { name: "Deep Cleaning", price: "0.20", features: ["Everything in Basic", "Carpet cleaning", "Window cleaning", "Equipment cleaning"] },
-      { name: "Move-out Clean", price: "0.30", features: ["Everything in Deep", "Paint touch-ups", "Detailed sanitizing", "Fixture cleaning"] }
-    ]
+    range: "1,001-1,400 sq ft",
+    icon: Home,
+    description: "Small to medium homes",
+    pricing: {
+      weekly: "$104.35",
+      biweekly: "$113.02",
+      monthly: "$167.93", 
+      oneTime: "$211.58",
+      deepClean: "$294.99"
+    }
   },
   {
-    type: "Office",
-    icon: Building,
-    description: "Professional office environments",
-    services: [
-      { name: "Basic Cleaning", price: "0.10", features: ["Desk cleaning", "Floor maintenance", "Trash service", "Kitchen areas"] },
-      { name: "Deep Cleaning", price: "0.18", features: ["Everything in Basic", "Conference rooms", "Break rooms", "Sanitizing"] },
-      { name: "Move-out Clean", price: "0.25", features: ["Everything in Deep", "Storage areas", "Detailed cleaning", "Final inspection"] }
-    ]
+    range: "1,401-1,800 sq ft",
+    icon: Home,
+    description: "Medium sized homes",
+    pricing: {
+      weekly: "$113.10",
+      biweekly: "$126.05",
+      monthly: "$203.16",
+      oneTime: "$229.74", 
+      deepClean: "$320.35"
+    }
+  },
+  {
+    range: "1,801-2,400 sq ft",
+    icon: Home,
+    description: "Large family homes",
+    pricing: {
+      weekly: "$119.53",
+      biweekly: "$135.14",
+      monthly: "$211.38",
+      oneTime: "$238.87",
+      deepClean: "$346.62"
+    }
+  },
+  {
+    range: "2,401-2,800 sq ft", 
+    icon: Home,
+    description: "Very large homes",
+    pricing: {
+      weekly: "$142.43",
+      biweekly: "$157.63", 
+      monthly: "$221.18",
+      oneTime: "$256.75",
+      deepClean: "$364.51"
+    }
+  },
+  {
+    range: "2,801+ sq ft",
+    icon: Home,
+    description: "Extra large homes",
+    pricing: {
+      weekly: "$151.86+",
+      biweekly: "$169.76+",
+      monthly: "$259.13+", 
+      oneTime: "$267.71+",
+      deepClean: "$413.24+"
+    }
   }
 ];
 
-const frequencyDiscounts = [
-  { frequency: "Weekly", discount: "15%", icon: Clock, color: "text-success" },
-  { frequency: "Bi-weekly", discount: "10%", icon: Clock, color: "text-primary" },
-  { frequency: "Monthly", discount: "5%", icon: Clock, color: "text-accent" }
+const serviceTypes = [
+  { 
+    name: "General Cleaning", 
+    description: "Regular maintenance cleaning for occupied homes",
+    icon: Home, 
+    color: "text-primary",
+    features: ["All rooms cleaned", "Kitchen & bathrooms", "Floors vacuumed/mopped", "Trash removal"]
+  },
+  { 
+    name: "Deep Cleaning", 
+    description: "Thorough cleaning including detailed work",
+    icon: Star, 
+    color: "text-accent",
+    features: ["Everything in General", "Inside appliances", "Baseboards", "Light fixtures", "Deep scrubbing"]
+  },
+  { 
+    name: "Move-out Cleaning", 
+    description: "Complete cleaning for vacant properties",
+    icon: Clock, 
+    color: "text-success",
+    features: ["Everything in Deep", "Inside cabinets", "Detailed sanitizing", "Window cleaning", "Move-in ready"]
+  }
 ];
 
 export function ServicePricing() {
   return (
     <div className="space-y-6">
-      {/* Service Types */}
+      {/* Pricing by Square Footage */}
       <div>
-        <h3 className="text-2xl font-bold mb-4">Service Pricing</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {pricingTiers.map((tier) => (
-            <Card key={tier.type} className="relative overflow-hidden">
+        <h3 className="text-2xl font-bold mb-4">Pricing by Home Size</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {pricingTiers.map((tier, index) => (
+            <Card key={tier.range} className="relative overflow-hidden">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <tier.icon className="h-5 w-5 text-primary" />
-                  {tier.type}
+                  {tier.range}
                 </CardTitle>
                 <CardDescription>{tier.description}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {tier.services.map((service) => (
-                  <div key={service.name} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold">{service.name}</h4>
-                      <Badge variant="outline">
-                        ${service.price}/sq ft
-                      </Badge>
-                    </div>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      {service.features.map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <Star className="h-3 w-3 fill-current text-accent" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">Weekly:</span>
+                    <div className="font-semibold text-primary">{tier.pricing.weekly}</div>
                   </div>
-                ))}
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">EOW:</span>
+                    <div className="font-semibold text-primary">{tier.pricing.biweekly}</div>
+                  </div>
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">Monthly:</span>
+                    <div className="font-semibold text-primary">{tier.pricing.monthly}</div>
+                  </div>
+                  <div className="p-2 bg-muted/50 rounded">
+                    <span className="text-muted-foreground">One-time:</span>
+                    <div className="font-semibold text-primary">{tier.pricing.oneTime}</div>
+                  </div>
+                </div>
+                <div className="p-3 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20">
+                  <span className="text-sm text-muted-foreground">Deep Clean:</span>
+                  <div className="font-bold text-accent text-lg">{tier.pricing.deepClean}</div>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </div>
 
-      {/* Frequency Discounts */}
+      {/* Service Types */}
       <Card>
         <CardHeader>
-          <CardTitle>Frequency Discounts</CardTitle>
+          <CardTitle>Our Cleaning Services</CardTitle>
           <CardDescription>
-            Save more with regular cleaning services
+            Professional cleaning services tailored to your needs
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {frequencyDiscounts.map((item) => (
-              <div key={item.frequency} className="flex items-center p-4 bg-muted/50 rounded-lg">
-                <div className={`flex items-center justify-center w-12 h-12 rounded-lg mr-4 ${item.color} bg-current/10`}>
-                  <item.icon className={`h-6 w-6 ${item.color}`} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {serviceTypes.map((service) => (
+              <div key={service.name} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${service.color} bg-current/10`}>
+                    <service.icon className={`h-6 w-6 ${service.color}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{service.name}</h4>
+                    <p className="text-sm text-muted-foreground">{service.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold">{item.frequency}</p>
-                  <p className={`text-sm font-bold ${item.color}`}>
-                    Save {item.discount}
-                  </p>
-                </div>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-15">
+                  {service.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <Star className="h-3 w-3 fill-current text-accent" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Contact Info */}
+      <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+        <CardContent className="p-6 text-center">
+          <h3 className="text-xl font-bold mb-2">Homes over 5,100 sq ft?</h3>
+          <p className="text-muted-foreground mb-4">
+            Contact us for a personalized in-person estimate
+          </p>
+          <Badge variant="outline" className="text-lg px-4 py-2">
+            Call: (281) 201-6112
+          </Badge>
         </CardContent>
       </Card>
     </div>
