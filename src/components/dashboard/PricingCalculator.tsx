@@ -32,13 +32,13 @@ const originalPricingTiers = [
   { min: 4501, max: 5100, weekly: 228.56, biweekly: 242.05, monthly: 428.17, oneTime: 461.37, deepClean: 564.24 }
 ];
 
-// Apply discounts: 25% off recurring services, 65% off deep cleaning
+// Apply discounts: 25% off recurring services, $65 off deep cleaning
 const pricingTiers = originalPricingTiers.map(tier => ({
   ...tier,
   weekly: Math.round((tier.weekly * 0.75) * 100) / 100, // 25% off
   biweekly: Math.round((tier.biweekly * 0.75) * 100) / 100, // 25% off  
   monthly: Math.round((tier.monthly * 0.75) * 100) / 100, // 25% off
-  deepClean: Math.round((tier.deepClean * 0.35) * 100) / 100 // 65% off
+  deepClean: Math.round((tier.deepClean - 65) * 100) / 100 // $65 off
 }));
 
 const addOnPrices = {
