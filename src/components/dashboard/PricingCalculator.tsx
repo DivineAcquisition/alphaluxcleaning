@@ -244,15 +244,23 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
           <div className="space-y-3">
             <Label>🔧 Additional Services Available</Label>
             <div className="grid grid-cols-1 gap-2">
-              <Button
-                variant={pricingData.addOns.includes('baseboards') ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleAddOn('baseboards')}
-                className="justify-between h-auto p-3"
-              >
-                <span>Baseboards</span>
-                <Badge variant="secondary">$50.00</Badge>
-              </Button>
+              {(() => {
+                const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
+                const isBaseboartsIncluded = isDeepCleaning;
+                
+                return (
+                  <Button
+                    variant={pricingData.addOns.includes('baseboards') ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => !isBaseboartsIncluded && toggleAddOn('baseboards')}
+                    className={`justify-between h-auto p-3 ${isBaseboartsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isBaseboartsIncluded}
+                  >
+                    <span>Baseboards {isBaseboartsIncluded && '(Included)'}</span>
+                    <Badge variant="secondary">{isBaseboartsIncluded ? 'Included' : '$50.00'}</Badge>
+                  </Button>
+                );
+              })()}
               <Button
                 variant={pricingData.addOns.includes('dishes') ? "default" : "outline"}
                 size="sm"
@@ -307,15 +315,23 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 <span>Blinds (blade by blade)</span>
                 <Badge variant="secondary">$15.00 per blind</Badge>
               </Button>
-              <Button
-                variant={pricingData.addOns.includes('oven_fridge') ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleAddOn('oven_fridge')}
-                className="justify-between h-auto p-3"
-              >
-                <span>Oven or refrigerator</span>
-                <Badge variant="secondary">$35.00</Badge>
-              </Button>
+              {(() => {
+                const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
+                const isOvenFridgeIncluded = isDeepCleaning;
+                
+                return (
+                  <Button
+                    variant={pricingData.addOns.includes('oven_fridge') ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => !isOvenFridgeIncluded && toggleAddOn('oven_fridge')}
+                    className={`justify-between h-auto p-3 ${isOvenFridgeIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isOvenFridgeIncluded}
+                  >
+                    <span>Oven or refrigerator {isOvenFridgeIncluded && '(Included)'}</span>
+                    <Badge variant="secondary">{isOvenFridgeIncluded ? 'Included' : '$35.00'}</Badge>
+                  </Button>
+                );
+              })()}
               <Button
                 variant={pricingData.addOns.includes('cabinet_fronts') ? "default" : "outline"}
                 size="sm"
@@ -325,15 +341,23 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 <span>Cabinet fronts</span>
                 <Badge variant="secondary">$50.00</Badge>
               </Button>
-              <Button
-                variant={pricingData.addOns.includes('window_sills') ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleAddOn('window_sills')}
-                className="justify-between h-auto p-3"
-              >
-                <span>Window sills</span>
-                <Badge variant="secondary">$25.00</Badge>
-              </Button>
+              {(() => {
+                const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
+                const isWindowSillsIncluded = isDeepCleaning;
+                
+                return (
+                  <Button
+                    variant={pricingData.addOns.includes('window_sills') ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => !isWindowSillsIncluded && toggleAddOn('window_sills')}
+                    className={`justify-between h-auto p-3 ${isWindowSillsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isWindowSillsIncluded}
+                  >
+                    <span>Window sills {isWindowSillsIncluded && '(Included)'}</span>
+                    <Badge variant="secondary">{isWindowSillsIncluded ? 'Included' : '$25.00'}</Badge>
+                  </Button>
+                );
+              })()}
               <Button
                 variant={pricingData.addOns.includes('light_fixtures') ? "default" : "outline"}
                 size="sm"
