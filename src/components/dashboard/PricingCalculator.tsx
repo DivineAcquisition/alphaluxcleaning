@@ -19,26 +19,41 @@ interface PricingCalculatorProps {
   onPriceUpdate?: (data: PricingData, price: number, breakdown: any) => void;
 }
 
-// Bay Area Cleaning Pros pricing structure (reduced by 10%)
-const pricingTiers = [
-  { min: 0, max: 1000, weekly: 87.75, biweekly: 106.73, monthly: 154.13, oneTime: 202.78, deepClean: 274.55 },
-  { min: 1001, max: 1400, weekly: 104.35, biweekly: 113.02, monthly: 167.93, oneTime: 211.58, deepClean: 294.99 },
-  { min: 1401, max: 1800, weekly: 113.10, biweekly: 126.05, monthly: 203.16, oneTime: 229.74, deepClean: 320.35 },
-  { min: 1801, max: 2400, weekly: 119.53, biweekly: 135.14, monthly: 211.38, oneTime: 238.87, deepClean: 346.62 },
-  { min: 2401, max: 2800, weekly: 142.43, biweekly: 157.63, monthly: 221.18, oneTime: 256.75, deepClean: 364.51 },
-  { min: 2801, max: 3300, weekly: 151.86, biweekly: 169.76, monthly: 259.13, oneTime: 267.71, deepClean: 413.24 },
-  { min: 3301, max: 3900, weekly: 160.94, biweekly: 177.85, monthly: 277.03, oneTime: 311.71, deepClean: 430.55 },
-  { min: 3901, max: 4500, weekly: 193.76, biweekly: 208.42, monthly: 331.82, oneTime: 340.80, deepClean: 461.34 },
-  { min: 4501, max: 5100, weekly: 205.70, biweekly: 217.85, monthly: 385.35, oneTime: 415.23, deepClean: 507.82 }
+// Bay Area Cleaning Professionals pricing structure with discounts applied
+const originalPricingTiers = [
+  { min: 0, max: 1000, weekly: 97.50, biweekly: 118.59, monthly: 171.26, oneTime: 225.31, deepClean: 305.05 },
+  { min: 1001, max: 1400, weekly: 115.94, biweekly: 125.58, monthly: 186.59, oneTime: 235.09, deepClean: 327.77 },
+  { min: 1401, max: 1800, weekly: 125.67, biweekly: 140.06, monthly: 225.73, oneTime: 255.27, deepClean: 355.94 },
+  { min: 1801, max: 2400, weekly: 132.81, biweekly: 150.15, monthly: 234.87, oneTime: 265.41, deepClean: 385.13 },
+  { min: 2401, max: 2800, weekly: 158.26, biweekly: 175.14, monthly: 245.76, oneTime: 285.28, deepClean: 405.01 },
+  { min: 2801, max: 3300, weekly: 168.73, biweekly: 188.62, monthly: 287.92, oneTime: 297.46, deepClean: 459.16 },
+  { min: 3301, max: 3900, weekly: 178.82, biweekly: 197.61, monthly: 307.81, oneTime: 346.34, deepClean: 478.39 },
+  { min: 3901, max: 4500, weekly: 215.29, biweekly: 231.58, monthly: 368.69, oneTime: 378.67, deepClean: 512.60 },
+  { min: 4501, max: 5100, weekly: 228.56, biweekly: 242.05, monthly: 428.17, oneTime: 461.37, deepClean: 564.24 }
 ];
 
+// Apply discounts: 25% off recurring services, 65% off deep cleaning
+const pricingTiers = originalPricingTiers.map(tier => ({
+  ...tier,
+  weekly: Math.round((tier.weekly * 0.75) * 100) / 100, // 25% off
+  biweekly: Math.round((tier.biweekly * 0.75) * 100) / 100, // 25% off  
+  monthly: Math.round((tier.monthly * 0.75) * 100) / 100, // 25% off
+  deepClean: Math.round((tier.deepClean * 0.35) * 100) / 100 // 65% off
+}));
+
 const addOnPrices = {
-  inside_fridge: 25,
-  inside_oven: 20,
-  inside_cabinets: 30,
-  garage: 40,
-  basement: 35,
-  windows: 50
+  baseboards: 50,
+  dishes: 40,
+  door_facings: 50,
+  wall_spot_clean: 75,
+  wall_wash_per_room: 25,
+  blinds_feather: 65,
+  blinds_blade: 15,
+  oven_fridge: 35,
+  cabinet_fronts: 50,
+  window_sills: 25,
+  light_fixtures: 35,
+  laundry_basket: 20
 };
 
 export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}) {
@@ -227,24 +242,116 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
 
           {/* Add-ons */}
           <div className="space-y-3">
-            <Label>Additional Services</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(addOnPrices).map(([key, price]) => (
-                <Button
-                  key={key}
-                  variant={pricingData.addOns.includes(key) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleAddOn(key)}
-                  className="justify-start h-auto p-3"
-                >
-                  <div className="text-left">
-                    <div className="font-medium">
-                      {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </div>
-                    <div className="text-xs opacity-70">+${price}</div>
-                  </div>
-                </Button>
-              ))}
+            <Label>🔧 Additional Services Available</Label>
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                variant={pricingData.addOns.includes('baseboards') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('baseboards')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Baseboards</span>
+                <Badge variant="secondary">$50.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('dishes') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('dishes')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Dishes</span>
+                <Badge variant="secondary">$40.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('door_facings') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('door_facings')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Door facings/moldings</span>
+                <Badge variant="secondary">$50.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('wall_spot_clean') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('wall_spot_clean')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Wall spot cleaning</span>
+                <Badge variant="secondary">$75.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('wall_wash_per_room') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('wall_wash_per_room')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Wall wash (per room)</span>
+                <Badge variant="secondary">$25.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('blinds_feather') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('blinds_feather')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Blinds (feather dust)</span>
+                <Badge variant="secondary">$65.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('blinds_blade') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('blinds_blade')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Blinds (blade by blade)</span>
+                <Badge variant="secondary">$15.00 per blind</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('oven_fridge') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('oven_fridge')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Oven or refrigerator</span>
+                <Badge variant="secondary">$35.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('cabinet_fronts') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('cabinet_fronts')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Cabinet fronts</span>
+                <Badge variant="secondary">$50.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('window_sills') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('window_sills')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Window sills</span>
+                <Badge variant="secondary">$25.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('light_fixtures') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('light_fixtures')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Light fixtures</span>
+                <Badge variant="secondary">$35.00</Badge>
+              </Button>
+              <Button
+                variant={pricingData.addOns.includes('laundry_basket') ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleAddOn('laundry_basket')}
+                className="justify-between h-auto p-3"
+              >
+                <span>Laundry (per basket)</span>
+                <Badge variant="secondary">$20.00</Badge>
+              </Button>
             </div>
           </div>
         </CardContent>

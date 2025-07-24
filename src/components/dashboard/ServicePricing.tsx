@@ -2,129 +2,161 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Home, Building, Star, Clock } from "lucide-react";
 
-// Bay Area Cleaning Professionals pricing structure by square footage
-const pricingTiers = [
+// Bay Area Cleaning Professionals original pricing structure
+const originalPricingTiers = [
   {
     range: "Under 1,000 sq ft",
     icon: Home,
     description: "Cozy homes and apartments",
-    pricing: {
-      weekly: "$73.13", // $97.50 with 25% discount
-      biweekly: "$88.94", // $118.59 with 25% discount
-      monthly: "$128.45", // $171.26 with 25% discount
-      oneTime: "$225.31",
-      deepClean: "$106.77" // $305.05 with 65% discount
+    originalPricing: {
+      weekly: 97.50,
+      biweekly: 118.59,
+      monthly: 171.26,
+      oneTime: 225.31,
+      deepClean: 305.05
     }
   },
   {
     range: "1,001-1,400 sq ft",
     icon: Home,
     description: "Small to medium homes",
-    pricing: {
-      weekly: "$86.96", // $115.94 with 25% discount
-      biweekly: "$94.19", // $125.58 with 25% discount
-      monthly: "$139.94", // $186.59 with 25% discount
-      oneTime: "$235.09",
-      deepClean: "$114.72" // $327.77 with 65% discount
+    originalPricing: {
+      weekly: 115.94,
+      biweekly: 125.58,
+      monthly: 186.59,
+      oneTime: 235.09,
+      deepClean: 327.77
     }
   },
   {
     range: "1,401-1,800 sq ft",
     icon: Home,
     description: "Medium sized homes",
-    pricing: {
-      weekly: "$94.25", // $125.67 with 25% discount
-      biweekly: "$105.05", // $140.06 with 25% discount
-      monthly: "$169.30", // $225.73 with 25% discount
-      oneTime: "$255.27",
-      deepClean: "$124.58" // $355.94 with 65% discount
+    originalPricing: {
+      weekly: 125.67,
+      biweekly: 140.06,
+      monthly: 225.73,
+      oneTime: 255.27,
+      deepClean: 355.94
     }
   },
   {
     range: "1,801-2,400 sq ft",
     icon: Home,
     description: "Large family homes",
-    pricing: {
-      weekly: "$99.61", // $132.81 with 25% discount
-      biweekly: "$112.61", // $150.15 with 25% discount
-      monthly: "$176.15", // $234.87 with 25% discount
-      oneTime: "$265.41",
-      deepClean: "$134.80" // $385.13 with 65% discount
+    originalPricing: {
+      weekly: 132.81,
+      biweekly: 150.15,
+      monthly: 234.87,
+      oneTime: 265.41,
+      deepClean: 385.13
     }
   },
   {
     range: "2,401-2,800 sq ft",
     icon: Home,
     description: "Very large homes",
-    pricing: {
-      weekly: "$118.70", // $158.26 with 25% discount
-      biweekly: "$131.36", // $175.14 with 25% discount
-      monthly: "$184.32", // $245.76 with 25% discount
-      oneTime: "$285.28",
-      deepClean: "$141.75" // $405.01 with 65% discount
+    originalPricing: {
+      weekly: 158.26,
+      biweekly: 175.14,
+      monthly: 245.76,
+      oneTime: 285.28,
+      deepClean: 405.01
     }
   },
   {
     range: "2,801-3,300 sq ft",
     icon: Home,
     description: "Extra large homes",
-    pricing: {
-      weekly: "$126.55", // $168.73 with 25% discount
-      biweekly: "$141.47", // $188.62 with 25% discount
-      monthly: "$215.94", // $287.92 with 25% discount
-      oneTime: "$297.46",
-      deepClean: "$160.71" // $459.16 with 65% discount
+    originalPricing: {
+      weekly: 168.73,
+      biweekly: 188.62,
+      monthly: 287.92,
+      oneTime: 297.46,
+      deepClean: 459.16
     }
   },
   {
     range: "3,301-3,900 sq ft",
     icon: Home,
     description: "Luxury homes",
-    pricing: {
-      weekly: "$134.12", // $178.82 with 25% discount
-      biweekly: "$148.21", // $197.61 with 25% discount
-      monthly: "$230.86", // $307.81 with 25% discount
-      oneTime: "$346.34",
-      deepClean: "$167.44" // $478.39 with 65% discount
+    originalPricing: {
+      weekly: 178.82,
+      biweekly: 197.61,
+      monthly: 307.81,
+      oneTime: 346.34,
+      deepClean: 478.39
     }
   },
   {
     range: "3,901-4,500 sq ft",
     icon: Building,
     description: "Estate homes",
-    pricing: {
-      weekly: "$161.47", // $215.29 with 25% discount
-      biweekly: "$173.69", // $231.58 with 25% discount
-      monthly: "$276.52", // $368.69 with 25% discount
-      oneTime: "$378.67",
-      deepClean: "$179.41" // $512.60 with 65% discount
+    originalPricing: {
+      weekly: 215.29,
+      biweekly: 231.58,
+      monthly: 368.69,
+      oneTime: 378.67,
+      deepClean: 512.60
     }
   },
   {
     range: "4,501-5,100 sq ft",
     icon: Building,
     description: "Mansion homes",
-    pricing: {
-      weekly: "$171.42", // $228.56 with 25% discount
-      biweekly: "$181.54", // $242.05 with 25% discount
-      monthly: "$321.13", // $428.17 with 25% discount
-      oneTime: "$461.37",
-      deepClean: "$197.48" // $564.24 with 65% discount
+    originalPricing: {
+      weekly: 228.56,
+      biweekly: 242.05,
+      monthly: 428.17,
+      oneTime: 461.37,
+      deepClean: 564.24
     }
   },
   {
     range: "5,100+ sq ft",
     icon: Building,
     description: "Custom estimate required",
-    pricing: {
-      weekly: "Call for Quote",
-      biweekly: "Call for Quote",
-      monthly: "Call for Quote",
-      oneTime: "Call for Quote",
-      deepClean: "Call for Quote"
+    originalPricing: {
+      weekly: 0,
+      biweekly: 0,
+      monthly: 0,
+      oneTime: 0,
+      deepClean: 0
     }
   }
 ];
+
+// Calculate discounted prices
+const pricingTiers = originalPricingTiers.map(tier => ({
+  ...tier,
+  pricing: {
+    weekly: {
+      original: tier.originalPricing.weekly,
+      discount: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * 0.25 * 100) / 100 : 0,
+      final: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * 0.75 * 100) / 100 : 0
+    },
+    biweekly: {
+      original: tier.originalPricing.biweekly,
+      discount: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * 0.25 * 100) / 100 : 0,
+      final: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * 0.75 * 100) / 100 : 0
+    },
+    monthly: {
+      original: tier.originalPricing.monthly,
+      discount: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * 0.25 * 100) / 100 : 0,
+      final: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * 0.75 * 100) / 100 : 0
+    },
+    oneTime: {
+      original: tier.originalPricing.oneTime,
+      discount: 0,
+      final: tier.originalPricing.oneTime
+    },
+    deepClean: {
+      original: tier.originalPricing.deepClean,
+      discount: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * 0.65 * 100) / 100 : 0,
+      final: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * 0.35 * 100) / 100 : 0
+    }
+  }
+}));
 
 const serviceTypes = [
   { 
@@ -209,54 +241,139 @@ export function ServicePricing() {
                 <CardDescription>{tier.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="p-2 bg-muted/50 rounded relative">
-                    <span className="text-muted-foreground">Weekly:</span>
-                    <div className="font-semibold text-primary">{tier.pricing.weekly}</div>
-                    {tier.pricing.weekly !== "Call for Quote" && (
-                      <div className="absolute -top-1 -right-1">
-                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  {/* Weekly Service */}
+                  <div className="p-3 bg-muted/50 rounded relative">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-muted-foreground font-medium">Weekly Service:</span>
+                      {tier.pricing.weekly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
                           25% OFF
                         </Badge>
+                      )}
+                    </div>
+                    {tier.pricing.weekly.original > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Regular Price:</span>
+                          <span className="line-through">${tier.pricing.weekly.original}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-success">
+                          <span>You Save:</span>
+                          <span>-${tier.pricing.weekly.discount}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-primary border-t pt-1">
+                          <span>Final Price:</span>
+                          <span>${tier.pricing.weekly.final}</span>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="font-semibold text-primary">Call for Quote</div>
                     )}
                   </div>
-                  <div className="p-2 bg-muted/50 rounded relative">
-                    <span className="text-muted-foreground">EOW:</span>
-                    <div className="font-semibold text-primary">{tier.pricing.biweekly}</div>
-                    {tier.pricing.biweekly !== "Call for Quote" && (
-                      <div className="absolute -top-1 -right-1">
-                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+
+                  {/* Biweekly Service */}
+                  <div className="p-3 bg-muted/50 rounded relative">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-muted-foreground font-medium">Every Other Week:</span>
+                      {tier.pricing.biweekly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
                           25% OFF
                         </Badge>
+                      )}
+                    </div>
+                    {tier.pricing.biweekly.original > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Regular Price:</span>
+                          <span className="line-through">${tier.pricing.biweekly.original}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-success">
+                          <span>You Save:</span>
+                          <span>-${tier.pricing.biweekly.discount}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-primary border-t pt-1">
+                          <span>Final Price:</span>
+                          <span>${tier.pricing.biweekly.final}</span>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="font-semibold text-primary">Call for Quote</div>
                     )}
                   </div>
-                  <div className="p-2 bg-muted/50 rounded relative">
-                    <span className="text-muted-foreground">Monthly:</span>
-                    <div className="font-semibold text-primary">{tier.pricing.monthly}</div>
-                    {tier.pricing.monthly !== "Call for Quote" && (
-                      <div className="absolute -top-1 -right-1">
-                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+
+                  {/* Monthly Service */}
+                  <div className="p-3 bg-muted/50 rounded relative">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-muted-foreground font-medium">Monthly Service:</span>
+                      {tier.pricing.monthly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
                           25% OFF
                         </Badge>
+                      )}
+                    </div>
+                    {tier.pricing.monthly.original > 0 ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Regular Price:</span>
+                          <span className="line-through">${tier.pricing.monthly.original}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-success">
+                          <span>You Save:</span>
+                          <span>-${tier.pricing.monthly.discount}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-primary border-t pt-1">
+                          <span>Final Price:</span>
+                          <span>${tier.pricing.monthly.final}</span>
+                        </div>
                       </div>
+                    ) : (
+                      <div className="font-semibold text-primary">Call for Quote</div>
                     )}
                   </div>
-                  <div className="p-2 bg-muted/50 rounded">
-                    <span className="text-muted-foreground">One-time:</span>
-                    <div className="font-semibold text-primary">{tier.pricing.oneTime}</div>
+
+                  {/* One Time Service */}
+                  <div className="p-3 bg-muted/50 rounded">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-muted-foreground font-medium">One-time Service:</span>
+                    </div>
+                    {tier.pricing.oneTime.original > 0 ? (
+                      <div className="font-bold text-primary">
+                        ${tier.pricing.oneTime.final}
+                      </div>
+                    ) : (
+                      <div className="font-semibold text-primary">Call for Quote</div>
+                    )}
                   </div>
                 </div>
-                <div className="p-3 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20 relative">
-                  <span className="text-sm text-muted-foreground">Deep Clean:</span>
-                  <div className="font-bold text-accent text-lg">{tier.pricing.deepClean}</div>
-                  {tier.pricing.deepClean !== "Call for Quote" && (
-                    <div className="absolute -top-2 -right-2">
+
+                {/* Deep Clean Special */}
+                <div className="p-4 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20 relative">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-accent">Deep Clean Special:</span>
+                    {tier.pricing.deepClean.original > 0 && (
                       <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
                         65% OFF!
                       </Badge>
+                    )}
+                  </div>
+                  {tier.pricing.deepClean.original > 0 ? (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Regular Price:</span>
+                        <span className="line-through">${tier.pricing.deepClean.original}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-destructive">
+                        <span>Huge Savings:</span>
+                        <span>-${tier.pricing.deepClean.discount}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-accent text-lg border-t border-accent/30 pt-2">
+                        <span>Your Price:</span>
+                        <span>${tier.pricing.deepClean.final}</span>
+                      </div>
                     </div>
+                  ) : (
+                    <div className="font-bold text-accent text-lg">Call for Quote</div>
                   )}
                 </div>
               </CardContent>
