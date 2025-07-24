@@ -32,6 +32,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     referralCode: "",
     hearAboutUs: "",
     generatedReferralCode: "",
+    customerEmail: "",
+    customerName: "",
     
     // Scheduling Preferences
     preferredTimeSlot: "",
@@ -51,6 +53,15 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [referralValidation, setReferralValidation] = useState<{
+    isValid: boolean;
+    message: string;
+    isChecking: boolean;
+  }>({
+    isValid: false,
+    message: "",
+    isChecking: false
+  });
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -63,10 +74,90 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     handleInputChange("preferredDays", newDays);
   };
 
+  const validateReferralCode = async (code: string) => {
+    if (!code.trim()) {
+      setReferralValidation({ isValid: false, message: "", isChecking: false });
+      return;
+    }
+
+    setReferralValidation({ isValid: false, message: "", isChecking: true });
+
+    try {
+      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+        p_code: code.trim().toUpperCase(),
+        p_user_email: formData.customerEmail || 'guest@example.com',
+        p_user_name: formData.customerName || null,
+        p_order_id: null // We'll update this later when the order is processed
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; reward_type?: string; message?: string; error?: string };
+
+      if (result.success) {
+        setReferralValidation({
+          isValid: true,
+          message: `✅ Valid referral code! You'll receive ${result.reward_type?.replace('_', ' ')} discount.`,
+          isChecking: false
+        });
+        toast.success(result.message || "Referral code applied successfully!");
+      } else {
+        setReferralValidation({
+          isValid: false,
+          message: `❌ ${result.error}`,
+          isChecking: false
+        });
+        toast.error(result.error || "Invalid referral code");
+      }
+    } catch (error) {
+      console.error("Error validating referral code:", error);
+      setReferralValidation({
+        isValid: false,
+        message: "❌ Error validating referral code",
+        isChecking: false
+      });
+      toast.error("Error validating referral code");
+    }
+  };
+
+  const generateReferralCode = async () => {
+    if (!formData.customerEmail) {
+      toast.error("Please enter your email first to generate a referral code");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('create_referral_code', {
+        p_owner_email: formData.customerEmail,
+        p_owner_name: formData.customerName || null
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; code?: string; message?: string; error?: string };
+
+      if (result.success && result.code) {
+        handleInputChange("generatedReferralCode", result.code);
+        navigator.clipboard.writeText(result.code);
+        toast.success("Referral code generated and copied to clipboard!");
+      } else {
+        toast.error(result.error || "Failed to generate referral code");
+      }
+    } catch (error) {
+      console.error("Error generating referral code:", error);
+      toast.error("Error generating referral code");
+    }
+  };
+
   const handleSubmit = async () => {
     // Validate required fields
     if (!formData.streetAddress || !formData.city || !formData.zipCode) {
       toast.error("Please fill in all required address fields");
+      return;
+    }
+
+    if (!formData.customerEmail) {
+      toast.error("Please enter your email address");
       return;
     }
 
@@ -91,7 +182,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             },
             referral: {
               code: formData.referralCode,
-              source: formData.hearAboutUs
+              source: formData.hearAboutUs,
+              isValid: referralValidation.isValid
             },
             scheduling: {
               preferredTimeSlot: formData.preferredTimeSlot,
@@ -109,7 +201,9 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               method: formData.contactMethod,
               time: formData.contactTime
             }
-          }
+          },
+          customer_email: formData.customerEmail,
+          customer_name: formData.customerName
         })
         .eq("stripe_session_id", sessionId);
 
@@ -137,7 +231,41 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             Help us provide the best cleaning service by sharing a few more details
           </CardDescription>
       </CardHeader>
-      <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+        <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
+          {/* Customer Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+              <User className="h-5 w-5 text-primary" />
+              Customer Information
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customerName">Full Name</Label>
+                <Input
+                  id="customerName"
+                  value={formData.customerName}
+                  onChange={(e) => handleInputChange("customerName", e.target.value)}
+                  placeholder="John Doe"
+                  className="text-sm sm:text-base"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="customerEmail">Email Address *</Label>
+                <Input
+                  id="customerEmail"
+                  type="email"
+                  value={formData.customerEmail}
+                  onChange={(e) => handleInputChange("customerEmail", e.target.value)}
+                  placeholder="john@example.com"
+                  className="text-sm sm:text-base"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Referral & Marketing */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
@@ -156,12 +284,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => {
-                const code = `REF${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
-                handleInputChange("generatedReferralCode", code);
-                navigator.clipboard.writeText(code);
-                toast.success("Referral code generated and copied to clipboard!");
-              }}
+              onClick={generateReferralCode}
+              disabled={!formData.customerEmail}
               className="bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
             >
               Generate My Referral Code
@@ -177,13 +301,30 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="referralCode">Referral Code (Optional)</Label>
-              <Input
-                id="referralCode"
-                value={formData.referralCode}
-                onChange={(e) => handleInputChange("referralCode", e.target.value)}
-                placeholder="Enter referral code"
-                className="text-sm sm:text-base"
-              />
+              <div className="space-y-2">
+                <Input
+                  id="referralCode"
+                  value={formData.referralCode}
+                  onChange={(e) => {
+                    handleInputChange("referralCode", e.target.value);
+                    // Auto-validate when user stops typing
+                    const timeoutId = setTimeout(() => {
+                      validateReferralCode(e.target.value);
+                    }, 1000);
+                    return () => clearTimeout(timeoutId);
+                  }}
+                  placeholder="Enter referral code"
+                  className="text-sm sm:text-base"
+                />
+                {referralValidation.isChecking && (
+                  <p className="text-sm text-muted-foreground">🔄 Checking referral code...</p>
+                )}
+                {referralValidation.message && (
+                  <p className={`text-sm ${referralValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                    {referralValidation.message}
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -486,15 +627,14 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
           </div>
         </div>
 
-        {/* Submit Button */}
-        <Button 
-          onClick={handleSubmit}
-          disabled={isSubmitting || !formData.streetAddress || !formData.city || !formData.zipCode}
-          className="w-full text-sm sm:text-base"
-          size="lg"
-        >
-          {isSubmitting ? "Saving Information..." : "Complete Booking Setup"}
-        </Button>
+        <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !formData.streetAddress || !formData.city || !formData.zipCode || !formData.customerEmail}
+            className="w-full text-sm sm:text-base"
+            size="lg"
+          >
+            {isSubmitting ? "Saving..." : "Complete Service Details"}
+          </Button>
         
         <p className="text-xs sm:text-sm text-muted-foreground text-center">
           This information helps us provide the best possible service experience
