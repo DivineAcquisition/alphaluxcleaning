@@ -210,26 +210,54 @@ export function ServicePricing() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="p-2 bg-muted/50 rounded">
+                  <div className="p-2 bg-muted/50 rounded relative">
                     <span className="text-muted-foreground">Weekly:</span>
                     <div className="font-semibold text-primary">{tier.pricing.weekly}</div>
+                    {tier.pricing.weekly !== "Call for Quote" && (
+                      <div className="absolute -top-1 -right-1">
+                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+                          25% OFF
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-2 bg-muted/50 rounded">
+                  <div className="p-2 bg-muted/50 rounded relative">
                     <span className="text-muted-foreground">EOW:</span>
                     <div className="font-semibold text-primary">{tier.pricing.biweekly}</div>
+                    {tier.pricing.biweekly !== "Call for Quote" && (
+                      <div className="absolute -top-1 -right-1">
+                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+                          25% OFF
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                  <div className="p-2 bg-muted/50 rounded">
+                  <div className="p-2 bg-muted/50 rounded relative">
                     <span className="text-muted-foreground">Monthly:</span>
                     <div className="font-semibold text-primary">{tier.pricing.monthly}</div>
+                    {tier.pricing.monthly !== "Call for Quote" && (
+                      <div className="absolute -top-1 -right-1">
+                        <Badge variant="secondary" className="text-xs px-1 py-0 bg-success text-success-foreground">
+                          25% OFF
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                   <div className="p-2 bg-muted/50 rounded">
                     <span className="text-muted-foreground">One-time:</span>
                     <div className="font-semibold text-primary">{tier.pricing.oneTime}</div>
                   </div>
                 </div>
-                <div className="p-3 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20">
+                <div className="p-3 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20 relative">
                   <span className="text-sm text-muted-foreground">Deep Clean:</span>
                   <div className="font-bold text-accent text-lg">{tier.pricing.deepClean}</div>
+                  {tier.pricing.deepClean !== "Call for Quote" && (
+                    <div className="absolute -top-2 -right-2">
+                      <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
+                        65% OFF!
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -238,39 +266,46 @@ export function ServicePricing() {
       </div>
 
       {/* Service Types */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Our Cleaning Services</CardTitle>
-          <CardDescription>
-            Professional cleaning services tailored to your needs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {serviceTypes.map((service) => (
-              <div key={service.name} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${service.color} bg-current/10`}>
-                    <service.icon className={`h-6 w-6 ${service.color}`} />
+      <div>
+        <h3 className="text-2xl font-bold mb-4">What's Included in Each Service</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {serviceTypes.map((service) => (
+            <Card key={service.name} className="relative overflow-hidden h-full">
+              {service.name === "Deep Cleaning" && (
+                <div className="absolute top-2 right-2 z-10">
+                  <Badge variant="destructive" className="animate-pulse bg-destructive text-destructive-foreground">
+                    65% OFF!
+                  </Badge>
+                </div>
+              )}
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`flex items-center justify-center w-14 h-14 rounded-xl ${service.color} bg-current/10`}>
+                    <service.icon className={`h-7 w-7 ${service.color}`} />
                   </div>
-                  <div>
-                    <h4 className="font-semibold">{service.name}</h4>
-                    <p className="text-sm text-muted-foreground">{service.description}</p>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                    <CardDescription className="text-sm">{service.description}</CardDescription>
                   </div>
                 </div>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-15">
-                  {service.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <Star className="h-3 w-3 fill-current text-accent" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <h5 className="font-semibold text-sm text-muted-foreground mb-3">Services Included:</h5>
+                  <ul className="space-y-2">
+                    {service.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <Star className="h-3 w-3 fill-current text-accent mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Add-on Services */}
       <Card>
