@@ -284,7 +284,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                     </SelectItem>
                   </>
                 )}
-                {(pricingData.serviceType === 'commercial' || pricingData.serviceType === 'office') && (
+                {pricingData.serviceType === 'commercial' && (
                   <>
                     <SelectItem value="standard">
                       <div className="flex items-center gap-2">
@@ -302,6 +302,22 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4 fill-current" />
                         Post-Construction
+                      </div>
+                    </SelectItem>
+                  </>
+                )}
+                {pricingData.serviceType === 'office' && (
+                  <>
+                    <SelectItem value="standard">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        Standard Cleaning
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="deep_commercial">
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 fill-current" />
+                        Deep Cleaning
                       </div>
                     </SelectItem>
                   </>
@@ -388,7 +404,8 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
             </Select>
           </div>
 
-          {/* Add-ons */}
+          {/* Add-ons - Only show for residential and carpet cleaning */}
+          {(pricingData.serviceType === 'residential' || pricingData.serviceType === 'carpet') && (
           <div className="space-y-3">
             <Label>🔧 Additional Services Available</Label>
             <div className="grid grid-cols-1 gap-2">
@@ -526,6 +543,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               </Button>
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
 
