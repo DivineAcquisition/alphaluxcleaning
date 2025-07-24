@@ -103,7 +103,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     }
 
     // Handle carpet cleaning
-    if (pricingData.serviceType === 'carpet') {
+    if (pricingData.cleaningType === 'carpet') {
       const basePrice = carpetCleaningPrices.standardRoom * Math.ceil(pricingData.squareFootage / 200); // Estimate rooms based on sq ft
       const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
         return total + (addOnPrices[addOn as keyof typeof addOnPrices] || 0);
@@ -244,22 +244,10 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                       Move-out Cleaning
                     </div>
                   </SelectItem>
-                  <SelectItem value="standard_carpet">
+                  <SelectItem value="carpet">
                     <div className="flex items-center gap-2">
                       <Home className="h-4 w-4" />
-                      Standard Carpet Cleaning
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="deep_carpet">
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 fill-current" />
-                      Deep Carpet Cleaning
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="stain_treatment">
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 fill-current" />
-                      Stain Treatment
+                      Carpet Cleaning
                     </div>
                   </SelectItem>
                 </>
