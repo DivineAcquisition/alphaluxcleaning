@@ -1,6 +1,7 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { PaymentForm } from "@/components/PaymentForm";
+import { BookingScheduler } from "@/components/BookingScheduler";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +16,12 @@ const Index = () => {
   });
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [priceBreakdown, setPriceBreakdown] = useState({});
+  const [schedulingData, setSchedulingData] = useState({
+    scheduledDate: "",
+    scheduledTime: "",
+    nextDayBooking: false,
+    upchargeAmount: 0
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,12 +36,17 @@ const Index = () => {
           
           <TabsContent value="residential" className="space-y-6">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2">
+              <div className="xl:col-span-2 space-y-6">
                 <PricingCalculator 
                   onPriceUpdate={(data, price, breakdown) => {
                     setPricingData(data);
                     setCalculatedPrice(price);
                     setPriceBreakdown(breakdown);
+                  }}
+                />
+                <BookingScheduler 
+                  onSchedulingUpdate={(data) => {
+                    setSchedulingData(data);
                   }}
                 />
               </div>
@@ -43,6 +55,7 @@ const Index = () => {
                   pricingData={pricingData}
                   calculatedPrice={calculatedPrice}
                   priceBreakdown={priceBreakdown}
+                  schedulingData={schedulingData}
                 />
               </div>
             </div>
