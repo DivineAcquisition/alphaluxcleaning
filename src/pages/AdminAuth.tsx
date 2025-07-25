@@ -51,22 +51,8 @@ const AdminAuth = () => {
   }, [navigate]);
 
   const handleAdminAccess = async (user: any) => {
-    // Known admin emails - direct access
-    const adminEmails = [
-      'admin1@bayareacleaningpros.com',
-      'ellie@bayareacleaningpros.com',
-      'divine@bayareacleaningpros.com',
-      'admin@test.com'
-    ];
-
-    if (adminEmails.includes(user.email)) {
-      console.log('Admin email detected, granting access');
-      navigate('/admin-panel');
-      return;
-    }
-
-    // For other users, check roles
-    checkUserRole(user.id);
+    // SECURITY: Always validate role through database, never trust email alone
+    await checkUserRole(user.id);
   };
 
   const checkUserRole = async (userId: string) => {
@@ -226,7 +212,7 @@ const AdminAuth = () => {
         toast.error(`Failed to reset passwords: ${error.message}`);
       } else {
         console.log('Passwords reset:', data);
-        toast.success("All admin passwords reset to: Bacp2025!-");
+        toast.success("Admin passwords reset successfully. Check email for new credentials.");
       }
     } catch (error) {
       console.error('Unexpected reset password error:', error);

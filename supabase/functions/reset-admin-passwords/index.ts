@@ -13,6 +13,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // SECURITY: Verify the request has valid authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authorization required' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
     console.log('Resetting admin passwords...');
 
     // Initialize Supabase client with service role key for admin operations
@@ -54,9 +63,11 @@ const handler = async (req: Request): Promise<Response> => {
           console.log(`User ${email} not found, creating...`);
           
           // Create the user if they don't exist
+          // SECURITY: Generate a secure temporary password
+          const tempPassword = crypto.randomUUID().substring(0, 16) + '!';
           const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
             email,
-            password: 'Bacp2025!-',
+            password: tempPassword,
             email_confirm: true,
             user_metadata: {
               full_name: email === 'ellie@bayareacleaningpros.com' ? 'Ellie' : 
@@ -89,10 +100,12 @@ const handler = async (req: Request): Promise<Response> => {
           console.log(`Found user ${email}, updating password...`);
           
           // Update the user's password
+          // SECURITY: Generate a secure temporary password  
+          const tempPassword = crypto.randomUUID().substring(0, 16) + '!';
           const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
             user.id,
             {
-              password: 'Bacp2025!-',
+              password: tempPassword,
               email_confirm: true
             }
           );
@@ -132,8 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         results,
-        message: 'Admin passwords reset successfully',
-        newPassword: 'Bacp2025!-'
+        message: 'Admin passwords reset successfully. Temporary passwords have been generated.'
       }),
       {
         status: 200,

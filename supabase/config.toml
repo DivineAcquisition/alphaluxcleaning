@@ -26,3 +26,15 @@ verify_jwt = false
 
 [functions.send-subcontractor-welcome]
 verify_jwt = false
+
+[functions.reset-admin-passwords]
+verify_jwt = true
+
+[functions.fix-admin-users]
+verify_jwt = true
+
+[functions.send-admin-invites]
+verify_jwt = true
+
+[functions.create-test-admin]
+verify_jwt = true
