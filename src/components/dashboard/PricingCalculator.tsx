@@ -45,8 +45,8 @@ const addOnPrices = {
   baseboards: 50,
   dishes: 40,
   door_facings: 50,
-  wall_spot_clean: 75,
-  wall_wash_per_room: 25,
+  wall_spot_clean: 25,
+  wall_wash_per_room: 75,
   blinds_feather: 65,
   blinds_blade: 15,
   oven_fridge: 35,
@@ -342,7 +342,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 className="justify-between h-auto p-3"
               >
                 <span>Wall spot cleaning</span>
-                <Badge variant="secondary">$75.00</Badge>
+                <Badge variant="secondary">$25.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('wall_wash_per_room') ? "default" : "outline"}
@@ -351,7 +351,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 className="justify-between h-auto p-3"
               >
                 <span>Wall wash (per room)</span>
-                <Badge variant="secondary">$25.00</Badge>
+                <Badge variant="secondary">$75.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('blinds_feather') ? "default" : "outline"}
