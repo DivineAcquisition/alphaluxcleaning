@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Mail, Phone, MapPin, Smartphone, Wallet } from "lucide-react";
+import { CreditCard, User, Mail, Phone, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -360,26 +360,12 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
             </div>
           </div>
 
-          {/* Payment Method Options */}
+          {/* Payment Information */}
           <div className="space-y-4">
             <h4 className="font-semibold flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Choose Payment Method
+              <CreditCard className="h-4 w-4" />
+              Payment Information
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
-                <CreditCard className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Credit/Debit Card</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
-                <Smartphone className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Apple Pay / Google Pay</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
-                <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Bank Transfer</span>
-              </div>
-            </div>
             <div className="border rounded-lg p-4 bg-background">
               <PaymentElement
                 options={{
@@ -453,7 +439,7 @@ export function EmbeddedPaymentForm(props: PaymentFormProps) {
             borderRadius: '8px',
           },
         },
-        payment_method_types: ['card', 'link', 'us_bank_account'],
+        payment_method_types: ['card'],
       }}
     >
       <PaymentFormInner {...props} />
