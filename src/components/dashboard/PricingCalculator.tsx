@@ -198,17 +198,25 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
         <CardContent className="p-6 space-y-6">
           {/* Square Footage */}
           <div className="space-y-2">
-            <Label htmlFor="squareFootage">Square Footage</Label>
-            <Input
-              id="squareFootage"
-              type="number"
-              value={pricingData.squareFootage}
-              onChange={(e) => setPricingData(prev => ({
-                ...prev,
-                squareFootage: parseInt(e.target.value) || 0
-              }))}
-              className="text-lg"
-            />
+            <Label>Square Footage</Label>
+            <Select 
+              value={pricingData.squareFootage.toString()} 
+              onValueChange={(value) => setPricingData(prev => ({ ...prev, squareFootage: parseInt(value) }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select square footage range" />
+              </SelectTrigger>
+              <SelectContent>
+                {originalPricingTiers.map((tier, index) => (
+                  <SelectItem key={index} value={Math.floor((tier.min + tier.max) / 2).toString()}>
+                    <div className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      {tier.min === 0 ? `Under ${tier.max.toLocaleString()}` : `${tier.min.toLocaleString()} - ${tier.max.toLocaleString()}`} sq ft
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
 
