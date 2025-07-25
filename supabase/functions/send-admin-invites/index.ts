@@ -101,9 +101,9 @@ const handler = async (req: Request): Promise<Response> => {
             console.error(`Error adding role for ${email}:`, roleError);
           }
 
-          // Send welcome email with Resend
+          // Send welcome email with Resend using custom domain
           const emailResponse = await resend.emails.send({
-            from: 'Bay Area Cleaning Pros <onboarding@resend.dev>',
+            from: 'Bay Area Cleaning Pros <admin@bayareacleaningpros.com>',
             to: [email],
             subject: 'Welcome to Bay Area Cleaning Pros Admin Portal',
             html: `
@@ -112,16 +112,17 @@ const handler = async (req: Request): Promise<Response> => {
                 <p>Your admin account has been created with the email: <strong>${email}</strong></p>
                 
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <h2>Login Credentials:</h2>
-                  <p><strong>Email:</strong> ${email}</p>
-                  <p><strong>Temporary Password:</strong> TempPass123!</p>
+                <h2>Login Credentials:</h2>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Temporary Password:</strong> TempPass123!</p>
                 </div>
                 
                 <h2>Getting Started:</h2>
                 <ol>
                   <li>Visit the admin portal: <a href="https://fc9bf4c2-5143-4270-83ec-c7de4b1ed612.lovableproject.com/admin-auth">Admin Portal</a></li>
                   <li>Login with the credentials above</li>
-                  <li>Change your password immediately after login</li>
+                  <li>You'll be redirected to update your password</li>
+                  <li>Create a secure password that meets all requirements</li>
                 </ol>
                 
                 <p style="color: #dc2626; font-weight: bold;">

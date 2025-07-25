@@ -10,6 +10,7 @@ import OrderStatus from "./pages/OrderStatus";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import PasswordReset from "./pages/PasswordReset";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/order-status" element={<OrderStatus />} />
           <Route path="/admin-auth" element={<AdminAuth />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
+          <Route path="/password-reset" element={<PasswordReset />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
