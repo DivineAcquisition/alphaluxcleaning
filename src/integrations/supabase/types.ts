@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          assigned_employee_id: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          estimated_duration: number | null
+          id: string
+          order_id: string | null
+          priority: string | null
+          service_address: string
+          service_date: string
+          service_time: string
+          special_instructions: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_employee_id?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          estimated_duration?: number | null
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          service_address: string
+          service_date: string
+          service_time: string
+          special_instructions?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_employee_id?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          estimated_duration?: number | null
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          service_address?: string
+          service_date?: string
+          service_time?: string
+          special_instructions?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commercial_estimates: {
         Row: {
           address: string
@@ -105,14 +167,20 @@ export type Database = {
         Row: {
           add_ons: string[] | null
           amount: number
+          auto_charged: boolean | null
           cleaning_type: string | null
+          completed_at: string | null
+          completion_notes: string | null
           created_at: string
           currency: string | null
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          employee_notes: string | null
           frequency: string | null
           id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
           service_details: Json | null
           square_footage: number | null
           status: string | null
@@ -123,14 +191,20 @@ export type Database = {
         Insert: {
           add_ons?: string[] | null
           amount: number
+          auto_charged?: boolean | null
           cleaning_type?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
           created_at?: string
           currency?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          employee_notes?: string | null
           frequency?: string | null
           id?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           service_details?: Json | null
           square_footage?: number | null
           status?: string | null
@@ -141,20 +215,59 @@ export type Database = {
         Update: {
           add_ons?: string[] | null
           amount?: number
+          auto_charged?: boolean | null
           cleaning_type?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
           created_at?: string
           currency?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          employee_notes?: string | null
           frequency?: string | null
           id?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           service_details?: Json | null
           square_footage?: number | null
           status?: string | null
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -242,6 +355,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -255,6 +389,17 @@ export type Database = {
         }
         Returns: Json
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       validate_and_use_referral_code: {
         Args: {
           p_code: string
@@ -266,7 +411,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "employee" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -393,6 +538,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "employee", "customer"],
+    },
   },
 } as const
