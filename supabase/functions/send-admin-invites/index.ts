@@ -42,17 +42,18 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`Processing admin invite for: ${email}`);
 
-        // Check if user already exists
-        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+        // Check if user already exists using listUsers
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = usersData?.users?.find(user => user.email === email);
         
-        if (existingUser?.user) {
+        if (existingUser) {
           console.log(`User ${email} already exists, skipping invite`);
           
           // Ensure they have admin role
           const { data: roleData } = await supabaseAdmin
             .from('user_roles')
             .select('*')
-            .eq('user_id', existingUser.user.id)
+            .eq('user_id', existingUser.id)
             .eq('role', 'admin')
             .single();
 
@@ -60,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
             await supabaseAdmin
               .from('user_roles')
               .insert({
-                user_id: existingUser.user.id,
+                user_id: existingUser.id,
                 role: 'admin'
               });
             console.log(`Added admin role to existing user: ${email}`);
