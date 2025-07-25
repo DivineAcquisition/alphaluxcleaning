@@ -83,7 +83,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
       nextDayBooking: enabled,
       scheduledDate: enabled ? tomorrowDate : "",
       scheduledTime: enabled ? schedulingData.scheduledTime : "",
-      upchargeAmount: enabled ? 20 : 0
+      upchargeAmount: enabled ? 50 : 0
     };
     
     setSchedulingData(newSchedulingData);
@@ -133,7 +133,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
                 Get your home cleaned tomorrow! Perfect for urgent cleaning needs.
               </p>
               <p className="text-sm font-medium text-orange-700 mt-2">
-                Additional $20.00 upcharge applies
+                Additional $50.00 upcharge applies
               </p>
             </div>
             <Button
@@ -226,7 +226,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
                 <div className="space-y-1 text-sm text-green-700">
                   <p><strong>Date:</strong> Tomorrow ({new Date(getTomorrowDate()).toLocaleDateString()})</p>
                   <p><strong>Time:</strong> {schedulingData.scheduledTime}</p>
-                  <p><strong>Priority Upcharge:</strong> $20.00</p>
+                  <p><strong>Priority Upcharge:</strong> $50.00</p>
                 </div>
               </div>
             )}
