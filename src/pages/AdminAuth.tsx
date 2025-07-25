@@ -56,13 +56,36 @@ const AdminAuth = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Role check error:', error);
-        toast.error('Error checking user permissions');
-        await supabase.auth.signOut();
-        return;
+        
+        // If user doesn't have a role, create a customer role for them
+        if (error.code === 'PGRST116' || !roleData) {
+          console.log('No role found, creating customer role...');
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: userId,
+              role: 'customer'
+            });
+          
+          if (insertError) {
+            console.error('Error creating role:', insertError);
+            toast.error('Error setting up user permissions');
+            await supabase.auth.signOut();
+            return;
+          }
+          
+          toast.error('Access denied. Admin or employee privileges required.');
+          await supabase.auth.signOut();
+          return;
+        } else {
+          toast.error('Error checking user permissions');
+          await supabase.auth.signOut();
+          return;
+        }
       }
       
       if (roleData && (roleData.role === 'admin' || roleData.role === 'employee')) {
