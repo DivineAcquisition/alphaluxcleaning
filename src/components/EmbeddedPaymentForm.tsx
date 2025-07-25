@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Mail, Phone, MapPin } from "lucide-react";
+import { CreditCard, User, Mail, Phone, MapPin, Smartphone, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Initialize Stripe
-const stripePromise = loadStripe("pk_test_51QVA9IB9OZpT3vVZnLUVVlCdM2L0y1rvQJC9wlWL4K89aaJKMnz9zfU7rYJmKy4D8JVTBpQOr5qKOgBfLCNdFZpZ00UrGNcBRk");
+// Initialize Stripe with additional payment methods
+const stripePromise = loadStripe("pk_test_51QVA9IB9OZpT3vVZnLUVVlCdM2L0y1rvQJC9wlWL4K89aaJKMnz9zfU7rYJmKy4D8JVTBpQOr5qKOgBfLCNdFZpZ00UrGNcBRk", {
+  stripeAccount: undefined,
+});
 
 interface PaymentFormProps {
   pricingData: {
@@ -108,32 +110,14 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
 
       if (intentError) throw intentError;
 
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        throw new Error("Card element not found");
-      }
-
-      // Confirm payment
-      const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(
-        paymentIntentData.client_secret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: customerInfo.name,
-              email: customerInfo.email,
-              phone: customerInfo.phone,
-              address: {
-                line1: customerInfo.address,
-                city: customerInfo.city,
-                state: customerInfo.state,
-                postal_code: customerInfo.zipCode,
-                country: 'US',
-              },
-            },
-          },
-        }
-      );
+      // Confirm payment using PaymentElement (supports multiple payment methods)
+      const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment-success?payment_intent=${paymentIntentData.payment_intent_id}`,
+        },
+        redirect: 'if_required',
+      });
 
       if (paymentError) {
         throw new Error(paymentError.message);
@@ -376,22 +360,31 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
             </div>
           </div>
 
-          {/* Card Information */}
+          {/* Payment Method Options */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Payment Information</h4>
+            <h4 className="font-semibold flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Choose Payment Method
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Credit/Debit Card</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
+                <Smartphone className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Apple Pay / Google Pay</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/20">
+                <Wallet className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Bank Transfer</span>
+              </div>
+            </div>
             <div className="border rounded-lg p-4 bg-background">
-              <CardElement
+              <PaymentElement
                 options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: 'hsl(var(--foreground))',
-                      fontFamily: 'system-ui, sans-serif',
-                      '::placeholder': {
-                        color: 'hsl(var(--muted-foreground))',
-                      },
-                    },
-                  },
+                  layout: 'tabs',
+                  paymentMethodOrder: ['card', 'apple_pay', 'google_pay', 'link', 'us_bank_account'],
                 }}
               />
             </div>
@@ -435,7 +428,26 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
 
 export function EmbeddedPaymentForm(props: PaymentFormProps) {
   return (
-    <Elements stripe={stripePromise}>
+    <Elements 
+      stripe={stripePromise}
+      options={{
+        mode: 'payment',
+        amount: Math.round(props.calculatedPrice * 100),
+        currency: 'usd',
+        appearance: {
+          theme: 'stripe',
+          variables: {
+            colorPrimary: 'hsl(var(--primary))',
+            colorBackground: 'hsl(var(--background))',
+            colorText: 'hsl(var(--foreground))',
+            colorDanger: 'hsl(var(--destructive))',
+            fontFamily: 'system-ui, sans-serif',
+            borderRadius: '8px',
+          },
+        },
+        payment_method_types: ['card', 'apple_pay', 'google_pay', 'link', 'us_bank_account'],
+      }}
+    >
       <PaymentFormInner {...props} />
     </Elements>
   );
