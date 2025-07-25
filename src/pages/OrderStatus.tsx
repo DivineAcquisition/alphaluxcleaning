@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Home,
   Search,
-  Send
+  Send,
+  FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,10 +46,12 @@ export default function OrderStatus() {
   const orderId = searchParams.get("order_id");
   
   const [order, setOrder] = useState<Order | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Auto-search if sessionId or orderId is provided
   useEffect(() => {
@@ -98,6 +101,40 @@ export default function OrderStatus() {
       console.error("Error searching for order:", error);
       toast.error("Order not found. Please check your Session ID or Order ID.");
       setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchByEmail = async () => {
+    if (!searchValue.trim()) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_email", searchValue.trim())
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (data.length === 0) {
+        toast.error("No orders found for this email address");
+        setOrders([]);
+        return;
+      }
+
+      setOrders(data);
+      setShowHistory(true);
+      toast.success(`Found ${data.length} order(s)`);
+    } catch (error) {
+      console.error("Error searching orders by email:", error);
+      toast.error("Failed to search orders");
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -172,29 +209,101 @@ export default function OrderStatus() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  placeholder="Enter Session ID or Order ID..."
-                  className="text-sm sm:text-base"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <Input
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder="Enter Session ID, Order ID, or Email..."
+                    className="text-sm sm:text-base"
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handleSearch()}
+                    disabled={loading}
+                    className="text-sm sm:text-base"
+                  >
+                    {loading ? "Searching..." : "Find Order"}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleSearchByEmail}
+                    disabled={loading}
+                    className="text-sm sm:text-base"
+                  >
+                    View History
+                  </Button>
+                </div>
               </div>
-              <Button 
-                onClick={() => handleSearch()}
-                disabled={loading}
-                className="text-sm sm:text-base"
-              >
-                {loading ? "Searching..." : "Find Order"}
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Use "Find Order" for specific orders or "View History" to see all orders for an email address
+              </p>
             </div>
           </CardContent>
         </Card>
 
+        {/* Transaction History */}
+        {showHistory && orders.length > 0 && (
+          <Card className="shadow-lg mb-6">
+            <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <FileText className="h-5 w-5" />
+                Transaction History
+              </CardTitle>
+              <CardDescription className="text-blue-50 text-sm sm:text-base">
+                All orders for {searchValue}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              <div className="space-y-4">
+                {orders.map((orderItem, index) => (
+                  <div 
+                    key={orderItem.id} 
+                    className="border rounded-lg p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setOrder(orderItem);
+                      setShowHistory(false);
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-medium">Order #{orderItem.id.slice(-8)}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(orderItem.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-primary">
+                          ${(orderItem.amount / 100).toFixed(2)}
+                        </div>
+                        <Badge className={`${getStatusColor(orderItem.status)} text-xs`}>
+                          {orderItem.status?.replace('_', ' ').toUpperCase() || 'PENDING'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {orderItem.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                      {orderItem.square_footage && ` • ${orderItem.square_footage} sq ft`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowHistory(false)}
+                className="w-full mt-4"
+              >
+                Close History
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Order Details */}
-        {order && (
+        {order && !showHistory && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Order Information */}
             <Card className="shadow-lg">

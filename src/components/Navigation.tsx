@@ -76,7 +76,18 @@ export function Navigation() {
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <a 
+                href="https://bayareacleaningpros.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-1"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span className="text-xs">Web</span>
+              </a>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/order-status">
                 <FileText className="h-4 w-4" />

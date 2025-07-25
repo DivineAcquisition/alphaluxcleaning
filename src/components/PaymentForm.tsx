@@ -32,6 +32,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
     phone: ""
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentType, setPaymentType] = useState<"full" | "split">("full");
 
   // Calculate final price with scheduling upcharge
   const getFinalPrice = () => {
@@ -67,10 +68,13 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
 
     try {
       const finalPrice = getFinalPrice();
+      const paymentAmount = paymentType === "split" ? Math.round(finalPrice / 2) : finalPrice;
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          amount: finalPrice,
+          amount: paymentAmount,
+          fullAmount: finalPrice,
+          paymentType: paymentType,
           squareFootage: pricingData.squareFootage,
           cleaningType: pricingData.cleaningType,
           frequency: pricingData.frequency,
@@ -89,7 +93,11 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       // Open Stripe checkout in a new tab
       window.open(data.url, '_blank');
       
-      toast.success("Redirecting to secure checkout...");
+      if (paymentType === "split") {
+        toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
+      } else {
+        toast.success("Redirecting to secure checkout...");
+      }
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Failed to create payment. Please try again.");
@@ -131,6 +139,52 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
+        {/* Payment Type Selection */}
+        <div className="space-y-4">
+          <h4 className="font-semibold">Payment Options</h4>
+          <div className="grid grid-cols-1 gap-3">
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                paymentType === "full" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+              }`}
+              onClick={() => setPaymentType("full")}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  paymentType === "full" ? "border-primary bg-primary" : "border-border"
+                }`}>
+                  {paymentType === "full" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
+                </div>
+                <div>
+                  <div className="font-medium">Pay Full Amount</div>
+                  <div className="text-sm text-muted-foreground">Pay ${getFinalPrice().toFixed(2)} now</div>
+                </div>
+              </div>
+            </div>
+            
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                paymentType === "split" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+              }`}
+              onClick={() => setPaymentType("split")}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  paymentType === "split" ? "border-primary bg-primary" : "border-border"
+                }`}>
+                  {paymentType === "split" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
+                </div>
+                <div>
+                  <div className="font-medium">Split Payment (50/50)</div>
+                  <div className="text-sm text-muted-foreground">
+                    Pay ${Math.round(getFinalPrice() / 2).toFixed(2)} now, remaining ${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)} auto-billed after completion
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Service Summary */}
         <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
           <h4 className="font-semibold mb-3">Service Summary</h4>
@@ -149,6 +203,18 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
               <span>Total Amount:</span>
               <span className="text-primary">${getFinalPrice().toFixed(2)}</span>
             </div>
+            {paymentType === "split" && (
+              <div className="space-y-1 mt-3 pt-3 border-t border-dashed">
+                <div className="flex justify-between text-green-600">
+                  <span>Paying Now (50%):</span>
+                  <span className="font-bold">${Math.round(getFinalPrice() / 2).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-orange-600">
+                  <span>Auto-billed After Service:</span>
+                  <span className="font-bold">${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 mt-3">
               <Badge variant="outline">{pricingData.squareFootage} sq ft</Badge>
               <Badge variant="outline">
@@ -246,11 +312,18 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             (schedulingData?.nextDayBooking && (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime))
           }
         >
-          {isProcessing ? "Processing..." : `Book Service - $${getFinalPrice().toFixed(2)}`}
+          {isProcessing ? "Processing..." : (
+            paymentType === "split" 
+              ? `Pay 50% Now - $${Math.round(getFinalPrice() / 2).toFixed(2)}`
+              : `Book Service - $${getFinalPrice().toFixed(2)}`
+          )}
         </Button>
 
         <div className="text-xs text-muted-foreground text-center">
-          You will be redirected to our secure payment processor to complete your booking
+          {paymentType === "split" 
+            ? "Remaining balance will be automatically charged after service completion"
+            : "You will be redirected to our secure payment processor to complete your booking"
+          }
         </div>
       </CardContent>
     </Card>
