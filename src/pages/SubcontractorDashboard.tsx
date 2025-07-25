@@ -447,7 +447,7 @@ const SubcontractorDashboard = () => {
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <img 
-              src="/bay-area-logo.png" 
+              src="/lovable-uploads/dc717713-12d1-4d02-8524-1f775106da30.png" 
               alt="Bay Area Cleaning Professionals" 
               className="h-16 w-auto"
             />
