@@ -53,18 +53,6 @@ export function Navigation() {
               );
             })}
             
-            {/* Subcontractor Link */}
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link to="/subcontractor-home" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Join Our Network
-              </Link>
-            </Button>
-            
             {/* Website Link */}
             <Button
               variant="outline"
@@ -124,13 +112,6 @@ export function Navigation() {
                 })}
                 
                 <DropdownMenuSeparator />
-                
-                <DropdownMenuItem asChild>
-                  <Link to="/subcontractor-home" className="flex items-center gap-2 w-full">
-                    <Users className="h-4 w-4" />
-                    Join Our Network
-                  </Link>
-                </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
                   <a 
