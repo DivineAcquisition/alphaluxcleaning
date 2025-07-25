@@ -384,7 +384,6 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
               <PaymentElement
                 options={{
                   layout: 'tabs',
-                  paymentMethodOrder: ['card', 'apple_pay', 'google_pay', 'link', 'us_bank_account'],
                 }}
               />
             </div>
@@ -445,7 +444,7 @@ export function EmbeddedPaymentForm(props: PaymentFormProps) {
             borderRadius: '8px',
           },
         },
-        payment_method_types: ['card', 'apple_pay', 'google_pay', 'link', 'us_bank_account'],
+        payment_method_types: ['card', 'link', 'us_bank_account'],
       }}
     >
       <PaymentFormInner {...props} />
