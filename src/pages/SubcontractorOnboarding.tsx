@@ -10,12 +10,15 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Star, Zap } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckCircle, Star, Zap, FileText } from "lucide-react";
+import ContractorAgreement from "@/components/ContractorAgreement";
 
 const SubcontractorOnboarding = () => {
   const [user, setUser] = useState<User | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -228,7 +231,7 @@ const SubcontractorOnboarding = () => {
           <p className="text-muted-foreground">Let's get you set up as a subcontractor</p>
           <div className="flex justify-center mt-4">
             <div className="flex space-x-2">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
                   className={`w-3 h-3 rounded-full ${
@@ -391,6 +394,44 @@ const SubcontractorOnboarding = () => {
         )}
 
         {step === 3 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5" />
+                <span>Contractor Agreement</span>
+              </CardTitle>
+              <CardDescription>
+                Please review and accept the Independent Contractor Agreement
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ContractorAgreement contractorName={formData.fullName} />
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="agreement" 
+                  checked={agreementAccepted}
+                  onCheckedChange={(checked) => setAgreementAccepted(checked as boolean)}
+                />
+                <Label htmlFor="agreement" className="text-sm">
+                  I have read and agree to the terms of the Independent Contractor Agreement
+                </Label>
+              </div>
+              
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleBack}>Back</Button>
+                <Button 
+                  onClick={handleNext} 
+                  disabled={!agreementAccepted}
+                >
+                  Accept & Continue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 4 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">

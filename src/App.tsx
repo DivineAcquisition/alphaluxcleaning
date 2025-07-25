@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import PasswordReset from "./pages/PasswordReset";
 import SubcontractorAuth from "./pages/SubcontractorAuth";
+import SubcontractorHome from "./pages/SubcontractorHome";
 import SubcontractorOnboarding from "./pages/SubcontractorOnboarding";
 import SubcontractorDashboard from "./pages/SubcontractorDashboard";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/password-reset" element={<PasswordReset />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/subcontractor-home" element={<SubcontractorHome />} />
           <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
           <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
           <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
