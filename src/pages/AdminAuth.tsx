@@ -22,38 +22,61 @@ const AdminAuth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Defer role check to prevent deadlock
         if (session?.user) {
-          // Check if user has admin or employee role
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id)
-            .single();
-          
-          if (roleData && (roleData.role === 'admin' || roleData.role === 'employee')) {
-            navigate('/admin-panel');
-          } else {
-            toast.error('Access denied. Admin or employee privileges required.');
-            await supabase.auth.signOut();
-          }
+          setTimeout(() => {
+            checkUserRole(session.user.id);
+          }, 0);
         }
       }
     );
 
-    // Check for existing session
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        checkUserRole(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const checkUserRole = async (userId: string) => {
+    try {
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Role check error:', error);
+        toast.error('Error checking user permissions');
+        await supabase.auth.signOut();
+        return;
+      }
+      
+      if (roleData && (roleData.role === 'admin' || roleData.role === 'employee')) {
+        navigate('/admin-panel');
+      } else {
+        toast.error('Access denied. Admin or employee privileges required.');
+        await supabase.auth.signOut();
+      }
+    } catch (error) {
+      console.error('Unexpected error during role check:', error);
+      toast.error('Authentication error occurred');
+      await supabase.auth.signOut();
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +136,12 @@ const AdminAuth = () => {
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Google OAuth error:', error);
+        toast.error(`Google sign-in failed: ${error.message}`);
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      console.error('Unexpected Google OAuth error:', error);
+      toast.error("An unexpected error occurred during Google sign-in");
     } finally {
       setIsGoogleLoading(false);
     }
@@ -124,29 +149,35 @@ const AdminAuth = () => {
 
   const sendAdminInvites = async () => {
     try {
-      const { error } = await supabase.functions.invoke('send-admin-invites');
+      const { data, error } = await supabase.functions.invoke('send-admin-invites');
       
       if (error) {
-        toast.error("Failed to send admin invites");
+        console.error('Admin invite error:', error);
+        toast.error(`Failed to send admin invites: ${error.message}`);
       } else {
+        console.log('Admin invites sent:', data);
         toast.success("Admin invitation emails sent successfully!");
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      console.error('Unexpected admin invite error:', error);
+      toast.error("An unexpected error occurred while sending invites");
     }
   };
 
   const createTestAdmin = async () => {
     try {
-      const { error } = await supabase.functions.invoke('create-test-admin');
+      const { data, error } = await supabase.functions.invoke('create-test-admin');
       
       if (error) {
-        toast.error("Failed to create test admin");
+        console.error('Test admin creation error:', error);
+        toast.error(`Failed to create test admin: ${error.message}`);
       } else {
+        console.log('Test admin created:', data);
         toast.success("Test admin created! Email: admin@test.com, Password: admin123");
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      console.error('Unexpected test admin error:', error);
+      toast.error("An unexpected error occurred while creating test admin");
     }
   };
 
