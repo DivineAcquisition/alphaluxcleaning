@@ -181,6 +181,23 @@ const AdminAuth = () => {
     }
   };
 
+  const fixAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('fix-admin-users');
+      
+      if (error) {
+        console.error('Fix admin users error:', error);
+        toast.error(`Failed to fix admin users: ${error.message}`);
+      } else {
+        console.log('Admin users fixed:', data);
+        toast.success("Admin users fixed! Use divine@bayareacleaningpros.com instead");
+      }
+    } catch (error) {
+      console.error('Unexpected fix admin error:', error);
+      toast.error("An unexpected error occurred while fixing admin users");
+    }
+  };
+
   if (user) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -251,6 +268,13 @@ const AdminAuth = () => {
                   Forgot your password?
                 </Button>
                 <div>
+                  <Button
+                    variant="outline"
+                    onClick={fixAdminUsers}
+                    className="text-sm mb-2 mr-2"
+                  >
+                    Fix Admin Users
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={sendAdminInvites}
