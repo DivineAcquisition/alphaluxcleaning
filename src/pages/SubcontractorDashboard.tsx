@@ -394,32 +394,6 @@ const SubcontractorDashboard = () => {
     }
   };
 
-  const handleSendTestTransactions = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-test-transactions');
-      
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to send test transactions.",
-        });
-      } else {
-        toast({
-          title: "Test Transactions Sent!",
-          description: "Successfully sent sample transaction data to Zapier webhook.",
-        });
-        console.log('Test transactions result:', data);
-      }
-    } catch (error) {
-      console.error('Error sending test transactions:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to send test transactions.",
-      });
-    }
-  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -471,18 +445,27 @@ const SubcontractorDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome, {subcontractor.full_name}!</h1>
-            <p className="text-muted-foreground">Subcontractor Dashboard</p>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <img 
+                src="/bay-area-logo.png" 
+                alt="Bay Area Cleaning Professionals" 
+                className="h-16 w-auto"
+              />
+              <div className="absolute -top-1 -right-1 animate-pulse">
+                <div className="w-3 h-3 bg-primary rounded-full"></div>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Welcome, {subcontractor.full_name}!
+              </h1>
+              <p className="text-muted-foreground">Bay Area Cleaning Professionals</p>
+            </div>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="secondary" onClick={handleSendTestTransactions}>
-              Send Test Transactions to Zapier
-            </Button>
-            <Button variant="outline" onClick={handleSignOut}>
-              Sign Out
-            </Button>
-          </div>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sign Out
+          </Button>
         </div>
 
         {/* Stats Cards */}
