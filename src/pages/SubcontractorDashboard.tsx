@@ -450,7 +450,7 @@ const SubcontractorDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {subcontractor.split_tier === '50_50' ? '50%' : '60%'}
+                {subcontractor.split_tier === '50_50' ? '50%' : '40%'}
               </div>
               <p className="text-xs text-muted-foreground">Your share</p>
             </CardContent>

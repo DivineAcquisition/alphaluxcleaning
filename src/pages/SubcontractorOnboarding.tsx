@@ -291,7 +291,7 @@ const SubcontractorOnboarding = () => {
                   title="60/40 Split - FREE"
                   description="Perfect for getting started"
                   features={[
-                    "You keep 60% of each job",
+                    "You keep 40% of each job",
                     "No monthly fees",
                     "Accept jobs when available",
                     "Flexible schedule"
@@ -348,7 +348,7 @@ const SubcontractorOnboarding = () => {
                   <h4 className="font-semibold mb-2">Split Tier</h4>
                   <div className="space-y-1 text-sm">
                     <p><strong>Plan:</strong> {formData.splitTier === '60_40' ? '60/40 Split (FREE)' : '50/50 Split ($10/month)'}</p>
-                    <p><strong>Your Share:</strong> {formData.splitTier === '60_40' ? '60%' : '50%'}</p>
+                    <p><strong>Your Share:</strong> {formData.splitTier === '60_40' ? '40%' : '50%'}</p>
                     {formData.splitTier === '50_50' && (
                       <p><strong>Guaranteed Jobs:</strong> 10 per month</p>
                     )}
