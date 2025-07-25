@@ -426,12 +426,21 @@ function PaymentFormInner({ pricingData, calculatedPrice, priceBreakdown, schedu
 }
 
 export function EmbeddedPaymentForm(props: PaymentFormProps) {
+  // Don't initialize Elements if amount is 0 or invalid
+  if (props.calculatedPrice <= 0) {
+    return <PaymentFormInner {...props} />;
+  }
+
+  const finalPrice = props.schedulingData?.nextDayBooking && props.schedulingData?.upchargeAmount 
+    ? props.calculatedPrice + props.schedulingData.upchargeAmount 
+    : props.calculatedPrice;
+
   return (
     <Elements 
       stripe={stripePromise}
       options={{
         mode: 'payment',
-        amount: Math.round(props.calculatedPrice * 100),
+        amount: Math.round(finalPrice * 100),
         currency: 'usd',
         appearance: {
           theme: 'stripe',
