@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, CheckCircle, Phone, Mail } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
@@ -44,6 +44,23 @@ export function Navigation() {
                 </Button>
               );
             })}
+            
+            {/* Website Link */}
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+            >
+              <a 
+                href="https://bayareacleaningpros.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Visit Website
+              </a>
+            </Button>
             
             {/* Contact Info */}
             <div className="hidden lg:flex items-center gap-4 ml-6 pl-6 border-l">
