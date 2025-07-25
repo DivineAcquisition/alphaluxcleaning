@@ -27,13 +27,18 @@ serve(async (req) => {
     
     const { 
       amount, 
+      fullAmount,
+      paymentType,
       squareFootage, 
       cleaningType, 
       frequency, 
       addOns,
       customerName,
       customerEmail,
-      customerPhone 
+      customerPhone,
+      scheduledDate,
+      scheduledTime,
+      nextDayUpcharge
     } = requestBody;
 
     console.log("Validating required fields...");
@@ -126,7 +131,59 @@ serve(async (req) => {
       throw new Error(`Database error: ${orderError.message}`);
     }
     
-    console.log("Order created successfully, returning checkout URL");
+    console.log("Order created successfully, sending data to GoHighLevel");
+
+    // Send data to GoHighLevel
+    try {
+      const ghlApiKey = Deno.env.get("GOHIGHLEVEL_API_KEY");
+      if (ghlApiKey) {
+        const ghlPayload = {
+          firstName: customerName?.split(' ')[0] || '',
+          lastName: customerName?.split(' ').slice(1).join(' ') || '',
+          email: customerEmail,
+          phone: customerPhone || '',
+          tags: [
+            'Bay Area Cleaning Pros',
+            cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          ].filter(Boolean),
+          customFields: {
+            square_footage: squareFootage?.toString() || '',
+            cleaning_type: cleaningType || '',
+            frequency: frequency || '',
+            add_ons: addOns?.join(', ') || '',
+            total_amount: (amount * 100).toString(), // in cents
+            payment_type: paymentType || 'full',
+            stripe_session_id: session.id,
+            service_scheduled: scheduledDate && scheduledTime ? `${scheduledDate} at ${scheduledTime}` : '',
+            next_day_booking: nextDayUpcharge > 0 ? 'Yes' : 'No'
+          }
+        };
+
+        console.log("Sending to GoHighLevel:", JSON.stringify(ghlPayload, null, 2));
+
+        const ghlResponse = await fetch('https://rest.gohighlevel.com/v1/contacts/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${ghlApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(ghlPayload)
+        });
+
+        if (ghlResponse.ok) {
+          console.log("Successfully sent data to GoHighLevel");
+        } else {
+          const errorText = await ghlResponse.text();
+          console.error("GoHighLevel API error:", ghlResponse.status, errorText);
+        }
+      }
+    } catch (ghlError) {
+      console.error("Error sending to GoHighLevel:", ghlError);
+      // Don't fail the payment process if GoHighLevel fails
+    }
+
+    console.log("Returning checkout URL");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
