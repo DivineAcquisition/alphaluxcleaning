@@ -108,6 +108,49 @@ serve(async (req) => {
       logStep("Warning: Email function error", { error: emailError });
     }
 
+    // Send subcontractor subscription transaction to Zapier
+    try {
+      // Determine price amount based on split tier
+      const tierPrices = { "50_50": 1000, "35_65": 5000 }; // cents
+      const priceAmount = tierPrices[metadata.split_tier as keyof typeof tierPrices] || 0;
+      
+      const subscriptionTransactionData = {
+        transaction_id: session.id,
+        subcontractor_name: subcontractor.full_name,
+        subcontractor_email: subcontractor.email,
+        split_tier: subcontractor.split_tier,
+        subscription_amount: priceAmount / 100, // Convert cents to dollars
+        currency: 'USD',
+        billing_cycle: 'monthly',
+        subscription_status: 'active',
+        stripe_customer_id: session.customer,
+        subscription_id: subscription.id,
+        guaranteed_jobs: subcontractor.split_tier === '50_50' ? 10 : subcontractor.split_tier === '35_65' ? 15 : 0,
+        payment_status: 'completed'
+      };
+
+      const zapierResponse = await fetch("https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          transaction_type: 'subscription_payment',
+          ...subscriptionTransactionData,
+          source: 'bay_area_cleaning_pros'
+        }),
+      });
+
+      if (zapierResponse.ok) {
+        logStep('Subscription transaction sent to Zapier successfully');
+      } else {
+        logStep('Warning: Failed to send subscription transaction to Zapier', { status: zapierResponse.status });
+      }
+    } catch (zapierError) {
+      logStep('Warning: Zapier webhook error for subscription', { error: zapierError });
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       subcontractor: {

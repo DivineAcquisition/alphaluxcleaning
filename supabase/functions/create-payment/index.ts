@@ -183,6 +183,49 @@ serve(async (req) => {
       // Don't fail the payment process if GoHighLevel fails
     }
 
+    // Send transaction data to Zapier webhook
+    try {
+      const transactionData = {
+        transaction_id: session.id,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        service_date: scheduledDate,
+        service_time: scheduledTime,
+        cleaning_type: cleaningType,
+        frequency: frequency,
+        amount: amount, // Amount in dollars
+        currency: 'USD',
+        payment_status: 'pending',
+        stripe_session_id: session.id,
+        add_ons: addOns || [],
+        square_footage: squareFootage,
+        next_day_booking: nextDayUpcharge > 0,
+        payment_type: paymentType
+      };
+
+      const zapierResponse = await fetch("https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          timestamp: new Date().toISOString(),
+          transaction_type: 'customer_payment',
+          ...transactionData,
+          source: 'bay_area_cleaning_pros'
+        }),
+      });
+
+      if (zapierResponse.ok) {
+        console.log('Transaction sent to Zapier successfully');
+      } else {
+        console.log('Warning: Failed to send transaction to Zapier:', zapierResponse.status);
+      }
+    } catch (zapierError) {
+      console.log('Warning: Zapier webhook error:', zapierError);
+    }
+
     console.log("Returning checkout URL");
 
     return new Response(JSON.stringify({ url: session.url }), {
