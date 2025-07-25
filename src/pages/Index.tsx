@@ -7,6 +7,7 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import { BookingScheduler } from "@/components/BookingScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
+import { ServiceIncluded } from "@/components/ServiceIncluded";
 
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
@@ -56,6 +57,17 @@ const Index = () => {
                       }}
                     />
                   </div>
+                  
+                  {/* Service Details Section */}
+                  {pricingData && (
+                    <div className="w-full">
+                      <h2 className="text-2xl font-semibold mb-4 text-center">What's Included in Your Service</h2>
+                      <ServiceIncluded 
+                        cleaningType={pricingData.cleaningType}
+                        serviceType={pricingData.serviceType}
+                      />
+                    </div>
+                  )}
                   
                   {/* Scheduling and Payment sections side by side when data is available */}
                   {pricingData && (
