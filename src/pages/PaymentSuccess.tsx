@@ -75,7 +75,7 @@ export default function PaymentSuccess() {
                   </div>
                   <div className="flex items-center justify-center gap-3 p-4 bg-muted/50 rounded-lg">
                     <Mail className="h-6 w-6 text-primary" />
-                    <span className="text-lg">info@bayareacleaningpros.com</span>
+                    <span className="text-lg">support@bayareacleaningpros.com</span>
                   </div>
                 </div>
               </div>

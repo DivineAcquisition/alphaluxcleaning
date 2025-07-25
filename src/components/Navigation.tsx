@@ -51,7 +51,7 @@ export function Navigation() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4" />
-                <span>info@bayareacleaningpros.com</span>
+                <span>support@bayareacleaningpros.com</span>
               </div>
             </div>
           </div>

@@ -362,7 +362,7 @@ export default function OrderStatus() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      <span>info@bayareacleaningpros.com</span>
+                      <span>support@bayareacleaningpros.com</span>
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground">

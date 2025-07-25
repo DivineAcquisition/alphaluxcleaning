@@ -41,50 +41,60 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="residential" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Left Column - Pricing & Booking */}
-              <div className="space-y-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-semibold mb-4">Get Your Quote</h2>
-                    <PricingCalculator 
-                      onPriceUpdate={(data, price, breakdown) => {
-                        setPricingData(data);
-                        setCalculatedPrice(price);
-                        setPriceBreakdown(breakdown);
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-                
-                {pricingData && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-                      <BookingScheduler 
-                        onSchedulingUpdate={setSchedulingData}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
+            {/* Full screen residential layout with logo */}
+            <div className="relative">
+              {/* Logo in corner */}
+              <div className="absolute top-4 right-4 z-10">
+                <img 
+                  src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
+                  alt="Bay Area Cleaning Professionals" 
+                  className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                />
               </div>
               
-              {/* Right Column - Payment */}
-              <div>
-                {pricingData && schedulingData && (
-                  <Card>
-                    <CardContent className="p-6">
-                      <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
-                      <PaymentForm 
-                        pricingData={pricingData}
-                        calculatedPrice={calculatedPrice}
-                        priceBreakdown={priceBreakdown}
-                        schedulingData={schedulingData}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              <Card className="w-full">
+                <CardContent className="p-8">
+                  <div className="grid gap-8 lg:grid-cols-2">
+                    {/* Left Column - Pricing & Booking */}
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="text-2xl font-semibold mb-4">Get Your Quote</h2>
+                        <PricingCalculator 
+                          onPriceUpdate={(data, price, breakdown) => {
+                            setPricingData(data);
+                            setCalculatedPrice(price);
+                            setPriceBreakdown(breakdown);
+                          }}
+                        />
+                      </div>
+                      
+                      {pricingData && (
+                        <div>
+                          <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
+                          <BookingScheduler 
+                            onSchedulingUpdate={setSchedulingData}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right Column - Payment */}
+                    <div>
+                      {pricingData && schedulingData && (
+                        <div>
+                          <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
+                          <PaymentForm 
+                            pricingData={pricingData}
+                            calculatedPrice={calculatedPrice}
+                            priceBreakdown={priceBreakdown}
+                            schedulingData={schedulingData}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
           
