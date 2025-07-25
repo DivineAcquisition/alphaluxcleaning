@@ -90,8 +90,8 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
 
       if (error) throw error;
 
-      // Open Stripe checkout in a new tab
-      window.open(data.url, '_blank');
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
       
       if (paymentType === "split") {
         toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
