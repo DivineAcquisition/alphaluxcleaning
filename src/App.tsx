@@ -9,6 +9,7 @@ import ServiceDetails from "./pages/ServiceDetails";
 import OrderStatus from "./pages/OrderStatus";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
+import SubcontractorManagement from "./pages/SubcontractorManagement";
 import AdminPanel from "./pages/AdminPanel";
 import PasswordReset from "./pages/PasswordReset";
 import SubcontractorAuth from "./pages/SubcontractorAuth";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/password-reset" element={<PasswordReset />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/subcontractor-management" element={<SubcontractorManagement />} />
           <Route path="/subcontractor-home" element={<SubcontractorHome />} />
           <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
           <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />

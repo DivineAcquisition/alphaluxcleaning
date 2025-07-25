@@ -23,6 +23,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
+import { SubcontractorStatusUpdate } from "@/components/SubcontractorStatusUpdate";
+import { TipComponent } from "@/components/TipComponent";
 
 interface Order {
   id: string;
@@ -304,183 +306,194 @@ export default function OrderStatus() {
 
         {/* Order Details */}
         {order && !showHistory && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Order Information */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  {getStatusIcon(order.status)}
-                  Order Details
-                </CardTitle>
-                <CardDescription className="text-green-50 text-sm sm:text-base">
-                  Order #{order.id.slice(-8)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                {/* Status */}
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm sm:text-base">Status:</span>
-                  <Badge className={`${getStatusColor(order.status)} text-xs sm:text-sm`}>
-                    {order.status?.replace('_', ' ').toUpperCase() || 'PENDING'}
-                  </Badge>
-                </div>
-
-                {/* Service Details */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm sm:text-base">Service Information</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Type:</span>
-                      <div className="font-medium">
-                        {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Frequency:</span>
-                      <div className="font-medium">
-                        {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Square Footage:</span>
-                      <div className="font-medium">{order.square_footage} sq ft</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Total Amount:</span>
-                      <div className="font-medium text-primary">${(order.amount / 100).toFixed(2)}</div>
-                    </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Order Information */}
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    {getStatusIcon(order.status)}
+                    Order Details
+                  </CardTitle>
+                  <CardDescription className="text-green-50 text-sm sm:text-base">
+                    Order #{order.id.slice(-8)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-sm sm:text-base">Status:</span>
+                    <Badge className={`${getStatusColor(order.status)} text-xs sm:text-sm`}>
+                      {order.status?.replace('_', ' ').toUpperCase() || 'PENDING'}
+                    </Badge>
                   </div>
-                </div>
 
-                {/* Add-ons */}
-                {order.add_ons && order.add_ons.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm sm:text-base">Additional Services</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {order.add_ons.map((addon, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {addon.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Service Address */}
-                {order.service_details?.address && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold flex items-center gap-2 text-sm sm:text-base">
-                      <MapPin className="h-4 w-4" />
-                      Service Address
-                    </h4>
-                    <div className="text-sm text-muted-foreground">
-                      {order.service_details.address.street}
-                      {order.service_details.address.apartment && `, ${order.service_details.address.apartment}`}
-                      <br />
-                      {order.service_details.address.city}, {order.service_details.address.state} {order.service_details.address.zipCode}
-                    </div>
-                  </div>
-                )}
-
-                {/* Contact Information */}
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm sm:text-base">Contact Information</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3 w-3 text-primary" />
-                      <span>{order.customer_phone || 'Not provided'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-3 w-3 text-primary" />
-                      <span>{order.customer_email}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Booking Date */}
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  Booked on: {new Date(order.created_at).toLocaleDateString()}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Support & Communication */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  <MessageSquare className="h-5 w-5" />
-                  Support & Updates
-                </CardTitle>
-                <CardDescription className="text-primary-foreground/80 text-sm sm:text-base">
-                  Send us a message or request changes
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                {/* Quick Actions */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm sm:text-base">Quick Actions</h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      Request Reschedule
-                    </Button>
-                    <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      Update Address
-                    </Button>
-                    <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      Update Contact Info
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Send Message */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm sm:text-base">Send Message</h4>
+                  {/* Service Details */}
                   <div className="space-y-3">
-                    <Textarea
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message, request, or question here..."
-                      className="text-sm sm:text-base"
-                      rows={4}
-                    />
-                    <Button 
-                      onClick={handleSendMessage}
-                      disabled={sendingMessage || !newMessage.trim()}
-                      className="w-full text-sm sm:text-base"
-                    >
-                      {sendingMessage ? "Sending..." : (
-                        <>
-                          <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                          Send Message
-                        </>
-                      )}
-                    </Button>
+                    <h4 className="font-semibold text-sm sm:text-base">Service Information</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Type:</span>
+                        <div className="font-medium">
+                          {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Frequency:</span>
+                        <div className="font-medium">
+                          {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Square Footage:</span>
+                        <div className="font-medium">{order.square_footage} sq ft</div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Total Amount:</span>
+                        <div className="font-medium text-primary">${(order.amount / 100).toFixed(2)}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Contact Support */}
-                <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm sm:text-base">Direct Contact</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      <span>(281) 201-6112</span>
+                  {/* Add-ons */}
+                  {order.add_ons && order.add_ons.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm sm:text-base">Additional Services</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {order.add_ons.map((addon, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {addon.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                      <span>support@bayareacleaningpros.com</span>
+                  )}
+
+                  {/* Service Address */}
+                  {order.service_details?.address && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold flex items-center gap-2 text-sm sm:text-base">
+                        <MapPin className="h-4 w-4" />
+                        Service Address
+                      </h4>
+                      <div className="text-sm text-muted-foreground">
+                        {order.service_details.address.street}
+                        {order.service_details.address.apartment && `, ${order.service_details.address.apartment}`}
+                        <br />
+                        {order.service_details.address.city}, {order.service_details.address.state} {order.service_details.address.zipCode}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Contact Information */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm sm:text-base">Contact Information</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3 w-3 text-primary" />
+                        <span>{order.customer_phone || 'Not provided'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-3 w-3 text-primary" />
+                        <span>{order.customer_email}</span>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Available Monday-Friday 8AM-6PM, Saturday 8AM-4PM
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+
+                  {/* Booking Date */}
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    Booked on: {new Date(order.created_at).toLocaleDateString()}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Support & Communication */}
+              <Card className="shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <MessageSquare className="h-5 w-5" />
+                    Support & Updates
+                  </CardTitle>
+                  <CardDescription className="text-primary-foreground/80 text-sm sm:text-base">
+                    Send us a message or request changes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                  {/* Quick Actions */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm sm:text-base">Quick Actions</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        Request Reschedule
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        Update Address
+                      </Button>
+                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        Update Contact Info
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Send Message */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm sm:text-base">Send Message</h4>
+                    <div className="space-y-3">
+                      <Textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message, request, or question here..."
+                        className="text-sm sm:text-base"
+                        rows={4}
+                      />
+                      <Button 
+                        onClick={handleSendMessage}
+                        disabled={sendingMessage || !newMessage.trim()}
+                        className="w-full text-sm sm:text-base"
+                      >
+                        {sendingMessage ? "Sending..." : (
+                          <>
+                            <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                            Send Message
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Contact Support */}
+                  <div className="space-y-3 border-t pt-4">
+                    <h4 className="font-semibold text-sm sm:text-base">Direct Contact</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                        <span>(281) 201-6112</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                        <span>support@bayareacleaningpros.com</span>
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      Available Monday-Friday 8AM-6PM, Saturday 8AM-4PM
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Features Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6">
+              {/* Subcontractor Status Update */}
+              <SubcontractorStatusUpdate orderId={order.id} />
+              
+              {/* Tip Component */}
+              <TipComponent orderId={order.id} orderAmount={order.amount} />
+            </div>
+          </>
         )}
 
         {/* Back to Home */}

@@ -163,6 +163,93 @@ export type Database = {
         }
         Relationships: []
       }
+      order_status_updates: {
+        Row: {
+          created_at: string
+          estimated_arrival_minutes: number | null
+          id: string
+          order_id: string | null
+          status_message: string
+          subcontractor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_arrival_minutes?: number | null
+          id?: string
+          order_id?: string | null
+          status_message: string
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estimated_arrival_minutes?: number | null
+          id?: string
+          order_id?: string | null
+          status_message?: string
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_updates_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_status_updates_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_tips: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_message: string | null
+          id: string
+          order_id: string | null
+          subcontractor_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_message?: string | null
+          id?: string
+          order_id?: string | null
+          subcontractor_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_message?: string | null
+          id?: string
+          order_id?: string | null
+          subcontractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_tips_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_tips_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           add_ons: string[] | null

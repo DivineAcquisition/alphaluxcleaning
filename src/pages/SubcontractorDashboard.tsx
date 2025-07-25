@@ -243,6 +243,20 @@ const SubcontractorDashboard = () => {
         setPayments(paymentsData);
       }
 
+      // Fetch tips received
+      const { data: tipsData, error: tipsError } = await supabase
+        .from('order_tips')
+        .select('*')
+        .eq('subcontractor_id', subcontractorData.id)
+        .order('created_at', { ascending: false });
+
+      if (!tipsError && tipsData) {
+        // Calculate total tips
+        const totalTips = tipsData.reduce((sum, tip) => sum + parseFloat(tip.amount.toString()), 0);
+        // Store tips for display
+        localStorage.setItem('subcontractor_tips', JSON.stringify({ total: totalTips, tips: tipsData }));
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({

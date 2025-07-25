@@ -183,6 +183,14 @@ const AdminPanel = () => {
             >
               Go to Booking Management Dashboard
             </Button>
+            <Button 
+              onClick={() => navigate('/subcontractor-management')} 
+              className="w-full" 
+              size="lg"
+              variant="outline"
+            >
+              Manage Subcontractors
+            </Button>
           </CardContent>
         </Card>
       </div>
