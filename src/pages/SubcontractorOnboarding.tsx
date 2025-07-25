@@ -283,7 +283,7 @@ const SubcontractorOnboarding = () => {
             <CardContent>
               <RadioGroup 
                 value={formData.splitTier} 
-                onValueChange={(value) => handleInputChange('splitTier', value as "60_40" | "50_50" | "35_65"))
+                onValueChange={(value) => handleInputChange('splitTier', value)}
                 className="space-y-4"
               >
                 <SplitTierCard
