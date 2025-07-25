@@ -42,48 +42,50 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`Processing admin invite for: ${email}`);
 
-        // Check if user already exists using listUsers
-        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-        const existingUser = usersData?.users?.find(user => user.email === email);
-        
-        if (existingUser) {
-          console.log(`User ${email} already exists, skipping invite`);
-          
-          // Ensure they have admin role
-          const { data: roleData } = await supabaseAdmin
-            .from('user_roles')
-            .select('*')
-            .eq('user_id', existingUser.id)
-            .eq('role', 'admin')
-            .single();
-
-          if (!roleData) {
-            await supabaseAdmin
-              .from('user_roles')
-              .insert({
-                user_id: existingUser.id,
-                role: 'admin'
-              });
-            console.log(`Added admin role to existing user: ${email}`);
-          }
-
-          results.push({ email, status: 'existing_user', message: 'User already exists with admin role' });
-          continue;
-        }
-
         // Create new user with admin role
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
           email_confirm: true,
+          password: 'TempPass123!', // They'll need to reset this
           user_metadata: {
-            role: 'admin'
+            role: 'admin',
+            full_name: email === 'ellie@bayareacleaningpros.com' ? 'Ellie' : 
+                      email === 'divineacquisition.io@gmail.com' ? 'Divine Acquisition' : 'Admin User'
           }
         });
 
         if (createError) {
-          console.error(`Error creating user ${email}:`, createError);
-          results.push({ email, status: 'error', message: createError.message });
-          continue;
+          // If user already exists, that's okay
+          if (createError.message.includes('already been registered')) {
+            console.log(`User ${email} already exists`);
+            
+            // Find the existing user and ensure they have admin role
+            const { data: listUsers } = await supabaseAdmin.auth.admin.listUsers();
+            const existingUser = listUsers?.users?.find(user => user.email === email);
+            
+            if (existingUser) {
+              // Add admin role if not exists
+              const { error: roleError } = await supabaseAdmin
+                .from('user_roles')
+                .upsert({
+                  user_id: existingUser.id,
+                  role: 'admin'
+                }, {
+                  onConflict: 'user_id,role'
+                });
+
+              if (roleError) {
+                console.error(`Error adding role for ${email}:`, roleError);
+              }
+            }
+            
+            results.push({ email, status: 'existing_user', message: 'User already exists with admin role' });
+            continue;
+          } else {
+            console.error(`Error creating user ${email}:`, createError);
+            results.push({ email, status: 'error', message: createError.message });
+            continue;
+          }
         }
 
         if (newUser?.user) {
@@ -99,19 +101,6 @@ const handler = async (req: Request): Promise<Response> => {
             console.error(`Error adding role for ${email}:`, roleError);
           }
 
-          // Send password setup email
-          const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email,
-            options: {
-              redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('https://', 'https://').replace('.supabase.co', '.supabase.co')}/auth/v1/verify?redirect_to=${encodeURIComponent(window?.location?.origin || 'https://kqoezqzogleaaupjzxch.supabase.co')}/admin-auth`
-            }
-          });
-
-          if (resetError) {
-            console.error(`Error generating reset link for ${email}:`, resetError);
-          }
-
           // Send welcome email with Resend
           const emailResponse = await resend.emails.send({
             from: 'Bay Area Cleaning Pros <onboarding@resend.dev>',
@@ -120,17 +109,24 @@ const handler = async (req: Request): Promise<Response> => {
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h1 style="color: #2563eb;">Welcome to Bay Area Cleaning Pros</h1>
-                <p>You've been invited to join the Bay Area Cleaning Pros admin portal.</p>
                 <p>Your admin account has been created with the email: <strong>${email}</strong></p>
+                
+                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h2>Login Credentials:</h2>
+                  <p><strong>Email:</strong> ${email}</p>
+                  <p><strong>Temporary Password:</strong> TempPass123!</p>
+                </div>
                 
                 <h2>Getting Started:</h2>
                 <ol>
-                  <li>Visit the admin portal: <a href="${window?.location?.origin || 'https://kqoezqzogleaaupjzxch.supabase.co'}/admin-auth">Admin Portal</a></li>
-                  <li>Click "Forgot your password?" to set up your password</li>
-                  <li>Or continue with Google if you prefer</li>
+                  <li>Visit the admin portal: <a href="https://fc9bf4c2-5143-4270-83ec-c7de4b1ed612.lovableproject.com/admin-auth">Admin Portal</a></li>
+                  <li>Login with the credentials above</li>
+                  <li>Change your password immediately after login</li>
                 </ol>
                 
-                <p>If you have any questions, please contact the system administrator.</p>
+                <p style="color: #dc2626; font-weight: bold;">
+                  IMPORTANT: Please change your password immediately after your first login for security.
+                </p>
                 
                 <hr style="margin: 20px 0;">
                 <p style="color: #666; font-size: 12px;">

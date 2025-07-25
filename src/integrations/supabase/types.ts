@@ -381,6 +381,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_initial_admin_users: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_referral_code: {
         Args: {
           p_owner_email: string
