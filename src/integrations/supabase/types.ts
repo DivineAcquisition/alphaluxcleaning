@@ -355,6 +355,307 @@ export type Database = {
           },
         ]
       }
+      subcontractor_job_assignments: {
+        Row: {
+          accepted_at: string | null
+          assigned_at: string
+          booking_id: string | null
+          completed_at: string | null
+          created_at: string
+          customer_rating: number | null
+          drop_reason: string | null
+          dropped_at: string | null
+          id: string
+          status: string
+          subcontractor_id: string | null
+          subcontractor_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          assigned_at?: string
+          booking_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_rating?: number | null
+          drop_reason?: string | null
+          dropped_at?: string | null
+          id?: string
+          status?: string
+          subcontractor_id?: string | null
+          subcontractor_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          assigned_at?: string
+          booking_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_rating?: number | null
+          drop_reason?: string | null
+          dropped_at?: string | null
+          id?: string
+          status?: string
+          subcontractor_id?: string | null
+          subcontractor_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_job_assignments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_job_assignments_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_job_drops: {
+        Row: {
+          assignment_id: string | null
+          booking_id: string | null
+          created_at: string
+          dropped_at: string
+          hours_before_service: number
+          id: string
+          reason: string | null
+          service_date: string
+          subcontractor_id: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          booking_id?: string | null
+          created_at?: string
+          dropped_at?: string
+          hours_before_service: number
+          id?: string
+          reason?: string | null
+          service_date: string
+          subcontractor_id?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          booking_id?: string | null
+          created_at?: string
+          dropped_at?: string
+          hours_before_service?: number
+          id?: string
+          reason?: string | null
+          service_date?: string
+          subcontractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_job_drops_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_job_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_job_drops_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_job_drops_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_payments: {
+        Row: {
+          assignment_id: string | null
+          booking_id: string | null
+          company_amount: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          payment_status: string | null
+          split_percentage: number
+          subcontractor_amount: number
+          subcontractor_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          booking_id?: string | null
+          company_amount: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_status?: string | null
+          split_percentage: number
+          subcontractor_amount: number
+          subcontractor_id?: string | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          booking_id?: string | null
+          company_amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_status?: string | null
+          split_percentage?: number
+          subcontractor_amount?: number
+          subcontractor_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_payments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_job_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_payments_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_restrictions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          reason: string
+          restriction_type: string
+          start_date: string
+          subcontractor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          reason: string
+          restriction_type?: string
+          start_date?: string
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          reason?: string
+          restriction_type?: string
+          start_date?: string
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_restrictions_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractors: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_available: boolean | null
+          jobs_completed_this_month: number | null
+          phone: string | null
+          rating: number | null
+          split_tier: string
+          state: string
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          subscription_status: string | null
+          total_earnings: number | null
+          updated_at: string
+          user_id: string | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_available?: boolean | null
+          jobs_completed_this_month?: number | null
+          phone?: string | null
+          rating?: number | null
+          split_tier: string
+          state: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_available?: boolean | null
+          jobs_completed_this_month?: number | null
+          phone?: string | null
+          rating?: number | null
+          split_tier?: string
+          state?: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          subscription_status?: string | null
+          total_earnings?: number | null
+          updated_at?: string
+          user_id?: string | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -381,6 +682,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_job_drop_restrictions: {
+        Args: { p_subcontractor_id: string; p_service_date: string }
+        Returns: Json
+      }
       create_initial_admin_users: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -392,6 +697,22 @@ export type Database = {
           p_custom_code?: string
         }
         Returns: Json
+      }
+      get_available_subcontractors_by_location: {
+        Args: {
+          p_customer_city: string
+          p_customer_state: string
+          p_service_date: string
+        }
+        Returns: {
+          subcontractor_id: string
+          full_name: string
+          email: string
+          phone: string
+          split_tier: string
+          rating: number
+          distance_priority: number
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }

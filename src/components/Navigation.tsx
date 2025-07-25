@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
@@ -52,6 +52,18 @@ export function Navigation() {
                 </Button>
               );
             })}
+            
+            {/* Subcontractor Portal Link */}
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+            >
+              <Link to="/subcontractor-auth" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Subcontractor Portal
+              </Link>
+            </Button>
             
             {/* Website Link */}
             <Button
@@ -112,6 +124,16 @@ export function Navigation() {
                 })}
                 
                 <DropdownMenuSeparator />
+                
+                <DropdownMenuItem asChild>
+                  <Link 
+                    to="/subcontractor-auth"
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <Users className="h-4 w-4" />
+                    Subcontractor Portal
+                  </Link>
+                </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
                   <a 
