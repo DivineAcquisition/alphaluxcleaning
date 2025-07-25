@@ -110,15 +110,23 @@ const SubcontractorOnboarding = () => {
 
         // Send welcome email for free tier
         try {
+          const { data: newSubcontractor } = await supabase
+            .from('subcontractors')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
           await supabase.functions.invoke('send-subcontractor-welcome', {
             body: {
               email: user.email,
               fullName: formData.fullName,
-              splitTier: formData.splitTier
+              splitTier: formData.splitTier,
+              userId: user.id,
+              subcontractorId: newSubcontractor?.id
             }
           });
         } catch (emailError) {
-          console.log('Warning: Failed to send welcome email:', emailError);
+          console.log('Warning: Failed to send welcome notification:', emailError);
         }
 
         toast({

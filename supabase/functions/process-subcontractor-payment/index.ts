@@ -93,14 +93,16 @@ serve(async (req) => {
         body: {
           email: subcontractor.email,
           fullName: subcontractor.full_name,
-          splitTier: subcontractor.split_tier
+          splitTier: subcontractor.split_tier,
+          userId: metadata.user_id,
+          subcontractorId: subcontractor.id
         }
       });
 
       if (emailError) {
-        logStep("Warning: Failed to send welcome email", { error: emailError });
+        logStep("Warning: Failed to send welcome notification", { error: emailError });
       } else {
-        logStep("Welcome email sent successfully");
+        logStep("Welcome notification sent successfully");
       }
     } catch (emailError) {
       logStep("Warning: Email function error", { error: emailError });

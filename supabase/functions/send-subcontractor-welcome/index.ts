@@ -26,12 +26,12 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { email, fullName, splitTier } = await req.json();
+    const { email, fullName, splitTier, userId, subcontractorId } = await req.json();
     if (!email || !fullName || !splitTier) {
       throw new Error("Missing required fields: email, fullName, splitTier");
     }
 
-    logStep("Request data received", { email, fullName, splitTier });
+    logStep("Request data received", { email, fullName, splitTier, userId, subcontractorId });
 
     // Determine plan details
     const planDetails = {
@@ -42,62 +42,58 @@ serve(async (req) => {
 
     const plan = planDetails[splitTier as keyof typeof planDetails];
 
-    // Create a welcome email content
-    const emailContent = `
-Welcome to Bay Area Cleaning Pros, ${fullName}!
+    // Create welcome notification content
+    const welcomeTitle = `Welcome to Bay Area Cleaning Pros!`;
+    const welcomeMessage = `🎉 Congratulations ${fullName}! You've successfully joined our network with the ${plan.name} plan.
 
-🎉 Congratulations! You've successfully joined our network of professional cleaning subcontractors.
-
-Your Plan Details:
-• Plan: ${plan.name}
+Your Benefits:
 • Your Share: ${plan.share} of each completed job
 • Monthly Fee: ${plan.fee}
 • Job Guarantee: ${plan.jobs}
 
-What's Next?
-1. Access your dashboard to view available jobs
-2. Complete your profile if you haven't already
-3. Start accepting and completing jobs
+What's Next:
+1. Browse and accept available jobs
+2. Complete jobs to start earning
+3. Maintain high service quality
 4. Track your earnings and performance
 
-Important Reminders:
-• Please arrive on time for all scheduled services
-• Maintain high service quality to keep your rating high
-• Dropping more than 2 jobs within 48 hours in a month will result in temporary restrictions
-• Contact support if you have any questions or concerns
+Important: Dropping more than 2 jobs within 48 hours in a month will result in temporary restrictions.
 
-Access Your Dashboard: ${req.headers.get("origin") || "https://your-domain.com"}/subcontractor-dashboard
+Welcome to the team!`;
 
-Need Help?
-Email: support@bayareacleaningpros.com
-Phone: (281) 201-6112
+    // Store welcome notification in database if we have the subcontractor ID
+    if (subcontractorId && userId) {
+      const { error: notificationError } = await supabaseAdmin
+        .from('subcontractor_notifications')
+        .insert({
+          subcontractor_id: subcontractorId,
+          user_id: userId,
+          title: welcomeTitle,
+          message: welcomeMessage,
+          type: 'welcome'
+        });
 
-Welcome to the team!
+      if (notificationError) {
+        logStep("Warning: Failed to store notification", { error: notificationError });
+      } else {
+        logStep("Welcome notification stored successfully");
+      }
+    }
 
-Best regards,
-Bay Area Cleaning Professionals Team
-    `;
-
-    // Store the welcome message in a notifications table or send via Supabase Auth
-    // For now, we'll just log it successfully since Supabase handles emails through Auth
     logStep("Welcome message prepared", { 
       recipient: email, 
       plan: plan.name,
-      messageLength: emailContent.length 
+      messageLength: welcomeMessage.length 
     });
-
-    // In a real implementation, you could:
-    // 1. Store this in a notifications table for the user
-    // 2. Use Supabase's built-in email templates
-    // 3. Trigger a custom email webhook
-    
-    // For now, we'll simulate success and could integrate with Supabase's email system
-    logStep("Welcome notification processed successfully");
 
     return new Response(JSON.stringify({ 
       success: true, 
       message: "Welcome notification processed",
-      plan: plan.name
+      plan: plan.name,
+      notification: {
+        title: welcomeTitle,
+        message: welcomeMessage
+      }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
