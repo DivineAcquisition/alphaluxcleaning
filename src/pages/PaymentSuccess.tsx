@@ -3,10 +3,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Home, Phone, Mail } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const [emailSent, setEmailSent] = useState(false);
+
+  // Send order confirmation email when component loads
+  useEffect(() => {
+    const sendConfirmationEmail = async () => {
+      if (sessionId && !emailSent) {
+        try {
+          const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
+            body: { sessionId }
+          });
+
+          if (error) throw error;
+
+          console.log("Confirmation email sent:", data);
+          setEmailSent(true);
+        } catch (error) {
+          console.error("Error sending confirmation email:", error);
+          toast.error("Failed to send confirmation email. We'll contact you shortly.");
+        }
+      }
+    };
+
+    sendConfirmationEmail();
+  }, [sessionId, emailSent]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
