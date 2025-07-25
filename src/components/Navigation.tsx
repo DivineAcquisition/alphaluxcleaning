@@ -1,6 +1,14 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
@@ -76,23 +84,60 @@ export function Navigation() {
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <a 
-                href="https://bayareacleaningpros.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-1"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span className="text-xs">Web</span>
-              </a>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/order-status">
-                <FileText className="h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-background z-[100]">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link 
+                        to={item.path} 
+                        className={`flex items-center gap-2 w-full ${
+                          isActive ? "bg-primary/10 text-primary" : ""
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem asChild>
+                  <a 
+                    href="https://bayareacleaningpros.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Website
+                  </a>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4" />
+                  (281) 201-6112
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4" />
+                  support@bayareacleaningpros.com
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
