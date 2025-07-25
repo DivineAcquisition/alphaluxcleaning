@@ -37,7 +37,7 @@ const AdminAuth = () => {
             .single();
           
           if (roleData && (roleData.role === 'admin' || roleData.role === 'employee')) {
-            navigate('/admin-dashboard');
+            navigate('/admin-panel');
           } else {
             toast.error('Access denied. Admin or employee privileges required.');
             await supabase.auth.signOut();
