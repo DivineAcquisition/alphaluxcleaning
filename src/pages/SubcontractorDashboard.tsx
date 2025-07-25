@@ -114,6 +114,18 @@ const SubcontractorDashboard = () => {
       }
       
       setUser(session.user);
+      
+      // Check for successful payment session
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      if (sessionId) {
+        // Process successful payment
+        await processPaymentSuccess(sessionId);
+        // Clean up URL
+        window.history.replaceState({}, '', '/subcontractor-dashboard');
+      }
+      
       await fetchSubcontractorData(session.user.id);
     };
 
@@ -132,6 +144,38 @@ const SubcontractorDashboard = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const processPaymentSuccess = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('process-subcontractor-payment', {
+        body: { sessionId }
+      });
+
+      if (error) {
+        console.error('Payment processing error:', error);
+        toast({
+          variant: "destructive",
+          title: "Payment Processing Error", 
+          description: "There was an issue processing your payment. Please contact support.",
+        });
+        return;
+      }
+
+      if (data?.success) {
+        toast({
+          title: "Payment Successful!",
+          description: `Welcome to the network, ${data.subcontractor?.full_name}! Your subscription is now active.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process payment confirmation.",
+      });
+    }
+  };
 
   const fetchSubcontractorData = async (userId: string) => {
     try {

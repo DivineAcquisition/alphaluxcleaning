@@ -82,33 +82,82 @@ const SubcontractorOnboarding = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('subcontractors')
-        .insert({
-          user_id: user.id,
-          full_name: formData.fullName,
-          email: user.email!,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zipCode,
-          split_tier: formData.splitTier,
-          subscription_status: formData.splitTier === '60_40' ? 'active' : 'pending'
-        });
+      // For free tier (60_40), create subcontractor directly
+      if (formData.splitTier === '60_40') {
+        const { error } = await supabase
+          .from('subcontractors')
+          .insert({
+            user_id: user.id,
+            full_name: formData.fullName,
+            email: user.email!,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zipCode,
+            split_tier: formData.splitTier,
+            subscription_status: 'active'
+          });
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Registration Failed",
-          description: error.message,
-        });
-      } else {
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Registration Failed",
+            description: error.message,
+          });
+          return;
+        }
+
+        // Send welcome email for free tier
+        try {
+          await supabase.functions.invoke('send-subcontractor-welcome', {
+            body: {
+              email: user.email,
+              fullName: formData.fullName,
+              splitTier: formData.splitTier
+            }
+          });
+        } catch (emailError) {
+          console.log('Warning: Failed to send welcome email:', emailError);
+        }
+
         toast({
           title: "Welcome to the Network!",
           description: "Your subcontractor account has been created successfully.",
         });
         navigate('/subcontractor-dashboard');
+      } else {
+        // For paid tiers, redirect to Stripe checkout
+        const { data, error } = await supabase.functions.invoke('create-subcontractor-subscription', {
+          body: {
+            splitTier: formData.splitTier,
+            subcontractorData: {
+              fullName: formData.fullName,
+              email: user.email,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode
+            }
+          }
+        });
+
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Payment Setup Failed",
+            description: error.message,
+          });
+          return;
+        }
+
+        if (data?.url) {
+          // Redirect to Stripe checkout
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL received');
+        }
       }
     } catch (error: any) {
       toast({

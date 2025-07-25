@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.send-order-confirmation]
 verify_jwt = false
+
+[functions.create-subcontractor-subscription]
+verify_jwt = false
+
+[functions.process-subcontractor-payment]
+verify_jwt = false
+
+[functions.send-subcontractor-welcome]
+verify_jwt = false
