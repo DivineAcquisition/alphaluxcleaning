@@ -15,10 +15,12 @@ export function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">BC</span>
-            </div>
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
+              alt="Bay Area Cleaning Professionals" 
+              className="h-10 w-10 object-contain"
+            />
             <span className="font-semibold text-lg">Bay Area Cleaning Pros</span>
           </Link>
 

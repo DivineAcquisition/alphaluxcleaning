@@ -41,46 +41,35 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="residential" className="space-y-6">
-            {/* Full screen residential layout with logo */}
-            <div className="relative">
-              {/* Logo in corner */}
-              <div className="absolute top-4 right-4 z-10">
-                <img 
-                  src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
-                  alt="Bay Area Cleaning Professionals" 
-                  className="w-32 h-32 md:w-40 md:h-40 object-contain"
-                />
-              </div>
-              
-              <Card className="w-full">
-                <CardContent className="p-8">
-                  <div className="grid gap-8 lg:grid-cols-2">
-                    {/* Left Column - Pricing & Booking */}
-                    <div className="space-y-6">
+            {/* Full screen residential layout matching commercial style */}
+            <Card className="w-full">
+              <CardContent className="p-8">
+                <div className="space-y-8">
+                  {/* Quote Section - Large like commercial */}
+                  <div className="w-full">
+                    <h2 className="text-3xl font-bold mb-6 text-center">Get Your Residential Cleaning Quote</h2>
+                    <PricingCalculator 
+                      onPriceUpdate={(data, price, breakdown) => {
+                        setPricingData(data);
+                        setCalculatedPrice(price);
+                        setPriceBreakdown(breakdown);
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Scheduling and Payment sections side by side when data is available */}
+                  {pricingData && (
+                    <div className="grid gap-8 lg:grid-cols-2">
+                      {/* Scheduling Section */}
                       <div>
-                        <h2 className="text-2xl font-semibold mb-4">Get Your Quote</h2>
-                        <PricingCalculator 
-                          onPriceUpdate={(data, price, breakdown) => {
-                            setPricingData(data);
-                            setCalculatedPrice(price);
-                            setPriceBreakdown(breakdown);
-                          }}
+                        <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
+                        <BookingScheduler 
+                          onSchedulingUpdate={setSchedulingData}
                         />
                       </div>
                       
-                      {pricingData && (
-                        <div>
-                          <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-                          <BookingScheduler 
-                            onSchedulingUpdate={setSchedulingData}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Right Column - Payment */}
-                    <div>
-                      {pricingData && schedulingData && (
+                      {/* Payment Section */}
+                      {schedulingData && (
                         <div>
                           <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
                           <PaymentForm 
@@ -92,10 +81,10 @@ const Index = () => {
                         </div>
                       )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="commercial">
