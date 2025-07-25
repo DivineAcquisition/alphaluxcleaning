@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Navigation } from "@/components/Navigation";
 
 interface Order {
   id: string;
@@ -147,8 +148,10 @@ export default function OrderStatus() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-2 sm:p-4">
-      <div className="container mx-auto max-w-6xl py-4 sm:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+      <Navigation />
+      
+      <div className="container mx-auto max-w-6xl py-8 px-4">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Order Status & Support</h1>
