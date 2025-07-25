@@ -5,7 +5,7 @@ import { Building2, Home as HomeIcon } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { BookingScheduler } from "@/components/BookingScheduler";
-import { EmbeddedPaymentForm } from "@/components/EmbeddedPaymentForm";
+import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
 
@@ -83,12 +83,12 @@ const Index = () => {
                       {/* Payment Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
-              <EmbeddedPaymentForm 
-                pricingData={pricingData}
-                calculatedPrice={calculatedPrice}
-                priceBreakdown={priceBreakdown}
-                schedulingData={schedulingData}
-              />
+                        <PaymentForm 
+                          pricingData={pricingData}
+                          calculatedPrice={calculatedPrice}
+                          priceBreakdown={priceBreakdown}
+                          schedulingData={schedulingData}
+                        />
                       </div>
                     </div>
                   )}
