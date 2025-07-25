@@ -23,7 +23,7 @@ const SubcontractorOnboarding = () => {
     city: "",
     state: "",
     zipCode: "",
-    splitTier: "60_40" as "60_40" | "50_50"
+    splitTier: "60_40" as "60_40" | "50_50" | "35_65"
   });
   
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ const SubcontractorOnboarding = () => {
           state: formData.state,
           zip_code: formData.zipCode,
           split_tier: formData.splitTier,
-          subscription_status: formData.splitTier === '50_50' ? 'pending' : 'active'
+          subscription_status: formData.splitTier === '60_40' ? 'active' : 'pending'
         });
 
       if (error) {
@@ -122,7 +122,7 @@ const SubcontractorOnboarding = () => {
   };
 
   const SplitTierCard = ({ tier, title, description, features, isPopular = false }: {
-    tier: "60_40" | "50_50";
+    tier: "60_40" | "50_50" | "35_65";
     title: string;
     description: string;
     features: string[];
@@ -283,7 +283,7 @@ const SubcontractorOnboarding = () => {
             <CardContent>
               <RadioGroup 
                 value={formData.splitTier} 
-                onValueChange={(value) => handleInputChange('splitTier', value as "60_40" | "50_50")}
+                onValueChange={(value) => handleInputChange('splitTier', value as "60_40" | "50_50" | "35_65"))
                 className="space-y-4"
               >
                 <SplitTierCard
@@ -309,6 +309,19 @@ const SubcontractorOnboarding = () => {
                     "Higher earning potential"
                   ]}
                   isPopular
+                />
+                
+                <SplitTierCard
+                  tier="35_65"
+                  title="35/65 Split - $50/month"
+                  description="Maximum earnings for professionals"
+                  features={[
+                    "You keep 65% of each job",
+                    "Guaranteed 15 jobs per month",
+                    "Highest priority assignments",
+                    "Maximum earning potential",
+                    "Dedicated support"
+                  ]}
                 />
               </RadioGroup>
               
@@ -347,10 +360,20 @@ const SubcontractorOnboarding = () => {
                 <div>
                   <h4 className="font-semibold mb-2">Split Tier</h4>
                   <div className="space-y-1 text-sm">
-                    <p><strong>Plan:</strong> {formData.splitTier === '60_40' ? '60/40 Split (FREE)' : '50/50 Split ($10/month)'}</p>
-                    <p><strong>Your Share:</strong> {formData.splitTier === '60_40' ? '40%' : '50%'}</p>
+                    <p><strong>Plan:</strong> {
+                      formData.splitTier === '60_40' ? '60/40 Split (FREE)' : 
+                      formData.splitTier === '50_50' ? '50/50 Split ($10/month)' : 
+                      '35/65 Split ($50/month)'
+                    }</p>
+                    <p><strong>Your Share:</strong> {
+                      formData.splitTier === '60_40' ? '40%' : 
+                      formData.splitTier === '50_50' ? '50%' : '65%'
+                    }</p>
                     {formData.splitTier === '50_50' && (
                       <p><strong>Guaranteed Jobs:</strong> 10 per month</p>
+                    )}
+                    {formData.splitTier === '35_65' && (
+                      <p><strong>Guaranteed Jobs:</strong> 15 per month</p>
                     )}
                   </div>
                 </div>

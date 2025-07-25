@@ -423,7 +423,7 @@ const SubcontractorDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{subcontractor.jobs_completed_this_month}</div>
               <p className="text-xs text-muted-foreground">
-                {subcontractor.split_tier === '50_50' ? '10 guaranteed' : 'No minimum'}
+                {subcontractor.split_tier === '35_65' ? '15 guaranteed' : subcontractor.split_tier === '50_50' ? '10 guaranteed' : 'No minimum'}
               </p>
             </CardContent>
           </Card>
@@ -444,13 +444,13 @@ const SubcontractorDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Split Tier</CardTitle>
-              <Badge variant={subcontractor.split_tier === '50_50' ? 'default' : 'secondary'}>
-                {subcontractor.split_tier === '50_50' ? '50/50' : '60/40'}
+              <Badge variant={subcontractor.split_tier === '35_65' ? 'default' : subcontractor.split_tier === '50_50' ? 'secondary' : 'outline'}>
+                {subcontractor.split_tier === '35_65' ? '35/65' : subcontractor.split_tier === '50_50' ? '50/50' : '60/40'}
               </Badge>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {subcontractor.split_tier === '50_50' ? '50%' : '40%'}
+                {subcontractor.split_tier === '35_65' ? '65%' : subcontractor.split_tier === '50_50' ? '50%' : '40%'}
               </div>
               <p className="text-xs text-muted-foreground">Your share</p>
             </CardContent>
