@@ -136,6 +136,20 @@ const AdminAuth = () => {
     }
   };
 
+  const createTestAdmin = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('create-test-admin');
+      
+      if (error) {
+        toast.error("Failed to create test admin");
+      } else {
+        toast.success("Test admin created! Email: admin@test.com, Password: admin123");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
   if (user) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -209,9 +223,17 @@ const AdminAuth = () => {
                   <Button
                     variant="outline"
                     onClick={sendAdminInvites}
-                    className="text-sm"
+                    className="text-sm mb-2"
                   >
                     Send Admin Setup Emails
+                  </Button>
+                  <br />
+                  <Button
+                    variant="outline"
+                    onClick={createTestAdmin}
+                    className="text-sm"
+                  >
+                    Create Test Admin (admin@test.com)
                   </Button>
                 </div>
               </div>
