@@ -446,16 +446,11 @@ const SubcontractorDashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <img 
-                src="/bay-area-logo.png" 
-                alt="Bay Area Cleaning Professionals" 
-                className="h-16 w-auto"
-              />
-              <div className="absolute -top-1 -right-1 animate-pulse">
-                <div className="w-3 h-3 bg-primary rounded-full"></div>
-              </div>
-            </div>
+            <img 
+              src="/bay-area-logo.png" 
+              alt="Bay Area Cleaning Professionals" 
+              className="h-16 w-auto"
+            />
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Welcome, {subcontractor.full_name}!
