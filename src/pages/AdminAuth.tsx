@@ -198,6 +198,23 @@ const AdminAuth = () => {
     }
   };
 
+  const resetAdminPasswords = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-admin-passwords');
+      
+      if (error) {
+        console.error('Reset passwords error:', error);
+        toast.error(`Failed to reset passwords: ${error.message}`);
+      } else {
+        console.log('Passwords reset:', data);
+        toast.success("All admin passwords reset to: Bacp2025!-");
+      }
+    } catch (error) {
+      console.error('Unexpected reset password error:', error);
+      toast.error("An unexpected error occurred while resetting passwords");
+    }
+  };
+
   if (user) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -270,19 +287,26 @@ const AdminAuth = () => {
                 <div>
                   <Button
                     variant="outline"
+                    onClick={resetAdminPasswords}
+                    className="text-sm mb-2 mr-2"
+                  >
+                    Reset Admin Passwords
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={fixAdminUsers}
                     className="text-sm mb-2 mr-2"
                   >
                     Fix Admin Users
                   </Button>
+                  <br />
                   <Button
                     variant="outline"
                     onClick={sendAdminInvites}
-                    className="text-sm mb-2"
+                    className="text-sm mb-2 mr-2"
                   >
                     Send Admin Setup Emails
                   </Button>
-                  <br />
                   <Button
                     variant="outline"
                     onClick={createTestAdmin}
