@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LogOut, Calendar, Clock, MapPin, User, Phone, Mail, DollarSign } from "lucide-react";
+import { LogOut, Calendar, Clock, MapPin, User, Phone, Mail, DollarSign, Users } from "lucide-react";
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface Booking {
@@ -173,10 +173,16 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground">Welcome back, {userRole}</p>
           </div>
-          <Button onClick={handleSignOut} variant="outline" size="sm">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/subcontractor-management')} variant="secondary" size="sm">
+              <Users className="h-4 w-4 mr-2" />
+              Manage Subcontractors
+            </Button>
+            <Button onClick={handleSignOut} variant="outline" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
 
