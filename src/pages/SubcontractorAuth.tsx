@@ -98,6 +98,17 @@ const SubcontractorAuth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Simple password validation - just minimum 6 characters
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -197,9 +208,13 @@ const SubcontractorAuth = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a password"
+                    placeholder="Create a password (min 6 characters)"
+                    minLength={6}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Password must be at least 6 characters long
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating Account..." : "Join Our Network"}
