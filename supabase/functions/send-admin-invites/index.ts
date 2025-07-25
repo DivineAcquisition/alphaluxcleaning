@@ -12,7 +12,7 @@ const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 const adminEmails = [
   'admin1@bayareacleaningpros.com',
   'ellie@bayareacleaningpros.com', 
-  'divineacquisition.io@gmail.com'
+  'divine@bayareacleaningpros.com'
 ];
 
 const handler = async (req: Request): Promise<Response> => {
@@ -46,11 +46,11 @@ const handler = async (req: Request): Promise<Response> => {
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
           email_confirm: true,
-          password: 'TempPass123!', // They'll need to reset this
+          password: 'Bacp2025!-', // Updated password
           user_metadata: {
             role: 'admin',
             full_name: email === 'ellie@bayareacleaningpros.com' ? 'Ellie' : 
-                      email === 'divineacquisition.io@gmail.com' ? 'Divine Acquisition' : 'Admin User'
+                      email === 'divine@bayareacleaningpros.com' ? 'Divine Acquisition' : 'Admin User'
           }
         });
 
@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h2>Login Credentials:</h2>
                 <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Temporary Password:</strong> TempPass123!</p>
+                <p><strong>Password:</strong> Bacp2025!-</p>
                 </div>
                 
                 <h2>Getting Started:</h2>
@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
                 </ol>
                 
                 <p style="color: #dc2626; font-weight: bold;">
-                  IMPORTANT: Please change your password immediately after your first login for security.
+                  IMPORTANT: Please keep your password secure. You can change it anytime in your profile settings.
                 </p>
                 
                 <hr style="margin: 20px 0;">
