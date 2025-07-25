@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
@@ -24,11 +24,6 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
-              alt="Bay Area Cleaning Professionals" 
-              className="h-10 w-10 object-contain"
-            />
             <span className="font-semibold text-lg">Bay Area Cleaning Pros</span>
           </Link>
 
@@ -53,17 +48,6 @@ export function Navigation() {
               );
             })}
             
-            {/* Subcontractor Portal Link */}
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link to="/subcontractor-auth" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Subcontractor Portal
-              </Link>
-            </Button>
             
             {/* Website Link */}
             <Button
@@ -125,15 +109,6 @@ export function Navigation() {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem asChild>
-                  <Link 
-                    to="/subcontractor-auth"
-                    className="flex items-center gap-2 w-full"
-                  >
-                    <Users className="h-4 w-4" />
-                    Subcontractor Portal
-                  </Link>
-                </DropdownMenuItem>
                 
                 <DropdownMenuItem asChild>
                   <a 
