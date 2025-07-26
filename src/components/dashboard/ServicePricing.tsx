@@ -437,7 +437,7 @@ export function ServicePricing() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="text-center p-4 bg-primary/10 rounded-lg">
               <h4 className="font-semibold text-primary mb-2">Deep Clean Discount</h4>
-              <p className="text-sm text-muted-foreground">$65 off all deep cleaning services</p>
+              <p className="text-sm text-muted-foreground">$75 off all deep cleaning services</p>
             </div>
             <div className="text-center p-4 bg-accent/10 rounded-lg">
               <h4 className="font-semibold text-accent mb-2">Recurring Service Benefits</h4>

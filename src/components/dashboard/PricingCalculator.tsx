@@ -584,16 +584,16 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                         <span className="font-medium">${originalBasePrice.toFixed(2)}</span>
                       </div>
                       
-                      {isRecurring && !isDeepCleaning && (
+                      {(frequency === 'weekly' || frequency === 'biweekly') && !isDeepCleaning && (
                         <div className="flex justify-between items-center py-2 text-green-600">
-                          <span>25% Recurring Discount</span>
+                          <span>25% Recurring Discount ({frequency === 'weekly' ? 'Weekly' : 'Biweekly'})</span>
                           <span>-${((originalBasePrice * 0.25)).toFixed(2)}</span>
                         </div>
                       )}
                       
                       {isDeepCleaning && (
                         <div className="flex justify-between items-center py-2 text-green-600">
-                          <span>Deep Cleaning Discount</span>
+                          <span>$75 Deep Cleaning Discount</span>
                           <span>-$75.00</span>
                         </div>
                       )}
