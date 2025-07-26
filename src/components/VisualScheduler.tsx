@@ -43,31 +43,21 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const [showNextDayOption, setShowNextDayOption] = useState(false);
   const [isNextDayBooking, setIsNextDayBooking] = useState(false);
 
-  // Dynamic time slots based on service duration
+  // Business hours time slots (allowing multiple bookings per slot)
   const getTimeSlots = () => {
-    const serviceDuration = getServiceDuration(serviceType || 'general');
-    
-    if (serviceDuration <= 1.5) {
-      // 1-1.5 hour services: 4 time slots
-      return [
-        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-        { id: "early_afternoon", label: "Early Afternoon", startTime: "12:00 PM", endTime: "2:30 PM", available: true },
-        { id: "late_afternoon", label: "Late Afternoon", startTime: "2:30 PM", endTime: "5:00 PM", available: true }
-      ];
-    } else if (serviceDuration <= 2) {
-      // 2 hour services: 3 time slots  
-      return [
-        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-        { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "3:00 PM", available: true },
-        { id: "late_afternoon", label: "Late Afternoon", startTime: "2:00 PM", endTime: "5:00 PM", available: true }
-      ];
-    } else {
-      // 3+ hour services: 2 time slots
-      return [
-        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-        { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
-      ];
-    }
+    // Use consistent business hours for all service types
+    return [
+      { id: "8am", label: "8:00 AM - 9:00 AM", startTime: "8:00 AM", endTime: "9:00 AM", available: true },
+      { id: "9am", label: "9:00 AM - 10:00 AM", startTime: "9:00 AM", endTime: "10:00 AM", available: true },
+      { id: "10am", label: "10:00 AM - 11:00 AM", startTime: "10:00 AM", endTime: "11:00 AM", available: true },
+      { id: "11am", label: "11:00 AM - 12:00 PM", startTime: "11:00 AM", endTime: "12:00 PM", available: true },
+      { id: "12pm", label: "12:00 PM - 1:00 PM", startTime: "12:00 PM", endTime: "1:00 PM", available: true },
+      { id: "1pm", label: "1:00 PM - 2:00 PM", startTime: "1:00 PM", endTime: "2:00 PM", available: true },
+      { id: "2pm", label: "2:00 PM - 3:00 PM", startTime: "2:00 PM", endTime: "3:00 PM", available: true },
+      { id: "3pm", label: "3:00 PM - 4:00 PM", startTime: "3:00 PM", endTime: "4:00 PM", available: true },
+      { id: "4pm", label: "4:00 PM - 5:00 PM", startTime: "4:00 PM", endTime: "5:00 PM", available: true },
+      { id: "5pm", label: "5:00 PM - 6:00 PM", startTime: "5:00 PM", endTime: "6:00 PM", available: true }
+    ];
   };
 
   const timeSlots: TimeSlot[] = getTimeSlots();
@@ -103,17 +93,17 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           };
         }
 
-        // Calendar integration disabled - showing demo availability
-        // For demonstration: make some slots unavailable to show the UI works
-        const demoSlots = timeSlots.map((slot, index) => ({
+        // For regular booking, all slots are available (multiple customers can book same slot)
+        // For next day priority booking, use actual availability checking
+        const regularSlots = timeSlots.map(slot => ({
           ...slot,
-          available: index !== 1 // Make the second slot unavailable for demo
+          available: true // Always available for regular bookings
         }));
         
         return {
           date: format(date, 'yyyy-MM-dd'),
-          available: demoSlots.some(slot => slot.available),
-          timeSlots: demoSlots
+          available: true, // All days available for regular booking
+          timeSlots: regularSlots
         };
       });
 
@@ -222,8 +212,11 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           Schedule Your Service
         </CardTitle>
         <CardDescription className="text-primary-foreground/80">
-          Select your preferred date and time slot
+          Select your preferred date and time slot. Business hours: 8 AM - 6 PM
         </CardDescription>
+        <div className="text-xs text-primary-foreground/60 mt-1">
+          ✓ Multiple customers can book the same time slot
+        </div>
       </CardHeader>
       
       <CardContent className="p-6 space-y-6">
