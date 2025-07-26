@@ -143,7 +143,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
 
     // For deep cleaning ONE-TIME only, apply $75 discount
     if ((cleaningType === 'deep' || cleaningType === 'moveout') && frequency === 'one_time') {
-      basePrice = tier.deepClean; // This has $75 discount already applied
+      basePrice = tier.deepClean - 75; // Apply $75 discount for deep cleaning
     }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
@@ -156,7 +156,8 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
       basePrice: basePrice,
       addOnTotal: addOnTotal,
       finalPrice: finalPrice,
-      tierInfo: `${tier.min === 0 ? 'Under' : tier.min}-${tier.max} sq ft`
+      tierInfo: `${tier.min === 0 ? 'Under' : tier.min}-${tier.max} sq ft`,
+      hasDeepCleanDiscount: (cleaningType === 'deep' || cleaningType === 'moveout') && frequency === 'one_time'
     });
     
     setCalculatedPrice(finalPrice);
@@ -538,7 +539,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                     {pricingData.serviceType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} - {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
                   </div>
                   <div className="text-muted-foreground">
-                    {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} • {pricingData.squareFootage} sq ft
+                    {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} • {priceBreakdown.tierInfo || `${pricingData.squareFootage} sq ft`}
                     {pricingData.serviceType === 'carpet' && priceBreakdown.estimatedRooms && (
                       <span> • ~{priceBreakdown.estimatedRooms} rooms</span>
                     )}
@@ -550,6 +551,20 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground">Price Breakdown</h4>
                 
+                {priceBreakdown.hasDeepCleanDiscount && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-muted-foreground">Original Deep Clean Price</span>
+                    <span className="font-medium">${(priceBreakdown.basePrice + 75).toFixed(2)}</span>
+                  </div>
+                )}
+                
+                {priceBreakdown.hasDeepCleanDiscount && (
+                  <div className="flex justify-between items-center py-2 text-green-600">
+                    <span>$75 One-Time Deep Cleaning Discount</span>
+                    <span>-$75.00</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-muted-foreground">Service Total</span>
                   <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
