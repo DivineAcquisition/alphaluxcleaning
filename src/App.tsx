@@ -27,12 +27,16 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const currentHost = window.location.hostname;
+  const currentPath = window.location.pathname;
   
-  // Determine which routes to show based on subdomain
-  const isAdminDomain = currentHost.startsWith('admin.') || (currentHost.includes('lovable') && window.location.pathname.includes('admin')) || (currentHost.includes('localhost') && window.location.pathname.includes('admin'));
-  const isSubconDomain = currentHost.startsWith('subcon.') || (currentHost.includes('lovable') && window.location.pathname.includes('subcontractor')) || (currentHost.includes('localhost') && window.location.pathname.includes('subcontractor'));
-  const isDashboardDomain = currentHost.startsWith('dashboard.') || (currentHost.includes('lovable') && window.location.pathname.includes('dashboard')) || (currentHost.includes('localhost') && window.location.pathname.includes('dashboard'));
-  const isPortalDomain = currentHost.startsWith('portal.') || currentHost === 'bayareacleaningpros.com' || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
+  // Simplified routing for preview environment
+  const isLovablePreview = currentHost.includes('lovable');
+  
+  // Determine which routes to show based on subdomain or path (for preview)
+  const isAdminDomain = currentHost.startsWith('admin.') || (isLovablePreview && (currentPath.includes('admin') || currentPath.includes('/subcontractor-management') || currentPath.includes('/application-manager'))) || (currentHost.includes('localhost') && currentPath.includes('admin'));
+  const isSubconDomain = currentHost.startsWith('subcon.') || (isLovablePreview && currentPath.includes('subcontractor')) || (currentHost.includes('localhost') && currentPath.includes('subcontractor'));
+  const isDashboardDomain = currentHost.startsWith('dashboard.') || (isLovablePreview && currentPath.includes('dashboard')) || (currentHost.includes('localhost') && currentPath.includes('dashboard'));
+  const isPortalDomain = currentHost.startsWith('portal.') || currentHost === 'bayareacleaningpros.com' || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app') || isLovablePreview;
 
   return (
     <QueryClientProvider client={queryClient}>
