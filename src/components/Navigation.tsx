@@ -70,16 +70,26 @@ export function Navigation() {
               </a>
             </Button>
             
-            {/* Contact Info */}
-            <div className="hidden lg:flex items-center gap-4 ml-6 pl-6 border-l">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {/* Contact Buttons */}
+            <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open('tel:+12812016112', '_self')}
+                className="flex items-center gap-2 text-sm"
+              >
                 <Phone className="h-4 w-4" />
                 <span>(281) 201-6112</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
+                className="flex items-center gap-2 text-sm"
+              >
                 <Mail className="h-4 w-4" />
                 <span>support@bayareacleaningpros.com</span>
-              </div>
+              </Button>
             </div>
           </div>
 
@@ -127,12 +137,18 @@ export function Navigation() {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem className="flex items-center gap-2 text-sm">
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-sm cursor-pointer"
+                  onClick={() => window.open('tel:+12812016112', '_self')}
+                >
                   <Phone className="h-4 w-4" />
                   (281) 201-6112
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem className="flex items-center gap-2 text-sm">
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-sm cursor-pointer"
+                  onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
+                >
                   <Mail className="h-4 w-4" />
                   support@bayareacleaningpros.com
                 </DropdownMenuItem>
