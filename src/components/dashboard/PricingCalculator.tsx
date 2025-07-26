@@ -73,8 +73,8 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     cleaningType: "",
     frequency: "",
     addOns: [],
-    bedrooms: 2,
-    bathrooms: 2
+    bedrooms: undefined,
+    bathrooms: undefined
   });
 
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
@@ -228,7 +228,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
             <div className="space-y-2">
               <Label>Bedrooms</Label>
               <Select 
-                value={pricingData.bedrooms?.toString() || "2"} 
+                value={pricingData.bedrooms?.toString() || ""} 
                 onValueChange={(value) => setPricingData(prev => ({ ...prev, bedrooms: parseInt(value) }))}
               >
                 <SelectTrigger>
@@ -247,7 +247,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
             <div className="space-y-2">
               <Label>Bathrooms</Label>
               <Select 
-                value={pricingData.bathrooms?.toString() || "2"} 
+                value={pricingData.bathrooms?.toString() || ""} 
                 onValueChange={(value) => setPricingData(prev => ({ ...prev, bathrooms: parseInt(value) }))}
               >
                 <SelectTrigger>
