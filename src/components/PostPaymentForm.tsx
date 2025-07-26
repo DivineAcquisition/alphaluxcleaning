@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Calendar, Clock, MessageSquare, User, Home, CheckCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Calendar, Clock, MessageSquare, User, Home, CheckCircle, Gift, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
@@ -45,6 +46,10 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     alarmCode: "",
   });
 
+  const [referralCode, setReferralCode] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedReferral, setAppliedReferral] = useState<any>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch order details and autofill service address
@@ -112,6 +117,78 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyReferralCode = async () => {
+    if (!referralCode.trim()) {
+      toast.error("Please enter a referral code");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+        p_code: referralCode.trim(),
+        p_user_email: formData.customerEmail,
+        p_user_name: formData.customerName,
+        p_order_id: null // We'll update this after order creation
+      });
+
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.success) {
+        setAppliedReferral(result);
+        toast.success(`Referral code applied! You get 10% off your service.`);
+        
+        // Get referrer's email from database and send reward email
+        const { data: referrerData } = await supabase
+          .from('referral_codes')
+          .select('owner_email')
+          .eq('code', referralCode.trim())
+          .single();
+
+        if (referrerData?.owner_email) {
+          await supabase.functions.invoke('send-service-notification', {
+            body: {
+              type: 'referral_reward',
+              referrerEmail: referrerData.owner_email,
+              referrerName: result.owner_name,
+              friendName: formData.customerName,
+              rewardCode: `FRIEND50-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+              rewardAmount: '50%'
+            }
+          });
+        }
+      } else {
+        toast.error(result?.error || "Invalid referral code");
+      }
+    } catch (error) {
+      console.error("Error applying referral code:", error);
+      toast.error("Failed to apply referral code");
+    }
+  };
+
+  const handleApplyDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      toast.error("Please enter a discount code");
+      return;
+    }
+
+    // Check if this is a reward code (starts with FRIEND50)
+    if (discountCode.startsWith('FRIEND50')) {
+      if (appliedReferral) {
+        toast.error("Cannot combine discount codes with referral codes");
+        return;
+      }
+      setAppliedDiscount({
+        code: discountCode,
+        type: 'deep_clean_50_percent',
+        description: '50% off deep cleaning service'
+      });
+      toast.success("Discount code applied! 50% off your deep cleaning service.");
+    } else {
+      toast.error("Invalid discount code");
+    }
   };
 
   const handleSubmit = async () => {
@@ -328,52 +405,66 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
-          {/* Customer Information */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
-              <User className="h-5 w-5 text-primary" />
-              Customer Information
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Full Name</Label>
-                <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => handleInputChange("customerName", e.target.value)}
-                  placeholder="John Doe"
-                  className="text-sm sm:text-base"
-                />
+        <CardContent className="p-4 sm:p-6">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="details">Complete Booking</TabsTrigger>
+              <TabsTrigger value="referral">
+                <Gift className="h-4 w-4 mr-2" />
+                Referral Code
+              </TabsTrigger>
+              <TabsTrigger value="discount">
+                <Tag className="h-4 w-4 mr-2" />
+                Apply Discount
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="space-y-6 sm:space-y-8 mt-6">
+              {/* Customer Information */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+                  <User className="h-5 w-5 text-primary" />
+                  Customer Information
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Full Name</Label>
+                    <Input
+                      id="customerName"
+                      value={formData.customerName}
+                      onChange={(e) => handleInputChange("customerName", e.target.value)}
+                      placeholder="John Doe"
+                      className="text-sm sm:text-base"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="customerEmail">Email Address *</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      value={formData.customerEmail}
+                      onChange={(e) => handleInputChange("customerEmail", e.target.value)}
+                      placeholder="john@example.com"
+                      className="text-sm sm:text-base"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="customerPhone">Phone Number</Label>
+                    <Input
+                      id="customerPhone"
+                      type="tel"
+                      value={formData.customerPhone}
+                      onChange={(e) => handleInputChange("customerPhone", e.target.value)}
+                      placeholder="(555) 123-4567"
+                      className="text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail">Email Address *</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  value={formData.customerEmail}
-                  onChange={(e) => handleInputChange("customerEmail", e.target.value)}
-                  placeholder="john@example.com"
-                  className="text-sm sm:text-base"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="customerPhone">Phone Number</Label>
-                <Input
-                  id="customerPhone"
-                  type="tel"
-                  value={formData.customerPhone}
-                  onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className="text-sm sm:text-base"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* How You Found Us */}
           <div className="space-y-4">
@@ -627,18 +718,120 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             </div>
           </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !formData.streetAddress || !formData.city || !formData.zipCode || !formData.customerEmail}
-            className="w-full text-sm sm:text-base"
-            size="lg"
-          >
-            {isSubmitting ? "Saving..." : "Complete Service Details"}
-          </Button>
-          
-          <p className="text-xs sm:text-sm text-muted-foreground text-center">
-            This information helps us provide the best possible service experience
-          </p>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !formData.streetAddress || !formData.city || !formData.zipCode || !formData.customerEmail}
+                className="w-full text-sm sm:text-base"
+                size="lg"
+              >
+                {isSubmitting ? "Saving..." : "Complete Service Details"}
+              </Button>
+              
+              <p className="text-xs sm:text-sm text-muted-foreground text-center">
+                This information helps us provide the best possible service experience
+              </p>
+            </TabsContent>
+
+            <TabsContent value="referral" className="mt-6 space-y-6">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 text-lg font-semibold">
+                  <Gift className="h-6 w-6 text-primary" />
+                  Have a Referral Code?
+                </div>
+                
+                <div className="bg-muted/50 p-6 rounded-lg space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Refer friends and save!</strong> Get 50% off your next deep cleaning when they book.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Using a referral code? Get 10% off your service (can stack with other offers).
+                  </p>
+                </div>
+
+                {appliedReferral && (
+                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                    <p className="text-green-800 font-medium">✓ Referral code applied!</p>
+                    <p className="text-green-600 text-sm">You get 10% off your service.</p>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <Label htmlFor="referralCode">Enter Referral Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="referralCode"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      placeholder="Enter your friend's referral code"
+                      disabled={!!appliedReferral}
+                    />
+                    <Button 
+                      onClick={handleApplyReferralCode}
+                      disabled={!referralCode.trim() || !!appliedReferral || !formData.customerEmail || !formData.customerName}
+                      variant="outline"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                  {(!formData.customerEmail || !formData.customerName) && (
+                    <p className="text-xs text-muted-foreground">
+                      Please fill in your name and email in the Complete Booking tab first
+                    </p>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="discount" className="mt-6 space-y-6">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 text-lg font-semibold">
+                  <Tag className="h-6 w-6 text-primary" />
+                  Apply Discount Code
+                </div>
+                
+                <div className="bg-muted/50 p-6 rounded-lg space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Have a discount code from a referral reward? Enter it here to get 50% off your deep cleaning service.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Note:</strong> Discount codes cannot be combined with referral codes.
+                  </p>
+                </div>
+
+                {appliedDiscount && (
+                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                    <p className="text-green-800 font-medium">✓ Discount code applied!</p>
+                    <p className="text-green-600 text-sm">{appliedDiscount.description}</p>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <Label htmlFor="discountCode">Enter Discount Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="discountCode"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      placeholder="Enter your discount code (e.g., FRIEND50-ABC123)"
+                      disabled={!!appliedDiscount || !!appliedReferral}
+                    />
+                    <Button 
+                      onClick={handleApplyDiscountCode}
+                      disabled={!discountCode.trim() || !!appliedDiscount || !!appliedReferral}
+                      variant="outline"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                  {appliedReferral && (
+                    <p className="text-xs text-muted-foreground text-orange-600">
+                      Cannot apply discount code when referral code is already applied
+                    </p>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

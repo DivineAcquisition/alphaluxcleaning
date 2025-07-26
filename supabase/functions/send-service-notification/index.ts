@@ -8,6 +8,7 @@ import { ServicePausedEmail } from '../_shared/email-templates/service-paused.ts
 import { ServiceResumedEmail } from '../_shared/email-templates/service-resumed.tsx';
 import { ServiceCancelledEmail } from '../_shared/email-templates/service-cancelled.tsx';
 import { RetentionDiscountEmail } from '../_shared/email-templates/retention-discount.tsx';
+import { ReferralRewardEmail } from '../_shared/email-templates/referral-reward.tsx';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -22,12 +23,13 @@ const logStep = (step: string, details?: any) => {
 };
 
 interface ServiceNotificationRequest {
-  orderId: string;
-  notificationType: 'rescheduled' | 'paused' | 'resumed' | 'cancelled' | 'discount_applied';
-  customerEmail: string;
-  customerName: string;
-  cleaningType: string;
-  frequency: string;
+  orderId?: string;
+  type?: string;
+  notificationType?: 'rescheduled' | 'paused' | 'resumed' | 'cancelled' | 'discount_applied';
+  customerEmail?: string;
+  customerName?: string;
+  cleaningType?: string;
+  frequency?: string;
   serviceAddress?: string;
   // For rescheduled
   oldDate?: string;
@@ -48,6 +50,12 @@ interface ServiceNotificationRequest {
   originalAmount?: number;
   discountedAmount?: number;
   savingsAmount?: number;
+  // For referral reward
+  referrerEmail?: string;
+  referrerName?: string;
+  friendName?: string;
+  rewardCode?: string;
+  rewardAmount?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -69,6 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
     logStep("Request body received", { type: body.notificationType, orderId: body.orderId });
 
     const {
+      type,
       notificationType,
       customerEmail,
       customerName,
@@ -88,14 +97,34 @@ const handler = async (req: Request): Promise<Response> => {
       discountAccepted,
       originalAmount,
       discountedAmount,
-      savingsAmount
+      savingsAmount,
+      referrerEmail,
+      referrerName,
+      friendName,
+      rewardCode,
+      rewardAmount
     } = body;
 
     let emailHtml: string;
     let subject: string;
 
     // Generate email based on notification type
-    switch (notificationType) {
+    switch (type || notificationType) {
+      case 'referral_reward':
+        if (!referrerName || !friendName || !rewardCode || !rewardAmount) {
+          throw new Error("Missing required fields for referral reward notification");
+        }
+        
+        emailHtml = await renderAsync(
+          React.createElement(ReferralRewardEmail, {
+            referrerName,
+            friendName,
+            rewardCode,
+            rewardAmount,
+          })
+        );
+        subject = "🎉 Referral Reward Earned! - Bay Area Cleaning Pros";
+        break;
       case 'rescheduled':
         if (!oldDate || !oldTime || !newDate || !newTime) {
           throw new Error("Missing required fields for rescheduled notification");
@@ -191,9 +220,10 @@ const handler = async (req: Request): Promise<Response> => {
     logStep("Email template rendered", { notificationType });
 
     // Send email
+    const recipientEmail = (type === 'referral_reward' && referrerEmail) ? referrerEmail : customerEmail;
     const emailResponse = await resend.emails.send({
       from: "Bay Area Cleaning Pros <notifications@bayareacleaningpros.com>",
-      to: [customerEmail],
+      to: [recipientEmail],
       subject,
       html: emailHtml,
     });
