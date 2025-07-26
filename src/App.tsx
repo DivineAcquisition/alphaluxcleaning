@@ -24,18 +24,34 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Helper component to redirect admin routes to admin subdomain
-const AdminRedirect = ({ children }: { children: React.ReactElement }) => {
+// Helper component to redirect routes to appropriate subdomains
+const SubdomainRedirect = ({ children }: { children: React.ReactElement }) => {
   const currentHost = window.location.hostname;
   const currentPath = window.location.pathname;
   
-  // Admin routes that should be on admin subdomain
+  // Define routes for each subdomain
   const adminRoutes = ['/admin-auth', '/admin-panel', '/admin-dashboard', '/subcontractor-management', '/application-manager', '/password-reset'];
+  const subcontractorRoutes = ['/subcontractor-home', '/subcontractor-auth', '/subcontractor-onboarding', '/subcontractor-dashboard', '/subcontractor-application'];
+  const customerRoutes = ['/', '/payment-success', '/service-details', '/order-status', '/commercial-thank-you', '/test-email'];
   
-  // If we're on an admin route but not on admin subdomain, redirect
+  // Redirect to admin subdomain
   if (adminRoutes.includes(currentPath) && !currentHost.startsWith('admin.')) {
     const adminUrl = `https://admin.bayareacleaningpros.com${currentPath}${window.location.search}`;
     window.location.href = adminUrl;
+    return null;
+  }
+  
+  // Redirect to subcontractor subdomain
+  if (subcontractorRoutes.includes(currentPath) && !currentHost.startsWith('subcon.')) {
+    const subconUrl = `https://subcon.bayareacleaningpros.com${currentPath}${window.location.search}`;
+    window.location.href = subconUrl;
+    return null;
+  }
+  
+  // Redirect to portal subdomain for customer pages
+  if (customerRoutes.includes(currentPath) && !currentHost.startsWith('portal.') && !currentHost.includes('localhost') && !currentHost.includes('127.0.0.1')) {
+    const portalUrl = `https://portal.bayareacleaningpros.com${currentPath}${window.location.search}`;
+    window.location.href = portalUrl;
     return null;
   }
   
@@ -49,23 +65,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/service-details" element={<ServiceDetails />} />
-          <Route path="/order-status" element={<OrderStatus />} />
-          <Route path="/admin-auth" element={<AdminRedirect><AdminAuth /></AdminRedirect>} />
-          <Route path="/admin-panel" element={<AdminRedirect><AdminPanel /></AdminRedirect>} />
-          <Route path="/password-reset" element={<AdminRedirect><PasswordReset /></AdminRedirect>} />
-          <Route path="/admin-dashboard" element={<AdminRedirect><AdminDashboard /></AdminRedirect>} />
-          <Route path="/subcontractor-management" element={<AdminRedirect><SubcontractorManagement /></AdminRedirect>} />
-          <Route path="/subcontractor-home" element={<SubcontractorHome />} />
-          <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
-          <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
-          <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
-          <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
-          <Route path="/application-manager" element={<AdminRedirect><ApplicationManager /></AdminRedirect>} />
-          <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
-          <Route path="/test-email" element={<TestEmail />} />
+          <Route path="/" element={<SubdomainRedirect><Index /></SubdomainRedirect>} />
+          <Route path="/payment-success" element={<SubdomainRedirect><PaymentSuccess /></SubdomainRedirect>} />
+          <Route path="/service-details" element={<SubdomainRedirect><ServiceDetails /></SubdomainRedirect>} />
+          <Route path="/order-status" element={<SubdomainRedirect><OrderStatus /></SubdomainRedirect>} />
+          <Route path="/admin-auth" element={<SubdomainRedirect><AdminAuth /></SubdomainRedirect>} />
+          <Route path="/admin-panel" element={<SubdomainRedirect><AdminPanel /></SubdomainRedirect>} />
+          <Route path="/password-reset" element={<SubdomainRedirect><PasswordReset /></SubdomainRedirect>} />
+          <Route path="/admin-dashboard" element={<SubdomainRedirect><AdminDashboard /></SubdomainRedirect>} />
+          <Route path="/subcontractor-management" element={<SubdomainRedirect><SubcontractorManagement /></SubdomainRedirect>} />
+          <Route path="/subcontractor-home" element={<SubdomainRedirect><SubcontractorHome /></SubdomainRedirect>} />
+          <Route path="/subcontractor-auth" element={<SubdomainRedirect><SubcontractorAuth /></SubdomainRedirect>} />
+          <Route path="/subcontractor-onboarding" element={<SubdomainRedirect><SubcontractorOnboarding /></SubdomainRedirect>} />
+          <Route path="/subcontractor-dashboard" element={<SubdomainRedirect><SubcontractorDashboard /></SubdomainRedirect>} />
+          <Route path="/subcontractor-application" element={<SubdomainRedirect><SubcontractorApplication /></SubdomainRedirect>} />
+          <Route path="/application-manager" element={<SubdomainRedirect><ApplicationManager /></SubdomainRedirect>} />
+          <Route path="/commercial-thank-you" element={<SubdomainRedirect><CommercialThankYou /></SubdomainRedirect>} />
+          <Route path="/test-email" element={<SubdomainRedirect><TestEmail /></SubdomainRedirect>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
