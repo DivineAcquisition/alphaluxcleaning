@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const ghlApiKey = Deno.env.get("GOHIGHLEVEL_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -95,15 +94,26 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Send test email
-    const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
-      to: [testEmail],
-      subject: "🧪 Test - Booking Confirmation Email System",
-      html: emailContent,
+    // Send test email using GoHighLevel API
+    const emailResponse = await fetch('https://services.leadconnectorhq.com/emails/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
+      },
+      body: JSON.stringify({
+        message: {
+          from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
+          to: testEmail,
+          subject: "🧪 Test - Booking Confirmation Email System",
+          html: emailContent
+        }
+      })
     });
 
-    console.log("Test email sent successfully:", emailResponse);
+    const responseData = await emailResponse.json();
+    console.log("Test email sent successfully:", responseData);
 
     return new Response(JSON.stringify({ 
       success: true, 
