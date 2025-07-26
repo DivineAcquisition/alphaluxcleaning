@@ -85,8 +85,21 @@ export default function Auth() {
       return;
     }
 
-    if (signUpData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Simple password validation: 8 characters, 1 number, 1 special character
+    if (signUpData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/\d/.test(signUpData.password)) {
+      setError('Password must contain at least 1 number');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password)) {
+      setError('Password must contain at least 1 special character (!@#$%^&* etc.)');
       setIsSubmitting(false);
       return;
     }
