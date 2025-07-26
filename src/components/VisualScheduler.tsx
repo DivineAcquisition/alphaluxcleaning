@@ -43,21 +43,51 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const [showNextDayOption, setShowNextDayOption] = useState(false);
   const [isNextDayBooking, setIsNextDayBooking] = useState(false);
 
-  // Business hours time slots (allowing multiple bookings per slot)
+  // Business hours time slots correlated with service duration
   const getTimeSlots = () => {
-    // Use consistent business hours for all service types
-    return [
-      { id: "8am", label: "8:00 AM - 9:00 AM", startTime: "8:00 AM", endTime: "9:00 AM", available: true },
-      { id: "9am", label: "9:00 AM - 10:00 AM", startTime: "9:00 AM", endTime: "10:00 AM", available: true },
-      { id: "10am", label: "10:00 AM - 11:00 AM", startTime: "10:00 AM", endTime: "11:00 AM", available: true },
-      { id: "11am", label: "11:00 AM - 12:00 PM", startTime: "11:00 AM", endTime: "12:00 PM", available: true },
-      { id: "12pm", label: "12:00 PM - 1:00 PM", startTime: "12:00 PM", endTime: "1:00 PM", available: true },
-      { id: "1pm", label: "1:00 PM - 2:00 PM", startTime: "1:00 PM", endTime: "2:00 PM", available: true },
-      { id: "2pm", label: "2:00 PM - 3:00 PM", startTime: "2:00 PM", endTime: "3:00 PM", available: true },
-      { id: "3pm", label: "3:00 PM - 4:00 PM", startTime: "3:00 PM", endTime: "4:00 PM", available: true },
-      { id: "4pm", label: "4:00 PM - 5:00 PM", startTime: "4:00 PM", endTime: "5:00 PM", available: true },
-      { id: "5pm", label: "5:00 PM - 6:00 PM", startTime: "5:00 PM", endTime: "6:00 PM", available: true }
-    ];
+    const serviceDuration = getServiceDuration(serviceType || 'general');
+    console.log('Service type:', serviceType, 'Duration:', serviceDuration);
+    
+    if (serviceDuration <= 1.5) {
+      // Short services (1-1.5 hours): More time slot options
+      return [
+        { id: "8am", label: "8:00 AM - 9:30 AM", startTime: "8:00 AM", endTime: "9:30 AM", available: true },
+        { id: "9am", label: "9:00 AM - 10:30 AM", startTime: "9:00 AM", endTime: "10:30 AM", available: true },
+        { id: "10am", label: "10:00 AM - 11:30 AM", startTime: "10:00 AM", endTime: "11:30 AM", available: true },
+        { id: "11am", label: "11:00 AM - 12:30 PM", startTime: "11:00 AM", endTime: "12:30 PM", available: true },
+        { id: "12pm", label: "12:00 PM - 1:30 PM", startTime: "12:00 PM", endTime: "1:30 PM", available: true },
+        { id: "1pm", label: "1:00 PM - 2:30 PM", startTime: "1:00 PM", endTime: "2:30 PM", available: true },
+        { id: "2pm", label: "2:00 PM - 3:30 PM", startTime: "2:00 PM", endTime: "3:30 PM", available: true },
+        { id: "3pm", label: "3:00 PM - 4:30 PM", startTime: "3:00 PM", endTime: "4:30 PM", available: true },
+        { id: "4pm", label: "4:00 PM - 5:30 PM", startTime: "4:00 PM", endTime: "5:30 PM", available: true },
+        { id: "430pm", label: "4:30 PM - 6:00 PM", startTime: "4:30 PM", endTime: "6:00 PM", available: true }
+      ];
+    } else if (serviceDuration <= 2.5) {
+      // Medium services (2-2.5 hours): Moderate time slot options
+      return [
+        { id: "8am", label: "8:00 AM - 10:30 AM", startTime: "8:00 AM", endTime: "10:30 AM", available: true },
+        { id: "9am", label: "9:00 AM - 11:30 AM", startTime: "9:00 AM", endTime: "11:30 AM", available: true },
+        { id: "10am", label: "10:00 AM - 12:30 PM", startTime: "10:00 AM", endTime: "12:30 PM", available: true },
+        { id: "11am", label: "11:00 AM - 1:30 PM", startTime: "11:00 AM", endTime: "1:30 PM", available: true },
+        { id: "12pm", label: "12:00 PM - 2:30 PM", startTime: "12:00 PM", endTime: "2:30 PM", available: true },
+        { id: "1pm", label: "1:00 PM - 3:30 PM", startTime: "1:00 PM", endTime: "3:30 PM", available: true },
+        { id: "2pm", label: "2:00 PM - 4:30 PM", startTime: "2:00 PM", endTime: "4:30 PM", available: true },
+        { id: "3pm", label: "3:00 PM - 5:30 PM", startTime: "3:00 PM", endTime: "5:30 PM", available: true },
+        { id: "330pm", label: "3:30 PM - 6:00 PM", startTime: "3:30 PM", endTime: "6:00 PM", available: true }
+      ];
+    } else {
+      // Long services (3+ hours): Fewer time slot options  
+      return [
+        { id: "8am", label: "8:00 AM - 11:30 AM", startTime: "8:00 AM", endTime: "11:30 AM", available: true },
+        { id: "9am", label: "9:00 AM - 12:30 PM", startTime: "9:00 AM", endTime: "12:30 PM", available: true },
+        { id: "10am", label: "10:00 AM - 1:30 PM", startTime: "10:00 AM", endTime: "1:30 PM", available: true },
+        { id: "11am", label: "11:00 AM - 2:30 PM", startTime: "11:00 AM", endTime: "2:30 PM", available: true },
+        { id: "12pm", label: "12:00 PM - 3:30 PM", startTime: "12:00 PM", endTime: "3:30 PM", available: true },
+        { id: "1pm", label: "1:00 PM - 4:30 PM", startTime: "1:00 PM", endTime: "4:30 PM", available: true },
+        { id: "2pm", label: "2:00 PM - 5:30 PM", startTime: "2:00 PM", endTime: "5:30 PM", available: true },
+        { id: "3pm", label: "3:00 PM - 6:00 PM", startTime: "3:00 PM", endTime: "6:00 PM", available: true }
+      ];
+    }
   };
 
   const timeSlots: TimeSlot[] = getTimeSlots();
@@ -202,6 +232,19 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
     setShowNextDayOption(true);
   }, [currentWeek]);
 
+  // Update availability when service type changes (time slots change based on duration)
+  useEffect(() => {
+    if (serviceType) {
+      console.log('Service type changed, updating availability:', serviceType);
+      checkWeekAvailability(currentWeek);
+      // Reset selected time when service type changes
+      setSelectedTimeState("");
+      if (selectedDateState) {
+        onSchedulingUpdate({ scheduledDate: selectedDateState, scheduledTime: "" });
+      }
+    }
+  }, [serviceType]);
+
   const weekDates = getWeekDates(currentWeek);
 
   return (
@@ -215,7 +258,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           Select your preferred date and time slot. Business hours: 8 AM - 6 PM
         </CardDescription>
         <div className="text-xs text-primary-foreground/60 mt-1">
-          ✓ Multiple customers can book the same time slot
+          ✓ Multiple customers can book the same time slot • Service duration: {getServiceDuration(serviceType || 'general')}h
         </div>
       </CardHeader>
       
