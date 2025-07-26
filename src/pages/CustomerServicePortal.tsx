@@ -60,6 +60,40 @@ const CustomerServicePortal = () => {
     }
   };
 
+  const sendServiceNotification = async (
+    service: RecurringService,
+    notificationType: string,
+    additionalData: any = {}
+  ) => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      // Get user profile for name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.user.id)
+        .single();
+
+      await supabase.functions.invoke('send-service-notification', {
+        body: {
+          orderId: service.id,
+          notificationType,
+          customerEmail: user.user.email,
+          customerName: profile?.full_name || 'Valued Customer',
+          cleaningType: service.cleaning_type,
+          frequency: service.frequency,
+          serviceAddress: '',
+          ...additionalData
+        }
+      });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      // Don't show error to user as this is not critical for the operation
+    }
+  };
+
   const handlePauseService = async (serviceId: string) => {
     try {
       const pauseUntil = new Date();
@@ -82,6 +116,19 @@ const CustomerServicePortal = () => {
         new_value: { paused_until: pauseUntil.toISOString().split('T')[0] },
         reason: 'Customer requested pause'
       });
+
+      // Send email notification
+      const currentService = services.find(s => s.id === serviceId);
+      if (currentService) {
+        await sendServiceNotification(currentService, 'paused', {
+          pausedUntil: pauseUntil.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
+        });
+      }
 
       toast({
         title: "Service Paused",
@@ -122,6 +169,20 @@ const CustomerServicePortal = () => {
         new_value: { next_service_date: nextDate.toISOString().split('T')[0] },
         reason: 'Customer resumed service'
       });
+
+      // Send email notification
+      const currentService = services.find(s => s.id === serviceId);
+      if (currentService) {
+        await sendServiceNotification(currentService, 'resumed', {
+          nextServiceDate: nextDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          nextServiceTime: currentService.preferred_time || '9:00 AM'
+        });
+      }
 
       toast({
         title: "Service Resumed",

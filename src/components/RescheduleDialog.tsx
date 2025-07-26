@@ -76,6 +76,40 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
         reason: 'Customer requested reschedule'
       });
 
+      // Send email notification
+      const { data: user } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.user?.id)
+        .single();
+
+      await supabase.functions.invoke('send-service-notification', {
+        body: {
+          orderId: service.id,
+          notificationType: 'rescheduled',
+          customerEmail: user.user?.email,
+          customerName: profile?.full_name || 'Valued Customer',
+          cleaningType: service.cleaning_type,
+          frequency: service.frequency,
+          serviceAddress: '',
+          oldDate: oldValues.next_service_date ? new Date(oldValues.next_service_date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : '',
+          oldTime: oldValues.preferred_time,
+          newDate: selectedDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          newTime: selectedTime
+        }
+      });
+
       toast({
         title: "Service Rescheduled",
         description: `Your service has been rescheduled to ${selectedDate.toLocaleDateString()} at ${selectedTime}`,

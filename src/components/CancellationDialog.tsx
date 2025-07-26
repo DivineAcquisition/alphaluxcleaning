@@ -62,6 +62,35 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
         reason: 'Retention discount accepted'
       });
 
+      // Send email notification
+      const { data: user } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.user?.id)
+        .single();
+
+      await supabase.functions.invoke('send-service-notification', {
+        body: {
+          orderId: service.id,
+          notificationType: 'discount_applied',
+          customerEmail: user.user?.email,
+          customerName: profile?.full_name || 'Valued Customer',
+          cleaningType: service.cleaning_type,
+          frequency: service.frequency,
+          originalAmount: service.amount,
+          discountedAmount: discountedAmount,
+          savingsAmount: savingsAmount,
+          nextServiceDate: service.next_service_date ? new Date(service.next_service_date).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'TBD',
+          nextServiceTime: service.preferred_time || '9:00 AM'
+        }
+      });
+
       toast({
         title: "Discount Applied!",
         description: `Great! Your service now costs $${(discountedAmount / 100).toFixed(2)} per ${service.frequency} service.`,
@@ -114,6 +143,28 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
         old_value: { service_status: service.service_status },
         new_value: { service_status: 'cancelled' },
         reason: reason
+      });
+
+      // Send cancellation email
+      const { data: user } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.user?.id)
+        .single();
+
+      await supabase.functions.invoke('send-service-notification', {
+        body: {
+          orderId: service.id,
+          notificationType: 'cancelled',
+          customerEmail: user.user?.email,
+          customerName: profile?.full_name || 'Valued Customer',
+          cleaningType: service.cleaning_type,
+          frequency: service.frequency,
+          cancellationReason: reason,
+          discountOffered: true,
+          discountAccepted: false
+        }
       });
 
       toast({
