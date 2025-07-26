@@ -203,7 +203,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
         <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Instant Price Calculator
+            Select your cleaning request
           </CardTitle>
           <CardDescription className="text-primary-foreground/80">
             Get an instant quote for your cleaning service
