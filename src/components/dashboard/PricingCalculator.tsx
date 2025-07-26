@@ -208,7 +208,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               onValueChange={(value) => setPricingData(prev => ({ ...prev, squareFootage: parseInt(value) }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select square footage range" />
+                <SelectValue placeholder="Select here" />
               </SelectTrigger>
               <SelectContent>
                 {originalPricingTiers.map((tier, index) => (
@@ -232,7 +232,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 onValueChange={(value) => setPricingData(prev => ({ ...prev, bedrooms: parseInt(value) }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select bedrooms" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1 Bedroom</SelectItem>
@@ -251,7 +251,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 onValueChange={(value) => setPricingData(prev => ({ ...prev, bathrooms: parseInt(value) }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select bathrooms" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1 Bathroom</SelectItem>
@@ -274,7 +274,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               disabled={!pricingData.serviceType}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select cleaning type" />
+                <SelectValue placeholder="Select here" />
               </SelectTrigger>
               <SelectContent>
                 <>
@@ -316,7 +316,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               disabled={!pricingData.cleaningType}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
+                <SelectValue placeholder="Select here" />
               </SelectTrigger>
               <SelectContent>
                 <>

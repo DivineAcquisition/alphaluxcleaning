@@ -441,7 +441,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>How did you hear about us?</Label>
               <Select value={formData.hearAboutUs} onValueChange={(value) => handleInputChange("hearAboutUs", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="Select source" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="google">Google Search</SelectItem>
@@ -538,7 +538,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>Dwelling Type</Label>
               <Select value={formData.dwellingType} onValueChange={(value) => handleInputChange("dwellingType", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="Select dwelling type" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="single_family">Single-Family Home</SelectItem>
@@ -556,7 +556,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>Primary Flooring Type</Label>
               <Select value={formData.flooringType} onValueChange={(value) => handleInputChange("flooringType", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="Select flooring type" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="hardwood">Hardwood</SelectItem>
@@ -585,7 +585,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>Preferred Time Slot</Label>
               <Select value={formData.preferredTimeSlot} onValueChange={(value) => handleInputChange("preferredTimeSlot", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="Select time preference" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="morning" className="text-muted-foreground">Morning (8 AM - 12 PM) - Unavailable</SelectItem>
@@ -703,7 +703,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>Preferred Contact Method</Label>
               <Select value={formData.contactMethod} onValueChange={(value) => handleInputChange("contactMethod", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="How should we contact you?" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="phone">Phone Call</SelectItem>
@@ -717,7 +717,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <Label>Best Time to Contact</Label>
               <Select value={formData.contactTime} onValueChange={(value) => handleInputChange("contactTime", value)}>
                 <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="When can we reach you?" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="morning">Morning (8 AM - 12 PM)</SelectItem>

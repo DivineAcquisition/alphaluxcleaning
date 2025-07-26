@@ -165,7 +165,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
                 onValueChange={handleTimeSelection}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose your preferred time slot" />
+                  <SelectValue placeholder="Select here" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border border-border shadow-lg z-50">
                   {timeSlots.map(slot => {

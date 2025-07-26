@@ -158,7 +158,7 @@ export const SubcontractorStatusUpdate = ({ orderId, onStatusUpdate }: Subcontra
             <Label htmlFor="estimated-minutes">Quick Arrival Time</Label>
             <Select value={estimatedMinutes} onValueChange={setEstimatedMinutes}>
               <SelectTrigger>
-                <SelectValue placeholder="Select estimated arrival time" />
+                <SelectValue placeholder="Select here" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="5">5 minutes away</SelectItem>

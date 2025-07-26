@@ -265,7 +265,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, businessType: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select business type" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {businessTypes.map(type => (
@@ -346,7 +346,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select state" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50 max-h-48">
                     {states.map(state => (
@@ -375,7 +375,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, squareFootage: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select square footage" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {squareFootageRanges.map(range => (
@@ -440,7 +440,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, cleaningType: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select cleaning type" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {cleaningTypes.map(type => (
@@ -457,7 +457,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select frequency" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {frequencyOptions.map(freq => (
@@ -476,7 +476,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, preferredTime: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select preferred time" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {timeSlots.map(slot => (
@@ -534,7 +534,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   onValueChange={(value) => setFormData(prev => ({ ...prev, preferredWalkthroughTime: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select preferred time" />
+                    <SelectValue placeholder="Select here" />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     {timeSlots.map(slot => {

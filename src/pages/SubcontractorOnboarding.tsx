@@ -299,7 +299,7 @@ const SubcontractorOnboarding = () => {
                   <Label htmlFor="state">State *</Label>
                   <Select onValueChange={(value) => handleInputChange('state', value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
+                      <SelectValue placeholder="Select here" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="CA">California</SelectItem>

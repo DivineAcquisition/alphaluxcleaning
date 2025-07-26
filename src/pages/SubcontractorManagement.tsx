@@ -799,7 +799,7 @@ const SubcontractorManagement = () => {
                                 onValueChange={setSelectedSubcontractor}
                               >
                                 <SelectTrigger className="w-48">
-                                  <SelectValue placeholder="Select subcontractor" />
+                                  <SelectValue placeholder="Select here" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {subcontractors
