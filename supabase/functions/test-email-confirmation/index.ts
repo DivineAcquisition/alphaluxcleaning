@@ -95,21 +95,65 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // Send test email using GoHighLevel API
-    const emailResponse = await fetch('https://services.leadconnectorhq.com/emails/', {
+    // First, create or get a contact in GoHighLevel
+    console.log("Creating contact in GoHighLevel...");
+    const contactResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ghlApiKey}`,
         'Content-Type': 'application/json',
-        'Version': '2021-07-28'
+        'Version': '2021-04-15'
       },
       body: JSON.stringify({
-        message: {
-          from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
-          to: testEmail,
-          subject: "🧪 Test - Booking Confirmation Email System",
-          html: emailContent
+        email: testEmail,
+        firstName: "Test",
+        lastName: "User"
+      })
+    });
+
+    const contactData = await contactResponse.json();
+    console.log("Contact response:", contactData);
+
+    let contactId;
+    if (contactData.contact) {
+      contactId = contactData.contact.id;
+    } else if (contactData.id) {
+      contactId = contactData.id;
+    } else {
+      console.log("Failed to create contact, trying to find existing...");
+      // If contact creation failed, try to search for existing contact
+      const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?email=${encodeURIComponent(testEmail)}`, {
+        headers: {
+          'Authorization': `Bearer ${ghlApiKey}`,
+          'Version': '2021-04-15'
         }
+      });
+      const searchData = await searchResponse.json();
+      console.log("Search response:", searchData);
+      
+      if (searchData.contact) {
+        contactId = searchData.contact.id;
+      } else {
+        throw new Error("Unable to create or find contact in GoHighLevel");
+      }
+    }
+
+    console.log("Using contact ID:", contactId);
+
+    // Send test email using GoHighLevel API
+    const emailResponse = await fetch('https://services.leadconnectorhq.com/conversations/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-04-15'
+      },
+      body: JSON.stringify({
+        type: "Email",
+        contactId: contactId,
+        emailFrom: "noreply@bayareacleaningpros.com",
+        html: emailContent,
+        message: "Test booking confirmation email from Bay Area Cleaning Pros"
       })
     });
 
