@@ -138,20 +138,29 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     const frequency = pricingData.frequency;
     const cleaningType = pricingData.cleaningType;
 
-    // Get base price based on frequency and cleaning type
-    if (frequency === 'weekly') {
-      basePrice = tier.weekly;
-    } else if (frequency === 'biweekly') {
-      basePrice = tier.biweekly;
-    } else if (frequency === 'monthly') {
-      basePrice = tier.monthly;
-    } else if (frequency === 'one_time') {
-      basePrice = tier.oneTime;
-    }
-
-    // Adjust for deep clean/move out
+    // Get base price based on cleaning type first
     if (cleaningType === 'deep' || cleaningType === 'moveout') {
+      // Start with deep cleaning base price
       basePrice = tier.deepClean;
+      
+      // Apply additional 25% recurring discount for weekly/biweekly deep cleaning
+      if (frequency === 'weekly' || frequency === 'biweekly') {
+        // Calculate original deep clean price before the $75 discount
+        const originalDeepPrice = tier.deepClean + 75;
+        // Apply 25% recurring discount to the original price, then subtract $75
+        basePrice = Math.round((originalDeepPrice * 0.75 - 75) * 100) / 100;
+      }
+    } else {
+      // For general cleaning, get base price based on frequency
+      if (frequency === 'weekly') {
+        basePrice = tier.weekly;
+      } else if (frequency === 'biweekly') {
+        basePrice = tier.biweekly;
+      } else if (frequency === 'monthly') {
+        basePrice = tier.monthly;
+      } else if (frequency === 'one_time') {
+        basePrice = tier.oneTime;
+      }
     }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
@@ -559,23 +568,22 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                   let originalBasePrice = 0;
                   const frequency = pricingData.frequency;
                   const cleaningType = pricingData.cleaningType;
-                  
-                  if (frequency === 'weekly') {
-                    originalBasePrice = tier.weekly;
-                  } else if (frequency === 'biweekly') {
-                    originalBasePrice = tier.biweekly;
-                  } else if (frequency === 'monthly') {
-                    originalBasePrice = tier.monthly;
-                  } else if (frequency === 'one_time') {
-                    originalBasePrice = tier.oneTime;
-                  }
-                  
-                  if (cleaningType === 'deep' || cleaningType === 'moveout') {
-                    originalBasePrice = tier.deepClean;
-                  }
-                  
-                  const isRecurring = ['weekly', 'biweekly', 'monthly'].includes(frequency);
                   const isDeepCleaning = cleaningType === 'deep' || cleaningType === 'moveout';
+                  const hasRecurringDiscount = frequency === 'weekly' || frequency === 'biweekly';
+                  
+                  if (isDeepCleaning) {
+                    originalBasePrice = tier.deepClean;
+                  } else {
+                    if (frequency === 'weekly') {
+                      originalBasePrice = tier.weekly;
+                    } else if (frequency === 'biweekly') {
+                      originalBasePrice = tier.biweekly;
+                    } else if (frequency === 'monthly') {
+                      originalBasePrice = tier.monthly;
+                    } else if (frequency === 'one_time') {
+                      originalBasePrice = tier.oneTime;
+                    }
+                  }
                   
                   return (
                     <>
@@ -584,7 +592,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                         <span className="font-medium">${originalBasePrice.toFixed(2)}</span>
                       </div>
                       
-                      {(frequency === 'weekly' || frequency === 'biweekly') && !isDeepCleaning && (
+                      {hasRecurringDiscount && (
                         <div className="flex justify-between items-center py-2 text-green-600">
                           <span>25% Recurring Discount ({frequency === 'weekly' ? 'Weekly' : 'Biweekly'})</span>
                           <span>-${((originalBasePrice * 0.25)).toFixed(2)}</span>
