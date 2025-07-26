@@ -17,6 +17,7 @@ import SubcontractorHome from "./pages/SubcontractorHome";
 import SubcontractorOnboarding from "./pages/SubcontractorOnboarding";
 import SubcontractorDashboard from "./pages/SubcontractorDashboard";
 import CommercialThankYou from "./pages/CommercialThankYou";
+import TestEmail from "./pages/TestEmail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
           <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
           <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
+          <Route path="/test-email" element={<TestEmail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
