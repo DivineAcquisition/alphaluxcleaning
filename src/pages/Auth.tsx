@@ -31,7 +31,7 @@ export default function Auth() {
       if (userRole === 'admin' || userRole === 'employee') {
         navigate('/admin-dashboard');
       } else if (userRole === 'customer') {
-        navigate('/customer-service-portal');
+        navigate('/my-services');
       }
     }
   }, [user, userRole, navigate]);
