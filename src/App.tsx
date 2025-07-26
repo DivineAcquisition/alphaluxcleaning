@@ -29,29 +29,32 @@ const SubdomainRedirect = ({ children }: { children: React.ReactElement }) => {
   const currentHost = window.location.hostname;
   const currentPath = window.location.pathname;
   
+  // Skip redirect for development environments
+  if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app')) {
+    return children;
+  }
+  
   // Define routes for each subdomain
   const adminRoutes = ['/admin-auth', '/admin-panel', '/admin-dashboard', '/subcontractor-management', '/application-manager', '/password-reset'];
   const subcontractorRoutes = ['/subcontractor-home', '/subcontractor-auth', '/subcontractor-onboarding', '/subcontractor-dashboard', '/subcontractor-application'];
   const customerRoutes = ['/', '/payment-success', '/service-details', '/order-status', '/commercial-thank-you', '/test-email'];
   
+  // Only redirect if we're on the wrong subdomain for the current route
   // Redirect to admin subdomain
   if (adminRoutes.includes(currentPath) && !currentHost.startsWith('admin.')) {
-    const adminUrl = `https://admin.bayareacleaningpros.com${currentPath}${window.location.search}`;
-    window.location.href = adminUrl;
+    window.location.replace(`https://admin.bayareacleaningpros.com${currentPath}${window.location.search}`);
     return null;
   }
   
   // Redirect to subcontractor subdomain
   if (subcontractorRoutes.includes(currentPath) && !currentHost.startsWith('subcon.')) {
-    const subconUrl = `https://subcon.bayareacleaningpros.com${currentPath}${window.location.search}`;
-    window.location.href = subconUrl;
+    window.location.replace(`https://subcon.bayareacleaningpros.com${currentPath}${window.location.search}`);
     return null;
   }
   
   // Redirect to portal subdomain for customer pages
-  if (customerRoutes.includes(currentPath) && !currentHost.startsWith('portal.') && !currentHost.includes('localhost') && !currentHost.includes('127.0.0.1')) {
-    const portalUrl = `https://portal.bayareacleaningpros.com${currentPath}${window.location.search}`;
-    window.location.href = portalUrl;
+  if (customerRoutes.includes(currentPath) && !currentHost.startsWith('portal.')) {
+    window.location.replace(`https://portal.bayareacleaningpros.com${currentPath}${window.location.search}`);
     return null;
   }
   
