@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import ServiceDetails from "./pages/ServiceDetails";
@@ -24,6 +24,24 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Helper component to redirect admin routes to admin subdomain
+const AdminRedirect = ({ children }: { children: React.ReactElement }) => {
+  const currentHost = window.location.hostname;
+  const currentPath = window.location.pathname;
+  
+  // Admin routes that should be on admin subdomain
+  const adminRoutes = ['/admin-auth', '/admin-panel', '/admin-dashboard', '/subcontractor-management', '/application-manager', '/password-reset'];
+  
+  // If we're on an admin route but not on admin subdomain, redirect
+  if (adminRoutes.includes(currentPath) && !currentHost.startsWith('admin.')) {
+    const adminUrl = `https://admin.bayareacleaningpros.com${currentPath}${window.location.search}`;
+    window.location.href = adminUrl;
+    return null;
+  }
+  
+  return children;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -35,17 +53,17 @@ const App = () => (
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/service-details" element={<ServiceDetails />} />
           <Route path="/order-status" element={<OrderStatus />} />
-          <Route path="/admin-auth" element={<AdminAuth />} />
-          <Route path="/admin-panel" element={<AdminPanel />} />
-          <Route path="/password-reset" element={<PasswordReset />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/subcontractor-management" element={<SubcontractorManagement />} />
+          <Route path="/admin-auth" element={<AdminRedirect><AdminAuth /></AdminRedirect>} />
+          <Route path="/admin-panel" element={<AdminRedirect><AdminPanel /></AdminRedirect>} />
+          <Route path="/password-reset" element={<AdminRedirect><PasswordReset /></AdminRedirect>} />
+          <Route path="/admin-dashboard" element={<AdminRedirect><AdminDashboard /></AdminRedirect>} />
+          <Route path="/subcontractor-management" element={<AdminRedirect><SubcontractorManagement /></AdminRedirect>} />
           <Route path="/subcontractor-home" element={<SubcontractorHome />} />
           <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
           <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
           <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
           <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
-          <Route path="/application-manager" element={<ApplicationManager />} />
+          <Route path="/application-manager" element={<AdminRedirect><ApplicationManager /></AdminRedirect>} />
           <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
           <Route path="/test-email" element={<TestEmail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
