@@ -24,73 +24,65 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Helper component to redirect routes to appropriate subdomains
-const SubdomainRedirect = ({ children }: { children: React.ReactElement }) => {
+const App = () => {
   const currentHost = window.location.hostname;
-  const currentPath = window.location.pathname;
   
-  // Skip redirect for development environments
-  if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app')) {
-    return children;
-  }
-  
-  // Define routes for each subdomain
-  const adminRoutes = ['/admin-auth', '/admin-panel', '/admin-dashboard', '/subcontractor-management', '/application-manager', '/password-reset'];
-  const subcontractorRoutes = ['/subcontractor-home', '/subcontractor-auth', '/subcontractor-onboarding', '/subcontractor-dashboard', '/subcontractor-application'];
-  const customerRoutes = ['/', '/payment-success', '/service-details', '/order-status', '/commercial-thank-you', '/test-email'];
-  
-  // Only redirect if we're on the wrong subdomain for the current route
-  // Redirect to admin subdomain
-  if (adminRoutes.includes(currentPath) && !currentHost.startsWith('admin.')) {
-    window.location.replace(`https://admin.bayareacleaningpros.com${currentPath}${window.location.search}`);
-    return null;
-  }
-  
-  // Redirect to subcontractor subdomain
-  if (subcontractorRoutes.includes(currentPath) && !currentHost.startsWith('subcon.')) {
-    window.location.replace(`https://subcon.bayareacleaningpros.com${currentPath}${window.location.search}`);
-    return null;
-  }
-  
-  // Redirect to portal subdomain for customer pages
-  if (customerRoutes.includes(currentPath) && !currentHost.startsWith('portal.')) {
-    window.location.replace(`https://portal.bayareacleaningpros.com${currentPath}${window.location.search}`);
-    return null;
-  }
-  
-  return children;
-};
+  // Determine which routes to show based on subdomain
+  const isAdminDomain = currentHost.startsWith('admin.');
+  const isSubconDomain = currentHost.startsWith('subcon.');
+  const isPortalDomain = currentHost.startsWith('portal.') || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<SubdomainRedirect><Index /></SubdomainRedirect>} />
-          <Route path="/payment-success" element={<SubdomainRedirect><PaymentSuccess /></SubdomainRedirect>} />
-          <Route path="/service-details" element={<SubdomainRedirect><ServiceDetails /></SubdomainRedirect>} />
-          <Route path="/order-status" element={<SubdomainRedirect><OrderStatus /></SubdomainRedirect>} />
-          <Route path="/admin-auth" element={<SubdomainRedirect><AdminAuth /></SubdomainRedirect>} />
-          <Route path="/admin-panel" element={<SubdomainRedirect><AdminPanel /></SubdomainRedirect>} />
-          <Route path="/password-reset" element={<SubdomainRedirect><PasswordReset /></SubdomainRedirect>} />
-          <Route path="/admin-dashboard" element={<SubdomainRedirect><AdminDashboard /></SubdomainRedirect>} />
-          <Route path="/subcontractor-management" element={<SubdomainRedirect><SubcontractorManagement /></SubdomainRedirect>} />
-          <Route path="/subcontractor-home" element={<SubdomainRedirect><SubcontractorHome /></SubdomainRedirect>} />
-          <Route path="/subcontractor-auth" element={<SubdomainRedirect><SubcontractorAuth /></SubdomainRedirect>} />
-          <Route path="/subcontractor-onboarding" element={<SubdomainRedirect><SubcontractorOnboarding /></SubdomainRedirect>} />
-          <Route path="/subcontractor-dashboard" element={<SubdomainRedirect><SubcontractorDashboard /></SubdomainRedirect>} />
-          <Route path="/subcontractor-application" element={<SubdomainRedirect><SubcontractorApplication /></SubdomainRedirect>} />
-          <Route path="/application-manager" element={<SubdomainRedirect><ApplicationManager /></SubdomainRedirect>} />
-          <Route path="/commercial-thank-you" element={<SubdomainRedirect><CommercialThankYou /></SubdomainRedirect>} />
-          <Route path="/test-email" element={<SubdomainRedirect><TestEmail /></SubdomainRedirect>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Admin Domain Routes */}
+            {isAdminDomain && (
+              <>
+                <Route path="/" element={<Navigate to="/admin-panel" replace />} />
+                <Route path="/admin-auth" element={<AdminAuth />} />
+                <Route path="/admin-panel" element={<AdminPanel />} />
+                <Route path="/password-reset" element={<PasswordReset />} />
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                <Route path="/subcontractor-management" element={<SubcontractorManagement />} />
+                <Route path="/application-manager" element={<ApplicationManager />} />
+                <Route path="/test-email" element={<TestEmail />} />
+              </>
+            )}
+            
+            {/* Subcontractor Domain Routes */}
+            {isSubconDomain && (
+              <>
+                <Route path="/" element={<Navigate to="/subcontractor-home" replace />} />
+                <Route path="/subcontractor-home" element={<SubcontractorHome />} />
+                <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
+                <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
+                <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
+                <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
+              </>
+            )}
+            
+            {/* Portal/Customer Domain Routes */}
+            {isPortalDomain && (
+              <>
+                <Route path="/" element={<Index />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/service-details" element={<ServiceDetails />} />
+                <Route path="/order-status" element={<OrderStatus />} />
+                <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
+              </>
+            )}
+            
+            {/* Catch-all route for 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
