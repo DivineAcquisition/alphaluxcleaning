@@ -78,9 +78,10 @@ serve(async (req) => {
     const contactData = await contactResponse.json();
     logStep("Contact created/updated", { contactId: contactData.contact?.id });
 
-    // Create appointment in GoHighLevel
+    // Create appointment with proper duration based on service type
     const startDateTime = new Date(`${scheduledDate}T${getTimeSlotHour(scheduledTime)}:00`);
-    const endDateTime = new Date(startDateTime.getTime() + (2 * 60 * 60 * 1000)); // 2 hours default
+    const duration = getServiceDuration(serviceType);
+    const endDateTime = new Date(startDateTime.getTime() + (duration * 60 * 60 * 1000));
 
     const appointmentResponse = await fetch(`https://services.leadconnectorhq.com/calendars/events/appointments`, {
       method: "POST",
@@ -127,18 +128,18 @@ serve(async (req) => {
 });
 
 function getTimeSlotHour(timeSlot: string): string {
-  switch (timeSlot) {
-    case "Early Morning (6-9 AM)":
-      return "06";
-    case "Morning (9 AM-12 PM)":
-      return "09";
-    case "Afternoon (12-5 PM)":
-      return "12";
-    case "Evening (5-8 PM)":
-      return "17";
-    case "After Hours (8 PM+)":
-      return "20";
-    default:
-      return "09";
-  }
+  if (timeSlot.includes("Early Morning")) return "06";
+  if (timeSlot.includes("Morning")) return "09";
+  if (timeSlot.includes("Afternoon")) return "12";
+  if (timeSlot.includes("Evening")) return "17";
+  if (timeSlot.includes("After Hours")) return "20";
+  return "09";
+}
+
+function getServiceDuration(serviceType: string): number {
+  const type = serviceType?.toLowerCase() || '';
+  if (type.includes('deep')) return 3; // 3 hours
+  if (type.includes('move')) return 2; // 2 hours  
+  if (type.includes('recurring')) return 1.5; // 1.5 hours
+  return 1.5; // General cleaning default 1.5 hours
 }

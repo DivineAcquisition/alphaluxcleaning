@@ -39,11 +39,11 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const [selectedTimeState, setSelectedTimeState] = useState<string>(selectedTime || "");
 
   const timeSlots: TimeSlot[] = [
-    { id: "early", label: "Early Morning", startTime: "06:00", endTime: "09:00", available: true },
-    { id: "morning", label: "Morning", startTime: "09:00", endTime: "12:00", available: true },
-    { id: "afternoon", label: "Afternoon", startTime: "12:00", endTime: "17:00", available: true },
-    { id: "evening", label: "Evening", startTime: "17:00", endTime: "20:00", available: true },
-    { id: "late", label: "After Hours", startTime: "20:00", endTime: "23:00", available: true }
+    { id: "early", label: "Early Morning", startTime: "6:00 AM", endTime: "9:00 AM", available: true },
+    { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
+    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true },
+    { id: "evening", label: "Evening", startTime: "5:00 PM", endTime: "8:00 PM", available: true },
+    { id: "late", label: "After Hours", startTime: "8:00 PM", endTime: "11:00 PM", available: true }
   ];
 
   // Get week dates starting from Monday
