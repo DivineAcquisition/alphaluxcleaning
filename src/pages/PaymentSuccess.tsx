@@ -6,13 +6,15 @@ import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { trackPurchase, trackCompleteRegistration } from "@/lib/facebook-pixel";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [emailSent, setEmailSent] = useState(false);
+  const [purchaseTracked, setPurchaseTracked] = useState(false);
 
-  // Send order confirmation email when component loads
+  // Send order confirmation email and track purchase when component loads
   useEffect(() => {
     const sendConfirmationEmail = async () => {
       if (sessionId && !emailSent) {
@@ -32,8 +34,46 @@ export default function PaymentSuccess() {
       }
     };
 
+    const trackPurchaseEvent = async () => {
+      if (sessionId && !purchaseTracked) {
+        try {
+          // Fetch order details to get price and service info
+          const { data: orders, error } = await supabase
+            .from('orders')
+            .select('amount, cleaning_type, frequency')
+            .eq('stripe_session_id', sessionId)
+            .limit(1);
+
+          if (error) throw error;
+
+          if (orders && orders.length > 0) {
+            const order = orders[0];
+            // Track Facebook Purchase event
+            trackPurchase(
+              order.amount / 100, // Convert cents to dollars
+              'USD',
+              `${order.cleaning_type} - ${order.frequency}`
+            );
+            
+            // Track completion registration
+            trackCompleteRegistration(order.cleaning_type);
+            
+            setPurchaseTracked(true);
+            console.log('Facebook Pixel: Purchase tracked', {
+              value: order.amount / 100,
+              cleaning_type: order.cleaning_type,
+              frequency: order.frequency
+            });
+          }
+        } catch (error) {
+          console.error("Error tracking purchase:", error);
+        }
+      }
+    };
+
     sendConfirmationEmail();
-  }, [sessionId, emailSent]);
+    trackPurchaseEvent();
+  }, [sessionId, emailSent, purchaseTracked]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">

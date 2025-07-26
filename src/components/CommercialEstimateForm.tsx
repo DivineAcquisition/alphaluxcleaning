@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { trackCommercialEstimateRequest, trackLead } from "@/lib/facebook-pixel";
 
 interface CommercialEstimateData {
   // Business Information
@@ -208,6 +209,17 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
         }]);
 
       if (error) throw error;
+
+      // Track Facebook Pixel events
+      trackCommercialEstimateRequest(
+        formData.serviceType,
+        parseInt(formData.squareFootage.replace(/[^\d]/g, '')) || undefined
+      );
+      
+      trackLead(
+        `${formData.serviceType} - ${formData.cleaningType}`,
+        undefined // No monetary value for estimate requests
+      );
 
       // Redirect to thank you page
       window.location.href = "/commercial-thank-you";

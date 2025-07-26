@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon } from "lucide-react";
@@ -9,6 +9,7 @@ import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
 import { ReferralSection } from "@/components/ReferralSection";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
@@ -19,9 +20,21 @@ const Index = () => {
     scheduledTime: ""
   });
 
+  // Track page view on component mount
+  useEffect(() => {
+    trackViewContent('Cleaning Services Homepage');
+  }, []);
+
   const handleSchedulingUpdate = (data: any) => {
     setSchedulingData(data);
   };
+
+  // Track InitiateCheckout when pricing data is available and user starts scheduling
+  useEffect(() => {
+    if (pricingData && calculatedPrice > 0) {
+      trackInitiateCheckout(calculatedPrice, pricingData.cleaningType);
+    }
+  }, [pricingData, calculatedPrice]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">

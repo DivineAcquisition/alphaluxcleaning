@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Home, Building, Star, Clock } from "lucide-react";
+import { trackQuoteCalculated, trackInitiateCheckout } from "@/lib/facebook-pixel";
 
 interface PricingData {
   squareFootage: number;
@@ -174,6 +175,15 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     calculatePrice();
     if (onPriceUpdate) {
       onPriceUpdate(pricingData, calculatedPrice, priceBreakdown);
+    }
+    
+    // Track Facebook Pixel event when a valid quote is calculated
+    if (calculatedPrice > 0 && pricingData.cleaningType && pricingData.frequency) {
+      trackQuoteCalculated(
+        pricingData.cleaningType,
+        calculatedPrice,
+        pricingData.frequency
+      );
     }
   }, [pricingData, calculatedPrice, priceBreakdown, onPriceUpdate]);
 
