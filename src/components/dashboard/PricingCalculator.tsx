@@ -138,29 +138,20 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     const frequency = pricingData.frequency;
     const cleaningType = pricingData.cleaningType;
 
-    // Get base price based on cleaning type first
+    // Get base price based on frequency first
+    if (frequency === 'weekly') {
+      basePrice = tier.weekly;
+    } else if (frequency === 'biweekly') {
+      basePrice = tier.biweekly;
+    } else if (frequency === 'monthly') {
+      basePrice = tier.monthly;
+    } else if (frequency === 'one_time') {
+      basePrice = tier.oneTime;
+    }
+
+    // For deep cleaning, start with deep clean base price and subtract $75
     if (cleaningType === 'deep' || cleaningType === 'moveout') {
-      // Start with deep cleaning base price
-      basePrice = tier.deepClean;
-      
-      // Apply additional 25% recurring discount for weekly/biweekly deep cleaning
-      if (frequency === 'weekly' || frequency === 'biweekly') {
-        // Calculate original deep clean price before the $75 discount
-        const originalDeepPrice = tier.deepClean + 75;
-        // Apply 25% recurring discount to the original price, then subtract $75
-        basePrice = Math.round((originalDeepPrice * 0.75 - 75) * 100) / 100;
-      }
-    } else {
-      // For general cleaning, get base price based on frequency
-      if (frequency === 'weekly') {
-        basePrice = tier.weekly;
-      } else if (frequency === 'biweekly') {
-        basePrice = tier.biweekly;
-      } else if (frequency === 'monthly') {
-        basePrice = tier.monthly;
-      } else if (frequency === 'one_time') {
-        basePrice = tier.oneTime;
-      }
+      basePrice = tier.deepClean; // This already has the $75 discount applied in the tier
     }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
