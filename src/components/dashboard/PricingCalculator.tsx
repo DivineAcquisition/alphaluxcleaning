@@ -138,7 +138,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     const frequency = pricingData.frequency;
     const cleaningType = pricingData.cleaningType;
 
-    // Get base price based on frequency first
+    // Get base price based on frequency and cleaning type
     if (frequency === 'weekly') {
       basePrice = tier.weekly;
     } else if (frequency === 'biweekly') {
@@ -149,9 +149,9 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
       basePrice = tier.oneTime;
     }
 
-    // For deep cleaning, start with deep clean base price and subtract $75
-    if (cleaningType === 'deep' || cleaningType === 'moveout') {
-      basePrice = tier.deepClean; // This already has the $75 discount applied in the tier
+    // For deep cleaning ONE-TIME only, apply $75 discount
+    if ((cleaningType === 'deep' || cleaningType === 'moveout') && frequency === 'one_time') {
+      basePrice = tier.deepClean; // This has $75 discount already applied
     }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {
@@ -560,15 +560,18 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                   const frequency = pricingData.frequency;
                   const cleaningType = pricingData.cleaningType;
                   const isDeepCleaning = cleaningType === 'deep' || cleaningType === 'moveout';
-                  const hasRecurringDiscount = frequency === 'weekly' || frequency === 'biweekly';
+                  const isOneTime = frequency === 'one_time';
+                  const hasRecurringDiscount = (frequency === 'weekly' || frequency === 'biweekly') && !isOneTime;
+                  const hasDeepCleanDiscount = isDeepCleaning && isOneTime;
                   
-                  if (isDeepCleaning) {
-                    originalBasePrice = tier.deepClean;
+                  // Get original price based on frequency for non-deep cleaning, or deep cleaning base for one-time deep
+                  if (isDeepCleaning && isOneTime) {
+                    originalBasePrice = tier.deepClean + 75; // Add back the $75 to show original price
                   } else {
                     if (frequency === 'weekly') {
-                      originalBasePrice = tier.weekly;
+                      originalBasePrice = tier.weekly / 0.75; // Show original before 25% discount
                     } else if (frequency === 'biweekly') {
-                      originalBasePrice = tier.biweekly;
+                      originalBasePrice = tier.biweekly / 0.75; // Show original before 25% discount  
                     } else if (frequency === 'monthly') {
                       originalBasePrice = tier.monthly;
                     } else if (frequency === 'one_time') {
@@ -580,19 +583,19 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                     <>
                       <div className="flex justify-between items-center py-2">
                         <span className="text-muted-foreground">Original Price</span>
-                        <span className="font-medium">${originalBasePrice.toFixed(2)}</span>
+                        <span className="font-medium">${Math.round(originalBasePrice * 100) / 100}</span>
                       </div>
                       
                       {hasRecurringDiscount && (
                         <div className="flex justify-between items-center py-2 text-green-600">
                           <span>25% Recurring Discount ({frequency === 'weekly' ? 'Weekly' : 'Biweekly'})</span>
-                          <span>-${((originalBasePrice * 0.25)).toFixed(2)}</span>
+                          <span>-${Math.round((originalBasePrice * 0.25) * 100) / 100}</span>
                         </div>
                       )}
                       
-                      {isDeepCleaning && (
+                      {hasDeepCleanDiscount && (
                         <div className="flex justify-between items-center py-2 text-green-600">
-                          <span>$75 Deep Cleaning Discount</span>
+                          <span>$75 One-Time Deep Cleaning Discount</span>
                           <span>-$75.00</span>
                         </div>
                       )}

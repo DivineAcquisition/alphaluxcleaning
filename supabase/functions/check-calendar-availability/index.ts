@@ -183,16 +183,20 @@ function hasConflict(events: CalendarEvent[], date: string, timeSlot: string): b
 }
 
 function parseTimeSlot(date: string, timeSlot: string): { startTime: Date; endTime: Date } {
-  // Parse time slots for business hours (9 AM-5 PM)
+  // Parse time slots for business hours (9 AM-5 PM) with more granular options
   const timeMap: Record<string, { start: number; end: number }> = {
     "Morning (9:00 AM-12:00 PM)": { start: 9, end: 12 },
+    "Early Afternoon (12:00 PM-2:30 PM)": { start: 12, end: 14.5 },
+    "Late Afternoon (2:30 PM-5:00 PM)": { start: 14.5, end: 17 },
+    "Afternoon (12:00 PM-3:00 PM)": { start: 12, end: 15 },
+    "Late Afternoon (2:00 PM-5:00 PM)": { start: 14, end: 17 },
     "Afternoon (12:00 PM-5:00 PM)": { start: 12, end: 17 },
   };
 
   const slot = timeMap[timeSlot] || { start: 9, end: 17 }; // Default to business hours
   
-  const startTime = new Date(`${date}T${slot.start.toString().padStart(2, '0')}:00:00`);
-  const endTime = new Date(`${date}T${slot.end.toString().padStart(2, '0')}:00:00`);
+  const startTime = new Date(`${date}T${Math.floor(slot.start).toString().padStart(2, '0')}:${((slot.start % 1) * 60).toString().padStart(2, '0')}:00`);
+  const endTime = new Date(`${date}T${Math.floor(slot.end).toString().padStart(2, '0')}:${((slot.end % 1) * 60).toString().padStart(2, '0')}:00`);
   
   return { startTime, endTime };
 }

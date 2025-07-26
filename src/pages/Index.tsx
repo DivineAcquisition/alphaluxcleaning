@@ -83,11 +83,12 @@ const Index = () => {
                       {/* Scheduling Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-                        <VisualScheduler 
-                          onSchedulingUpdate={handleSchedulingUpdate}
-                          selectedDate={schedulingData.scheduledDate}
-                          selectedTime={schedulingData.scheduledTime}
-                        />
+            <VisualScheduler 
+              onSchedulingUpdate={handleSchedulingUpdate} 
+              selectedDate={schedulingData.scheduledDate}
+              selectedTime={schedulingData.scheduledTime}
+              serviceType={pricingData.cleaningType}
+            />
                       </div>
                       
                       {/* Payment Section */}

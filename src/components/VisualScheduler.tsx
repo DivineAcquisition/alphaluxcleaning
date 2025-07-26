@@ -17,6 +17,7 @@ interface VisualSchedulerProps {
   onSchedulingUpdate: (data: SchedulingData) => void;
   selectedDate?: string;
   selectedTime?: string;
+  serviceType?: string; // Add this to determine time slots
 }
 
 interface TimeSlot {
@@ -33,7 +34,7 @@ interface DayAvailability {
   timeSlots: TimeSlot[];
 }
 
-export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime }: VisualSchedulerProps) {
+export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime, serviceType }: VisualSchedulerProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [availability, setAvailability] = useState<DayAvailability[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,15 +43,44 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const [showNextDayOption, setShowNextDayOption] = useState(false);
   const [isNextDayBooking, setIsNextDayBooking] = useState(false);
 
-  const timeSlots: TimeSlot[] = [
-    { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
-  ];
+  // Dynamic time slots based on service duration
+  const getTimeSlots = () => {
+    const serviceDuration = getServiceDuration(serviceType || 'general');
+    
+    if (serviceDuration <= 1.5) {
+      // 1-1.5 hour services: 4 time slots
+      return [
+        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
+        { id: "early_afternoon", label: "Early Afternoon", startTime: "12:00 PM", endTime: "2:30 PM", available: true },
+        { id: "late_afternoon", label: "Late Afternoon", startTime: "2:30 PM", endTime: "5:00 PM", available: true }
+      ];
+    } else if (serviceDuration <= 2) {
+      // 2 hour services: 3 time slots  
+      return [
+        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
+        { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "3:00 PM", available: true },
+        { id: "late_afternoon", label: "Late Afternoon", startTime: "2:00 PM", endTime: "5:00 PM", available: true }
+      ];
+    } else {
+      // 3+ hour services: 2 time slots
+      return [
+        { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
+        { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
+      ];
+    }
+  };
 
-  const nextDayTimeSlots: TimeSlot[] = [
-    { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
-  ];
+  const timeSlots: TimeSlot[] = getTimeSlots();
+  const nextDayTimeSlots: TimeSlot[] = getTimeSlots();
+
+  // Helper function to get service duration
+  function getServiceDuration(serviceType: string): number {
+    const type = serviceType?.toLowerCase() || '';
+    if (type.includes('deep')) return 3; // 3 hours
+    if (type.includes('move')) return 2; // 2 hours  
+    if (type.includes('recurring')) return 1.5; // 1.5 hours
+    return 1.5; // General cleaning default 1.5 hours
+  }
 
   // Get week dates starting from Monday
   const getWeekDates = (date: Date) => {
@@ -187,9 +217,8 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   useEffect(() => {
     checkWeekAvailability(currentWeek);
     
-    // Show next day option if it's after 5 PM today or user selects a date
-    const currentHour = new Date().getHours();
-    setShowNextDayOption(currentHour >= 17);
+    // Always show next day option
+    setShowNextDayOption(true);
   }, [currentWeek]);
 
   const weekDates = getWeekDates(currentWeek);
