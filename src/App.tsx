@@ -27,6 +27,7 @@ import TestEmail from '@/pages/TestEmail';
 import CommercialThankYou from '@/pages/CommercialThankYou';
 import NotFound from '@/pages/NotFound';
 import PasswordReset from '@/pages/PasswordReset';
+import SecureAdminCreation from '@/pages/SecureAdminCreation';
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ function App() {
             <Route path="/test-email" element={<TestEmail />} />
             <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
             <Route path="/password-reset" element={<PasswordReset />} />
+            <Route path="/secure-admin-creation" element={<SecureAdminCreation />} />
             
             {/* Admin protected routes */}
             <Route path="/admin-panel" element={

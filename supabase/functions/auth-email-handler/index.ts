@@ -42,17 +42,33 @@ serve(async (req) => {
 
     console.log('Webhook data:', JSON.stringify(webhookData, null, 2));
 
-    // Check if this is a password recovery email
+    // Check if this is a password recovery email or signup confirmation
     const { 
       user, 
-      email_data: { 
-        token, 
-        token_hash, 
-        redirect_to, 
-        email_action_type,
-        site_url 
-      } 
+      email_data 
     } = webhookData;
+
+    if (!email_data) {
+      console.log('No email_data found, webhook type:', webhookData.metadata?.name);
+      return new Response(
+        JSON.stringify({ success: true, message: "No email data to process" }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    const { 
+      token, 
+      token_hash, 
+      redirect_to, 
+      email_action_type,
+      site_url 
+    } = email_data;
 
     if (email_action_type === 'recovery') {
       console.log('Processing password recovery email for:', user.email);

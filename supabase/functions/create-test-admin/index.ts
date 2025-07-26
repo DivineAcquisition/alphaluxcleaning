@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface AdminCreationRequest {
+  email?: string;
+  password?: string;
+  fullName?: string;
+  secretCode?: string;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,7 +20,37 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('Creating test admin user...');
+    let requestData: AdminCreationRequest = {};
+    
+    if (req.method === 'POST') {
+      try {
+        requestData = await req.json();
+      } catch (e) {
+        console.log('No JSON body provided, using defaults');
+      }
+    }
+
+    console.log('Creating admin user with data:', { email: requestData.email, hasPassword: !!requestData.password });
+    
+    // Validate secret code if provided
+    const ADMIN_SECRET_CODES = [
+      'BACP_ADMIN_2024_DIVINE',
+      'SUPER_SECURE_ADMIN_KEY_2024',
+      'DIVINE_ACQUISITION_ADMIN_2024'
+    ];
+
+    if (requestData.secretCode && !ADMIN_SECRET_CODES.includes(requestData.secretCode)) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid secret code. Access denied.' 
+        }),
+        { 
+          status: 403, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
 
     // Initialize Supabase client with service role key for admin operations
     const supabaseAdmin = createClient(
@@ -27,13 +64,18 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Create the test admin user
+    // Use provided data or defaults
+    const email = requestData.email || 'admin@test.com';
+    const password = requestData.password || 'admin123';
+    const fullName = requestData.fullName || 'Test Admin';
+
+    // Create the admin user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: 'admin@test.com',
-      password: 'admin123',
+      email,
+      password,
       email_confirm: true,
       user_metadata: {
-        full_name: 'Test Admin'
+        full_name: fullName
       }
     });
 
