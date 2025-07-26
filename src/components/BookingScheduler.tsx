@@ -232,11 +232,18 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
             {/* Booking Summary */}
             {schedulingData.scheduledTime && (
               <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
-                <h5 className="font-semibold text-green-800 mb-2">📅 Booking Confirmed</h5>
+                <h5 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  📅 Time Selection Complete
+                </h5>
                 <div className="space-y-1 text-sm text-green-700">
                   <p><strong>Date:</strong> Tomorrow ({new Date(getTomorrowDate()).toLocaleDateString()})</p>
                   <p><strong>Time:</strong> {schedulingData.scheduledTime}</p>
                   <p><strong>Priority Upcharge:</strong> $50.00</p>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>✓ Scheduling completed successfully</span>
                 </div>
               </div>
             )}

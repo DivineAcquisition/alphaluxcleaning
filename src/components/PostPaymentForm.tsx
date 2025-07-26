@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Calendar, Clock, MessageSquare, User, Home } from "lucide-react";
+import { MapPin, Calendar, Clock, MessageSquare, User, Home, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import React from "react";
@@ -126,6 +126,12 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
       return;
     }
 
+    if (!formData.customerName) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    console.log('Starting form submission with data:', formData);
     setIsSubmitting(true);
 
     try {
@@ -278,6 +284,21 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     }
   };
 
+  // Calculate completion percentage
+  const calculateCompletion = () => {
+    const requiredFields = ['streetAddress', 'city', 'zipCode', 'customerEmail', 'customerName'];
+    const optionalFields = ['dwellingType', 'flooringType', 'hearAboutUs', 'contactMethod'];
+    
+    const requiredComplete = requiredFields.filter(field => formData[field as keyof typeof formData]).length;
+    const optionalComplete = optionalFields.filter(field => formData[field as keyof typeof formData]).length;
+    
+    const totalRequired = requiredFields.length;
+    const totalOptional = optionalFields.length;
+    
+    const completion = ((requiredComplete * 2 + optionalComplete) / (totalRequired * 2 + totalOptional)) * 100;
+    return Math.round(completion);
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <Card className="shadow-lg">
@@ -289,6 +310,23 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
           <CardDescription className="text-primary-foreground/80 text-sm sm:text-base">
             Help us provide the best cleaning service by sharing a few more details
           </CardDescription>
+          
+          {/* Completion Progress */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>Form Completion</span>
+              <span className="flex items-center gap-1">
+                {calculateCompletion() === 100 && <CheckCircle className="h-4 w-4" />}
+                {calculateCompletion()}%
+              </span>
+            </div>
+            <div className="w-full bg-primary-foreground/20 rounded-full h-2">
+              <div 
+                className="bg-white h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${calculateCompletion()}%` }}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
           {/* Customer Information */}
