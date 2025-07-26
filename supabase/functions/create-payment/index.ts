@@ -36,6 +36,9 @@ serve(async (req) => {
       customerName,
       customerEmail,
       customerPhone,
+      serviceAddress,
+      bedrooms,
+      bathrooms,
       scheduledDate,
       scheduledTime,
       nextDayUpcharge
@@ -118,7 +121,10 @@ serve(async (req) => {
         cleaningType,
         frequency,
         addOns,
-        totalAmount: amount
+        totalAmount: amount,
+        serviceAddress,
+        bedrooms,
+        bathrooms
       },
       status: "pending",
       created_at: new Date().toISOString()

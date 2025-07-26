@@ -64,19 +64,40 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     isChecking: false
   });
 
-  // Fetch order details to get service type
+  // Fetch order details and autofill service address
   React.useEffect(() => {
     const fetchOrderDetails = async () => {
       if (sessionId) {
         try {
           const { data, error } = await supabase
             .from("orders")
-            .select("frequency")
+            .select("frequency, service_details, customer_name, customer_email")
             .eq("stripe_session_id", sessionId)
             .single();
 
           if (data && !error) {
             handleInputChange("serviceType", data.frequency || "one-time");
+            
+            // Autofill customer info
+            if (data.customer_name) {
+              handleInputChange("customerName", data.customer_name);
+            }
+            if (data.customer_email) {
+              handleInputChange("customerEmail", data.customer_email);
+            }
+            
+            // Autofill service address if available
+            if (data.service_details && typeof data.service_details === 'object') {
+              const serviceDetails = data.service_details as any;
+              if (serviceDetails.serviceAddress) {
+                const addr = serviceDetails.serviceAddress;
+                if (addr.street) handleInputChange("streetAddress", addr.street);
+                if (addr.apartment) handleInputChange("apartmentUnit", addr.apartment);
+                if (addr.city) handleInputChange("city", addr.city);
+                if (addr.state) handleInputChange("state", addr.state);
+                if (addr.zipCode) handleInputChange("zipCode", addr.zipCode);
+              }
+            }
           }
         } catch (error) {
           console.error("Error fetching order details:", error);

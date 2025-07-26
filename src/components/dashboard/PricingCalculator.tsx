@@ -13,6 +13,8 @@ interface PricingData {
   cleaningType: string;
   frequency: string;
   addOns: string[];
+  bedrooms?: number;
+  bathrooms?: number;
 }
 
 interface PricingCalculatorProps {
@@ -70,7 +72,9 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
     serviceType: "residential",
     cleaningType: "",
     frequency: "",
-    addOns: []
+    addOns: [],
+    bedrooms: 2,
+    bathrooms: 2
   });
 
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
@@ -219,6 +223,46 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
             </Select>
           </div>
 
+          {/* Bedroom and Bathroom Count */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Bedrooms</Label>
+              <Select 
+                value={pricingData.bedrooms?.toString() || "2"} 
+                onValueChange={(value) => setPricingData(prev => ({ ...prev, bedrooms: parseInt(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select bedrooms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Bedroom</SelectItem>
+                  <SelectItem value="2">2 Bedrooms</SelectItem>
+                  <SelectItem value="3">3 Bedrooms</SelectItem>
+                  <SelectItem value="4">4 Bedrooms</SelectItem>
+                  <SelectItem value="5">5+ Bedrooms</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Bathrooms</Label>
+              <Select 
+                value={pricingData.bathrooms?.toString() || "2"} 
+                onValueChange={(value) => setPricingData(prev => ({ ...prev, bathrooms: parseInt(value) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select bathrooms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Bathroom</SelectItem>
+                  <SelectItem value="2">2 Bathrooms</SelectItem>
+                  <SelectItem value="3">3 Bathrooms</SelectItem>
+                  <SelectItem value="4">4 Bathrooms</SelectItem>
+                  <SelectItem value="5">5+ Bathrooms</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
 
           {/* Cleaning Type */}
