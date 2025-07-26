@@ -8,10 +8,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Navigation() {
   const location = useLocation();
+  const { user, userRole, signOut } = useAuth();
   
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -70,6 +72,48 @@ export function Navigation() {
                 Visit Website
               </a>
             </Button>
+            
+            {/* Auth Section */}
+            <div className="flex items-center gap-2 ml-4">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      {user.email?.split('@')[0]} ({userRole})
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {userRole === 'admin' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin-dashboard">Admin Dashboard</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {userRole === 'customer' && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link to="/customer-service-portal">My Account</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth" className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                </Button>
+              )}
+            </div>
             
             {/* Contact Buttons */}
             <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l">
@@ -138,6 +182,40 @@ export function Navigation() {
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
+                
+                {/* Auth Section for Mobile */}
+                {user ? (
+                  <>
+                    <DropdownMenuItem disabled className="flex items-center gap-2 text-sm font-medium">
+                      {user.email?.split('@')[0]} ({userRole})
+                    </DropdownMenuItem>
+                    {userRole === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-dashboard">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {userRole === 'customer' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/customer-service-portal">My Account</Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/auth" className="flex items-center gap-2">
+                        <LogIn className="h-4 w-4" />
+                        Sign In
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 
                 <DropdownMenuItem disabled className="flex items-center gap-2 text-sm font-medium">
                   Email or call us:

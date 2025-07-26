@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_redirects: {
+        Row: {
+          created_at: string | null
+          id: string
+          redirect_path: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          redirect_path: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          redirect_path?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           assigned_employee_id: string | null
@@ -891,6 +912,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           company_id: string | null
           created_at: string
           department: string | null
@@ -899,9 +921,11 @@ export type Database = {
           id: string
           is_active: boolean | null
           phone: string | null
+          role_display_name: string | null
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           company_id?: string | null
           created_at?: string
           department?: string | null
@@ -910,9 +934,11 @@ export type Database = {
           id: string
           is_active?: boolean | null
           phone?: string | null
+          role_display_name?: string | null
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           company_id?: string | null
           created_at?: string
           department?: string | null
@@ -921,6 +947,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           phone?: string | null
+          role_display_name?: string | null
           updated_at?: string
         }
         Relationships: [
