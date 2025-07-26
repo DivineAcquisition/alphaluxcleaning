@@ -31,7 +31,7 @@ export function ProtectedRoute({
         if (userRole === 'admin' || userRole === 'employee') {
           navigate('/admin-dashboard');
         } else if (userRole === 'customer') {
-          navigate('/customer-service-portal');
+          navigate('/my-services');
         } else {
           navigate('/auth');
         }
