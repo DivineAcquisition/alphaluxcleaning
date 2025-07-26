@@ -128,12 +128,9 @@ serve(async (req) => {
 });
 
 function getTimeSlotHour(timeSlot: string): string {
-  if (timeSlot.includes("Early Morning")) return "06";
   if (timeSlot.includes("Morning")) return "09";
   if (timeSlot.includes("Afternoon")) return "12";
-  if (timeSlot.includes("Evening")) return "17";
-  if (timeSlot.includes("After Hours")) return "20";
-  return "09";
+  return "09"; // Default to 9 AM
 }
 
 function getServiceDuration(serviceType: string): number {

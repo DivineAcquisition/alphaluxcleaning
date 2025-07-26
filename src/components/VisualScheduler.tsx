@@ -9,6 +9,8 @@ import { format, addDays, startOfWeek, isSameDay, isToday, isBefore } from "date
 interface SchedulingData {
   scheduledDate: string;
   scheduledTime: string;
+  nextDayBooking?: boolean;
+  upchargeAmount?: number;
 }
 
 interface VisualSchedulerProps {
@@ -37,13 +39,17 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDateState, setSelectedDateState] = useState<string>(selectedDate || "");
   const [selectedTimeState, setSelectedTimeState] = useState<string>(selectedTime || "");
+  const [showNextDayOption, setShowNextDayOption] = useState(false);
+  const [isNextDayBooking, setIsNextDayBooking] = useState(false);
 
   const timeSlots: TimeSlot[] = [
-    { id: "early", label: "Early Morning", startTime: "6:00 AM", endTime: "9:00 AM", available: true },
     { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
-    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true },
-    { id: "evening", label: "Evening", startTime: "5:00 PM", endTime: "8:00 PM", available: true },
-    { id: "late", label: "After Hours", startTime: "8:00 PM", endTime: "11:00 PM", available: true }
+    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
+  ];
+
+  const nextDayTimeSlots: TimeSlot[] = [
+    { id: "morning", label: "Morning", startTime: "9:00 AM", endTime: "12:00 PM", available: true },
+    { id: "afternoon", label: "Afternoon", startTime: "12:00 PM", endTime: "5:00 PM", available: true }
   ];
 
   // Get week dates starting from Monday
@@ -116,7 +122,25 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
   const handleDateSelect = (date: string) => {
     setSelectedDateState(date);
     setSelectedTimeState(""); // Reset time when date changes
+    setIsNextDayBooking(false); // Reset next day booking
     onSchedulingUpdate({ scheduledDate: date, scheduledTime: "" });
+  };
+
+  // Handle next day booking selection
+  const handleNextDaySelect = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    setSelectedDateState(tomorrowStr);
+    setSelectedTimeState("");
+    setIsNextDayBooking(true);
+    onSchedulingUpdate({ 
+      scheduledDate: tomorrowStr, 
+      scheduledTime: "",
+      nextDayBooking: true,
+      upchargeAmount: 50
+    });
   };
 
   // Handle time selection
@@ -133,7 +157,18 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
 
     const timeLabel = `${timeSlot.label} (${timeSlot.startTime}-${timeSlot.endTime})`;
     setSelectedTimeState(timeLabel);
-    onSchedulingUpdate({ scheduledDate: selectedDateState, scheduledTime: timeLabel });
+    
+    const updateData: any = { 
+      scheduledDate: selectedDateState, 
+      scheduledTime: timeLabel 
+    };
+    
+    if (isNextDayBooking) {
+      updateData.nextDayBooking = true;
+      updateData.upchargeAmount = 50;
+    }
+    
+    onSchedulingUpdate(updateData);
     toast.success("Time slot selected successfully!");
   };
 
@@ -148,9 +183,13 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
     return availability.find(day => day.date === date);
   };
 
-  // Initialize with current week
+  // Initialize with current week and check if today is past business hours
   useEffect(() => {
     checkWeekAvailability(currentWeek);
+    
+    // Show next day option if it's after 5 PM today or user selects a date
+    const currentHour = new Date().getHours();
+    setShowNextDayOption(currentHour >= 17);
   }, [currentWeek]);
 
   const weekDates = getWeekDates(currentWeek);
@@ -195,82 +234,106 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           </Button>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="space-y-4">
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-2">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-              <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
-                {day}
+        {/* Next Day Priority Booking Option */}
+        {showNextDayOption && (
+          <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="font-semibold text-orange-800">Need Service Tomorrow?</h4>
+                <p className="text-sm text-orange-600">Priority next-day booking available (+$50)</p>
               </div>
-            ))}
+              <Button
+                variant={isNextDayBooking ? "default" : "outline"}
+                onClick={handleNextDaySelect}
+                className={isNextDayBooking ? "bg-orange-500 hover:bg-orange-600" : "border-orange-300 text-orange-700 hover:bg-orange-50"}
+              >
+                {isNextDayBooking ? "Selected" : "Book Tomorrow"}
+              </Button>
+            </div>
           </div>
+        )}
 
-          {/* Date Buttons */}
-          <div className="grid grid-cols-7 gap-2">
-            {weekDates.map(date => {
-              const dateStr = format(date, 'yyyy-MM-dd');
-              const dayAvailability = getDayAvailability(dateStr);
-              const isPast = isBefore(date, new Date()) && !isToday(date);
-              const isSelected = selectedDateState === dateStr;
-              const hasAvailability = dayAvailability?.available;
+        {/* Calendar Grid - Only show if not next day booking */}
+        {!isNextDayBooking && (
+          <div className="space-y-4">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-2">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                  {day}
+                </div>
+              ))}
+            </div>
 
-              return (
-                <Button
-                  key={dateStr}
-                  variant={isSelected ? "default" : "outline"}
-                  className={`
-                    h-16 flex flex-col items-center justify-center relative
-                    ${isPast ? 'opacity-50 cursor-not-allowed' : ''}
-                    ${!hasAvailability && !isPast ? 'bg-red-50 border-red-200 text-red-600' : ''}
-                    ${hasAvailability && !isPast && !isSelected ? 'hover:bg-green-50 border-green-200' : ''}
-                  `}
-                  onClick={() => !isPast && handleDateSelect(dateStr)}
-                  disabled={isPast || isLoading}
-                >
-                  <span className="text-lg font-semibold">{format(date, 'd')}</span>
-                  <span className="text-xs">
-                    {isToday(date) ? 'Today' : format(date, 'EEE')}
-                  </span>
-                  
-                  {/* Availability indicator */}
-                  {!isPast && (
-                    <div className="absolute bottom-1 right-1">
-                      {isLoading ? (
-                        <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
-                      ) : hasAvailability ? (
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      ) : (
-                        <div className="w-2 h-2 bg-red-500 rounded-full" />
-                      )}
-                    </div>
-                  )}
-                </Button>
-              );
-            })}
+            {/* Date Buttons */}
+            <div className="grid grid-cols-7 gap-2">
+              {weekDates.map(date => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const dayAvailability = getDayAvailability(dateStr);
+                const isPast = isBefore(date, new Date()) && !isToday(date);
+                const isSelected = selectedDateState === dateStr;
+                const hasAvailability = dayAvailability?.available;
+
+                return (
+                  <Button
+                    key={dateStr}
+                    variant={isSelected ? "default" : "outline"}
+                    className={`
+                      h-16 flex flex-col items-center justify-center relative
+                      ${isPast ? 'opacity-50 cursor-not-allowed' : ''}
+                      ${!hasAvailability && !isPast ? 'bg-red-50 border-red-200 text-red-600' : ''}
+                      ${hasAvailability && !isPast && !isSelected ? 'hover:bg-green-50 border-green-200' : ''}
+                    `}
+                    onClick={() => !isPast && handleDateSelect(dateStr)}
+                    disabled={isPast || isLoading}
+                  >
+                    <span className="text-lg font-semibold">{format(date, 'd')}</span>
+                    <span className="text-xs">
+                      {isToday(date) ? 'Today' : format(date, 'EEE')}
+                    </span>
+                    
+                    {/* Availability indicator */}
+                    {!isPast && (
+                      <div className="absolute bottom-1 right-1">
+                        {isLoading ? (
+                          <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
+                        ) : hasAvailability ? (
+                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                        ) : (
+                          <div className="w-2 h-2 bg-red-500 rounded-full" />
+                        )}
+                      </div>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Time Slot Selection */}
         {selectedDateState && (
           <div className="space-y-4">
-            <div className="space-y-2">
+              <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span className="font-medium">
-                  Available Time Slots for {format(new Date(selectedDateState), 'EEEE, MMMM d')}
+                  {isNextDayBooking 
+                    ? "Select Time for Tomorrow's Priority Service" 
+                    : `Available Time Slots for ${format(new Date(selectedDateState), 'EEEE, MMMM d')}`
+                  }
                 </span>
               </div>
               
               {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
                     <div key={i} className="h-16 bg-gray-100 animate-pulse rounded-lg" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {getDayAvailability(selectedDateState)?.timeSlots.map(slot => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(isNextDayBooking ? nextDayTimeSlots : getDayAvailability(selectedDateState)?.timeSlots || []).map(slot => {
                     const isSelected = selectedTimeState.includes(slot.label);
                     return (
                       <Button
@@ -309,8 +372,9 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
             <h5 className="font-semibold text-green-800 mb-2">📅 Booking Summary</h5>
             <div className="space-y-1 text-sm text-green-700">
-              <p><strong>Date:</strong> {format(new Date(selectedDateState), 'EEEE, MMMM d, yyyy')}</p>
+              <p><strong>Date:</strong> {isNextDayBooking ? 'Tomorrow' : format(new Date(selectedDateState), 'EEEE, MMMM d, yyyy')}</p>
               <p><strong>Time:</strong> {selectedTimeState}</p>
+              {isNextDayBooking && <p><strong>Priority Fee:</strong> +$50.00</p>}
             </div>
           </div>
         )}
