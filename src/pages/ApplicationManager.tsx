@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserCheck, UserX, Eye, Calendar, Phone, Mail, Car, FileText } from "lucide-react";
+import { Loader2, UserCheck, UserX, Eye, Calendar, Phone, Mail, Car, FileText, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,7 @@ interface Application {
 
 export default function ApplicationManager() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -160,7 +162,17 @@ export default function ApplicationManager() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary mb-4">Application Manager</h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/admin-dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-4xl font-bold text-primary">Application Manager</h1>
+          </div>
           <p className="text-xl text-muted-foreground">
             Review and manage subcontractor applications
           </p>
