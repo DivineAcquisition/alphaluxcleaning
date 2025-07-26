@@ -16,8 +16,6 @@ export function Navigation() {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/order-status", label: "Order Status", icon: FileText },
-    { path: "/subcontractor-application", label: "Join Our Team", icon: UserPlus },
-    { path: "/application-manager", label: "Application Manager", icon: Users },
   ];
 
   return (
