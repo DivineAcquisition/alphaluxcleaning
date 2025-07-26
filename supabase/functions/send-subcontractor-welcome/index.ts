@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@2.0.0";
+import React from 'npm:react@18.3.1';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import { SubcontractorWelcomeEmail } from '../_shared/email-templates/subcontractor-welcome.tsx';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,8 +46,26 @@ serve(async (req) => {
 
     const plan = planDetails[splitTier as keyof typeof planDetails];
 
-    // Create welcome notification content
-    const welcomeTitle = `Welcome to Bay Area Cleaning Pros!`;
+    // Generate dashboard URL
+    const dashboardUrl = `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/subcontractor-dashboard`;
+
+    // Initialize Resend for email sending
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+    // Render the React email template
+    const emailContent = await renderAsync(
+      React.createElement(SubcontractorWelcomeEmail, {
+        fullName,
+        planName: plan.name,
+        share: plan.share,
+        fee: plan.fee,
+        jobs: plan.jobs,
+        dashboardUrl,
+      })
+    );
+
+    // Create welcome notification content for database storage
+    const welcomeTitle = `Welcome to Bay Area Cleaning Professionals!`;
     const welcomeMessage = `🎉 Congratulations ${fullName}! You've successfully joined our network with the ${plan.name} plan.
 
 Your Benefits:
@@ -80,16 +102,25 @@ Welcome to the team!`;
       }
     }
 
-    logStep("Welcome message prepared", { 
+    // Send welcome email
+    const emailResponse = await resend.emails.send({
+      from: "Bay Area Cleaning Professionals <welcome@bayareacleaningpros.com>",
+      to: [email],
+      subject: welcomeTitle,
+      html: emailContent,
+    });
+
+    logStep("Welcome email sent successfully", { 
       recipient: email, 
       plan: plan.name,
-      messageLength: welcomeMessage.length 
+      emailId: emailResponse.data?.id 
     });
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Welcome notification processed",
+      message: "Welcome notification processed and email sent",
       plan: plan.name,
+      emailId: emailResponse.data?.id,
       notification: {
         title: welcomeTitle,
         message: welcomeMessage

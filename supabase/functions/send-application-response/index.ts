@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Resend } from "npm:resend@2.0.0";
+import React from 'npm:react@18.3.1';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import { ApplicationResponseEmail } from '../_shared/email-templates/application-response.tsx';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,94 +73,20 @@ serve(async (req) => {
       ? "🎉 Welcome to Bay Area Cleaning Pros - Application Approved!" 
       : "Thank you for your interest - Application Update";
 
-    const logoUrl = "/bay-area-logo.png";
-    
-    const emailContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 25%, #C084FC 50%, #D8B4FE 75%, #E9D5FF 100%); min-height: 100vh;">
-          <div style="max-width: 600px; margin: 40px auto; background: rgba(255, 255, 255, 0.95); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);">
-            
-            <!-- Header with Logo -->
-            <div style="background: linear-gradient(135deg, #8B5CF6, #A855F7); padding: 40px 30px; text-align: center;">
-              <div style="display: inline-block; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 15px; backdrop-filter: blur(10px);">
-                <img src="${logoUrl}" alt="Bay Area Cleaning Pros" style="height: 60px; width: auto;">
-              </div>
-            </div>
+    // Generate onboarding URL for approved applications
+    const onboardingUrl = isApproved 
+      ? `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/subcontractor-onboarding`
+      : undefined;
 
-            <!-- Main Content -->
-            <div style="padding: 40px 30px;">
-              <h1 style="color: #374151; margin: 0 0 20px 0; font-size: 28px; font-weight: 700; text-align: center;">
-                ${isApproved ? '🎉 Congratulations!' : 'Application Update'}
-              </h1>
-              
-              <div style="background: ${isApproved ? 'linear-gradient(135deg, #D1FAE5, #A7F3D0)' : 'linear-gradient(135deg, #FEF3C7, #FDE68A)'}; padding: 25px; border-radius: 15px; margin-bottom: 30px; border-left: 5px solid ${isApproved ? '#10B981' : '#F59E0B'};">
-                <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
-                  Dear ${application.full_name},
-                </p>
-                <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 15px 0 0 0;">
-                  ${isApproved 
-                    ? 'We are excited to inform you that your application to join Bay Area Cleaning Pros as a subcontractor has been <strong>APPROVED</strong>! 🎊'
-                    : 'Thank you for your interest in joining Bay Area Cleaning Pros. After careful review, we have decided not to move forward with your application at this time.'
-                  }
-                </p>
-              </div>
-
-              ${isApproved ? `
-                <div style="background: linear-gradient(135deg, #EDE9FE, #DDD6FE); padding: 25px; border-radius: 15px; margin-bottom: 30px;">
-                  <h3 style="color: #7C3AED; margin: 0 0 15px 0; font-size: 20px;">Next Steps:</h3>
-                  <ul style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0; padding-left: 20px;">
-                    <li>Complete your onboarding process</li>
-                    <li>Receive your branded uniform shirt</li>
-                    <li>Start accepting cleaning jobs in your area</li>
-                    <li>Begin earning with our partnership program</li>
-                  </ul>
-                </div>
-
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/subcontractor-onboarding" 
-                     style="display: inline-block; background: linear-gradient(135deg, #8B5CF6, #A855F7); color: white; text-decoration: none; padding: 15px 30px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3); transition: all 0.3s ease;">
-                    🚀 Start Onboarding Process
-                  </a>
-                </div>
-              ` : `
-                <div style="background: linear-gradient(135deg, #FEF3C7, #FDE68A); padding: 25px; border-radius: 15px; margin-bottom: 30px;">
-                  <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
-                    We appreciate the time you took to apply and encourage you to consider applying again in the future as opportunities arise.
-                  </p>
-                  ${adminNotes ? `
-                    <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 15px 0 0 0;">
-                      <strong>Additional Notes:</strong> ${adminNotes}
-                    </p>
-                  ` : ''}
-                </div>
-              `}
-
-              <!-- Contact Information -->
-              <div style="background: linear-gradient(135deg, #F3F4F6, #E5E7EB); padding: 25px; border-radius: 15px; text-align: center;">
-                <p style="color: #6B7280; font-size: 14px; line-height: 1.5; margin: 0;">
-                  If you have any questions, please don't hesitate to contact us.<br>
-                  <strong>Bay Area Cleaning Pros Team</strong><br>
-                  📧 info@bayareacleaningpros.com | 📞 (555) 123-4567
-                </p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div style="background: linear-gradient(135deg, #374151, #4B5563); padding: 20px 30px; text-align: center;">
-              <p style="color: #D1D5DB; font-size: 12px; margin: 0;">
-                © 2024 Bay Area Cleaning Pros. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    // Render the React email template
+    const emailContent = await renderAsync(
+      React.createElement(ApplicationResponseEmail, {
+        applicantName: application.full_name,
+        isApproved,
+        adminNotes,
+        onboardingUrl,
+      })
+    );
 
     // Send email
     const emailResponse = await resend.emails.send({
