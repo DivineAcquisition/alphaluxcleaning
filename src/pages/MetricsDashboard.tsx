@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { BookingsChart } from "@/components/dashboard/BookingsChart";
 import { RetentionMetrics } from "@/components/dashboard/RetentionMetrics";
 import { LTVMetrics } from "@/components/dashboard/LTVMetrics";
 import { RecentBookings } from "@/components/dashboard/RecentBookings";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export default function MetricsDashboard() {
   const { data: bookingsData, isLoading: bookingsLoading } = useQuery({
@@ -58,11 +60,10 @@ export default function MetricsDashboard() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-      </div>
-      
+    <AdminLayout 
+      title="Metrics & Analytics Dashboard"
+      description="Track performance, revenue, and business insights"
+    >
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -105,6 +106,6 @@ export default function MetricsDashboard() {
           <LTVMetrics orders={ordersData || []} />
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminLayout>
   );
 }

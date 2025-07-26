@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { LogOut, CheckCircle, UserCheck, Mail } from "lucide-react";
+import { CheckCircle, UserCheck, Mail } from "lucide-react";
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 const AdminPanel = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -83,15 +85,6 @@ const AdminPanel = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/admin-auth');
-  };
-
-  const goToMainDashboard = () => {
-    navigate('/admin-dashboard');
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -108,24 +101,13 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Control Panel</h1>
-            <p className="text-muted-foreground mt-2">
-              Welcome, {user.email} ({userRole || 'loading...'})
-            </p>
-          </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-
+    <AdminLayout 
+      title="Admin Control Panel" 
+      description={`Welcome, ${user.email} (${userRole || 'loading...'})`}
+    >
+      <div className="space-y-6">
         {/* Admin Setup Section */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5" />
@@ -165,36 +147,8 @@ const AdminPanel = () => {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Navigation Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Access main dashboard and other admin functions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              onClick={goToMainDashboard} 
-              className="w-full" 
-              size="lg"
-              variant="outline"
-            >
-              Go to Booking Management Dashboard
-            </Button>
-            <Button 
-              onClick={() => navigate('/subcontractor-management')} 
-              className="w-full" 
-              size="lg"
-              variant="outline"
-            >
-              Manage Subcontractors
-            </Button>
-          </CardContent>
-        </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

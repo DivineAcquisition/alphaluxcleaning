@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
-  LogOut, 
   User, 
   Phone, 
   Mail, 
@@ -25,7 +24,6 @@ import {
   UserX,
   UserPlus,
   Calendar,
-  Settings,
   Filter,
   Search,
   Download,
@@ -35,6 +33,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 interface Subcontractor {
   id: string;
@@ -443,28 +442,11 @@ const SubcontractorManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Subcontractor Management</h1>
-            <p className="text-muted-foreground">Manage network subcontractors and job assignments</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => navigate('/admin-dashboard')} variant="outline" size="sm">
-              Back to Dashboard
-            </Button>
-            <Button onClick={handleSignOut} variant="outline" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 space-y-8">
+    <AdminLayout 
+      title="Subcontractor Management"
+      description="Manage network subcontractors and job assignments"
+    >
+      <div className="space-y-8">
         <Tabs defaultValue="subcontractors" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="subcontractors">Subcontractors</TabsTrigger>
@@ -948,7 +930,7 @@ const SubcontractorManagement = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
