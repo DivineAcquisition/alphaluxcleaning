@@ -18,6 +18,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { testEmail } = await req.json();
     console.log("Sending test email to:", testEmail);
+    console.log("Using GoHighLevel API with key:", ghlApiKey ? "API key present" : "API key missing");
 
     // Create test email content that mimics the booking confirmation
     const emailContent = `
@@ -117,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailResponse,
+      emailResponse: responseData,
       message: `Test confirmation email sent successfully to ${testEmail}`
     }), {
       status: 200,
