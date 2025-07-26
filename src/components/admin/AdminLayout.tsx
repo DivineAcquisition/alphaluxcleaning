@@ -1,5 +1,6 @@
 
 import { ReactNode } from "react";
+import { AdminFooter } from "@/components/footer/AdminFooter";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -168,6 +169,10 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
         {/* Page Content */}
         {children}
       </div>
+      
+      {/* Admin Footer */}
+      <AdminFooter />
     </div>
   );
 }
+

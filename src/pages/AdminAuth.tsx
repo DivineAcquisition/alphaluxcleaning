@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { PublicFooter } from "@/components/footer/PublicFooter";
 import { User, Session } from '@supabase/supabase-js';
 import { Chrome } from "lucide-react";
 

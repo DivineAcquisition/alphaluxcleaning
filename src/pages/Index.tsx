@@ -7,6 +7,7 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import { VisualScheduler } from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
+import { PublicFooter } from "@/components/footer/PublicFooter";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
@@ -37,7 +38,7 @@ const Index = () => {
   }, [pricingData, calculatedPrice]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
@@ -135,6 +136,9 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Public Footer */}
+      <PublicFooter />
     </div>
   );
 };

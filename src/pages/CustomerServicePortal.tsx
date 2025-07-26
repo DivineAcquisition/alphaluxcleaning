@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RescheduleDialog } from "@/components/RescheduleDialog";
 import { CancellationDialog } from "@/components/CancellationDialog";
+import { PublicFooter } from "@/components/footer/PublicFooter";
 
 interface RecurringService {
   id: string;
@@ -229,7 +230,8 @@ const CustomerServicePortal = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 py-8 flex-1">{/* Added flex-1 */}
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Recurring Services</h1>
@@ -391,6 +393,10 @@ const CustomerServicePortal = () => {
           </>
         )}
       </div>
+      </div>
+      
+      {/* Public Footer */}
+      <PublicFooter />
     </div>
   );
 };
