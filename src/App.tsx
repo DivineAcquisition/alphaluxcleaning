@@ -32,7 +32,7 @@ const App = () => {
   const isAdminDomain = currentHost.startsWith('admin.') || (currentHost.includes('localhost') && window.location.pathname.includes('admin'));
   const isSubconDomain = currentHost.startsWith('subcon.') || (currentHost.includes('localhost') && window.location.pathname.includes('subcontractor'));
   const isDashboardDomain = currentHost.startsWith('dashboard.') || (currentHost.includes('localhost') && window.location.pathname.includes('dashboard'));
-  const isPortalDomain = currentHost.startsWith('portal.') || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
+  const isPortalDomain = currentHost.startsWith('portal.') || currentHost === 'bayareacleaningpros.com' || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
 
   return (
     <QueryClientProvider client={queryClient}>
