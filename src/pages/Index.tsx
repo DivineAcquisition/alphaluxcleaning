@@ -93,12 +93,12 @@ const Index = () => {
                       {/* Payment Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
-                        <PaymentForm 
-                          pricingData={pricingData}
-                          calculatedPrice={calculatedPrice}
-                          priceBreakdown={priceBreakdown}
-                          schedulingData={schedulingData}
-                        />
+            <PaymentForm 
+              pricingData={pricingData}
+              calculatedPrice={calculatedPrice}
+              priceBreakdown={priceBreakdown}
+              schedulingData={schedulingData}
+            />
                       </div>
                     </div>
                   )}

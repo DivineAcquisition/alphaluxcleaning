@@ -34,7 +34,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
     phone: ""
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"full" | "split">("full");
+  const [paymentType, setPaymentType] = useState<"full" | "split" | "prepayment">("full");
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
   const getFinalPrice = () => {
@@ -60,9 +60,15 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       return;
     }
 
+    // Check if service type is selected (required for proper scheduling)
+    if (!pricingData.cleaningType) {
+      toast.error("Please select a service type first");
+      return;
+    }
+
     // Check if scheduling is required and provided
-    if (schedulingData?.nextDayBooking && (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime)) {
-      toast.error("Please complete your service scheduling");
+    if (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime) {
+      toast.error("Please select a date and time for your service");
       return;
     }
 
@@ -70,7 +76,13 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
 
     try {
       const finalPrice = getFinalPrice();
-      const paymentAmount = paymentType === "split" ? Math.round(finalPrice / 2) : finalPrice;
+      let paymentAmount = finalPrice;
+      
+      if (paymentType === "split") {
+        paymentAmount = Math.round(finalPrice / 2);
+      } else if (paymentType === "prepayment") {
+        paymentAmount = 15000; // $150 in cents
+      }
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
@@ -99,6 +111,8 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       
       if (paymentType === "split") {
         toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
+      } else if (paymentType === "prepayment") {
+        toast.success("Paying $150 prepayment. Remaining balance will be charged after job completion.");
       } else {
         toast.success("Redirecting to secure checkout...");
       }
@@ -186,6 +200,27 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 </div>
               </div>
             </div>
+            
+            <div 
+              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                paymentType === "prepayment" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+              }`}
+              onClick={() => setPaymentType("prepayment")}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"
+                }`}>
+                  {paymentType === "prepayment" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
+                </div>
+                <div>
+                  <div className="font-medium">$150 Prepayment</div>
+                  <div className="text-sm text-muted-foreground">
+                    Pay $150.00 now, remaining ${(getFinalPrice() - 150).toFixed(2)} charged after job completion
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -207,15 +242,21 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
               <span>Total Amount:</span>
               <span className="text-primary">${getFinalPrice().toFixed(2)}</span>
             </div>
-            {paymentType === "split" && (
+            {(paymentType === "split" || paymentType === "prepayment") && (
               <div className="space-y-1 mt-3 pt-3 border-t border-dashed">
                 <div className="flex justify-between text-green-600">
-                  <span>Paying Now (50%):</span>
-                  <span className="font-bold">${Math.round(getFinalPrice() / 2).toFixed(2)}</span>
+                  <span>Paying Now:</span>
+                  <span className="font-bold">
+                    ${paymentType === "prepayment" ? "150.00" : Math.round(getFinalPrice() / 2).toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-orange-600">
-                  <span>Auto-billed After Service:</span>
-                  <span className="font-bold">${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}</span>
+                  <span>Charged After Service:</span>
+                  <span className="font-bold">
+                    ${paymentType === "prepayment" 
+                      ? (getFinalPrice() - 150).toFixed(2) 
+                      : (getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}
+                  </span>
                 </div>
               </div>
             )}
@@ -310,17 +351,21 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
           className="w-full" 
           size="lg"
           onClick={handleBookService}
-          disabled={
+            disabled={
             isProcessing || 
             !customerInfo.name || 
             !customerInfo.email ||
             !customerInfo.phone ||
-            (schedulingData?.nextDayBooking && (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime))
+            !pricingData.cleaningType ||
+            !schedulingData?.scheduledDate ||
+            !schedulingData?.scheduledTime
           }
         >
           {isProcessing ? "Processing..." : (
             paymentType === "split" 
               ? `Pay 50% Now - $${Math.round(getFinalPrice() / 2).toFixed(2)}`
+              : paymentType === "prepayment"
+              ? `Pay $150 Prepayment`
               : `Book Service - $${getFinalPrice().toFixed(2)}`
           )}
         </Button>
@@ -328,6 +373,8 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         <div className="text-xs text-muted-foreground text-center">
           {paymentType === "split" 
             ? "Remaining balance will be automatically charged after service completion"
+            : paymentType === "prepayment"
+            ? `Remaining $${(getFinalPrice() - 150).toFixed(2)} will be charged after job completion`
             : "You will be redirected to our secure payment processor to complete your booking"
           }
         </div>

@@ -33,7 +33,13 @@ serve(async (req) => {
       throw new Error('Google Service Account key not configured');
     }
 
-    const credentials = JSON.parse(serviceAccountKey);
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountKey);
+    } catch (parseError) {
+      console.error('Invalid JSON in service account key:', parseError);
+      throw new Error('Invalid Google Service Account key format');
+    }
     
     // Get access token using JWT
     const accessToken = await getAccessToken(credentials);
