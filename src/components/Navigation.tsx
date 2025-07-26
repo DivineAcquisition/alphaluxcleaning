@@ -35,54 +35,53 @@ export function Navigation() {
             <span className="font-semibold text-lg">Bay Area Cleaning Pros</span>
           </Link>
 
-          {/* Center Navigation Dropdown */}
-          <div className="hidden md:flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Menu className="h-4 w-4" />
-                  Navigation
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48 bg-background border shadow-lg z-[100]">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  
-                  return (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link 
-                        to={item.path} 
-                        className={`flex items-center gap-3 w-full py-2 ${
-                          isActive ? "bg-primary/10 text-primary font-medium" : ""
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-                
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem asChild>
-                  <a 
-                    href="https://bayareacleaningpros.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 w-full py-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Visit Website
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           {/* Right Section */}
           <div className="flex items-center space-x-3">
+            {/* Navigation Dropdown */}
+            <div className="hidden md:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Menu className="h-4 w-4" />
+                    Navigation
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
+                    
+                    return (
+                      <DropdownMenuItem key={item.path} asChild>
+                        <Link 
+                          to={item.path} 
+                          className={`flex items-center gap-3 w-full py-2 ${
+                            isActive ? "bg-primary/10 text-primary font-medium" : ""
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem asChild>
+                    <a 
+                      href="https://bayareacleaningpros.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 w-full py-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Visit Website
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             {/* Contact Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
