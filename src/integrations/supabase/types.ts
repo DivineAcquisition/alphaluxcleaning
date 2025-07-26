@@ -163,6 +163,477 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          address: string | null
+          business_license: string | null
+          city: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          state: string | null
+          tax_id: string | null
+          updated_at: string
+          website: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_license?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          state?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_license?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          state?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          auto_renewal: boolean | null
+          base_fee: number | null
+          company_id: string
+          contract_number: string
+          contract_type: string
+          created_at: string
+          document_url: string | null
+          end_date: string | null
+          id: string
+          maximum_payment: number | null
+          minimum_payment: number | null
+          performance_bonus_triggers: Json | null
+          renewal_notice_days: number | null
+          revenue_share_percentage: number | null
+          signed_by_client: string | null
+          signed_by_divine: string | null
+          signed_date: string | null
+          start_date: string
+          status: string | null
+          terms_and_conditions: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renewal?: boolean | null
+          base_fee?: number | null
+          company_id: string
+          contract_number: string
+          contract_type: string
+          created_at?: string
+          document_url?: string | null
+          end_date?: string | null
+          id?: string
+          maximum_payment?: number | null
+          minimum_payment?: number | null
+          performance_bonus_triggers?: Json | null
+          renewal_notice_days?: number | null
+          revenue_share_percentage?: number | null
+          signed_by_client?: string | null
+          signed_by_divine?: string | null
+          signed_date?: string | null
+          start_date: string
+          status?: string | null
+          terms_and_conditions?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renewal?: boolean | null
+          base_fee?: number | null
+          company_id?: string
+          contract_number?: string
+          contract_type?: string
+          created_at?: string
+          document_url?: string | null
+          end_date?: string | null
+          id?: string
+          maximum_payment?: number | null
+          minimum_payment?: number | null
+          performance_bonus_triggers?: Json | null
+          renewal_notice_days?: number | null
+          revenue_share_percentage?: number | null
+          signed_by_client?: string | null
+          signed_by_divine?: string | null
+          signed_date?: string | null
+          start_date?: string
+          status?: string | null
+          terms_and_conditions?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          actual_close_date: string | null
+          assigned_to: string | null
+          close_reason: string | null
+          company_id: string | null
+          created_at: string
+          deal_name: string
+          deal_source: string | null
+          expected_close_date: string | null
+          id: string
+          is_closed: boolean | null
+          notes: string | null
+          potential_value: number | null
+          probability: number | null
+          stage: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_close_date?: string | null
+          assigned_to?: string | null
+          close_reason?: string | null
+          company_id?: string | null
+          created_at?: string
+          deal_name: string
+          deal_source?: string | null
+          expected_close_date?: string | null
+          id?: string
+          is_closed?: boolean | null
+          notes?: string | null
+          potential_value?: number | null
+          probability?: number | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_close_date?: string | null
+          assigned_to?: string | null
+          close_reason?: string | null
+          company_id?: string | null
+          created_at?: string
+          deal_name?: string
+          deal_source?: string | null
+          expected_close_date?: string | null
+          id?: string
+          is_closed?: boolean | null
+          notes?: string | null
+          potential_value?: number | null
+          probability?: number | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          company_id: string | null
+          contract_id: string | null
+          created_at: string
+          description: string | null
+          document_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          is_confidential: boolean | null
+          mime_type: string | null
+          tags: Json | null
+          title: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          company_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          document_type: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_confidential?: boolean | null
+          mime_type?: string | null
+          tags?: Json | null
+          title: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          company_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_confidential?: boolean | null
+          mime_type?: string | null
+          tags?: Json | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          company_id: string
+          contract_id: string
+          created_at: string
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          line_items: Json | null
+          notes: string | null
+          payment_terms: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          status: string | null
+          subtotal: number
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          contract_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          line_items?: Json | null
+          notes?: string | null
+          payment_terms?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subtotal: number
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          contract_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          line_items?: Json | null
+          notes?: string | null
+          payment_terms?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subtotal?: number
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: string
+          city: string
+          company_id: string
+          contact_email: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          location_type: string | null
+          name: string
+          square_footage: number | null
+          state: string
+          updated_at: string
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          city: string
+          company_id: string
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_type?: string | null
+          name: string
+          square_footage?: number | null
+          state: string
+          updated_at?: string
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          company_id?: string
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_type?: string | null
+          name?: string
+          square_footage?: number | null
+          state?: string
+          updated_at?: string
+          zip_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          attachments: Json | null
+          company_id: string | null
+          created_at: string
+          id: string
+          message: string
+          message_type: string | null
+          parent_message_id: string | null
+          priority: string | null
+          read_at: string | null
+          recipient_id: string | null
+          sender_id: string
+          status: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          message_type?: string | null
+          parent_message_id?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id: string
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          message_type?: string | null
+          parent_message_id?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_updates: {
         Row: {
           created_at: string
@@ -255,6 +726,7 @@ export type Database = {
           add_ons: string[] | null
           amount: number
           auto_charged: boolean | null
+          cancellation_reason: string | null
           cleaning_type: string | null
           completed_at: string | null
           completion_notes: string | null
@@ -266,9 +738,17 @@ export type Database = {
           employee_notes: string | null
           frequency: string | null
           id: string
+          is_recurring: boolean | null
+          next_service_date: string | null
+          paused_until: string | null
+          preferred_time: string | null
+          recurring_frequency: string | null
+          retention_discount_accepted: boolean | null
+          retention_discount_offered: boolean | null
           scheduled_date: string | null
           scheduled_time: string | null
           service_details: Json | null
+          service_status: string | null
           square_footage: number | null
           status: string | null
           stripe_session_id: string | null
@@ -279,6 +759,7 @@ export type Database = {
           add_ons?: string[] | null
           amount: number
           auto_charged?: boolean | null
+          cancellation_reason?: string | null
           cleaning_type?: string | null
           completed_at?: string | null
           completion_notes?: string | null
@@ -290,9 +771,17 @@ export type Database = {
           employee_notes?: string | null
           frequency?: string | null
           id?: string
+          is_recurring?: boolean | null
+          next_service_date?: string | null
+          paused_until?: string | null
+          preferred_time?: string | null
+          recurring_frequency?: string | null
+          retention_discount_accepted?: boolean | null
+          retention_discount_offered?: boolean | null
           scheduled_date?: string | null
           scheduled_time?: string | null
           service_details?: Json | null
+          service_status?: string | null
           square_footage?: number | null
           status?: string | null
           stripe_session_id?: string | null
@@ -303,6 +792,7 @@ export type Database = {
           add_ons?: string[] | null
           amount?: number
           auto_charged?: boolean | null
+          cancellation_reason?: string | null
           cleaning_type?: string | null
           completed_at?: string | null
           completion_notes?: string | null
@@ -314,9 +804,17 @@ export type Database = {
           employee_notes?: string | null
           frequency?: string | null
           id?: string
+          is_recurring?: boolean | null
+          next_service_date?: string | null
+          paused_until?: string | null
+          preferred_time?: string | null
+          recurring_frequency?: string | null
+          retention_discount_accepted?: boolean | null
+          retention_discount_offered?: boolean | null
           scheduled_date?: string | null
           scheduled_time?: string | null
           service_details?: Json | null
+          service_status?: string | null
           square_footage?: number | null
           status?: string | null
           stripe_session_id?: string | null
@@ -325,8 +823,75 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          bank_account_last_four: string | null
+          company_id: string
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method: string | null
+          processed_by: string | null
+          reference_number: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account_last_four?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method?: string | null
+          processed_by?: string | null
+          reference_number?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account_last_four?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_method?: string | null
+          processed_by?: string | null
+          reference_number?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          company_id: string | null
           created_at: string
           department: string | null
           employee_id: string | null
@@ -337,6 +902,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           department?: string | null
           employee_id?: string | null
@@ -347,6 +913,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           department?: string | null
           employee_id?: string | null
@@ -356,7 +923,109 @@ export type Database = {
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quality_reports: {
+        Row: {
+          areas_inspected: Json | null
+          cleanliness_rating: number | null
+          client_signature: string | null
+          company_id: string
+          corrective_actions: Json | null
+          created_at: string
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          id: string
+          inspection_date: string
+          inspector_name: string
+          inspector_signature: string | null
+          issues_found: Json | null
+          location_id: string | null
+          notes: string | null
+          overall_rating: number | null
+          photos: Json | null
+          professionalism_rating: number | null
+          service_id: string
+          timeliness_rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          areas_inspected?: Json | null
+          cleanliness_rating?: number | null
+          client_signature?: string | null
+          company_id: string
+          corrective_actions?: Json | null
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          inspection_date: string
+          inspector_name: string
+          inspector_signature?: string | null
+          issues_found?: Json | null
+          location_id?: string | null
+          notes?: string | null
+          overall_rating?: number | null
+          photos?: Json | null
+          professionalism_rating?: number | null
+          service_id: string
+          timeliness_rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          areas_inspected?: Json | null
+          cleanliness_rating?: number | null
+          client_signature?: string | null
+          company_id?: string
+          corrective_actions?: Json | null
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          inspection_date?: string
+          inspector_name?: string
+          inspector_signature?: string | null
+          issues_found?: Json | null
+          location_id?: string | null
+          notes?: string | null
+          overall_rating?: number | null
+          photos?: Json | null
+          professionalism_rating?: number | null
+          service_id?: string
+          timeliness_rating?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_reports_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_codes: {
         Row: {
@@ -442,6 +1111,91 @@ export type Database = {
           },
         ]
       }
+      revenue_entries: {
+        Row: {
+          cleaning_cost: number | null
+          company_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_method: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          revenue_amount: number
+          revenue_share_amount: number | null
+          source_system: string | null
+          supporting_documents: Json | null
+          updated_at: string
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          cleaning_cost?: number | null
+          company_id: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          entry_date: string
+          entry_method: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          revenue_amount: number
+          revenue_share_amount?: number | null
+          source_system?: string | null
+          supporting_documents?: Json | null
+          updated_at?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          cleaning_cost?: number | null
+          company_id?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_method?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          revenue_amount?: number
+          revenue_share_amount?: number | null
+          source_system?: string | null
+          supporting_documents?: Json | null
+          updated_at?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_entries_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_entries_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_logs: {
         Row: {
           action: string
@@ -474,6 +1228,129 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      service_modifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          modification_type: string
+          new_value: Json | null
+          old_value: Json | null
+          order_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modification_type: string
+          new_value?: Json | null
+          old_value?: Json | null
+          order_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modification_type?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          order_id?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_modifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          client_feedback: string | null
+          company_id: string
+          completion_photos: Json | null
+          contract_id: string
+          cost: number | null
+          created_at: string
+          hours_worked: number | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          service_date: string
+          service_time: string | null
+          service_type: string
+          status: string | null
+          supplies_used: Json | null
+          team_members: Json | null
+          updated_at: string
+        }
+        Insert: {
+          client_feedback?: string | null
+          company_id: string
+          completion_photos?: Json | null
+          contract_id: string
+          cost?: number | null
+          created_at?: string
+          hours_worked?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          service_date: string
+          service_time?: string | null
+          service_type: string
+          status?: string | null
+          supplies_used?: Json | null
+          team_members?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          client_feedback?: string | null
+          company_id?: string
+          completion_photos?: Json | null
+          contract_id?: string
+          cost?: number | null
+          created_at?: string
+          hours_worked?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          service_date?: string
+          service_time?: string | null
+          service_type?: string
+          status?: string | null
+          supplies_used?: Json | null
+          team_members?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subcontractor_applications: {
         Row: {
