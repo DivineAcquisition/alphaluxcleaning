@@ -262,47 +262,53 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
         </div>
       </CardHeader>
       
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* Week Navigation */}
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigateWeek('prev')}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 px-2 sm:px-4"
           >
             <ChevronLeft className="h-4 w-4" />
-            Previous
+            <span className="hidden sm:inline">Previous</span>
           </Button>
           
-          <div className="text-lg font-semibold">
-            {format(weekDates[0], 'MMM d')} - {format(weekDates[6], 'MMM d, yyyy')}
+          <div className="text-sm sm:text-lg font-semibold text-center">
+            <div className="sm:hidden">
+              {format(weekDates[0], 'MMM d')} - {format(weekDates[6], 'MMM d')}
+            </div>
+            <div className="hidden sm:block">
+              {format(weekDates[0], 'MMM d')} - {format(weekDates[6], 'MMM d, yyyy')}
+            </div>
           </div>
           
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigateWeek('next')}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 px-2 sm:px-4"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Next Day Priority Booking Option */}
         {showNextDayOption && (
-          <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
+          <div className="p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="font-semibold text-orange-800">Need Service Tomorrow?</h4>
-                <p className="text-sm text-orange-600">Priority next-day booking available (+$50)</p>
+                <h4 className="font-semibold text-orange-800 text-sm sm:text-base">Need Service Tomorrow?</h4>
+                <p className="text-xs sm:text-sm text-orange-600">Priority next-day booking available (+$50)</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   variant={isNextDayBooking ? "default" : "outline"}
                   onClick={handleNextDaySelect}
-                  className={isNextDayBooking ? "bg-orange-500 hover:bg-orange-600" : "border-orange-300 text-orange-700 hover:bg-orange-50"}
+                  className={`text-sm ${isNextDayBooking ? "bg-orange-500 hover:bg-orange-600" : "border-orange-300 text-orange-700 hover:bg-orange-50"}`}
+                  size="sm"
                 >
                   {isNextDayBooking ? "Selected" : "Book Tomorrow"}
                 </Button>
@@ -310,7 +316,8 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                   <Button
                     variant="outline"
                     onClick={handleCancelNextDay}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
+                    size="sm"
                   >
                     Cancel
                   </Button>
@@ -324,16 +331,16 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
         {!isNextDayBooking && (
           <div className="space-y-4">
             {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                <div key={day} className="text-center text-xs sm:text-sm font-medium text-muted-foreground p-1 sm:p-2">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Date Buttons */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
               {weekDates.map(date => {
                 const dateStr = format(date, 'yyyy-MM-dd');
                 const dayAvailability = getDayAvailability(dateStr);
@@ -346,7 +353,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                     key={dateStr}
                     variant={isSelected ? "default" : "outline"}
                     className={`
-                      h-16 flex flex-col items-center justify-center relative
+                      h-12 sm:h-16 flex flex-col items-center justify-center relative text-xs sm:text-sm
                       ${isPast ? 'opacity-50 cursor-not-allowed' : ''}
                       ${!hasAvailability && !isPast ? 'bg-red-50 border-red-200 text-red-600' : ''}
                       ${hasAvailability && !isPast && !isSelected ? 'hover:bg-green-50 border-green-200' : ''}
@@ -354,20 +361,20 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                     onClick={() => !isPast && handleDateSelect(dateStr)}
                     disabled={isPast || isLoading}
                   >
-                    <span className="text-lg font-semibold">{format(date, 'd')}</span>
-                    <span className="text-xs">
+                    <span className="text-sm sm:text-lg font-semibold">{format(date, 'd')}</span>
+                    <span className="text-xs hidden sm:block">
                       {isToday(date) ? 'Today' : format(date, 'EEE')}
                     </span>
                     
                     {/* Availability indicator */}
                     {!isPast && (
-                      <div className="absolute bottom-1 right-1">
+                      <div className="absolute bottom-0.5 right-0.5 sm:bottom-1 sm:right-1">
                         {isLoading ? (
-                          <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-300 rounded-full animate-pulse" />
                         ) : hasAvailability ? (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full" />
                         ) : (
-                          <div className="w-2 h-2 bg-red-500 rounded-full" />
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full" />
                         )}
                       </div>
                     )}
@@ -399,7 +406,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-2 sm:gap-3">
                   {(isNextDayBooking ? nextDayTimeSlots : getDayAvailability(selectedDateState)?.timeSlots || []).map(slot => {
                     const isSelected = selectedTimeState.includes(slot.label);
                     return (
@@ -407,7 +414,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                         key={slot.id}
                         variant={isSelected ? "default" : "outline"}
                         className={`
-                          h-16 flex flex-col items-center justify-center
+                          h-14 sm:h-16 flex flex-col sm:flex-row items-center justify-center sm:justify-between px-3 sm:px-4
                           ${!slot.available ? 'opacity-50 cursor-not-allowed bg-red-50 border-red-200' : ''}
                           ${slot.available && !isSelected ? 'hover:bg-green-50 border-green-200' : ''}
                         `}
@@ -415,14 +422,14 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                         disabled={!slot.available}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{slot.label}</span>
+                          <span className="font-medium text-sm sm:text-base">{slot.label}</span>
                           {slot.available ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                           ) : (
-                            <X className="h-4 w-4 text-red-500" />
+                            <X className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                           )}
                         </div>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-0">
                           {slot.startTime} - {slot.endTime}
                         </span>
                       </Button>
