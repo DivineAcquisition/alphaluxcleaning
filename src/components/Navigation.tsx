@@ -72,6 +72,7 @@ export function Navigation() {
             
             {/* Contact Buttons */}
             <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l">
+              <span className="text-sm text-muted-foreground mr-2">Email or call us:</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -88,7 +89,7 @@ export function Navigation() {
                 className="flex items-center gap-2 text-sm"
               >
                 <Mail className="h-4 w-4" />
-                <span>support@bayareacleaningpros.com</span>
+                <span>Email</span>
               </Button>
             </div>
           </div>
@@ -137,6 +138,10 @@ export function Navigation() {
                 
                 <DropdownMenuSeparator />
                 
+                <DropdownMenuItem disabled className="flex items-center gap-2 text-sm font-medium">
+                  Email or call us:
+                </DropdownMenuItem>
+                
                 <DropdownMenuItem 
                   className="flex items-center gap-2 text-sm cursor-pointer"
                   onClick={() => window.open('tel:+12812016112', '_self')}
@@ -150,7 +155,7 @@ export function Navigation() {
                   onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
                 >
                   <Mail className="h-4 w-4" />
-                  support@bayareacleaningpros.com
+                  Email us
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
