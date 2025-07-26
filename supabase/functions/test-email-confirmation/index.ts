@@ -173,8 +173,15 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in test-email-confirmation function:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error message:", error.message);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack || "No additional details available",
+        success: false
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
