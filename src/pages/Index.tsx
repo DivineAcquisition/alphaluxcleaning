@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
-import { BookingScheduler } from "@/components/BookingScheduler";
+import { VisualScheduler } from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
@@ -14,7 +14,14 @@ const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [priceBreakdown, setPriceBreakdown] = useState({});
-  const [schedulingData, setSchedulingData] = useState(null);
+  const [schedulingData, setSchedulingData] = useState({
+    scheduledDate: "",
+    scheduledTime: ""
+  });
+
+  const handleSchedulingUpdate = (data: any) => {
+    setSchedulingData(data);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
@@ -76,8 +83,10 @@ const Index = () => {
                       {/* Scheduling Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-                        <BookingScheduler 
-                          onSchedulingUpdate={setSchedulingData}
+                        <VisualScheduler 
+                          onSchedulingUpdate={handleSchedulingUpdate}
+                          selectedDate={schedulingData.scheduledDate}
+                          selectedTime={schedulingData.scheduledTime}
                         />
                       </div>
                       

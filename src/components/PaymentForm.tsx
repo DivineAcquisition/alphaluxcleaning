@@ -22,8 +22,8 @@ interface PaymentFormProps {
   schedulingData?: {
     scheduledDate: string;
     scheduledTime: string;
-    nextDayBooking: boolean;
-    upchargeAmount: number;
+    nextDayBooking?: boolean;
+    upchargeAmount?: number;
   };
 }
 
@@ -36,7 +36,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<"full" | "split">("full");
 
-  // Calculate final price with scheduling upcharge
+  // Calculate final price with scheduling upcharge (for legacy next-day booking)
   const getFinalPrice = () => {
     let finalPrice = calculatedPrice;
     if (schedulingData?.nextDayBooking && schedulingData?.upchargeAmount) {

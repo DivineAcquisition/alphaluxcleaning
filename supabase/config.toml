@@ -30,6 +30,9 @@ verify_jwt = false
 [functions.send-subcontractor-welcome]
 verify_jwt = false
 
+[functions.create-gohighlevel-booking]
+verify_jwt = false
+
 [functions.reset-admin-passwords]
 verify_jwt = true
 

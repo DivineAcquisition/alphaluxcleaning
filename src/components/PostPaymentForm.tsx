@@ -35,22 +35,16 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     generatedReferralCode: "",
     customerEmail: "",
     customerName: "",
+    customerPhone: "",
     
-    // Scheduling Preferences
-    preferredTimeSlot: "",
-    preferredDays: [] as string[],
-    serviceType: "", // one-time, weekly, bi-weekly, monthly
-    
-    // Access & Special Instructions
+    // Contact Preferences
+    contactMethod: "",
+    contactTime: "",
     accessInstructions: "",
     parkingInstructions: "",
     specialRequests: "",
     petsPresent: false,
     alarmCode: "",
-    
-    // Contact Preferences
-    contactMethod: "",
-    contactTime: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,8 +70,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             .single();
 
           if (data && !error) {
-            handleInputChange("serviceType", data.frequency || "one-time");
-            
             // Autofill customer info
             if (data.customer_name) {
               handleInputChange("customerName", data.customer_name);
@@ -109,19 +101,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleDayToggle = (day: string) => {
-    // For one-time services, only allow one day selection
-    if (formData.serviceType === "one-time") {
-      handleInputChange("preferredDays", [day]);
-    } else {
-      // For recurring services, allow multiple days
-      const newDays = formData.preferredDays.includes(day)
-        ? formData.preferredDays.filter(d => d !== day)
-        : [...formData.preferredDays, day];
-      handleInputChange("preferredDays", newDays);
-    }
   };
 
   const validateReferralCode = async (code: string) => {
@@ -244,10 +223,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               source: formData.hearAboutUs,
               isValid: referralValidation.isValid
             },
-            scheduling: {
-              preferredTimeSlot: formData.preferredTimeSlot,
-              preferredDays: formData.preferredDays
-            },
             instructions: {
               access: formData.accessInstructions,
               parking: formData.parkingInstructions,
@@ -288,10 +263,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               source: formData.hearAboutUs,
               isValid: referralValidation.isValid
             },
-            scheduling: {
-              preferredTimeSlot: formData.preferredTimeSlot,
-              preferredDays: formData.preferredDays
-            },
             instructions: {
               access: formData.accessInstructions,
               parking: formData.parkingInstructions,
@@ -317,6 +288,55 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
       } catch (zapierError) {
         console.error('Error sending to Zapier:', zapierError);
         // Don't fail the main flow if Zapier fails
+      }
+
+      // Create booking in GoHighLevel if scheduling data exists
+      try {
+        const { data: orderData, error: orderFetchError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+
+        if (!orderFetchError && orderData) {
+          // Check if this order has scheduling data from the visual scheduler
+          const serviceDetails = orderData.service_details as any;
+          const hasSchedulingInfo = serviceDetails?.scheduling;
+          
+          if (hasSchedulingInfo || (formData.streetAddress && formData.customerEmail)) {
+            await supabase.functions.invoke('create-gohighlevel-booking', {
+              body: {
+                customerName: formData.customerName,
+                customerEmail: formData.customerEmail,
+                customerPhone: formData.customerPhone || '',
+                scheduledDate: hasSchedulingInfo?.scheduledDate || '',
+                scheduledTime: hasSchedulingInfo?.scheduledTime || '',
+                serviceType: orderData.cleaning_type,
+                address: {
+                  street: formData.streetAddress,
+                  city: formData.city,
+                  state: formData.state,
+                  zipCode: formData.zipCode
+                },
+                serviceDetails: {
+                  squareFootage: orderData.square_footage,
+                  addOns: orderData.add_ons,
+                  frequency: orderData.frequency,
+                  instructions: {
+                    special: formData.specialRequests,
+                    access: formData.accessInstructions,
+                    parking: formData.parkingInstructions,
+                    pets: formData.petsPresent
+                  }
+                }
+              }
+            });
+            console.log("Booking created in GoHighLevel successfully");
+          }
+        }
+      } catch (ghlError) {
+        console.error('Error creating GoHighLevel booking:', ghlError);
+        // Don't fail the main flow if GoHighLevel fails
       }
 
       toast.success("Information saved successfully!");
@@ -371,6 +391,18 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                   placeholder="john@example.com"
                   className="text-sm sm:text-base"
                   required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="customerPhone">Phone Number</Label>
+                <Input
+                  id="customerPhone"
+                  type="tel"
+                  value={formData.customerPhone}
+                  onChange={(e) => handleInputChange("customerPhone", e.target.value)}
+                  placeholder="(555) 123-4567"
+                  className="text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -570,55 +602,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </div>
-
-        {/* Scheduling Preferences */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-base sm:text-lg font-semibold">
-            <Calendar className="h-5 w-5 text-primary" />
-            Scheduling Preferences
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label>Preferred Time Slot</Label>
-              <Select value={formData.preferredTimeSlot} onValueChange={(value) => handleInputChange("preferredTimeSlot", value)}>
-                <SelectTrigger className="text-sm sm:text-base">
-                  <SelectValue placeholder="Select here" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="morning" className="text-muted-foreground">Morning (8 AM - 12 PM) - Unavailable</SelectItem>
-                  <SelectItem value="afternoon">Afternoon (12 PM - 5 PM)</SelectItem>
-                  <SelectItem value="evening" className="text-muted-foreground">Evening (5 PM - 8 PM) - Unavailable</SelectItem>
-                  <SelectItem value="flexible">Flexible</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>
-              Preferred Days {formData.serviceType === "one-time" ? "(select one)" : "(select all that work)"}
-            </Label>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(day => (
-                <Button
-                  key={day}
-                  variant={formData.preferredDays.includes(day) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleDayToggle(day)}
-                  className="text-xs sm:text-sm px-2 py-1"
-                >
-                  {day.slice(0, 3)}
-                </Button>
-              ))}
-            </div>
-            {formData.serviceType === "one-time" && (
-              <p className="text-xs text-muted-foreground">
-                For one-time services, please select your preferred day for the cleaning.
-              </p>
-            )}
           </div>
         </div>
 
