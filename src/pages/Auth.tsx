@@ -85,7 +85,7 @@ export default function Auth() {
       return;
     }
 
-    // Simple password validation: 8 characters, 1 number, 1 special character
+    // Enhanced password validation to meet Supabase requirements
     if (signUpData.password.length < 8) {
       setError('Password must be at least 8 characters long');
       setIsSubmitting(false);
@@ -99,7 +99,27 @@ export default function Auth() {
     }
 
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password)) {
-      setError('Password must contain at least 1 special character (!@#$%^&* etc.)');
+      setError('Password must contain at least 1 special character');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/[A-Z]/.test(signUpData.password)) {
+      setError('Password must contain at least 1 uppercase letter');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!/[a-z]/.test(signUpData.password)) {
+      setError('Password must contain at least 1 lowercase letter');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check for common weak patterns
+    const commonWeakPatterns = ['123', 'abc', 'password', 'admin', 'user', 'test'];
+    if (commonWeakPatterns.some(pattern => signUpData.password.toLowerCase().includes(pattern))) {
+      setError('Password contains common patterns. Please use a more unique password.');
       setIsSubmitting(false);
       return;
     }
@@ -244,11 +264,14 @@ export default function Auth() {
                     <Input
                       id="signup-password"
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="8+ chars, 1 uppercase, 1 number, 1 special char"
                       value={signUpData.password}
                       onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Must be 8+ characters with uppercase, lowercase, number, and special character
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
