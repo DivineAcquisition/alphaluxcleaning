@@ -268,7 +268,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
       }
 
       toast.success("Information saved successfully!");
-      onComplete?.();
+      // Redirect to order status page with session ID
+      window.location.href = `/order-status?session_id=${sessionId}`;
     } catch (error) {
       console.error("Error saving information:", error);
       toast.error("Failed to save information. Please try again.");

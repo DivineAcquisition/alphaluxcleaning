@@ -11,13 +11,7 @@ export default function ServiceDetails() {
       <Navigation />
       
       <div className="container mx-auto max-w-4xl py-8 px-4">
-        <PostPaymentForm 
-          sessionId={sessionId || undefined}
-          onComplete={() => {
-            // Redirect to success or home page after completion
-            window.location.href = "/";
-          }}
-        />
+        <PostPaymentForm sessionId={sessionId || undefined} />
       </div>
     </div>
   );
