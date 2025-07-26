@@ -202,7 +202,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
         <CardContent className="p-6 space-y-6">
           {/* Square Footage */}
           <div className="space-y-2">
-            <Label>Square Footage</Label>
+            <Label>Square Footage *</Label>
             <Select 
               value={pricingData.squareFootage.toString()} 
               onValueChange={(value) => setPricingData(prev => ({ ...prev, squareFootage: parseInt(value) }))}
