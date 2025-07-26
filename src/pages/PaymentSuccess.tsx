@@ -69,6 +69,20 @@ export default function PaymentSuccess() {
                     </p>
                   </div>
                 )}
+
+                <div className="flex flex-col sm:flex-row gap-4 pt-8 max-w-2xl mx-auto">
+                  <Button asChild className="flex-1 text-lg py-6" size="lg">
+                    <Link to={`/service-details?session_id=${sessionId}`}>
+                      Complete Your Service Details
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild className="flex-1 text-lg py-6" size="lg">
+                    <Link to="/">
+                      <Home className="h-5 w-5 mr-2" />
+                      Back to Home
+                    </Link>
+                  </Button>
+                </div>
               </div>
 
               <div className="border-t pt-8 space-y-6">
@@ -107,19 +121,6 @@ export default function PaymentSuccess() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-8 max-w-2xl mx-auto">
-                <Button asChild className="flex-1 text-lg py-6" size="lg">
-                  <Link to={`/service-details?session_id=${sessionId}`}>
-                    Complete Your Service Details
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild className="flex-1 text-lg py-6" size="lg">
-                  <Link to="/">
-                    <Home className="h-5 w-5 mr-2" />
-                    Back to Home
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
