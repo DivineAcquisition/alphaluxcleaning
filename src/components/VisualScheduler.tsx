@@ -173,6 +173,18 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
     });
   };
 
+  // Handle canceling next day booking
+  const handleCancelNextDay = () => {
+    setSelectedDateState("");
+    setSelectedTimeState("");
+    setIsNextDayBooking(false);
+    onSchedulingUpdate({ 
+      scheduledDate: "", 
+      scheduledTime: ""
+    });
+    toast.success("Next day booking cancelled. Please select a date from the calendar.");
+  };
+
   // Handle time selection
   const handleTimeSelect = (timeSlot: TimeSlot) => {
     if (!selectedDateState) {
@@ -271,13 +283,24 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
                 <h4 className="font-semibold text-orange-800">Need Service Tomorrow?</h4>
                 <p className="text-sm text-orange-600">Priority next-day booking available (+$50)</p>
               </div>
-              <Button
-                variant={isNextDayBooking ? "default" : "outline"}
-                onClick={handleNextDaySelect}
-                className={isNextDayBooking ? "bg-orange-500 hover:bg-orange-600" : "border-orange-300 text-orange-700 hover:bg-orange-50"}
-              >
-                {isNextDayBooking ? "Selected" : "Book Tomorrow"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant={isNextDayBooking ? "default" : "outline"}
+                  onClick={handleNextDaySelect}
+                  className={isNextDayBooking ? "bg-orange-500 hover:bg-orange-600" : "border-orange-300 text-orange-700 hover:bg-orange-50"}
+                >
+                  {isNextDayBooking ? "Selected" : "Book Tomorrow"}
+                </Button>
+                {isNextDayBooking && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelNextDay}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
