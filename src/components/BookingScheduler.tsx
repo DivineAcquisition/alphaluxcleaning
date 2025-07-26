@@ -87,6 +87,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
 
   // Handle next day booking toggle
   const handleNextDayBooking = (enabled: boolean) => {
+    console.log('Next day booking toggled:', enabled);
     const tomorrowDate = getTomorrowDate();
     const newSchedulingData = {
       ...schedulingData,
@@ -96,10 +97,12 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
       upchargeAmount: enabled ? 50 : 0
     };
     
+    console.log('New scheduling data:', newSchedulingData);
     setSchedulingData(newSchedulingData);
     onSchedulingUpdate(newSchedulingData);
 
     if (enabled) {
+      console.log('Checking availability for date:', tomorrowDate);
       checkAvailability(tomorrowDate);
     }
   };
