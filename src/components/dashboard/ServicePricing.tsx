@@ -126,23 +126,23 @@ const originalPricingTiers = [
   }
 ];
 
-// Calculate discounted prices
+// These are the final prices - no additional discounting needed
 const pricingTiers = originalPricingTiers.map(tier => ({
   ...tier,
   pricing: {
     weekly: {
       original: tier.originalPricing.weekly,
-      discount: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * 0.25 * 100) / 100 : 0,
-      final: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * 0.75 * 100) / 100 : 0
+      discount: 0,
+      final: tier.originalPricing.weekly
     },
     biweekly: {
       original: tier.originalPricing.biweekly,
-      discount: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * 0.25 * 100) / 100 : 0,
-      final: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * 0.75 * 100) / 100 : 0
+      discount: 0,
+      final: tier.originalPricing.biweekly
     },
     monthly: {
       original: tier.originalPricing.monthly,
-      discount: 0, // No discount for monthly
+      discount: 0,
       final: tier.originalPricing.monthly
     },
     oneTime: {
@@ -246,26 +246,10 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Weekly Service:</span>
-                      {tier.pricing.weekly.original > 0 && (
-                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
-                          25% OFF
-                        </Badge>
-                      )}
                     </div>
                     {tier.pricing.weekly.original > 0 ? (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Regular Price:</span>
-                          <span className="line-through">${tier.pricing.weekly.original}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-success">
-                          <span>You Save:</span>
-                          <span>-${tier.pricing.weekly.discount}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-primary border-t pt-1">
-                          <span>Final Price:</span>
-                          <span>${tier.pricing.weekly.final}</span>
-                        </div>
+                      <div className="font-bold text-primary">
+                        ${tier.pricing.weekly.final}
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>
@@ -276,26 +260,10 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Every Other Week:</span>
-                      {tier.pricing.biweekly.original > 0 && (
-                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
-                          25% OFF
-                        </Badge>
-                      )}
                     </div>
                     {tier.pricing.biweekly.original > 0 ? (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Regular Price:</span>
-                          <span className="line-through">${tier.pricing.biweekly.original}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-success">
-                          <span>You Save:</span>
-                          <span>-${tier.pricing.biweekly.discount}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-primary border-t pt-1">
-                          <span>Final Price:</span>
-                          <span>${tier.pricing.biweekly.final}</span>
-                        </div>
+                      <div className="font-bold text-primary">
+                        ${tier.pricing.biweekly.final}
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>

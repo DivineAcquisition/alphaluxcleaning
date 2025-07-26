@@ -22,8 +22,8 @@ interface PricingCalculatorProps {
   onPriceUpdate?: (data: PricingData, price: number, breakdown: any) => void;
 }
 
-// Bay Area Cleaning Professionals pricing structure with discounts applied
-const originalPricingTiers = [
+// Bay Area Cleaning Professionals pricing structure - THESE ARE THE FINAL PRICES
+const pricingTiers = [
   { min: 0, max: 1000, weekly: 97.50, biweekly: 118.59, monthly: 171.26, oneTime: 225.31, deepClean: 305.05 },
   { min: 1001, max: 1400, weekly: 115.94, biweekly: 125.58, monthly: 186.59, oneTime: 235.09, deepClean: 327.77 },
   { min: 1401, max: 1800, weekly: 125.67, biweekly: 140.06, monthly: 225.73, oneTime: 255.27, deepClean: 355.94 },
@@ -34,15 +34,6 @@ const originalPricingTiers = [
   { min: 3901, max: 4500, weekly: 215.29, biweekly: 231.58, monthly: 368.69, oneTime: 378.67, deepClean: 512.60 },
   { min: 4501, max: 5100, weekly: 228.56, biweekly: 242.05, monthly: 428.17, oneTime: 461.37, deepClean: 564.24 }
 ];
-
-// Apply discounts: 25% off weekly/biweekly only, $75 off deep cleaning
-const pricingTiers = originalPricingTiers.map(tier => ({
-  ...tier,
-  weekly: Math.round((tier.weekly * 0.75) * 100) / 100, // 25% off
-  biweekly: Math.round((tier.biweekly * 0.75) * 100) / 100, // 25% off  
-  monthly: tier.monthly, // No discount for monthly
-  deepClean: Math.round((tier.deepClean - 75) * 100) / 100 // $75 off
-}));
 
 const addOnPrices = {
   baseboards: 50,
@@ -221,7 +212,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 <SelectValue placeholder="Select here" />
               </SelectTrigger>
               <SelectContent>
-                {originalPricingTiers.map((tier, index) => (
+                {pricingTiers.map((tier, index) => (
                   <SelectItem key={index} value={Math.floor((tier.min + tier.max) / 2).toString()}>
                     <div className="flex items-center gap-2">
                       <Home className="h-4 w-4" />
@@ -559,64 +550,10 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground">Price Breakdown</h4>
                 
-                {(() => {
-                  const tier = originalPricingTiers.find(t => 
-                    pricingData.squareFootage >= t.min && pricingData.squareFootage <= t.max
-                  );
-                  
-                  if (!tier) return null;
-                  
-                  let originalBasePrice = 0;
-                  const frequency = pricingData.frequency;
-                  const cleaningType = pricingData.cleaningType;
-                  const isDeepCleaning = cleaningType === 'deep' || cleaningType === 'moveout';
-                  const isOneTime = frequency === 'one_time';
-                  const hasRecurringDiscount = (frequency === 'weekly' || frequency === 'biweekly') && !isOneTime;
-                  const hasDeepCleanDiscount = isDeepCleaning && isOneTime;
-                  
-                  // Get original price based on frequency for non-deep cleaning, or deep cleaning base for one-time deep
-                  if (isDeepCleaning && isOneTime) {
-                    originalBasePrice = tier.deepClean + 75; // Add back the $75 to show original price
-                  } else {
-                    if (frequency === 'weekly') {
-                      originalBasePrice = tier.weekly / 0.75; // Show original before 25% discount
-                    } else if (frequency === 'biweekly') {
-                      originalBasePrice = tier.biweekly / 0.75; // Show original before 25% discount  
-                    } else if (frequency === 'monthly') {
-                      originalBasePrice = tier.monthly;
-                    } else if (frequency === 'one_time') {
-                      originalBasePrice = tier.oneTime;
-                    }
-                  }
-                  
-                  return (
-                    <>
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-muted-foreground">Original Price</span>
-                        <span className="font-medium">${Math.round(originalBasePrice * 100) / 100}</span>
-                      </div>
-                      
-                      {hasRecurringDiscount && (
-                        <div className="flex justify-between items-center py-2 text-green-600">
-                          <span>25% Recurring Discount ({frequency === 'weekly' ? 'Weekly' : 'Biweekly'})</span>
-                          <span>-${Math.round((originalBasePrice * 0.25) * 100) / 100}</span>
-                        </div>
-                      )}
-                      
-                      {hasDeepCleanDiscount && (
-                        <div className="flex justify-between items-center py-2 text-green-600">
-                          <span>$75 One-Time Deep Cleaning Discount</span>
-                          <span>-$75.00</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span className="text-muted-foreground">Service Total</span>
-                        <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
-                      </div>
-                    </>
-                  );
-                })()}
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="text-muted-foreground">Service Total</span>
+                  <span className="font-medium">${priceBreakdown.basePrice?.toFixed(2)}</span>
+                </div>
 
                 {priceBreakdown.addOnTotal > 0 && (
                   <div className="flex justify-between items-center py-2 border-b">
