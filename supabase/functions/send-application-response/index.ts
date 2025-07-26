@@ -70,7 +70,7 @@ serve(async (req) => {
       ? "🎉 Welcome to Bay Area Cleaning Pros - Application Approved!" 
       : "Thank you for your interest - Application Update";
 
-    const logoUrl = "https://kqoezqzogleaaupjzxch.supabase.co/storage/v1/object/public/images/b837eb94-c4b1-4de1-9ab0-ac2606e98209.png";
+    const logoUrl = "/bay-area-logo.png";
     
     const emailContent = `
       <!DOCTYPE html>
@@ -120,7 +120,7 @@ serve(async (req) => {
                 </div>
 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://kqoezqzogleaaupjzxch.supabase.co/subcontractor-onboarding" 
+                  <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/subcontractor-onboarding" 
                      style="display: inline-block; background: linear-gradient(135deg, #8B5CF6, #A855F7); color: white; text-decoration: none; padding: 15px 30px; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3); transition: all 0.3s ease;">
                     🚀 Start Onboarding Process
                   </a>

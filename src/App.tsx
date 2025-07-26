@@ -16,6 +16,8 @@ import SubcontractorAuth from "./pages/SubcontractorAuth";
 import SubcontractorHome from "./pages/SubcontractorHome";
 import SubcontractorOnboarding from "./pages/SubcontractorOnboarding";
 import SubcontractorDashboard from "./pages/SubcontractorDashboard";
+import SubcontractorApplication from "./pages/SubcontractorApplication";
+import ApplicationManager from "./pages/ApplicationManager";
 import CommercialThankYou from "./pages/CommercialThankYou";
 import TestEmail from "./pages/TestEmail";
 import NotFound from "./pages/NotFound";
@@ -42,6 +44,8 @@ const App = () => (
           <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
           <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
           <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
+          <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
+          <Route path="/application-manager" element={<ApplicationManager />} />
           <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
           <Route path="/test-email" element={<TestEmail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

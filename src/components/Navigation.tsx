@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus } from "lucide-react";
 
 export function Navigation() {
   const location = useLocation();
@@ -16,6 +16,8 @@ export function Navigation() {
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/order-status", label: "Order Status", icon: FileText },
+    { path: "/subcontractor-application", label: "Join Our Team", icon: UserPlus },
+    { path: "/application-manager", label: "Application Manager", icon: Users },
   ];
 
   return (
