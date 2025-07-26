@@ -142,8 +142,8 @@ const pricingTiers = originalPricingTiers.map(tier => ({
     },
     monthly: {
       original: tier.originalPricing.monthly,
-      discount: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * 0.25 * 100) / 100 : 0,
-      final: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * 0.75 * 100) / 100 : 0
+      discount: 0, // No discount for monthly
+      final: tier.originalPricing.monthly
     },
     oneTime: {
       original: tier.originalPricing.oneTime,
@@ -152,8 +152,8 @@ const pricingTiers = originalPricingTiers.map(tier => ({
     },
     deepClean: {
       original: tier.originalPricing.deepClean,
-      discount: tier.originalPricing.deepClean > 0 ? 65 : 0,
-      final: tier.originalPricing.deepClean > 0 ? Math.round((tier.originalPricing.deepClean - 65) * 100) / 100 : 0
+      discount: tier.originalPricing.deepClean > 0 ? 75 : 0,
+      final: tier.originalPricing.deepClean > 0 ? Math.round((tier.originalPricing.deepClean - 75) * 100) / 100 : 0
     }
   }
 }));
@@ -176,9 +176,9 @@ const serviceTypes = [
       "Fold up to 2 baskets of clothes"
     ]
   },
-  { 
+    { 
     name: "Deep Cleaning", 
-    description: "Comprehensive cleaning with detailed work ($65 off regular price)",
+    description: "Comprehensive cleaning with detailed work ($75 off regular price)",
     icon: Star, 
     color: "text-accent",
     features: [
@@ -306,26 +306,10 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Monthly Service:</span>
-                      {tier.pricing.monthly.original > 0 && (
-                        <Badge variant="secondary" className="text-xs px-2 py-1 bg-success text-success-foreground">
-                          25% OFF
-                        </Badge>
-                      )}
                     </div>
                     {tier.pricing.monthly.original > 0 ? (
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Regular Price:</span>
-                          <span className="line-through">${tier.pricing.monthly.original}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-success">
-                          <span>You Save:</span>
-                          <span>-${tier.pricing.monthly.discount}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-primary border-t pt-1">
-                          <span>Final Price:</span>
-                          <span>${tier.pricing.monthly.final}</span>
-                        </div>
+                      <div className="font-bold text-primary">
+                        ${tier.pricing.monthly.final}
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>
@@ -353,7 +337,7 @@ export function ServicePricing() {
                     <span className="font-medium text-accent">Deep Clean Special:</span>
                     {tier.pricing.deepClean.original > 0 && (
                        <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
-                         $65 OFF!
+                         $75 OFF!
                        </Badge>
                     )}
                   </div>
@@ -391,7 +375,7 @@ export function ServicePricing() {
               {service.name === "Deep Cleaning" && (
                 <div className="absolute top-2 right-2 z-10">
                   <Badge variant="destructive" className="animate-pulse bg-destructive text-destructive-foreground">
-                    $65 OFF!
+                    $75 OFF!
                   </Badge>
                 </div>
               )}

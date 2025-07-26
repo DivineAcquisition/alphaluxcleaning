@@ -32,13 +32,13 @@ const originalPricingTiers = [
   { min: 4501, max: 5100, weekly: 228.56, biweekly: 242.05, monthly: 428.17, oneTime: 461.37, deepClean: 564.24 }
 ];
 
-// Apply discounts: 25% off recurring services, $65 off deep cleaning
+// Apply discounts: 25% off weekly/biweekly only, $75 off deep cleaning
 const pricingTiers = originalPricingTiers.map(tier => ({
   ...tier,
   weekly: Math.round((tier.weekly * 0.75) * 100) / 100, // 25% off
   biweekly: Math.round((tier.biweekly * 0.75) * 100) / 100, // 25% off  
-  monthly: Math.round((tier.monthly * 0.75) * 100) / 100, // 25% off
-  deepClean: Math.round((tier.deepClean - 65) * 100) / 100 // $65 off
+  monthly: tier.monthly, // No discount for monthly
+  deepClean: Math.round((tier.deepClean - 75) * 100) / 100 // $75 off
 }));
 
 const addOnPrices = {
@@ -550,7 +550,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                       {isDeepCleaning && (
                         <div className="flex justify-between items-center py-2 text-green-600">
                           <span>Deep Cleaning Discount</span>
-                          <span>-$65.00</span>
+                          <span>-$75.00</span>
                         </div>
                       )}
                       

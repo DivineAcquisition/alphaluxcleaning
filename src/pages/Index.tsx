@@ -8,6 +8,7 @@ import { BookingScheduler } from "@/components/BookingScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
+import { ReferralSection } from "@/components/ReferralSection";
 
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
@@ -92,6 +93,11 @@ const Index = () => {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Referral Section */}
+                  <div className="w-full">
+                    <ReferralSection />
+                  </div>
                 </div>
               </CardContent>
             </Card>
