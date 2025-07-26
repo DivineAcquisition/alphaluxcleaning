@@ -209,27 +209,8 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
 
       if (error) throw error;
 
-      toast({
-        title: "Estimate Request Submitted!",
-        description: "We'll contact you within 24 hours to schedule your walkthrough.",
-        duration: 5000,
-      });
-
-      // Reset form
-      setFormData({
-        ...formData,
-        businessName: "",
-        businessType: "",
-        contactPerson: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        zipCode: "",
-        specialRequirements: "",
-        preferredWalkthroughDate: "",
-        preferredWalkthroughTime: ""
-      });
+      // Redirect to thank you page
+      window.location.href = "/commercial-thank-you";
 
     } catch (error) {
       console.error('Error submitting estimate request:', error);

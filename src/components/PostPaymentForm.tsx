@@ -193,6 +193,15 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     setIsSubmitting(true);
 
     try {
+      // First, get the complete order data
+      const { data: orderData, error: fetchError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("stripe_session_id", sessionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       // Update the order with additional information
       const { error } = await supabase
         .from("orders")
@@ -236,6 +245,58 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
         .eq("stripe_session_id", sessionId);
 
       if (error) throw error;
+
+      // Send transaction data to Zapier webhook
+      try {
+        const transactionData = {
+          ...orderData,
+          service_details: {
+            address: {
+              street: formData.streetAddress,
+              apartment: formData.apartmentUnit,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode
+            },
+            property: {
+              dwellingType: formData.dwellingType,
+              flooringType: formData.flooringType
+            },
+            referral: {
+              code: formData.referralCode,
+              source: formData.hearAboutUs,
+              isValid: referralValidation.isValid
+            },
+            scheduling: {
+              preferredTimeSlot: formData.preferredTimeSlot,
+              preferredDays: formData.preferredDays
+            },
+            instructions: {
+              access: formData.accessInstructions,
+              parking: formData.parkingInstructions,
+              special: formData.specialRequests,
+              pets: formData.petsPresent,
+              alarmCode: formData.alarmCode
+            },
+            contact: {
+              method: formData.contactMethod,
+              time: formData.contactTime
+            }
+          },
+          customer_email: formData.customerEmail,
+          customer_name: formData.customerName
+        };
+
+        await supabase.functions.invoke('send-transaction-to-zapier', {
+          body: {
+            transactionData,
+            type: 'residential_booking'
+          }
+        });
+      } catch (zapierError) {
+        console.error('Error sending to Zapier:', zapierError);
+        // Don't fail the main flow if Zapier fails
+      }
 
       toast.success("Information saved successfully!");
       onComplete?.();
