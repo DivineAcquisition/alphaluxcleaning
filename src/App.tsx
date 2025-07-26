@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import MetricsDashboard from "./pages/MetricsDashboard";
 import Index from "./pages/Index";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import ServiceDetails from "./pages/ServiceDetails";
@@ -30,6 +31,7 @@ const App = () => {
   // Determine which routes to show based on subdomain
   const isAdminDomain = currentHost.startsWith('admin.');
   const isSubconDomain = currentHost.startsWith('subcon.');
+  const isDashboardDomain = currentHost.startsWith('dashboard.');
   const isPortalDomain = currentHost.startsWith('portal.') || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
 
   return (
@@ -39,6 +41,15 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Dashboard Domain Routes */}
+            {isDashboardDomain && (
+              <>
+                <Route path="/" element={<MetricsDashboard />} />
+                <Route path="/admin-auth" element={<AdminAuth />} />
+                <Route path="/password-reset" element={<PasswordReset />} />
+              </>
+            )}
+            
             {/* Admin Domain Routes */}
             {isAdminDomain && (
               <>
