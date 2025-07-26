@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, User, Mail, Phone, Gift, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -238,20 +237,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        <Tabs defaultValue="booking" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="booking">Book Service</TabsTrigger>
-            <TabsTrigger value="referral">
-              <Gift className="h-4 w-4 mr-2" />
-              Referral Code
-            </TabsTrigger>
-            <TabsTrigger value="discount">
-              <Tag className="h-4 w-4 mr-2" />
-              Apply Discount
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="booking" className="space-y-6 mt-6">
+        <div className="space-y-6">
             {/* Payment Type Selection */}
             <div className="space-y-4">
               <h4 className="font-semibold">Payment Options</h4>
@@ -497,6 +483,100 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
               </div>
             </div>
 
+            {/* Referral and Discount Codes Section */}
+            <div className="space-y-4">
+              <h4 className="font-semibold">Promo Codes (Optional)</h4>
+              
+              {/* Referral Code */}
+              <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-primary" />
+                  <Label className="font-medium">Referral Code</Label>
+                </div>
+                
+                {appliedReferral && (
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                    <p className="text-green-800 font-medium text-sm">✓ Referral code applied!</p>
+                    <p className="text-green-600 text-xs">You get 10% off your service.</p>
+                  </div>
+                )}
+                
+                {!appliedReferral && (
+                  <>
+                    <div className="flex gap-2">
+                      <Input
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                        placeholder="Enter your friend's referral code"
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={handleApplyReferralCode}
+                        disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Get 10% off your service with a friend's referral code
+                    </p>
+                    {(!customerInfo.email || !customerInfo.name) && (
+                      <p className="text-xs text-orange-600">
+                        Please fill in your name and email first
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Discount Code */}
+              <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  <Label className="font-medium">Discount Code</Label>
+                </div>
+                
+                {appliedDiscount && (
+                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                    <p className="text-green-800 font-medium text-sm">✓ Discount code applied!</p>
+                    <p className="text-green-600 text-xs">{appliedDiscount.description}</p>
+                  </div>
+                )}
+                
+                {!appliedDiscount && !appliedReferral && (
+                  <>
+                    <div className="flex gap-2">
+                      <Input
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        placeholder="Enter discount code (e.g., FRIEND50-ABC123)"
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={handleApplyDiscountCode}
+                        disabled={!discountCode.trim()}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Have a discount code from a referral reward? Get 50% off deep cleaning
+                    </p>
+                  </>
+                )}
+                
+                {appliedReferral && (
+                  <p className="text-xs text-muted-foreground text-orange-600">
+                    Cannot apply discount code when referral code is already applied
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Book Service Button */}
             <Button 
               className="w-full" 
@@ -529,108 +609,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 : "You will be redirected to our secure payment processor to complete your booking"
               }
             </div>
-          </TabsContent>
-
-          <TabsContent value="referral" className="mt-6 space-y-6">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 text-lg font-semibold">
-                <Gift className="h-6 w-6 text-primary" />
-                Have a Referral Code?
-              </div>
-              
-              <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Refer friends and save!</strong> Get 50% off your next deep cleaning when they book.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Using a referral code? Get 10% off your service (can stack with other offers).
-                </p>
-              </div>
-
-              {appliedReferral && (
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <p className="text-green-800 font-medium">✓ Referral code applied!</p>
-                  <p className="text-green-600 text-sm">You get 10% off your service.</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <Label htmlFor="referralCode">Enter Referral Code</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="referralCode"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    placeholder="Enter your friend's referral code"
-                    disabled={!!appliedReferral}
-                  />
-                  <Button 
-                    onClick={handleApplyReferralCode}
-                    disabled={!referralCode.trim() || !!appliedReferral || !customerInfo.email || !customerInfo.name}
-                    variant="outline"
-                  >
-                    Apply
-                  </Button>
-                </div>
-                {(!customerInfo.email || !customerInfo.name) && (
-                  <p className="text-xs text-muted-foreground">
-                    Please fill in your name and email in the Book Service tab first
-                  </p>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="discount" className="mt-6 space-y-6">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 text-lg font-semibold">
-                <Tag className="h-6 w-6 text-primary" />
-                Apply Discount Code
-              </div>
-              
-              <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Have a discount code from a referral reward? Enter it here to get 50% off your deep cleaning service.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Note:</strong> Discount codes cannot be combined with referral codes.
-                </p>
-              </div>
-
-              {appliedDiscount && (
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <p className="text-green-800 font-medium">✓ Discount code applied!</p>
-                  <p className="text-green-600 text-sm">{appliedDiscount.description}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <Label htmlFor="discountCode">Enter Discount Code</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="discountCode"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value)}
-                    placeholder="Enter your discount code (e.g., FRIEND50-ABC123)"
-                    disabled={!!appliedDiscount || !!appliedReferral}
-                  />
-                  <Button 
-                    onClick={handleApplyDiscountCode}
-                    disabled={!discountCode.trim() || !!appliedDiscount || !!appliedReferral}
-                    variant="outline"
-                  >
-                    Apply
-                  </Button>
-                </div>
-                {appliedReferral && (
-                  <p className="text-xs text-muted-foreground text-orange-600">
-                    Cannot apply discount code when referral code is already applied
-                  </p>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </CardContent>
     </Card>
   );
