@@ -18,13 +18,29 @@ export default function TestEmail() {
         body: { testEmail: email }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
 
       console.log("Test email response:", data);
-      toast.success(`Test email sent successfully to ${email}!`);
+      
+      if (data.success) {
+        toast.success(`Test email sent successfully to ${email}!`);
+      } else {
+        console.error("Function returned error:", data);
+        toast.error(`Failed to send test email: ${data.error || 'Unknown error'}`);
+      }
     } catch (error: any) {
       console.error("Error sending test email:", error);
-      toast.error(`Failed to send test email: ${error.message}`);
+      
+      // Try to get more details from the error
+      let errorMessage = error.message;
+      if (error.details) {
+        errorMessage += `: ${error.details}`;
+      }
+      
+      toast.error(`Failed to send test email: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
