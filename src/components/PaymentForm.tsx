@@ -228,6 +228,47 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
           <h4 className="font-semibold mb-3">Service Summary</h4>
           <div className="space-y-2">
+            {/* Show discount breakdown */}
+            {(() => {
+              const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
+              const isRecurring = pricingData.frequency === 'weekly' || pricingData.frequency === 'biweekly';
+              const isOneTime = pricingData.frequency === 'one_time';
+              
+              // Calculate original price before discounts
+              let originalPrice = calculatedPrice;
+              if (isRecurring) {
+                originalPrice = Math.round((calculatedPrice / 0.75) * 100) / 100; // Add back 25% discount
+              }
+              if (isDeepCleaning && isOneTime) {
+                originalPrice = calculatedPrice + 75; // Add back $75 discount
+              }
+              
+              return (
+                <>
+                  {(isRecurring || (isDeepCleaning && isOneTime)) && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Original Price:</span>
+                      <span className="line-through">${originalPrice.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  {isRecurring && (
+                    <div className="flex justify-between text-green-600">
+                      <span>25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):</span>
+                      <span>-${Math.round((originalPrice * 0.25) * 100) / 100}</span>
+                    </div>
+                  )}
+                  
+                  {isDeepCleaning && isOneTime && (
+                    <div className="flex justify-between text-green-600">
+                      <span>$75 Deep Cleaning Discount:</span>
+                      <span>-$75.00</span>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+            
             <div className="flex justify-between">
               <span>Service Amount:</span>
               <span className="font-bold text-primary">${calculatedPrice.toFixed(2)}</span>
