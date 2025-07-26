@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, LogIn, UserPlus, Home } from 'lucide-react';
 import { toast } from 'sonner';
-import { PublicFooter } from '@/components/footer/PublicFooter';
 
 export default function Auth() {
   const { user, userRole, signIn, signUp, loading } = useAuth();
@@ -319,9 +318,6 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Public Footer */}
-      <PublicFooter />
     </div>
   );
 }

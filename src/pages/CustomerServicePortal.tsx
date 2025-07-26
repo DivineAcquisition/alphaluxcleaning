@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RescheduleDialog } from "@/components/RescheduleDialog";
 import { CancellationDialog } from "@/components/CancellationDialog";
-import { PublicFooter } from "@/components/footer/PublicFooter";
 
 interface RecurringService {
   id: string;
@@ -230,27 +229,7 @@ const CustomerServicePortal = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Promotional Banner */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-4 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              <span className="text-sm font-semibold uppercase tracking-wider">LIMITED TIME OFFER</span>
-              <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-1">
-              Save $75 + Get 25% Off Recurring Services!
-            </h2>
-            <p className="text-sm md:text-base opacity-90">
-              Book your next cleaning and enjoy ongoing savings • Offer expires soon!
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 flex-1">{/* Added flex-1 */}
+    <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Recurring Services</h1>
@@ -412,10 +391,6 @@ const CustomerServicePortal = () => {
           </>
         )}
       </div>
-      </div>
-      
-      {/* Public Footer */}
-      <PublicFooter />
     </div>
   );
 };

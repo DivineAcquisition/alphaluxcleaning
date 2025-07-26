@@ -7,7 +7,6 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import { VisualScheduler } from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
-import { PublicFooter } from "@/components/footer/PublicFooter";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
@@ -38,10 +37,10 @@ const Index = () => {
   }, [pricingData, calculatedPrice]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-6 sm:px-8 py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight mb-4">
             Professional Cleaning Services
@@ -66,7 +65,7 @@ const Index = () => {
           <TabsContent value="residential" className="space-y-6">
             {/* Full screen residential layout matching commercial style */}
             <Card className="w-full">
-              <CardContent className="p-4 sm:p-6 lg:p-8">
+              <CardContent className="p-8">
                 <div className="space-y-8">
                   {/* Quote Section - Large like commercial */}
                   <div className="w-full">
@@ -136,9 +135,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
-      
-      {/* Public Footer */}
-      <PublicFooter />
     </div>
   );
 };
