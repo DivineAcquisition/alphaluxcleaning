@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Mail, Phone, MapPin } from "lucide-react";
+import { CreditCard, User, Mail, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -31,12 +31,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
-    phone: "",
-    streetAddress: "",
-    apartmentUnit: "",
-    city: "",
-    state: "CA",
-    zipCode: ""
+    phone: ""
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<"full" | "split">("full");
@@ -55,7 +50,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
   };
 
   const handleBookService = async () => {
-    if (!customerInfo.name || !customerInfo.email || !customerInfo.streetAddress || !customerInfo.city || !customerInfo.zipCode) {
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -89,13 +84,6 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
           customerName: customerInfo.name,
           customerEmail: customerInfo.email,
           customerPhone: customerInfo.phone,
-          serviceAddress: {
-            street: customerInfo.streetAddress,
-            apartment: customerInfo.apartmentUnit,
-            city: customerInfo.city,
-            state: customerInfo.state,
-            zipCode: customerInfo.zipCode
-          },
           bedrooms: pricingData.bedrooms,
           bathrooms: pricingData.bathrooms,
           scheduledDate: schedulingData?.scheduledDate || "",
@@ -304,82 +292,16 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
           <div className="space-y-2">
             <Label htmlFor="customerPhone" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              Phone Number
+              Phone Number *
             </Label>
             <Input
               id="customerPhone"
               type="tel"
               value={customerInfo.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="(optional)"
+              placeholder="Enter your phone number"
+              required
             />
-          </div>
-        </div>
-
-        {/* Service Address */}
-        <div className="space-y-4">
-          <h4 className="font-semibold flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Service Address
-          </h4>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="streetAddress">Street Address *</Label>
-              <Input
-                id="streetAddress"
-                value={customerInfo.streetAddress}
-                onChange={(e) => handleInputChange("streetAddress", e.target.value)}
-                placeholder="123 Main Street"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="apartmentUnit">Apartment/Unit</Label>
-                <Input
-                  id="apartmentUnit"
-                  value={customerInfo.apartmentUnit}
-                  onChange={(e) => handleInputChange("apartmentUnit", e.target.value)}
-                  placeholder="Apt 4B (optional)"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  value={customerInfo.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  placeholder="San Francisco"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  value={customerInfo.state}
-                  onChange={(e) => handleInputChange("state", e.target.value)}
-                  placeholder="CA"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code *</Label>
-                <Input
-                  id="zipCode"
-                  value={customerInfo.zipCode}
-                  onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                  placeholder="94102"
-                  required
-                />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -392,9 +314,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             isProcessing || 
             !customerInfo.name || 
             !customerInfo.email ||
-            !customerInfo.streetAddress ||
-            !customerInfo.city ||
-            !customerInfo.zipCode ||
+            !customerInfo.phone ||
             (schedulingData?.nextDayBooking && (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime))
           }
         >
