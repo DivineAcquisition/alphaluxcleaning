@@ -23,21 +23,65 @@ export function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+      <div className="container mx-auto px-4 lg:px-6">
+        <div className="flex h-18 items-center justify-between">
           {/* Logo/Brand */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3 flex-shrink-0">
             <img 
               src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
               alt="Bay Area Cleaning Professionals" 
               className="h-10 w-10 object-contain"
             />
-            <span className="font-semibold text-lg">Bay Area Cleaning Pros</span>
+            <span className="font-semibold text-lg hidden sm:block">Bay Area Cleaning Pros</span>
+            <span className="font-semibold text-base sm:hidden">BACP</span>
           </Link>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-4">
-            {navItems.map((item) => {
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center justify-center flex-1 mx-8">
+            <div className="flex items-center space-x-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Button
+                    key={item.path}
+                    variant={isActive ? "default" : "ghost"}
+                    size="default"
+                    className="px-4 py-2"
+                    asChild
+                  >
+                    <Link to={item.path} className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </Button>
+                );
+              })}
+              
+              {/* Website Link */}
+              <Button
+                variant="outline"
+                size="default"
+                className="px-4 py-2"
+                asChild
+              >
+                <a 
+                  href="https://bayareacleaningpros.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Visit Website
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Tablet Navigation */}
+          <div className="hidden md:flex lg:hidden items-center space-x-3">
+            {navItems.slice(0, 2).map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               
@@ -50,43 +94,62 @@ export function Navigation() {
                 >
                   <Link to={item.path} className="flex items-center gap-2">
                     <Icon className="h-4 w-4" />
-                    {item.label}
+                    <span className="hidden xl:inline">{item.label}</span>
                   </Link>
                 </Button>
               );
             })}
-            
-            {/* Website Link */}
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <a 
-                href="https://bayareacleaningpros.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Visit Website
-              </a>
-            </Button>
+          </div>
+          
+          {/* Right Section */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
+            {/* Contact Info - Desktop Only */}
+            <div className="hidden xl:flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <span>Contact:</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open('tel:+12812016112', '_self')}
+                  className="flex items-center gap-2 h-8 px-2"
+                >
+                  <Phone className="h-3 w-3" />
+                  <span>(281) 201-6112</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
+                  className="flex items-center gap-2 h-8 px-2"
+                >
+                  <Mail className="h-3 w-3" />
+                  <span>Email</span>
+                </Button>
+              </div>
+            </div>
             
             {/* Auth Section */}
-            <div className="flex items-center gap-2 ml-4">
+            <div className="flex items-center">
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      {user.email?.split('@')[0]} ({userRole})
+                    <Button variant="outline" className="px-3 py-2">
+                      <span className="hidden sm:inline mr-2">{user.email?.split('@')[0]}</span>
+                      <span className="text-xs text-muted-foreground">({userRole})</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2 text-sm border-b">
+                      <div className="font-medium">{user.email?.split('@')[0]}</div>
+                      <div className="text-xs text-muted-foreground">Role: {userRole}</div>
+                    </div>
                     {userRole === 'admin' && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link to="/admin-dashboard">Admin Dashboard</Link>
+                          <Link to="/admin-dashboard" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Admin Dashboard
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
@@ -94,7 +157,10 @@ export function Navigation() {
                     {userRole === 'customer' && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link to="/customer-service-portal">My Account</Link>
+                          <Link to="/my-services" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            My Account
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
@@ -106,138 +172,86 @@ export function Navigation() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" className="px-4 py-2" asChild>
                   <Link to="/auth" className="flex items-center gap-2">
                     <LogIn className="h-4 w-4" />
-                    Sign In
+                    <span className="hidden sm:inline">Sign In</span>
                   </Link>
                 </Button>
               )}
             </div>
-            
-            {/* Contact Buttons */}
-            <div className="hidden lg:flex items-center gap-2 ml-6 pl-6 border-l">
-              <span className="text-sm text-muted-foreground mr-2">Email or call us:</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.open('tel:+12812016112', '_self')}
-                className="flex items-center gap-2 text-sm"
-              >
-                <Phone className="h-4 w-4" />
-                <span>(281) 201-6112</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
-                className="flex items-center gap-2 text-sm"
-              >
-                <Mail className="h-4 w-4" />
-                <span>Email</span>
-              </Button>
-            </div>
-          </div>
 
-          {/* Mobile Menu */}
-          <div className="md:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-background z-[100]">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  
-                  return (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link 
-                        to={item.path} 
-                        className={`flex items-center gap-2 w-full ${
-                          isActive ? "bg-primary/10 text-primary" : ""
-                        }`}
-                      >
-                        <Icon className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-                
-                <DropdownMenuSeparator />
-                
-                <DropdownMenuItem asChild>
-                  <a 
-                    href="https://bayareacleaningpros.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 w-full"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Visit Website
-                  </a>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator />
-                
-                {/* Auth Section for Mobile */}
-                {user ? (
-                  <>
-                    <DropdownMenuItem disabled className="flex items-center gap-2 text-sm font-medium">
-                      {user.email?.split('@')[0]} ({userRole})
-                    </DropdownMenuItem>
-                    {userRole === 'admin' && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin-dashboard">Admin Dashboard</Link>
-                      </DropdownMenuItem>
-                    )}
-                    {userRole === 'customer' && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/customer-service-portal">My Account</Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={signOut}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
+            {/* Mobile Menu */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="px-2">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background z-[100]">
+                  <div className="lg:hidden">
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      
+                      return (
+                        <DropdownMenuItem key={item.path} asChild>
+                          <Link 
+                            to={item.path} 
+                            className={`flex items-center gap-3 w-full py-2 ${
+                              isActive ? "bg-primary/10 text-primary font-medium" : ""
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    
                     <DropdownMenuSeparator />
-                  </>
-                ) : (
-                  <>
+                    
                     <DropdownMenuItem asChild>
-                      <Link to="/auth" className="flex items-center gap-2">
-                        <LogIn className="h-4 w-4" />
-                        Sign In
-                      </Link>
+                      <a 
+                        href="https://bayareacleaningpros.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 w-full py-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Visit Website
+                      </a>
                     </DropdownMenuItem>
+                    
                     <DropdownMenuSeparator />
-                  </>
-                )}
-                
-                <DropdownMenuItem disabled className="flex items-center gap-2 text-sm font-medium">
-                  Email or call us:
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem 
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  onClick={() => window.open('tel:+12812016112', '_self')}
-                >
-                  <Phone className="h-4 w-4" />
-                  (281) 201-6112
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem 
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                  onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
-                >
-                  <Mail className="h-4 w-4" />
-                  Email us
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </div>
+                  
+                  {/* Contact Section for Mobile */}
+                  <div className="xl:hidden">
+                    <div className="px-3 py-2 text-sm font-medium text-muted-foreground border-b">
+                      Contact Us:
+                    </div>
+                    
+                    <DropdownMenuItem 
+                      className="flex items-center gap-3 py-2 cursor-pointer"
+                      onClick={() => window.open('tel:+12812016112', '_self')}
+                    >
+                      <Phone className="h-4 w-4" />
+                      (281) 201-6112
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem 
+                      className="flex items-center gap-3 py-2 cursor-pointer"
+                      onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email Support
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
