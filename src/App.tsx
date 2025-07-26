@@ -29,9 +29,9 @@ const App = () => {
   const currentHost = window.location.hostname;
   
   // Determine which routes to show based on subdomain
-  const isAdminDomain = currentHost.startsWith('admin.');
-  const isSubconDomain = currentHost.startsWith('subcon.');
-  const isDashboardDomain = currentHost.startsWith('dashboard.');
+  const isAdminDomain = currentHost.startsWith('admin.') || (currentHost.includes('localhost') && window.location.pathname.includes('admin'));
+  const isSubconDomain = currentHost.startsWith('subcon.') || (currentHost.includes('localhost') && window.location.pathname.includes('subcontractor'));
+  const isDashboardDomain = currentHost.startsWith('dashboard.') || (currentHost.includes('localhost') && window.location.pathname.includes('dashboard'));
   const isPortalDomain = currentHost.startsWith('portal.') || currentHost.includes('localhost') || currentHost.includes('127.0.0.1') || currentHost.includes('lovable.app');
 
   return (
