@@ -103,53 +103,18 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           };
         }
 
-        try {
-          const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
-            body: { 
-              date: format(date, 'yyyy-MM-dd'),
-              timeSlots: timeSlots.map(slot => `${slot.label} (${slot.startTime}-${slot.endTime})`)
-            }
-          });
-
-          if (error) {
-            console.error(`Calendar API error for ${format(date, 'yyyy-MM-dd')}:`, error);
-            // Return default availability if API fails
-            return {
-              date: format(date, 'yyyy-MM-dd'),
-              available: true,
-              timeSlots: timeSlots.map(slot => ({ ...slot, available: true }))
-            };
-          }
-
-          const daySlots = timeSlots.map(slot => {
-            const availabilitySlot = data?.availability?.find((a: any) => 
-              a.time.includes(slot.label)
-            );
-            return {
-              ...slot,
-              available: availabilitySlot ? availabilitySlot.available : true
-            };
-          });
-
-          return {
-            date: format(date, 'yyyy-MM-dd'),
-            available: daySlots.some(slot => slot.available),
-            timeSlots: daySlots
-          };
-        } catch (error) {
-          console.error(`Error checking availability for ${format(date, 'yyyy-MM-dd')}:`, error);
-          // Simulate some slots as unavailable for testing when API fails
-          const simulatedSlots = timeSlots.map((slot, index) => ({
-            ...slot,
-            available: index % 2 === 0 // Make every other slot unavailable for demo
-          }));
-          
-          return {
-            date: format(date, 'yyyy-MM-dd'),
-            available: simulatedSlots.some(slot => slot.available),
-            timeSlots: simulatedSlots
-          };
-        }
+        // Calendar integration disabled - showing demo availability
+        // For demonstration: make some slots unavailable to show the UI works
+        const demoSlots = timeSlots.map((slot, index) => ({
+          ...slot,
+          available: index !== 1 // Make the second slot unavailable for demo
+        }));
+        
+        return {
+          date: format(date, 'yyyy-MM-dd'),
+          available: demoSlots.some(slot => slot.available),
+          timeSlots: demoSlots
+        };
       });
 
       const weekAvailability = await Promise.all(availabilityPromises);
