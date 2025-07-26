@@ -475,6 +475,87 @@ export type Database = {
         }
         Relationships: []
       }
+      subcontractor_applications: {
+        Row: {
+          admin_notes: string | null
+          availability: string
+          background_check_consent: boolean
+          brand_shirt_consent: boolean
+          can_lift_heavy_items: boolean
+          comfortable_with_chemicals: boolean
+          created_at: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          full_name: string
+          has_drivers_license: boolean
+          has_own_vehicle: boolean
+          id: string
+          phone: string
+          preferred_work_areas: string | null
+          previous_cleaning_experience: string | null
+          reliable_transportation: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subcontractor_agreement_consent: boolean
+          updated_at: string
+          why_join_us: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          availability: string
+          background_check_consent?: boolean
+          brand_shirt_consent?: boolean
+          can_lift_heavy_items?: boolean
+          comfortable_with_chemicals?: boolean
+          created_at?: string
+          email: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          full_name: string
+          has_drivers_license?: boolean
+          has_own_vehicle?: boolean
+          id?: string
+          phone: string
+          preferred_work_areas?: string | null
+          previous_cleaning_experience?: string | null
+          reliable_transportation?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subcontractor_agreement_consent?: boolean
+          updated_at?: string
+          why_join_us: string
+        }
+        Update: {
+          admin_notes?: string | null
+          availability?: string
+          background_check_consent?: boolean
+          brand_shirt_consent?: boolean
+          can_lift_heavy_items?: boolean
+          comfortable_with_chemicals?: boolean
+          created_at?: string
+          email?: string
+          emergency_contact_name?: string
+          emergency_contact_phone?: string
+          full_name?: string
+          has_drivers_license?: boolean
+          has_own_vehicle?: boolean
+          id?: string
+          phone?: string
+          preferred_work_areas?: string | null
+          previous_cleaning_experience?: string | null
+          reliable_transportation?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          subcontractor_agreement_consent?: boolean
+          updated_at?: string
+          why_join_us?: string
+        }
+        Relationships: []
+      }
       subcontractor_job_assignments: {
         Row: {
           accepted_at: string | null
