@@ -1,4 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,97 +20,70 @@ const handler = async (req: Request): Promise<Response> => {
     const { testEmail } = await req.json();
     console.log("Sending test email to:", testEmail);
 
-    const ghlApiKey = Deno.env.get("GOHIGHLEVEL_API_KEY");
-    console.log("API key available:", ghlApiKey ? "Yes" : "No");
-    
-    if (!ghlApiKey) {
-      throw new Error("GOHIGHLEVEL_API_KEY not found in environment variables");
-    }
-
-    // First, try to create/find a contact
-    console.log("Creating contact in GoHighLevel...");
-    const contactResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${ghlApiKey}`,
-        'Content-Type': 'application/json',
-        'Version': '2021-04-15'
-      },
-      body: JSON.stringify({
-        email: testEmail,
-        firstName: "Test",
-        lastName: "User"
-      })
-    });
-
-    const contactData = await contactResponse.json();
-    console.log("Contact response status:", contactResponse.status);
-    console.log("Contact response:", contactData);
-
-    let contactId;
-    if (contactData.contact?.id) {
-      contactId = contactData.contact.id;
-    } else if (contactData.id) {
-      contactId = contactData.id;
-    } else {
-      // Contact might already exist, try to search
-      console.log("Contact creation failed, searching for existing contact...");
-      const searchResponse = await fetch(`https://services.leadconnectorhq.com/contacts/search/duplicate?email=${encodeURIComponent(testEmail)}`, {
-        headers: {
-          'Authorization': `Bearer ${ghlApiKey}`,
-          'Version': '2021-04-15'
-        }
-      });
-      const searchData = await searchResponse.json();
-      console.log("Search response:", searchData);
-      
-      if (searchData.contact?.id) {
-        contactId = searchData.contact.id;
-      }
-    }
-
-    if (!contactId) {
-      throw new Error("Could not create or find contact in GoHighLevel. Response: " + JSON.stringify(contactData));
-    }
-
-    console.log("Using contact ID:", contactId);
-
-    // Create email content
+    // Create test email content
     const emailContent = `
-      <h1>🧪 Test Email - Booking Confirmation</h1>
-      <p>This is a test email to verify the GoHighLevel integration is working.</p>
-      <p>If you received this email, the integration is successful!</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #3B82F6, #6366F1); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="margin: 0; font-size: 28px;">🧪 Test Email - Order Confirmation</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Testing email delivery for Bay Area Cleaning Pros!</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+          <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+            <h2 style="color: #3B82F6; margin-top: 0;">Test Successful! 🎉</h2>
+            <p style="margin: 15px 0; color: #64748b; line-height: 1.6;">
+              This is a test email to verify that the booking confirmation email system is working correctly.
+              Here's what a real booking confirmation would look like:
+            </p>
+          </div>
+
+          <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #1e293b; margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+              📋 Sample Service Details
+            </h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Service Type:</td>
+                <td style="padding: 8px 0; color: #1e293b; font-weight: 600;">Deep Cleaning</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Frequency:</td>
+                <td style="padding: 8px 0; color: #1e293b; font-weight: 600;">One-time</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Square Footage:</td>
+                <td style="padding: 8px 0; color: #1e293b; font-weight: 600;">1,500 sq ft</td>
+              </tr>
+              <tr style="border-top: 2px solid #e2e8f0;">
+                <td style="padding: 15px 0 8px 0; color: #1e293b; font-weight: 700; font-size: 18px;">Total Amount:</td>
+                <td style="padding: 15px 0 8px 0; color: #059669; font-weight: 700; font-size: 18px;">$299.00</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background: linear-gradient(135deg, #059669, #10b981); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; font-size: 16px; font-weight: 500;">
+              ✅ Email system is working correctly! Booking confirmation emails will be delivered.
+            </p>
+          </div>
+        </div>
+      </div>
     `;
 
-    // Send email through GoHighLevel
-    console.log("Sending email through GoHighLevel...");
-    const emailResponse = await fetch('https://services.leadconnectorhq.com/conversations/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${ghlApiKey}`,
-        'Content-Type': 'application/json',
-        'Version': '2021-04-15'
-      },
-      body: JSON.stringify({
-        type: "Email",
-        contactId: contactId,
-        html: emailContent,
-        message: "Test booking confirmation email"
-      })
+    // Send test email using Resend
+    const emailResponse = await resend.emails.send({
+      from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
+      to: [testEmail],
+      subject: "🧪 Test - Booking Confirmation Email System",
+      html: emailContent,
     });
 
-    const emailData = await emailResponse.json();
-    console.log("Email response status:", emailResponse.status);
-    console.log("Email response:", emailData);
-
-    if (!emailResponse.ok) {
-      throw new Error(`GoHighLevel API error: ${JSON.stringify(emailData)}`);
-    }
+    console.log("Test email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: `Test email sent successfully to ${testEmail}!`,
-      emailResponse: emailData
+      emailResponse,
+      message: `Test confirmation email sent successfully to ${testEmail}`
     }), {
       status: 200,
       headers: {
