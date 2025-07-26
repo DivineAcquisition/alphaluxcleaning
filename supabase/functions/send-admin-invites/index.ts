@@ -42,109 +42,60 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`Processing admin invite for: ${email}`);
 
-        // Create new user with admin role
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          email_confirm: true,
-          password: 'Bacp2025!-', // Updated password
-          user_metadata: {
-            role: 'admin',
-            full_name: email === 'ellie@bayareacleaningpros.com' ? 'Ellie' : 
-                      email === 'divine@bayareacleaningpros.com' ? 'Divine Acquisition' : 'Admin User'
-          }
-        });
+        // Check if user already exists
+        const { data: listUsers } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = listUsers?.users?.find(user => user.email === email);
 
-        if (createError) {
-          // If user already exists, that's okay
-          if (createError.message.includes('already been registered')) {
-            console.log(`User ${email} already exists`);
-            
-            // Find the existing user and ensure they have admin role
-            const { data: listUsers } = await supabaseAdmin.auth.admin.listUsers();
-            const existingUser = listUsers?.users?.find(user => user.email === email);
-            
-            if (existingUser) {
-              // Add admin role if not exists
-              const { error: roleError } = await supabaseAdmin
-                .from('user_roles')
-                .upsert({
-                  user_id: existingUser.id,
-                  role: 'admin'
-                }, {
-                  onConflict: 'user_id,role'
-                });
-
-              if (roleError) {
-                console.error(`Error adding role for ${email}:`, roleError);
-              }
-            }
-            
-            results.push({ email, status: 'existing_user', message: 'User already exists with admin role' });
-            continue;
-          } else {
-            console.error(`Error creating user ${email}:`, createError);
-            results.push({ email, status: 'error', message: createError.message });
-            continue;
-          }
-        }
-
-        if (newUser?.user) {
-          // Add admin role to user_roles table
+        if (existingUser) {
+          console.log(`User ${email} already exists`);
+          
+          // Add admin role if not exists
           const { error: roleError } = await supabaseAdmin
             .from('user_roles')
-            .insert({
-              user_id: newUser.user.id,
+            .upsert({
+              user_id: existingUser.id,
               role: 'admin'
+            }, {
+              onConflict: 'user_id,role'
             });
 
           if (roleError) {
             console.error(`Error adding role for ${email}:`, roleError);
           }
-
-          // Send welcome email with Resend using custom domain
-          const emailResponse = await resend.emails.send({
-            from: 'Bay Area Cleaning Pros <admin@bayareacleaningpros.com>',
-            to: [email],
-            subject: 'Welcome to Bay Area Cleaning Pros Admin Portal',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #2563eb;">Welcome to Bay Area Cleaning Pros</h1>
-                <p>Your admin account has been created with the email: <strong>${email}</strong></p>
-                
-                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h2>Login Credentials:</h2>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Password:</strong> Bacp2025!-</p>
-                </div>
-                
-                <h2>Getting Started:</h2>
-                <ol>
-                  <li>Visit the admin portal: <a href="https://fc9bf4c2-5143-4270-83ec-c7de4b1ed612.lovableproject.com/admin-auth">Admin Portal</a></li>
-                  <li>Login with the credentials above</li>
-                  <li>You'll be redirected to update your password</li>
-                  <li>Create a secure password that meets all requirements</li>
-                </ol>
-                
-                <p style="color: #dc2626; font-weight: bold;">
-                  IMPORTANT: Please keep your password secure. You can change it anytime in your profile settings.
-                </p>
-                
-                <hr style="margin: 20px 0;">
-                <p style="color: #666; font-size: 12px;">
-                  This email was sent from Bay Area Cleaning Pros admin system.
-                </p>
-              </div>
-            `,
-          });
-
-          console.log(`Email sent to ${email}:`, emailResponse);
-          results.push({ 
-            email, 
-            status: 'success', 
-            message: 'User created and invitation email sent',
-            userId: newUser.user.id 
-          });
+          
+          results.push({ email, status: 'existing_user', message: 'User already exists with admin role' });
+          continue;
         }
+
+        // Use our send-user-invite function instead of Supabase's invite
+        const inviteResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-user-invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          },
+          body: JSON.stringify({
+            email,
+            role: 'admin',
+            redirectTo: 'https://fc9bf4c2-5143-4270-83ec-c7de4b1ed612.lovableproject.com/auth'
+          })
+        });
+
+        const inviteResult = await inviteResponse.json();
+
+        if (!inviteResponse.ok) {
+          console.error(`Error inviting ${email}:`, inviteResult);
+          results.push({ email, status: 'error', message: inviteResult.error || 'Failed to send invitation' });
+          continue;
+        }
+
+        console.log(`Invitation sent to ${email}:`, inviteResult);
+        results.push({ 
+          email, 
+          status: 'success', 
+          message: 'User created and invitation email sent',
+          userId: inviteResult.userId 
+        });
 
       } catch (error) {
         console.error(`Error processing ${email}:`, error);
