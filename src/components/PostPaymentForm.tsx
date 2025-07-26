@@ -54,11 +54,13 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
         try {
           const { data, error } = await supabase
             .from("orders")
-            .select("frequency, service_details, customer_name, customer_email")
+            .select("frequency, service_details, customer_name, customer_email, customer_phone")
             .eq("stripe_session_id", sessionId)
             .single();
 
           if (data && !error) {
+            console.log("Order data fetched:", data);
+            
             // Autofill customer info
             if (data.customer_name) {
               handleInputChange("customerName", data.customer_name);
@@ -66,12 +68,30 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
             if (data.customer_email) {
               handleInputChange("customerEmail", data.customer_email);
             }
+            if (data.customer_phone) {
+              handleInputChange("customerPhone", data.customer_phone);
+            }
             
             // Autofill service address if available
             if (data.service_details && typeof data.service_details === 'object') {
               const serviceDetails = data.service_details as any;
+              
+              // Check for service address in the new structure
               if (serviceDetails.serviceAddress) {
                 const addr = serviceDetails.serviceAddress;
+                console.log("Auto-filling address from serviceAddress:", addr);
+                
+                if (addr.street) handleInputChange("streetAddress", addr.street);
+                if (addr.apartment) handleInputChange("apartmentUnit", addr.apartment);
+                if (addr.city) handleInputChange("city", addr.city);
+                if (addr.state) handleInputChange("state", addr.state);
+                if (addr.zipCode) handleInputChange("zipCode", addr.zipCode);
+              }
+              // Also check for address in the old address structure (fallback)
+              else if (serviceDetails.address) {
+                const addr = serviceDetails.address;
+                console.log("Auto-filling address from address field:", addr);
+                
                 if (addr.street) handleInputChange("streetAddress", addr.street);
                 if (addr.apartment) handleInputChange("apartmentUnit", addr.apartment);
                 if (addr.city) handleInputChange("city", addr.city);
@@ -79,6 +99,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                 if (addr.zipCode) handleInputChange("zipCode", addr.zipCode);
               }
             }
+          } else {
+            console.log("No order data found or error:", error);
           }
         } catch (error) {
           console.error("Error fetching order details:", error);
