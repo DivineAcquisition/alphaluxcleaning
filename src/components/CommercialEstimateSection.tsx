@@ -25,7 +25,7 @@ export function CommercialEstimateSection() {
           serviceType={selectedService}
           cleaningType="standard"
           frequency="weekly"
-          squareFootage={5000}
+          squareFootage="5,000-10,000 sq ft"
         />
       </div>
     );

@@ -22,7 +22,7 @@ interface CommercialEstimateData {
   city: string;
   state: string;
   zipCode: string;
-  squareFootage: number;
+  squareFootage: string;
   numberOfFloors: number;
   numberOfRestrooms: number;
   numberOfOffices: number;
@@ -37,8 +37,6 @@ interface CommercialEstimateData {
   // Walkthrough Scheduling
   preferredWalkthroughDate: string;
   preferredWalkthroughTime: string;
-  alternativeDate: string;
-  alternativeTime: string;
 }
 
 interface AvailabilitySlot {
@@ -49,12 +47,12 @@ interface AvailabilitySlot {
 
 interface CommercialEstimateFormProps {
   serviceType: 'commercial' | 'office';
-  cleaningType: string;
-  frequency: string;
-  squareFootage: number;
+  cleaningType?: string;
+  frequency?: string;
+  squareFootage?: string;
 }
 
-export function CommercialEstimateForm({ serviceType, cleaningType, frequency, squareFootage }: CommercialEstimateFormProps) {
+export function CommercialEstimateForm({ serviceType, cleaningType = '', frequency = '', squareFootage = '' }: CommercialEstimateFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
@@ -79,9 +77,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
     preferredTime: "",
     specialRequirements: "",
     preferredWalkthroughDate: "",
-    preferredWalkthroughTime: "",
-    alternativeDate: "",
-    alternativeTime: ""
+    preferredWalkthroughTime: ""
   });
 
   const businessTypes = [
@@ -95,6 +91,44 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
     "Government",
     "Non-Profit",
     "Other"
+  ];
+
+  const states = [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
+    "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
+    "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
+    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", 
+    "New Hampshire", "New Jersey", "New Mexico", "New York", 
+    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", 
+    "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
+    "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", 
+    "West Virginia", "Wisconsin", "Wyoming"
+  ];
+
+  const squareFootageRanges = [
+    "500-1,000 sq ft",
+    "1,000-2,500 sq ft",
+    "2,500-5,000 sq ft",
+    "5,000-10,000 sq ft",
+    "10,000-15,000 sq ft",
+    "15,000-20,000 sq ft",
+    "20,000+ sq ft"
+  ];
+
+  const frequencyOptions = [
+    "Daily",
+    "Weekly", 
+    "Bi-weekly",
+    "Monthly",
+    "Quarterly",
+    "One-time",
+    "As needed"
+  ];
+
+  const cleaningTypes = [
+    "Standard",
+    "Deep"
   ];
 
   const timeSlots = [
@@ -159,7 +193,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
           city: formData.city,
           state: formData.state,
           zip_code: formData.zipCode,
-          square_footage: formData.squareFootage,
+          square_footage: parseInt(formData.squareFootage.replace(/[^\d]/g, '')) || 0,
           number_of_floors: formData.numberOfFloors,
           number_of_restrooms: formData.numberOfRestrooms,
           number_of_offices: formData.numberOfOffices,
@@ -170,8 +204,6 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
           special_requirements: formData.specialRequirements,
           preferred_walkthrough_date: formData.preferredWalkthroughDate,
           preferred_walkthrough_time: formData.preferredWalkthroughTime,
-          alternative_date: formData.alternativeDate,
-          alternative_time: formData.alternativeTime,
           status: 'pending'
         }]);
 
@@ -196,9 +228,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
         zipCode: "",
         specialRequirements: "",
         preferredWalkthroughDate: "",
-        preferredWalkthroughTime: "",
-        alternativeDate: "",
-        alternativeTime: ""
+        preferredWalkthroughTime: ""
       });
 
     } catch (error) {
@@ -223,6 +253,9 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
         <CardDescription className="text-primary-foreground/80">
           Request a walkthrough and custom quote for your {serviceType} space
         </CardDescription>
+        <div className="mt-4 p-3 bg-white/10 rounded-lg">
+          <p className="text-sm font-medium">🎉 Special Offer: 15% off the first 3 months with 1-year commitment!</p>
+        </div>
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -327,12 +360,19 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
               
               <div className="space-y-2">
                 <Label htmlFor="state">State *</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                  required
-                />
+                <Select 
+                  value={formData.state} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, state: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select state" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-lg z-50 max-h-48">
+                    {states.map(state => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -348,13 +388,20 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="squareFootage">Square Footage</Label>
-                <Input
-                  id="squareFootage"
-                  type="number"
-                  value={formData.squareFootage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, squareFootage: parseInt(e.target.value) || 0 }))}
-                />
+                <Label htmlFor="squareFootage">Square Footage *</Label>
+                <Select 
+                  value={formData.squareFootage} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, squareFootage: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select square footage" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-lg z-50">
+                    {squareFootageRanges.map(range => (
+                      <SelectItem key={range} value={range}>{range}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -399,24 +446,48 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
               Service Requirements
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Service Type</Label>
                 <Input value={serviceType === 'commercial' ? 'Commercial Cleaning' : 'Office Cleaning'} disabled />
               </div>
               
               <div className="space-y-2">
-                <Label>Cleaning Type</Label>
-                <Input value={cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} disabled />
+                <Label htmlFor="cleaningType">Cleaning Type *</Label>
+                <Select 
+                  value={formData.cleaningType} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cleaningType: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select cleaning type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-lg z-50">
+                    {cleaningTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="frequency">Frequency *</Label>
+                <Select 
+                  value={formData.frequency} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-lg z-50">
+                    {frequencyOptions.map(freq => (
+                      <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Frequency</Label>
-                <Input value={frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} disabled />
-              </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="preferredTime">Preferred Cleaning Time</Label>
                 <Select 
@@ -510,35 +581,6 @@ export function CommercialEstimateForm({ serviceType, cleaningType, frequency, s
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="alternativeDate">Alternative Date</Label>
-                <Input
-                  id="alternativeDate"
-                  type="date"
-                  value={formData.alternativeDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, alternativeDate: e.target.value }))}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="alternativeTime">Alternative Time</Label>
-                <Select 
-                  value={formData.alternativeTime} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, alternativeTime: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select alternative time" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border border-border shadow-lg z-50">
-                    {timeSlots.map(slot => (
-                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
           </div>
 
           <Button 
