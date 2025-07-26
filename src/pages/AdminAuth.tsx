@@ -152,55 +152,8 @@ const AdminAuth = () => {
     }
   };
 
-  const sendAdminInvites = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-admin-invites');
-      
-      if (error) {
-        console.error('Admin invite error:', error);
-        toast.error(`Failed to send admin invites: ${error.message}`);
-      } else {
-        console.log('Admin invites sent:', data);
-        toast.success("Admin invitation emails sent successfully!");
-      }
-    } catch (error) {
-      console.error('Unexpected admin invite error:', error);
-      toast.error("An unexpected error occurred while sending invites");
-    }
-  };
-
-  const createTestAdmin = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-test-admin');
-      
-      if (error) {
-        console.error('Test admin creation error:', error);
-        toast.error(`Failed to create test admin: ${error.message}`);
-      } else {
-        console.log('Test admin created:', data);
-        toast.success("Test admin created! Email: admin@test.com, Password: admin123");
-      }
-    } catch (error) {
-      console.error('Unexpected test admin error:', error);
-      toast.error("An unexpected error occurred while creating test admin");
-    }
-  };
-
-  const fixAdminUsers = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('fix-admin-users');
-      
-      if (error) {
-        console.error('Fix admin users error:', error);
-        toast.error(`Failed to fix admin users: ${error.message}`);
-      } else {
-        console.log('Admin users fixed:', data);
-        toast.success("Admin users fixed! Use divine@bayareacleaningpros.com instead");
-      }
-    } catch (error) {
-      console.error('Unexpected fix admin error:', error);
-      toast.error("An unexpected error occurred while fixing admin users");
-    }
+  const redirectToAdminSetup = () => {
+    navigate('/admin-setup');
   };
 
   const resetAdminPasswords = async () => {
@@ -299,25 +252,10 @@ const AdminAuth = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={fixAdminUsers}
-                    className="text-sm mb-2 mr-2"
+                    onClick={redirectToAdminSetup}
+                    className="text-sm mb-2"
                   >
-                    Fix Admin Users
-                  </Button>
-                  <br />
-                  <Button
-                    variant="outline"
-                    onClick={sendAdminInvites}
-                    className="text-sm mb-2 mr-2"
-                  >
-                    Send Admin Setup Emails
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={createTestAdmin}
-                    className="text-sm"
-                  >
-                    Create Test Admin (admin@test.com)
+                    Admin Setup Portal
                   </Button>
                 </div>
               </div>

@@ -10,6 +10,7 @@ import ServiceDetails from '@/pages/ServiceDetails';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import Auth from '@/pages/Auth';
 import AdminAuth from '@/pages/AdminAuth';
+import AdminSetup from '@/pages/AdminSetup';
 import AdminPanel from '@/pages/AdminPanel';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
@@ -41,6 +42,11 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin-auth" element={<AdminAuth />} />
+            <Route path="/admin-setup" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminSetup />
+              </ProtectedRoute>
+            } />
             <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
             <Route path="/subcontractor-home" element={<SubcontractorHome />} />
             <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
