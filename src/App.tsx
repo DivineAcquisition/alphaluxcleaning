@@ -132,7 +132,11 @@ const App = () => {
                   <Route path="/service-details" element={<ServiceDetails />} />
                   <Route path="/order-status" element={<OrderStatus />} />
                   <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
-                  <Route path="/my-services" element={<CustomerServicePortal />} />
+                  <Route path="/my-services" element={
+                    <ProtectedRoute requiredRole="customer">
+                      <CustomerServicePortal />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/customer-service-portal" element={
                     <ProtectedRoute requiredRole="customer">
                       <CustomerServicePortal />
