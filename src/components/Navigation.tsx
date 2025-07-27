@@ -30,9 +30,9 @@ export function Navigation() {
             <img 
               src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
               alt="Bay Area Cleaning Professionals" 
-              className="h-10 w-10 sm:h-12 sm:w-12 object-contain"
+              className="h-10 w-10 object-contain"
             />
-            <span className="font-semibold text-lg hidden sm:block">Bay Area Cleaning Pros</span>
+            <span className="font-semibold text-lg">Bay Area Cleaning Pros</span>
           </Link>
 
           {/* Right Section */}
