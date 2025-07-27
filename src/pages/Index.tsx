@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building2, Home as HomeIcon } from "lucide-react";
+import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { VisualScheduler } from "@/components/VisualScheduler";
@@ -19,10 +19,45 @@ const Index = () => {
     scheduledDate: "",
     scheduledTime: ""
   });
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 23,
+    minutes: 59,
+    seconds: 59
+  });
 
   // Track page view on component mount
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
+  }, []);
+
+  // Countdown timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        let newSeconds = prev.seconds - 1;
+        let newMinutes = prev.minutes;
+        let newHours = prev.hours;
+
+        if (newSeconds < 0) {
+          newSeconds = 59;
+          newMinutes = prev.minutes - 1;
+          
+          if (newMinutes < 0) {
+            newMinutes = 59;
+            newHours = prev.hours - 1;
+            
+            if (newHours < 0) {
+              // Reset to 24 hours when it reaches 0
+              return { hours: 23, minutes: 59, seconds: 59 };
+            }
+          }
+        }
+
+        return { hours: newHours, minutes: newMinutes, seconds: newSeconds };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const handleSchedulingUpdate = (data: any) => {
@@ -48,6 +83,52 @@ const Index = () => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Bay Area's premier cleaning service for residential and commercial properties
           </p>
+        </div>
+
+        {/* Limited Time Offer Banner */}
+        <div className="mb-8 max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary to-primary/80 border-none shadow-lg animate-pulse">
+            <CardContent className="p-6">
+              <div className="text-center text-white">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Sparkles className="h-6 w-6 animate-bounce" />
+                  <h2 className="text-2xl font-bold">LIMITED TIME OFFER!</h2>
+                  <Sparkles className="h-6 w-6 animate-bounce" />
+                </div>
+                
+                <div className="mb-4">
+                  <p className="text-xl font-semibold mb-1">
+                    Save $75 + Get 25% Off All Recurring Services
+                  </p>
+                  <p className="text-primary-foreground/90">
+                    Book now and enjoy ongoing savings on every clean!
+                  </p>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <Clock className="h-5 w-5" />
+                  <div className="flex items-center gap-1 text-lg font-mono font-bold">
+                    <span className="bg-white/20 px-2 py-1 rounded">
+                      {String(timeLeft.hours).padStart(2, '0')}
+                    </span>
+                    <span>:</span>
+                    <span className="bg-white/20 px-2 py-1 rounded">
+                      {String(timeLeft.minutes).padStart(2, '0')}
+                    </span>
+                    <span>:</span>
+                    <span className="bg-white/20 px-2 py-1 rounded">
+                      {String(timeLeft.seconds).padStart(2, '0')}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-primary-foreground/80">
+                  ⏰ Offer expires at midnight! Don't miss out on these incredible savings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto">
