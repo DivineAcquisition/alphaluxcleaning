@@ -352,22 +352,22 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
           {/* Add-ons - Always show for residential services */}
           {(
           <div className="space-y-3">
-            <Label>🔧 Additional Services Available</Label>
-            <div className="grid grid-cols-1 gap-2">
+            <Label className="font-jakarta font-semibold" style={{letterSpacing: '-1px'}}>🔧 Additional Services Available</Label>
+            <div className="grid grid-cols-1 gap-2 sm:gap-3">
               {(() => {
                 const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
                 const isBaseboartsIncluded = isDeepCleaning;
                 
                 return (
-                  <Button
+                    <Button
                     variant={pricingData.addOns.includes('baseboards') ? "default" : "outline"}
                     size="sm"
                     onClick={() => !isBaseboartsIncluded && toggleAddOn('baseboards')}
-                    className={`justify-between h-auto p-3 ${isBaseboartsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`justify-between h-auto p-2 sm:p-3 ${isBaseboartsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isBaseboartsIncluded}
                   >
-                    <span>Baseboards {isBaseboartsIncluded && '(Included)'}</span>
-                    <Badge variant="secondary">{isBaseboartsIncluded ? 'Included' : '$50.00'}</Badge>
+                    <span className="font-inter text-xs sm:text-sm">Baseboards {isBaseboartsIncluded && '(Included)'}</span>
+                    <Badge variant="secondary" className="text-xs">{isBaseboartsIncluded ? 'Included' : '$50.00'}</Badge>
                   </Button>
                 );
               })()}
@@ -375,55 +375,55 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 variant={pricingData.addOns.includes('dishes') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('dishes')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Dishes</span>
-                <Badge variant="secondary">$40.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Dishes</span>
+                <Badge variant="secondary" className="text-xs">$40.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('door_facings') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('door_facings')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Door facings/moldings</span>
-                <Badge variant="secondary">$50.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Door facings/moldings</span>
+                <Badge variant="secondary" className="text-xs">$50.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('wall_spot_clean') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('wall_spot_clean')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Wall spot cleaning</span>
-                <Badge variant="secondary">$25.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Wall spot cleaning</span>
+                <Badge variant="secondary" className="text-xs">$25.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('wall_wash_per_room') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('wall_wash_per_room')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Wall wash (per room)</span>
-                <Badge variant="secondary">$75.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Wall wash (per room)</span>
+                <Badge variant="secondary" className="text-xs">$75.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('blinds_feather') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('blinds_feather')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Blinds (feather dust)</span>
-                <Badge variant="secondary">$65.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Blinds (feather dust)</span>
+                <Badge variant="secondary" className="text-xs">$65.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('blinds_blade') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('blinds_blade')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Blinds (blade by blade)</span>
-                <Badge variant="secondary">$15.00 per blind</Badge>
+                <span className="font-inter text-xs sm:text-sm">Blinds (blade by blade)</span>
+                <Badge variant="secondary" className="text-xs">$15.00 per blind</Badge>
               </Button>
               {(() => {
                 const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
@@ -434,11 +434,11 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                     variant={pricingData.addOns.includes('oven_fridge') ? "default" : "outline"}
                     size="sm"
                     onClick={() => !isOvenFridgeIncluded && toggleAddOn('oven_fridge')}
-                    className={`justify-between h-auto p-3 ${isOvenFridgeIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`justify-between h-auto p-2 sm:p-3 ${isOvenFridgeIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isOvenFridgeIncluded}
                   >
-                    <span>Oven or refrigerator {isOvenFridgeIncluded && '(Included)'}</span>
-                    <Badge variant="secondary">{isOvenFridgeIncluded ? 'Included' : '$35.00'}</Badge>
+                    <span className="font-inter text-xs sm:text-sm">Oven or refrigerator {isOvenFridgeIncluded && '(Included)'}</span>
+                    <Badge variant="secondary" className="text-xs">{isOvenFridgeIncluded ? 'Included' : '$35.00'}</Badge>
                   </Button>
                 );
               })()}
@@ -446,10 +446,10 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 variant={pricingData.addOns.includes('cabinet_fronts') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('cabinet_fronts')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Cabinet fronts</span>
-                <Badge variant="secondary">$50.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Cabinet fronts</span>
+                <Badge variant="secondary" className="text-xs">$50.00</Badge>
               </Button>
               {(() => {
                 const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
@@ -460,11 +460,11 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                     variant={pricingData.addOns.includes('window_sills') ? "default" : "outline"}
                     size="sm"
                     onClick={() => !isWindowSillsIncluded && toggleAddOn('window_sills')}
-                    className={`justify-between h-auto p-3 ${isWindowSillsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`justify-between h-auto p-2 sm:p-3 ${isWindowSillsIncluded ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={isWindowSillsIncluded}
                   >
-                    <span>Window sills {isWindowSillsIncluded && '(Included)'}</span>
-                    <Badge variant="secondary">{isWindowSillsIncluded ? 'Included' : '$25.00'}</Badge>
+                    <span className="font-inter text-xs sm:text-sm">Window sills {isWindowSillsIncluded && '(Included)'}</span>
+                    <Badge variant="secondary" className="text-xs">{isWindowSillsIncluded ? 'Included' : '$25.00'}</Badge>
                   </Button>
                 );
               })()}
@@ -472,19 +472,19 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 variant={pricingData.addOns.includes('light_fixtures') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('light_fixtures')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Light fixtures</span>
-                <Badge variant="secondary">$35.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Light fixtures</span>
+                <Badge variant="secondary" className="text-xs">$35.00</Badge>
               </Button>
               <Button
                 variant={pricingData.addOns.includes('laundry_basket') ? "default" : "outline"}
                 size="sm"
                 onClick={() => toggleAddOn('laundry_basket')}
-                className="justify-between h-auto p-3"
+                className="justify-between h-auto p-2 sm:p-3"
               >
-                <span>Laundry (per basket)</span>
-                <Badge variant="secondary">$20.00</Badge>
+                <span className="font-inter text-xs sm:text-sm">Laundry (per basket)</span>
+                <Badge variant="secondary" className="text-xs">$20.00</Badge>
               </Button>
             </div>
           </div>

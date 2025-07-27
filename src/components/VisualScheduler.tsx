@@ -123,16 +123,17 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           };
         }
 
-        // For regular booking, all slots are available (multiple customers can book same slot)
-        // For next day priority booking, use actual availability checking
-        const regularSlots = timeSlots.map(slot => ({
+        // Simulate booking slot checking - in a real app, this would check a database
+        // For now, randomly mark some slots as unavailable to demonstrate uniqueness
+        const regularSlots = timeSlots.map((slot, index) => ({
           ...slot,
-          available: true // Always available for regular bookings
+          // Randomly make some slots unavailable (simulating booked slots)
+          available: !(Math.random() < 0.2 && index % 3 === 0) // ~20% chance for some slots to be booked
         }));
         
         return {
           date: format(date, 'yyyy-MM-dd'),
-          available: true, // All days available for regular booking
+          available: regularSlots.some(slot => slot.available), // Day available if any slot is free
           timeSlots: regularSlots
         };
       });
@@ -258,7 +259,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
           Select your preferred date and time slot. Business hours: 8 AM - 6 PM
         </CardDescription>
         <div className="text-xs text-primary-foreground/60 mt-1">
-          ✓ Multiple customers can book the same time slot • Service duration: {getServiceDuration(serviceType || 'general')}h
+          ⚠️ Time slots are limited - book early to secure your preferred time • Service duration: {getServiceDuration(serviceType || 'general')}h
         </div>
       </CardHeader>
       

@@ -77,10 +77,10 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
+          <h1 className="text-2xl sm:text-4xl font-bold font-jakarta tracking-tight mb-4" style={{letterSpacing: '-3px'}}>
             Professional Cleaning Services
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto font-inter">
             Bay Area's premier cleaning service for residential and commercial properties
           </p>
         </div>
@@ -91,16 +91,16 @@ const Index = () => {
             <CardContent className="p-6">
               <div className="text-center text-white">
                 <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles className="h-6 w-6 animate-bounce" />
-                  <h2 className="text-2xl font-bold">LIMITED TIME OFFER!</h2>
-                  <Sparkles className="h-6 w-6 animate-bounce" />
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" />
+                  <h2 className="text-lg sm:text-2xl font-bold font-jakarta" style={{letterSpacing: '-3px'}}>LIMITED TIME OFFER!</h2>
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 animate-bounce" />
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-xl font-semibold mb-1">
+                  <p className="text-lg sm:text-xl font-semibold mb-1 font-jakarta" style={{letterSpacing: '-2px'}}>
                     Save $75 + Get 25% Off All Recurring Services
                   </p>
-                  <p className="text-primary-foreground/90">
+                  <p className="text-sm sm:text-base text-primary-foreground/90 font-inter">
                     Book now and enjoy ongoing savings on every clean!
                   </p>
                 </div>
@@ -123,7 +123,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <p className="text-sm text-primary-foreground/80">
+                <p className="text-xs sm:text-sm text-primary-foreground/80 font-inter">
                   ⏰ Offer expires at midnight! Don't miss out on these incredible savings.
                 </p>
               </div>
@@ -146,11 +146,11 @@ const Index = () => {
           <TabsContent value="residential" className="space-y-6">
             {/* Full screen residential layout matching commercial style */}
             <Card className="w-full">
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 <div className="space-y-8">
-                  {/* Quote Section - Large like commercial */}
+                   {/* Quote Section - Large like commercial */}
                   <div className="w-full">
-                    <h2 className="text-3xl font-bold mb-6 text-center">Get Your Residential Cleaning Quote</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center font-jakarta" style={{letterSpacing: '-3px'}}>Choose Your Residential Services</h2>
                     <PricingCalculator 
                       onPriceUpdate={(data, price, breakdown) => {
                         setPricingData(data);
@@ -160,10 +160,10 @@ const Index = () => {
                     />
                   </div>
                   
-                  {/* Service Details Section */}
+                   {/* Service Details Section */}
                   {pricingData && (
                     <div className="w-full">
-                      <h2 className="text-2xl font-semibold mb-4 text-center">What's Included in Your Service</h2>
+                      <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-center font-jakarta" style={{letterSpacing: '-2px'}}>What's Included in Your Service</h2>
                       <ServiceIncluded 
                         cleaningType={pricingData.cleaningType}
                         serviceType={pricingData.serviceType}
@@ -171,12 +171,12 @@ const Index = () => {
                     </div>
                   )}
                   
-                  {/* Scheduling and Payment sections side by side when data is available */}
+                   {/* Scheduling and Payment sections side by side when data is available */}
                   {pricingData && (
-                    <div className="grid gap-8 lg:grid-cols-2">
+                    <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
                       {/* Scheduling Section */}
                       <div>
-                        <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
+                        <h2 className="text-xl sm:text-2xl font-semibold mb-4 font-jakarta" style={{letterSpacing: '-2px'}}>Schedule Your Service</h2>
             <VisualScheduler 
               onSchedulingUpdate={handleSchedulingUpdate} 
               selectedDate={schedulingData.scheduledDate}
@@ -187,7 +187,7 @@ const Index = () => {
                       
                       {/* Payment Section */}
                       <div>
-                        <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
+                        <h2 className="text-xl sm:text-2xl font-semibold mb-4 font-jakarta" style={{letterSpacing: '-2px'}}>Complete Your Booking</h2>
             <PaymentForm 
               pricingData={pricingData}
               calculatedPrice={calculatedPrice}
