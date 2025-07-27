@@ -96,7 +96,7 @@ const Index = () => {
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-xl font-semibold mb-1">Save $75 On Deep Cleans Or Get 25% Off All Recurring Services</p>
+                  <p className="text-xl font-semibold mb-1">Save $75 On Deep Cleanings Or Get 25% Off All Recurring Services</p>
                   <p className="text-primary-foreground/90">
                     Book now and enjoy ongoing savings on every clean!
                   </p>
