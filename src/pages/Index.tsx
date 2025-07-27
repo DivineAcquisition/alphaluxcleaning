@@ -10,7 +10,6 @@ import { Navigation } from "@/components/Navigation";
 import { ServiceIncluded } from "@/components/ServiceIncluded";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
-
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
@@ -37,29 +36,31 @@ const Index = () => {
         let newSeconds = prev.seconds - 1;
         let newMinutes = prev.minutes;
         let newHours = prev.hours;
-
         if (newSeconds < 0) {
           newSeconds = 59;
           newMinutes = prev.minutes - 1;
-          
           if (newMinutes < 0) {
             newMinutes = 59;
             newHours = prev.hours - 1;
-            
             if (newHours < 0) {
               // Reset to 24 hours when it reaches 0
-              return { hours: 23, minutes: 59, seconds: 59 };
+              return {
+                hours: 23,
+                minutes: 59,
+                seconds: 59
+              };
             }
           }
         }
-
-        return { hours: newHours, minutes: newMinutes, seconds: newSeconds };
+        return {
+          hours: newHours,
+          minutes: newMinutes,
+          seconds: newSeconds
+        };
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
-
   const handleSchedulingUpdate = (data: any) => {
     setSchedulingData(data);
   };
@@ -70,9 +71,7 @@ const Index = () => {
       trackInitiateCheckout(calculatedPrice, pricingData.cleaningType);
     }
   }, [pricingData, calculatedPrice]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
@@ -97,9 +96,7 @@ const Index = () => {
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-xl font-semibold mb-1">
-                    Save $75 + Get 25% Off All Recurring Services
-                  </p>
+                  <p className="text-xl font-semibold mb-1">Save $75 On Deep Cleans Or Get 25% Off All Recurring Services</p>
                   <p className="text-primary-foreground/90">
                     Book now and enjoy ongoing savings on every clean!
                   </p>
@@ -151,52 +148,33 @@ const Index = () => {
                   {/* Quote Section - Large like commercial */}
                   <div className="w-full">
                     <h2 className="text-3xl font-bold mb-6 text-center">Get Your Residential Cleaning Quote</h2>
-                    <PricingCalculator 
-                      onPriceUpdate={(data, price, breakdown) => {
-                        setPricingData(data);
-                        setCalculatedPrice(price);
-                        setPriceBreakdown(breakdown);
-                      }}
-                    />
+                    <PricingCalculator onPriceUpdate={(data, price, breakdown) => {
+                    setPricingData(data);
+                    setCalculatedPrice(price);
+                    setPriceBreakdown(breakdown);
+                  }} />
                   </div>
                   
                   {/* Service Details Section */}
-                  {pricingData && (
-                    <div className="w-full">
+                  {pricingData && <div className="w-full">
                       <h2 className="text-2xl font-semibold mb-4 text-center">What's Included in Your Service</h2>
-                      <ServiceIncluded 
-                        cleaningType={pricingData.cleaningType}
-                        serviceType={pricingData.serviceType}
-                      />
-                    </div>
-                  )}
+                      <ServiceIncluded cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
+                    </div>}
                   
                   {/* Scheduling and Payment sections side by side when data is available */}
-                  {pricingData && (
-                    <div className="grid gap-8 lg:grid-cols-2">
+                  {pricingData && <div className="grid gap-8 lg:grid-cols-2">
                       {/* Scheduling Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-            <VisualScheduler 
-              onSchedulingUpdate={handleSchedulingUpdate} 
-              selectedDate={schedulingData.scheduledDate}
-              selectedTime={schedulingData.scheduledTime}
-              serviceType={pricingData.cleaningType}
-            />
+            <VisualScheduler onSchedulingUpdate={handleSchedulingUpdate} selectedDate={schedulingData.scheduledDate} selectedTime={schedulingData.scheduledTime} serviceType={pricingData.cleaningType} />
                       </div>
                       
                       {/* Payment Section */}
                       <div>
                         <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
-            <PaymentForm 
-              pricingData={pricingData}
-              calculatedPrice={calculatedPrice}
-              priceBreakdown={priceBreakdown}
-              schedulingData={schedulingData}
-            />
+            <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
                       </div>
-                    </div>
-                  )}
+                    </div>}
                   
                   {/* Referral Section */}
                   <div className="w-full">
@@ -216,8 +194,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
