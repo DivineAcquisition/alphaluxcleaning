@@ -7,7 +7,7 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import { VisualScheduler } from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
-import { ServiceIncluded } from "@/components/ServiceIncluded";
+import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
@@ -128,61 +128,97 @@ const Index = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="residential" className="flex items-center gap-2">
-              <HomeIcon className="h-4 w-4" />
+        <Tabs defaultValue="residential" className="w-full max-w-7xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
+            <TabsTrigger value="residential" className="flex items-center gap-2 text-base">
+              <HomeIcon className="h-5 w-5" />
               Residential
             </TabsTrigger>
-            <TabsTrigger value="commercial" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+            <TabsTrigger value="commercial" className="flex items-center gap-2 text-base">
+              <Building2 className="h-5 w-5" />
               Commercial
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="residential" className="space-y-6">
-            {/* Full screen residential layout matching commercial style */}
-            <Card className="w-full">
-              <CardContent className="p-8">
-                <div className="space-y-8">
-                  {/* Quote Section - Large like commercial */}
-                  <div className="w-full">
-                    <h2 className="text-3xl font-bold mb-6 text-center">Get Your Residential Cleaning Quote</h2>
-                    <PricingCalculator onPriceUpdate={(data, price, breakdown) => {
+          <TabsContent value="residential" className="space-y-8">
+            {/* Modern card-based layout */}
+            <div className="grid gap-6 lg:gap-8">
+              {/* Service Configuration Section */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm">
+                <CardContent className="p-8">
+                  <div className="text-center mb-8">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      Choose Your Residential Services
+                    </h2>
+                    <p className="text-muted-foreground text-lg">
+                      Customize your cleaning experience with our flexible options
+                    </p>
+                  </div>
+                  <PricingCalculator onPriceUpdate={(data, price, breakdown) => {
                     setPricingData(data);
                     setCalculatedPrice(price);
                     setPriceBreakdown(breakdown);
                   }} />
-                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Service Details Button */}
+              {pricingData && (
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <h3 className="text-xl font-semibold">Want to know exactly what's included?</h3>
+                      <ServiceDetailsDialog 
+                        cleaningType={pricingData.cleaningType} 
+                        serviceType={pricingData.serviceType} 
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Booking Section - Side by side layout */}
+              {pricingData && (
+                <div className="grid gap-6 xl:grid-cols-2">
+                  {/* Scheduling Section */}
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-8">
+                      <h2 className="text-2xl font-bold mb-6 text-center">
+                        Schedule Your Service
+                      </h2>
+                      <VisualScheduler 
+                        onSchedulingUpdate={handleSchedulingUpdate} 
+                        selectedDate={schedulingData.scheduledDate} 
+                        selectedTime={schedulingData.scheduledTime} 
+                        serviceType={pricingData.cleaningType} 
+                      />
+                    </CardContent>
+                  </Card>
                   
-                  {/* Service Details Section */}
-                  {pricingData && <div className="w-full">
-                      <h2 className="text-2xl font-semibold mb-4 text-center">What's Included in Your Service</h2>
-                      <ServiceIncluded cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
-                    </div>}
-                  
-                  {/* Scheduling and Payment sections side by side when data is available */}
-                  {pricingData && <div className="grid gap-8 lg:grid-cols-2">
-                      {/* Scheduling Section */}
-                      <div>
-                        <h2 className="text-2xl font-semibold mb-4">Schedule Your Service</h2>
-            <VisualScheduler onSchedulingUpdate={handleSchedulingUpdate} selectedDate={schedulingData.scheduledDate} selectedTime={schedulingData.scheduledTime} serviceType={pricingData.cleaningType} />
-                      </div>
-                      
-                      {/* Payment Section */}
-                      <div>
-                        <h2 className="text-2xl font-semibold mb-4">Complete Your Booking</h2>
-            <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
-                      </div>
-                    </div>}
-                  
-                  {/* Referral Section */}
-                  <div className="w-full">
-                    <ReferralSection />
-                  </div>
+                  {/* Payment Section */}
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-8">
+                      <h2 className="text-2xl font-bold mb-6 text-center">
+                        Complete Your Booking
+                      </h2>
+                      <PaymentForm 
+                        pricingData={pricingData} 
+                        calculatedPrice={calculatedPrice} 
+                        priceBreakdown={priceBreakdown} 
+                        schedulingData={schedulingData} 
+                      />
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+              
+              {/* Referral Section */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
+                <CardContent className="p-8">
+                  <ReferralSection />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
           
           <TabsContent value="commercial">
