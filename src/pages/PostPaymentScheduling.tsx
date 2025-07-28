@@ -20,15 +20,16 @@ export default function PostPaymentScheduling() {
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      // Wait for auth to finish loading
-      if (authLoading) {
-        console.log('PostPaymentScheduling: Auth still loading, waiting...');
-        return;
-      }
-
+      console.log('PostPaymentScheduling: Effect triggered');
       console.log('PostPaymentScheduling: sessionId:', sessionId);
       console.log('PostPaymentScheduling: userRole:', userRole);
       console.log('PostPaymentScheduling: authLoading:', authLoading);
+      
+      // Wait for auth to finish loading AND for role to be determined
+      if (authLoading || (userRole === null && sessionId === null)) {
+        console.log('PostPaymentScheduling: Still waiting for auth/role to load');
+        return;
+      }
       
       // Allow admin/manager access without session_id for testing
       if (!sessionId && (userRole === 'admin' || userRole === 'employee')) {
@@ -45,6 +46,7 @@ export default function PostPaymentScheduling() {
 
       if (!sessionId) {
         console.log('PostPaymentScheduling: No session ID and not admin, redirecting to home');
+        console.log('PostPaymentScheduling: Current userRole:', userRole);
         toast.error("Access denied. This page requires a valid session ID or admin privileges.");
         navigate("/");
         return;
