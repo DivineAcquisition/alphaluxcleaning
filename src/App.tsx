@@ -58,37 +58,30 @@ function App() {
             <Route path="/password-reset" element={<PasswordReset />} />
             <Route path="/secure-admin-creation" element={<SecureAdminCreation />} />
             
-            {/* Admin/Employee protected routes */}
+            {/* Admin protected routes */}
             <Route path="/admin-panel" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminPanel />
               </ProtectedRoute>
             } />
             <Route path="/admin-dashboard" element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
             } />
             <Route path="/subcontractor-management" element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <SubcontractorManagement />
               </ProtectedRoute>
             } />
             <Route path="/metrics-dashboard" element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <MetricsDashboard />
               </ProtectedRoute>
             } />
             <Route path="/application-manager" element={
-              <ProtectedRoute allowedRoles={['admin', 'employee']}>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <ApplicationManager />
-              </ProtectedRoute>
-            } />
-            
-            {/* Subcontractor protected routes */}
-            <Route path="/subcontractor-dashboard" element={
-              <ProtectedRoute allowedRoles={['subcontractor']}>
-                <SubcontractorDashboard />
               </ProtectedRoute>
             } />
             

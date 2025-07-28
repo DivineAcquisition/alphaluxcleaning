@@ -38,22 +38,10 @@ const navigationItems = [
     description: "Manage bookings"
   },
   {
-    label: "Subcontractors",
-    path: "/subcontractor-management", 
-    icon: Users,
-    description: "Manage network"
-  },
-  {
     label: "Metrics & Analytics",
     path: "/metrics-dashboard",
     icon: BarChart3,
     description: "Performance data"
-  },
-  {
-    label: "Application Manager",
-    path: "/application-manager",
-    icon: UserCheck,
-    description: "Review applications"
   }
 ];
 
