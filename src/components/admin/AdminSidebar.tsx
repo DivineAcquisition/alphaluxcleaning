@@ -38,6 +38,18 @@ const navigationItems = [
     description: "Manage bookings"
   },
   {
+    label: "Subcontractor Management",
+    path: "/subcontractor-management",
+    icon: Users,
+    description: "Manage subcontractors"
+  },
+  {
+    label: "Application Manager",
+    path: "/application-manager",
+    icon: UserCheck,
+    description: "Review applications"
+  },
+  {
     label: "Metrics & Analytics",
     path: "/metrics-dashboard",
     icon: BarChart3,
