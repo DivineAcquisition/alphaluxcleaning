@@ -15,26 +15,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
 }) => {
   
   useEffect(() => {
-    // Load the GHL form embed script
-    const script = document.createElement('script');
-    script.src = 'https://app.bayareacleaningpros.com/js/form_embed.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.onload = () => {
-      console.log('GHL embed script loaded successfully');
-    };
-    script.onerror = () => {
-      console.error('Failed to load GHL embed script');
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      // Cleanup script on unmount if it exists
-      const existingScript = document.querySelector('script[src="https://app.bayareacleaningpros.com/js/form_embed.js"]');
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
-    };
+    console.log('VisualScheduler component mounted');
   }, []);
 
   const getServiceDuration = (type: string) => {
