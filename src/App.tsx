@@ -85,6 +85,13 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Subcontractor protected routes */}
+            <Route path="/subcontractor-dashboard" element={
+              <ProtectedRoute allowedRoles={['subcontractor', 'admin']}>
+                <SubcontractorDashboard />
+              </ProtectedRoute>
+            } />
+            
             {/* Customer protected routes */}
             <Route path="/my-services" element={
               <ProtectedRoute requiredRole="customer">

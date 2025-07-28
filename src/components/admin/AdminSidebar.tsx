@@ -44,6 +44,12 @@ const navigationItems = [
     description: "Manage subcontractors"
   },
   {
+    label: "Subcontractor Dashboard",
+    path: "/subcontractor-dashboard",
+    icon: UserCheck,
+    description: "Subcontractor view"
+  },
+  {
     label: "Application Manager",
     path: "/application-manager",
     icon: UserCheck,
