@@ -5,39 +5,59 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'admin' | 'employee' | 'customer';
+  requiredRole?: 'admin' | 'employee' | 'customer' | 'subcontractor';
+  allowedRoles?: string[];
   redirectTo?: string;
 }
 
 export function ProtectedRoute({ 
   children, 
   requiredRole, 
+  allowedRoles,
   redirectTo = '/auth' 
 }: ProtectedRouteProps) {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading) {
-      // If user is not authenticated, redirect to auth page
-      if (!user) {
-        navigate(redirectTo);
-        return;
-      }
+    if (!loading && user) {
+      console.log('ProtectedRoute check:', { 
+        currentPath: window.location.pathname, 
+        userRole, 
+        requiredRole, 
+        allowedRoles 
+      });
 
-      // If specific role is required, check if user has it
-      if (requiredRole && userRole !== requiredRole) {
+      // Determine if user has access
+      const hasAccess = allowedRoles 
+        ? allowedRoles.includes(userRole || '')
+        : !requiredRole || userRole === requiredRole;
+
+      if (!hasAccess) {
+        console.log('Access denied, redirecting...');
         // Redirect based on user's actual role
         if (userRole === 'admin' || userRole === 'employee') {
-          navigate('/admin-dashboard');
+          // Don't redirect if already on admin pages
+          if (!window.location.pathname.startsWith('/admin')) {
+            navigate('/admin-dashboard');
+          }
         } else if (userRole === 'customer') {
-          navigate('/my-services');
+          if (window.location.pathname !== '/my-services') {
+            navigate('/my-services');
+          }
+        } else if (userRole === 'subcontractor') {
+          if (window.location.pathname !== '/subcontractor-dashboard') {
+            navigate('/subcontractor-dashboard');
+          }
         } else {
           navigate('/auth');
         }
       }
+    } else if (!loading && !user) {
+      console.log('No user, redirecting to auth');
+      navigate(redirectTo);
     }
-  }, [user, userRole, loading, navigate, requiredRole, redirectTo]);
+  }, [user, userRole, loading, navigate, requiredRole, allowedRoles, redirectTo]);
 
   // Show loading spinner while checking authentication
   if (loading) {
@@ -56,8 +76,12 @@ export function ProtectedRoute({
     return null;
   }
 
-  // If specific role is required and user doesn't have it, don't render children
-  if (requiredRole && userRole !== requiredRole) {
+  // Check if user has required access
+  const hasAccess = allowedRoles 
+    ? allowedRoles.includes(userRole || '')
+    : !requiredRole || userRole === requiredRole;
+
+  if (!hasAccess) {
     return null;
   }
 
