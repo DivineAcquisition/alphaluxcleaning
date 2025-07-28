@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
-import VisualScheduler from "@/components/VisualScheduler";
+import { VisualScheduler } from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
@@ -187,6 +187,9 @@ const Index = () => {
                         Schedule Your Service
                       </h2>
                       <VisualScheduler 
+                        onSchedulingUpdate={handleSchedulingUpdate} 
+                        selectedDate={schedulingData.scheduledDate} 
+                        selectedTime={schedulingData.scheduledTime} 
                         serviceType={pricingData.cleaningType} 
                       />
                     </CardContent>
