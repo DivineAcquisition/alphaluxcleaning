@@ -115,20 +115,20 @@ export const ServiceDetailsDialog = ({ cleaningType, serviceType }: ServiceDetai
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{serviceDetails.title}</DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogTitle className="text-2xl font-jakarta font-bold">{serviceDetails.title}</DialogTitle>
+          <DialogDescription className="text-base font-inter font-semibold">
             {serviceDetails.description}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 mt-6">
           <div>
-            <h4 className="font-semibold mb-4 text-lg">What's Included:</h4>
+            <h4 className="font-jakarta font-bold mb-4 text-lg">What's Included:</h4>
             <div className="grid gap-3">
               {serviceDetails.included.map((item, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm leading-relaxed">{item}</span>
+                  <span className="text-sm font-inter font-semibold leading-relaxed">{item}</span>
                 </div>
               ))}
             </div>
@@ -136,31 +136,31 @@ export const ServiceDetailsDialog = ({ cleaningType, serviceType }: ServiceDetai
 
           {serviceDetails.special && (
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-900 mb-2">Special Offer</h4>
-              <p className="text-sm text-blue-800">{serviceDetails.special}</p>
+              <h4 className="font-jakarta font-bold text-blue-900 mb-2">Special Offer</h4>
+              <p className="text-sm font-inter font-semibold text-blue-800">{serviceDetails.special}</p>
             </div>
           )}
 
           {serviceDetails.benefit && (
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <h4 className="font-semibold text-green-900 mb-2">Recurring Service Benefit</h4>
-              <p className="text-sm text-green-800">{serviceDetails.benefit}</p>
+              <h4 className="font-jakarta font-bold text-green-900 mb-2">Recurring Service Benefit</h4>
+              <p className="text-sm font-inter font-semibold text-green-800">{serviceDetails.benefit}</p>
             </div>
           )}
 
           {serviceDetails.zones && (
             <div>
-              <h4 className="font-semibold mb-2 text-lg">{serviceDetails.zones.title}</h4>
-              <p className="text-sm text-muted-foreground mb-4">{serviceDetails.zones.description}</p>
+              <h4 className="font-jakarta font-bold mb-2 text-lg">{serviceDetails.zones.title}</h4>
+              <p className="text-sm font-inter font-semibold text-muted-foreground mb-4">{serviceDetails.zones.description}</p>
               <div className="grid gap-4 md:grid-cols-2">
                 {serviceDetails.zones.areas.map((zone, index) => (
                   <div key={index} className="p-4 bg-gray-50 rounded-lg border">
-                    <h5 className="font-medium mb-3 text-primary">{zone.name}</h5>
+                    <h5 className="font-jakarta font-bold mb-3 text-primary">{zone.name}</h5>
                     <div className="space-y-2">
                       {zone.items.map((item, itemIndex) => (
                         <div key={itemIndex} className="flex items-start gap-2">
                           <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{item}</span>
+                          <span className="text-sm font-inter font-semibold">{item}</span>
                         </div>
                       ))}
                     </div>
@@ -171,8 +171,8 @@ export const ServiceDetailsDialog = ({ cleaningType, serviceType }: ServiceDetai
           )}
 
           <div className="pt-4 border-t text-center">
-            <p className="text-sm text-muted-foreground">BayAreaCleaningPros | (281) 201-6112</p>
-            <p className="text-sm text-muted-foreground">Baytown, TX | support@bayareacleaningpros.com</p>
+            <p className="text-sm font-inter font-semibold text-muted-foreground">BayAreaCleaningPros | (281) 201-6112</p>
+            <p className="text-sm font-inter font-semibold text-muted-foreground">Baytown, TX | support@bayareacleaningpros.com</p>
           </div>
         </div>
       </DialogContent>
