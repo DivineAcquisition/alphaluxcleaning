@@ -163,7 +163,7 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
 
             return {
               ...slot,
-              available: hasGHLAvailability || !isNextDayBooking // Regular bookings always available
+              available: hasGHLAvailability // Respect live GHL availability
             };
           });
 
