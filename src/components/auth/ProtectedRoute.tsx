@@ -18,34 +18,23 @@ export function ProtectedRoute({
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('ProtectedRoute check:', { user: !!user, userRole, requiredRole, loading });
-    
     if (!loading) {
       // If user is not authenticated, redirect to auth page
       if (!user) {
-        console.log('No user, redirecting to:', redirectTo);
         navigate(redirectTo);
         return;
       }
 
       // If specific role is required, check if user has it
       if (requiredRole && userRole !== requiredRole) {
-        console.log('Role mismatch. Required:', requiredRole, 'Actual:', userRole);
-        // Only redirect if the role is actually different
-        if (userRole && userRole !== requiredRole) {
-          // Redirect based on user's actual role
-          if (userRole === 'admin' || userRole === 'employee') {
-            console.log('Redirecting admin/employee to dashboard');
-            navigate('/admin-dashboard');
-          } else if (userRole === 'customer') {
-            console.log('Redirecting customer to services');
-            navigate('/my-services');
-          } else {
-            console.log('Unknown role, redirecting to auth');
-            navigate('/auth');
-          }
+        // Redirect based on user's actual role
+        if (userRole === 'admin' || userRole === 'employee') {
+          navigate('/admin-dashboard');
+        } else if (userRole === 'customer') {
+          navigate('/my-services');
+        } else {
+          navigate('/auth');
         }
-        // Don't redirect if userRole is null (still loading)
       }
     }
   }, [user, userRole, loading, navigate, requiredRole, redirectTo]);

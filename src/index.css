@@ -8,73 +8,66 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Futuristic Color Palette */
-    --background: 220 27% 8%;
-    --foreground: 200 20% 98%;
+    --background: 220 20% 97%;
+    --foreground: 210 40% 8%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 200 20% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 8%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 200 20% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 8%;
 
-    --primary: 189 100% 50%;
-    --primary-foreground: 220 27% 8%;
+    --primary: 273 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 25% 16%;
-    --secondary-foreground: 200 20% 98%;
+    --secondary: 273 20% 95%;
+    --secondary-foreground: 273 50% 20%;
 
-    --muted: 220 25% 14%;
-    --muted-foreground: 200 10% 70%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 270 100% 60%;
-    --accent-foreground: 220 27% 8%;
+    --accent: 280 100% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 200 20% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 25% 20%;
-    --input: 220 25% 16%;
-    --ring: 189 100% 50%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 273 100% 50%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 220 27% 8%;
+    --success: 160 85% 35%;
+    --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
-    --warning-foreground: 220 27% 8%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 100%;
 
-    /* Futuristic Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(189 100% 50%), hsl(195 100% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(270 100% 60%), hsl(280 100% 70%));
-    --gradient-card: linear-gradient(135deg, hsl(220 25% 12%), hsl(220 25% 16%));
-    --gradient-accent: linear-gradient(135deg, hsl(189 100% 50%), hsl(270 100% 60%));
-    --gradient-glow: radial-gradient(circle at center, hsl(189 100% 50% / 0.3), transparent 70%);
+    --gradient-primary: linear-gradient(135deg, hsl(273 100% 50%), hsl(280 100% 70%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(273 100% 98%));
     
-    /* Advanced Shadows & Effects */
-    --shadow-neon: 0 0 20px hsl(189 100% 50% / 0.5), 0 0 40px hsl(189 100% 50% / 0.3);
-    --shadow-glass: 0 8px 32px hsl(220 27% 8% / 0.3);
-    --shadow-depth: 0 20px 40px hsl(220 27% 8% / 0.4);
-    --shadow-soft: 0 4px 16px hsl(220 27% 8% / 0.2);
+    --shadow-clean: 0 4px 20px -4px hsl(273 100% 50% / 0.15);
+    --shadow-soft: 0 2px 10px -2px hsl(210 40% 8% / 0.1);
 
-    /* Glass Morphism */
-    --glass-bg: hsl(220 25% 12% / 0.7);
-    --glass-border: hsl(200 20% 98% / 0.1);
+    --radius: 0.5rem;
 
-    --radius: 0.75rem;
+    --sidebar-background: 0 0% 98%;
 
-    /* Sidebar Variables */
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 200 20% 98%;
-    --sidebar-primary: 189 100% 50%;
-    --sidebar-primary-foreground: 220 27% 8%;
-    --sidebar-accent: 220 25% 16%;
-    --sidebar-accent-foreground: 200 20% 98%;
-    --sidebar-border: 220 25% 18%;
-    --sidebar-ring: 189 100% 50%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  /* Light mode override (keeping dark as default) */
-  .light {
+  .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -120,82 +113,5 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
-@layer utilities {
-  /* Futuristic Utility Classes */
-  .glass-morphism {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-  }
-  
-  .neon-glow {
-    box-shadow: var(--shadow-neon);
-  }
-  
-  .cyber-border {
-    position: relative;
-    border: 1px solid transparent;
-    background: linear-gradient(var(--background), var(--background)) padding-box,
-                var(--gradient-accent) border-box;
-  }
-  
-  .floating-card {
-    background: var(--gradient-card);
-    box-shadow: var(--shadow-glass);
-    backdrop-filter: blur(20px);
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 10px currentColor;
-  }
-  
-  .gradient-text {
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .scan-line {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .scan-line::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 2px;
-    background: var(--gradient-primary);
-    animation: scan 2s linear infinite;
-  }
-  
-  @keyframes scan {
-    0% { left: -100%; }
-    100% { left: 100%; }
-  }
-  
-  /* Hover Effects */
-  .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-depth);
-  }
-  
-  /* Grid Patterns */
-  .cyber-grid {
-    background-image: 
-      linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
-    background-size: 20px 20px;
   }
 }
