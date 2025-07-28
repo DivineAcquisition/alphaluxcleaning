@@ -88,52 +88,59 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className={open ? "w-72" : "w-16"} collapsible="icon">
-      {/* Header with modern branding */}
-      <SidebarHeader className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-secondary p-6 border-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
+    <Sidebar className={open ? "w-80" : "w-20"} collapsible="icon">
+      {/* Futuristic Header with Enhanced Branding */}
+      <SidebarHeader className="relative overflow-hidden bg-gradient-to-br from-background via-muted/30 to-background p-8 border-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary" />
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-4 mb-6">
             <div className="relative">
-              <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
-                <Zap className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 glass-morphism rounded-2xl flex items-center justify-center border cyber-border">
+                <Zap className="h-7 w-7 text-primary" />
               </div>
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-success rounded-full border-2 border-background animate-pulse neon-glow" />
             </div>
             {open && (
-              <div className="text-white">
-                <h1 className="text-lg font-bold tracking-tight">Admin Hub</h1>
-                <p className="text-xs text-white/70 font-medium">Bay Area Cleaning Pros</p>
+              <div className="text-foreground">
+                <h1 className="text-xl font-bold tracking-tight gradient-text">ADMIN NEXUS</h1>
+                <p className="text-xs text-muted-foreground font-medium tracking-wider">
+                  BAY AREA CLEANING PROS
+                </p>
               </div>
             )}
           </div>
           
-          {/* User Profile Section */}
+          {/* Enhanced User Profile Section */}
           {open && user && (
-            <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-              <Avatar className="h-8 w-8 border-2 border-white/30">
+            <div className="flex items-center gap-3 p-4 glass-morphism rounded-2xl border cyber-border">
+              <Avatar className="h-10 w-10 border-2 border-primary/30">
                 <AvatarImage src="" />
-                <AvatarFallback className="bg-white/20 text-white font-semibold text-sm">
+                <AvatarFallback className="glass-morphism text-primary font-bold text-sm">
                   {getInitials(user.email || '')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user.email}</p>
-                <p className="text-xs text-white/70">Administrator</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user.email}
+                </p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  SYSTEM ADMINISTRATOR
+                </p>
               </div>
             </div>
           )}
         </div>
-        <SidebarTrigger className="absolute top-4 right-4 z-20 text-white hover:bg-white/20" />
+        <SidebarTrigger className="absolute top-6 right-6 z-20 text-foreground hover:glass-morphism rounded-xl p-2 transition-all duration-300" />
       </SidebarHeader>
       
-      <SidebarContent className="px-4 py-6 bg-gradient-to-b from-background to-muted/30">
+      <SidebarContent className="px-6 py-8 bg-gradient-to-b from-background to-muted/20">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-            Management Suite
+          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6 gradient-text">
+            CONTROL MATRIX
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
+            <SidebarMenu className="space-y-3">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -146,35 +153,43 @@ export function AdminSidebar() {
                     >
                       <button 
                         onClick={() => navigate(item.path)}
-                        className={`w-full group relative overflow-hidden rounded-xl p-3 text-left transition-all duration-300 ${
+                        className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-500 ${
                           active 
-                            ? `bg-gradient-to-r ${item.gradient} text-white shadow-lg scale-105` 
-                            : 'hover:bg-muted/50 hover:scale-105'
+                            ? `glass-morphism neon-glow cyber-border bg-gradient-to-r ${item.gradient}` 
+                            : 'hover:glass-morphism hover:scale-105'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-xl ${
                             active 
-                              ? 'bg-white/20 backdrop-blur-sm' 
-                              : 'bg-muted group-hover:bg-muted-foreground/10'
-                          }`}>
-                            <Icon className={`h-4 w-4 ${active ? 'text-white' : ''}`} />
+                              ? 'glass-morphism border border-white/20' 
+                              : 'bg-muted/50 group-hover:bg-primary/20'
+                          } transition-all duration-300`}>
+                            <Icon className={`h-5 w-5 ${active ? 'text-foreground' : 'text-primary'}`} />
                           </div>
                           {open && (
                             <div className="flex-1">
-                              <span className={`font-semibold text-sm ${active ? 'text-white' : ''}`}>
+                              <span className={`font-bold text-sm tracking-wide ${
+                                active ? 'text-foreground' : 'text-foreground'
+                              }`}>
                                 {item.label}
                               </span>
-                              <p className={`text-xs mt-0.5 ${
-                                active ? 'text-white/80' : 'text-muted-foreground'
+                              <p className={`text-xs mt-1 ${
+                                active ? 'text-foreground/80' : 'text-muted-foreground'
                               }`}>
                                 {item.description}
                               </p>
                             </div>
                           )}
                         </div>
+                        {active && open && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <div className="h-2 w-2 bg-foreground rounded-full animate-pulse" />
+                          </div>
+                        )}
+                        {/* Scan line effect for active item */}
                         {active && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50" />
+                          <div className="absolute inset-0 scan-line opacity-30" />
                         )}
                       </button>
                     </SidebarMenuButton>
@@ -185,7 +200,7 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sign Out Section */}
+        {/* Enhanced Sign Out Section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
@@ -194,12 +209,12 @@ export function AdminSidebar() {
                   <Button 
                     onClick={handleSignOut} 
                     variant="ghost" 
-                    className="w-full justify-start p-3 rounded-xl hover:bg-destructive/10 hover:text-destructive group transition-all duration-300"
+                    className="w-full justify-start p-4 rounded-2xl hover:glass-morphism hover:text-destructive group transition-all duration-500 hover:scale-105"
                   >
-                    <div className="p-2 rounded-lg bg-muted group-hover:bg-destructive/20">
-                      <LogOut className="h-4 w-4" />
+                    <div className="p-3 rounded-xl bg-muted/50 group-hover:bg-destructive/20 transition-all duration-300">
+                      <LogOut className="h-5 w-5" />
                     </div>
-                    {open && <span className="ml-3 font-medium">Sign Out</span>}
+                    {open && <span className="ml-4 font-semibold tracking-wide">DISCONNECT</span>}
                   </Button>
                 </SidebarMenuButton>
               </SidebarMenuItem>

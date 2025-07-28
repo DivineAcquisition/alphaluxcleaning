@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
       
+      console.log('User role fetched:', data);
       return data;
     } catch (error) {
       console.error('Error getting user role:', error);

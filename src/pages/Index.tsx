@@ -71,87 +71,108 @@ const Index = () => {
       trackInitiateCheckout(calculatedPrice, pricingData.cleaningType);
     }
   }, [pricingData, calculatedPrice]);
-  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+  return (
+    <div className="min-h-screen bg-background cyber-grid relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      <div className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl animate-pulse" />
+      
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
-            Professional Cleaning Services
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Bay Area's premier cleaning service for residential and commercial properties
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Hero Section with Futuristic Design */}
+        <div className="text-center mb-12 relative">
+          <div className="inline-block">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 gradient-text text-glow">
+              FUTURE CLEAN
+            </h1>
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent mb-6" />
+          </div>
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto font-light">
+            Bay Area's most advanced cleaning service powered by precision and technology
           </p>
         </div>
 
-        {/* Limited Time Offer Banner */}
-        <div className="mb-8 max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-primary to-primary/80 border-none shadow-lg animate-pulse">
-            <CardContent className="p-6">
-              <div className="text-center text-white">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles className="h-6 w-6 animate-bounce" />
-                  <h2 className="text-2xl font-bold">LIMITED TIME OFFER!</h2>
-                  <Sparkles className="h-6 w-6 animate-bounce" />
+        {/* Futuristic Limited Time Offer */}
+        <div className="mb-12 max-w-5xl mx-auto">
+          <Card className="glass-morphism border-0 neon-glow relative overflow-hidden hover-lift">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20" />
+            <div className="scan-line" />
+            <CardContent className="p-8 relative z-10">
+              <div className="text-center text-foreground">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Sparkles className="h-8 w-8 animate-bounce text-primary" />
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-wider">QUANTUM SAVINGS</h2>
+                  <Sparkles className="h-8 w-8 animate-bounce text-accent" />
                 </div>
                 
-                <div className="mb-4">
-                  <p className="text-xl font-semibold mb-1">Save $75 On Deep Cleanings Or Get 25% Off All Recurring Services</p>
-                  <p className="text-primary-foreground/90">
-                    Book now and enjoy ongoing savings on every clean!
+                <div className="mb-6">
+                  <p className="text-xl md:text-2xl font-semibold mb-2 gradient-text">
+                    Save $75 On Deep Cleanings + 25% Off Recurring Services
+                  </p>
+                  <p className="text-muted-foreground text-lg">
+                    Unlock premium cleaning technology at breakthrough prices
                   </p>
                 </div>
 
-                {/* Countdown Timer */}
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <Clock className="h-5 w-5" />
-                  <div className="flex items-center gap-1 text-lg font-mono font-bold">
-                    <span className="bg-white/20 px-2 py-1 rounded">
+                {/* Enhanced Countdown Timer */}
+                <div className="flex items-center justify-center gap-6 mb-6">
+                  <Clock className="h-6 w-6 text-primary" />
+                  <div className="flex items-center gap-2 text-2xl font-mono font-bold">
+                    <div className="glass-morphism px-4 py-2 rounded-lg cyber-border">
                       {String(timeLeft.hours).padStart(2, '0')}
-                    </span>
-                    <span>:</span>
-                    <span className="bg-white/20 px-2 py-1 rounded">
+                    </div>
+                    <span className="text-primary">:</span>
+                    <div className="glass-morphism px-4 py-2 rounded-lg cyber-border">
                       {String(timeLeft.minutes).padStart(2, '0')}
-                    </span>
-                    <span>:</span>
-                    <span className="bg-white/20 px-2 py-1 rounded">
+                    </div>
+                    <span className="text-primary">:</span>
+                    <div className="glass-morphism px-4 py-2 rounded-lg cyber-border">
                       {String(timeLeft.seconds).padStart(2, '0')}
-                    </span>
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-sm text-primary-foreground/80">
-                  ⏰ Offer expires at midnight! Don't miss out on these incredible savings.
+                <p className="text-sm text-muted-foreground">
+                  ⚡ Quantum offer expires at system midnight - Activate before time runs out
                 </p>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Futuristic Tabs */}
         <Tabs defaultValue="residential" className="w-full max-w-7xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-            <TabsTrigger value="residential" className="flex items-center gap-2 text-base">
-              <HomeIcon className="h-5 w-5" />
-              Residential
+          <TabsList className="grid w-full grid-cols-2 mb-12 h-16 glass-morphism border-0">
+            <TabsTrigger 
+              value="residential" 
+              className="flex items-center gap-3 text-lg font-semibold data-[state=active]:glass-morphism data-[state=active]:neon-glow"
+            >
+              <HomeIcon className="h-6 w-6" />
+              RESIDENTIAL
             </TabsTrigger>
-            <TabsTrigger value="commercial" className="flex items-center gap-2 text-base">
-              <Building2 className="h-5 w-5" />
-              Commercial
+            <TabsTrigger 
+              value="commercial" 
+              className="flex items-center gap-3 text-lg font-semibold data-[state=active]:glass-morphism data-[state=active]:neon-glow"
+            >
+              <Building2 className="h-6 w-6" />
+              COMMERCIAL
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="residential" className="space-y-8">
-            {/* Modern card-based layout */}
-            <div className="grid gap-6 lg:gap-8">
+          <TabsContent value="residential" className="space-y-12">
+            <div className="grid gap-8 lg:gap-12">
               {/* Service Configuration Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm">
-                <CardContent className="p-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      Choose Your Residential Services
+              <Card className="floating-card border-0 cyber-border hover-lift relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+                <CardContent className="p-10">
+                  <div className="text-center mb-10">
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">
+                      CONFIGURE SERVICES
                     </h2>
-                    <p className="text-muted-foreground text-lg">
-                      Customize your cleaning experience with our flexible options
+                    <p className="text-muted-foreground text-xl">
+                      Customize your cleaning matrix with precision controls
                     </p>
                   </div>
                   <PricingCalculator onPriceUpdate={(data, price, breakdown) => {
@@ -162,12 +183,14 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              {/* Service Details Button */}
+              {/* Service Details Section */}
               {pricingData && (
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-6">
-                    <div className="text-center space-y-4">
-                      <h3 className="text-xl font-semibold">Want to know exactly what's included?</h3>
+                <Card className="glass-morphism border-0 hover-lift relative">
+                  <CardContent className="p-8">
+                    <div className="text-center space-y-6">
+                      <h3 className="text-2xl font-semibold gradient-text">
+                        SERVICE SPECIFICATIONS
+                      </h3>
                       <ServiceDetailsDialog 
                         cleaningType={pricingData.cleaningType} 
                         serviceType={pricingData.serviceType} 
@@ -177,14 +200,15 @@ const Index = () => {
                 </Card>
               )}
               
-              {/* Booking Section - Side by side layout */}
+              {/* Booking Section */}
               {pricingData && (
-                <div className="grid gap-6 xl:grid-cols-2">
+                <div className="grid gap-8 xl:grid-cols-2">
                   {/* Scheduling Section */}
-                  <Card className="border-0 shadow-lg">
-                    <CardContent className="p-8">
-                      <h2 className="text-2xl font-bold mb-6 text-center">
-                        Schedule Your Service
+                  <Card className="floating-card border-0 cyber-border hover-lift">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
+                    <CardContent className="p-10">
+                      <h2 className="text-3xl font-bold mb-8 text-center gradient-text">
+                        SCHEDULE MATRIX
                       </h2>
                       <VisualScheduler 
                         onSchedulingUpdate={handleSchedulingUpdate} 
@@ -196,10 +220,11 @@ const Index = () => {
                   </Card>
                   
                   {/* Payment Section */}
-                  <Card className="border-0 shadow-lg">
-                    <CardContent className="p-8">
-                      <h2 className="text-2xl font-bold mb-6 text-center">
-                        Complete Your Booking
+                  <Card className="floating-card border-0 cyber-border hover-lift">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent to-primary" />
+                    <CardContent className="p-10">
+                      <h2 className="text-3xl font-bold mb-8 text-center gradient-text">
+                        PAYMENT PROTOCOL
                       </h2>
                       <PaymentForm 
                         pricingData={pricingData} 
@@ -213,8 +238,9 @@ const Index = () => {
               )}
               
               {/* Referral Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
-                <CardContent className="p-8">
+              <Card className="glass-morphism border-0 neon-glow hover-lift relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
+                <CardContent className="p-10 relative z-10">
                   <ReferralSection />
                 </CardContent>
               </Card>
@@ -222,14 +248,16 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="commercial">
-            <Card>
-              <CardContent className="p-6">
+            <Card className="floating-card border-0 cyber-border">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
+              <CardContent className="p-10">
                 <CommercialEstimateSection />
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
-    </div>;
+    </div>
+  );
 };
 export default Index;
