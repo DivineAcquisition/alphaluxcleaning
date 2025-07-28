@@ -177,26 +177,36 @@ const Index = () => {
                 </Card>
               )}
               
-              {/* Payment Section */}
+              {/* Booking Section - Side by side layout */}
               {pricingData && (
-                <Card className="border-0 shadow-lg">
-                  <CardContent className="p-8">
-                    <div className="text-center space-y-6">
-                      <h2 className="text-2xl font-jakarta font-bold">
+                <div className="grid gap-6 xl:grid-cols-2">
+                  {/* Scheduling Section */}
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-8">
+                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
+                        Schedule Your Service
+                      </h2>
+                      <VisualScheduler 
+                        serviceType={pricingData.cleaningType} 
+                      />
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Payment Section */}
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-8">
+                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
                         Complete Your Booking
                       </h2>
-                      <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Secure your spot with payment, then choose your preferred date and time on the next page.
-                      </p>
                       <PaymentForm 
                         pricingData={pricingData} 
                         calculatedPrice={calculatedPrice} 
                         priceBreakdown={priceBreakdown} 
                         schedulingData={schedulingData} 
                       />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
               
               {/* Referral Section */}

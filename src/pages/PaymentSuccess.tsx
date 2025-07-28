@@ -110,15 +110,10 @@ export default function PaymentSuccess() {
                   </div>
                 )}
 
-                <div className="flex justify-center gap-4 pt-8 max-w-2xl mx-auto">
+                <div className="flex justify-center pt-8 max-w-2xl mx-auto">
                   <Button asChild className="text-lg py-6" size="lg">
-                    <Link to={`/post-payment-scheduling?session_id=${sessionId}`}>
-                      Schedule Your Service
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="text-lg py-6" size="lg">
                     <Link to={`/service-details?session_id=${sessionId}`}>
-                      Service Details
+                      Complete Your Service Details
                     </Link>
                   </Button>
                 </div>
@@ -129,7 +124,7 @@ export default function PaymentSuccess() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                   <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
                     <span className="font-semibold text-primary text-xl bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center">1</span>
-                    <p className="text-muted-foreground">Schedule your preferred cleaning date and time</p>
+                    <p className="text-muted-foreground">Complete your service details to finalize your booking</p>
                   </div>
                   <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
                     <span className="font-semibold text-primary text-xl bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center">2</span>
@@ -137,7 +132,7 @@ export default function PaymentSuccess() {
                   </div>
                   <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
                     <span className="font-semibold text-primary text-xl bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center">3</span>
-                    <p className="text-muted-foreground">Complete your service details for any special instructions</p>
+                    <p className="text-muted-foreground">Our team will call you to schedule the cleaning appointment</p>
                   </div>
                   <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
                     <span className="font-semibold text-primary text-xl bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center">4</span>
