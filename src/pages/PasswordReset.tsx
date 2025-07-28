@@ -27,11 +27,17 @@ const PasswordReset = () => {
     const type = searchParams.get('type');
 
     if (accessToken && refreshToken && type === 'recovery') {
-      setIsValidToken(true);
       // Set the session with the tokens
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
+      }).then(({ data, error }) => {
+        if (!error) {
+          setIsValidToken(true);
+        } else {
+          console.error('Session error:', error);
+          setIsValidToken(false);
+        }
       });
     } else {
       setIsValidToken(false);
