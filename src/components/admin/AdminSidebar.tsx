@@ -17,13 +17,16 @@ import {
   Settings, 
   BarChart3,
   UserCheck,
-  Home,
   LogOut,
-  Sparkles,
-  Zap,
-  Shield,
-  Target,
-  TrendingUp
+  DollarSign,
+  FileText,
+  Home,
+  Eye,
+  EyeOff,
+  CreditCard,
+  UserPlus,
+  ClipboardList,
+  Briefcase
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,39 +36,67 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navigationItems = [
   {
-    label: "Control Panel",
-    path: "/admin-panel",
-    icon: Shield,
-    description: "System administration",
-    gradient: "from-violet-500 to-purple-500"
+    label: "Overview",
+    path: "/admin-dashboard",
+    icon: LayoutDashboard
   },
   {
     label: "Bookings", 
-    path: "/admin-dashboard",
-    icon: Target,
-    description: "Active reservations",
-    gradient: "from-blue-500 to-cyan-500"
-  },
-  {
-    label: "Team Network",
-    path: "/subcontractor-management", 
-    icon: Users,
-    description: "Contractor management",
-    gradient: "from-emerald-500 to-teal-500"
+    path: "/admin-panel",
+    icon: Home
   },
   {
     label: "Analytics",
     path: "/metrics-dashboard",
-    icon: TrendingUp,
-    description: "Business insights",
-    gradient: "from-orange-500 to-amber-500"
+    icon: BarChart3
   },
   {
-    label: "Applications",
+    label: "Payments",
+    path: "/payments",
+    icon: DollarSign
+  },
+  {
+    label: "Billing",
+    path: "/billing",
+    icon: CreditCard
+  },
+  {
+    label: "Services",
+    path: "/services",
+    icon: Briefcase
+  },
+  {
+    label: "Subcontractors",
+    path: "/subcontractor-management", 
+    icon: Users
+  },
+  {
+    label: "Hire Team",
+    path: "/hire-team",
+    icon: UserPlus
+  },
+  {
+    label: "Job Assignments",
     path: "/application-manager",
-    icon: Sparkles,
-    description: "Review candidates",
-    gradient: "from-pink-500 to-rose-500"
+    icon: ClipboardList
+  },
+  {
+    label: "Settings",
+    path: "/settings",
+    icon: Settings
+  }
+];
+
+const bookingPageItems = [
+  {
+    label: "View Booking Page",
+    path: "/booking-page",
+    icon: Eye
+  },
+  {
+    label: "Disable Page",
+    path: "/disable-page",
+    icon: EyeOff
   }
 ];
 
@@ -88,52 +119,30 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className={open ? "w-72" : "w-16"} collapsible="icon">
-      {/* Header with modern branding */}
-      <SidebarHeader className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-secondary p-6 border-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative">
-              <div className="h-10 w-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-400 rounded-full border-2 border-white animate-pulse" />
-            </div>
-            {open && (
-              <div className="text-white">
-                <h1 className="text-lg font-bold tracking-tight">Admin Hub</h1>
-                <p className="text-xs text-white/70 font-medium">Bay Area Cleaning Pros</p>
-              </div>
-            )}
+    <Sidebar className="w-64 border-r border-border bg-card" collapsible="icon">
+      {/* Header */}
+      <SidebarHeader className="p-6 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">BC</span>
           </div>
-          
-          {/* User Profile Section */}
-          {open && user && (
-            <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-              <Avatar className="h-8 w-8 border-2 border-white/30">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-white/20 text-white font-semibold text-sm">
-                  {getInitials(user.email || '')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user.email}</p>
-                <p className="text-xs text-white/70">Administrator</p>
-              </div>
+          {open && (
+            <div>
+              <h1 className="font-semibold text-foreground">Bay Area Cleaning Pros</h1>
+              <p className="text-sm text-muted-foreground">Admin Panel</p>
             </div>
           )}
         </div>
-        <SidebarTrigger className="absolute top-4 right-4 z-20 text-white hover:bg-white/20" />
       </SidebarHeader>
       
-      <SidebarContent className="px-4 py-6 bg-gradient-to-b from-background to-muted/30">
+      <SidebarContent className="px-3 py-4">
+        {/* Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-            Management Suite
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
+            Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-2">
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -142,40 +151,18 @@ export function AdminSidebar() {
                     <SidebarMenuButton 
                       asChild
                       isActive={active}
-                      className="p-0"
+                      className="h-9"
                     >
                       <button 
                         onClick={() => navigate(item.path)}
-                        className={`w-full group relative overflow-hidden rounded-xl p-3 text-left transition-all duration-300 ${
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                           active 
-                            ? `bg-gradient-to-r ${item.gradient} text-white shadow-lg scale-105` 
-                            : 'hover:bg-muted/50 hover:scale-105'
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${
-                            active 
-                              ? 'bg-white/20 backdrop-blur-sm' 
-                              : 'bg-muted group-hover:bg-muted-foreground/10'
-                          }`}>
-                            <Icon className={`h-4 w-4 ${active ? 'text-white' : ''}`} />
-                          </div>
-                          {open && (
-                            <div className="flex-1">
-                              <span className={`font-semibold text-sm ${active ? 'text-white' : ''}`}>
-                                {item.label}
-                              </span>
-                              <p className={`text-xs mt-0.5 ${
-                                active ? 'text-white/80' : 'text-muted-foreground'
-                              }`}>
-                                {item.description}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                        {active && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50" />
-                        )}
+                        <Icon className="h-4 w-4" />
+                        {open && <span>{item.label}</span>}
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -185,21 +172,75 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sign Out Section */}
+        {/* Booking Page */}
+        <SidebarGroup className="mt-6">
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
+            Booking Page
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {bookingPageItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton 
+                      asChild
+                      isActive={active}
+                      className="h-9"
+                    >
+                      <button 
+                        onClick={() => navigate(item.path)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          active 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {open && <span>{item.label}</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Current Plan */}
+        <SidebarGroup className="mt-6">
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
+            Current Plan
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <div className="px-3 py-3 bg-accent/50 rounded-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Free</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                You're on a Free Preview. Upgrade to unlock full features.
+              </p>
+              <Button size="sm" className="w-full h-8 text-xs">
+                Upgrade Plan
+              </Button>
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Sign Out */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="p-0">
+                <SidebarMenuButton asChild className="h-9">
                   <Button 
                     onClick={handleSignOut} 
                     variant="ghost" 
-                    className="w-full justify-start p-3 rounded-xl hover:bg-destructive/10 hover:text-destructive group transition-all duration-300"
+                    className="w-full justify-start px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
                   >
-                    <div className="p-2 rounded-lg bg-muted group-hover:bg-destructive/20">
-                      <LogOut className="h-4 w-4" />
-                    </div>
-                    {open && <span className="ml-3 font-medium">Sign Out</span>}
+                    <LogOut className="h-4 w-4 mr-3" />
+                    {open && <span className="text-sm font-medium">Sign In</span>}
                   </Button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
