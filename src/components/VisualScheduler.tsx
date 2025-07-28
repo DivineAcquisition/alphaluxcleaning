@@ -20,6 +20,12 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
     script.src = 'https://app.bayareacleaningpros.com/js/form_embed.js';
     script.type = 'text/javascript';
     script.async = true;
+    script.onload = () => {
+      console.log('GHL embed script loaded successfully');
+    };
+    script.onerror = () => {
+      console.error('Failed to load GHL embed script');
+    };
     document.head.appendChild(script);
 
     return () => {
@@ -77,6 +83,9 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
             scrolling="no" 
             id="39tuCeWMXzsnqMcYpkCD_1753729484465"
             title="Bay Area Cleaning Pros Booking Calendar"
+            allow="camera; microphone; geolocation"
+            onLoad={() => console.log('Iframe loaded successfully')}
+            onError={() => console.error('Iframe failed to load')}
           />
         </div>
       </CardContent>
