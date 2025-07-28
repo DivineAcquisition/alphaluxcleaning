@@ -75,12 +75,16 @@ export default function OrderStatus() {
 
     setLoading(true);
     try {
+      console.log("Searching for term:", term);
+      
       // Try searching by exact stripe_session_id match first
       let { data, error } = await supabase
         .from("orders")
         .select("*")
         .eq("stripe_session_id", term)
         .maybeSingle();
+
+      console.log("Search result:", { data, error });
 
       if (!data) {
         // Check if term looks like a UUID before searching by ID
