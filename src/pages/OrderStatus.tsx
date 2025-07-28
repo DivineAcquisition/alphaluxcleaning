@@ -83,15 +83,20 @@ export default function OrderStatus() {
         .maybeSingle();
 
       if (!data) {
-        // Try searching by order ID
-        const { data: orderData, error: orderError } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", term)
-          .maybeSingle();
+        // Check if term looks like a UUID before searching by ID
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+        
+        if (isUUID) {
+          // Try searching by order ID only if it's a valid UUID
+          const { data: orderData, error: orderError } = await supabase
+            .from("orders")
+            .select("*")
+            .eq("id", term)
+            .maybeSingle();
 
-        if (orderData) {
-          data = orderData;
+          if (orderData) {
+            data = orderData;
+          }
         }
       }
 
