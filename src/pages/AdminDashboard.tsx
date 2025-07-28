@@ -12,26 +12,28 @@ import { Calendar, Clock, MapPin, User, Phone, Mail, DollarSign } from "lucide-r
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
-interface Booking {
+interface Order {
   id: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
-  service_address: string;
-  service_date: string;
-  service_time: string;
+  service_details: any;
+  scheduled_date: string;
+  scheduled_time: string;
   status: string;
-  priority: string;
-  special_instructions?: string;
-  estimated_duration?: number;
-  order_id?: string;
+  cleaning_type: string;
+  frequency: string;
+  amount: number;
+  square_footage: number;
+  add_ons: string[];
   created_at: string;
+  stripe_session_id: string;
 }
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('');
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (user) {
       fetchUserRole();
-      fetchBookings();
+      fetchOrders();
     }
   }, [user]);
 
@@ -82,52 +84,49 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchBookings = async () => {
+  const fetchOrders = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('bookings')
+        .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      setOrders(data || []);
     } catch (error) {
-      toast.error('Failed to fetch bookings');
+      toast.error('Failed to fetch orders');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const { error } = await supabase
-        .from('bookings')
+        .from('orders')
         .update({ status: newStatus })
-        .eq('id', bookingId);
+        .eq('id', orderId);
 
       if (error) throw error;
       
-      toast.success('Booking status updated');
-      fetchBookings();
+      toast.success('Order status updated');
+      fetchOrders();
 
       // If marked as completed, process auto-charge
       if (newStatus === 'completed') {
-        await processAutoCharge(bookingId);
+        await processAutoCharge(orderId);
       }
     } catch (error) {
-      toast.error('Failed to update booking status');
+      toast.error('Failed to update order status');
     }
   };
 
-  const processAutoCharge = async (bookingId: string) => {
+  const processAutoCharge = async (orderId: string) => {
     try {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking || !booking.order_id) return;
-
       // Call edge function to process payment
       const { error } = await supabase.functions.invoke('process-auto-charge', {
-        body: { orderId: booking.order_id }
+        body: { orderId: orderId }
       });
 
       if (error) throw error;
@@ -168,17 +167,17 @@ const AdminDashboard = () => {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Active Bookings</CardTitle>
+          <CardTitle>Order Management</CardTitle>
           <CardDescription>
-            Manage all customer bookings and update their status
+            Manage all customer orders and update their status
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading bookings...</div>
-          ) : bookings.length === 0 ? (
+            <div className="text-center py-8">Loading orders...</div>
+          ) : orders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No bookings found
+              No orders found
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -193,22 +192,22 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
-                            <span className="font-medium">{booking.customer_name}</span>
+                            <span className="font-medium">{order.customer_name}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="h-3 w-3" />
-                            {booking.customer_email}
+                            {order.customer_email}
                           </div>
-                          {booking.customer_phone && (
+                          {order.customer_phone && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Phone className="h-3 w-3" />
-                              {booking.customer_phone}
+                              {order.customer_phone}
                             </div>
                           )}
                         </div>
@@ -217,42 +216,45 @@ const AdminDashboard = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>{booking.service_date}</span>
+                            <span>{order.scheduled_date || 'Not scheduled'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            {booking.service_time}
+                            {order.scheduled_time || 'Time TBD'}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-3 w-3" />
-                            {booking.service_address}
+                            {order.service_details?.address?.street || 'Address pending'}
                           </div>
-                          {booking.estimated_duration && (
-                            <div className="text-sm text-muted-foreground">
-                              Duration: {booking.estimated_duration} hours
-                            </div>
-                          )}
+                          <div className="text-sm text-muted-foreground">
+                            {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} • {order.square_footage} sq ft
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            ${(order.amount / 100).toFixed(2)}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status.replace('_', ' ')}
+                        <Badge className={getStatusColor(order.status)}>
+                          {order.status.replace('_', ' ')}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getPriorityColor(booking.priority)}>
-                          {booking.priority}
+                        <Badge className="bg-blue-100 text-blue-800">
+                          normal
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={booking.status}
-                          onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                          value={order.status}
+                          onValueChange={(value) => updateOrderStatus(order.id, value)}
                         >
                           <SelectTrigger className="w-40">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
                             <SelectItem value="scheduled">Scheduled</SelectItem>
                             <SelectItem value="in_progress">In Progress</SelectItem>
                             <SelectItem value="completed">
