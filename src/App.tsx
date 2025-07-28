@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Index from '@/pages/Index';
 import ServiceDetails from '@/pages/ServiceDetails';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import PostPaymentScheduling from '@/pages/PostPaymentScheduling';
 import Auth from '@/pages/Auth';
 import AdminAuth from '@/pages/AdminAuth';
 import AdminSetup from '@/pages/AdminSetup';
@@ -41,6 +42,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/service-details" element={<ServiceDetails />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/post-payment-scheduling" element={<PostPaymentScheduling />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin-auth" element={<AdminAuth />} />
             <Route path="/admin-setup" element={

@@ -22,17 +22,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const getUserRole = async (): Promise<string | null> => {
-    if (!user) return null;
+    if (!user) {
+      console.log('AuthContext: No user, returning null role');
+      return null;
+    }
+    
+    console.log('AuthContext: Getting role for user:', user.id, user.email);
     
     try {
       const { data, error } = await supabase
         .rpc('get_user_role', { _user_id: user.id });
+      
+      console.log('AuthContext: get_user_role response:', { data, error });
       
       if (error) {
         console.error('Error getting user role:', error);
         return null;
       }
       
+      console.log('AuthContext: User role retrieved:', data);
       return data;
     } catch (error) {
       console.error('Error getting user role:', error);
@@ -44,41 +52,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('AuthContext: Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer role fetching to avoid deadlock
-          setTimeout(async () => {
-            const role = await getUserRole();
-            setUserRole(role);
-          }, 0);
-        } else {
-          setUserRole(null);
-        }
-        
         setLoading(false);
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('AuthContext: Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        getUserRole().then(setUserRole);
-      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Update userRole when user changes
+  // Get user role when user changes
   useEffect(() => {
     if (user) {
-      getUserRole().then(setUserRole);
+      console.log('AuthContext: User changed, getting role for:', user.email);
+      getUserRole().then((role) => {
+        console.log('AuthContext: Role set to:', role);
+        setUserRole(role);
+      });
+    } else {
+      console.log('AuthContext: No user, setting role to null');
+      setUserRole(null);
     }
   }, [user]);
 

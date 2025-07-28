@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
-import { VisualScheduler } from "@/components/VisualScheduler";
+import VisualScheduler from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
@@ -177,39 +177,26 @@ const Index = () => {
                 </Card>
               )}
               
-              {/* Booking Section - Side by side layout */}
+              {/* Payment Section */}
               {pricingData && (
-                <div className="grid gap-6 xl:grid-cols-2">
-                  {/* Scheduling Section */}
-                  <Card className="border-0 shadow-lg">
-                    <CardContent className="p-8">
-                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
-                        Schedule Your Service
-                      </h2>
-                      <VisualScheduler 
-                        onSchedulingUpdate={handleSchedulingUpdate} 
-                        selectedDate={schedulingData.scheduledDate} 
-                        selectedTime={schedulingData.scheduledTime} 
-                        serviceType={pricingData.cleaningType} 
-                      />
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Payment Section */}
-                  <Card className="border-0 shadow-lg">
-                    <CardContent className="p-8">
-                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-8">
+                    <div className="text-center space-y-6">
+                      <h2 className="text-2xl font-jakarta font-bold">
                         Complete Your Booking
                       </h2>
+                      <p className="text-muted-foreground max-w-2xl mx-auto">
+                        Secure your spot with payment, then choose your preferred date and time on the next page.
+                      </p>
                       <PaymentForm 
                         pricingData={pricingData} 
                         calculatedPrice={calculatedPrice} 
                         priceBreakdown={priceBreakdown} 
                         schedulingData={schedulingData} 
                       />
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
               
               {/* Referral Section */}
