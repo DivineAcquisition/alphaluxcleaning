@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function PostPaymentScheduling() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { userRole } = useAuth();
+  const { userRole, loading: authLoading } = useAuth();
   const sessionId = searchParams.get("session_id");
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -20,8 +20,19 @@ export default function PostPaymentScheduling() {
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
+      // Wait for auth to finish loading
+      if (authLoading) {
+        console.log('PostPaymentScheduling: Auth still loading, waiting...');
+        return;
+      }
+
+      console.log('PostPaymentScheduling: sessionId:', sessionId);
+      console.log('PostPaymentScheduling: userRole:', userRole);
+      console.log('PostPaymentScheduling: authLoading:', authLoading);
+      
       // Allow admin/manager access without session_id for testing
       if (!sessionId && (userRole === 'admin' || userRole === 'employee')) {
+        console.log('PostPaymentScheduling: Admin/Manager access granted');
         setIsAdminView(true);
         setOrderDetails({
           cleaning_type: 'general',
@@ -33,7 +44,8 @@ export default function PostPaymentScheduling() {
       }
 
       if (!sessionId) {
-        toast.error("No session ID found");
+        console.log('PostPaymentScheduling: No session ID and not admin, redirecting to home');
+        toast.error("Access denied. This page requires a valid session ID or admin privileges.");
         navigate("/");
         return;
       }
@@ -62,14 +74,19 @@ export default function PostPaymentScheduling() {
     };
 
     fetchOrderDetails();
-  }, [sessionId, navigate, userRole]);
+  }, [sessionId, navigate, userRole, authLoading]);
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">
+            <p>Loading...</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {authLoading ? 'Checking authentication...' : 'Loading order details...'}
+            </p>
+          </div>
         </div>
       </div>
     );
