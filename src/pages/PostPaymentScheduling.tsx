@@ -7,16 +7,31 @@ import VisualScheduler from "@/components/VisualScheduler";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PostPaymentScheduling() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { userRole } = useAuth();
   const sessionId = searchParams.get("session_id");
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdminView, setIsAdminView] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
+      // Allow admin/manager access without session_id for testing
+      if (!sessionId && (userRole === 'admin' || userRole === 'employee')) {
+        setIsAdminView(true);
+        setOrderDetails({
+          cleaning_type: 'general',
+          frequency: 'weekly',
+          amount: 15000 // $150.00 example
+        });
+        setLoading(false);
+        return;
+      }
+
       if (!sessionId) {
         toast.error("No session ID found");
         navigate("/");
@@ -47,7 +62,7 @@ export default function PostPaymentScheduling() {
     };
 
     fetchOrderDetails();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, userRole]);
 
   if (loading) {
     return (
@@ -73,9 +88,14 @@ export default function PostPaymentScheduling() {
               <div className="flex justify-center mb-4">
                 <CheckCircle className="h-16 w-16" />
               </div>
-              <CardTitle className="text-3xl mb-2">Payment Complete!</CardTitle>
+              <CardTitle className="text-3xl mb-2">
+                {isAdminView ? "Admin Preview" : "Payment Complete!"}
+              </CardTitle>
               <CardDescription className="text-primary-foreground/90 text-lg">
-                Now let's schedule your {orderDetails?.cleaning_type} cleaning service
+                {isAdminView 
+                  ? "Preview of the post-payment scheduling flow" 
+                  : `Now let's schedule your ${orderDetails?.cleaning_type} cleaning service`
+                }
               </CardDescription>
             </CardHeader>
             
