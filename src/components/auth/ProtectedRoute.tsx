@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'admin' | 'employee' | 'customer' | 'subcontractor';
+  requiredRole?: 'admin' | 'employee' | 'customer';
   redirectTo?: string;
 }
 
@@ -19,8 +19,6 @@ export function ProtectedRoute({
 
   useEffect(() => {
     if (!loading) {
-      console.log('ProtectedRoute check:', { user: !!user, userRole, requiredRole, loading });
-      
       // If user is not authenticated, redirect to auth page
       if (!user) {
         navigate(redirectTo);
@@ -29,20 +27,11 @@ export function ProtectedRoute({
 
       // If specific role is required, check if user has it
       if (requiredRole && userRole !== requiredRole) {
-        console.log('Role mismatch, redirecting...', { userRole, requiredRole });
-        // For admin routes, allow both admin and employee access
-        if ((requiredRole === 'admin' || requiredRole === 'employee') && 
-            (userRole === 'admin' || userRole === 'employee')) {
-          return; // Allow access
-        }
-        
         // Redirect based on user's actual role
         if (userRole === 'admin' || userRole === 'employee') {
           navigate('/admin-dashboard');
         } else if (userRole === 'customer') {
           navigate('/my-services');
-        } else if (userRole === 'subcontractor') {
-          navigate('/subcontractor-dashboard');
         } else {
           navigate('/auth');
         }
@@ -69,13 +58,7 @@ export function ProtectedRoute({
 
   // If specific role is required and user doesn't have it, don't render children
   if (requiredRole && userRole !== requiredRole) {
-    // For admin routes, allow both admin and employee access
-    if ((requiredRole === 'admin' || requiredRole === 'employee') && 
-        (userRole === 'admin' || userRole === 'employee')) {
-      // Allow access
-    } else {
-      return null;
-    }
+    return null;
   }
 
   // Render protected content
