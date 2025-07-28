@@ -52,22 +52,24 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
       </CardHeader>
       
       <CardContent className="p-6">
-        <div className="bg-white rounded-lg p-4 shadow-inner">
-          <iframe 
-            src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
-            style={{
-              width: '100%',
-              border: 'none',
-              overflow: 'hidden',
-              minHeight: '600px'
-            }}
-            scrolling="no" 
-            id="39tuCeWMXzsnqMcYpkCD_1753729484465"
-            title="Bay Area Cleaning Pros Booking Calendar"
-            allow="camera; microphone; geolocation"
-            onLoad={() => console.log('Iframe loaded successfully')}
-            onError={() => console.error('Iframe failed to load')}
-          />
+        <div className="bg-white rounded-lg p-8 shadow-inner text-center">
+          <div className="text-red-600 mb-4">
+            <p className="font-semibold">Booking System Temporarily Unavailable</p>
+            <p className="text-sm text-gray-600 mt-2">
+              The GoHighLevel booking widget is currently returning a 404 error.
+            </p>
+          </div>
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="font-semibold text-gray-800 mb-3">Alternative Booking Options:</h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p>📞 Call: (555) 123-4567</p>
+              <p>✉️ Email: booking@bayareacleaningpros.com</p>
+              <p>🕐 Business Hours: 8 AM - 6 PM</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">
+            URL tested: https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD
+          </p>
         </div>
       </CardContent>
     </Card>
