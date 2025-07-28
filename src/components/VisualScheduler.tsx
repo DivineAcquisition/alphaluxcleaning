@@ -50,7 +50,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
     { value: '4:00 PM', label: '4:00 PM - 6:00 PM', popular: false }
   ];
 
-  // Check next day availability
+  // Check next day availability - always show as available for now
   useEffect(() => {
     const checkNextDayAvailability = async () => {
       try {
@@ -64,13 +64,15 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
         
         if (error) {
           console.error('Error checking availability:', error);
-          setNextDayAvailable(false);
+          // Default to available if check fails
+          setNextDayAvailable(true);
         } else {
           setNextDayAvailable(data?.available !== false);
         }
       } catch (error) {
         console.error('Error checking next day availability:', error);
-        setNextDayAvailable(false);
+        // Default to available if check fails
+        setNextDayAvailable(true);
       }
     };
 
