@@ -282,7 +282,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
                   
                   <div>
                     <Select onValueChange={setTimeSlot} value={timeSlot}>
-                      <SelectTrigger className="text-lg p-4">
+                      <SelectTrigger className="text-lg p-4 text-gray-900 placeholder:text-gray-500">
                         <SelectValue placeholder="Choose your preferred time slot" />
                       </SelectTrigger>
                       <SelectContent>
@@ -315,7 +315,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
                     <div className="space-y-2">
                       <label className="text-base font-medium text-gray-700">Service Date</label>
                       <Select onValueChange={setServiceDate} value={serviceDate}>
-                        <SelectTrigger className="text-lg p-4">
+                        <SelectTrigger className="text-lg p-4 text-gray-900 placeholder:text-gray-500">
                           <SelectValue placeholder="Select a date" />
                         </SelectTrigger>
                         <SelectContent>
@@ -331,7 +331,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
                     <div className="space-y-2">
                       <label className="text-base font-medium text-gray-700">Time Slot</label>
                       <Select onValueChange={setTimeSlot} value={timeSlot}>
-                        <SelectTrigger className="text-lg p-4">
+                        <SelectTrigger className="text-lg p-4 text-gray-900 placeholder:text-gray-500">
                           <SelectValue placeholder="Select a time" />
                         </SelectTrigger>
                         <SelectContent>
