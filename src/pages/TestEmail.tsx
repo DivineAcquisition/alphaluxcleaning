@@ -8,41 +8,41 @@ import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
 
 export default function TestEmail() {
-  const [email, setEmail] = useState("divineacquisition.io@gmail.com");
-  const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState("cs_live_a1IVTHRlvD3N7nzW1mjGhGmKop3z620rxFUMZzTGdkBUnspD6JSh7HLM67");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
 
-  const sendTestEmail = async () => {
-    setIsLoading(true);
+  const testOrderConfirmation = async () => {
+    if (!sessionId.trim()) {
+      toast.error("Please enter a session ID");
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+
     try {
-      const { data, error } = await supabase.functions.invoke('test-email-confirmation', {
-        body: { testEmail: email }
+      console.log("Testing order confirmation with session ID:", sessionId);
+      
+      const { data, error } = await supabase.functions.invoke('send-order-confirmation', {
+        body: { sessionId: sessionId.trim() }
       });
 
       if (error) {
-        console.error("Supabase function error:", error);
+        console.error("Error calling function:", error);
         throw error;
       }
 
-      console.log("Test email response:", data);
+      console.log("Function response:", data);
+      setResult(data);
+      toast.success("Order confirmation email test completed! Check the result below.");
       
-      if (data.success) {
-        toast.success(`Test email sent successfully to ${email}!`);
-      } else {
-        console.error("Function returned error:", data);
-        toast.error(`Failed to send test email: ${data.error || 'Unknown error'}`);
-      }
     } catch (error: any) {
-      console.error("Error sending test email:", error);
-      
-      // Try to get more details from the error
-      let errorMessage = error.message;
-      if (error.details) {
-        errorMessage += `: ${error.details}`;
-      }
-      
-      toast.error(`Failed to send test email: ${errorMessage}`);
+      console.error("Error testing order confirmation:", error);
+      setResult({ error: error.message || "Unknown error occurred" });
+      toast.error(`Failed to send test email: ${error.message || "Unknown error"}`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -50,51 +50,69 @@ export default function TestEmail() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card className="shadow-xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl mb-4">🧪 Test Email System</CardTitle>
-              <CardDescription className="text-lg">
-                Test the booking confirmation email system
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="p-8 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter email address"
-                  />
-                </div>
-                
-                <Button 
-                  onClick={sendTestEmail}
-                  disabled={isLoading || !email}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoading ? "Sending..." : "Send Test Email"}
-                </Button>
-              </div>
+      <div className="container mx-auto max-w-4xl py-8 px-4">
+        <Card className="shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
+            <CardTitle className="text-xl">
+              🧪 Test Order Confirmation Email
+            </CardTitle>
+            <CardDescription className="text-primary-foreground/80">
+              Test the order confirmation email system with a real order
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="sessionId">Session ID</Label>
+              <Input
+                id="sessionId"
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                placeholder="Enter Stripe session ID"
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Pre-filled with a recent confirmed order for testing
+              </p>
+            </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">What this test does:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Sends a sample booking confirmation email</li>
-                  <li>• Tests the Resend email service integration</li>
-                  <li>• Shows you exactly how customer emails will look</li>
-                  <li>• Verifies email delivery is working</li>
+            <Button 
+              onClick={testOrderConfirmation}
+              disabled={loading}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? "Sending Test Email..." : "🚀 Send Test Confirmation Email"}
+            </Button>
+
+            {result && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    {result.error ? "❌ Error Result" : "✅ Success Result"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm">
+                    {JSON.stringify(result, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">Test Details:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Customer: Malik (asannie74@gmail.com)</li>
+                  <li>• Service: Deep Cleaning - Weekly</li>
+                  <li>• Amount: $49.00</li>
+                  <li>• Order ID: 6a8e247a-0393-4698-8959-131ae7261171</li>
                 </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
