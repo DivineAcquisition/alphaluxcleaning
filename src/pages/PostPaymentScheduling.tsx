@@ -169,7 +169,8 @@ export default function PostPaymentScheduling() {
               
               <CardContent className="p-6">
                 <VisualScheduler 
-                  serviceType={orderDetails?.cleaning_type} 
+                  serviceType={orderDetails?.cleaning_type}
+                  sessionId={sessionId}
                 />
               </CardContent>
             </Card>

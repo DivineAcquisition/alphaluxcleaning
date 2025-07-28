@@ -407,16 +407,8 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="details">Complete Booking</TabsTrigger>
-              <TabsTrigger value="referral">
-                <Gift className="h-4 w-4 mr-2" />
-                Referral Code
-              </TabsTrigger>
-              <TabsTrigger value="discount">
-                <Tag className="h-4 w-4 mr-2" />
-                Apply Discount
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-6 sm:space-y-8 mt-6">
@@ -730,106 +722,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
               <p className="text-xs sm:text-sm text-muted-foreground text-center">
                 This information helps us provide the best possible service experience
               </p>
-            </TabsContent>
-
-            <TabsContent value="referral" className="mt-6 space-y-6">
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 text-lg font-semibold">
-                  <Gift className="h-6 w-6 text-primary" />
-                  Have a Referral Code?
-                </div>
-                
-                <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Refer friends and save!</strong> Get 50% off your next deep cleaning when they book.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Using a referral code? Get 10% off your service (can stack with other offers).
-                  </p>
-                </div>
-
-                {appliedReferral && (
-                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <p className="text-green-800 font-medium">✓ Referral code applied!</p>
-                    <p className="text-green-600 text-sm">You get 10% off your service.</p>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <Label htmlFor="referralCode">Enter Referral Code</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="referralCode"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                      placeholder="Enter your friend's referral code"
-                      disabled={!!appliedReferral}
-                    />
-                    <Button 
-                      onClick={handleApplyReferralCode}
-                      disabled={!referralCode.trim() || !!appliedReferral || !formData.customerEmail || !formData.customerName}
-                      variant="outline"
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                  {(!formData.customerEmail || !formData.customerName) && (
-                    <p className="text-xs text-muted-foreground">
-                      Please fill in your name and email in the Complete Booking tab first
-                    </p>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="discount" className="mt-6 space-y-6">
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 text-lg font-semibold">
-                  <Tag className="h-6 w-6 text-primary" />
-                  Apply Discount Code
-                </div>
-                
-                <div className="bg-muted/50 p-6 rounded-lg space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Have a discount code from a referral reward? Enter it here to get 50% off your deep cleaning service.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    <strong>Note:</strong> Discount codes cannot be combined with referral codes.
-                  </p>
-                </div>
-
-                {appliedDiscount && (
-                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <p className="text-green-800 font-medium">✓ Discount code applied!</p>
-                    <p className="text-green-600 text-sm">{appliedDiscount.description}</p>
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  <Label htmlFor="discountCode">Enter Discount Code</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="discountCode"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
-                      placeholder="Enter your discount code (e.g., FRIEND50-ABC123)"
-                      disabled={!!appliedDiscount || !!appliedReferral}
-                    />
-                    <Button 
-                      onClick={handleApplyDiscountCode}
-                      disabled={!discountCode.trim() || !!appliedDiscount || !!appliedReferral}
-                      variant="outline"
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                  {appliedReferral && (
-                    <p className="text-xs text-muted-foreground text-orange-600">
-                      Cannot apply discount code when referral code is already applied
-                    </p>
-                  )}
-                </div>
-              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
