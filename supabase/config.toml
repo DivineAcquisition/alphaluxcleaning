@@ -39,6 +39,15 @@ verify_jwt = false
 [functions.create-gohighlevel-booking]
 verify_jwt = false
 
+[functions.sync-ghl-availability]
+verify_jwt = false
+
+[functions.sync-ghl-updates]
+verify_jwt = false
+
+[functions.ghl-webhook-handler]
+verify_jwt = false
+
 [functions.reset-admin-passwords]
 verify_jwt = true
 

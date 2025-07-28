@@ -28,9 +28,36 @@ serve(async (req) => {
   try {
     const { date, timeSlots } = await req.json();
     
+    // Check if GoHighLevel integration is available first
+    const GHL_API_KEY = Deno.env.get("GOHIGHLEVEL_API_KEY");
+    const GHL_LOCATION_ID = Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
+
+    if (GHL_API_KEY && GHL_LOCATION_ID) {
+      console.log('Using GoHighLevel for availability check');
+      try {
+        const ghlAvailability = await checkGHLAvailability(date, timeSlots);
+        return new Response(JSON.stringify({ availability: ghlAvailability, source: 'gohighlevel' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (ghlError) {
+        console.error('GHL availability check failed, falling back to Google Calendar:', ghlError);
+      }
+    }
+
+    // Fallback to Google Calendar
+    console.log('Using Google Calendar for availability check');
     const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
     if (!serviceAccountKey) {
-      throw new Error('Google Service Account key not configured');
+      // If neither GHL nor Google Calendar is configured, return mock availability
+      console.log('No calendar integration configured, using mock availability');
+      const mockAvailability = timeSlots.map(timeSlot => ({
+        date,
+        time: timeSlot,
+        available: true,
+      }));
+      return new Response(JSON.stringify({ availability: mockAvailability, source: 'mock' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     let credentials;
@@ -47,7 +74,7 @@ serve(async (req) => {
     // Check availability for the requested date
     const availability = await checkAvailability(accessToken, date, timeSlots);
     
-    return new Response(JSON.stringify({ availability }), {
+    return new Response(JSON.stringify({ availability, source: 'google' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
@@ -61,6 +88,63 @@ serve(async (req) => {
     });
   }
 });
+
+async function checkGHLAvailability(date: string, timeSlots: string[]): Promise<AvailabilitySlot[]> {
+  const GHL_API_KEY = Deno.env.get("GOHIGHLEVEL_API_KEY");
+  const GHL_LOCATION_ID = Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
+
+  // Get calendars for the location
+  const calendarsResponse = await fetch(`https://services.leadconnectorhq.com/calendars/`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${GHL_API_KEY}`,
+      "Content-Type": "application/json",
+      "Version": "2021-07-28"
+    }
+  });
+
+  const calendarsData = await calendarsResponse.json();
+  
+  if (!calendarsData.calendars || calendarsData.calendars.length === 0) {
+    throw new Error("No calendars found in GoHighLevel");
+  }
+
+  const calendar = calendarsData.calendars.find(cal => cal.locationId === GHL_LOCATION_ID) || calendarsData.calendars[0];
+
+  // Get existing appointments for the date
+  const appointmentsResponse = await fetch(`https://services.leadconnectorhq.com/calendars/events/appointments?calendarId=${calendar.id}&startDate=${date}&endDate=${date}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${GHL_API_KEY}`,
+      "Content-Type": "application/json",
+      "Version": "2021-07-28"
+    }
+  });
+
+  const appointmentsData = await appointmentsResponse.json();
+  const existingAppointments = appointmentsData.events || [];
+
+  // Check each time slot for availability
+  const availability: AvailabilitySlot[] = timeSlots.map(timeSlot => {
+    const { startTime, endTime } = parseTimeSlot(date, timeSlot);
+    
+    // Check for conflicts with existing appointments
+    const hasConflict = existingAppointments.some(appointment => {
+      const appointmentStart = new Date(appointment.startTime);
+      const appointmentEnd = new Date(appointment.endTime);
+      
+      return (startTime < appointmentEnd && endTime > appointmentStart);
+    });
+
+    return {
+      date,
+      time: timeSlot,
+      available: !hasConflict,
+    };
+  });
+
+  return availability;
+}
 
 async function getAccessToken(credentials: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
