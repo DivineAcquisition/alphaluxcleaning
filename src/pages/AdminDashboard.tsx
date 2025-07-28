@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calendar, Clock, MapPin, User, Phone, Mail, DollarSign, CheckCircle, X } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Phone, Mail, DollarSign } from "lucide-react";
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
@@ -163,226 +163,116 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout 
-      title="Booking Management"
-      description={`Active bookings dashboard - Welcome, ${userRole}`}
+      title="Booking Management Dashboard"
+      description={`Manage all customer bookings and update their status - Welcome, ${userRole}`}
     >
-      <div className="space-y-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-primary/10 to-primary/5">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/20 rounded-xl">
-                  <Calendar className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
-                  <p className="text-2xl font-bold">{bookings.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-success/10 to-success/5">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-success/20 rounded-xl">
-                  <CheckCircle className="h-6 w-6 text-success" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold">
-                    {bookings.filter(b => b.status === 'completed').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-warning/10 to-warning/5">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-warning/20 rounded-xl">
-                  <Clock className="h-6 w-6 text-warning" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                  <p className="text-2xl font-bold">
-                    {bookings.filter(b => b.status === 'in_progress').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-accent/10 to-accent/5">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-accent/20 rounded-xl">
-                  <Calendar className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
-                  <p className="text-2xl font-bold">
-                    {bookings.filter(b => b.status === 'scheduled').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Bookings Table */}
-        <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Active Bookings
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  Manage customer bookings and update their status
-                </CardDescription>
-              </div>
-              <Badge variant="secondary" className="font-medium">
-                {bookings.length} total
-              </Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Bookings</CardTitle>
+          <CardDescription>
+            Manage all customer bookings and update their status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">Loading bookings...</div>
+          ) : bookings.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No bookings found
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex items-center gap-3">
-                  <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-muted-foreground">Loading bookings...</span>
-                </div>
-              </div>
-            ) : bookings.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-muted-foreground mb-2">No bookings found</h3>
-                <p className="text-sm text-muted-foreground">
-                  New bookings will appear here when customers make reservations
-                </p>
-              </div>
-            ) : (
-              <div className="relative overflow-hidden rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      <TableHead className="font-semibold">Customer</TableHead>
-                      <TableHead className="font-semibold">Service Details</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Priority</TableHead>
-                      <TableHead className="font-semibold">Actions</TableHead>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Service Details</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">{booking.customer_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            {booking.customer_email}
+                          </div>
+                          {booking.customer_phone && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              {booking.customer_phone}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{booking.service_date}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {booking.service_time}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {booking.service_address}
+                          </div>
+                          {booking.estimated_duration && (
+                            <div className="text-sm text-muted-foreground">
+                              Duration: {booking.estimated_duration} hours
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(booking.status)}>
+                          {booking.status.replace('_', ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getPriorityColor(booking.priority)}>
+                          {booking.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={booking.status}
+                          onValueChange={(value) => updateBookingStatus(booking.id, value)}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="completed">
+                              <div className="flex items-center gap-2">
+                                <DollarSign className="h-3 w-3" />
+                                Completed (Auto-charge)
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings.map((booking, index) => (
-                      <TableRow 
-                        key={booking.id}
-                        className={`transition-colors hover:bg-muted/30 ${
-                          index % 2 === 0 ? 'bg-background' : 'bg-muted/10'
-                        }`}
-                      >
-                        <TableCell className="py-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                <User className="h-4 w-4 text-primary" />
-                              </div>
-                              <span className="font-semibold">{booking.customer_name}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Mail className="h-3 w-3" />
-                              {booking.customer_email}
-                            </div>
-                            {booking.customer_phone && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Phone className="h-3 w-3" />
-                                {booking.customer_phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 font-medium">
-                              <Calendar className="h-4 w-4 text-primary" />
-                              <span>{booking.service_date}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {booking.service_time}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              {booking.service_address}
-                            </div>
-                            {booking.estimated_duration && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                Duration: {booking.estimated_duration}h
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status.replace('_', ' ')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <Badge className={getPriorityColor(booking.priority)}>
-                            {booking.priority}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <Select
-                            value={booking.status}
-                            onValueChange={(value) => updateBookingStatus(booking.id, value)}
-                          >
-                            <SelectTrigger className="w-44 bg-background border-border/50 hover:border-border">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border-border">
-                              <SelectItem value="scheduled">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-3 w-3" />
-                                  Scheduled
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="in_progress">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-3 w-3" />
-                                  In Progress
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="completed">
-                                <div className="flex items-center gap-2">
-                                  <DollarSign className="h-3 w-3" />
-                                  Completed (Auto-charge)
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="cancelled">
-                                <div className="flex items-center gap-2">
-                                  <X className="h-3 w-3" />
-                                  Cancelled
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </AdminLayout>
   );
 };

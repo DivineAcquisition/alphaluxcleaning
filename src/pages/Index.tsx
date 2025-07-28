@@ -76,10 +76,10 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
+          <h1 className="text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl font-inter font-semibold text-muted-foreground max-w-2xl mx-auto">
             Bay Area's premier cleaning service for residential and commercial properties
           </p>
         </div>
@@ -91,13 +91,13 @@ const Index = () => {
               <div className="text-center text-white">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Sparkles className="h-6 w-6 animate-bounce" />
-                  <h2 className="text-2xl font-bold">LIMITED TIME OFFER!</h2>
+                  <h2 className="text-2xl font-jakarta font-bold">LIMITED TIME OFFER!</h2>
                   <Sparkles className="h-6 w-6 animate-bounce" />
                 </div>
                 
                 <div className="mb-4">
-                  <p className="text-xl font-semibold mb-1">Save $75 On Deep Cleanings Or Get 25% Off All Recurring Services</p>
-                  <p className="text-primary-foreground/90">
+                  <p className="text-xl font-jakarta font-semibold mb-1">Save $75 On Deep Cleanings Or Get 25% Off All Recurring Services</p>
+                  <p className="font-inter font-semibold text-primary-foreground/90">
                     Book now and enjoy ongoing savings on every clean!
                   </p>
                 </div>
@@ -120,7 +120,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <p className="text-sm text-primary-foreground/80">
+                <p className="text-sm font-inter font-semibold text-primary-foreground/80">
                   ⏰ Offer expires at midnight! Don't miss out on these incredible savings.
                 </p>
               </div>
@@ -147,10 +147,10 @@ const Index = () => {
               <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm">
                 <CardContent className="p-8">
                   <div className="text-center mb-8">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       Choose Your Residential Services
                     </h2>
-                    <p className="text-muted-foreground text-lg">
+                    <p className="font-inter font-semibold text-muted-foreground text-lg">
                       Customize your cleaning experience with our flexible options
                     </p>
                   </div>
@@ -167,7 +167,7 @@ const Index = () => {
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-6">
                     <div className="text-center space-y-4">
-                      <h3 className="text-xl font-semibold">Want to know exactly what's included?</h3>
+                      <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
                       <ServiceDetailsDialog 
                         cleaningType={pricingData.cleaningType} 
                         serviceType={pricingData.serviceType} 
@@ -183,7 +183,7 @@ const Index = () => {
                   {/* Scheduling Section */}
                   <Card className="border-0 shadow-lg">
                     <CardContent className="p-8">
-                      <h2 className="text-2xl font-bold mb-6 text-center">
+                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
                         Schedule Your Service
                       </h2>
                       <VisualScheduler 
@@ -198,7 +198,7 @@ const Index = () => {
                   {/* Payment Section */}
                   <Card className="border-0 shadow-lg">
                     <CardContent className="p-8">
-                      <h2 className="text-2xl font-bold mb-6 text-center">
+                      <h2 className="text-2xl font-jakarta font-bold mb-6 text-center">
                         Complete Your Booking
                       </h2>
                       <PaymentForm 
