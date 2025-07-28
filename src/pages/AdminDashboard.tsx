@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Calendar, Clock, MapPin, User, Phone, Mail, DollarSign } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Phone, Mail, DollarSign, Filter, X } from "lucide-react";
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
@@ -34,8 +36,18 @@ const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('');
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [cleaningTypeFilter, setCleaningTypeFilter] = useState<string>('all');
+  const [dateFromFilter, setDateFromFilter] = useState<string>('');
+  const [dateToFilter, setDateToFilter] = useState<string>('');
+  const [minAmountFilter, setMinAmountFilter] = useState<string>('');
+  const [maxAmountFilter, setMaxAmountFilter] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,6 +79,7 @@ const AdminDashboard = () => {
     if (user) {
       fetchUserRole();
       fetchOrders();
+      applyFilters();
     }
   }, [user]);
 
@@ -94,11 +107,63 @@ const AdminDashboard = () => {
 
       if (error) throw error;
       setOrders(data || []);
+      setFilteredOrders(data || []);
     } catch (error) {
       toast.error('Failed to fetch orders');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Apply filters whenever filter values change
+  useEffect(() => {
+    applyFilters();
+  }, [statusFilter, cleaningTypeFilter, dateFromFilter, dateToFilter, minAmountFilter, maxAmountFilter, orders]);
+
+  const applyFilters = () => {
+    let filtered = [...orders];
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === statusFilter);
+    }
+
+    // Cleaning type filter
+    if (cleaningTypeFilter !== 'all') {
+      filtered = filtered.filter(order => order.cleaning_type === cleaningTypeFilter);
+    }
+
+    // Date range filter
+    if (dateFromFilter) {
+      filtered = filtered.filter(order => new Date(order.created_at) >= new Date(dateFromFilter));
+    }
+    if (dateToFilter) {
+      filtered = filtered.filter(order => new Date(order.created_at) <= new Date(dateToFilter + 'T23:59:59'));
+    }
+
+    // Amount range filter
+    if (minAmountFilter) {
+      filtered = filtered.filter(order => order.amount >= parseInt(minAmountFilter) * 100);
+    }
+    if (maxAmountFilter) {
+      filtered = filtered.filter(order => order.amount <= parseInt(maxAmountFilter) * 100);
+    }
+
+    setFilteredOrders(filtered);
+  };
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setCleaningTypeFilter('all');
+    setDateFromFilter('');
+    setDateToFilter('');
+    setMinAmountFilter('');
+    setMaxAmountFilter('');
+  };
+
+  const getUniqueCleaningTypes = () => {
+    const types = orders.map(order => order.cleaning_type).filter(Boolean);
+    return [...new Set(types)];
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -167,17 +232,131 @@ const AdminDashboard = () => {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Order Management</CardTitle>
-          <CardDescription>
-            Manage all customer orders and update their status
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Order Management</CardTitle>
+              <CardDescription>
+                Manage all customer orders and update their status
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+          </div>
         </CardHeader>
+        
+        {/* Filters Section */}
+        {showFilters && (
+          <div className="px-6 pb-6 border-b">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="status-filter">Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-md z-50">
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cleaning Type Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="cleaning-type-filter">Cleaning Type</Label>
+                <Select value={cleaningTypeFilter} onValueChange={setCleaningTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border shadow-md z-50">
+                    <SelectItem value="all">All Types</SelectItem>
+                    {getUniqueCleaningTypes().map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date From Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="date-from">From Date</Label>
+                <Input
+                  id="date-from"
+                  type="date"
+                  value={dateFromFilter}
+                  onChange={(e) => setDateFromFilter(e.target.value)}
+                />
+              </div>
+
+              {/* Date To Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="date-to">To Date</Label>
+                <Input
+                  id="date-to"
+                  type="date"
+                  value={dateToFilter}
+                  onChange={(e) => setDateToFilter(e.target.value)}
+                />
+              </div>
+
+              {/* Min Amount Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="min-amount">Min Amount ($)</Label>
+                <Input
+                  id="min-amount"
+                  type="number"
+                  placeholder="0"
+                  value={minAmountFilter}
+                  onChange={(e) => setMinAmountFilter(e.target.value)}
+                />
+              </div>
+
+              {/* Max Amount Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="max-amount">Max Amount ($)</Label>
+                <Input
+                  id="max-amount"
+                  type="number"
+                  placeholder="1000"
+                  value={maxAmountFilter}
+                  onChange={(e) => setMaxAmountFilter(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            {/* Filter Actions */}
+            <div className="flex items-center gap-2 mt-4">
+              <Button variant="outline" onClick={clearFilters} className="flex items-center gap-2">
+                <X className="h-4 w-4" />
+                Clear Filters
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Showing {filteredOrders.length} of {orders.length} orders
+              </div>
+            </div>
+          </div>
+        )}
+
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">Loading orders...</div>
-          ) : orders.length === 0 ? (
+          ) : filteredOrders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No orders found
+              {orders.length === 0 ? 'No orders found' : 'No orders match the current filters'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -192,7 +371,7 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
                         <div className="space-y-1">
