@@ -1,13 +1,21 @@
 import {
-  Button,
-  Section,
-  Text,
+  Body,
+  Container,
+  Head,
   Heading,
-} from 'npm:@react-email/components@0.0.22'
-import * as React from 'npm:react@18.3.1'
-import { BaseEmailTemplate } from './base-template.tsx'
+  Html,
+  Img,
+  Preview,
+  Text,
+  Section,
+  Row,
+  Column,
+  Hr,
+  Button,
+} from "@react-email/components";
+import { BaseEmailTemplate } from "./base-template";
 
-interface OrderConfirmationEmailProps {
+export interface OrderConfirmationEmailProps {
   customerName: string;
   orderId: string;
   cleaningType: string;
@@ -18,230 +26,295 @@ interface OrderConfirmationEmailProps {
   serviceDetailsUrl: string;
 }
 
-export const OrderConfirmationEmail = ({
-  customerName,
-  orderId,
-  cleaningType,
-  frequency,
+export function OrderConfirmationEmail({
+  customerName = "Valued Customer",
+  orderId = "ORDER123",
+  cleaningType = "Deep Cleaning",
+  frequency = "One-time",
   squareFootage,
-  addOns,
-  amount,
-  serviceDetailsUrl,
-}: OrderConfirmationEmailProps) => (
-  <BaseEmailTemplate previewText={`Order confirmed! Thank you for choosing Bay Area Cleaning Professionals.`}>
-    
-    {/* Success Header */}
-    <Section style={successSection}>
-      <Heading style={successHeading}>✅ Order Confirmed!</Heading>
-      <Text style={successText}>
-        Thank you for choosing Bay Area Cleaning Professionals, {customerName}! 
-        Your cleaning service has been successfully booked.
-      </Text>
-    </Section>
+  addOns = "None",
+  amount = "0.00",
+  serviceDetailsUrl = "#",
+}: OrderConfirmationEmailProps) {
+  const previewText = `Order confirmation for your ${cleaningType} service - ${orderId}`;
 
-    {/* Order Details */}
-    <Section style={detailsSection}>
-      <Heading style={sectionHeading}>📋 Service Details</Heading>
-      <div style={detailsGrid}>
-        <div style={detailRow}>
-          <span style={detailLabel}>Order ID:</span>
-          <span style={detailValue}>{orderId}</span>
-        </div>
-        <div style={detailRow}>
-          <span style={detailLabel}>Service Type:</span>
-          <span style={detailValue}>{cleaningType}</span>
-        </div>
-        <div style={detailRow}>
-          <span style={detailLabel}>Frequency:</span>
-          <span style={detailValue}>{frequency}</span>
-        </div>
-        {squareFootage && (
-          <div style={detailRow}>
-            <span style={detailLabel}>Square Footage:</span>
-            <span style={detailValue}>{squareFootage} sq ft</span>
-          </div>
-        )}
-        <div style={detailRow}>
-          <span style={detailLabel}>Add-ons:</span>
-          <span style={detailValue}>{addOns}</span>
-        </div>
-        <div style={{...detailRow, ...totalRow}}>
-          <span style={totalLabel}>Total Amount:</span>
-          <span style={totalValue}>${amount}</span>
-        </div>
-      </div>
-    </Section>
+  return (
+    <BaseEmailTemplate previewText={previewText}>
+      <Section style={headerSection}>
+        <Text style={successText}>✅ Order Confirmed!</Text>
+        <Heading style={mainHeading}>
+          Thank you for choosing Bay Area Cleaning Pros
+        </Heading>
+        <Text style={subHeading}>
+          Your cleaning service has been successfully booked
+        </Text>
+      </Section>
 
-    {/* Next Steps */}
-    <Section style={stepsSection}>
-      <Heading style={sectionHeading}>🚀 What's Next?</Heading>
-      <div style={stepsList}>
-        <div style={step}>
-          <span style={stepNumber}>1</span>
-          <Text style={stepText}>
-            <strong>Complete Service Details:</strong> Provide your address and scheduling preferences
+      <Section style={contentSection}>
+        <Text style={greeting}>Hello {customerName},</Text>
+        
+        <Text style={paragraph}>
+          Great news! We've received your order and payment. Here are the details of your booking:
+        </Text>
+
+        <Section style={orderDetailsBox}>
+          <Heading as="h2" style={sectionHeading}>
+            Order Details
+          </Heading>
+          
+          <Row style={detailRow}>
+            <Column style={labelColumn}>
+              <Text style={labelText}>Order ID:</Text>
+            </Column>
+            <Column style={valueColumn}>
+              <Text style={valueText}>#{orderId}</Text>
+            </Column>
+          </Row>
+
+          <Row style={detailRow}>
+            <Column style={labelColumn}>
+              <Text style={labelText}>Service Type:</Text>
+            </Column>
+            <Column style={valueColumn}>
+              <Text style={valueText}>{cleaningType}</Text>
+            </Column>
+          </Row>
+
+          <Row style={detailRow}>
+            <Column style={labelColumn}>
+              <Text style={labelText}>Frequency:</Text>
+            </Column>
+            <Column style={valueColumn}>
+              <Text style={valueText}>{frequency}</Text>
+            </Column>
+          </Row>
+
+          {squareFootage && (
+            <Row style={detailRow}>
+              <Column style={labelColumn}>
+                <Text style={labelText}>Square Footage:</Text>
+              </Column>
+              <Column style={valueColumn}>
+                <Text style={valueText}>{squareFootage} sq ft</Text>
+              </Column>
+            </Row>
+          )}
+
+          <Row style={detailRow}>
+            <Column style={labelColumn}>
+              <Text style={labelText}>Add-ons:</Text>
+            </Column>
+            <Column style={valueColumn}>
+              <Text style={valueText}>{addOns}</Text>
+            </Column>
+          </Row>
+
+          <Hr style={divider} />
+
+          <Row style={detailRow}>
+            <Column style={labelColumn}>
+              <Text style={totalLabel}>Total Amount:</Text>
+            </Column>
+            <Column style={valueColumn}>
+              <Text style={totalAmount}>${amount}</Text>
+            </Column>
+          </Row>
+        </Section>
+
+        <Section style={nextStepsSection}>
+          <Heading as="h2" style={sectionHeading}>
+            What's Next?
+          </Heading>
+          
+          <Text style={paragraph}>
+            <strong>1.</strong> Complete your service details (address, special instructions, etc.)
           </Text>
-        </div>
-        <div style={step}>
-          <span style={stepNumber}>2</span>
-          <Text style={stepText}>
-            <strong>Confirmation Call:</strong> We'll contact you within 24 hours to confirm your appointment
+          <Text style={paragraph}>
+            <strong>2.</strong> Schedule your preferred date and time
           </Text>
-        </div>
-        <div style={step}>
-          <span style={stepNumber}>3</span>
-          <Text style={stepText}>
-            <strong>Professional Service:</strong> Our team arrives with all supplies and equipment
+          <Text style={paragraph}>
+            <strong>3.</strong> Our professional team will arrive ready to clean
           </Text>
-        </div>
-      </div>
-    </Section>
+        </Section>
 
-    {/* CTA Button */}
-    <Section style={ctaSection}>
-      <Button href={serviceDetailsUrl} style={ctaButton}>
-        Complete Service Details
-      </Button>
-    </Section>
+        <Section style={buttonSection}>
+          <Button style={primaryButton} href={serviceDetailsUrl}>
+            Complete Service Details
+          </Button>
+        </Section>
 
-  </BaseEmailTemplate>
-)
+        <Section style={contactSection}>
+          <Text style={contactHeading}>Need Help?</Text>
+          <Text style={contactText}>
+            📞 Phone: (281) 201-6112<br />
+            ✉️ Email: support@bayareacleaningpros.com
+          </Text>
+        </Section>
+
+        <Text style={footerText}>
+          Thank you for choosing Bay Area Cleaning Pros. We look forward to providing you with exceptional cleaning service!
+        </Text>
+      </Section>
+    </BaseEmailTemplate>
+  );
+}
 
 // Styles
-const successSection = {
-  backgroundColor: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  borderLeft: '5px solid #10B981',
-}
-
-const successHeading = {
-  color: '#047857',
-  margin: '0 0 15px 0',
-  fontSize: '24px',
-  fontWeight: '700',
-  textAlign: 'center' as const,
-}
+const headerSection = {
+  padding: "40px 20px",
+  textAlign: "center" as const,
+  backgroundColor: "#f8f9fa",
+  borderRadius: "8px 8px 0 0",
+};
 
 const successText = {
-  color: '#374151',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
-  textAlign: 'center' as const,
-}
+  fontSize: "24px",
+  fontWeight: "bold",
+  color: "#10b981",
+  margin: "0 0 16px 0",
+};
 
-const detailsSection = {
-  backgroundColor: '#F9FAFB',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #E5E7EB',
-}
+const mainHeading = {
+  fontSize: "28px",
+  fontWeight: "bold",
+  color: "#1f2937",
+  margin: "0 0 12px 0",
+  lineHeight: "1.3",
+};
+
+const subHeading = {
+  fontSize: "16px",
+  color: "#6b7280",
+  margin: "0",
+};
+
+const contentSection = {
+  padding: "40px 20px",
+};
+
+const greeting = {
+  fontSize: "18px",
+  fontWeight: "600",
+  color: "#1f2937",
+  margin: "0 0 20px 0",
+};
+
+const paragraph = {
+  fontSize: "16px",
+  lineHeight: "1.6",
+  color: "#374151",
+  margin: "0 0 16px 0",
+};
+
+const orderDetailsBox = {
+  backgroundColor: "#f9fafb",
+  border: "1px solid #e5e7eb",
+  borderRadius: "8px",
+  padding: "24px",
+  margin: "24px 0",
+};
 
 const sectionHeading = {
-  color: '#8B5CF6',
-  margin: '0 0 20px 0',
-  fontSize: '20px',
-  fontWeight: '600',
-}
-
-const detailsGrid = {
-  display: 'grid',
-  gap: '12px',
-}
+  fontSize: "20px",
+  fontWeight: "bold",
+  color: "#1f2937",
+  margin: "0 0 20px 0",
+};
 
 const detailRow = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '8px 0',
-}
+  marginBottom: "12px",
+};
 
-const detailLabel = {
-  color: '#6B7280',
-  fontWeight: '500',
-}
+const labelColumn = {
+  width: "40%",
+  verticalAlign: "top" as const,
+};
 
-const detailValue = {
-  color: '#111827',
-  fontWeight: '600',
-}
+const valueColumn = {
+  width: "60%",
+  verticalAlign: "top" as const,
+};
 
-const totalRow = {
-  borderTop: '2px solid #E5E7EB',
-  paddingTop: '15px',
-  marginTop: '10px',
-}
+const labelText = {
+  fontSize: "14px",
+  color: "#6b7280",
+  margin: "0",
+  fontWeight: "500",
+};
+
+const valueText = {
+  fontSize: "14px",
+  color: "#1f2937",
+  margin: "0",
+  fontWeight: "600",
+};
 
 const totalLabel = {
-  color: '#111827',
-  fontWeight: '700',
-  fontSize: '18px',
-}
+  fontSize: "16px",
+  color: "#1f2937",
+  margin: "0",
+  fontWeight: "bold",
+};
 
-const totalValue = {
-  color: '#059669',
-  fontWeight: '700',
-  fontSize: '18px',
-}
+const totalAmount = {
+  fontSize: "18px",
+  color: "#059669",
+  margin: "0",
+  fontWeight: "bold",
+};
 
-const stepsSection = {
-  backgroundColor: '#FEF7FF',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #E9D5FF',
-}
+const divider = {
+  margin: "16px 0",
+  borderColor: "#d1d5db",
+};
 
-const stepsList = {
-  display: 'grid',
-  gap: '20px',
-}
+const nextStepsSection = {
+  margin: "32px 0",
+};
 
-const step = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '15px',
-}
+const buttonSection = {
+  textAlign: "center" as const,
+  margin: "32px 0",
+};
 
-const stepNumber = {
-  backgroundColor: '#8B5CF6',
-  color: 'white',
-  width: '30px',
-  height: '30px',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontWeight: '700',
-  fontSize: '14px',
-  flexShrink: '0',
-}
+const primaryButton = {
+  backgroundColor: "#059669",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "600",
+  textDecoration: "none",
+  padding: "14px 28px",
+  borderRadius: "8px",
+  display: "inline-block",
+  border: "none",
+};
 
-const stepText = {
-  color: '#374151',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
-}
+const contactSection = {
+  backgroundColor: "#f3f4f6",
+  padding: "24px",
+  borderRadius: "8px",
+  margin: "32px 0",
+  textAlign: "center" as const,
+};
 
-const ctaSection = {
-  textAlign: 'center' as const,
-  marginBottom: '30px',
-}
+const contactHeading = {
+  fontSize: "18px",
+  fontWeight: "bold",
+  color: "#1f2937",
+  margin: "0 0 12px 0",
+};
 
-const ctaButton = {
-  backgroundColor: 'linear-gradient(135deg, #8B5CF6, #A855F7)',
-  color: 'white',
-  padding: '15px 30px',
-  borderRadius: '12px',
-  textDecoration: 'none',
-  fontWeight: '600',
-  fontSize: '16px',
-  boxShadow: '0 10px 20px rgba(139, 92, 246, 0.3)',
-  display: 'inline-block',
-}
+const contactText = {
+  fontSize: "14px",
+  color: "#374151",
+  margin: "0",
+  lineHeight: "1.6",
+};
 
-export default OrderConfirmationEmail
+const footerText = {
+  fontSize: "14px",
+  color: "#6b7280",
+  fontStyle: "italic",
+  textAlign: "center" as const,
+  margin: "32px 0 0 0",
+};

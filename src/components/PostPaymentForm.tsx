@@ -221,37 +221,50 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
 
       if (fetchError) throw fetchError;
 
+      // Merge new service details with existing ones
+      const existingServiceDetails = (orderData.service_details && typeof orderData.service_details === 'object') ? orderData.service_details : {};
+      const updatedServiceDetails = {
+        ...existingServiceDetails,
+        serviceAddress: {
+          street: formData.streetAddress,
+          apartment: formData.apartmentUnit,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode
+        },
+        address: {
+          street: formData.streetAddress,
+          apartment: formData.apartmentUnit,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode
+        },
+        property: {
+          dwellingType: formData.dwellingType,
+          flooringType: formData.flooringType
+        },
+        source: formData.hearAboutUs,
+        instructions: {
+          access: formData.accessInstructions,
+          parking: formData.parkingInstructions,
+          special: formData.specialRequests,
+          pets: formData.petsPresent,
+          alarmCode: formData.alarmCode
+        },
+        contact: {
+          method: formData.contactMethod,
+          time: formData.contactTime
+        }
+      };
+
       // Update the order with additional information
       const { error } = await supabase
         .from("orders")
         .update({
-          service_details: {
-            address: {
-              street: formData.streetAddress,
-              apartment: formData.apartmentUnit,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode
-            },
-            property: {
-              dwellingType: formData.dwellingType,
-              flooringType: formData.flooringType
-            },
-            source: formData.hearAboutUs,
-            instructions: {
-              access: formData.accessInstructions,
-              parking: formData.parkingInstructions,
-              special: formData.specialRequests,
-              pets: formData.petsPresent,
-              alarmCode: formData.alarmCode
-            },
-            contact: {
-              method: formData.contactMethod,
-              time: formData.contactTime
-            }
-          },
+          service_details: updatedServiceDetails,
           customer_email: formData.customerEmail,
-          customer_name: formData.customerName
+          customer_name: formData.customerName,
+          customer_phone: formData.customerPhone
         })
         .eq("stripe_session_id", sessionId);
 

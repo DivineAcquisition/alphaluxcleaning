@@ -75,29 +75,45 @@ export default function OrderStatus() {
 
     setLoading(true);
     try {
-      // Try searching by stripe_session_id first, then by order id
+      // Try searching by exact stripe_session_id match first
       let { data, error } = await supabase
         .from("orders")
         .select("*")
-        .or(`stripe_session_id.ilike.%${term}%,id.eq.${term}`)
-        .single();
+        .eq("stripe_session_id", term)
+        .maybeSingle();
 
-      if (error || !data) {
-        // If not found, try partial match on session ID
-        const { data: partialData, error: partialError } = await supabase
+      if (!data) {
+        // Try searching by order ID
+        const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", term)
+          .maybeSingle();
+
+        if (orderData) {
+          data = orderData;
+        }
+      }
+
+      if (!data) {
+        // Try partial match on session ID (last 12 characters)
+        const { data: partialResults, error: partialError } = await supabase
           .from("orders")
           .select("*")
           .ilike("stripe_session_id", `%${term}%`)
-          .limit(1)
-          .single();
+          .limit(5);
 
-        if (partialError || !partialData) {
-          throw new Error("Order not found");
+        if (partialResults && partialResults.length > 0) {
+          data = partialResults[0]; // Take the first match
         }
-        data = partialData;
+      }
+
+      if (!data) {
+        throw new Error("Order not found");
       }
 
       setOrder(data);
+      console.log("Order found:", data);
       toast.success("Order found!");
     } catch (error) {
       console.error("Error searching for order:", error);
