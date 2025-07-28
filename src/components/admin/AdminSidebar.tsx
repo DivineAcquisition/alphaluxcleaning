@@ -16,93 +16,95 @@ import {
   Users, 
   Settings, 
   BarChart3,
-  UserCheck,
   LogOut,
   DollarSign,
-  FileText,
-  Home,
-  Eye,
-  EyeOff,
-  CreditCard,
+  Briefcase,
   UserPlus,
   ClipboardList,
-  Briefcase
+  Crown,
+  Shield,
+  Eye,
+  Sparkles,
+  TrendingUp,
+  Zap
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 const navigationItems = [
   {
-    label: "Overview",
+    label: "Dashboard",
     path: "/admin-dashboard",
-    icon: LayoutDashboard
+    icon: LayoutDashboard,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30"
   },
   {
-    label: "Bookings", 
+    label: "Control Center", 
     path: "/admin-panel",
-    icon: Home
+    icon: Shield,
+    color: "text-violet-500",
+    bgColor: "bg-violet-50 dark:bg-violet-950/30"
   },
   {
-    label: "Analytics",
+    label: "Business Intelligence",
     path: "/metrics-dashboard",
-    icon: BarChart3
+    icon: TrendingUp,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30"
   },
   {
-    label: "Payments",
-    path: "/payments",
-    icon: DollarSign
-  },
-  {
-    label: "Billing",
-    path: "/billing",
-    icon: CreditCard
-  },
-  {
-    label: "Services",
-    path: "/services",
-    icon: Briefcase
-  },
-  {
-    label: "Subcontractors",
+    label: "Team Management",
     path: "/subcontractor-management", 
-    icon: Users
+    icon: Users,
+    color: "text-orange-500",
+    bgColor: "bg-orange-50 dark:bg-orange-950/30"
   },
   {
-    label: "Hire Team",
-    path: "/hire-team",
-    icon: UserPlus
-  },
-  {
-    label: "Job Assignments",
+    label: "Talent Acquisition",
     path: "/application-manager",
-    icon: ClipboardList
+    icon: UserPlus,
+    color: "text-pink-500",
+    bgColor: "bg-pink-50 dark:bg-pink-950/30"
   },
   {
-    label: "Settings",
+    label: "Service Portfolio",
+    path: "/services",
+    icon: Briefcase,
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-50 dark:bg-indigo-950/30"
+  },
+  {
+    label: "System Settings",
     path: "/settings",
-    icon: Settings
+    icon: Settings,
+    color: "text-gray-500",
+    bgColor: "bg-gray-50 dark:bg-gray-950/30"
   }
 ];
 
-const bookingPageItems = [
+const quickActions = [
   {
-    label: "View Booking Page",
-    path: "/booking-page",
-    icon: Eye
+    label: "View Live Site",
+    path: "/",
+    icon: Eye,
+    badge: "Live"
   },
   {
-    label: "Disable Page",
-    path: "/disable-page",
-    icon: EyeOff
+    label: "Premium Features",
+    path: "/upgrade",
+    icon: Crown,
+    badge: "Pro"
   }
 ];
 
 export function AdminSidebar() {
   const { open } = useSidebar();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -119,30 +121,59 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className="w-64 border-r border-border bg-card" collapsible="icon">
-      {/* Header */}
-      <SidebarHeader className="p-6 border-b border-border">
+    <Sidebar className="border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80" collapsible="icon">
+      {/* Modern Header */}
+      <SidebarHeader className="p-6 border-b border-border/60">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">BC</span>
+          <div className="relative">
+            <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+              <Zap className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
           </div>
           {open && (
-            <div>
-              <h1 className="font-semibold text-foreground">Bay Area Cleaning Pros</h1>
-              <p className="text-sm text-muted-foreground">Admin Panel</p>
+            <div className="flex-1">
+              <h1 className="font-bold text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Bay Area Pro
+              </h1>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground font-medium">Admin Console</p>
+                <Badge variant="secondary" className="text-xs px-2 py-0">
+                  {userRole || 'Admin'}
+                </Badge>
+              </div>
             </div>
           )}
         </div>
+        
+        {/* User Profile Mini Card */}
+        {open && user && (
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg border border-border/40">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8 border-2 border-border">
+                <AvatarImage src="" />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                  {getInitials(user.email || '')}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.email}</p>
+                <p className="text-xs text-muted-foreground">System Administrator</p>
+              </div>
+            </div>
+          </div>
+        )}
       </SidebarHeader>
       
-      <SidebarContent className="px-3 py-4">
-        {/* Navigation */}
+      <SidebarContent className="px-4 py-6">
+        {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
-            Navigation
+          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-4 flex items-center gap-2">
+            <Sparkles className="h-3 w-3" />
+            Core Functions
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-2">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -151,18 +182,39 @@ export function AdminSidebar() {
                     <SidebarMenuButton 
                       asChild
                       isActive={active}
-                      className="h-9"
+                      className="h-12 p-0"
                     >
                       <button 
                         onClick={() => navigate(item.path)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        className={`w-full group relative overflow-hidden rounded-xl transition-all duration-300 ${
                           active 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                            ? 'bg-primary text-primary-foreground shadow-lg scale-[1.02]' 
+                            : 'hover:bg-muted/70 hover:scale-[1.01]'
                         }`}
                       >
-                        <Icon className="h-4 w-4" />
-                        {open && <span>{item.label}</span>}
+                        <div className="flex items-center gap-4 p-3">
+                          <div className={`p-2 rounded-lg transition-colors ${
+                            active 
+                              ? 'bg-primary-foreground/20' 
+                              : `${item.bgColor} ${item.color} group-hover:scale-110`
+                          }`}>
+                            <Icon className={`h-4 w-4 transition-transform ${
+                              active ? 'text-primary-foreground' : item.color
+                            }`} />
+                          </div>
+                          {open && (
+                            <div className="flex-1 text-left">
+                              <span className={`font-semibold text-sm block ${
+                                active ? 'text-primary-foreground' : 'text-foreground'
+                              }`}>
+                                {item.label}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {active && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50" />
+                        )}
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -172,33 +224,36 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Booking Page */}
+        {/* Quick Actions */}
         <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
-            Booking Page
+          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-4">
+            Quick Access
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {bookingPageItems.map((item) => {
+            <SidebarMenu className="space-y-2">
+              {quickActions.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
                       asChild
-                      isActive={active}
-                      className="h-9"
+                      className="h-10"
                     >
                       <button 
                         onClick={() => navigate(item.path)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          active 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                        }`}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-muted/50 group"
                       >
-                        <Icon className="h-4 w-4" />
-                        {open && <span>{item.label}</span>}
+                        <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                        {open && (
+                          <>
+                            <span className="flex-1 text-left text-muted-foreground group-hover:text-foreground">
+                              {item.label}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {item.badge}
+                            </Badge>
+                          </>
+                        )}
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -208,39 +263,41 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Current Plan */}
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2 px-3">
-            Current Plan
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <div className="px-3 py-3 bg-accent/50 rounded-md">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Free</span>
+        {/* Status Card */}
+        {open && (
+          <SidebarGroup className="mt-6">
+            <SidebarGroupContent>
+              <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-foreground">System Status</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  All services operational
+                </p>
+                <Button size="sm" variant="outline" className="w-full h-8 text-xs">
+                  View Details
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                You're on a Free Preview. Upgrade to unlock full features.
-              </p>
-              <Button size="sm" className="w-full h-8 text-xs">
-                Upgrade Plan
-              </Button>
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Sign Out */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-9">
+                <SidebarMenuButton asChild className="h-10">
                   <Button 
                     onClick={handleSignOut} 
                     variant="ghost" 
-                    className="w-full justify-start px-3 text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="w-full justify-start gap-3 p-3 rounded-lg hover:bg-destructive/10 hover:text-destructive group transition-all duration-200"
                   >
-                    <LogOut className="h-4 w-4 mr-3" />
-                    {open && <span className="text-sm font-medium">Sign In</span>}
+                    <div className="p-1.5 rounded-md bg-muted group-hover:bg-destructive/20 transition-colors">
+                      <LogOut className="h-3.5 w-3.5" />
+                    </div>
+                    {open && <span className="font-medium">Sign Out</span>}
                   </Button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
