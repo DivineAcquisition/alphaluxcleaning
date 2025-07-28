@@ -40,6 +40,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { SubcontractorProfileSettings } from "@/components/SubcontractorProfileSettings";
+import { SubcontractorSubscriptionSettings } from "@/components/SubcontractorSubscriptionSettings";
 
 interface Notification {
   id: string;
@@ -52,6 +54,7 @@ interface Notification {
 
 interface Subcontractor {
   id: string;
+  user_id: string;
   full_name: string;
   email: string;
   phone: string;
@@ -544,6 +547,7 @@ const SubcontractorDashboard = () => {
               Completed Jobs ({completedJobs})
             </TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           {/* Active Jobs Tab */}
@@ -794,6 +798,20 @@ const SubcontractorDashboard = () => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <SubcontractorProfileSettings 
+                subcontractor={subcontractor} 
+                onUpdate={() => user && fetchSubcontractorData(user.id)} 
+              />
+              <SubcontractorSubscriptionSettings 
+                subcontractor={subcontractor} 
+                onUpdate={() => user && fetchSubcontractorData(user.id)} 
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
