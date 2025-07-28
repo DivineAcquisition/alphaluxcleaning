@@ -107,6 +107,14 @@ const handler = async (req: Request): Promise<Response> => {
       })
     });
 
+    console.log("GHL API Response Status:", emailResponse.status);
+    
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      console.error("GHL API Error:", errorText);
+      throw new Error(`GoHighLevel API error: ${emailResponse.status} - ${errorText}`);
+    }
+
     const emailResult = await emailResponse.json();
     console.log("Email sent successfully:", emailResult);
 
