@@ -1,11 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import React from 'npm:react@18.3.1';
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const ghlApiKey = Deno.env.get("GOHIGHLEVEL_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,15 +89,26 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Send confirmation email
-    const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <hello@noreply.bayareacleaningpros.com>",
-      to: [email],
-      subject: `Order Confirmation - ${cleaningType} Service`,
-      html: emailContent,
+    // Send confirmation email using GoHighLevel
+    const emailResponse = await fetch("https://services.leadconnectorhq.com/communications/campaign/email", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${ghlApiKey}`,
+        "Content-Type": "application/json",
+        "Version": "2021-07-28"
+      },
+      body: JSON.stringify({
+        html: emailContent,
+        subject: `Order Confirmation - ${cleaningType} Service`,
+        altText: `Order Confirmation for ${cleaningType} Service - Order #${order.id.slice(-12)}`,
+        emailFrom: "hello@bayareacleaningpros.com",
+        emailFromName: "Bay Area Cleaning Pros",
+        recipients: [email]
+      })
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    const emailResult = await emailResponse.json();
+    console.log("Email sent successfully:", emailResult);
 
     // Update order status to indicate email was sent
     await supabaseClient
