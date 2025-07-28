@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
+      from: "Bay Area Cleaning Pros <onboarding@resend.dev>",
       to: [email],
       subject: `Order Confirmation - ${cleaningType} Service`,
       html: emailContent,
