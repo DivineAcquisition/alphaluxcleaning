@@ -86,7 +86,7 @@ serve(async (req) => {
               name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning`,
               description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}`
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: paymentType === "prepayment" ? amount : Math.round(amount * 100), // Prepayment amount is already in cents
           },
           quantity: 1,
         },
@@ -108,7 +108,7 @@ serve(async (req) => {
     // Create order record in Supabase
     const orderData = {
       stripe_session_id: session.id,
-      amount: Math.round(amount * 100), // Store in cents
+      amount: paymentType === "prepayment" ? amount : Math.round(amount * 100), // Store in cents
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,
@@ -121,7 +121,7 @@ serve(async (req) => {
         cleaningType,
         frequency,
         addOns,
-        totalAmount: amount,
+        totalAmount: paymentType === "prepayment" ? amount / 100 : amount, // Convert back to dollars for display
         serviceAddress,
         bedrooms,
         bathrooms
@@ -158,7 +158,7 @@ serve(async (req) => {
             cleaning_type: cleaningType || '',
             frequency: frequency || '',
             add_ons: addOns?.join(', ') || '',
-            total_amount: (amount * 100).toString(), // in cents
+            total_amount: paymentType === "prepayment" ? amount.toString() : (amount * 100).toString(), // in cents
             payment_type: paymentType || 'full',
             stripe_session_id: session.id,
             service_scheduled: scheduledDate && scheduledTime ? `${scheduledDate} at ${scheduledTime}` : '',
@@ -200,7 +200,7 @@ serve(async (req) => {
         service_time: scheduledTime,
         cleaning_type: cleaningType,
         frequency: frequency,
-        amount: amount, // Amount in dollars
+        amount: paymentType === "prepayment" ? amount / 100 : amount, // Amount in dollars
         currency: 'USD',
         payment_status: 'pending',
         stripe_session_id: session.id,
