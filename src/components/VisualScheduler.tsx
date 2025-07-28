@@ -108,33 +108,80 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
     return Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i));
   };
 
-  // Check calendar availability for the current week
+  // Check calendar availability for the current week with live GHL sync
   const checkWeekAvailability = async (weekStart: Date) => {
     setIsLoading(true);
     try {
       const weekDates = getWeekDates(weekStart);
       const availabilityPromises = weekDates.map(async (date) => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        
         // Skip dates in the past
         if (isBefore(date, new Date()) && !isToday(date)) {
           return {
-            date: format(date, 'yyyy-MM-dd'),
+            date: dateStr,
             available: false,
             timeSlots: timeSlots.map(slot => ({ ...slot, available: false }))
           };
         }
 
-        // For regular booking, all slots are available (multiple customers can book same slot)
-        // For next day priority booking, use actual availability checking
-        const regularSlots = timeSlots.map(slot => ({
-          ...slot,
-          available: true // Always available for regular bookings
-        }));
-        
-        return {
-          date: format(date, 'yyyy-MM-dd'),
-          available: true, // All days available for regular booking
-          timeSlots: regularSlots
-        };
+        try {
+          // Get live availability from GoHighLevel
+          const { data: ghlData, error } = await supabase.functions.invoke('sync-ghl-availability', {
+            body: { 
+              startDate: dateStr, 
+              endDate: dateStr 
+            }
+          });
+
+          if (error) {
+            console.warn('GHL availability check failed for', dateStr, error);
+            // Fallback to all available for regular bookings
+            return {
+              date: dateStr,
+              available: true,
+              timeSlots: timeSlots.map(slot => ({ ...slot, available: true }))
+            };
+          }
+
+          const ghlSlots = ghlData?.availableSlots || [];
+          console.log('GHL availability for', dateStr, ':', ghlSlots.length, 'slots');
+
+          // Map GHL slots to our time slot format
+          const mappedSlots = timeSlots.map(slot => {
+            // Extract start time from our slot format
+            const slotStartTime = slot.startTime;
+            
+            // Check if this time slot has availability in GHL
+            const hasGHLAvailability = ghlSlots.some(ghlSlot => {
+              const ghlTime = new Date(ghlSlot.startTime);
+              const slotTime = new Date(`${dateStr} ${slotStartTime}`);
+              
+              // Check if GHL slot overlaps with our time slot
+              return Math.abs(ghlTime.getTime() - slotTime.getTime()) < 30 * 60 * 1000; // 30 min tolerance
+            });
+
+            return {
+              ...slot,
+              available: hasGHLAvailability || !isNextDayBooking // Regular bookings always available
+            };
+          });
+
+          return {
+            date: dateStr,
+            available: mappedSlots.some(slot => slot.available),
+            timeSlots: mappedSlots
+          };
+
+        } catch (syncError) {
+          console.warn('Error syncing with GHL for', dateStr, syncError);
+          // Fallback to standard availability
+          return {
+            date: dateStr,
+            available: true,
+            timeSlots: timeSlots.map(slot => ({ ...slot, available: true }))
+          };
+        }
       });
 
       const weekAvailability = await Promise.all(availabilityPromises);
@@ -257,8 +304,13 @@ export function VisualScheduler({ onSchedulingUpdate, selectedDate, selectedTime
         <CardDescription className="text-primary-foreground/80">
           Select your preferred date and time slot. Business hours: 8 AM - 6 PM
         </CardDescription>
-        <div className="text-xs text-primary-foreground/60 mt-1">
-          ✓ Multiple customers can book the same time slot • Service duration: {getServiceDuration(serviceType || 'general')}h
+        <div className="text-xs text-primary-foreground/60 mt-1 flex items-center gap-3">
+          <span>✓ Multiple customers can book the same time slot</span>
+          <span>• Service duration: {getServiceDuration(serviceType || 'general')}h</span>
+          <span className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            Live GHL sync
+          </span>
         </div>
       </CardHeader>
       
