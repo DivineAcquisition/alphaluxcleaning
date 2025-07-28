@@ -90,9 +90,9 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Send confirmation email - using verified Resend domain temporarily
+    // Send confirmation email
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <onboarding@resend.dev>",
+      from: "Bay Area Cleaning Pros <hello@noreply.bayareacleaningpros.com>",
       to: [email],
       subject: `Order Confirmation - ${cleaningType} Service`,
       html: emailContent,
