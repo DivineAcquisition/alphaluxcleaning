@@ -649,35 +649,35 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                <div className="space-y-2">
                  <div className="flex items-start gap-2">
                    <Gift className="h-5 w-5 text-primary mt-0.5" />
-                   <div>
-                     <h4 className="text-lg font-semibold text-primary">Promo Codes</h4>
-                     <p className="text-sm text-muted-foreground">Have a referral or discount code? Apply it here to save money</p>
+                   <div className="text-left">
+                     <h4 className="text-lg font-semibold text-primary text-left">Promo Codes</h4>
+                     <p className="text-sm text-muted-foreground text-left">Have a referral or discount code? Apply it here to save money</p>
                    </div>
                  </div>
                </div>
                
                {/* Referral Code */}
                <div className="space-y-4">
-                 <div className="space-y-1">
-                   <h5 className="font-medium text-foreground">Referral Code</h5>
-                   <p className="text-sm text-muted-foreground">Got referred by a friend? Use their code for instant savings</p>
+                 <div className="space-y-1 text-left">
+                   <h5 className="font-medium text-foreground text-left">Referral Code</h5>
+                   <p className="text-sm text-muted-foreground text-left">Got referred by a friend? Use their code for instant savings</p>
                  </div>
                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
                    {appliedReferral && (
-                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                       <p className="text-green-800 font-medium text-sm">✓ Referral code applied!</p>
-                       <p className="text-green-600 text-xs">You get 10% off your service.</p>
+                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                       <p className="text-green-800 font-medium text-sm text-left">✓ Referral code applied!</p>
+                       <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
                      </div>
                    )}
                    
                    {!appliedReferral && (
-                     <>
+                     <div className="text-left">
                        <div className="flex gap-2">
                          <Input
                            value={referralCode}
                            onChange={(e) => setReferralCode(e.target.value)}
                            placeholder="Enter your friend's referral code"
-                           className="flex-1"
+                           className="flex-1 text-left"
                          />
                          <Button 
                            onClick={handleApplyReferralCode}
@@ -688,41 +688,41 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                            Apply
                          </Button>
                        </div>
-                       <p className="text-xs text-muted-foreground">
+                       <p className="text-xs text-muted-foreground text-left mt-2">
                          Get 10% off your service with a friend's referral code
                        </p>
                        {(!customerInfo.email || !customerInfo.name) && (
-                         <p className="text-xs text-orange-600">
+                         <p className="text-xs text-orange-600 text-left mt-1">
                            Please fill in your name and email first
                          </p>
                        )}
-                     </>
+                     </div>
                    )}
                  </div>
                </div>
 
                {/* Discount Code */}
                <div className="space-y-4">
-                 <div className="space-y-1">
-                   <h5 className="font-medium text-foreground">Discount Code</h5>
-                   <p className="text-sm text-muted-foreground">Have a special promotion code? Enter it for additional discounts</p>
+                 <div className="space-y-1 text-left">
+                   <h5 className="font-medium text-foreground text-left">Discount Code</h5>
+                   <p className="text-sm text-muted-foreground text-left">Have a special promotion code? Enter it for additional discounts</p>
                  </div>
                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
                    {appliedDiscount && (
-                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                       <p className="text-green-800 font-medium text-sm">✓ Discount code applied!</p>
-                       <p className="text-green-600 text-xs">{appliedDiscount.description}</p>
+                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                       <p className="text-green-800 font-medium text-sm text-left">✓ Discount code applied!</p>
+                       <p className="text-green-600 text-xs text-left">{appliedDiscount.description}</p>
                      </div>
                    )}
                    
                    {!appliedDiscount && !appliedReferral && (
-                     <>
+                     <div className="text-left">
                        <div className="flex gap-2">
                          <Input
                            value={discountCode}
                            onChange={(e) => setDiscountCode(e.target.value)}
                            placeholder="Enter discount code (e.g., FRIEND50-ABC123)"
-                           className="flex-1"
+                           className="flex-1 text-left"
                          />
                          <Button 
                            onClick={handleApplyDiscountCode}
@@ -733,14 +733,14 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                            Apply
                          </Button>
                        </div>
-                       <p className="text-xs text-muted-foreground">
+                       <p className="text-xs text-muted-foreground text-left mt-2">
                          Have a discount code from a referral reward? Get 50% off deep cleaning
                        </p>
-                     </>
+                     </div>
                    )}
                    
                    {appliedReferral && (
-                     <p className="text-xs text-muted-foreground text-orange-600">
+                     <p className="text-xs text-muted-foreground text-orange-600 text-left">
                        Cannot apply discount code when referral code is already applied
                      </p>
                    )}
