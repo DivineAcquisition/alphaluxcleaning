@@ -97,6 +97,42 @@ export type Database = {
           },
         ]
       }
+      busy_slots: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          end_time: string
+          event_id: string | null
+          event_title: string | null
+          id: string
+          start_time: string
+          subcontractor_id: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          end_time: string
+          event_id?: string | null
+          event_title?: string | null
+          id?: string
+          start_time: string
+          subcontractor_id: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          end_time?: string
+          event_id?: string | null
+          event_title?: string | null
+          id?: string
+          start_time?: string
+          subcontractor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commercial_estimates: {
         Row: {
           address: string
@@ -1742,6 +1778,7 @@ export type Database = {
       subcontractors: {
         Row: {
           address: string
+          calendar_id: string | null
           city: string
           created_at: string
           email: string
@@ -1763,6 +1800,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          calendar_id?: string | null
           city: string
           created_at?: string
           email: string
@@ -1784,6 +1822,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          calendar_id?: string | null
           city?: string
           created_at?: string
           email?: string
@@ -1847,6 +1886,17 @@ export type Database = {
         }
         Returns: Json
       }
+      get_available_slots: {
+        Args: {
+          p_subcontractor_id: string
+          p_date: string
+          p_time_slots: string[]
+        }
+        Returns: {
+          time_slot: string
+          available: boolean
+        }[]
+      }
       get_available_subcontractors_by_location: {
         Args: {
           p_customer_city: string
@@ -1873,6 +1923,16 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      upsert_busy_slot: {
+        Args: {
+          p_calendar_id: string
+          p_start_time: string
+          p_end_time: string
+          p_event_title?: string
+          p_event_id?: string
+        }
+        Returns: Json
       }
       validate_and_use_referral_code: {
         Args: {
