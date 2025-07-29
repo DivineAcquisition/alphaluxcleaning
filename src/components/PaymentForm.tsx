@@ -587,40 +587,54 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 <p className="text-sm text-muted-foreground">We'll use this information to contact you about your service</p>
               </div>
               
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="customerName">Full Name *</Label>
-                  <Input
-                    id="customerName"
-                    value={customerInfo.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Enter your full name"
-                    required
-                  />
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <h5 className="font-medium text-foreground">Personal Details</h5>
+                    <p className="text-sm text-muted-foreground">Your name as it appears on official documents</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customerName">Full Name *</Label>
+                    <Input
+                      id="customerName"
+                      value={customerInfo.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="customerPhone">Phone Number *</Label>
-                  <Input
-                    id="customerPhone"
-                    type="tel"
-                    value={customerInfo.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="Enter your phone number"
-                    required
-                  />
-                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <h5 className="font-medium text-foreground">Contact Details</h5>
+                    <p className="text-sm text-muted-foreground">How we'll reach you for updates and confirmations</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerPhone">Phone Number *</Label>
+                      <Input
+                        id="customerPhone"
+                        type="tel"
+                        value={customerInfo.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        placeholder="Enter your phone number"
+                        required
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="customerEmail">Email Address *</Label>
-                  <Input
-                    id="customerEmail"
-                    type="email"
-                    value={customerInfo.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="Enter your email address"
-                    required
-                  />
+                    <div className="space-y-2">
+                      <Label htmlFor="customerEmail">Email Address *</Label>
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        value={customerInfo.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        placeholder="Enter your email address"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
