@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import SlotTakenDialog from './SlotTakenDialog';
 
 interface ModernSchedulerProps {
   serviceType?: string;
@@ -25,6 +26,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const [availabilityData, setAvailabilityData] = useState<{[key: string]: {[key: string]: boolean}}>({});
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [calendarSource, setCalendarSource] = useState<string>('unknown');
+  const [showSlotTakenDialog, setShowSlotTakenDialog] = useState(false);
+  const [attemptedSlot, setAttemptedSlot] = useState({ date: '', time: '' });
 
   const timeSlots = [
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false },
@@ -341,7 +344,20 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                 return (
                   <button
                     key={slot.value}
-                    onClick={() => available && setSelectedTime(slot.value)}
+                    onClick={() => {
+                      if (available) {
+                        setSelectedTime(slot.value);
+                      } else {
+                        // Show popup for unavailable slot
+                        setAttemptedSlot({ 
+                          date: nextDayUpsell ? 
+                            new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                            selectedDate, 
+                          time: slot.value 
+                        });
+                        setShowSlotTakenDialog(true);
+                      }
+                    }}
                     disabled={!available}
                     className={cn(
                       "p-3 sm:p-4 rounded-lg border text-left transition-all",
@@ -422,6 +438,14 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Slot Taken Dialog */}
+      <SlotTakenDialog
+        open={showSlotTakenDialog}
+        onOpenChange={setShowSlotTakenDialog}
+        selectedTime={attemptedSlot.time}
+        selectedDate={attemptedSlot.date}
+      />
     </div>
   );
 };
