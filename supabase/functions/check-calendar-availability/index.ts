@@ -49,12 +49,16 @@ serve(async (req) => {
     const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
     if (!serviceAccountKey) {
       // If neither GHL nor Google Calendar is configured, return mock availability
-      console.log('No calendar integration configured, using mock availability');
-      const mockAvailability = timeSlots.map(timeSlot => ({
+      console.log('No Google Service Account key configured, using mock availability');
+      const mockAvailability = Array.isArray(timeSlots) ? timeSlots.map(timeSlot => ({
         date,
         time: timeSlot,
         available: true,
-      }));
+      })) : [{
+        date,
+        time: timeSlots,
+        available: true,
+      }];
       return new Response(JSON.stringify({ availability: mockAvailability, source: 'mock' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -63,9 +67,24 @@ serve(async (req) => {
     let credentials;
     try {
       credentials = JSON.parse(serviceAccountKey);
+      if (!credentials.private_key || !credentials.client_email) {
+        throw new Error('Missing required fields in service account key');
+      }
     } catch (parseError) {
       console.error('Invalid JSON in service account key:', parseError);
-      throw new Error('Invalid Google Service Account key format');
+      // Return mock availability instead of failing
+      const mockAvailability = Array.isArray(timeSlots) ? timeSlots.map(timeSlot => ({
+        date,
+        time: timeSlot,
+        available: true,
+      })) : [{
+        date,
+        time: timeSlots,
+        available: true,
+      }];
+      return new Response(JSON.stringify({ availability: mockAvailability, source: 'mock_fallback' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
     // Get access token using JWT
@@ -217,9 +236,12 @@ async function checkAvailability(accessToken: string, date: string, timeSlots: s
   const startOfDay = new Date(`${date}T00:00:00`);
   const endOfDay = new Date(`${date}T23:59:59`);
 
+  // Use the specific calendar ID for elitehousekeepers@gmail.com
+  const calendarId = 'elitehousekeepers@gmail.com';
+  
   // Get calendar events for the day
   const calendarResponse = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
     `timeMin=${startOfDay.toISOString()}&` +
     `timeMax=${endOfDay.toISOString()}&` +
     `singleEvents=true&` +
