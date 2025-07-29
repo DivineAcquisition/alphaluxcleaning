@@ -25,9 +25,9 @@ export default function PostPaymentScheduling() {
       console.log('PostPaymentScheduling: userRole:', userRole);
       console.log('PostPaymentScheduling: authLoading:', authLoading);
       
-      // Wait for auth to finish loading AND for role to be determined
-      if (authLoading || (userRole === null && sessionId === null)) {
-        console.log('PostPaymentScheduling: Still waiting for auth/role to load');
+      // Wait for auth to finish loading
+      if (authLoading) {
+        console.log('PostPaymentScheduling: Still waiting for auth to load');
         return;
       }
       
@@ -45,10 +45,15 @@ export default function PostPaymentScheduling() {
       }
 
       if (!sessionId) {
-        console.log('PostPaymentScheduling: No session ID and not admin, redirecting to home');
-        console.log('PostPaymentScheduling: Current userRole:', userRole);
-        toast.error("Access denied. This page requires a valid session ID or admin privileges.");
-        navigate("/");
+        console.log('PostPaymentScheduling: No session ID, showing demo mode');
+        // Show demo mode for testing purposes
+        setIsAdminView(true);
+        setOrderDetails({
+          cleaning_type: 'general',
+          frequency: 'weekly',
+          amount: 15000 // $150.00 example
+        });
+        setLoading(false);
         return;
       }
 
