@@ -578,65 +578,70 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             </div>
 
             {/* Customer Information */}
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  <h4 className="text-lg font-semibold text-primary">Contact Information</h4>
-                </div>
-                <p className="text-sm text-muted-foreground">We'll use this information to contact you about your service</p>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <h5 className="font-medium text-foreground">Personal Details</h5>
-                    <p className="text-sm text-muted-foreground">Your name as it appears on official documents</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Full Name *</Label>
-                    <Input
-                      id="customerName"
-                      value={customerInfo.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-                </div>
+             <div className="space-y-6 text-left">
+               <div className="space-y-2 text-left">
+                 <div className="flex items-start gap-2 text-left">
+                   <User className="h-5 w-5 text-primary mt-0.5" />
+                   <div className="text-left">
+                     <h4 className="text-lg font-semibold text-primary text-left">Contact Information</h4>
+                     <p className="text-sm text-muted-foreground text-left">We'll use this information to contact you about your service</p>
+                   </div>
+                 </div>
+               </div>
+               
+               <div className="space-y-6 text-left">
+                 <div className="space-y-4 text-left">
+                   <div className="space-y-1 text-left">
+                     <h5 className="font-medium text-foreground text-left">Personal Details</h5>
+                     <p className="text-sm text-muted-foreground text-left">Your name as it appears on official documents</p>
+                   </div>
+                   <div className="space-y-2 text-left">
+                     <Label htmlFor="customerName" className="text-left">Full Name *</Label>
+                     <Input
+                       id="customerName"
+                       value={customerInfo.name}
+                       onChange={(e) => handleInputChange("name", e.target.value)}
+                       placeholder="Enter your full name"
+                       className="text-left"
+                       required
+                     />
+                   </div>
+                 </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <h5 className="font-medium text-foreground">Contact Details</h5>
-                    <p className="text-sm text-muted-foreground">How we'll reach you for updates and confirmations</p>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="customerPhone">Phone Number *</Label>
-                      <Input
-                        id="customerPhone"
-                        type="tel"
-                        value={customerInfo.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        placeholder="Enter your phone number"
-                        required
-                      />
-                    </div>
+                 <div className="space-y-4 text-left">
+                   <div className="space-y-1 text-left">
+                     <h5 className="font-medium text-foreground text-left">Contact Details</h5>
+                     <p className="text-sm text-muted-foreground text-left">How we'll reach you for updates and confirmations</p>
+                   </div>
+                   <div className="space-y-4 text-left">
+                     <div className="space-y-2 text-left">
+                       <Label htmlFor="customerPhone" className="text-left">Phone Number *</Label>
+                       <Input
+                         id="customerPhone"
+                         type="tel"
+                         value={customerInfo.phone}
+                         onChange={(e) => handleInputChange("phone", e.target.value)}
+                         placeholder="Enter your phone number"
+                         className="text-left"
+                         required
+                       />
+                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="customerEmail">Email Address *</Label>
-                      <Input
-                        id="customerEmail"
-                        type="email"
-                        value={customerInfo.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        placeholder="Enter your email address"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+                     <div className="space-y-2 text-left">
+                       <Label htmlFor="customerEmail" className="text-left">Email Address *</Label>
+                       <Input
+                         id="customerEmail"
+                         type="email"
+                         value={customerInfo.email}
+                         onChange={(e) => handleInputChange("email", e.target.value)}
+                         placeholder="Enter your email address"
+                         className="text-left"
+                         required
+                       />
+                     </div>
+                   </div>
+                 </div>
+               </div>
             </div>
 
             {/* Referral and Discount Codes Section */}
