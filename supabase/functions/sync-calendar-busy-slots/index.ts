@@ -73,7 +73,8 @@ serve(async (req) => {
       p_start_time: startTimestamp,
       p_end_time: endTimestamp,
       p_event_title: event_title || null,
-      p_event_id: event_id || null
+      p_event_id: event_id || null,
+      p_calendar_type: 'business'
     });
 
     if (error) {

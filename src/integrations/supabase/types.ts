@@ -100,35 +100,38 @@ export type Database = {
       busy_slots: {
         Row: {
           calendar_id: string
+          calendar_type: string
           created_at: string
           end_time: string
           event_id: string | null
           event_title: string | null
           id: string
           start_time: string
-          subcontractor_id: string
+          subcontractor_id: string | null
           updated_at: string
         }
         Insert: {
           calendar_id: string
+          calendar_type?: string
           created_at?: string
           end_time: string
           event_id?: string | null
           event_title?: string | null
           id?: string
           start_time: string
-          subcontractor_id: string
+          subcontractor_id?: string | null
           updated_at?: string
         }
         Update: {
           calendar_id?: string
+          calendar_type?: string
           created_at?: string
           end_time?: string
           event_id?: string | null
           event_title?: string | null
           id?: string
           start_time?: string
-          subcontractor_id?: string
+          subcontractor_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1925,13 +1928,22 @@ export type Database = {
         Returns: boolean
       }
       upsert_busy_slot: {
-        Args: {
-          p_calendar_id: string
-          p_start_time: string
-          p_end_time: string
-          p_event_title?: string
-          p_event_id?: string
-        }
+        Args:
+          | {
+              p_calendar_id: string
+              p_start_time: string
+              p_end_time: string
+              p_event_title?: string
+              p_event_id?: string
+            }
+          | {
+              p_calendar_id: string
+              p_start_time: string
+              p_end_time: string
+              p_event_title?: string
+              p_event_id?: string
+              p_calendar_type?: string
+            }
         Returns: Json
       }
       validate_and_use_referral_code: {
