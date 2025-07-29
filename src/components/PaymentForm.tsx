@@ -578,28 +578,42 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             </div>
 
             {/* Customer Information */}
-            <div className="space-y-4">
-              <h4 className="font-semibold">Contact Information</h4>
-              
+            <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="customerName" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Full Name *
-                </Label>
-                <Input
-                  id="customerName"
-                  value={customerInfo.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Enter your full name"
-                  required
-                />
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  <h4 className="text-lg font-semibold text-primary">Contact Information</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">We'll use this information to contact you about your service</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customerName">Full Name *</Label>
+                  <Input
+                    id="customerName"
+                    value={customerInfo.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="customerPhone">Phone Number *</Label>
+                  <Input
+                    id="customerPhone"
+                    type="tel"
+                    value={customerInfo.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    placeholder="Enter your phone number"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="customerEmail" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email Address *
-                </Label>
+                <Label htmlFor="customerEmail">Email Address *</Label>
                 <Input
                   id="customerEmail"
                   type="email"
@@ -609,26 +623,17 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   required
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="customerPhone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone Number *
-                </Label>
-                <Input
-                  id="customerPhone"
-                  type="tel"
-                  value={customerInfo.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  placeholder="Enter your phone number"
-                  required
-                />
-              </div>
             </div>
 
             {/* Referral and Discount Codes Section */}
-            <div className="space-y-4">
-              <h4 className="font-semibold">Promo Codes (Optional)</h4>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-primary" />
+                  <h4 className="text-lg font-semibold text-primary">Promo Codes</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">Have a referral or discount code? Apply it here to save money</p>
+              </div>
               
               {/* Referral Code */}
               <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
