@@ -307,9 +307,9 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             </div>
 
             {/* Service Summary */}
-            <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
-              <h4 className="font-semibold mb-3">Service Summary</h4>
-              <div className="space-y-2">
+            <div className="p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+              <h4 className="font-semibold text-lg mb-4 text-center">Service Summary</h4>
+              <div className="space-y-3">
                 {/* Show discount breakdown */}
                 {(() => {
                   const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
@@ -328,23 +328,23 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   return (
                     <>
                       {(isRecurring || (isDeepCleaning && isOneTime)) && (
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Original Price:</span>
-                          <span className="line-through">${originalPrice.toFixed(2)}</span>
+                        <div className="flex justify-between items-center text-muted-foreground">
+                          <span className="font-medium">Original Price:</span>
+                          <span className="line-through font-mono">${originalPrice.toFixed(2)}</span>
                         </div>
                       )}
                       
                       {isRecurring && (
-                        <div className="flex justify-between text-green-600">
-                          <span>25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):</span>
-                          <span>-${Math.round((originalPrice * 0.25) * 100) / 100}</span>
+                        <div className="flex justify-between items-center text-green-600">
+                          <span className="font-medium">25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):</span>
+                          <span className="font-bold font-mono">-${Math.round((originalPrice * 0.25) * 100) / 100}</span>
                         </div>
                       )}
                       
                       {isDeepCleaning && isOneTime && (
-                        <div className="flex justify-between text-green-600">
-                          <span>$75 Deep Cleaning Discount:</span>
-                          <span>-$75.00</span>
+                        <div className="flex justify-between items-center text-green-600">
+                          <span className="font-medium">$75 Deep Cleaning Discount:</span>
+                          <span className="font-bold font-mono">-$75.00</span>
                         </div>
                       )}
                     </>
@@ -353,44 +353,47 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 
                 {/* Show referral/discount code discounts */}
                 {appliedReferral && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Referral Code (10% off):</span>
-                    <span>-${(calculatedPrice * 0.1).toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-green-600">
+                    <span className="font-medium">Referral Code (10% off):</span>
+                    <span className="font-bold font-mono">-${(calculatedPrice * 0.1).toFixed(2)}</span>
                   </div>
                 )}
                 
                 {appliedDiscount && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount Code (50% off):</span>
-                    <span>-${(calculatedPrice * 0.5).toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-green-600">
+                    <span className="font-medium">Discount Code (50% off):</span>
+                    <span className="font-bold font-mono">-${(calculatedPrice * 0.5).toFixed(2)}</span>
                   </div>
                 )}
                 
-                <div className="flex justify-between">
-                  <span>Service Amount:</span>
-                  <span className="font-bold text-primary">${calculatedPrice.toFixed(2)}</span>
+                <div className="flex justify-between items-center py-2 border-t border-dashed border-primary/30">
+                  <span className="font-semibold">Service Amount:</span>
+                  <span className="font-bold text-primary text-lg font-mono">${calculatedPrice.toFixed(2)}</span>
                 </div>
+                
                 {schedulingData?.nextDayBooking && schedulingData?.upchargeAmount > 0 && (
-                  <div className="flex justify-between text-orange-600">
-                    <span>Next Day Priority Booking:</span>
-                    <span className="font-bold">+${schedulingData.upchargeAmount.toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-orange-600">
+                    <span className="font-medium">Next Day Priority Booking:</span>
+                    <span className="font-bold font-mono">+${schedulingData.upchargeAmount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                
+                <div className="flex justify-between items-center text-xl font-bold border-t-2 border-primary pt-4 mt-4">
                   <span>Total Amount:</span>
-                  <span className="text-primary">${getFinalPrice().toFixed(2)}</span>
+                  <span className="text-primary font-mono">${getFinalPrice().toFixed(2)}</span>
                 </div>
+                
                 {(paymentType === "split" || paymentType === "prepayment") && (
-                  <div className="space-y-1 mt-3 pt-3 border-t border-dashed">
-                    <div className="flex justify-between text-green-600">
-                      <span>Paying Now:</span>
-                      <span className="font-bold">
+                  <div className="space-y-2 mt-4 pt-4 border-t border-dashed border-accent/30 bg-muted/20 rounded-lg p-3">
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="font-semibold">Paying Now:</span>
+                      <span className="font-bold text-lg font-mono">
                         ${paymentType === "prepayment" ? "150.00" : Math.round(getFinalPrice() / 2).toFixed(2)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-orange-600">
-                      <span>Charged After Service:</span>
-                      <span className="font-bold">
+                    <div className="flex justify-between items-center text-orange-600">
+                      <span className="font-semibold">Charged After Service:</span>
+                      <span className="font-bold text-lg font-mono">
                         ${paymentType === "prepayment" 
                           ? (getFinalPrice() - 150).toFixed(2) 
                           : (getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}
@@ -398,37 +401,43 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                     </div>
                   </div>
                 )}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant="outline">{pricingData.squareFootage} sq ft</Badge>
-                  <Badge variant="outline">
+                
+                {/* Service Details Badges */}
+                <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-muted/30">
+                  <Badge variant="outline" className="font-medium">{pricingData.squareFootage} sq ft</Badge>
+                  <Badge variant="outline" className="font-medium">
                     {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
                   </Badge>
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="font-medium">
                     {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </Badge>
                   {schedulingData?.nextDayBooking && (
-                    <Badge variant="default" className="bg-orange-500">
+                    <Badge variant="default" className="bg-orange-500 font-medium">
                       Next Day Priority
                     </Badge>
                   )}
                 </div>
+                
+                {/* Add-ons */}
                 {pricingData.addOns.length > 0 && (
-                  <div className="mt-2">
-                    <div className="text-sm text-muted-foreground mb-1">Add-ons:</div>
-                    <div className="flex flex-wrap gap-1">
+                  <div className="mt-4 pt-3 border-t border-muted/30">
+                    <div className="text-sm text-muted-foreground font-medium mb-2 text-center">Add-ons:</div>
+                    <div className="flex flex-wrap justify-center gap-2">
                       {pricingData.addOns.map(addOn => (
-                        <Badge key={addOn} variant="secondary" className="text-xs">
+                        <Badge key={addOn} variant="secondary" className="text-xs font-medium">
                           {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </Badge>
                       ))}
                     </div>
                   </div>
                 )}
+                
+                {/* Scheduled Service Info */}
                 {schedulingData?.nextDayBooking && schedulingData?.scheduledTime && (
-                  <div className="mt-3 pt-3 border-t">
-                    <div className="text-sm text-muted-foreground mb-1">Scheduled Service:</div>
-                    <div className="text-sm">
-                      <strong>Tomorrow</strong> at <strong>{schedulingData.scheduledTime}</strong>
+                  <div className="mt-4 pt-3 border-t border-muted/30 text-center">
+                    <div className="text-sm text-muted-foreground font-medium mb-1">Scheduled Service:</div>
+                    <div className="text-base font-semibold">
+                      <strong className="text-orange-600">Tomorrow</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
                     </div>
                   </div>
                 )}
