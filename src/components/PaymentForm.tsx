@@ -587,7 +587,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 <p className="text-sm text-muted-foreground">We'll use this information to contact you about your service</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="customerName">Full Name *</Label>
                   <Input
@@ -610,18 +610,18 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                     required
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail">Email Address *</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  value={customerInfo.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Enter your email address"
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="customerEmail">Email Address *</Label>
+                  <Input
+                    id="customerEmail"
+                    type="email"
+                    value={customerInfo.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="Enter your email address"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
