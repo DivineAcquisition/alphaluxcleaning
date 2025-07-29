@@ -27,38 +27,19 @@ serve(async (req) => {
 
   try {
     const { date, timeSlots } = await req.json();
+    console.log('Checking availability for date:', date, 'timeSlots:', timeSlots);
     
-    // Check if GoHighLevel integration is available first
-    const GHL_API_KEY = Deno.env.get("GOHIGHLEVEL_API_KEY");
-    const GHL_LOCATION_ID = Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
-
-    if (GHL_API_KEY && GHL_LOCATION_ID) {
-      console.log('Using GoHighLevel for availability check');
-      try {
-        const ghlAvailability = await checkGHLAvailability(date, timeSlots);
-        return new Response(JSON.stringify({ availability: ghlAvailability, source: 'gohighlevel' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (ghlError) {
-        console.error('GHL availability check failed, falling back to Google Calendar:', ghlError);
-      }
-    }
-
-    // Fallback to Google Calendar
+    // Use Google Calendar only
     console.log('Using Google Calendar for availability check');
     const serviceAccountKey = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_KEY');
+    
     if (!serviceAccountKey) {
-      // If neither GHL nor Google Calendar is configured, return mock availability
       console.log('No Google Service Account key configured, using mock availability');
-      const mockAvailability = Array.isArray(timeSlots) ? timeSlots.map(timeSlot => ({
+      const mockAvailability = timeSlots.map(timeSlot => ({
         date,
         time: timeSlot,
         available: true,
-      })) : [{
-        date,
-        time: timeSlots,
-        available: true,
-      }];
+      }));
       return new Response(JSON.stringify({ availability: mockAvailability, source: 'mock' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -67,103 +48,65 @@ serve(async (req) => {
     let credentials;
     try {
       credentials = JSON.parse(serviceAccountKey);
-      if (!credentials.private_key || !credentials.client_email) {
+      console.log('Service account parsed successfully, client_email:', credentials.client_email);
+      
+      if (!credentials.private_key || !credentials.client_email || !credentials.type) {
         throw new Error('Missing required fields in service account key');
       }
+      
+      // Validate private key format
+      if (!credentials.private_key.includes('-----BEGIN PRIVATE KEY-----')) {
+        throw new Error('Invalid private key format - must be a proper PEM key');
+      }
+      
     } catch (parseError) {
-      console.error('Invalid JSON in service account key:', parseError);
-      // Return mock availability instead of failing
-      const mockAvailability = Array.isArray(timeSlots) ? timeSlots.map(timeSlot => ({
+      console.error('Invalid service account key format:', parseError);
+      const mockAvailability = timeSlots.map(timeSlot => ({
         date,
         time: timeSlot,
         available: true,
-      })) : [{
-        date,
-        time: timeSlots,
-        available: true,
-      }];
-      return new Response(JSON.stringify({ availability: mockAvailability, source: 'mock_fallback' }), {
+      }));
+      return new Response(JSON.stringify({ 
+        availability: mockAvailability, 
+        source: 'mock_parse_error',
+        error: 'Invalid service account key format'
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
     // Get access token using JWT
+    console.log('Getting Google Calendar access token...');
     const accessToken = await getAccessToken(credentials);
+    console.log('Access token obtained successfully');
     
-    // Check availability for the requested date
+    // Check availability using Google Calendar
     const availability = await checkAvailability(accessToken, date, timeSlots);
+    console.log('Availability check completed:', availability.length, 'slots checked');
     
     return new Response(JSON.stringify({ availability, source: 'google' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error checking calendar availability:', error);
+    console.error('Google Calendar check failed:', error);
+    
+    // Return mock availability if all checks fail
+    const mockAvailability = timeSlots.map(timeSlot => ({
+      date,
+      time: timeSlot,
+      available: true,
+    }));
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      availability: [] 
+      availability: mockAvailability, 
+      source: 'mock_error_fallback',
+      error: error.message 
     }), {
-      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-async function checkGHLAvailability(date: string, timeSlots: string[]): Promise<AvailabilitySlot[]> {
-  const GHL_API_KEY = Deno.env.get("GOHIGHLEVEL_API_KEY");
-  const GHL_LOCATION_ID = Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
-
-  // Get calendars for the location
-  const calendarsResponse = await fetch(`https://services.leadconnectorhq.com/calendars/`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${GHL_API_KEY}`,
-      "Content-Type": "application/json",
-      "Version": "2021-07-28"
-    }
-  });
-
-  const calendarsData = await calendarsResponse.json();
-  
-  if (!calendarsData.calendars || calendarsData.calendars.length === 0) {
-    throw new Error("No calendars found in GoHighLevel");
-  }
-
-  const calendar = calendarsData.calendars.find(cal => cal.locationId === GHL_LOCATION_ID) || calendarsData.calendars[0];
-
-  // Get existing appointments for the date
-  const appointmentsResponse = await fetch(`https://services.leadconnectorhq.com/calendars/events/appointments?calendarId=${calendar.id}&startDate=${date}&endDate=${date}`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${GHL_API_KEY}`,
-      "Content-Type": "application/json",
-      "Version": "2021-07-28"
-    }
-  });
-
-  const appointmentsData = await appointmentsResponse.json();
-  const existingAppointments = appointmentsData.events || [];
-
-  // Check each time slot for availability
-  const availability: AvailabilitySlot[] = timeSlots.map(timeSlot => {
-    const { startTime, endTime } = parseTimeSlot(date, timeSlot);
-    
-    // Check for conflicts with existing appointments
-    const hasConflict = existingAppointments.some(appointment => {
-      const appointmentStart = new Date(appointment.startTime);
-      const appointmentEnd = new Date(appointment.endTime);
-      
-      return (startTime < appointmentEnd && endTime > appointmentStart);
-    });
-
-    return {
-      date,
-      time: timeSlot,
-      available: !hasConflict,
-    };
-  });
-
-  return availability;
-}
 
 async function getAccessToken(credentials: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
