@@ -267,7 +267,7 @@ function hasConflict(events: CalendarEvent[], date: string, timeSlot: string): b
 }
 
 function parseTimeSlot(date: string, timeSlot: string): { startTime: Date; endTime: Date } {
-  // Parse time slots for business hours (9 AM-5 PM) with more granular options
+  // Handle both legacy format and new format time slots
   const timeMap: Record<string, { start: number; end: number }> = {
     "Morning (9:00 AM-12:00 PM)": { start: 9, end: 12 },
     "Early Afternoon (12:00 PM-2:30 PM)": { start: 12, end: 14.5 },
@@ -275,9 +275,49 @@ function parseTimeSlot(date: string, timeSlot: string): { startTime: Date; endTi
     "Afternoon (12:00 PM-3:00 PM)": { start: 12, end: 15 },
     "Late Afternoon (2:00 PM-5:00 PM)": { start: 14, end: 17 },
     "Afternoon (12:00 PM-5:00 PM)": { start: 12, end: 17 },
+    // Add support for specific time slots from VisualScheduler
+    "8:00 AM": { start: 8, end: 10 },
+    "9:00 AM": { start: 9, end: 11 },
+    "10:00 AM": { start: 10, end: 12 },
+    "11:00 AM": { start: 11, end: 13 },
+    "12:00 PM": { start: 12, end: 14 },
+    "1:00 PM": { start: 13, end: 15 },
+    "2:00 PM": { start: 14, end: 16 },
+    "3:00 PM": { start: 15, end: 17 },
+    "4:00 PM": { start: 16, end: 18 },
   };
 
-  const slot = timeMap[timeSlot] || { start: 9, end: 17 }; // Default to business hours
+  const slot = timeMap[timeSlot];
+  
+  if (!slot) {
+    // Try to parse a generic time like "10:00 AM" 
+    const timeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM)/i;
+    const match = timeSlot.match(timeRegex);
+    
+    if (match) {
+      let hour = parseInt(match[1]);
+      const minute = parseInt(match[2]);
+      const period = match[3].toUpperCase();
+      
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+      
+      const start = hour + (minute / 60);
+      const end = start + 2; // Default 2-hour service duration
+      
+      const startTime = new Date(`${date}T${Math.floor(start).toString().padStart(2, '0')}:${((start % 1) * 60).toString().padStart(2, '0')}:00`);
+      const endTime = new Date(`${date}T${Math.floor(end).toString().padStart(2, '0')}:${((end % 1) * 60).toString().padStart(2, '0')}:00`);
+      
+      return { startTime, endTime };
+    }
+    
+    // Fallback to default business hours
+    const defaultSlot = { start: 9, end: 17 };
+    const startTime = new Date(`${date}T${Math.floor(defaultSlot.start).toString().padStart(2, '0')}:${((defaultSlot.start % 1) * 60).toString().padStart(2, '0')}:00`);
+    const endTime = new Date(`${date}T${Math.floor(defaultSlot.end).toString().padStart(2, '0')}:${((defaultSlot.end % 1) * 60).toString().padStart(2, '0')}:00`);
+    
+    return { startTime, endTime };
+  }
   
   const startTime = new Date(`${date}T${Math.floor(slot.start).toString().padStart(2, '0')}:${((slot.start % 1) * 60).toString().padStart(2, '0')}:00`);
   const endTime = new Date(`${date}T${Math.floor(slot.end).toString().padStart(2, '0')}:${((slot.end % 1) * 60).toString().padStart(2, '0')}:00`);

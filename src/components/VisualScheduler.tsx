@@ -24,6 +24,9 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
   const [nextDayUpsell, setNextDayUpsell] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [nextDayAvailable, setNextDayAvailable] = useState(true);
+  const [availabilityData, setAvailabilityData] = useState<{[key: string]: {[key: string]: boolean}}>({});
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [calendarSource, setCalendarSource] = useState<string>('unknown');
 
   const getServiceDuration = (type: string) => {
     const durations: { [key: string]: number } = {
@@ -50,7 +53,63 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
     { value: '4:00 PM', label: '4:00 PM - 6:00 PM', popular: false }
   ];
 
-  // Check next day availability - always show as available for now
+  // Check availability for selected date
+  const checkDateAvailability = async (date: string) => {
+    if (!date || availabilityData[date]) return; // Don't check if already have data
+    
+    setIsCheckingAvailability(true);
+    try {
+      const timeSlotValues = timeSlots.map(slot => slot.value);
+      const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
+        body: { date, timeSlots: timeSlotValues }
+      });
+      
+      if (error) {
+        console.error('Error checking availability:', error);
+        // Default all slots to available if check fails
+        const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
+          acc[timeValue] = true;
+          return acc;
+        }, {} as {[key: string]: boolean});
+        
+        setAvailabilityData(prev => ({
+          ...prev,
+          [date]: defaultAvailability
+        }));
+      } else {
+        const availability = data?.availability || [];
+        const availabilityMap = availability.reduce((acc: {[key: string]: boolean}, slot: any) => {
+          acc[slot.time] = slot.available;
+          return acc;
+        }, {});
+        
+        setAvailabilityData(prev => ({
+          ...prev,
+          [date]: availabilityMap
+        }));
+        
+        // Set calendar source
+        setCalendarSource(data?.source || 'unknown');
+      }
+    } catch (error) {
+      console.error('Error checking date availability:', error);
+      // Default all slots to available if check fails
+      const timeSlotValues = timeSlots.map(slot => slot.value);
+      const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
+        acc[timeValue] = true;
+        return acc;
+      }, {} as {[key: string]: boolean});
+      
+      setAvailabilityData(prev => ({
+        ...prev,
+        [date]: defaultAvailability
+      }));
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  // Check next day availability
   useEffect(() => {
     const checkNextDayAvailability = async () => {
       try {
@@ -59,25 +118,53 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
         const tomorrowISO = tomorrow.toISOString().split('T')[0];
         
         const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
-          body: { date: tomorrowISO, timeSlot: '9:00 AM' }
+          body: { date: tomorrowISO, timeSlots: ['9:00 AM'] }
         });
         
         if (error) {
           console.error('Error checking availability:', error);
-          // Default to available if check fails
           setNextDayAvailable(true);
         } else {
-          setNextDayAvailable(data?.available !== false);
+          const availability = data?.availability || [];
+          const morningSlot = availability.find((slot: any) => slot.time === '9:00 AM');
+          setNextDayAvailable(morningSlot?.available !== false);
         }
       } catch (error) {
         console.error('Error checking next day availability:', error);
-        // Default to available if check fails
         setNextDayAvailable(true);
       }
     };
 
     checkNextDayAvailability();
   }, []);
+
+  // Check availability when service date changes
+  useEffect(() => {
+    if (serviceDate && !nextDayUpsell) {
+      checkDateAvailability(serviceDate);
+    }
+  }, [serviceDate, nextDayUpsell]);
+
+  // Check tomorrow's availability when next day upsell is enabled
+  useEffect(() => {
+    if (nextDayUpsell) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowISO = tomorrow.toISOString().split('T')[0];
+      checkDateAvailability(tomorrowISO);
+    }
+  }, [nextDayUpsell]);
+
+  // Helper function to check if a time slot is available
+  const isTimeSlotAvailable = (time: string, date?: string) => {
+    const checkDate = date || (nextDayUpsell ? 
+      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+      serviceDate
+    );
+    
+    if (!checkDate || !availabilityData[checkDate]) return true; // Default to available
+    return availabilityData[checkDate][time] !== false;
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -220,9 +307,14 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
           <span>✓ Instant confirmation</span>
           <span>• Service duration: {getServiceDuration(serviceType)}h</span>
           <span className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            Real-time availability
+            <div className={`w-2 h-2 rounded-full ${isCheckingAvailability ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`} />
+            {isCheckingAvailability ? 'Checking calendar...' : 'Real-time availability'}
           </span>
+          {calendarSource && calendarSource !== 'unknown' && (
+            <span className="text-primary-foreground/40">
+              • {calendarSource === 'google' ? 'Google Calendar' : calendarSource === 'gohighlevel' ? 'GoHighLevel' : 'Mock Data'}
+            </span>
+          )}
         </div>
       </CardHeader>
       
@@ -285,21 +377,44 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
                       <SelectTrigger className="text-lg p-4 text-gray-900 placeholder:text-gray-500">
                         <SelectValue placeholder="Choose your preferred time slot" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((slot) => (
-                          <SelectItem key={slot.value} value={slot.value} className="text-base p-3">
-                            <div className="flex items-center justify-between w-full">
-                              <span>{slot.label}</span>
-                              {slot.popular && (
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  <Star className="h-3 w-3 mr-1" />
-                                  Popular
-                                </Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                       <SelectContent>
+                         {isCheckingAvailability && (
+                           <div className="p-3 text-center text-muted-foreground">
+                             Checking availability...
+                           </div>
+                         )}
+                         {timeSlots.map((slot) => {
+                           const available = isTimeSlotAvailable(slot.value);
+                           return (
+                             <SelectItem 
+                               key={slot.value} 
+                               value={slot.value} 
+                               className={`text-base p-3 ${!available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                               disabled={!available}
+                             >
+                               <div className="flex items-center justify-between w-full">
+                                 <span className={!available ? 'line-through' : ''}>{slot.label}</span>
+                                 <div className="flex items-center gap-2">
+                                   {slot.popular && available && (
+                                     <Badge variant="secondary" className="text-xs">
+                                       <Star className="h-3 w-3 mr-1" />
+                                       Popular
+                                     </Badge>
+                                   )}
+                                   {!available && (
+                                     <Badge variant="destructive" className="text-xs">
+                                       Unavailable
+                                     </Badge>
+                                   )}
+                                   {available && (
+                                     <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                   )}
+                                 </div>
+                               </div>
+                             </SelectItem>
+                           );
+                         })}
+                       </SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -334,21 +449,44 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
                         <SelectTrigger className="text-lg p-4 text-gray-900 placeholder:text-gray-500">
                           <SelectValue placeholder="Select a time" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((slot) => (
-                            <SelectItem key={slot.value} value={slot.value} className="text-base p-3">
-                              <div className="flex items-center justify-between w-full">
-                                <span>{slot.label}</span>
-                                {slot.popular && (
-                                  <Badge variant="secondary" className="ml-2 text-xs">
-                                    <Star className="h-3 w-3 mr-1" />
-                                    Popular
-                                  </Badge>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                         <SelectContent>
+                           {isCheckingAvailability && (
+                             <div className="p-3 text-center text-muted-foreground">
+                               Checking availability...
+                             </div>
+                           )}
+                           {timeSlots.map((slot) => {
+                             const available = isTimeSlotAvailable(slot.value);
+                             return (
+                               <SelectItem 
+                                 key={slot.value} 
+                                 value={slot.value} 
+                                 className={`text-base p-3 ${!available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                 disabled={!available}
+                               >
+                                 <div className="flex items-center justify-between w-full">
+                                   <span className={!available ? 'line-through' : ''}>{slot.label}</span>
+                                   <div className="flex items-center gap-2">
+                                     {slot.popular && available && (
+                                       <Badge variant="secondary" className="text-xs">
+                                         <Star className="h-3 w-3 mr-1" />
+                                         Popular
+                                       </Badge>
+                                     )}
+                                     {!available && (
+                                       <Badge variant="destructive" className="text-xs">
+                                         Unavailable
+                                       </Badge>
+                                     )}
+                                     {available && (
+                                       <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                     )}
+                                   </div>
+                                 </div>
+                               </SelectItem>
+                             );
+                           })}
+                         </SelectContent>
                       </Select>
                     </div>
                   </div>
