@@ -7,7 +7,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Copyright className="h-4 w-4" />
-            <span>2025 All rights reserved Bay Area Cleaning Pros</span>
+            <span>© 2025 All rights reserved Bay Area Cleaning Pros</span>
           </div>
           
           <div className="flex items-center gap-6 text-sm">
