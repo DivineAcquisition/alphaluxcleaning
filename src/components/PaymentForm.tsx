@@ -241,21 +241,21 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         <div className="space-y-6">
             {/* Payment Type Selection */}
             <div className="space-y-4">
-              <h4 className="font-semibold">Payment Options</h4>
-              <div className="grid grid-cols-1 gap-3">
+              <h4 className="font-semibold text-center text-lg">Payment Options</h4>
+              <div className="grid grid-cols-1 gap-3 max-w-2xl mx-auto">
                 <div 
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                     paymentType === "full" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                   }`}
                   onClick={() => setPaymentType("full")}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <div className={`w-4 h-4 rounded-full border-2 ${
                       paymentType === "full" ? "border-primary bg-primary" : "border-border"
                     }`}>
                       {paymentType === "full" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
                     </div>
-                    <div>
+                    <div className="text-center">
                       <div className="font-medium">Pay Full Amount</div>
                       <div className="text-sm text-muted-foreground">Pay ${getFinalPrice().toFixed(2)} now</div>
                     </div>
@@ -268,13 +268,13 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   }`}
                   onClick={() => setPaymentType("split")}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <div className={`w-4 h-4 rounded-full border-2 ${
                       paymentType === "split" ? "border-primary bg-primary" : "border-border"
                     }`}>
                       {paymentType === "split" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
                     </div>
-                    <div>
+                    <div className="text-center">
                       <div className="font-medium">Split Payment (50/50)</div>
                       <div className="text-sm text-muted-foreground">
                         Pay ${Math.round(getFinalPrice() / 2).toFixed(2)} now, remaining ${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)} auto-billed after completion
@@ -289,13 +289,13 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   }`}
                   onClick={() => setPaymentType("prepayment")}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <div className={`w-4 h-4 rounded-full border-2 ${
                       paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"
                     }`}>
                       {paymentType === "prepayment" && <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>}
                     </div>
-                    <div>
+                    <div className="text-center">
                       <div className="font-medium">$150 Prepayment</div>
                       <div className="text-sm text-muted-foreground">
                         Pay $150.00 now, remaining ${(getFinalPrice() - 150).toFixed(2)} charged after job completion
