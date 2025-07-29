@@ -228,12 +228,12 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg">
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+      <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl">
+          <CreditCard className="h-6 w-6" />
           Book Your Service
         </CardTitle>
-        <CardDescription className="text-primary-foreground/80">
+        <CardDescription className="text-primary-foreground/80 text-center">
           Secure booking with Bay Area Cleaning Pros
         </CardDescription>
       </CardHeader>
