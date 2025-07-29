@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { Footer } from '@/components/Footer';
 
 import Index from '@/pages/Index';
 import ServiceDetails from '@/pages/ServiceDetails';
@@ -37,73 +38,78 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/service-details" element={<ServiceDetails />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/post-payment-scheduling" element={<PostPaymentScheduling />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin-auth" element={<AdminAuth />} />
-            <Route path="/admin-setup" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminSetup />
-              </ProtectedRoute>
-            } />
-            <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
-            <Route path="/subcontractor-home" element={<SubcontractorHome />} />
-            <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
-            <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
-            <Route path="/order-status" element={<OrderStatus />} />
-            <Route path="/test-email" element={<TestEmail />} />
-            <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
-            <Route path="/password-reset" element={<PasswordReset />} />
-            <Route path="/secure-admin-creation" element={<SecureAdminCreation />} />
-            
-            {/* Admin protected routes */}
-            <Route path="/admin-panel" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminPanel />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin-dashboard" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/subcontractor-management" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <SubcontractorManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/metrics-dashboard" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <MetricsDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/application-manager" element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <ApplicationManager />
-              </ProtectedRoute>
-            } />
-            
-            {/* Subcontractor protected routes */}
-            <Route path="/subcontractor-dashboard" element={
-              <ProtectedRoute allowedRoles={['subcontractor', 'admin']}>
-                <SubcontractorDashboard />
-              </ProtectedRoute>
-            } />
-            
-            {/* Customer protected routes */}
-            <Route path="/my-services" element={
-              <ProtectedRoute requiredRole="customer">
-                <CustomerServicePortal />
-              </ProtectedRoute>
-            } />
-            
-            {/* 404 fallback */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="min-h-screen flex flex-col">
+            <div className="flex-1">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/service-details" element={<ServiceDetails />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/post-payment-scheduling" element={<PostPaymentScheduling />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin-auth" element={<AdminAuth />} />
+                <Route path="/admin-setup" element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminSetup />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subcontractor-auth" element={<SubcontractorAuth />} />
+                <Route path="/subcontractor-home" element={<SubcontractorHome />} />
+                <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
+                <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
+                <Route path="/order-status" element={<OrderStatus />} />
+                <Route path="/test-email" element={<TestEmail />} />
+                <Route path="/commercial-thank-you" element={<CommercialThankYou />} />
+                <Route path="/password-reset" element={<PasswordReset />} />
+                <Route path="/secure-admin-creation" element={<SecureAdminCreation />} />
+                
+                {/* Admin protected routes */}
+                <Route path="/admin-panel" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subcontractor-management" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SubcontractorManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/metrics-dashboard" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <MetricsDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/application-manager" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ApplicationManager />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Subcontractor protected routes */}
+                <Route path="/subcontractor-dashboard" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'admin']}>
+                    <SubcontractorDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Customer protected routes */}
+                <Route path="/my-services" element={
+                  <ProtectedRoute requiredRole="customer">
+                    <CustomerServicePortal />
+                  </ProtectedRoute>
+                } />
+                
+                {/* 404 fallback */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+            <Footer />
+          </div>
           <Toaster />
         </Router>
       </AuthProvider>
