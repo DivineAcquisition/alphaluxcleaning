@@ -49,12 +49,23 @@ serve(async (req) => {
     } else {
       // Check if payload is wrapped in a string (Zapier issue)
       const keys = Object.keys(body);
-      if (keys.length === 1 && keys[0].includes('Content-Type')) {
-        try {
-          const innerData = JSON.parse(body[keys[0]]);
-          ({ calendar_id, start_time, end_time, event_title, event_id } = innerData);
-        } catch (parseError) {
-          console.error('Failed to parse inner payload:', parseError);
+      console.log('Available keys in body:', keys);
+      
+      if (keys.length === 1) {
+        const key = keys[0];
+        console.log('Single key found:', JSON.stringify(key));
+        
+        // Check for various Zapier wrapping patterns
+        if (key.includes('Content-Type') || key.includes('\n') || key.includes('json') || key.trim() === '') {
+          try {
+            console.log('Attempting to parse wrapped payload from key:', JSON.stringify(key));
+            const innerData = JSON.parse(body[key]);
+            console.log('Successfully parsed inner data:', innerData);
+            ({ calendar_id, start_time, end_time, event_title, event_id } = innerData);
+          } catch (parseError) {
+            console.error('Failed to parse inner payload from key', JSON.stringify(key), ':', parseError);
+            console.error('Raw value:', body[key]);
+          }
         }
       }
     }
