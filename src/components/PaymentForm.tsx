@@ -146,11 +146,8 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       return;
     }
 
-    // Check if scheduling is required and provided
-    if (!schedulingData?.scheduledDate || !schedulingData?.scheduledTime) {
-      toast.error("Please select a date and time for your service");
-      return;
-    }
+    // Scheduling will be handled after payment
+    // No need to check scheduling data here since it happens post-payment
 
     setIsProcessing(true);
 
@@ -187,7 +184,11 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       if (error) throw error;
 
       // Redirect to Stripe checkout
-      window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
       
       if (paymentType === "split") {
         toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
@@ -582,14 +583,12 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
               className="w-full" 
               size="lg"
               onClick={handleBookService}
-                disabled={
+              disabled={
                 isProcessing || 
                 !customerInfo.name || 
                 !customerInfo.email ||
                 !customerInfo.phone ||
-                !pricingData.cleaningType ||
-                !schedulingData?.scheduledDate ||
-                !schedulingData?.scheduledTime
+                !pricingData.cleaningType
               }
             >
               {isProcessing ? "Processing..." : (
