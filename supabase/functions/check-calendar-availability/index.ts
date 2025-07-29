@@ -243,23 +243,43 @@ async function checkAvailability(accessToken: string, date: string, timeSlots: s
   
   console.log(`Found ${events.length} events for ${date} in calendar ${calendarId}`);
 
-  // Create test scenarios for demonstration
-  const availability: AvailabilitySlot[] = timeSlots.map(timeSlot => {
-    const isAvailable = !hasConflict(events, date, timeSlot);
-    
-    // For demo purposes, let's make some slots unavailable to test the UI
-    let finalAvailability = isAvailable;
-    if (date === '2025-08-01') {
-      // Make 10:00 AM and 2:00 PM unavailable for testing
-      if (timeSlot === '10:00 AM' || timeSlot === '2:00 PM') {
-        finalAvailability = false;
+  // Also check against busy slots from our database
+  console.log('Checking busy slots from database...');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  let busySlots: any[] = [];
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const busySlotsResponse = await fetch(
+        `${supabaseUrl}/rest/v1/busy_slots?calendar_id=eq.${encodeURIComponent(calendarId)}&start_time=gte.${startOfDay.toISOString()}&end_time=lte.${endOfDay.toISOString()}`,
+        {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (busySlotsResponse.ok) {
+        busySlots = await busySlotsResponse.json();
+        console.log(`Found ${busySlots.length} busy slots from database`);
       }
+    } catch (error) {
+      console.error('Failed to fetch busy slots:', error);
     }
+  }
+
+  const availability: AvailabilitySlot[] = timeSlots.map(timeSlot => {
+    const googleCalendarConflict = hasConflict(events, date, timeSlot);
+    const busySlotConflict = hasBusySlotConflict(busySlots, date, timeSlot);
+    const isAvailable = !googleCalendarConflict && !busySlotConflict;
     
     return {
       date,
       time: timeSlot,
-      available: finalAvailability,
+      available: isAvailable,
     };
   });
 
@@ -276,6 +296,17 @@ function hasConflict(events: CalendarEvent[], date: string, timeSlot: string): b
     const eventEnd = new Date(event.end.dateTime);
     
     return (startTime < eventEnd && endTime > eventStart);
+  });
+}
+
+function hasBusySlotConflict(busySlots: any[], date: string, timeSlot: string): boolean {
+  const { startTime, endTime } = parseTimeSlot(date, timeSlot);
+
+  return busySlots.some(slot => {
+    const slotStart = new Date(slot.start_time);
+    const slotEnd = new Date(slot.end_time);
+    
+    return (startTime < slotEnd && endTime > slotStart);
   });
 }
 
