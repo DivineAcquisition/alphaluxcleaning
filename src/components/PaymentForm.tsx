@@ -374,140 +374,206 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
           </div>
 
             {/* Service Summary */}
-            <div className="p-6 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-              <h4 className="font-semibold text-lg mb-4 text-center">Service Summary</h4>
-              <div className="space-y-3">
-                {/* Show discount breakdown */}
-                {(() => {
-                  const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
-                  const isRecurring = pricingData.frequency === 'weekly' || pricingData.frequency === 'biweekly';
-                  const isOneTime = pricingData.frequency === 'one_time';
+            <div className="space-y-8">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-primary">Your Service Details</h3>
+                <p className="text-muted-foreground">Review your cleaning service and pricing breakdown</p>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                {/* Service Information Card */}
+                <div className="bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl border-2 border-primary/20 p-6">
+                  <h4 className="text-xl font-bold mb-6 text-center text-primary">Service Information</h4>
                   
-                  // Calculate original price before discounts
-                  let originalPrice = calculatedPrice;
-                  if (isRecurring) {
-                    originalPrice = Math.round((calculatedPrice / 0.75) * 100) / 100; // Add back 25% discount
-                  }
-                  if (isDeepCleaning && isOneTime) {
-                    originalPrice = calculatedPrice + 75; // Add back $75 discount
-                  }
-                  
-                  return (
-                    <>
-                      {(isRecurring || (isDeepCleaning && isOneTime)) && (
-                        <div className="flex justify-between items-center text-muted-foreground">
-                          <span className="font-medium">Original Price:</span>
-                          <span className="line-through font-mono">${originalPrice.toFixed(2)}</span>
+                  <div className="space-y-4">
+                    {/* Main Service Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white/50 rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-primary">{pricingData.squareFootage}</div>
+                        <div className="text-sm text-muted-foreground">Square Feet</div>
+                      </div>
+                      <div className="bg-white/50 rounded-lg p-4 text-center">
+                        <div className="text-lg font-bold text-primary">
+                          {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </div>
-                      )}
-                      
-                      {isRecurring && (
-                        <div className="flex justify-between items-center text-green-600">
-                          <span className="font-medium">25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):</span>
-                          <span className="font-bold font-mono">-${Math.round((originalPrice * 0.25) * 100) / 100}</span>
-                        </div>
-                      )}
-                      
-                      {isDeepCleaning && isOneTime && (
-                        <div className="flex justify-between items-center text-green-600">
-                          <span className="font-medium">$75 Deep Cleaning Discount:</span>
-                          <span className="font-bold font-mono">-$75.00</span>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-                
-                {/* Show referral/discount code discounts */}
-                {appliedReferral && (
-                  <div className="flex justify-between items-center text-green-600">
-                    <span className="font-medium">Referral Code (10% off):</span>
-                    <span className="font-bold font-mono">-${(calculatedPrice * 0.1).toFixed(2)}</span>
-                  </div>
-                )}
-                
-                {appliedDiscount && (
-                  <div className="flex justify-between items-center text-green-600">
-                    <span className="font-medium">Discount Code (50% off):</span>
-                    <span className="font-bold font-mono">-${(calculatedPrice * 0.5).toFixed(2)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center py-2 border-t border-dashed border-primary/30">
-                  <span className="font-semibold">Service Amount:</span>
-                  <span className="font-bold text-primary text-lg font-mono">${calculatedPrice.toFixed(2)}</span>
-                </div>
-                
-                {schedulingData?.nextDayBooking && schedulingData?.upchargeAmount > 0 && (
-                  <div className="flex justify-between items-center text-orange-600">
-                    <span className="font-medium">Next Day Priority Booking:</span>
-                    <span className="font-bold font-mono">+${schedulingData.upchargeAmount.toFixed(2)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center text-xl font-bold border-t-2 border-primary pt-4 mt-4">
-                  <span>Total Amount:</span>
-                  <span className="text-primary font-mono">${getFinalPrice().toFixed(2)}</span>
-                </div>
-                
-                {(paymentType === "split" || paymentType === "prepayment") && (
-                  <div className="space-y-2 mt-4 pt-4 border-t border-dashed border-accent/30 bg-muted/20 rounded-lg p-3">
-                    <div className="flex justify-between items-center text-green-600">
-                      <span className="font-semibold">Paying Now:</span>
-                      <span className="font-bold text-lg font-mono">
-                        ${paymentType === "prepayment" ? "150.00" : Math.round(getFinalPrice() / 2).toFixed(2)}
-                      </span>
+                        <div className="text-sm text-muted-foreground">Cleaning Type</div>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-orange-600">
-                      <span className="font-semibold">Charged After Service:</span>
-                      <span className="font-bold text-lg font-mono">
-                        ${paymentType === "prepayment" 
-                          ? (getFinalPrice() - 150).toFixed(2) 
-                          : (getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}
-                      </span>
+                    
+                    <div className="bg-white/50 rounded-lg p-4 text-center">
+                      <div className="text-lg font-bold text-primary">
+                        {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Service Frequency</div>
                     </div>
-                  </div>
-                )}
-                
-                {/* Service Details Badges */}
-                <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-muted/30">
-                  <Badge variant="outline" className="font-medium">{pricingData.squareFootage} sq ft</Badge>
-                  <Badge variant="outline" className="font-medium">
-                    {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
-                  </Badge>
-                  <Badge variant="outline" className="font-medium">
-                    {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </Badge>
-                  {schedulingData?.nextDayBooking && (
-                    <Badge variant="default" className="bg-orange-500 font-medium">
-                      Next Day Priority
-                    </Badge>
-                  )}
-                </div>
-                
-                {/* Add-ons */}
-                {pricingData.addOns.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-muted/30">
-                    <div className="text-sm text-muted-foreground font-medium mb-2 text-center">Add-ons:</div>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {pricingData.addOns.map(addOn => (
-                        <Badge key={addOn} variant="secondary" className="text-xs font-medium">
-                          {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    
+                    {(pricingData.bedrooms || pricingData.bathrooms) && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {pricingData.bedrooms && (
+                          <div className="bg-white/50 rounded-lg p-4 text-center">
+                            <div className="text-xl font-bold text-primary">{pricingData.bedrooms}</div>
+                            <div className="text-sm text-muted-foreground">Bedrooms</div>
+                          </div>
+                        )}
+                        {pricingData.bathrooms && (
+                          <div className="bg-white/50 rounded-lg p-4 text-center">
+                            <div className="text-xl font-bold text-primary">{pricingData.bathrooms}</div>
+                            <div className="text-sm text-muted-foreground">Bathrooms</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Add-ons Section */}
+                    {pricingData.addOns.length > 0 && (
+                      <div className="bg-white/50 rounded-lg p-4">
+                        <h5 className="font-bold text-primary mb-3 text-center">Included Add-ons</h5>
+                        <div className="space-y-2">
+                          {pricingData.addOns.map(addOn => (
+                            <div key={addOn} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="font-medium">
+                                {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {schedulingData?.nextDayBooking && (
+                      <div className="bg-orange-100 border border-orange-300 rounded-lg p-4 text-center">
+                        <Badge className="bg-orange-500 text-white mb-2">
+                          Next Day Priority Booking
                         </Badge>
-                      ))}
-                    </div>
+                        <div className="text-sm text-orange-700">
+                          Expedited service for next-day booking
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Scheduled Service Info */}
+                    {schedulingData?.scheduledTime && (
+                      <div className="bg-primary/10 rounded-lg p-4 text-center">
+                        <div className="text-sm text-muted-foreground font-medium mb-1">Scheduled Service:</div>
+                        <div className="text-base font-semibold">
+                          {schedulingData?.nextDayBooking ? (
+                            <>
+                              <strong className="text-orange-600">Tomorrow</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
+                            </>
+                          ) : (
+                            <>
+                              <strong className="text-primary">{schedulingData.scheduledDate}</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
                 
-                {/* Scheduled Service Info */}
-                {schedulingData?.nextDayBooking && schedulingData?.scheduledTime && (
-                  <div className="mt-4 pt-3 border-t border-muted/30 text-center">
-                    <div className="text-sm text-muted-foreground font-medium mb-1">Scheduled Service:</div>
-                    <div className="text-base font-semibold">
-                      <strong className="text-orange-600">Tomorrow</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
+                {/* Pricing Breakdown Card */}
+                <div className="bg-gradient-to-br from-accent/5 to-primary/10 rounded-xl border-2 border-accent/20 p-6">
+                  <h4 className="text-xl font-bold mb-6 text-center text-primary">Pricing Breakdown</h4>
+                  
+                  <div className="space-y-4">
+                    {/* Show discount breakdown */}
+                    {(() => {
+                      const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
+                      const isRecurring = pricingData.frequency === 'weekly' || pricingData.frequency === 'biweekly';
+                      const isOneTime = pricingData.frequency === 'one_time';
+                      
+                      // Calculate original price before discounts
+                      let originalPrice = calculatedPrice;
+                      if (isRecurring) {
+                        originalPrice = Math.round((calculatedPrice / 0.75) * 100) / 100; // Add back 25% discount
+                      }
+                      if (isDeepCleaning && isOneTime) {
+                        originalPrice = calculatedPrice + 75; // Add back $75 discount
+                      }
+                      
+                      return (
+                        <>
+                          {(isRecurring || (isDeepCleaning && isOneTime)) && (
+                            <div className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
+                              <span className="font-medium text-muted-foreground">Original Price:</span>
+                              <span className="line-through font-mono text-muted-foreground">${originalPrice.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          {isRecurring && (
+                            <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <span className="font-medium text-green-700">
+                                25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):
+                              </span>
+                              <span className="font-bold font-mono text-green-600">
+                                -${Math.round((originalPrice * 0.25) * 100) / 100}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {isDeepCleaning && isOneTime && (
+                            <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <span className="font-medium text-green-700">$75 Deep Cleaning Discount:</span>
+                              <span className="font-bold font-mono text-green-600">-$75.00</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                    
+                    {/* Show referral/discount code discounts */}
+                    {appliedReferral && (
+                      <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <span className="font-medium text-green-700">Referral Code (10% off):</span>
+                        <span className="font-bold font-mono text-green-600">-${(calculatedPrice * 0.1).toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    {appliedDiscount && (
+                      <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <span className="font-medium text-green-700">Discount Code (50% off):</span>
+                        <span className="font-bold font-mono text-green-600">-${(calculatedPrice * 0.5).toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                      <span className="font-semibold text-primary">Service Amount:</span>
+                      <span className="font-bold text-primary text-lg font-mono">${calculatedPrice.toFixed(2)}</span>
                     </div>
+                    
+                    {schedulingData?.nextDayBooking && schedulingData?.upchargeAmount > 0 && (
+                      <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <span className="font-medium text-orange-700">Next Day Priority Booking:</span>
+                        <span className="font-bold font-mono text-orange-600">+${schedulingData.upchargeAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-primary to-accent text-white rounded-lg text-xl font-bold">
+                      <span>Total Amount:</span>
+                      <span className="font-mono">${getFinalPrice().toFixed(2)}</span>
+                    </div>
+                    
+                    {(paymentType === "split" || paymentType === "prepayment") && (
+                      <div className="space-y-3 p-4 bg-muted/20 border border-muted/40 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-green-600">Paying Now:</span>
+                          <span className="font-bold text-lg font-mono text-green-600">
+                            ${paymentType === "prepayment" ? "150.00" : Math.round(getFinalPrice() / 2).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-orange-600">Charged After Service:</span>
+                          <span className="font-bold text-lg font-mono text-orange-600">
+                            ${paymentType === "prepayment" 
+                              ? (getFinalPrice() - 150).toFixed(2) 
+                              : (getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
