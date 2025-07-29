@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle, ArrowLeft } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
-import VisualScheduler from "@/components/VisualScheduler";
+import ModernScheduler from "@/components/ModernScheduler";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -160,25 +160,11 @@ export default function PostPaymentScheduling() {
           </Card>
 
           {/* Scheduling Section */}
-          <div className="grid gap-6">
-            <Card className="shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                  <Calendar className="h-6 w-6" />
-                  Schedule Your Service
-                </CardTitle>
-                <CardDescription>
-                  Select your preferred date and time slot from our live calendar
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="p-6">
-                <VisualScheduler 
-                  serviceType={orderDetails?.cleaning_type}
-                  sessionId={sessionId}
-                />
-              </CardContent>
-            </Card>
+          <div className="mt-8">
+            <ModernScheduler 
+              serviceType={orderDetails?.cleaning_type}
+              sessionId={sessionId}
+            />
           </div>
 
           {/* Navigation */}
