@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -67,6 +67,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const checkDateAvailability = async (date: string) => {
     if (!date || availabilityData[date]) return;
     
+    console.log('Checking availability for date:', date);
     setIsCheckingAvailability(true);
     try {
       const timeSlotValues = timeSlots.map(slot => slot.value);
@@ -74,26 +75,34 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         body: { date, timeSlots: timeSlotValues }
       });
       
+      console.log('Availability response:', { data, error });
+      
       if (error) {
         console.error('Error checking availability:', error);
+        // Default to all available on error
         const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
           acc[timeValue] = true;
           return acc;
         }, {} as {[key: string]: boolean});
         
         setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
+        setCalendarSource('error');
       } else {
         const availability = data?.availability || [];
+        console.log('Parsed availability:', availability);
+        
         const availabilityMap = availability.reduce((acc: {[key: string]: boolean}, slot: any) => {
           acc[slot.time] = slot.available;
           return acc;
         }, {});
         
+        console.log('Availability map:', availabilityMap);
         setAvailabilityData(prev => ({ ...prev, [date]: availabilityMap }));
         setCalendarSource(data?.source || 'unknown');
       }
     } catch (error) {
       console.error('Error checking date availability:', error);
+      // Default to all available on error
       const timeSlotValues = timeSlots.map(slot => slot.value);
       const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
         acc[timeValue] = true;
@@ -101,6 +110,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       }, {} as {[key: string]: boolean});
       
       setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
+      setCalendarSource('error');
     } finally {
       setIsCheckingAvailability(false);
     }
@@ -127,8 +137,42 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
       selectedDate;
     
-    if (!checkDate || !availabilityData[checkDate]) return true;
-    return availabilityData[checkDate][time] !== false;
+    if (!checkDate || !availabilityData[checkDate]) {
+      console.log('No availability data for:', checkDate);
+      return true; // Default to available
+    }
+    
+    const isAvailable = availabilityData[checkDate][time] !== false;
+    console.log(`Time ${time} on ${checkDate} is available:`, isAvailable);
+    return isAvailable;
+  };
+
+  const createGoogleCalendarEvent = async (date: string, time: string) => {
+    try {
+      console.log('Creating Google Calendar event for:', { date, time });
+      
+      const { data, error } = await supabase.functions.invoke('create-google-calendar-event', {
+        body: {
+          date,
+          time,
+          serviceType,
+          sessionId,
+          duration: 2 // 2 hours default
+        }
+      });
+
+      if (error) {
+        console.error('Error creating calendar event:', error);
+        // Don't block the booking if calendar creation fails
+        toast.error('Booking saved but calendar event creation failed');
+      } else {
+        console.log('Calendar event created successfully:', data);
+        toast.success('Appointment scheduled and added to calendar!');
+      }
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      // Don't block the booking if calendar creation fails
+    }
   };
 
   const handleSubmit = async () => {
@@ -139,6 +183,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Update order in database
       if (sessionId) {
         await supabase
           .from("orders")
@@ -173,7 +218,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         }
       }
 
-      toast.success('Appointment scheduled successfully!');
+      // Create Google Calendar event
+      await createGoogleCalendarEvent(selectedDate, selectedTime);
       
       if (sessionId) {
         navigate(`/service-details?session_id=${sessionId}`);
@@ -191,12 +237,12 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const dates = generateDates();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Schedule Your Service</h1>
-        <p className="text-muted-foreground">Choose your preferred date and time for your {serviceType} cleaning</p>
-        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Schedule Your Service</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Choose your preferred date and time for your {serviceType} cleaning</p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <div className={`w-2 h-2 rounded-full ${isCheckingAvailability ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`} />
             <span>{isCheckingAvailability ? 'Checking...' : 'Live availability'}</span>
@@ -209,18 +255,18 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
       {/* Next Day Upsell */}
       <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <Zap className="h-6 w-6 text-orange-500 mt-1" />
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500 mt-1" />
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-lg font-semibold">Need it tomorrow?</h3>
-                <Badge variant="destructive">+$50</Badge>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold">Need it tomorrow?</h3>
+                <Badge variant="destructive" className="text-xs sm:text-sm w-fit">+$50</Badge>
               </div>
-              <p className="text-muted-foreground text-sm mb-4">
+              <p className="text-muted-foreground text-xs sm:text-sm mb-3 sm:mb-4">
                 Get priority scheduling for tomorrow with our expedited service
               </p>
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center gap-2 sm:gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={nextDayUpsell}
@@ -233,7 +279,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                   }}
                   className="w-4 h-4 rounded border-gray-300"
                 />
-                <span className="font-medium">Yes, schedule for tomorrow (+$50)</span>
+                <span className="text-sm sm:text-base font-medium">Yes, schedule for tomorrow (+$50)</span>
               </label>
             </div>
           </div>
@@ -243,20 +289,20 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       {/* Date Selection */}
       {!nextDayUpsell && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
               Select Date
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {dates.map((date) => (
                 <button
                   key={date.value}
                   onClick={() => setSelectedDate(date.value)}
                   className={cn(
-                    "p-3 rounded-lg border text-center transition-all",
+                    "p-2 sm:p-3 rounded-lg border text-center transition-all text-xs sm:text-sm",
                     "hover:border-primary hover:bg-primary/5",
                     selectedDate === date.value
                       ? "border-primary bg-primary text-primary-foreground"
@@ -264,8 +310,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                   )}
                 >
                   <div className="text-xs text-muted-foreground">{date.weekday}</div>
-                  <div className="text-sm font-medium">{date.month}</div>
-                  <div className="text-lg font-bold">{date.day}</div>
+                  <div className="text-xs sm:text-sm font-medium">{date.month}</div>
+                  <div className="text-sm sm:text-lg font-bold">{date.day}</div>
                   {date.isTomorrow && (
                     <div className="text-xs text-orange-500 font-medium">Tomorrow</div>
                   )}
@@ -279,15 +325,17 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       {/* Time Selection */}
       {(selectedDate || nextDayUpsell) && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Select Time
-              {nextDayUpsell && <Badge variant="secondary">Tomorrow</Badge>}
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg sm:text-xl">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                Select Time
+              </div>
+              {nextDayUpsell && <Badge variant="secondary" className="w-fit">Tomorrow</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
               {timeSlots.map((slot) => {
                 const available = isTimeSlotAvailable(slot.value);
                 return (
@@ -296,24 +344,24 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                     onClick={() => available && setSelectedTime(slot.value)}
                     disabled={!available}
                     className={cn(
-                      "p-4 rounded-lg border text-left transition-all",
-                      "hover:border-primary hover:bg-primary/5",
-                      !available && "opacity-50 cursor-not-allowed",
+                      "p-3 sm:p-4 rounded-lg border text-left transition-all",
+                      !available && "opacity-50 cursor-not-allowed bg-gray-100",
+                      available && "hover:border-primary hover:bg-primary/5",
                       selectedTime === slot.value
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border"
                     )}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold">{slot.label}</span>
+                      <span className="font-semibold text-sm sm:text-base">{slot.label}</span>
                       <div className="flex items-center gap-1">
                         {slot.popular && available && (
                           <Star className="h-3 w-3 text-yellow-500" />
                         )}
                         {available ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                         )}
                       </div>
                     </div>
@@ -335,11 +383,11 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       {/* Submit Button */}
       {selectedDate && selectedTime && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between p-4 bg-muted rounded-lg mb-4">
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-muted rounded-lg mb-4 gap-2 sm:gap-0">
               <div>
-                <div className="font-semibold">Selected Appointment</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="font-semibold text-sm sm:text-base">Selected Appointment</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
                   {new Date(selectedDate).toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -348,12 +396,12 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                   })} at {selectedTime}
                 </div>
                 {nextDayUpsell && (
-                  <div className="text-sm text-orange-600 font-medium">
+                  <div className="text-xs sm:text-sm text-orange-600 font-medium">
                     Includes $50 next-day service fee
                   </div>
                 )}
               </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground hidden sm:block" />
             </div>
             
             <Button 
@@ -362,7 +410,14 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
               className="w-full"
               size="lg"
             >
-              {isSubmitting ? 'Confirming...' : 'Confirm Appointment'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Confirming...
+                </>
+              ) : (
+                'Confirm Appointment'
+              )}
             </Button>
           </CardContent>
         </Card>

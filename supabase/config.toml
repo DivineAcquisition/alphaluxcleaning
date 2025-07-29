@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.check-calendar-availability]
 verify_jwt = false
 
+[functions.create-google-calendar-event]
+verify_jwt = false
+
 [functions.send-order-confirmation]
 verify_jwt = false
 
