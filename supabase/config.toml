@@ -1,5 +1,8 @@
 project_id = "kqoezqzogleaaupjzxch"
 
+[functions.sync-calendar-busy-slots]
+verify_jwt = false
+
 [functions.test-email-confirmation]
 verify_jwt = false
 

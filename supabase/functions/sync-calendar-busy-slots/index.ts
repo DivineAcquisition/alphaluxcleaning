@@ -33,7 +33,31 @@ serve(async (req) => {
     const body = await req.json();
     console.log('Webhook payload:', JSON.stringify(body, null, 2));
     
-    const { calendar_id, start_time, end_time, event_title, event_id } = body;
+    // Handle both direct format and Google Calendar format
+    let calendar_id, start_time, end_time, event_title, event_id;
+    
+    if (body.calendar_id) {
+      // Direct format (expected)
+      ({ calendar_id, start_time, end_time, event_title, event_id } = body);
+    } else if (body.start && body.end) {
+      // Google Calendar format fallback
+      calendar_id = body.organizer?.email || body.creator?.email;
+      start_time = body.start.dateTime;
+      end_time = body.end.dateTime;
+      event_title = body.summary;
+      event_id = body.id;
+    } else {
+      // Check if payload is wrapped in a string (Zapier issue)
+      const keys = Object.keys(body);
+      if (keys.length === 1 && keys[0].includes('Content-Type')) {
+        try {
+          const innerData = JSON.parse(body[keys[0]]);
+          ({ calendar_id, start_time, end_time, event_title, event_id } = innerData);
+        } catch (parseError) {
+          console.error('Failed to parse inner payload:', parseError);
+        }
+      }
+    }
     
     if (!calendar_id || !start_time || !end_time) {
       throw new Error('Missing required fields: calendar_id, start_time, end_time');
