@@ -21,7 +21,11 @@ import {
   User,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  AlertTriangle,
+  Trash2,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 interface Order {
@@ -70,10 +74,16 @@ const AdminPortal = () => {
   // Dashboard metrics
   const [metrics, setMetrics] = useState({
     totalOrders: 0,
-    totalRevenue: 0,
+    completedRevenue: 0,
+    pendingRevenue: 0,
     pendingApplications: 0,
-    completedServices: 0
+    completedServices: 0,
+    completionRate: 0
   });
+
+  // Duplicate order management
+  const [duplicateOrders, setDuplicateOrders] = useState<{[email: string]: Order[]}>({});
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -138,7 +148,7 @@ const AdminPortal = () => {
     console.log('AdminPortal: Calculating metrics...');
     const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
-      .select('amount, status');
+      .select('amount, status, customer_email, created_at');
 
     const { data: applicationsData, error: applicationsError } = await supabase
       .from('subcontractor_applications')
@@ -153,13 +163,44 @@ const AdminPortal = () => {
     }
 
     if (ordersData && applicationsData) {
+      const completedOrders = ordersData.filter(order => order.status === 'completed');
+      const pendingOrders = ordersData.filter(order => order.status === 'pending');
+      
+      const completedRevenue = completedOrders.reduce((sum, order) => sum + (order.amount || 0), 0) / 100;
+      const pendingRevenue = pendingOrders.reduce((sum, order) => sum + (order.amount || 0), 0) / 100;
+      const completionRate = ordersData.length > 0 ? (completedOrders.length / ordersData.length) * 100 : 0;
+
+      // Detect duplicates
+      const duplicatesByEmail: {[email: string]: Order[]} = {};
+      ordersData.forEach(order => {
+        if (order.status === 'pending' && order.customer_email) {
+          if (!duplicatesByEmail[order.customer_email]) {
+            duplicatesByEmail[order.customer_email] = [];
+          }
+          duplicatesByEmail[order.customer_email].push(order as Order);
+        }
+      });
+
+      // Filter out singles, keep only actual duplicates
+      const actualDuplicates: {[email: string]: Order[]} = {};
+      Object.entries(duplicatesByEmail).forEach(([email, orders]) => {
+        if (orders.length > 1) {
+          actualDuplicates[email] = orders;
+        }
+      });
+
+      setDuplicateOrders(actualDuplicates);
+
       const newMetrics = {
         totalOrders: ordersData.length,
-        totalRevenue: ordersData.reduce((sum, order) => sum + (order.amount || 0), 0) / 100,
+        completedRevenue,
+        pendingRevenue,
         pendingApplications: applicationsData.filter(app => app.status === 'pending').length,
-        completedServices: ordersData.filter(order => order.status === 'completed').length
+        completedServices: completedOrders.length,
+        completionRate
       };
       console.log('AdminPortal: Metrics calculated:', newMetrics);
+      console.log('AdminPortal: Duplicates found:', Object.keys(actualDuplicates).length, 'customers with duplicates');
       setMetrics(newMetrics);
     }
   };
@@ -175,6 +216,7 @@ const AdminPortal = () => {
       
       toast.success('Order status updated successfully');
       fetchOrders();
+      calculateMetrics(); // Recalculate metrics to update revenue
     } catch (error) {
       toast.error('Failed to update order status');
     }
@@ -198,6 +240,37 @@ const AdminPortal = () => {
       calculateMetrics();
     } catch (error) {
       toast.error('Failed to update application status');
+    }
+  };
+
+  const deleteDuplicateOrders = async (email: string, keepLatest: boolean = true) => {
+    try {
+      const duplicates = duplicateOrders[email];
+      if (!duplicates || duplicates.length <= 1) return;
+
+      let ordersToDelete = duplicates;
+      if (keepLatest) {
+        // Sort by created_at and keep the most recent
+        const sorted = [...duplicates].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        ordersToDelete = sorted.slice(1); // Remove the first (newest) one
+      }
+
+      const idsToDelete = ordersToDelete.map(order => order.id);
+      
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .in('id', idsToDelete);
+
+      if (error) throw error;
+
+      toast.success(`Deleted ${idsToDelete.length} duplicate orders for ${email}`);
+      fetchOrders();
+      calculateMetrics();
+    } catch (error) {
+      toast.error('Failed to delete duplicate orders');
     }
   };
 
@@ -244,7 +317,7 @@ const AdminPortal = () => {
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Overview
@@ -252,6 +325,14 @@ const AdminPortal = () => {
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Orders
+              </TabsTrigger>
+              <TabsTrigger value="duplicates" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Duplicates {Object.keys(duplicateOrders).length > 0 && (
+                  <Badge variant="destructive" className="ml-1 text-xs">
+                    {Object.keys(duplicateOrders).length}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="applications" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -265,7 +346,7 @@ const AdminPortal = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -282,10 +363,34 @@ const AdminPortal = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                        <p className="text-2xl font-bold">${metrics.totalRevenue.toFixed(2)}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Completed Revenue</p>
+                        <p className="text-2xl font-bold">${metrics.completedRevenue.toFixed(2)}</p>
                       </div>
                       <DollarSign className="h-8 w-8 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Pending Revenue</p>
+                        <p className="text-2xl font-bold">${metrics.pendingRevenue.toFixed(2)}</p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-orange-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
+                        <p className="text-2xl font-bold">{metrics.completionRate.toFixed(1)}%</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-purple-600" />
                     </div>
                   </CardContent>
                 </Card>
@@ -314,6 +419,32 @@ const AdminPortal = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Duplicate Alert */}
+              {Object.keys(duplicateOrders).length > 0 && (
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                        <div>
+                          <h3 className="font-semibold text-red-800">Duplicate Orders Detected</h3>
+                          <p className="text-sm text-red-600">
+                            Found {Object.keys(duplicateOrders).length} customers with multiple pending orders
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => setSelectedTab("duplicates")}
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-100"
+                      >
+                        Review Duplicates
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Recent Activity */}
               <Card>
@@ -442,6 +573,97 @@ const AdminPortal = () => {
               </Card>
             </TabsContent>
 
+            {/* Duplicates Tab */}
+            <TabsContent value="duplicates">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Duplicate Order Management</CardTitle>
+                      <CardDescription>Manage customers with multiple pending orders</CardDescription>
+                    </div>
+                    <Button
+                      onClick={() => setShowDuplicates(!showDuplicates)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {showDuplicates ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                      {showDuplicates ? 'Hide Details' : 'Show Details'}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {Object.keys(duplicateOrders).length === 0 ? (
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-green-800 mb-2">No Duplicate Orders</h3>
+                      <p className="text-muted-foreground">All customers have single pending orders.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.entries(duplicateOrders).map(([email, orders]) => (
+                        <Card key={email} className="border-orange-200 bg-orange-50">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <h4 className="font-semibold text-orange-800">{email}</h4>
+                                <p className="text-sm text-orange-600">
+                                  {orders.length} pending orders • Total: ${(orders.reduce((sum, order) => sum + order.amount, 0) / 100).toFixed(2)}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => deleteDuplicateOrders(email, true)}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Keep Latest
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteDuplicateOrders(email, false)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete All
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            {showDuplicates && (
+                              <div className="space-y-2 mt-4 pt-4 border-t border-orange-200">
+                                {orders.map((order, index) => (
+                                  <div key={order.id} className="flex items-center justify-between text-sm">
+                                    <div>
+                                      <span className="font-medium">Order #{index + 1}</span>
+                                      <span className="ml-2 text-muted-foreground">
+                                        {order.cleaning_type?.replace(/_/g, ' ')} • ${(order.amount / 100).toFixed(2)}
+                                      </span>
+                                      <span className="ml-2 text-xs text-muted-foreground">
+                                        {new Date(order.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => deleteDuplicateOrders(email, false)}
+                                      className="h-6 text-xs"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {/* Applications Tab */}
             <TabsContent value="applications">
               <Card>
@@ -526,18 +748,22 @@ const AdminPortal = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
-                      <span>Total Revenue:</span>
-                      <span className="font-bold">${metrics.totalRevenue.toFixed(2)}</span>
+                      <span>Completed Revenue:</span>
+                      <span className="font-bold">${metrics.completedRevenue.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Average Order Value:</span>
+                      <span>Pending Revenue:</span>
+                      <span className="font-bold">${metrics.pendingRevenue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Average Completed Order:</span>
                       <span className="font-bold">
-                        ${metrics.totalOrders > 0 ? (metrics.totalRevenue / metrics.totalOrders).toFixed(2) : '0.00'}
+                        ${metrics.completedServices > 0 ? (metrics.completedRevenue / metrics.completedServices).toFixed(2) : '0.00'}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Completed Orders:</span>
-                      <span className="font-bold">{metrics.completedServices}</span>
+                      <span>Completion Rate:</span>
+                      <span className="font-bold">{metrics.completionRate.toFixed(1)}%</span>
                     </div>
                   </CardContent>
                 </Card>
