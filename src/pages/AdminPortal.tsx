@@ -97,6 +97,17 @@ const AdminPortal = () => {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Phase 3: Advanced analytics
+  const [analyticsData, setAnalyticsData] = useState({
+    dailyRevenue: [],
+    monthlyTrends: [],
+    customerSegments: [],
+    serviceTypeBreakdown: [],
+    completionRates: []
+  });
+  const [dateRange, setDateRange] = useState("7d");
+  const [isExporting, setIsExporting] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchData();
@@ -104,7 +115,7 @@ const AdminPortal = () => {
       // Auto-refresh every 30 seconds
       const interval = setInterval(() => {
         console.log('AdminPortal: Auto-refreshing data...');
-        fetchData();
+        fetchData(false);
       }, 30000);
       
       return () => clearInterval(interval);
@@ -118,7 +129,8 @@ const AdminPortal = () => {
       await Promise.all([
         fetchOrders(),
         fetchApplications(),
-        calculateMetrics()
+        calculateMetrics(),
+        calculateAnalytics() // Phase 3: Add analytics calculation
       ]);
       console.log('AdminPortal: Data fetched successfully');
     } catch (error) {
@@ -231,6 +243,134 @@ const AdminPortal = () => {
       console.log('AdminPortal: Duplicates found:', Object.keys(actualDuplicates).length, 'customers with duplicates');
       setMetrics(newMetrics);
     }
+  };
+
+  // Phase 3: Advanced analytics calculation
+  const calculateAnalytics = async () => {
+    try {
+      const { data: analyticsOrders, error } = await supabase
+        .from('orders')
+        .select('amount, status, customer_email, created_at, cleaning_type, frequency')
+        .gte('created_at', getDateFromRange(dateRange));
+
+      if (error) throw error;
+
+      // Calculate daily revenue for the last 7 days
+      const dailyRevenue = getDailyRevenue(analyticsOrders);
+      
+      // Calculate service type breakdown
+      const serviceTypeBreakdown = getServiceTypeBreakdown(analyticsOrders);
+      
+      // Calculate customer segments
+      const customerSegments = getCustomerSegments(analyticsOrders);
+      
+      // Calculate completion rates over time
+      const completionRates = getCompletionRates(analyticsOrders);
+
+      setAnalyticsData({
+        dailyRevenue,
+        monthlyTrends: [],
+        customerSegments,
+        serviceTypeBreakdown,
+        completionRates
+      });
+    } catch (error) {
+      console.error('Error calculating analytics:', error);
+    }
+  };
+
+  // Phase 3: Helper functions for analytics
+  const getDateFromRange = (range: string) => {
+    const now = new Date();
+    switch (range) {
+      case '7d': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      case '30d': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      case '90d': return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      default: return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    }
+  };
+
+  const getDailyRevenue = (orders: any[]) => {
+    const dailyData: { [key: string]: number } = {};
+    orders.forEach(order => {
+      if (order.status === 'completed') {
+        const date = new Date(order.created_at).toLocaleDateString();
+        dailyData[date] = (dailyData[date] || 0) + (order.amount / 100);
+      }
+    });
+    return Object.entries(dailyData).map(([date, revenue]) => ({ date, revenue }));
+  };
+
+  const getServiceTypeBreakdown = (orders: any[]) => {
+    const breakdown: { [key: string]: number } = {};
+    orders.forEach(order => {
+      const type = order.cleaning_type || 'Unknown';
+      breakdown[type] = (breakdown[type] || 0) + 1;
+    });
+    return Object.entries(breakdown).map(([type, count]) => ({ type, count }));
+  };
+
+  const getCustomerSegments = (orders: any[]) => {
+    const segments: { [key: string]: number } = {};
+    const customerOrders: { [email: string]: number } = {};
+    
+    orders.forEach(order => {
+      customerOrders[order.customer_email] = (customerOrders[order.customer_email] || 0) + 1;
+    });
+
+    Object.values(customerOrders).forEach(orderCount => {
+      if (orderCount === 1) segments['One-time'] = (segments['One-time'] || 0) + 1;
+      else if (orderCount <= 3) segments['Regular'] = (segments['Regular'] || 0) + 1;
+      else segments['VIP'] = (segments['VIP'] || 0) + 1;
+    });
+
+    return Object.entries(segments).map(([segment, count]) => ({ segment, count }));
+  };
+
+  const getCompletionRates = (orders: any[]) => {
+    const daily: { [key: string]: { total: number, completed: number } } = {};
+    
+    orders.forEach(order => {
+      const date = new Date(order.created_at).toLocaleDateString();
+      if (!daily[date]) daily[date] = { total: 0, completed: 0 };
+      daily[date].total++;
+      if (order.status === 'completed') daily[date].completed++;
+    });
+
+    return Object.entries(daily).map(([date, data]) => ({
+      date,
+      rate: data.total > 0 ? (data.completed / data.total) * 100 : 0
+    }));
+  };
+
+  // Phase 3: Export functionality
+  const exportOrdersToCSV = () => {
+    setIsExporting(true);
+    
+    const headers = ['Customer Name', 'Email', 'Service Type', 'Amount', 'Status', 'Created Date'];
+    const csvData = filteredOrders.map(order => [
+      order.customer_name,
+      order.customer_email,
+      order.cleaning_type,
+      `$${(order.amount / 100).toFixed(2)}`,
+      order.status,
+      new Date(order.created_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    setIsExporting(false);
+    toast.success('Orders exported successfully');
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -434,10 +574,14 @@ const AdminPortal = () => {
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Overview
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
               </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -586,6 +730,205 @@ const AdminPortal = () => {
                           <p className="text-sm text-muted-foreground mt-1">
                             ${(order.amount / 100).toFixed(2)}
                           </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Phase 3: Analytics Tab */}
+            <TabsContent value="analytics" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">Advanced Analytics</h2>
+                  <p className="text-muted-foreground">Detailed insights and performance metrics</p>
+                </div>
+                <div className="flex gap-2">
+                  <Select value={dateRange} onValueChange={(value) => {
+                    setDateRange(value);
+                    calculateAnalytics();
+                  }}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Last 7 Days</SelectItem>
+                      <SelectItem value="30d">Last 30 Days</SelectItem>
+                      <SelectItem value="90d">Last 90 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={exportOrdersToCSV} disabled={isExporting}>
+                    <Download className="h-4 w-4 mr-2" />
+                    {isExporting ? 'Exporting...' : 'Export CSV'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Analytics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Avg Order Value</p>
+                        <p className="text-2xl font-bold">
+                          ${orders.length > 0 ? (orders.reduce((sum, order) => sum + order.amount, 0) / orders.length / 100).toFixed(2) : '0.00'}
+                        </p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Customer Retention</p>
+                        <p className="text-2xl font-bold">
+                          {(() => {
+                            const uniqueCustomers = new Set(orders.map(o => o.customer_email)).size;
+                            const returningCustomers = Object.values(
+                              orders.reduce((acc, order) => {
+                                acc[order.customer_email] = (acc[order.customer_email] || 0) + 1;
+                                return acc;
+                              }, {} as {[key: string]: number})
+                            ).filter(count => count > 1).length;
+                            return uniqueCustomers > 0 ? `${((returningCustomers / uniqueCustomers) * 100).toFixed(1)}%` : '0%';
+                          })()}
+                        </p>
+                      </div>
+                      <Users className="h-8 w-8 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Active Customers</p>
+                        <p className="text-2xl font-bold">
+                          {new Set(orders.filter(o => new Date(o.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).map(o => o.customer_email)).size}
+                        </p>
+                      </div>
+                      <User className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Growth Rate</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {(() => {
+                            const thisMonth = orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth()).length;
+                            const lastMonth = orders.filter(o => new Date(o.created_at).getMonth() === new Date().getMonth() - 1).length;
+                            const growth = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth * 100) : 0;
+                            return `+${growth.toFixed(1)}%`;
+                          })()}
+                        </p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Service Type Breakdown */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      Service Type Distribution
+                    </CardTitle>
+                    <CardDescription>Popular cleaning services</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {analyticsData.serviceTypeBreakdown.map((item, index) => (
+                        <div key={item.type} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded" 
+                              style={{ backgroundColor: `hsl(${index * 60}, 70%, 50%)` }}
+                            />
+                            <span className="font-medium capitalize">{item.type}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold">{item.count}</span>
+                            <div className="text-sm text-muted-foreground">
+                              {((item.count / orders.length) * 100).toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Customer Segments */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Customer Segments
+                    </CardTitle>
+                    <CardDescription>Customer loyalty breakdown</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {analyticsData.customerSegments.map((segment, index) => (
+                        <div key={segment.segment} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded" 
+                              style={{ backgroundColor: `hsl(${index * 120}, 70%, 50%)` }}
+                            />
+                            <span className="font-medium">{segment.segment}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold">{segment.count}</span>
+                            <div className="text-sm text-muted-foreground">customers</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Revenue Trends */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Daily Revenue Trends
+                  </CardTitle>
+                  <CardDescription>Revenue performance over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-7 gap-2 h-32">
+                    {analyticsData.dailyRevenue.slice(-7).map((day, index) => (
+                      <div key={day.date} className="flex flex-col items-center">
+                        <div 
+                          className="bg-primary/20 w-full rounded-t"
+                          style={{ 
+                            height: `${Math.max((day.revenue / Math.max(...analyticsData.dailyRevenue.map(d => d.revenue))) * 100, 5)}%`,
+                            minHeight: '8px'
+                          }}
+                        />
+                        <div className="text-xs mt-1 text-muted-foreground">
+                          {new Date(day.date).getDate()}
+                        </div>
+                        <div className="text-xs font-medium">
+                          ${day.revenue.toFixed(0)}
                         </div>
                       </div>
                     ))}
