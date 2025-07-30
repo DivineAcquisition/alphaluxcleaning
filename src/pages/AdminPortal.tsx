@@ -364,7 +364,7 @@ const AdminPortal = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Completed Revenue</p>
-                        <p className="text-2xl font-bold">${metrics.completedRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-bold">${(metrics.completedRevenue || 0).toFixed(2)}</p>
                       </div>
                       <DollarSign className="h-8 w-8 text-green-600" />
                     </div>
@@ -376,7 +376,7 @@ const AdminPortal = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Pending Revenue</p>
-                        <p className="text-2xl font-bold">${metrics.pendingRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-bold">${(metrics.pendingRevenue || 0).toFixed(2)}</p>
                       </div>
                       <DollarSign className="h-8 w-8 text-orange-600" />
                     </div>
@@ -388,7 +388,7 @@ const AdminPortal = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
-                        <p className="text-2xl font-bold">{metrics.completionRate.toFixed(1)}%</p>
+                        <p className="text-2xl font-bold">{(metrics.completionRate || 0).toFixed(1)}%</p>
                       </div>
                       <TrendingUp className="h-8 w-8 text-purple-600" />
                     </div>
@@ -749,21 +749,21 @@ const AdminPortal = () => {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
                       <span>Completed Revenue:</span>
-                      <span className="font-bold">${metrics.completedRevenue.toFixed(2)}</span>
+                      <span className="font-bold">${(metrics.completedRevenue || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Pending Revenue:</span>
-                      <span className="font-bold">${metrics.pendingRevenue.toFixed(2)}</span>
+                      <span className="font-bold">${(metrics.pendingRevenue || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Average Completed Order:</span>
                       <span className="font-bold">
-                        ${metrics.completedServices > 0 ? (metrics.completedRevenue / metrics.completedServices).toFixed(2) : '0.00'}
+                        ${metrics.completedServices > 0 ? ((metrics.completedRevenue || 0) / metrics.completedServices).toFixed(2) : '0.00'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Completion Rate:</span>
-                      <span className="font-bold">{metrics.completionRate.toFixed(1)}%</span>
+                      <span className="font-bold">{(metrics.completionRate || 0).toFixed(1)}%</span>
                     </div>
                   </CardContent>
                 </Card>

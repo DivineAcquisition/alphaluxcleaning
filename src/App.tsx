@@ -61,6 +61,11 @@ function App() {
                     <AdminPortal />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin-dashboard" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminPortal />
+                  </ProtectedRoute>
+                } />
                 
                 {/* 404 fallback */}
                 <Route path="*" element={<NotFound />} />
