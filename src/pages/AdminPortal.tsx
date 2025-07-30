@@ -245,8 +245,12 @@ const AdminPortal = () => {
 
   const deleteDuplicateOrders = async (email: string, keepLatest: boolean = true) => {
     try {
+      console.log('Attempting to delete duplicates for:', email, 'keepLatest:', keepLatest);
       const duplicates = duplicateOrders[email];
-      if (!duplicates || duplicates.length <= 1) return;
+      if (!duplicates || duplicates.length <= 1) {
+        console.log('No duplicates found or insufficient duplicates:', duplicates?.length);
+        return;
+      }
 
       let ordersToDelete = duplicates;
       if (keepLatest) {
@@ -258,19 +262,26 @@ const AdminPortal = () => {
       }
 
       const idsToDelete = ordersToDelete.map(order => order.id);
+      console.log('Orders to delete:', idsToDelete);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('orders')
         .delete()
-        .in('id', idsToDelete);
+        .in('id', idsToDelete)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase deletion error:', error);
+        throw error;
+      }
 
+      console.log('Deletion successful, deleted rows:', data);
       toast.success(`Deleted ${idsToDelete.length} duplicate orders for ${email}`);
       fetchOrders();
       calculateMetrics();
     } catch (error) {
-      toast.error('Failed to delete duplicate orders');
+      console.error('Full deletion error:', error);
+      toast.error(`Failed to delete duplicate orders: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -643,14 +654,14 @@ const AdminPortal = () => {
                                         {new Date(order.created_at).toLocaleDateString()}
                                       </span>
                                     </div>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => deleteDuplicateOrders(email, false)}
-                                      className="h-6 text-xs"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
+                                     <Button
+                                       size="sm"
+                                       variant="outline"
+                                       onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                                       className="h-6 text-xs"
+                                     >
+                                       <Trash2 className="h-3 w-3" />
+                                     </Button>
                                   </div>
                                 ))}
                               </div>
