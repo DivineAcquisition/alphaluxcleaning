@@ -1,303 +1,397 @@
-import React, { useState, useEffect } from 'react';
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarDays, DollarSign, Users, TrendingUp, CheckCircle, XCircle, Clock, Lightbulb, AlertTriangle, Info } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  DollarSign, 
-  Calendar,
-  RefreshCw,
-  Brain,
-  Lightbulb,
-  TrendingUpIcon,
-  AlertTriangle,
-  Info,
-  Target
-} from "lucide-react";
-import { RecentBookings } from "@/components/dashboard/RecentBookings";
-import { MetricsOverview } from "@/components/dashboard/MetricsOverview";
+
+interface Order {
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  amount: number;
+  cleaning_type: string;
+  status: string;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  created_at: string;
+}
+
+interface BusinessInsight {
+  id: string;
+  type: 'opportunity' | 'warning' | 'info';
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  confidence: number;
+  actionable: boolean;
+  implemented?: boolean;
+  dismissed?: boolean;
+}
 
 interface Metrics {
   totalOrders: number;
   totalRevenue: number;
   completionRate: number;
-  duplicateOrders: number;
-}
-
-interface BusinessInsight {
-  type: string;
-  title: string;
-  message: string;
-  confidence: number;
-  impact: string;
-  action: string;
+  pendingOrders: number;
+  activeServices: number;
 }
 
 export default function AdminDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState([]);
-  const [applications, setApplications] = useState([]);
-  const [subcontractors, setSubcontractors] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({
     totalOrders: 0,
     totalRevenue: 0,
     completionRate: 0,
-    duplicateOrders: 0
+    pendingOrders: 0,
+    activeServices: 0
   });
-  const [businessInsights, setBusinessInsights] = useState<BusinessInsight[]>([]);
+  const [insights, setInsights] = useState<BusinessInsight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [insightStates, setInsightStates] = useState<{[key: string]: { implemented?: boolean, dismissed?: boolean }}>({});
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
     try {
-      const [ordersData, applicationsData, subcontractorsData] = await Promise.all([
-        supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100),
-        supabase.from('subcontractor_applications').select('*').order('created_at', { ascending: false }).limit(50),
-        supabase.from('subcontractors').select('*').limit(50)
-      ]);
+      // Fetch orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-      if (ordersData.data) setOrders(ordersData.data);
-      if (applicationsData.data) setApplications(applicationsData.data);
-      if (subcontractorsData.data) setSubcontractors(subcontractorsData.data);
+      if (ordersError) throw ordersError;
 
-      calculateMetrics(ordersData.data || []);
-      await generateRealInsights(ordersData.data || []);
+      const formattedOrders = ordersData.map(order => ({
+        id: order.id,
+        customer_name: order.customer_name || 'Unknown',
+        customer_email: order.customer_email || '',
+        customer_phone: order.customer_phone,
+        amount: order.amount || 0,
+        cleaning_type: order.cleaning_type || 'Unknown',
+        status: order.status || 'pending',
+        scheduled_date: order.scheduled_date,
+        scheduled_time: order.scheduled_time,
+        created_at: order.created_at
+      }));
+
+      setOrders(formattedOrders);
+
+      // Calculate metrics
+      const totalRevenue = formattedOrders.reduce((sum, order) => sum + (order.amount / 100), 0);
+      const completedOrders = formattedOrders.filter(order => order.status === 'completed').length;
+      const completionRate = formattedOrders.length > 0 ? (completedOrders / formattedOrders.length) * 100 : 0;
+      const pendingOrders = formattedOrders.filter(order => order.status === 'pending').length;
+      const activeServices = formattedOrders.filter(order => order.status === 'active').length;
+
+      setMetrics({
+        totalOrders: formattedOrders.length,
+        totalRevenue,
+        completionRate,
+        pendingOrders,
+        activeServices
+      });
+
+      // Generate real insights
+      const realInsights = await generateRealBusinessInsights(formattedOrders);
+      setInsights(realInsights);
+
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to fetch dashboard data');
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateMetrics = (ordersData: any[]) => {
-    const totalOrders = ordersData.length;
-    const totalRevenue = ordersData.reduce((sum, order) => sum + (order.amount || 0), 0) / 100;
-    const completedOrders = ordersData.filter(order => order.status === 'completed').length;
-    const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
-    
-    // Find duplicates based on customer email and service date
-    const duplicates = ordersData.filter((order, index, arr) => 
-      arr.findIndex(o => o.customer_email === order.customer_email && 
-                         o.scheduled_date === order.scheduled_date) !== index
-    );
+  const generateRealBusinessInsights = async (orders: Order[]): Promise<BusinessInsight[]> => {
+    const insights: BusinessInsight[] = [];
 
-    setMetrics({
-      totalOrders,
-      totalRevenue,
-      completionRate,
-      duplicateOrders: duplicates.length
+    if (orders.length === 0) {
+      return [{
+        id: 'no-data',
+        type: 'info',
+        title: 'No Data Available',
+        description: 'Not enough order data to generate meaningful insights. Start collecting orders to see AI-powered analysis.',
+        impact: 'low',
+        confidence: 100,
+        actionable: false
+      }];
+    }
+
+    // Revenue analysis
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.amount / 100), 0);
+    const avgOrderValue = totalRevenue / orders.length;
+    
+    if (avgOrderValue < 150) {
+      insights.push({
+        id: 'low-aov',
+        type: 'opportunity',
+        title: 'Low Average Order Value',
+        description: `Current average order value is $${avgOrderValue.toFixed(2)}. Consider upselling add-on services or premium packages to increase revenue per customer.`,
+        impact: 'high',
+        confidence: 85,
+        actionable: true
+      });
+    }
+
+    // Service type analysis
+    const serviceTypes = orders.reduce((acc, order) => {
+      acc[order.cleaning_type] = (acc[order.cleaning_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const mostPopular = Object.entries(serviceTypes).sort(([,a], [,b]) => b - a)[0];
+    if (mostPopular && mostPopular[1] > orders.length * 0.4) {
+      insights.push({
+        id: 'popular-service',
+        type: 'opportunity',
+        title: 'High Demand Service Identified',
+        description: `${mostPopular[0]} represents ${Math.round((mostPopular[1] / orders.length) * 100)}% of bookings. Consider expanding capacity or creating specialized packages for this service.`,
+        impact: 'medium',
+        confidence: 90,
+        actionable: true
+      });
+    }
+
+    // Status analysis
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
+    const pendingRate = (pendingOrders / orders.length) * 100;
+    
+    if (pendingRate > 30) {
+      insights.push({
+        id: 'high-pending',
+        type: 'warning',
+        title: 'High Pending Order Rate',
+        description: `${pendingRate.toFixed(1)}% of orders are still pending. This may indicate capacity issues or scheduling bottlenecks.`,
+        impact: 'high',
+        confidence: 95,
+        actionable: true
+      });
+    }
+
+    // Recent booking trend
+    const recentOrders = orders.filter(order => {
+      const orderDate = new Date(order.created_at);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return orderDate > weekAgo;
     });
+
+    if (recentOrders.length > orders.length * 0.3) {
+      insights.push({
+        id: 'growth-trend',
+        type: 'opportunity',
+        title: 'Strong Recent Growth',
+        description: `${Math.round((recentOrders.length / orders.length) * 100)}% of orders came in the last week. Consider scaling operations to meet growing demand.`,
+        impact: 'high',
+        confidence: 80,
+        actionable: true
+      });
+    }
+
+    return insights;
   };
 
-  const generateRealInsights = async (ordersData: any[]) => {
-    try {
-      const insights: BusinessInsight[] = [];
-      
-      // Revenue trend analysis
-      if (ordersData.length > 0) {
-        const last30Days = ordersData.filter(order => {
-          const orderDate = new Date(order.created_at);
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          return orderDate >= thirtyDaysAgo;
-        });
+  const handleImplementInsight = (insightId: string) => {
+    setInsightStates(prev => ({
+      ...prev,
+      [insightId]: { ...prev[insightId], implemented: true }
+    }));
+    toast.success('Insight marked as implemented');
+  };
 
-        const last60Days = ordersData.filter(order => {
-          const orderDate = new Date(order.created_at);
-          const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          return orderDate >= sixtyDaysAgo && orderDate < thirtyDaysAgo;
-        });
-
-        const revenue30 = last30Days.reduce((sum, order) => sum + (order.amount || 0), 0);
-        const revenue60 = last60Days.reduce((sum, order) => sum + (order.amount || 0), 0);
-
-        if (revenue60 > 0) {
-          const growthRate = ((revenue30 - revenue60) / revenue60) * 100;
-          if (growthRate > 20) {
-            insights.push({
-              type: 'opportunity',
-              title: 'Strong Revenue Growth',
-              message: `Revenue increased by ${Math.round(growthRate)}% in the last 30 days. Consider scaling operations.`,
-              confidence: 0.9,
-              impact: 'high',
-              action: 'Expand marketing and hiring efforts'
-            });
-          } else if (growthRate < -10) {
-            insights.push({
-              type: 'risk',
-              title: 'Revenue Decline Alert',
-              message: `Revenue decreased by ${Math.round(Math.abs(growthRate))}% in the last 30 days. Investigate causes.`,
-              confidence: 0.85,
-              impact: 'high',
-              action: 'Review pricing and customer satisfaction'
-            });
-          }
-        }
-      }
-
-      // Customer retention analysis
-      const uniqueCustomers = new Set(ordersData.map(order => order.customer_email)).size;
-      const repeatCustomers = ordersData.reduce((acc, order) => {
-        const customerOrders = ordersData.filter(o => o.customer_email === order.customer_email);
-        if (customerOrders.length > 1) acc.add(order.customer_email);
-        return acc;
-      }, new Set()).size;
-
-      if (uniqueCustomers > 0) {
-        const retentionRate = (repeatCustomers / uniqueCustomers) * 100;
-        if (retentionRate < 30) {
-          insights.push({
-            type: 'risk',
-            title: 'Low Customer Retention',
-            message: `Only ${Math.round(retentionRate)}% of customers return. Implement loyalty programs.`,
-            confidence: 0.88,
-            impact: 'high',
-            action: 'Launch customer retention campaign'
-          });
-        } else if (retentionRate > 60) {
-          insights.push({
-            type: 'opportunity',
-            title: 'Excellent Customer Loyalty',
-            message: `${Math.round(retentionRate)}% customer retention rate. Leverage for referral program.`,
-            confidence: 0.92,
-            impact: 'medium',
-            action: 'Launch referral incentive program'
-          });
-        }
-      }
-
-      setBusinessInsights(insights);
-    } catch (error) {
-      console.error('Error generating insights:', error);
-    }
+  const handleDismissInsight = (insightId: string) => {
+    setInsightStates(prev => ({
+      ...prev,
+      [insightId]: { ...prev[insightId], dismissed: true }
+    }));
+    toast.info('Insight dismissed');
   };
 
   const getInsightIcon = (type: string) => {
     switch (type) {
-      case 'opportunity': return <TrendingUpIcon className="h-5 w-5 text-green-600" />;
-      case 'risk': return <AlertTriangle className="h-5 w-5 text-red-600" />;
-      case 'efficiency': return <Target className="h-5 w-5 text-blue-600" />;
-      default: return <Info className="h-5 w-5 text-gray-600" />;
+      case 'opportunity': return <TrendingUp className="h-4 w-4" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4" />;
+      default: return <Info className="h-4 w-4" />;
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 300000); // Refresh every 5 minutes
-    return () => clearInterval(interval);
-  }, []);
+  const getInsightColor = (type: string) => {
+    switch (type) {
+      case 'opportunity': return 'text-green-600';
+      case 'warning': return 'text-orange-600';
+      default: return 'text-blue-600';
+    }
+  };
 
   if (loading) {
     return (
-      <AdminLayout title="Dashboard" description="Business overview and key metrics">
+      <AdminLayout title="Booking Dashboard" description="Overview of all bookings and business metrics">
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading dashboard...</p>
+          </div>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title="Dashboard" description="Business overview and key metrics">
+    <AdminLayout title="Booking Dashboard" description="Overview of all bookings and business metrics">
       <div className="space-y-6">
-        {/* Quick Actions */}
-        <div className="flex gap-4">
-          <Button onClick={fetchDashboardData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Data
-          </Button>
-        </div>
-
         {/* Metrics Overview */}
-        <MetricsOverview 
-          bookings={orders}
-          orders={orders}
-          subcontractors={subcontractors}
-        />
-
-        {/* AI Insights Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              AI-Powered Business Insights
-            </CardTitle>
-            <CardDescription>
-              Real-time analysis of your business data with actionable recommendations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {businessInsights.length > 0 ? (
-                businessInsights.map((insight, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        {getInsightIcon(insight.type)}
-                        <div className="space-y-1">
-                          <h4 className="font-medium">{insight.title}</h4>
-                          <p className="text-sm text-muted-foreground">{insight.message}</p>
-                          <p className="text-xs font-medium text-primary">{insight.action}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={insight.impact === 'high' ? 'destructive' : insight.impact === 'medium' ? 'default' : 'secondary'}>
-                          {insight.impact} impact
-                        </Badge>
-                        <Badge variant="outline">
-                          {Math.round(insight.confidence * 100)}% confidence
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Analyzing data to generate insights...</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <RecentBookings bookings={orders.slice(0, 5)} />
-          
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Applications</CardTitle>
-              <CardDescription>Latest subcontractor applications</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {applications.slice(0, 5).map((app: any) => (
-                  <div key={app.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{app.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{app.email}</p>
-                    </div>
-                    <Badge variant={
-                      app.status === 'approved' ? 'default' : 
-                      app.status === 'rejected' ? 'destructive' : 'secondary'
-                    }>
-                      {app.status}
-                    </Badge>
-                  </div>
-                ))}
-                {applications.length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">No recent applications</p>
-                )}
-              </div>
+              <div className="text-2xl font-bold">{metrics.totalOrders}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${metrics.totalRevenue.toFixed(2)}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.completionRate.toFixed(1)}%</div>
+              <Progress value={metrics.completionRate} className="mt-2" />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.pendingOrders}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Services</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.activeServices}</div>
             </CardContent>
           </Card>
         </div>
+
+        <Tabs defaultValue="insights" className="w-full">
+          <TabsList>
+            <TabsTrigger value="insights">AI Insights</TabsTrigger>
+            <TabsTrigger value="recent-orders">Recent Orders</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="insights">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5" />
+                  AI-Powered Business Insights
+                </CardTitle>
+                <CardDescription>
+                  Real-time analysis of your business data with actionable recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {insights.map((insight) => {
+                    const state = insightStates[insight.id];
+                    const isImplemented = state?.implemented;
+                    const isDismissed = state?.dismissed;
+                    
+                    if (isDismissed) return null;
+                    
+                    return (
+                      <div key={insight.id} className={`p-4 border rounded-lg ${isImplemented ? 'bg-green-50 border-green-200' : ''}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={getInsightColor(insight.type)}>
+                                {getInsightIcon(insight.type)}
+                              </span>
+                              <h4 className="font-semibold">{insight.title}</h4>
+                              <Badge variant={insight.impact === 'high' ? 'destructive' : insight.impact === 'medium' ? 'default' : 'secondary'}>
+                                {insight.impact} impact
+                              </Badge>
+                              <Badge variant="outline">{insight.confidence}% confidence</Badge>
+                              {isImplemented && <Badge variant="default" className="bg-green-600">Implemented</Badge>}
+                            </div>
+                            <p className="text-muted-foreground">{insight.description}</p>
+                          </div>
+                          {!isImplemented && insight.actionable && (
+                            <div className="flex gap-2 ml-4">
+                              <Button size="sm" onClick={() => handleImplementInsight(insight.id)}>
+                                Implement
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleDismissInsight(insight.id)}>
+                                Dismiss
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="recent-orders">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Orders</CardTitle>
+                <CardDescription>Latest booking activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {orders.slice(0, 10).map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{order.customer_name}</p>
+                        <p className="text-sm text-muted-foreground">{order.cleaning_type}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">${(order.amount / 100).toFixed(2)}</p>
+                        <Badge variant={order.status === 'completed' ? 'default' : order.status === 'pending' ? 'secondary' : 'outline'}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
