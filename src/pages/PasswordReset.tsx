@@ -31,10 +31,24 @@ export default function PasswordReset() {
     }
 
     // Set the session with the tokens from the URL
-    supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+    const setSessionFromTokens = async () => {
+      try {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (error) {
+          console.error('Error setting session:', error);
+          setError('Invalid or expired password reset link');
+        }
+      } catch (err) {
+        console.error('Session error:', err);
+        setError('Invalid or expired password reset link');
+      }
+    };
+
+    setSessionFromTokens();
   }, [accessToken, refreshToken, type]);
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
