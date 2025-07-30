@@ -20,6 +20,7 @@ import AdminPortal from '@/pages/AdminPortal';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
+import PasswordReset from '@/pages/PasswordReset';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ function App() {
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 

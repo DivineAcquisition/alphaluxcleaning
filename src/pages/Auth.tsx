@@ -7,14 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, LogIn, UserPlus, Home } from 'lucide-react';
+import { Loader2, LogIn, UserPlus, Home, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const { user, userRole, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // Form states
   const [signInData, setSignInData] = useState({ email: '', password: '' });
@@ -148,6 +151,36 @@ export default function Auth() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    if (!resetEmail) {
+      setError('Please enter your email address');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/password-reset`,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        toast.success('Password reset email sent! Check your inbox.');
+        setShowPasswordReset(false);
+        setResetEmail('');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -213,14 +246,26 @@ export default function Auth() {
                       placeholder="Enter your password"
                       value={signInData.password}
                       onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
-                  >
+                       required
+                     />
+                   </div>
+                   
+                   <div className="text-right">
+                     <Button 
+                       type="button" 
+                       variant="link" 
+                       className="h-auto p-0 text-sm"
+                       onClick={() => setShowPasswordReset(true)}
+                     >
+                       Forgot password?
+                     </Button>
+                   </div>
+
+                   <Button 
+                     type="submit" 
+                     className="w-full" 
+                     disabled={isSubmitting}
+                   >
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -304,6 +349,62 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+
+            {/* Password Reset Modal */}
+            {showPasswordReset && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <Card className="w-full max-w-md">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5" />
+                      Reset Password
+                    </CardTitle>
+                    <CardDescription>
+                      Enter your email address and we'll send you a link to reset your password.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handlePasswordReset} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">Email</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setShowPasswordReset(false)}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          className="flex-1" 
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            'Send Reset Link'
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <Button 
