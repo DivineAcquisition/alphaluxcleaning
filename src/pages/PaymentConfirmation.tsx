@@ -172,9 +172,7 @@ const PaymentConfirmation = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ModernScheduler
-                  onSchedulingComplete={handleSchedulingComplete}
-                />
+                <ModernScheduler />
               </CardContent>
             </Card>
           )}

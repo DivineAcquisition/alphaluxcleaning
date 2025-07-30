@@ -361,22 +361,37 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Dialogs */}
+      {/* Dialogs - Commented out until props are properly configured */}
+      {/* 
       {selectedOrder && (
         <>
           <CancellationDialog
             open={showCancelDialog}
             onOpenChange={setShowCancelDialog}
+            service={selectedOrder}
+            onSuccess={() => {
+              fetchOrders();
+              setShowCancelDialog(false);
+            }}
           />
           
           <RescheduleDialog
             open={showRescheduleDialog}
             onOpenChange={setShowRescheduleDialog}
+            service={selectedOrder}
+            onSuccess={() => {
+              fetchOrders();
+              setShowRescheduleDialog(false);
+            }}
           />
           
-          <TipComponent />
+          <TipComponent 
+            orderId={selectedOrder.id}
+            orderAmount={selectedOrder.amount}
+          />
         </>
       )}
+      */}
     </div>
   );
 };
