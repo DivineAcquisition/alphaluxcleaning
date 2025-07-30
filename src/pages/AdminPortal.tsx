@@ -277,6 +277,26 @@ const AdminPortal = () => {
 
       console.log('Deletion successful, deleted rows:', data);
       toast.success(`Deleted ${idsToDelete.length} duplicate orders for ${email}`);
+      
+      // Update local state immediately
+      setOrders(prevOrders => prevOrders.filter(order => !idsToDelete.includes(order.id)));
+      
+      // Remove from duplicates
+      const updatedDuplicates = { ...duplicateOrders };
+      if (keepLatest && updatedDuplicates[email]) {
+        // Keep only the latest one
+        const sorted = [...updatedDuplicates[email]].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        updatedDuplicates[email] = sorted.slice(0, 1);
+        if (updatedDuplicates[email].length <= 1) {
+          delete updatedDuplicates[email];
+        }
+      } else {
+        delete updatedDuplicates[email];
+      }
+      setDuplicateOrders(updatedDuplicates);
+      
       fetchOrders();
       calculateMetrics();
     } catch (error) {
