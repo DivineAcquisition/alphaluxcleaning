@@ -665,6 +665,67 @@ const AdminPortal = () => {
     }
   };
 
+  // Phase 4: Individual order deletion
+  const deleteOrder = async (orderId: string, customerName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete the order for ${customerName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+      
+      toast.success('Order deleted successfully');
+      
+      // Update local state immediately
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      setSelectedOrders(prev => prev.filter(id => id !== orderId));
+      
+      // Refresh data
+      fetchData(false);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Failed to delete order');
+    }
+  };
+
+  // Phase 4: Bulk order deletion
+  const handleBulkDelete = async () => {
+    if (selectedOrders.length === 0) {
+      toast.error('Please select orders to delete');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to permanently delete ${selectedOrders.length} selected orders? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .in('id', selectedOrders);
+
+      if (error) throw error;
+      
+      toast.success(`Successfully deleted ${selectedOrders.length} orders`);
+      
+      // Update local state immediately
+      setOrders(prevOrders => prevOrders.filter(order => !selectedOrders.includes(order.id)));
+      setSelectedOrders([]);
+      
+      // Refresh data
+      fetchData(false);
+    } catch (error) {
+      console.error('Error bulk deleting orders:', error);
+      toast.error('Failed to delete selected orders');
+    }
+  };
+
   const toggleOrderSelection = (orderId: string) => {
     setSelectedOrders(prev => 
       prev.includes(orderId) 
@@ -1155,15 +1216,27 @@ const AdminPortal = () => {
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
                       >
+                        <CheckCircle className="h-4 w-4 mr-1" />
                         Mark Completed
                       </Button>
                       <Button
                         onClick={() => handleBulkStatusUpdate('cancelled')}
                         disabled={selectedOrders.length === 0}
                         size="sm"
+                        variant="outline"
+                        className="border-yellow-600 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Cancel Orders
+                      </Button>
+                      <Button
+                        onClick={handleBulkDelete}
+                        disabled={selectedOrders.length === 0}
+                        size="sm"
                         variant="destructive"
                       >
-                        Cancel Orders
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete Permanently
                       </Button>
                     </div>
                   </div>
@@ -1279,24 +1352,35 @@ const AdminPortal = () => {
                                 {order.status.replace('_', ' ')}
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              <Select
-                                value={order.status}
-                                onValueChange={(value) => updateOrderStatus(order.id, value)}
-                              >
-                                <SelectTrigger className="w-32">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                                  <SelectItem value="in_progress">In Progress</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
+                             <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <Select
+                                   value={order.status}
+                                   onValueChange={(value) => updateOrderStatus(order.id, value)}
+                                 >
+                                   <SelectTrigger className="w-32">
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     <SelectItem value="pending">Pending</SelectItem>
+                                     <SelectItem value="confirmed">Confirmed</SelectItem>
+                                     <SelectItem value="scheduled">Scheduled</SelectItem>
+                                     <SelectItem value="in_progress">In Progress</SelectItem>
+                                     <SelectItem value="completed">Completed</SelectItem>
+                                     <SelectItem value="cancelled">Cancelled</SelectItem>
+                                   </SelectContent>
+                                 </Select>
+                                 <Button
+                                   onClick={() => deleteOrder(order.id, order.customer_name)}
+                                   size="sm"
+                                   variant="destructive"
+                                   className="h-8 w-8 p-0"
+                                   title="Delete order permanently"
+                                 >
+                                   <Trash2 className="h-3 w-3" />
+                                 </Button>
+                               </div>
+                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
