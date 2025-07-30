@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation } from "@/components/Navigation";
 import { toast } from "sonner";
@@ -25,7 +26,12 @@ import {
   AlertTriangle,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw,
+  Filter,
+  Download,
+  BarChart3,
+  PieChart
 } from "lucide-react";
 
 interface Order {
@@ -85,15 +91,29 @@ const AdminPortal = () => {
   const [duplicateOrders, setDuplicateOrders] = useState<{[email: string]: Order[]}>({});
   const [showDuplicates, setShowDuplicates] = useState(false);
 
+  // Phase 2: Enhanced filtering and bulk operations
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchData();
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(() => {
+        console.log('AdminPortal: Auto-refreshing data...');
+        fetchData();
+      }, 30000);
+      
+      return () => clearInterval(interval);
     }
   }, [user]);
 
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
     console.log('AdminPortal: Starting to fetch data...');
-    setIsLoading(true);
+    if (showLoading) setIsLoading(true);
     try {
       await Promise.all([
         fetchOrders(),
@@ -105,8 +125,16 @@ const AdminPortal = () => {
       console.error('AdminPortal: Error fetching data:', error);
       toast.error('Failed to load admin data');
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
+  };
+
+  // Phase 2: Manual refresh function
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData(false);
+    setIsRefreshing(false);
+    toast.success('Data refreshed successfully');
   };
 
   const fetchOrders = async () => {
@@ -331,6 +359,53 @@ const AdminPortal = () => {
       </div>
     );
   }
+  const filteredOrders = orders.filter(order => {
+    const matchesFilter = orderFilter === "all" || order.status === orderFilter;
+    const matchesSearch = searchTerm === "" || 
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.cleaning_type.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  // Phase 2: Bulk operations
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (selectedOrders.length === 0) {
+      toast.error('Please select orders to update');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .in('id', selectedOrders);
+
+      if (error) throw error;
+      
+      toast.success(`Updated ${selectedOrders.length} orders to ${newStatus}`);
+      setSelectedOrders([]);
+      fetchData(false);
+    } catch (error) {
+      toast.error('Failed to update orders');
+    }
+  };
+
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrders(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const selectAllOrders = () => {
+    setSelectedOrders(
+      selectedOrders.length === filteredOrders.length 
+        ? [] 
+        : filteredOrders.map(order => order.id)
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
@@ -340,11 +415,22 @@ const AdminPortal = () => {
         <div className="max-w-7xl mx-auto space-y-8">
           
           {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Admin Portal</h1>
-            <p className="text-muted-foreground">
-              Manage orders, applications, and monitor business performance
-            </p>
+          <div className="flex justify-between items-center">
+            <div className="text-center flex-1">
+              <h1 className="text-3xl font-bold mb-4">Admin Portal</h1>
+              <p className="text-muted-foreground">
+                Manage orders, applications, and monitor business performance
+              </p>
+            </div>
+            <Button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              variant="outline"
+              className="ml-4"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
@@ -512,14 +598,77 @@ const AdminPortal = () => {
             <TabsContent value="orders">
               <Card>
                 <CardHeader>
-                  <CardTitle>Order Management</CardTitle>
-                  <CardDescription>Manage all customer orders and bookings</CardDescription>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>Order Management</CardTitle>
+                      <CardDescription>Manage all customer orders and bookings</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleBulkStatusUpdate('completed')}
+                        disabled={selectedOrders.length === 0}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Mark Completed
+                      </Button>
+                      <Button
+                        onClick={() => handleBulkStatusUpdate('cancelled')}
+                        disabled={selectedOrders.length === 0}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        Cancel Orders
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Phase 2: Filters */}
+                  <div className="flex gap-4 mt-4">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Search by customer name, email, or service type..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="max-w-md"
+                      />
+                    </div>
+                    <Select value={orderFilter} onValueChange={setOrderFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Orders</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
+                  {selectedOrders.length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-700">
+                        {selectedOrders.length} order(s) selected
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>
+                            <input
+                              type="checkbox"
+                              checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                              onChange={selectAllOrders}
+                              className="rounded border-gray-300"
+                            />
+                          </TableHead>
                           <TableHead>Customer</TableHead>
                           <TableHead>Service</TableHead>
                           <TableHead>Date & Time</TableHead>
@@ -529,8 +678,16 @@ const AdminPortal = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {orders.map((order) => (
+                        {filteredOrders.map((order) => (
                           <TableRow key={order.id}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={selectedOrders.includes(order.id)}
+                                onChange={() => toggleOrderSelection(order.id)}
+                                className="rounded border-gray-300"
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
@@ -600,6 +757,17 @@ const AdminPortal = () => {
                       </TableBody>
                     </Table>
                   </div>
+                  
+                  {filteredOrders.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        {searchTerm || orderFilter !== "all" 
+                          ? "No orders match your filters" 
+                          : "No orders found"
+                        }
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
