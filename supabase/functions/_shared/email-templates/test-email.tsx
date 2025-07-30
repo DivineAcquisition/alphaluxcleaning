@@ -18,291 +18,128 @@ export const TestEmail = ({
   sampleOrderId,
   orderStatusUrl,
 }: TestEmailProps) => (
-  <BaseEmailTemplate previewText="🧪 Test Email - Bay Area Cleaning Professionals email system is working!">
+  <BaseEmailTemplate previewText="Test Email - Bay Area Cleaning Professionals email system is working!">
     
-    {/* Test Header */}
-    <Section style={testSection}>
-      <Heading style={testHeading}>🧪 Test Email System</Heading>
-      <Text style={testText}>
-        This is a test email to verify that the Bay Area Cleaning Professionals email system is working correctly.
-        Email sent to: <strong>{testEmail}</strong>
-      </Text>
-    </Section>
+    <Heading style={heading}>Test Email System</Heading>
+    
+    <Text style={text}>
+      This is a test email to verify that the Bay Area Cleaning Professionals email system is working correctly.
+      Email sent to: <strong>{testEmail}</strong>
+    </Text>
 
-    {/* Sample Order Details */}
     <Section style={orderSection}>
-      <Heading style={sectionHeading}>📋 Sample Order Details</Heading>
-      <div style={orderGrid}>
-        <div style={orderRow}>
-          <span style={orderLabel}>Order ID:</span>
-          <span style={orderValue}>{sampleOrderId}</span>
-        </div>
-        <div style={orderRow}>
-          <span style={orderLabel}>Service Type:</span>
-          <span style={orderValue}>Deep Cleaning</span>
-        </div>
-        <div style={orderRow}>
-          <span style={orderLabel}>Frequency:</span>
-          <span style={orderValue}>One-time</span>
-        </div>
-        <div style={orderRow}>
-          <span style={orderLabel}>Square Footage:</span>
-          <span style={orderValue}>1,500 sq ft</span>
-        </div>
-        <div style={orderRow}>
-          <span style={orderLabel}>Scheduled Date:</span>
-          <span style={orderValue}>
-            {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </span>
-        </div>
-        <div style={{...orderRow, ...totalRow}}>
-          <span style={totalLabel}>Total Amount:</span>
-          <span style={totalValue}>$299.00</span>
-        </div>
-      </div>
+      <Heading style={subHeading}>Sample Order Details</Heading>
+      <Text style={text}><strong>Order ID:</strong> {sampleOrderId}</Text>
+      <Text style={text}><strong>Service Type:</strong> Deep Cleaning</Text>
+      <Text style={text}><strong>Frequency:</strong> One-time</Text>
+      <Text style={text}><strong>Square Footage:</strong> 1,500 sq ft</Text>
+      <Text style={text}>
+        <strong>Scheduled Date:</strong> {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}
+      </Text>
+      <Text style={totalText}><strong>Total Amount:</strong> $299.00</Text>
     </Section>
 
-    {/* Sample Features */}
-    <Section style={featuresSection}>
-      <Heading style={sectionHeading}>✨ Email Features Test</Heading>
-      <div style={featuresList}>
-        <div style={feature}>
-          <span style={featureIcon}>🎨</span>
-          <div>
-            <Text style={featureTitle}>Branded Design</Text>
-            <Text style={featureDescription}>Consistent branding with your logo and colors</Text>
-          </div>
-        </div>
-        <div style={feature}>
-          <span style={featureIcon}>📱</span>
-          <div>
-            <Text style={featureTitle}>Mobile Responsive</Text>
-            <Text style={featureDescription}>Looks great on all devices and email clients</Text>
-          </div>
-        </div>
-        <div style={feature}>
-          <span style={featureIcon}>🔗</span>
-          <div>
-            <Text style={featureTitle}>Interactive Links</Text>
-            <Text style={featureDescription}>Working buttons and links for customer actions</Text>
-          </div>
-        </div>
-        <div style={feature}>
-          <span style={featureIcon}>📊</span>
-          <div>
-            <Text style={featureTitle}>Dynamic Content</Text>
-            <Text style={featureDescription}>Personalized content based on order details</Text>
-          </div>
-        </div>
-      </div>
-    </Section>
+    <Text style={text}>
+      <strong>Email Features Test:</strong><br />
+      • Branded design with consistent branding<br />
+      • Mobile responsive - looks great on all devices<br />
+      • Interactive links and working buttons<br />
+      • Personalized content based on order details
+    </Text>
 
-    {/* CTA Button */}
-    <Section style={ctaSection}>
-      <Button href={orderStatusUrl} style={ctaButton}>
-        📊 Check Sample Order Status
+    <Section style={buttonSection}>
+      <Button href={orderStatusUrl} style={button}>
+        Check Sample Order Status
       </Button>
     </Section>
 
-    {/* Success Message */}
     <Section style={successSection}>
-      <Heading style={successHeading}>✅ Email System Status</Heading>
       <Text style={successText}>
-        🎉 Congratulations! Your email system is working perfectly. All email templates are now ready to use 
+        Congratulations! Your email system is working perfectly. All email templates are now ready to use 
         for order confirmations, application responses, password resets, and more.
       </Text>
     </Section>
 
-    {/* System Info */}
-    <Section style={infoSection}>
-      <Heading style={sectionHeading}>🔧 System Information</Heading>
-      <div style={infoList}>
-        <Text style={infoItem}>📧 Email Provider: Resend</Text>
-        <Text style={infoItem}>🎨 Template Engine: React Email</Text>
-        <Text style={infoItem}>🚀 Platform: Supabase Edge Functions</Text>
-        <Text style={infoItem}>⏰ Test Time: {new Date().toLocaleString()}</Text>
-      </div>
-    </Section>
+    <Text style={text}>
+      <strong>System Information:</strong><br />
+      • Email Provider: Resend<br />
+      • Template Engine: React Email<br />
+      • Platform: Supabase Edge Functions<br />
+      • Test Time: {new Date().toLocaleString()}
+    </Text>
 
   </BaseEmailTemplate>
 )
 
-// Styles
-const testSection = {
-  backgroundColor: 'linear-gradient(135deg, #E0E7FF, #C7D2FE)',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  borderLeft: '5px solid #6366F1',
-  textAlign: 'center' as const,
-}
-
-const testHeading = {
-  color: '#4338CA',
-  margin: '0 0 15px 0',
+// Simple styles
+const heading = {
+  color: '#3b82f6',
   fontSize: '24px',
-  fontWeight: '700',
+  fontWeight: '600',
+  margin: '0 0 20px 0',
 }
 
-const testText = {
+const subHeading = {
+  color: '#1f2937',
+  fontSize: '18px',
+  fontWeight: '600',
+  margin: '0 0 15px 0',
+}
+
+const text = {
   color: '#374151',
   fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
+  lineHeight: '1.5',
+  margin: '0 0 15px 0',
 }
 
 const orderSection = {
-  backgroundColor: '#F9FAFB',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #E5E7EB',
+  backgroundColor: '#f9fafb',
+  padding: '20px',
+  borderRadius: '6px',
+  margin: '20px 0',
 }
 
-const sectionHeading = {
-  color: '#8B5CF6',
-  margin: '0 0 20px 0',
-  fontSize: '20px',
-  fontWeight: '600',
-}
-
-const orderGrid = {
-  display: 'grid',
-  gap: '12px',
-}
-
-const orderRow = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '8px 0',
-}
-
-const orderLabel = {
-  color: '#6B7280',
-  fontWeight: '500',
-}
-
-const orderValue = {
-  color: '#111827',
-  fontWeight: '600',
-}
-
-const totalRow = {
-  borderTop: '2px solid #E5E7EB',
-  paddingTop: '15px',
-  marginTop: '10px',
-}
-
-const totalLabel = {
-  color: '#111827',
-  fontWeight: '700',
-  fontSize: '18px',
-}
-
-const totalValue = {
+const totalText = {
   color: '#059669',
-  fontWeight: '700',
-  fontSize: '18px',
-}
-
-const featuresSection = {
-  backgroundColor: '#FEF7FF',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #E9D5FF',
-}
-
-const featuresList = {
-  display: 'grid',
-  gap: '20px',
-}
-
-const feature = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '15px',
-}
-
-const featureIcon = {
-  fontSize: '24px',
-  lineHeight: '1',
-}
-
-const featureTitle = {
-  color: '#111827',
   fontSize: '16px',
   fontWeight: '600',
-  margin: '0 0 5px 0',
+  margin: '15px 0 0 0',
 }
 
-const featureDescription = {
-  color: '#6B7280',
-  fontSize: '14px',
-  lineHeight: '1.5',
-  margin: '0',
-}
-
-const ctaSection = {
+const buttonSection = {
   textAlign: 'center' as const,
-  marginBottom: '30px',
+  margin: '30px 0',
 }
 
-const ctaButton = {
-  backgroundColor: 'linear-gradient(135deg, #8B5CF6, #A855F7)',
-  color: 'white',
-  padding: '15px 30px',
-  borderRadius: '12px',
-  textDecoration: 'none',
-  fontWeight: '600',
+const button = {
+  backgroundColor: '#3b82f6',
+  color: '#ffffff',
   fontSize: '16px',
-  boxShadow: '0 10px 20px rgba(139, 92, 246, 0.3)',
+  fontWeight: '600',
+  textDecoration: 'none',
+  padding: '12px 24px',
+  borderRadius: '6px',
   display: 'inline-block',
 }
 
 const successSection = {
-  backgroundColor: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  borderLeft: '5px solid #10B981',
+  backgroundColor: '#dcfce7',
+  padding: '20px',
+  borderRadius: '6px',
+  margin: '20px 0',
   textAlign: 'center' as const,
 }
 
-const successHeading = {
-  color: '#047857',
-  margin: '0 0 15px 0',
-  fontSize: '20px',
-  fontWeight: '700',
-}
-
 const successText = {
-  color: '#374151',
+  color: '#047857',
   fontSize: '16px',
   lineHeight: '1.6',
-  margin: '0',
-}
-
-const infoSection = {
-  backgroundColor: '#F3F4F6',
-  padding: '25px',
-  borderRadius: '15px',
-}
-
-const infoList = {
-  display: 'grid',
-  gap: '8px',
-}
-
-const infoItem = {
-  color: '#6B7280',
-  fontSize: '14px',
   margin: '0',
 }
 

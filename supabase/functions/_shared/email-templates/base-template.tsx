@@ -4,7 +4,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Preview,
   Section,
   Text,
@@ -25,15 +24,10 @@ export const BaseEmailTemplate = ({
     <Preview>{previewText}</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header with Logo */}
+        
+        {/* Header */}
         <Section style={header}>
-          <div style={logoContainer}>
-            <Img
-              src="/lovable-uploads/ad3d4805-1acc-4581-a7a7-3709bfe43093.png"
-              alt="Bay Area Cleaning Professionals"
-              style={logo}
-            />
-          </div>
+          <Heading style={headerHeading}>Bay Area Cleaning Professionals</Heading>
         </Section>
         
         {/* Main Content */}
@@ -45,11 +39,7 @@ export const BaseEmailTemplate = ({
         <Section style={footer}>
           <Text style={footerText}>
             Bay Area Cleaning Professionals<br />
-            📧 info@bayareacleaningpros.com | 📞 (415) 987-6543<br />
-            🌐 bayareacleaningpros.com
-          </Text>
-          <Text style={copyright}>
-            © 2024 Bay Area Cleaning Professionals. All rights reserved.
+            📧 info@bayareacleaningpros.com | 📞 (415) 987-6543
           </Text>
         </Section>
       </Container>
@@ -57,59 +47,47 @@ export const BaseEmailTemplate = ({
   </Html>
 )
 
+// Simple, clean styles
 const main = {
-  backgroundColor: '#f8fafc',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+  backgroundColor: '#f9fafb',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 }
 
 const container = {
   maxWidth: '600px',
-  margin: '40px auto',
+  margin: '0 auto',
   backgroundColor: '#ffffff',
-  borderRadius: '20px',
-  overflow: 'hidden',
-  boxShadow: '0 20px 40px rgba(139, 92, 246, 0.15)',
+  padding: '20px',
 }
 
 const header = {
-  background: 'linear-gradient(135deg, #8B5CF6, #A855F7)',
-  padding: '40px 30px',
   textAlign: 'center' as const,
+  padding: '20px 0',
+  borderBottom: '1px solid #e5e7eb',
+  marginBottom: '30px',
 }
 
-const logoContainer = {
-  display: 'inline-block',
-  padding: '20px',
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  borderRadius: '20px',
-  backdropFilter: 'blur(10px)',
-}
-
-const logo = {
-  height: '80px',
-  width: 'auto',
+const headerHeading = {
+  color: '#1f2937',
+  fontSize: '24px',
+  fontWeight: '600',
+  margin: '0',
 }
 
 const content = {
-  padding: '40px 30px',
+  padding: '0',
 }
 
 const footer = {
-  backgroundColor: 'linear-gradient(135deg, #374151, #4B5563)',
-  padding: '30px',
   textAlign: 'center' as const,
+  padding: '20px 0',
+  borderTop: '1px solid #e5e7eb',
+  marginTop: '30px',
 }
 
 const footerText = {
-  color: '#D1D5DB',
+  color: '#6b7280',
   fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0 0 15px 0',
-}
-
-const copyright = {
-  color: '#9CA3AF',
-  fontSize: '12px',
   margin: '0',
 }
 

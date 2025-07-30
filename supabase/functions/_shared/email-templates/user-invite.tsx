@@ -35,357 +35,99 @@ export const UserInviteEmail = ({
   return (
     <BaseEmailTemplate previewText={`Welcome to ${companyName}! Set up your ${roleLabels[role]} account`}>
       
-      {/* Welcome Header */}
-      <Section style={headerSection}>
-        <Heading style={headerHeading}>🎉 Welcome to Bay Area Cleaning Professionals!</Heading>
-        <Text style={headerText}>
-          You've been invited to join our platform as a <strong>{roleLabels[role]}</strong>. 
-          We're excited to have you on board!
-        </Text>
-      </Section>
+      <Heading style={heading}>Welcome to Bay Area Cleaning Professionals!</Heading>
+      
+      <Text style={text}>
+        You've been invited to join our platform as a <strong>{roleLabels[role]}</strong>. 
+        We're excited to have you on board!
+      </Text>
 
-      {/* Account Details */}
       <Section style={detailsSection}>
-        <Heading style={sectionHeading}>📋 Your Account Details</Heading>
-        
-        <div style={accountBox}>
-          <div style={accountItem}>
-            <span style={accountIcon}>📧</span>
-            <div>
-              <Text style={accountLabel}>Email Address</Text>
-              <Text style={accountValue}>{email}</Text>
-            </div>
-          </div>
-          
-          <div style={accountItem}>
-            <span style={accountIcon}>👤</span>
-            <div>
-              <Text style={accountLabel}>Role</Text>
-              <Text style={accountValue}>{roleLabels[role]}</Text>
-            </div>
-          </div>
-        </div>
-
-        <div style={roleDescriptionBox}>
-          <Text style={roleDescriptionText}>
-            <strong>As a {roleLabels[role]}:</strong> {roleDescriptions[role]}
-          </Text>
-        </div>
+        <Text style={text}><strong>Email Address:</strong> {email}</Text>
+        <Text style={text}><strong>Role:</strong> {roleLabels[role]}</Text>
+        <Text style={text}><strong>What you can do:</strong> {roleDescriptions[role]}</Text>
       </Section>
 
-      {/* Setup Instructions */}
-      <Section style={instructionsSection}>
-        <Heading style={sectionHeading}>🚀 Get Started</Heading>
-        <div style={stepsList}>
-          <div style={step}>
-            <span style={stepNumber}>1</span>
-            <Text style={stepText}>
-              <strong>Click the "Set Up Account" button below</strong> to create your password
-            </Text>
-          </div>
-          <div style={step}>
-            <span style={stepNumber}>2</span>
-            <Text style={stepText}>
-              <strong>Create a secure password</strong> for your account
-            </Text>
-          </div>
-          <div style={step}>
-            <span style={stepNumber}>3</span>
-            <Text style={stepText}>
-              <strong>Complete your profile</strong> with any additional information
-            </Text>
-          </div>
-          <div style={step}>
-            <span style={stepNumber}>4</span>
-            <Text style={stepText}>
-              <strong>Start using the platform</strong> with your new {roleLabels[role]} access
-            </Text>
-          </div>
-        </div>
-      </Section>
+      <Text style={text}>
+        <strong>Get Started:</strong><br />
+        1. Click the "Set Up Account" button below to create your password<br />
+        2. Create a secure password for your account<br />
+        3. Complete your profile with any additional information<br />
+        4. Start using the platform with your new {roleLabels[role]} access
+      </Text>
 
-      {/* CTA Button */}
-      <Section style={ctaSection}>
-        <Button href={inviteUrl} style={ctaButton}>
-          🔑 Set Up My Account
+      <Section style={buttonSection}>
+        <Button href={inviteUrl} style={button}>
+          Set Up My Account
         </Button>
-        <Text style={linkText}>
-          Or copy and paste this link in your browser:<br />
-          <a href={inviteUrl} style={linkStyle}>{inviteUrl}</a>
-        </Text>
       </Section>
 
-      {/* Important Notes */}
-      <Section style={notesSection}>
-        <Heading style={notesHeading}>🔒 Important Information</Heading>
-        <div style={notesList}>
-          <Text style={noteItem}>🕒 This invitation link will expire in 24 hours</Text>
-          <Text style={noteItem}>🔐 Choose a strong password to keep your account secure</Text>
-          <Text style={noteItem}>📱 Save your login credentials in a secure location</Text>
-          {role === 'admin' && (
-            <Text style={noteItem}>⚠️ As an admin, you have full access to sensitive data - please keep your credentials secure</Text>
-          )}
-        </div>
-      </Section>
+      <Text style={smallText}>
+        Or copy this link: <a href={inviteUrl} style={link}>{inviteUrl}</a>
+      </Text>
 
-      {/* Support Section */}
-      <Section style={supportSection}>
-        <Heading style={supportHeading}>❓ Need Help?</Heading>
-        <Text style={supportText}>
-          If you have any questions about setting up your account or using the platform, 
-          our support team is here to help.
-        </Text>
-        <div style={contactInfo}>
-          <Text style={contactItem}>📧 support@bayareacleaningpros.com</Text>
-          <Text style={contactItem}>📞 (415) 987-6543</Text>
-          <Text style={contactItem}>⏰ Available 7 days a week, 8 AM - 8 PM</Text>
-        </div>
-      </Section>
+      <Text style={smallText}>
+        <strong>Important:</strong> This invitation link will expire in 24 hours. 
+        Choose a strong password to keep your account secure.
+        {role === 'admin' && ' As an admin, you have full access to sensitive data - please keep your credentials secure.'}
+      </Text>
 
-      {/* Welcome Message */}
-      <Section style={welcomeSection}>
-        <Text style={welcomeText}>
-          🌟 Welcome to the Bay Area Cleaning Professionals family! We're excited to work with you 
-          and look forward to a successful partnership.
-        </Text>
-      </Section>
+      <Text style={smallText}>
+        Need help? Contact us at support@bayareacleaningpros.com or (415) 987-6543
+      </Text>
 
     </BaseEmailTemplate>
   );
 };
 
-// Enhanced Styles
-const headerSection = {
-  backgroundColor: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)',
-  padding: '30px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  borderLeft: '5px solid #10B981',
-  textAlign: 'center' as const,
-}
-
-const headerHeading = {
-  color: '#047857',
+// Simple styles
+const heading = {
+  color: '#10b981',
+  fontSize: '24px',
+  fontWeight: '600',
   margin: '0 0 20px 0',
-  fontSize: '28px',
-  fontWeight: '700',
 }
 
-const headerText = {
+const text = {
   color: '#374151',
   fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
+  lineHeight: '1.5',
+  margin: '0 0 15px 0',
 }
 
 const detailsSection = {
-  backgroundColor: '#F9FAFB',
-  padding: '30px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #E5E7EB',
-}
-
-const sectionHeading = {
-  color: '#8B5CF6',
-  margin: '0 0 25px 0',
-  fontSize: '20px',
-  fontWeight: '600',
-}
-
-const accountBox = {
-  display: 'grid',
-  gap: '20px',
-  marginBottom: '25px',
-}
-
-const accountItem = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '15px',
-  padding: '15px',
-  backgroundColor: 'white',
-  borderRadius: '10px',
-  border: '1px solid #E5E7EB',
-}
-
-const accountIcon = {
-  fontSize: '20px',
-  lineHeight: '1',
-}
-
-const accountLabel = {
-  color: '#6B7280',
-  fontSize: '14px',
-  fontWeight: '500',
-  margin: '0 0 5px 0',
-}
-
-const accountValue = {
-  color: '#111827',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0',
-}
-
-const roleDescriptionBox = {
-  backgroundColor: '#FEF7FF',
+  backgroundColor: '#f9fafb',
   padding: '20px',
-  borderRadius: '12px',
-  border: '1px solid #E9D5FF',
+  borderRadius: '6px',
+  margin: '20px 0',
 }
 
-const roleDescriptionText = {
-  color: '#374151',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
-}
-
-const instructionsSection = {
-  backgroundColor: '#F0F9FF',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #BAE6FD',
-}
-
-const stepsList = {
-  display: 'grid',
-  gap: '20px',
-}
-
-const step = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '15px',
-}
-
-const stepNumber = {
-  backgroundColor: '#3B82F6',
-  color: 'white',
-  width: '30px',
-  height: '30px',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontWeight: '700',
-  fontSize: '14px',
-  flexShrink: '0',
-}
-
-const stepText = {
-  color: '#374151',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
-}
-
-const ctaSection = {
+const buttonSection = {
   textAlign: 'center' as const,
-  marginBottom: '30px',
+  margin: '30px 0',
 }
 
-const ctaButton = {
-  backgroundColor: 'linear-gradient(135deg, #8B5CF6, #A855F7)',
-  color: 'white',
-  padding: '15px 30px',
-  borderRadius: '12px',
+const button = {
+  backgroundColor: '#3b82f6',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '600',
   textDecoration: 'none',
-  fontWeight: '600',
-  fontSize: '16px',
-  boxShadow: '0 10px 20px rgba(139, 92, 246, 0.3)',
+  padding: '12px 24px',
+  borderRadius: '6px',
   display: 'inline-block',
-  marginBottom: '20px',
 }
 
-const linkText = {
-  color: '#6B7280',
+const smallText = {
+  color: '#6b7280',
   fontSize: '14px',
-  lineHeight: '1.5',
-  margin: '0',
+  lineHeight: '1.4',
+  margin: '0 0 10px 0',
 }
 
-const linkStyle = {
-  color: '#8B5CF6',
-  wordBreak: 'break-all' as const,
-}
-
-const notesSection = {
-  backgroundColor: '#FEF3C7',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-  border: '1px solid #FDE68A',
-  borderLeft: '5px solid #F59E0B',
-}
-
-const notesHeading = {
-  color: '#92400E',
-  margin: '0 0 20px 0',
-  fontSize: '18px',
-  fontWeight: '600',
-}
-
-const notesList = {
-  display: 'grid',
-  gap: '10px',
-}
-
-const noteItem = {
-  color: '#374151',
-  fontSize: '14px',
-  lineHeight: '1.5',
-  margin: '0',
-}
-
-const supportSection = {
-  backgroundColor: '#F3F4F6',
-  padding: '25px',
-  borderRadius: '15px',
-  marginBottom: '30px',
-}
-
-const supportHeading = {
-  color: '#059669',
-  margin: '0 0 15px 0',
-  fontSize: '18px',
-  fontWeight: '600',
-}
-
-const supportText = {
-  color: '#374151',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0 0 20px 0',
-}
-
-const contactInfo = {
-  display: 'grid',
-  gap: '8px',
-}
-
-const contactItem = {
-  color: '#8B5CF6',
-  fontSize: '14px',
-  fontWeight: '500',
-  margin: '0',
-}
-
-const welcomeSection = {
-  backgroundColor: 'linear-gradient(135deg, #D1FAE5, #A7F3D0)',
-  padding: '25px',
-  borderRadius: '15px',
-  textAlign: 'center' as const,
-}
-
-const welcomeText = {
-  color: '#047857',
-  fontSize: '16px',
-  lineHeight: '1.7',
-  margin: '0',
-  fontWeight: '500',
+const link = {
+  color: '#3b82f6',
+  textDecoration: 'underline',
 }
 
 export default UserInviteEmail
