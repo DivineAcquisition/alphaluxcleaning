@@ -18,7 +18,9 @@ import {
   BarChart3,
   UserCheck,
   Home,
-  LogOut
+  LogOut,
+  FileText,
+  Crown
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,16 +28,16 @@ import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   {
+    label: "Overview Dashboard",
+    path: "/admin",
+    icon: LayoutDashboard,
+    description: "Main dashboard overview"
+  },
+  {
     label: "Control Panel",
     path: "/admin-panel",
     icon: Settings,
-    description: "Admin setup & invites"
-  },
-  {
-    label: "Booking Dashboard", 
-    path: "/admin-dashboard",
-    icon: LayoutDashboard,
-    description: "Manage bookings"
+    description: "Admin setup & configuration"
   },
   {
     label: "Subcontractor Management",
@@ -44,22 +46,22 @@ const navigationItems = [
     description: "Manage subcontractors"
   },
   {
-    label: "Subcontractor Dashboard",
-    path: "/subcontractor-dashboard",
-    icon: UserCheck,
-    description: "Subcontractor view"
-  },
-  {
     label: "Application Manager",
     path: "/application-manager",
-    icon: UserCheck,
+    icon: FileText,
     description: "Review applications"
   },
   {
     label: "Metrics & Analytics",
     path: "/metrics-dashboard",
     icon: BarChart3,
-    description: "Performance data"
+    description: "Performance insights"
+  },
+  {
+    label: "Subcontractor Portal",
+    path: "/subcontractor-dashboard",
+    icon: UserCheck,
+    description: "Subcontractor view"
   }
 ];
 
@@ -77,45 +79,69 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className={open ? "w-64" : "w-14"} collapsible="icon">
-      <SidebarHeader className="border-b p-4">
+    <Sidebar className={open ? "w-72" : "w-16"} collapsible="icon">
+      <SidebarHeader className="border-b p-4 bg-gradient-to-r from-primary/10 to-secondary/10">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-            <Home className="h-5 w-5 text-primary-foreground" />
+          <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+            <Crown className="h-5 w-5 text-primary-foreground" />
           </div>
           {open && (
             <div>
-              <h1 className="text-sm font-semibold">Bay Area Cleaning Pros</h1>
-              <p className="text-xs text-muted-foreground">Admin Panel</p>
+              <h1 className="text-sm font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                Bay Area Cleaning Pros
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">Admin Dashboard</p>
             </div>
           )}
         </div>
-        <SidebarTrigger className="ml-auto" />
+        <SidebarTrigger className="ml-auto hover:bg-primary/10 rounded-lg transition-colors" />
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2">
+            Management Hub
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
                       asChild
-                      isActive={isActive(item.path)}
-                      className={isActive(item.path) ? "bg-primary text-primary-foreground" : ""}
+                      isActive={active}
+                      className={`
+                        group relative transition-all duration-200 hover:shadow-md
+                        ${active 
+                          ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg scale-[1.02] border-primary/20" 
+                          : "hover:bg-primary/5 hover:border-primary/10 border-transparent"
+                        }
+                        border rounded-xl p-3 min-h-[3rem]
+                      `}
                     >
                       <button 
                         onClick={() => navigate(item.path)}
-                        className="w-full flex items-center gap-3 p-2 text-left"
+                        className="w-full flex items-center gap-3 text-left"
                       >
-                        <Icon className="h-4 w-4" />
+                        <div className={`
+                          p-2 rounded-lg transition-colors
+                          ${active 
+                            ? "bg-primary-foreground/20" 
+                            : "bg-primary/10 group-hover:bg-primary/20"
+                          }
+                        `}>
+                          <Icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
+                        </div>
                         {open && (
-                          <div>
-                            <span className="font-medium">{item.label}</span>
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                          <div className="flex-1 min-w-0">
+                            <span className={`font-semibold text-sm block ${active ? "text-primary-foreground" : ""}`}>
+                              {item.label}
+                            </span>
+                            <p className={`text-xs opacity-80 ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                              {item.description}
+                            </p>
                           </div>
                         )}
                       </button>
@@ -135,10 +161,12 @@ export function AdminSidebar() {
                   <Button 
                     onClick={handleSignOut} 
                     variant="ghost" 
-                    className="w-full justify-start"
+                    className="w-full justify-start mx-2 mb-2 hover:bg-destructive/10 hover:text-destructive transition-colors rounded-xl"
                   >
-                    <LogOut className="h-4 w-4" />
-                    {open && <span className="ml-2">Sign Out</span>}
+                    <div className="p-2 rounded-lg bg-destructive/10">
+                      <LogOut className="h-4 w-4 text-destructive" />
+                    </div>
+                    {open && <span className="ml-2 font-medium">Sign Out</span>}
                   </Button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
