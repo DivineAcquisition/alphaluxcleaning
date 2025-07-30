@@ -17,11 +17,6 @@ import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
-import AdminPanel from '@/pages/AdminPanel';
-import AdminDashboard from '@/pages/AdminDashboard';
-import SubcontractorManagement from '@/pages/SubcontractorManagement';
-import ApplicationManager from '@/pages/ApplicationManager';
-import MetricsDashboard from '@/pages/MetricsDashboard';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
@@ -66,29 +61,9 @@ function App() {
                     <AdminPortal />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-panel" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin-dashboard" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/subcontractor-management" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <SubcontractorManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/application-manager" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <ApplicationManager />
-                  </ProtectedRoute>
-                } />
-                <Route path="/metrics-dashboard" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <MetricsDashboard />
+                    <AdminPortal />
                   </ProtectedRoute>
                 } />
                 
