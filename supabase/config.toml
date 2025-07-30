@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.ghl-advanced-pipeline]
 verify_jwt = false
+
+[functions.ghl-automation-workflows]
+verify_jwt = false

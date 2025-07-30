@@ -5,397 +5,390 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { 
+  Zap, 
   Users, 
-  TrendingUp, 
   MessageSquare, 
+  Mail, 
   Calendar, 
-  Target,
+  TrendingUp,
+  Settings,
+  Play,
+  Pause,
   BarChart3,
-  Mail,
-  Phone,
-  Star,
-  DollarSign,
   Clock,
+  Star,
+  Phone,
+  Target,
+  RefreshCw,
+  Send,
+  Bot,
+  Activity,
   CheckCircle,
-  AlertCircle
+  AlertTriangle,
+  Heart,
+  Gift,
+  MessageCircle,
+  UserPlus,
+  Repeat,
+  DollarSign
 } from "lucide-react";
 
-interface PipelineMetrics {
-  totalContacts: number;
-  opportunities: number;
-  conversionRate: number;
-  averageDealValue: number;
-  totalRevenue: number;
+interface WorkflowExecution {
+  id: string;
+  workflow_type: string;
+  stage: string;
+  customer_email: string;
+  executed_at: string;
+  actions_executed: number;
+  success_count: number;
+  status: string;
 }
 
-interface CampaignMetrics {
-  emailsSent: number;
-  emailOpenRate: number;
-  smsDelivered: number;
-  responseRate: number;
-  automationsActive: number;
+interface AutomationMetrics {
+  total_workflows: number;
+  active_campaigns: number;
+  success_rate: number;
+  customers_engaged: number;
+  retention_rate: number;
+  upsell_conversions: number;
 }
 
-export function GHLIntegrationDashboard() {
-  const [pipelineMetrics, setPipelineMetrics] = useState<PipelineMetrics>({
-    totalContacts: 0,
-    opportunities: 0,
-    conversionRate: 0,
-    averageDealValue: 0,
-    totalRevenue: 0
+export const GHLIntegrationDashboard = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isLoading, setIsLoading] = useState(false);
+  const [metrics, setMetrics] = useState<AutomationMetrics>({
+    total_workflows: 0,
+    active_campaigns: 0,
+    success_rate: 0,
+    customers_engaged: 0,
+    retention_rate: 0,
+    upsell_conversions: 0
   });
+  const [workflowExecutions, setWorkflowExecutions] = useState<WorkflowExecution[]>([]);
   
-  const [campaignMetrics, setCampaignMetrics] = useState<CampaignMetrics>({
-    emailsSent: 0,
-    emailOpenRate: 0,
-    smsDelivered: 0,
-    responseRate: 0,
-    automationsActive: 0
+  // Phase 2: Automation Workflow States
+  const [automationSettings, setAutomationSettings] = useState({
+    service_lifecycle: true,
+    retention_campaigns: true,
+    upselling_workflows: true,
+    review_management: true,
+    appointment_reminders: true,
+    referral_automation: true
   });
 
-  const [loading, setLoading] = useState(false);
-  const [selectedContact, setSelectedContact] = useState("");
-  const [messageContent, setMessageContent] = useState("");
-  const [campaignType, setCampaignType] = useState("");
-  
-  const { toast } = useToast();
+  const [campaignConfig, setCampaignConfig] = useState({
+    retention_trigger_days: 30,
+    upsell_delay_days: 7,
+    review_request_hours: 24,
+    reminder_schedule: "24h,2h,30m"
+  });
 
   useEffect(() => {
-    loadDashboardData();
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
-  const loadDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async () => {
     try {
-      // Load metrics from GHL via our enhanced integration
-      const metricsResponse = await supabase.functions.invoke('enhanced-ghl-integration', {
-        body: {
-          action: 'get_analytics',
-          reportType: 'contacts',
-          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          endDate: new Date().toISOString().split('T')[0]
-        }
-      });
-
-      if (metricsResponse.data?.result) {
-        // Update metrics based on response
-        setPipelineMetrics({
-          totalContacts: metricsResponse.data.result.totalContacts || 0,
-          opportunities: metricsResponse.data.result.opportunities || 0,
-          conversionRate: metricsResponse.data.result.conversionRate || 0,
-          averageDealValue: metricsResponse.data.result.averageDealValue || 0,
-          totalRevenue: metricsResponse.data.result.totalRevenue || 0
-        });
-      }
-
-      // Load campaign metrics
-      const campaignResponse = await supabase.functions.invoke('enhanced-ghl-integration', {
-        body: {
-          action: 'get_analytics',
-          reportType: 'campaigns',
-          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          endDate: new Date().toISOString().split('T')[0]
-        }
-      });
-
-      if (campaignResponse.data?.result) {
-        setCampaignMetrics({
-          emailsSent: campaignResponse.data.result.emailsSent || 0,
-          emailOpenRate: campaignResponse.data.result.emailOpenRate || 0,
-          smsDelivered: campaignResponse.data.result.smsDelivered || 0,
-          responseRate: campaignResponse.data.result.responseRate || 0,
-          automationsActive: campaignResponse.data.result.automationsActive || 0
-        });
-      }
-
+      setIsLoading(true);
+      await Promise.all([
+        fetchAutomationMetrics(),
+        fetchWorkflowExecutions(),
+        fetchCampaignPerformance()
+      ]);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive",
-      });
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const sendSMS = async () => {
-    if (!selectedContact || !messageContent) {
-      toast({
-        title: "Error",
-        description: "Please select a contact and enter a message",
-        variant: "destructive",
-      });
-      return;
-    }
+  const fetchAutomationMetrics = async () => {
+    // Simulate fetching automation metrics
+    setMetrics({
+      total_workflows: 1247,
+      active_campaigns: 23,
+      success_rate: 87.5,
+      customers_engaged: 892,
+      retention_rate: 73.2,
+      upsell_conversions: 156
+    });
+  };
 
-    setLoading(true);
-    try {
-      const response = await supabase.functions.invoke('enhanced-ghl-integration', {
-        body: {
-          action: 'send_sms',
-          contactId: selectedContact,
-          message: messageContent,
-          messageType: 'text'
-        }
-      });
-
-      if (response.data?.success) {
-        toast({
-          title: "Success",
-          description: "SMS sent successfully",
-        });
-        setMessageContent("");
-      } else {
-        throw new Error(response.data?.error || 'Failed to send SMS');
+  const fetchWorkflowExecutions = async () => {
+    // Simulate fetching recent workflow executions
+    const mockExecutions: WorkflowExecution[] = [
+      {
+        id: '1',
+        workflow_type: 'service_lifecycle',
+        stage: 'booking_confirmed',
+        customer_email: 'john@example.com',
+        executed_at: new Date().toISOString(),
+        actions_executed: 4,
+        success_count: 4,
+        status: 'completed'
+      },
+      {
+        id: '2',
+        workflow_type: 'retention_campaign',
+        stage: 'inactive_30_days',
+        customer_email: 'sarah@example.com',
+        executed_at: new Date(Date.now() - 300000).toISOString(),
+        actions_executed: 3,
+        success_count: 2,
+        status: 'partially_completed'
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send SMS",
-        variant: "destructive",
+    ];
+    setWorkflowExecutions(mockExecutions);
+  };
+
+  const fetchCampaignPerformance = async () => {
+    // Implementation for fetching campaign performance data
+  };
+
+  // Phase 2: Automation Workflow Functions
+  const executeWorkflow = async (workflow: string, params: any) => {
+    try {
+      setIsLoading(true);
+      const response = await supabase.functions.invoke('ghl-automation-workflows', {
+        body: { workflow, ...params }
       });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast.success(`${workflow} workflow executed successfully`);
+      await fetchWorkflowExecutions(); // Refresh data
+      return response.data;
+    } catch (error) {
+      console.error(`Error executing ${workflow}:`, error);
+      toast.error(`Failed to execute ${workflow} workflow`);
+      throw error;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const triggerCampaign = async () => {
-    if (!campaignType || !selectedContact) {
-      toast({
-        title: "Error",
-        description: "Please select a contact and campaign type",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
+  const toggleAutomation = async (automationType: string, enabled: boolean) => {
     try {
-      const response = await supabase.functions.invoke('enhanced-ghl-integration', {
-        body: {
-          action: 'create_campaign_automation',
-          campaignType: campaignType,
-          contactId: selectedContact,
-          serviceType: 'general_cleaning',
-          triggerDate: new Date().toISOString()
-        }
-      });
-
-      if (response.data?.success) {
-        toast({
-          title: "Success",
-          description: "Campaign automation triggered successfully",
-        });
-        setCampaignType("");
-      } else {
-        throw new Error(response.data?.error || 'Failed to trigger campaign');
-      }
+      setAutomationSettings(prev => ({
+        ...prev,
+        [automationType]: enabled
+      }));
+      
+      toast.success(`${automationType} ${enabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to trigger campaign",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error toggling automation:', error);
+      toast.error('Failed to update automation settings');
     }
   };
 
-  const testPipelineAutomation = async () => {
-    setLoading(true);
-    try {
-      const response = await supabase.functions.invoke('ghl-advanced-pipeline', {
-        body: {
-          action: 'automation_trigger',
-          triggerType: 'service_completed',
-          contactId: selectedContact,
-          data: { rating: 5 }
-        }
-      });
+  const triggerRetentionCampaign = async () => {
+    await executeWorkflow('retention_campaign', {
+      campaignType: 'inactive_30_days',
+      customerEmail: 'test@example.com',
+      customerName: 'Test Customer',
+      lastServiceDate: '2024-01-01',
+      lifetimeValue: 500
+    });
+  };
 
-      if (response.data?.success) {
-        toast({
-          title: "Success",
-          description: "Pipeline automation tested successfully",
-        });
-      } else {
-        throw new Error(response.data?.error || 'Failed to test automation');
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to test pipeline automation",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const triggerServiceLifecycle = async (stage: string) => {
+    await executeWorkflow('service_lifecycle', {
+      stage,
+      orderId: 'test-order-123',
+      customerEmail: 'test@example.com',
+      customerName: 'Test Customer',
+      serviceDate: new Date().toISOString().split('T')[0],
+      serviceType: 'Standard Cleaning'
+    });
+  };
+
+  const triggerUpsellWorkflow = async () => {
+    await executeWorkflow('upselling_workflow', {
+      customerEmail: 'test@example.com',
+      customerName: 'Test Customer',
+      serviceHistory: ['standard_cleaning'],
+      currentService: 'standard_cleaning',
+      spendingTier: 'medium'
+    });
+  };
+
+  const triggerReviewManagement = async (action: string) => {
+    await executeWorkflow('review_management', {
+      action,
+      customerEmail: 'test@example.com',
+      customerName: 'Test Customer',
+      serviceDate: new Date().toISOString().split('T')[0],
+      rating: action === 'handle_positive_review' ? 5 : 2
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">GoHighLevel Integration</h2>
-          <p className="text-muted-foreground">
-            Advanced CRM automation and pipeline management
-          </p>
+          <h2 className="text-3xl font-bold">GHL Integration Dashboard</h2>
+          <p className="text-muted-foreground">Phase 2: Intelligent Automation Workflows</p>
         </div>
-        <Button onClick={loadDashboardData} disabled={loading}>
-          {loading ? "Loading..." : "Refresh Data"}
+        <Button onClick={fetchDashboardData} disabled={isLoading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      {/* Phase 2: Automation Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pipelineMetrics.totalContacts}</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Workflows</p>
+                <p className="text-2xl font-bold">{metrics.total_workflows}</p>
+              </div>
+              <Bot className="h-8 w-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Opportunities</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pipelineMetrics.opportunities}</div>
-            <p className="text-xs text-muted-foreground">
-              {pipelineMetrics.conversionRate}% conversion rate
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Campaigns</p>
+                <p className="text-2xl font-bold">{metrics.active_campaigns}</p>
+              </div>
+              <Activity className="h-8 w-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Deal Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${pipelineMetrics.averageDealValue}</div>
-            <p className="text-xs text-muted-foreground">
-              +5% from last month
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
+                <p className="text-2xl font-bold">{metrics.success_rate}%</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Email Open Rate</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{campaignMetrics.emailOpenRate}%</div>
-            <p className="text-xs text-muted-foreground">
-              {campaignMetrics.emailsSent} emails sent
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Customers Engaged</p>
+                <p className="text-2xl font-bold">{metrics.customers_engaged}</p>
+              </div>
+              <Users className="h-8 w-8 text-purple-600" />
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Automations</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{campaignMetrics.automationsActive}</div>
-            <p className="text-xs text-muted-foreground">
-              Running campaigns
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Retention Rate</p>
+                <p className="text-2xl font-bold">{metrics.retention_rate}%</p>
+              </div>
+              <Heart className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Upsell Conversions</p>
+                <p className="text-2xl font-bold">{metrics.upsell_conversions}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-orange-600" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="pipeline" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pipeline">Pipeline Management</TabsTrigger>
-          <TabsTrigger value="communications">Communications</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaign Automation</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="workflows">Workflows</TabsTrigger>
+          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="testing">Testing</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pipeline" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Pipeline Overview</CardTitle>
-                <CardDescription>
-                  Track opportunities through the sales pipeline
-                </CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Recent Workflow Executions
+                </CardTitle>
+                <CardDescription>Latest automation activity</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Leads</span>
-                    <Badge variant="secondary">45</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Qualified</span>
-                    <Badge variant="secondary">32</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Scheduled</span>
-                    <Badge variant="secondary">28</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">In Progress</span>
-                    <Badge variant="secondary">15</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Completed</span>
-                    <Badge variant="outline">12</Badge>
-                  </div>
+              <CardContent>
+                <div className="space-y-3">
+                  {workflowExecutions.map((execution) => (
+                    <div key={execution.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{execution.workflow_type.replace('_', ' ')}</div>
+                        <div className="text-sm text-muted-foreground">{execution.customer_email}</div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={execution.status === 'completed' ? 'default' : 'secondary'}>
+                          {execution.success_count}/{execution.actions_executed}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(execution.executed_at).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <Button onClick={testPipelineAutomation} disabled={loading} className="w-full">
-                  Test Pipeline Automation
-                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Lead Scoring</CardTitle>
-                <CardDescription>
-                  Automatic lead scoring based on behavior
-                </CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Performance Summary
+                </CardTitle>
+                <CardDescription>Key automation metrics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Hot Leads (80-100)</span>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-12 bg-red-500 rounded" />
-                      <span className="text-sm font-medium">8</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Service Lifecycle</span>
+                    <Badge variant="outline">92% success</Badge>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Warm Leads (60-79)</span>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-12 bg-orange-500 rounded" />
-                      <span className="text-sm font-medium">15</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Retention Campaigns</span>
+                    <Badge variant="outline">78% success</Badge>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Cold Leads (0-59)</span>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-12 bg-blue-500 rounded" />
-                      <span className="text-sm font-medium">22</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Upselling</span>
+                    <Badge variant="outline">65% success</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Review Management</span>
+                    <Badge variant="outline">88% success</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -403,145 +396,337 @@ export function GHLIntegrationDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="communications" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Send SMS</CardTitle>
-                <CardDescription>
-                  Send personalized SMS messages to contacts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="contact-select">Select Contact</Label>
-                  <Input
-                    id="contact-select"
-                    placeholder="Enter contact ID or email"
-                    value={selectedContact}
-                    onChange={(e) => setSelectedContact(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="message-content">Message</Label>
-                  <Textarea
-                    id="message-content"
-                    placeholder="Enter your message here..."
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-                <Button onClick={sendSMS} disabled={loading || !selectedContact || !messageContent}>
-                  {loading ? "Sending..." : "Send SMS"}
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Phase 2: Workflow Management Tab */}
+        <TabsContent value="workflows" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                Automation Workflows
+              </CardTitle>
+              <CardDescription>
+                Intelligent automation workflows for customer lifecycle management
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Service Lifecycle Workflow */}
+                <Card className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        <h4 className="font-semibold">Service Lifecycle</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.service_lifecycle}
+                        onCheckedChange={(checked) => toggleAutomation('service_lifecycle', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Automate booking confirmations, service updates, and completion follow-ups
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => triggerServiceLifecycle('booking_confirmed')}>
+                        <Play className="h-3 w-3 mr-1" />
+                        Test Booking
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => triggerServiceLifecycle('service_completed')}>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Test Completion
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication Stats</CardTitle>
-                <CardDescription>
-                  Recent communication metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Emails Sent (30d)
-                    </span>
-                    <Badge variant="secondary">{campaignMetrics.emailsSent}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      SMS Delivered (30d)
-                    </span>
-                    <Badge variant="secondary">{campaignMetrics.smsDelivered}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Response Rate
-                    </span>
-                    <Badge variant="outline">{campaignMetrics.responseRate}%</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                {/* Retention Campaign */}
+                <Card className="border-l-4 border-l-red-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-red-600" />
+                        <h4 className="font-semibold">Retention Campaigns</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.retention_campaigns}
+                        onCheckedChange={(checked) => toggleAutomation('retention_campaigns', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Win back inactive customers with personalized offers and incentives
+                    </p>
+                    <Button size="sm" onClick={triggerRetentionCampaign}>
+                      <Send className="h-3 w-3 mr-1" />
+                      Test Campaign
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Upselling Workflow */}
+                <Card className="border-l-4 border-l-green-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <h4 className="font-semibold">Upselling</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.upselling_workflows}
+                        onCheckedChange={(checked) => toggleAutomation('upselling_workflows', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Intelligent upselling based on service history and customer behavior
+                    </p>
+                    <Button size="sm" onClick={triggerUpsellWorkflow}>
+                      <Target className="h-3 w-3 mr-1" />
+                      Test Upsell
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Review Management */}
+                <Card className="border-l-4 border-l-yellow-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-600" />
+                        <h4 className="font-semibold">Review Management</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.review_management}
+                        onCheckedChange={(checked) => toggleAutomation('review_management', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Automate review requests and handle positive/negative feedback
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => triggerReviewManagement('request_review')}>
+                        <Star className="h-3 w-3 mr-1" />
+                        Request
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => triggerReviewManagement('handle_positive_review')}>
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Positive
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Appointment Reminders */}
+                <Card className="border-l-4 border-l-purple-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-purple-600" />
+                        <h4 className="font-semibold">Reminders</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.appointment_reminders}
+                        onCheckedChange={(checked) => toggleAutomation('appointment_reminders', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Multi-stage appointment reminders to reduce no-shows
+                    </p>
+                    <Button size="sm">
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      Test Reminder
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Referral Automation */}
+                <Card className="border-l-4 border-l-indigo-500">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4 text-indigo-600" />
+                        <h4 className="font-semibold">Referral Program</h4>
+                      </div>
+                      <Switch
+                        checked={automationSettings.referral_automation}
+                        onCheckedChange={(checked) => toggleAutomation('referral_automation', checked)}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Automate referral requests to satisfied customers
+                    </p>
+                    <Button size="sm">
+                      <Gift className="h-3 w-3 mr-1" />
+                      Test Referral
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="campaigns" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+        {/* Campaigns Tab */}
+        <TabsContent value="campaigns" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Trigger Campaign</CardTitle>
-                <CardDescription>
-                  Launch automated campaign sequences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="campaign-type">Campaign Type</Label>
-                  <Select value={campaignType} onValueChange={setCampaignType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select campaign type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service_reminder">Service Reminder</SelectItem>
-                      <SelectItem value="upsell_sequence">Upsell Sequence</SelectItem>
-                      <SelectItem value="retention_campaign">Retention Campaign</SelectItem>
-                      <SelectItem value="referral_request">Referral Request</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="target-contact">Target Contact</Label>
-                  <Input
-                    id="target-contact"
-                    placeholder="Enter contact ID"
-                    value={selectedContact}
-                    onChange={(e) => setSelectedContact(e.target.value)}
-                  />
-                </div>
-                <Button onClick={triggerCampaign} disabled={loading || !campaignType || !selectedContact}>
-                  {loading ? "Triggering..." : "Trigger Campaign"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Campaigns</CardTitle>
-                <CardDescription>
-                  Currently running automated campaigns
-                </CardDescription>
+                <CardTitle>Campaign Performance</CardTitle>
+                <CardDescription>Track campaign effectiveness and ROI</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Welcome Sequence</p>
-                      <p className="text-sm text-muted-foreground">New customer onboarding</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Retention Campaigns</span>
+                    <div className="text-right">
+                      <div className="font-medium">23% comeback rate</div>
+                      <div className="text-xs text-muted-foreground">156 sent this month</div>
                     </div>
-                    <Badge variant="secondary">Active</Badge>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Service Reminders</p>
-                      <p className="text-sm text-muted-foreground">Appointment notifications</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Upsell Campaigns</span>
+                    <div className="text-right">
+                      <div className="font-medium">15% conversion</div>
+                      <div className="text-xs text-muted-foreground">89 opportunities</div>
                     </div>
-                    <Badge variant="secondary">Active</Badge>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <div>
-                      <p className="font-medium">Review Requests</p>
-                      <p className="text-sm text-muted-foreground">Post-service feedback</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Review Requests</span>
+                    <div className="text-right">
+                      <div className="font-medium">67% response</div>
+                      <div className="text-xs text-muted-foreground">234 requests sent</div>
                     </div>
-                    <Badge variant="outline">Paused</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Campaign Settings</CardTitle>
+                <CardDescription>Configure automation triggers and timing</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Retention Trigger (days inactive)</Label>
+                  <Input
+                    type="number"
+                    value={campaignConfig.retention_trigger_days}
+                    onChange={(e) => setCampaignConfig(prev => ({ 
+                      ...prev, 
+                      retention_trigger_days: parseInt(e.target.value) 
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Upsell Delay (days after service)</Label>
+                  <Input
+                    type="number"
+                    value={campaignConfig.upsell_delay_days}
+                    onChange={(e) => setCampaignConfig(prev => ({ 
+                      ...prev, 
+                      upsell_delay_days: parseInt(e.target.value) 
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Review Request (hours after completion)</Label>
+                  <Input
+                    type="number"
+                    value={campaignConfig.review_request_hours}
+                    onChange={(e) => setCampaignConfig(prev => ({ 
+                      ...prev, 
+                      review_request_hours: parseInt(e.target.value) 
+                    }))}
+                  />
+                </div>
+                <Button className="w-full">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Save Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue Impact</CardTitle>
+                <CardDescription>Automation-driven revenue</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Retention Revenue</span>
+                    <span className="font-medium">$12,450</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Upsell Revenue</span>
+                    <span className="font-medium">$8,920</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Referral Revenue</span>
+                    <span className="font-medium">$5,670</span>
+                  </div>
+                  <hr />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total ROI</span>
+                    <span className="text-green-600">+$27,040</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Engagement</CardTitle>
+                <CardDescription>Interaction metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm">SMS Open Rate</span>
+                    <span className="font-medium">94%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Email Open Rate</span>
+                    <span className="font-medium">67%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Response Rate</span>
+                    <span className="font-medium">34%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Click-through Rate</span>
+                    <span className="font-medium">23%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Workflow Efficiency</CardTitle>
+                <CardDescription>Automation performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Time Saved (hours)</span>
+                    <span className="font-medium">127</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Manual Tasks Avoided</span>
+                    <span className="font-medium">892</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Error Reduction</span>
+                    <span className="font-medium">78%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Cost Savings</span>
+                    <span className="font-medium text-green-600">$3,240</span>
                   </div>
                 </div>
               </CardContent>
@@ -549,68 +734,110 @@ export function GHLIntegrationDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Attribution</CardTitle>
-                <CardDescription>
-                  Revenue tracked by source and campaign
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Global Automation Settings</CardTitle>
+              <CardDescription>Configure automation behavior and preferences</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Google Ads</span>
-                    <span className="font-medium">$12,450</span>
+                  <h4 className="font-semibold">Workflow Controls</h4>
+                  {Object.entries(automationSettings).map(([key, value]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <Label htmlFor={key} className="capitalize">
+                        {key.replace('_', ' ')}
+                      </Label>
+                      <Switch
+                        id={key}
+                        checked={value}
+                        onCheckedChange={(checked) => toggleAutomation(key, checked)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Timing Configuration</h4>
+                  <div className="space-y-2">
+                    <Label>Default Business Hours</Label>
+                    <Input placeholder="9:00 AM - 6:00 PM" />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Email Campaigns</span>
-                    <span className="font-medium">$8,200</span>
+                  <div className="space-y-2">
+                    <Label>Timezone</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pst">Pacific Standard Time</SelectItem>
+                        <SelectItem value="mst">Mountain Standard Time</SelectItem>
+                        <SelectItem value="cst">Central Standard Time</SelectItem>
+                        <SelectItem value="est">Eastern Standard Time</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Referrals</span>
-                    <span className="font-medium">$5,750</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Direct</span>
-                    <span className="font-medium">$3,100</span>
+                  <div className="space-y-2">
+                    <Label>Max Daily Messages</Label>
+                    <Input type="number" placeholder="50" />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Journey</CardTitle>
-                <CardDescription>
-                  Average customer progression metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Lead to Qualified</span>
-                    <span className="font-medium">2.3 days</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Qualified to Booked</span>
-                    <span className="font-medium">1.7 days</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Booked to Completed</span>
-                    <span className="font-medium">5.2 days</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">First to Repeat Service</span>
-                    <span className="font-medium">28 days</span>
-                  </div>
+        {/* Testing Tab */}
+        <TabsContent value="testing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Workflow Testing</CardTitle>
+              <CardDescription>Test automation workflows with sample data</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <Label>Test Email</Label>
+                  <Input placeholder="test@example.com" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="space-y-3">
+                  <Label>Test Customer Name</Label>
+                  <Input placeholder="John Doe" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <Button onClick={() => triggerServiceLifecycle('booking_confirmed')} disabled={isLoading}>
+                  <Play className="h-4 w-4 mr-2" />
+                  Test Booking Confirmed
+                </Button>
+                <Button onClick={() => triggerServiceLifecycle('service_completed')} disabled={isLoading}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Test Service Completed
+                </Button>
+                <Button onClick={triggerRetentionCampaign} disabled={isLoading}>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Test Retention Campaign
+                </Button>
+                <Button onClick={triggerUpsellWorkflow} disabled={isLoading}>
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Test Upsell Workflow
+                </Button>
+                <Button onClick={() => triggerReviewManagement('request_review')} disabled={isLoading}>
+                  <Star className="h-4 w-4 mr-2" />
+                  Test Review Request
+                </Button>
+                <Button onClick={() => triggerReviewManagement('handle_positive_review')} disabled={isLoading}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Test Positive Review
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
-}
+};
