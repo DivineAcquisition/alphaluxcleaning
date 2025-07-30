@@ -82,6 +82,7 @@ const AdminPortal = () => {
   }, [user]);
 
   const fetchData = async () => {
+    console.log('AdminPortal: Starting to fetch data...');
     setIsLoading(true);
     try {
       await Promise.all([
@@ -89,14 +90,17 @@ const AdminPortal = () => {
         fetchApplications(),
         calculateMetrics()
       ]);
+      console.log('AdminPortal: Data fetched successfully');
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('AdminPortal: Error fetching data:', error);
+      toast.error('Failed to load admin data');
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchOrders = async () => {
+    console.log('AdminPortal: Fetching orders...');
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -104,43 +108,59 @@ const AdminPortal = () => {
       .limit(50);
 
     if (error) {
-      console.error('Error fetching orders:', error);
+      console.error('AdminPortal: Error fetching orders:', error);
+      toast.error('Failed to load orders');
       return;
     }
     
+    console.log('AdminPortal: Orders fetched:', data?.length || 0);
     setOrders(data || []);
   };
 
   const fetchApplications = async () => {
+    console.log('AdminPortal: Fetching applications...');
     const { data, error } = await supabase
       .from('subcontractor_applications')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching applications:', error);
+      console.error('AdminPortal: Error fetching applications:', error);
+      toast.error('Failed to load applications');
       return;
     }
     
+    console.log('AdminPortal: Applications fetched:', data?.length || 0);
     setApplications(data || []);
   };
 
   const calculateMetrics = async () => {
-    const { data: ordersData } = await supabase
+    console.log('AdminPortal: Calculating metrics...');
+    const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
       .select('amount, status');
 
-    const { data: applicationsData } = await supabase
+    const { data: applicationsData, error: applicationsError } = await supabase
       .from('subcontractor_applications')
       .select('status');
 
+    if (ordersError) {
+      console.error('AdminPortal: Error fetching orders for metrics:', ordersError);
+    }
+    
+    if (applicationsError) {
+      console.error('AdminPortal: Error fetching applications for metrics:', applicationsError);
+    }
+
     if (ordersData && applicationsData) {
-      setMetrics({
+      const newMetrics = {
         totalOrders: ordersData.length,
         totalRevenue: ordersData.reduce((sum, order) => sum + (order.amount || 0), 0) / 100,
         pendingApplications: applicationsData.filter(app => app.status === 'pending').length,
         completedServices: ordersData.filter(order => order.status === 'completed').length
-      });
+      };
+      console.log('AdminPortal: Metrics calculated:', newMetrics);
+      setMetrics(newMetrics);
     }
   };
 
