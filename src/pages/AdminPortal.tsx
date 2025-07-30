@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation } from "@/components/Navigation";
+import { GHLIntegrationDashboard } from "@/components/admin/GHLIntegrationDashboard";
 import { toast } from "sonner";
 import { 
   Users, 
@@ -819,7 +820,7 @@ const AdminPortal = () => {
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Overview
@@ -851,6 +852,10 @@ const AdminPortal = () => {
               <TabsTrigger value="applications" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Applications
+              </TabsTrigger>
+              <TabsTrigger value="ghl-integration" className="flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                GHL Integration
               </TabsTrigger>
               <TabsTrigger value="reports" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -1619,6 +1624,11 @@ const AdminPortal = () => {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* GHL Integration Tab */}
+            <TabsContent value="ghl-integration">
+              <GHLIntegrationDashboard />
             </TabsContent>
           </Tabs>
         </div>
