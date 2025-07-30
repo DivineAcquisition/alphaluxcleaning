@@ -107,15 +107,6 @@ export function Navigation() {
                     <div className="text-xs text-muted-foreground">Role: {userRole}</div>
                   </div>
                   
-                  {userRole === 'admin' && <>
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin-dashboard" className="flex items-center gap-2">
-                          <Settings className="h-4 w-4" />
-                          Admin Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>}
                   
                   {userRole === 'customer' && <>
                       <DropdownMenuItem asChild>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
-import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
+import { PricingCalculator } from "@/components/PricingCalculator";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
