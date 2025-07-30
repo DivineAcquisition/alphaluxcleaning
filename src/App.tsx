@@ -17,6 +17,8 @@ import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
+import AdminDashboard from '@/pages/AdminDashboard';
+import OrderManagement from '@/pages/OrderManagement';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
@@ -63,7 +65,12 @@ function App() {
                 } />
                 <Route path="/admin-dashboard" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminPortal />
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/order-management" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <OrderManagement />
                   </ProtectedRoute>
                 } />
                 
