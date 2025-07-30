@@ -148,7 +148,7 @@ const AdminPortal = () => {
     console.log('AdminPortal: Calculating metrics...');
     const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
-      .select('amount, status, customer_email, created_at');
+      .select('id, amount, status, customer_email, created_at');
 
     const { data: applicationsData, error: applicationsError } = await supabase
       .from('subcontractor_applications')
