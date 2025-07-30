@@ -65,3 +65,9 @@ verify_jwt = true
 
 [functions.create-test-admin]
 verify_jwt = false
+
+[functions.enhanced-ghl-integration]
+verify_jwt = false
+
+[functions.ghl-advanced-pipeline]
+verify_jwt = false
