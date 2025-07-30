@@ -28,7 +28,9 @@ export default function Auth() {
   // Redirect authenticated users
   useEffect(() => {
     if (user && userRole) {
-      if (userRole === 'customer') {
+      if (userRole === 'admin' || userRole === 'employee') {
+        navigate('/admin-dashboard');
+      } else if (userRole === 'customer') {
         navigate('/my-services');
       }
     }
