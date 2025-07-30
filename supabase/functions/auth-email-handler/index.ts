@@ -73,8 +73,8 @@ serve(async (req) => {
     if (email_action_type === 'recovery') {
       console.log('Processing password recovery email for:', user.email);
 
-      // Construct the reset URL pointing to our password reset page
-      const resetUrl = `http://portal.bayareacleaningpros.com/password-reset?access_token=${token}&refresh_token=${token}&type=recovery`;
+      // Use Supabase's built-in recovery link construction
+      const resetUrl = `${site_url}/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(redirect_to || 'https://portal.bayareacleaningpros.com/password-reset')}`;
       
       // Get user role to determine user type
       let userType = 'customer';

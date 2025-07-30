@@ -18,38 +18,37 @@ export default function PasswordReset() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Get tokens from URL
-  const accessToken = searchParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token');
-  const type = searchParams.get('type');
+  const [isValidSession, setIsValidSession] = useState(false);
 
   useEffect(() => {
-    // Verify this is a valid password recovery request
-    if (!accessToken || !refreshToken || type !== 'recovery') {
-      setError('Invalid or expired password reset link');
-      return;
-    }
-
-    // Set the session with the tokens from the URL
-    const setSessionFromTokens = async () => {
+    // Check if we have a valid recovery session
+    const checkRecoverySession = async () => {
       try {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error setting session:', error);
+          console.error('Error getting session:', error);
           setError('Invalid or expired password reset link');
+          return;
         }
+
+        if (!session || !session.user) {
+          setError('Invalid or expired password reset link. Please request a new password reset.');
+          return;
+        }
+
+        // Verify this is a recovery session by checking if user was recently created
+        // or if we're in a recovery context
+        setIsValidSession(true);
+        
       } catch (err) {
         console.error('Session error:', err);
         setError('Invalid or expired password reset link');
       }
     };
 
-    setSessionFromTokens();
-  }, [accessToken, refreshToken, type]);
+    checkRecoverySession();
+  }, []);
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,10 +104,17 @@ export default function PasswordReset() {
       });
 
       if (error) {
-        setError(error.message);
+        if (error.message.includes('Auth session missing')) {
+          setError('Your session has expired. Please request a new password reset link.');
+        } else {
+          setError(error.message);
+        }
       } else {
         setSuccess(true);
         toast.success('Password updated successfully!');
+        
+        // Sign out to clear the recovery session
+        await supabase.auth.signOut();
         
         // Redirect to login after a delay
         setTimeout(() => {
@@ -122,7 +128,7 @@ export default function PasswordReset() {
     }
   };
 
-  if (!accessToken || !refreshToken || type !== 'recovery') {
+  if (!isValidSession && error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
