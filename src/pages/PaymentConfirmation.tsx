@@ -173,8 +173,6 @@ const PaymentConfirmation = () => {
               </CardHeader>
               <CardContent>
                 <ModernScheduler
-                  orderId={orderDetails.id}
-                  customerEmail={orderDetails.customer_email}
                   onSchedulingComplete={handleSchedulingComplete}
                 />
               </CardContent>

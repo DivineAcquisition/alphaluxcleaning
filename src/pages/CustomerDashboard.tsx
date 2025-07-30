@@ -367,26 +367,14 @@ const CustomerDashboard = () => {
           <CancellationDialog
             open={showCancelDialog}
             onOpenChange={setShowCancelDialog}
-            onCancellationComplete={() => {
-              fetchOrders();
-              setShowCancelDialog(false);
-            }}
           />
           
           <RescheduleDialog
             open={showRescheduleDialog}
             onOpenChange={setShowRescheduleDialog}
-            onRescheduleComplete={() => {
-              fetchOrders();
-              setShowRescheduleDialog(false);
-            }}
           />
           
-          <TipComponent
-            onTipComplete={() => {
-              setShowTipDialog(false);
-            }}
-          />
+          <TipComponent />
         </>
       )}
     </div>
