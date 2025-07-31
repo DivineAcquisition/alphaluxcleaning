@@ -27,14 +27,25 @@ serve(async (req) => {
     );
 
     const { 
-      application_id, 
+      token,
       selected_tier, 
       profile_data, 
       banking_data, 
       application_data 
     } = await req.json();
 
-    logStep("Processing onboarding", { application_id, selected_tier });
+    logStep("Processing onboarding", { token, selected_tier });
+
+    // Validate and mark token as used first
+    const { data: tokenResult, error: tokenError } = await supabaseService
+      .rpc('validate_onboarding_token', { p_token: token });
+
+    if (tokenError || !tokenResult?.valid) {
+      logStep("Token validation failed", { tokenError, tokenResult });
+      throw new Error(tokenResult?.error || "Invalid onboarding token");
+    }
+
+    const application_id = tokenResult.application_id;
 
     // Create auth user first
     const { data: authUser, error: authError } = await supabaseService.auth.admin.createUser({
@@ -101,17 +112,46 @@ serve(async (req) => {
 
     logStep("Profile created");
 
-    // Update application status
+    // Update application status and mark token as used
     await supabaseService
       .from("subcontractor_applications")
       .update({ status: "onboarded" })
       .eq("id", application_id);
 
+    // Mark token as used
+    await supabaseService.rpc('mark_onboarding_token_used', { p_token: token });
+
     if (selected_tier === "60_40") {
-      // Free tier - complete onboarding
-      logStep("Free tier onboarding complete");
+      // Free tier - create auth session for auto-login
+      logStep("Free tier onboarding complete - creating session");
+      
+      // Generate a one-time login link
+      const { data: linkData, error: linkError } = await supabaseService.auth.admin.generateLink({
+        type: 'magiclink',
+        email: application_data.email,
+        options: {
+          redirectTo: `${req.headers.get("origin")}/subcontractor-dashboard`
+        }
+      });
+
+      if (linkError) {
+        logStep("Magic link generation failed", linkError);
+        // Return success but redirect to login
+        return new Response(JSON.stringify({ 
+          success: true, 
+          redirect_to_login: true,
+          message: "Account created successfully. Please check your email to log in."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      logStep("Magic link generated", { link_url: linkData.properties.action_link });
+      
       return new Response(JSON.stringify({ 
         success: true, 
+        auto_login_url: linkData.properties.action_link,
         message: "Onboarding completed successfully"
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

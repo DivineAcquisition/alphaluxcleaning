@@ -182,15 +182,6 @@ export default function SubcontractorOnboardingV2() {
 
     setIsProcessing(true);
     try {
-      // Mark token as used first
-      const { data: tokenResult, error: tokenError } = await supabase
-        .rpc('mark_onboarding_token_used', { p_token: token });
-
-      const result = tokenResult as any;
-      if (tokenError || !result?.success) {
-        throw new Error(result?.error || "Failed to validate onboarding token");
-      }
-
       // Create subcontractor account with all collected data
       const { data, error } = await supabase.functions.invoke('complete-subcontractor-onboarding', {
         body: {
@@ -205,9 +196,19 @@ export default function SubcontractorOnboardingV2() {
       if (error) throw error;
 
       if (selectedTier === "60_40") {
-        // Free tier - account created directly
+        // Free tier - auto-login user and redirect to dashboard
         applicationToasts.onboarding.welcomeSuccess();
-        navigate("/auth");
+        
+        if (data.auto_login_url) {
+          // Use the magic link to auto-login
+          window.location.href = data.auto_login_url;
+        } else if (data.redirect_to_login) {
+          // Fallback to login page
+          navigate("/auth");
+        } else {
+          // Direct redirect to dashboard
+          navigate("/subcontractor-dashboard");
+        }
       } else {
         // Paid tier - redirect to Stripe checkout
         applicationToasts.onboarding.paymentProcessing();
