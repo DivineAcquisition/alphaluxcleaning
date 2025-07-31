@@ -383,19 +383,20 @@ const SubcontractorDashboard = () => {
 
   const handleCompleteJob = async (assignmentId: string) => {
     try {
-      const { error } = await supabase
-        .from('subcontractor_job_assignments')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', assignmentId);
+      // Call the completion notification function
+      const { data, error } = await supabase.functions.invoke('complete-order-notification', {
+        body: {
+          orderId: assignments.find(a => a.id === assignmentId)?.bookings?.id,
+          assignmentId: assignmentId,
+          completionNotes: "Service completed successfully"
+        }
+      });
 
       if (error) throw error;
 
       toast({
-        title: "Job Completed",
-        description: "Great work! This job has been marked as completed.",
+        title: "Job Completed! 🎉",
+        description: "Great work! Customer has been notified and payment will be processed.",
       });
 
       if (user) {
@@ -406,7 +407,7 @@ const SubcontractorDashboard = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to complete job.",
+        description: "Failed to complete job. Please try again.",
       });
     }
   };
