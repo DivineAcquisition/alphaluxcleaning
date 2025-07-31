@@ -64,8 +64,8 @@ export default function SubcontractorOnboardingV2() {
   const [bankingData, setBankingData] = useState({
     legal_name: "",
     date_of_birth: "",
-    ssn_last_four: "",
-    account_number_last_four: "",
+    ssn: "",
+    account_number: "",
     routing_number: "",
     background_check_consent: false,
     background_check_copy_consent: false
@@ -145,7 +145,7 @@ export default function SubcontractorOnboardingV2() {
   };
 
   const validateBankingInfo = () => {
-    const required = ['legal_name', 'date_of_birth', 'ssn_last_four', 'account_number_last_four', 'routing_number'];
+    const required = ['legal_name', 'date_of_birth', 'ssn', 'account_number', 'routing_number'];
     
     for (const field of required) {
       if (!bankingData[field as keyof typeof bankingData]) {
@@ -159,13 +159,18 @@ export default function SubcontractorOnboardingV2() {
       return false;
     }
 
-    if (bankingData.ssn_last_four.length !== 4) {
-      toast.error("Please enter the last 4 digits of your SSN");
+    if (bankingData.ssn.length !== 9) {
+      toast.error("Please enter your full 9-digit Social Security Number");
       return false;
     }
 
-    if (bankingData.account_number_last_four.length !== 4) {
-      toast.error("Please enter the last 4 digits of your account number");
+    if (bankingData.account_number.length < 8) {
+      toast.error("Please enter your full bank account number");
+      return false;
+    }
+
+    if (bankingData.routing_number.length !== 9) {
+      toast.error("Routing number must be exactly 9 digits");
       return false;
     }
 
@@ -431,14 +436,18 @@ export default function SubcontractorOnboardingV2() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ssn_last_four">Last 4 digits of SSN *</Label>
+                    <Label htmlFor="ssn">Social Security Number *</Label>
                     <Input
-                      id="ssn_last_four"
-                      value={bankingData.ssn_last_four}
-                      onChange={(e) => setBankingData(prev => ({ ...prev, ssn_last_four: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
-                      placeholder="1234"
-                      maxLength={4}
+                      id="ssn"
+                      value={bankingData.ssn}
+                      onChange={(e) => setBankingData(prev => ({ ...prev, ssn: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
+                      placeholder="123456789"
+                      maxLength={9}
+                      type="password"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Enter your 9-digit SSN (no spaces or dashes)
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="routing_number">Bank Routing Number *</Label>
@@ -449,18 +458,24 @@ export default function SubcontractorOnboardingV2() {
                       placeholder="123456789"
                       maxLength={9}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      9-digit routing number found on your checks
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="account_last_four">Last 4 digits of Account Number *</Label>
+                  <Label htmlFor="account_number">Bank Account Number *</Label>
                   <Input
-                    id="account_last_four"
-                    value={bankingData.account_number_last_four}
-                    onChange={(e) => setBankingData(prev => ({ ...prev, account_number_last_four: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
-                    placeholder="5678"
-                    maxLength={4}
+                    id="account_number"
+                    value={bankingData.account_number}
+                    onChange={(e) => setBankingData(prev => ({ ...prev, account_number: e.target.value.replace(/\D/g, '') }))}
+                    placeholder="1234567890"
+                    type="password"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Your full bank account number for direct deposit
+                  </p>
                 </div>
 
                 {/* Consent Checkboxes */}

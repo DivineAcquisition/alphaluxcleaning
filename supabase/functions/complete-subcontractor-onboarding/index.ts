@@ -92,8 +92,8 @@ serve(async (req) => {
       biography: profile_data.biography,
       legal_name: banking_data.legal_name,
       date_of_birth: banking_data.date_of_birth,
-      ssn_last_four: banking_data.ssn_last_four,
-      account_number_last_four: banking_data.account_number_last_four,
+      ssn: banking_data.ssn,
+      account_number: banking_data.account_number,
       routing_number: banking_data.routing_number,
       background_check_consent: banking_data.background_check_consent,
       background_check_copy_consent: banking_data.background_check_copy_consent

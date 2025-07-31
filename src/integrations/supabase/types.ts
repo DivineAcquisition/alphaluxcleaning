@@ -1789,6 +1789,7 @@ export type Database = {
       }
       subcontractor_profiles: {
         Row: {
+          account_number: string | null
           account_number_last_four: string | null
           background_check_consent: boolean | null
           background_check_copy_consent: boolean | null
@@ -1799,11 +1800,13 @@ export type Database = {
           legal_name: string | null
           profile_image_url: string | null
           routing_number: string | null
+          ssn: string | null
           ssn_last_four: string | null
           subcontractor_id: string | null
           updated_at: string
         }
         Insert: {
+          account_number?: string | null
           account_number_last_four?: string | null
           background_check_consent?: boolean | null
           background_check_copy_consent?: boolean | null
@@ -1814,11 +1817,13 @@ export type Database = {
           legal_name?: string | null
           profile_image_url?: string | null
           routing_number?: string | null
+          ssn?: string | null
           ssn_last_four?: string | null
           subcontractor_id?: string | null
           updated_at?: string
         }
         Update: {
+          account_number?: string | null
           account_number_last_four?: string | null
           background_check_consent?: boolean | null
           background_check_copy_consent?: boolean | null
@@ -1829,6 +1834,7 @@ export type Database = {
           legal_name?: string | null
           profile_image_url?: string | null
           routing_number?: string | null
+          ssn?: string | null
           ssn_last_four?: string | null
           subcontractor_id?: string | null
           updated_at?: string
