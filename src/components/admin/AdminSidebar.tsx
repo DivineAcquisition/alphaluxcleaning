@@ -28,40 +28,40 @@ import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   {
-    label: "Overview Dashboard",
+    label: "Dashboard",
     path: "/admin",
     icon: LayoutDashboard,
-    description: "Main dashboard overview"
+    description: "Overview"
   },
   {
     label: "Control Panel",
     path: "/admin-dashboard",
     icon: Settings,
-    description: "Admin setup & configuration"
+    description: "Settings"
   },
   {
-    label: "Subcontractor Management",
+    label: "Subcontractors",
     path: "/subcontractor-management",
     icon: Users,
-    description: "Manage subcontractors"
+    description: "Manage team"
   },
   {
-    label: "Application Manager",
+    label: "Applications",
     path: "/application-manager",
     icon: FileText,
-    description: "Review applications"
+    description: "Review apps"
   },
   {
-    label: "Metrics & Analytics",
+    label: "Analytics",
     path: "/metrics-dashboard",
     icon: BarChart3,
-    description: "Performance insights"
+    description: "Insights"
   },
   {
-    label: "Subcontractor Portal",
+    label: "Portal",
     path: "/subcontractor-dashboard",
     icon: UserCheck,
-    description: "Subcontractor view"
+    description: "Sub view"
   }
 ];
 
