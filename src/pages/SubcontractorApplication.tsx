@@ -1,34 +1,114 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileText, CheckCircle } from "lucide-react";
+import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-interface ContractorAgreementProps {
-  contractorName?: string;
-}
-
-export default function SubcontractorApplication({ contractorName = "[Contractor Name]" }: ContractorAgreementProps) {
-  const [agreed, setAgreed] = useState(false);
+export default function SubcontractorApplication() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
+    zip_code: "",
+    why_join_us: "",
+    previous_cleaning_experience: "",
+    availability: "",
+    preferred_work_areas: "",
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
+    has_drivers_license: false,
+    has_own_vehicle: false,
+    reliable_transportation: false,
+    can_lift_heavy_items: false,
+    comfortable_with_chemicals: false,
+    background_check_consent: false,
+    brand_shirt_consent: false,
+    subcontractor_agreement_consent: false
+  });
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    const requiredFields = [
+      'full_name', 'email', 'phone', 'why_join_us', 'availability',
+      'emergency_contact_name', 'emergency_contact_phone'
+    ];
+
+    for (const field of requiredFields) {
+      if (!formData[field as keyof typeof formData]) {
+        toast.error(`Please fill in ${field.replace('_', ' ')}`);
+        return false;
+      }
+    }
+
+    const requiredConsents = [
+      'background_check_consent', 'brand_shirt_consent', 'subcontractor_agreement_consent'
+    ];
+
+    for (const consent of requiredConsents) {
+      if (!formData[consent as keyof typeof formData]) {
+        toast.error(`Please provide all required consents`);
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!agreed) {
-      toast.error("Please read and agree to the 1099 Independent Contractor Agreement");
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success("Application submitted successfully!");
-    } catch (error) {
-      toast.error("Failed to submit application");
+      const { data, error } = await supabase.functions.invoke('submit-subcontractor-application', {
+        body: formData
+      });
+
+      if (error) throw error;
+
+      toast.success(data.message || "Application submitted successfully!");
+      
+      // Reset form
+      setFormData({
+        full_name: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        zip_code: "",
+        why_join_us: "",
+        previous_cleaning_experience: "",
+        availability: "",
+        preferred_work_areas: "",
+        emergency_contact_name: "",
+        emergency_contact_phone: "",
+        has_drivers_license: false,
+        has_own_vehicle: false,
+        reliable_transportation: false,
+        can_lift_heavy_items: false,
+        comfortable_with_chemicals: false,
+        background_check_consent: false,
+        brand_shirt_consent: false,
+        subcontractor_agreement_consent: false
+      });
+
+    } catch (error: any) {
+      console.error('Application submission error:', error);
+      toast.error(error.message || "Failed to submit application");
     } finally {
       setIsSubmitting(false);
     }
@@ -40,283 +120,353 @@ export default function SubcontractorApplication({ contractorName = "[Contractor
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
-            <FileText className="h-8 w-8 text-primary" />
+            <UserPlus className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-              1099 Independent Contractor Agreement
+              Subcontractor Application
             </h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Please carefully review the following independent contractor agreement. 
-            This document outlines the terms and conditions of our working relationship.
+            Join our team of professional cleaning contractors and build your own business with our support and established client base.
           </p>
           <Badge variant="outline" className="bg-primary/10">
             Bay Area Cleaning Professionals
           </Badge>
         </div>
 
-        {/* Agreement Content */}
-        <Card className="shadow-lg border-border/50">
-          <CardHeader className="bg-muted/30">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Independent Contractor Agreement
-            </CardTitle>
-            <CardDescription>
-              Effective Date: {new Date().toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[600px] p-6">
-              <div className="space-y-6 text-sm leading-relaxed">
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">1. PARTIES</h3>
-                  <p>
-                    This Independent Contractor Agreement ("Agreement") is entered into between 
-                    Bay Area Cleaning Professionals ("Company") and {contractorName} ("Contractor").
-                  </p>
-                </section>
+        {/* Application Form */}
+        <div className="grid gap-6">
+          {/* Personal Information */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>
+                Tell us about yourself and your contact information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="your.email@example.com"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Street Address</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="123 Main Street"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="San Francisco"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State</Label>
+                  <Select value={formData.state} onValueChange={(value) => handleInputChange('state', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CA">California</SelectItem>
+                      <SelectItem value="NV">Nevada</SelectItem>
+                      <SelectItem value="OR">Oregon</SelectItem>
+                      <SelectItem value="WA">Washington</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="zip_code">ZIP Code</Label>
+                  <Input
+                    id="zip_code"
+                    value={formData.zip_code}
+                    onChange={(e) => handleInputChange('zip_code', e.target.value)}
+                    placeholder="94102"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                <Separator />
+          {/* Professional Background */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Professional Background
+              </CardTitle>
+              <CardDescription>
+                Share your experience and motivation for joining our team
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="why_join_us">Why do you want to join our team? *</Label>
+                <Textarea
+                  id="why_join_us"
+                  value={formData.why_join_us}
+                  onChange={(e) => handleInputChange('why_join_us', e.target.value)}
+                  placeholder="Tell us what motivates you to work with us..."
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="previous_cleaning_experience">Previous Cleaning Experience</Label>
+                <Textarea
+                  id="previous_cleaning_experience"
+                  value={formData.previous_cleaning_experience}
+                  onChange={(e) => handleInputChange('previous_cleaning_experience', e.target.value)}
+                  placeholder="Describe any relevant cleaning or service experience..."
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">2. SERVICES</h3>
-                  <p className="mb-3">
-                    Contractor agrees to provide residential and commercial cleaning services as an independent contractor. 
-                    Services include but are not limited to:
-                  </p>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>General house cleaning and maintenance</li>
-                    <li>Deep cleaning services</li>
-                    <li>Move-in/move-out cleaning</li>
-                    <li>Post-construction cleanup</li>
-                    <li>Commercial office cleaning</li>
-                    <li>Specialty cleaning services as requested</li>
-                  </ul>
-                </section>
+          {/* Availability & Preferences */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Availability & Preferences
+              </CardTitle>
+              <CardDescription>
+                Let us know when you're available and your preferred work areas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="availability">Availability *</Label>
+                <Select value={formData.availability} onValueChange={(value) => handleInputChange('availability', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full-time">Full-time (30+ hours/week)</SelectItem>
+                    <SelectItem value="part-time">Part-time (15-30 hours/week)</SelectItem>
+                    <SelectItem value="weekends">Weekends only</SelectItem>
+                    <SelectItem value="flexible">Flexible schedule</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preferred_work_areas">Preferred Work Areas</Label>
+                <Textarea
+                  id="preferred_work_areas"
+                  value={formData.preferred_work_areas}
+                  onChange={(e) => handleInputChange('preferred_work_areas', e.target.value)}
+                  placeholder="List cities or areas where you prefer to work..."
+                  rows={2}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-                <Separator />
+          {/* Emergency Contact */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                Emergency Contact
+              </CardTitle>
+              <CardDescription>
+                Provide emergency contact information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emergency_contact_name">Emergency Contact Name *</Label>
+                  <Input
+                    id="emergency_contact_name"
+                    value={formData.emergency_contact_name}
+                    onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emergency_contact_phone">Emergency Contact Phone *</Label>
+                  <Input
+                    id="emergency_contact_phone"
+                    value={formData.emergency_contact_phone}
+                    onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">3. TERM</h3>
-                  <p>
-                    This Agreement shall commence on the date of execution and shall continue until 
-                    terminated by either party with thirty (30) days written notice.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">4. COMPENSATION</h3>
-                  <div className="space-y-3">
-                    <p>
-                      Contractor will be compensated based on a revenue-sharing model:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li><strong>Tier 1:</strong> 60% of service revenue (New contractors, first 30 days)</li>
-                      <li><strong>Tier 2:</strong> 65% of service revenue (After 30 days, good performance)</li>
-                      <li><strong>Tier 3:</strong> 70% of service revenue (After 90 days, excellent performance)</li>
-                    </ul>
-                    <p>
-                      Payment will be made within 7 business days after service completion and customer payment receipt.
-                    </p>
+          {/* Requirements & Capabilities */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Requirements & Capabilities
+              </CardTitle>
+              <CardDescription>
+                Please confirm your capabilities and qualifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="has_drivers_license"
+                      checked={formData.has_drivers_license}
+                      onCheckedChange={(checked) => handleInputChange('has_drivers_license', checked)}
+                    />
+                    <label htmlFor="has_drivers_license" className="text-sm">I have a valid driver's license</label>
                   </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">5. INDEPENDENT CONTRACTOR STATUS</h3>
-                  <div className="space-y-3">
-                    <p>
-                      Contractor acknowledges and agrees that:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>They are an independent contractor, not an employee</li>
-                      <li>They are responsible for their own taxes, including self-employment tax</li>
-                      <li>No benefits, insurance, or worker's compensation is provided by Company</li>
-                      <li>They have the right to control the manner and means of performing services</li>
-                      <li>They may work for other clients and companies</li>
-                    </ul>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="has_own_vehicle"
+                      checked={formData.has_own_vehicle}
+                      onCheckedChange={(checked) => handleInputChange('has_own_vehicle', checked)}
+                    />
+                    <label htmlFor="has_own_vehicle" className="text-sm">I have my own reliable vehicle</label>
                   </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">6. PERFORMANCE STANDARDS</h3>
-                  <div className="space-y-3">
-                    <p>Contractor agrees to:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Maintain professional appearance and conduct</li>
-                      <li>Arrive punctually for scheduled appointments</li>
-                      <li>Provide high-quality cleaning services</li>
-                      <li>Use approved cleaning supplies and equipment</li>
-                      <li>Respect customer property and privacy</li>
-                      <li>Maintain customer confidentiality</li>
-                    </ul>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="reliable_transportation"
+                      checked={formData.reliable_transportation}
+                      onCheckedChange={(checked) => handleInputChange('reliable_transportation', checked)}
+                    />
+                    <label htmlFor="reliable_transportation" className="text-sm">I have reliable transportation to job sites</label>
                   </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">7. EQUIPMENT AND SUPPLIES</h3>
-                  <p>
-                    Company will provide basic cleaning supplies and equipment. Contractor is responsible 
-                    for maintaining equipment in good condition and may be required to replace damaged items.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">8. CONFIDENTIALITY</h3>
-                  <p>
-                    Contractor agrees to maintain strict confidentiality regarding customer information, 
-                    business operations, pricing, and any proprietary information obtained during the 
-                    course of this agreement.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">9. NON-SOLICITATION</h3>
-                  <p>
-                    For a period of two (2) years following termination, Contractor agrees not to 
-                    directly solicit or provide services to customers obtained through Company without 
-                    prior written consent.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">10. LIABILITY AND INSURANCE</h3>
-                  <div className="space-y-3">
-                    <p>
-                      Contractor acknowledges responsibility for:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Obtaining general liability insurance (minimum $1,000,000)</li>
-                      <li>Any damage caused by negligent performance</li>
-                      <li>Compliance with all applicable laws and regulations</li>
-                      <li>Proper licensing and permits as required</li>
-                    </ul>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="can_lift_heavy_items"
+                      checked={formData.can_lift_heavy_items}
+                      onCheckedChange={(checked) => handleInputChange('can_lift_heavy_items', checked)}
+                    />
+                    <label htmlFor="can_lift_heavy_items" className="text-sm">I can lift heavy items (up to 50 lbs)</label>
                   </div>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">11. TERMINATION</h3>
-                  <p>
-                    Either party may terminate this agreement with thirty (30) days written notice. 
-                    Company may terminate immediately for breach of agreement, poor performance, 
-                    or violation of company policies.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">12. GOVERNING LAW</h3>
-                  <p>
-                    This Agreement shall be governed by the laws of the State of California. 
-                    Any disputes shall be resolved through binding arbitration in San Francisco County.
-                  </p>
-                </section>
-
-                <Separator />
-
-                <section>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">13. ENTIRE AGREEMENT</h3>
-                  <p>
-                    This Agreement constitutes the entire agreement between the parties and supersedes 
-                    all prior negotiations, representations, or agreements. Modifications must be in 
-                    writing and signed by both parties.
-                  </p>
-                </section>
-
-                <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-                  <h4 className="font-semibold mb-2">ACKNOWLEDGMENT</h4>
-                  <p className="text-sm">
-                    By signing below, both parties acknowledge they have read, understood, and agree 
-                    to be bound by the terms of this Independent Contractor Agreement.
-                  </p>
-                  
-                  <div className="grid md:grid-cols-2 gap-6 mt-6">
-                    <div>
-                      <p className="font-medium">Contractor:</p>
-                      <div className="mt-4 border-b border-foreground/20 pb-1">
-                        <p className="text-sm text-muted-foreground">Signature</p>
-                      </div>
-                      <p className="mt-2 text-sm">{contractorName}</p>
-                      <div className="mt-4 border-b border-foreground/20 pb-1 w-32">
-                        <p className="text-sm text-muted-foreground">Date</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="font-medium">Bay Area Cleaning Professionals:</p>
-                      <div className="mt-4 border-b border-foreground/20 pb-1">
-                        <p className="text-sm text-muted-foreground">Signature</p>
-                      </div>
-                      <p className="mt-2 text-sm">Authorized Representative</p>
-                      <div className="mt-4 border-b border-foreground/20 pb-1 w-32">
-                        <p className="text-sm text-muted-foreground">Date</p>
-                      </div>
-                    </div>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="comfortable_with_chemicals"
+                      checked={formData.comfortable_with_chemicals}
+                      onCheckedChange={(checked) => handleInputChange('comfortable_with_chemicals', checked)}
+                    />
+                    <label htmlFor="comfortable_with_chemicals" className="text-sm">I'm comfortable working with cleaning chemicals</label>
                   </div>
                 </div>
               </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Agreement Checkbox and Submit */}
-        <Card className="shadow-lg border-border/50">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Checkbox 
-                  id="agreement" 
-                  checked={agreed}
-                  onCheckedChange={(checked) => setAgreed(checked as boolean)}
-                  className="mt-1"
-                />
-                <label htmlFor="agreement" className="text-sm leading-relaxed cursor-pointer">
-                  I have read, understood, and agree to be bound by the terms and conditions 
-                  of this 1099 Independent Contractor Agreement. I acknowledge that I am 
-                  entering into this agreement as an independent contractor and understand 
-                  my responsibilities regarding taxes, insurance, and performance standards.
-                </label>
+          {/* Agreements & Consents */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                Required Agreements
+              </CardTitle>
+              <CardDescription>
+                Please review and agree to the following terms
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="background_check_consent"
+                    checked={formData.background_check_consent}
+                    onCheckedChange={(checked) => handleInputChange('background_check_consent', checked)}
+                    className="mt-1"
+                  />
+                  <label htmlFor="background_check_consent" className="text-sm leading-relaxed">
+                    I consent to a background check being performed as part of the application process *
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="brand_shirt_consent"
+                    checked={formData.brand_shirt_consent}
+                    onCheckedChange={(checked) => handleInputChange('brand_shirt_consent', checked)}
+                    className="mt-1"
+                  />
+                  <label htmlFor="brand_shirt_consent" className="text-sm leading-relaxed">
+                    I agree to wear Bay Area Cleaning Professionals branded shirts during work *
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="subcontractor_agreement_consent"
+                    checked={formData.subcontractor_agreement_consent}
+                    onCheckedChange={(checked) => handleInputChange('subcontractor_agreement_consent', checked)}
+                    className="mt-1"
+                  />
+                  <label htmlFor="subcontractor_agreement_consent" className="text-sm leading-relaxed">
+                    I understand that if approved, I will need to sign a 1099 Independent Contractor Agreement *
+                  </label>
+                </div>
               </div>
-              
-              <div className="flex justify-center pt-4">
-                <Button 
-                  onClick={handleSubmit}
-                  disabled={!agreed || isSubmitting}
-                  size="lg"
-                  className="min-w-[200px]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-background border-t-transparent mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      Submit Application
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              size="lg"
+              className="min-w-[250px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-background border-t-transparent mr-2" />
+                  Submitting Application...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-5 w-5 mr-2" />
+                  Submit Application
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

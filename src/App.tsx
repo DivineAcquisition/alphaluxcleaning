@@ -15,6 +15,7 @@ import OrderStatus from '@/pages/OrderStatus';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorApplication from '@/pages/SubcontractorApplication';
+import SubcontractorOnboarding from '@/pages/SubcontractorOnboarding';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
@@ -63,6 +64,7 @@ function App() {
                 {/* Subcontractor routes */}
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />
                 <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
+                <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
                 <Route path="/subcontractor-dashboard" element={
                   <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDashboard />
