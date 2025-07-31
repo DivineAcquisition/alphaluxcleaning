@@ -8,6 +8,9 @@ import { Footer } from '@/components/Footer';
 // Core customer pages
 import Index from '@/pages/Index';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
+import ServiceDetails from '@/pages/ServiceDetails';
+import ScheduleService from '@/pages/ScheduleService';
+import BookingConfirmation from '@/pages/BookingConfirmation';
 import CustomerDashboard from '@/pages/CustomerDashboard';
 import OrderStatus from '@/pages/OrderStatus';
 
@@ -71,6 +74,9 @@ function App() {
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+                <Route path="/service-details" element={<ServiceDetails />} />
+                <Route path="/schedule-service" element={<ScheduleService />} />
+                <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 <Route path="/test-booking" element={<TestBooking />} />
                 
                 {/* Customer protected routes */}

@@ -219,7 +219,7 @@ const PaymentConfirmation = () => {
           )}
 
           {/* Service Details Form */}
-          {!detailsCompleted && !showDetailsForm && (
+          {!detailsCompleted && (
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -236,7 +236,7 @@ const PaymentConfirmation = () => {
                     Please provide your service address and any special instructions for our team.
                   </p>
                   <Button 
-                    onClick={() => setShowDetailsForm(true)}
+                    onClick={() => navigate(`/service-details?session_id=${sessionId}`)}
                     size="lg"
                     className="px-8"
                   >
@@ -249,16 +249,8 @@ const PaymentConfirmation = () => {
             </Card>
           )}
 
-          {/* Details Form */}
-          {showDetailsForm && (
-            <PostPaymentForm 
-              sessionId={sessionId}
-              onComplete={handleDetailsComplete}
-            />
-          )}
-
           {/* Scheduling Section */}
-          {detailsCompleted && !isScheduled && !isScheduling && (
+          {detailsCompleted && !isScheduled && (
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -275,40 +267,13 @@ const PaymentConfirmation = () => {
                     Now that your payment is confirmed and details are complete, let's schedule your cleaning service.
                   </p>
                   <Button 
-                    onClick={() => setIsScheduling(true)}
+                    onClick={() => navigate(`/schedule-service?session_id=${sessionId}`)}
                     size="lg"
                     className="px-8"
                   >
                     <Clock className="h-4 w-4 mr-2" />
                     Schedule Now
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Scheduler */}
-          {isScheduling && orderDetails && (
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Choose Your Preferred Date & Time</CardTitle>
-                <CardDescription>
-                  Select a convenient time for your cleaning service
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ModernScheduler 
-                  serviceType={orderDetails?.service_details?.cleaning_type || "Deep Clean"}
-                  sessionId={sessionId}
-                  onComplete={handleSchedulingComplete}
-                />
-                <div className="mt-6 text-center">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setIsScheduling(false)}
-                    className="w-full sm:w-auto"
-                  >
-                    Back to Details
+                    <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
               </CardContent>
@@ -344,6 +309,13 @@ const PaymentConfirmation = () => {
                   <p className="text-blue-600">
                     You'll receive a confirmation email with all the details.
                   </p>
+                  <Button 
+                    onClick={() => navigate(`/booking-confirmation?session_id=${sessionId}`)}
+                    className="mt-4"
+                  >
+                    View Full Confirmation
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
