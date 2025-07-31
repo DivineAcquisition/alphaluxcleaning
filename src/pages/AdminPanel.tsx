@@ -3,6 +3,7 @@ import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { 
   Users, 
@@ -11,8 +12,12 @@ import {
   Key, 
   Shield, 
   Settings,
-  ArrowRight
+  ArrowRight,
+  Briefcase,
+  BarChart3
 } from "lucide-react";
+import { JobManagementDashboard } from "@/components/admin/JobManagementDashboard";
+import { SubcontractorJobTracker } from "@/components/admin/SubcontractorJobTracker";
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -67,33 +72,65 @@ export default function AdminPanel() {
       title="Control Panel" 
       description="Administrative tools and system configuration"
     >
-      <AdminSection 
-        title="Admin Control Panel"
-        description="Access all administrative tools and system configurations from this central hub"
-      >
-        <AdminGrid columns={3} gap="lg">
-          {adminSections.map((section) => (
-            <AdminCard
-              key={section.title}
-              title={section.title}
-              description={section.description}
-              variant="action"
-              icon={section.icon}
-            >
-              <div className="mt-4">
-                <Button 
-                  onClick={() => navigate(section.path)}
-                  className="w-full justify-between group"
-                  variant="outline"
+      <Tabs defaultValue="management" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="management" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Job Management
+          </TabsTrigger>
+          <TabsTrigger value="subcontractors" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Subcontractors
+          </TabsTrigger>
+          <TabsTrigger value="tools" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Admin Tools
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="management" className="space-y-4">
+          <JobManagementDashboard />
+        </TabsContent>
+
+        <TabsContent value="subcontractors" className="space-y-4">
+          <AdminSection 
+            title="Subcontractor Performance Tracker"
+            description="Monitor and manage subcontractor performance, availability, and job completion rates"
+          >
+            <SubcontractorJobTracker />
+          </AdminSection>
+        </TabsContent>
+
+        <TabsContent value="tools" className="space-y-4">
+          <AdminSection 
+            title="Admin Control Panel"
+            description="Access all administrative tools and system configurations from this central hub"
+          >
+            <AdminGrid columns={3} gap="lg">
+              {adminSections.map((section) => (
+                <AdminCard
+                  key={section.title}
+                  title={section.title}
+                  description={section.description}
+                  variant="action"
+                  icon={section.icon}
                 >
-                  <span>{section.action}</span>
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
-            </AdminCard>
-          ))}
-        </AdminGrid>
-      </AdminSection>
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => navigate(section.path)}
+                      className="w-full justify-between group"
+                      variant="outline"
+                    >
+                      <span>{section.action}</span>
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </AdminCard>
+              ))}
+            </AdminGrid>
+          </AdminSection>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }
