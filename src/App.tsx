@@ -15,7 +15,7 @@ import OrderStatus from '@/pages/OrderStatus';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorApplication from '@/pages/SubcontractorApplication';
-import SubcontractorOnboarding from '@/pages/SubcontractorOnboarding';
+import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
@@ -39,6 +39,23 @@ import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
+// Domain detection component
+function DomainRouter() {
+  const hostname = window.location.hostname;
+  
+  // Check for subdomains and redirect appropriately
+  if (hostname.includes('subcon.')) {
+    return <Navigate to="/subcontractor" replace />;
+  }
+  
+  if (hostname.includes('admin.')) {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  // Default to main landing page for main domain
+  return <Index />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -47,8 +64,8 @@ function App() {
           <div className="min-h-screen flex flex-col">
             <div className="flex-1">
               <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
+                {/* Public routes with domain-based routing */}
+                <Route path="/" element={<DomainRouter />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/order-status" element={<OrderStatus />} />
@@ -63,8 +80,9 @@ function App() {
                 
                 {/* Subcontractor routes */}
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />
+                <Route path="/subcontractor-auth" element={<SubcontractorPortal />} />
                 <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
-                <Route path="/subcontractor-onboarding" element={<SubcontractorOnboarding />} />
+                <Route path="/subcontractor-onboarding" element={<SubcontractorOnboardingV2 />} />
                 <Route path="/subcontractor-dashboard" element={
                   <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDashboard />
