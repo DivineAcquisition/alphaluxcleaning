@@ -31,8 +31,10 @@ export default function Auth() {
   // Redirect authenticated users
   useEffect(() => {
     if (user && userRole) {
-      if (userRole === 'admin' || userRole === 'employee') {
+      if (userRole === 'super_admin' || userRole === 'enterprise_client') {
         navigate('/admin-dashboard');
+      } else if (userRole === 'subcontractor') {
+        navigate('/subcontractor-dashboard');
       } else if (userRole === 'customer') {
         navigate('/my-services');
       }
