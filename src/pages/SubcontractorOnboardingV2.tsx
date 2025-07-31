@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ContractorAgreement from "@/components/ContractorAgreement";
 import FileUpload from "@/components/FileUpload";
+import ProgressIndicator from "@/components/ProgressIndicator";
+import { applicationToasts } from "@/lib/toast-messages";
 
 const SUBSCRIPTION_TIERS = {
   "60_40": {
@@ -112,11 +114,11 @@ export default function SubcontractorOnboardingV2() {
 
   const validateProfileSetup = () => {
     if (!profileData.profile_image_url) {
-      toast.error("Please upload a profile photo for customers to see");
+      applicationToasts.onboarding.profileRequired();
       return false;
     }
     if (!profileData.biography.trim()) {
-      toast.error("Please write a brief biography for customers");
+      applicationToasts.onboarding.profileRequired();
       return false;
     }
     if (profileData.biography.length < 50) {
@@ -136,7 +138,7 @@ export default function SubcontractorOnboardingV2() {
     
     for (const field of required) {
       if (!bankingData[field as keyof typeof bankingData]) {
-        toast.error(`Please fill in all required banking information`);
+        applicationToasts.onboarding.bankingRequired();
         return false;
       }
     }
@@ -179,10 +181,11 @@ export default function SubcontractorOnboardingV2() {
 
       if (selectedTier === "60_40") {
         // Free tier - account created directly
-        toast.success("Account created successfully! You can now log in to your dashboard.");
+        applicationToasts.onboarding.welcomeSuccess();
         navigate("/auth");
       } else {
         // Paid tier - redirect to Stripe checkout
+        applicationToasts.onboarding.paymentProcessing();
         if (data.url) {
           window.location.href = data.url;
         }
@@ -223,29 +226,31 @@ export default function SubcontractorOnboardingV2() {
           </Badge>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-center space-x-8 py-6">
-          <div className={`flex items-center space-x-2 ${currentPhase >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentPhase >= 1 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground'}`}>
-              {currentPhase > 1 ? <CheckCircle className="h-5 w-5" /> : '1'}
-            </div>
-            <span className="text-sm font-medium">Plan & Account</span>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <div className={`flex items-center space-x-2 ${currentPhase >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentPhase >= 2 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground'}`}>
-              {currentPhase > 2 ? <CheckCircle className="h-5 w-5" /> : '2'}
-            </div>
-            <span className="text-sm font-medium">Profile Setup</span>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <div className={`flex items-center space-x-2 ${currentPhase >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${currentPhase >= 3 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground'}`}>
-              3
-            </div>
-            <span className="text-sm font-medium">Payment & Legal</span>
-          </div>
-        </div>
+        {/* Enhanced Progress Steps */}
+        <ProgressIndicator
+          steps={[
+            { 
+              id: 1, 
+              title: "Plan & Account", 
+              description: "Choose your revenue share", 
+              status: currentPhase > 1 ? 'completed' : currentPhase === 1 ? 'current' : 'upcoming' 
+            },
+            { 
+              id: 2, 
+              title: "Profile Setup", 
+              description: "Photo & biography", 
+              status: currentPhase > 2 ? 'completed' : currentPhase === 2 ? 'current' : 'upcoming' 
+            },
+            { 
+              id: 3, 
+              title: "Payment & Legal", 
+              description: "Banking & background check", 
+              status: currentPhase >= 3 ? 'current' : 'upcoming' 
+            }
+          ]}
+          currentStep={currentPhase}
+          className="my-8"
+        />
 
         {/* Phase 1: Plan Selection */}
         {currentPhase === 1 && (

@@ -7,13 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase, FileImage, AlertCircle } from "lucide-react";
+import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase, FileImage, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "@/components/FileUpload";
+import ProgressIndicator from "@/components/ProgressIndicator";
+import { applicationToasts } from "@/lib/toast-messages";
 
 export default function SubcontractorApplication() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentSection, setCurrentSection] = useState(1);
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -58,18 +61,18 @@ export default function SubcontractorApplication() {
 
     // MANDATORY filter: Must have valid driver's license AND own vehicle
     if (!formData.has_drivers_license) {
-      toast.error("You must have a valid driver's license to apply");
+      applicationToasts.validation.licenseRequired();
       return false;
     }
 
     if (!formData.has_own_vehicle) {
-      toast.error("You must have your own reliable vehicle to apply");
+      applicationToasts.validation.vehicleRequired();
       return false;
     }
 
     // Require driver's license image
     if (!formData.drivers_license_image_url) {
-      toast.error("Please upload a photo of your driver's license");
+      applicationToasts.validation.licenseImageRequired();
       return false;
     }
 
@@ -79,7 +82,7 @@ export default function SubcontractorApplication() {
 
     for (const consent of requiredConsents) {
       if (!formData[consent as keyof typeof formData]) {
-        toast.error(`Please provide all required consents`);
+        applicationToasts.validation.consentRequired();
         return false;
       }
     }
@@ -98,7 +101,7 @@ export default function SubcontractorApplication() {
 
       if (error) throw error;
 
-      toast.success(data.message || "Application submitted successfully!");
+      applicationToasts.submission.success();
       
       // Reset form
       setFormData({
@@ -128,7 +131,7 @@ export default function SubcontractorApplication() {
 
     } catch (error: any) {
       console.error('Application submission error:', error);
-      toast.error(error.message || "Failed to submit application");
+      applicationToasts.submission.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -136,22 +139,43 @@ export default function SubcontractorApplication() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <div className="container mx-auto p-6 space-y-6 max-w-4xl">
-        {/* Header */}
-        <div className="text-center space-y-4">
+      <div className="container mx-auto p-6 space-y-8 max-w-4xl">
+        {/* Header with Enhanced Styling */}
+        <div className="text-center space-y-6 animate-fade-in">
           <div className="flex items-center justify-center gap-3">
-            <UserPlus className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-              Subcontractor Application
+            <div className="relative">
+              <UserPlus className="h-10 w-10 text-primary" />
+              <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              Join Our Professional Team
             </h1>
           </div>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Join our team of professional cleaning contractors and build your own business with our support and established client base.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
+            Become a professional cleaning contractor with Bay Area Cleaning Professionals. 
+            Build your own business with our support, established client base, and flexible revenue sharing plans.
           </p>
-          <Badge variant="outline" className="bg-primary/10">
-            Bay Area Cleaning Professionals
-          </Badge>
+          <div className="flex items-center justify-center gap-4">
+            <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
+              Bay Area Cleaning Professionals
+            </Badge>
+            <Badge variant="outline" className="bg-success/10 border-success/20 text-success">
+              Now Hiring
+            </Badge>
+          </div>
         </div>
+
+        {/* Progress Indicator */}
+        <ProgressIndicator
+          steps={[
+            { id: 1, title: "Personal Info", description: "Basic details", status: currentSection >= 1 ? 'completed' : 'upcoming' },
+            { id: 2, title: "Requirements", description: "Capabilities", status: currentSection >= 4 ? 'completed' : currentSection === 2 || currentSection === 3 ? 'current' : 'upcoming' },
+            { id: 3, title: "Documentation", description: "Upload files", status: currentSection >= 5 ? 'completed' : currentSection === 4 ? 'current' : 'upcoming' },
+            { id: 4, title: "Final Review", description: "Submit app", status: currentSection >= 6 ? 'completed' : currentSection === 5 ? 'current' : 'upcoming' }
+          ]}
+          currentStep={currentSection}
+          className="my-8"
+        />
 
         {/* Application Form */}
         <div className="grid gap-6">
