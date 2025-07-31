@@ -2,43 +2,58 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Calendar, Clock, MapPin, Home } from "lucide-react";
+import { CheckCircle, Calendar, Clock, MapPin, Home, FileText, ArrowRight } from "lucide-react";
 import ModernScheduler from "@/components/ModernScheduler";
+import { PostPaymentForm } from "@/components/PostPaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+
 const PaymentConfirmation = () => {
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [showDetailsForm, setShowDetailsForm] = useState(false);
+  const [detailsCompleted, setDetailsCompleted] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const navigate = useNavigate();
 
   const sessionId = searchParams.get('session_id');
-  const orderId = searchParams.get('order_id');
 
   useEffect(() => {
-    if (sessionId && orderId) {
+    if (sessionId) {
       fetchOrderDetails();
     }
-  }, [sessionId, orderId]);
+  }, [sessionId]);
 
   const fetchOrderDetails = async () => {
     try {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('id', orderId)
+        .eq('stripe_session_id', sessionId)
         .single();
 
       if (error) throw error;
       setOrderDetails(data);
+      
+      // Check if service details are complete
+      const serviceDetails = data.service_details as any;
+      const hasAddress = serviceDetails?.serviceAddress?.street || serviceDetails?.address?.street;
+      setDetailsCompleted(!!hasAddress);
       setIsScheduled(!!data.scheduled_date);
     } catch (error) {
       console.error('Error fetching order details:', error);
       toast.error('Failed to load order details');
     }
+  };
+
+  const handleDetailsComplete = () => {
+    setDetailsCompleted(true);
+    setShowDetailsForm(false);
+    fetchOrderDetails(); // Refresh order details
+    toast.success('Service details completed successfully!');
   };
 
   const handleSchedulingComplete = (schedulingData: any) => {
@@ -54,7 +69,7 @@ const PaymentConfirmation = () => {
     }));
   };
 
-  if (!sessionId || !orderId) {
+  if (!sessionId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
         <Navigation />
@@ -96,6 +111,42 @@ const PaymentConfirmation = () => {
             </CardContent>
           </Card>
 
+          {/* Progress Indicator */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-green-600">Payment</span>
+                  </div>
+                  <div className="h-px w-8 bg-gray-300"></div>
+                  <div className="flex items-center space-x-2">
+                    {detailsCompleted ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-primary bg-white text-xs flex items-center justify-center">2</div>
+                    )}
+                    <span className={`text-sm font-medium ${detailsCompleted ? 'text-green-600' : 'text-primary'}`}>
+                      Details
+                    </span>
+                  </div>
+                  <div className="h-px w-8 bg-gray-300"></div>
+                  <div className="flex items-center space-x-2">
+                    {isScheduled ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-gray-300 bg-white text-xs flex items-center justify-center text-gray-400">3</div>
+                    )}
+                    <span className={`text-sm font-medium ${isScheduled ? 'text-green-600' : 'text-gray-400'}`}>
+                      Schedule
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Order Details */}
           {orderDetails && (
             <Card className="border-0 shadow-lg">
@@ -132,8 +183,47 @@ const PaymentConfirmation = () => {
             </Card>
           )}
 
+          {/* Service Details Form */}
+          {!detailsCompleted && !showDetailsForm && (
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Complete Service Details
+                </CardTitle>
+                <CardDescription>
+                  We need a few more details to prepare for your cleaning service
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">
+                    Please provide your service address and any special instructions for our team.
+                  </p>
+                  <Button 
+                    onClick={() => setShowDetailsForm(true)}
+                    size="lg"
+                    className="px-8"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Enter Details
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Details Form */}
+          {showDetailsForm && (
+            <PostPaymentForm 
+              sessionId={sessionId}
+              onComplete={handleDetailsComplete}
+            />
+          )}
+
           {/* Scheduling Section */}
-          {!isScheduled && !isScheduling && (
+          {detailsCompleted && !isScheduled && !isScheduling && (
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -147,7 +237,7 @@ const PaymentConfirmation = () => {
               <CardContent>
                 <div className="text-center space-y-4">
                   <p className="text-muted-foreground">
-                    Now that your payment is confirmed, let's schedule your cleaning service.
+                    Now that your payment is confirmed and details are complete, let's schedule your cleaning service.
                   </p>
                   <Button 
                     onClick={() => setIsScheduling(true)}
