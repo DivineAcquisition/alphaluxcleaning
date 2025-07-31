@@ -35,6 +35,7 @@ import SystemSettings from '@/pages/SystemSettings';
 // Auth & utility pages
 import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
+import TestBooking from '@/pages/TestBooking';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ function App() {
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+                <Route path="/test-booking" element={<TestBooking />} />
                 
                 {/* Customer protected routes */}
                 <Route path="/my-services" element={

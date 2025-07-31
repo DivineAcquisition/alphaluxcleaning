@@ -17,6 +17,8 @@ const PaymentConfirmation = () => {
   const [detailsCompleted, setDetailsCompleted] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const sessionId = searchParams.get('session_id');
@@ -28,14 +30,26 @@ const PaymentConfirmation = () => {
   }, [sessionId]);
 
   const fetchOrderDetails = async () => {
+    if (!sessionId) {
+      setError('No session ID provided');
+      setLoading(false);
+      return;
+    }
+
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('stripe_session_id', sessionId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching order:', error);
+        setError('Order not found');
+        return;
+      }
+
       setOrderDetails(data);
       
       // Check if service details are complete
@@ -45,7 +59,9 @@ const PaymentConfirmation = () => {
       setIsScheduled(!!data.scheduled_date);
     } catch (error) {
       console.error('Error fetching order details:', error);
-      toast.error('Failed to load order details');
+      setError('Failed to load order details');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,7 +72,7 @@ const PaymentConfirmation = () => {
     toast.success('Service details completed successfully!');
   };
 
-  const handleSchedulingComplete = (schedulingData: any) => {
+  const handleSchedulingComplete = (data: { scheduled_date: string; scheduled_time: string }) => {
     setIsScheduled(true);
     setIsScheduling(false);
     toast.success('Your service has been scheduled successfully!');
@@ -64,20 +80,39 @@ const PaymentConfirmation = () => {
     // Update order details with scheduling info
     setOrderDetails(prev => ({
       ...prev,
-      scheduled_date: schedulingData.scheduledDate,
-      scheduled_time: schedulingData.scheduledTime
+      scheduled_date: data.scheduled_date,
+      scheduled_time: data.scheduled_time
     }));
+    
+    // Refresh order details to get updated data
+    fetchOrderDetails();
   };
 
-  if (!sessionId) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
         <Navigation />
         <div className="container mx-auto px-4 py-16">
           <Card className="max-w-md mx-auto">
             <CardContent className="text-center p-8">
-              <h2 className="text-xl font-bold mb-4">Invalid Payment Session</h2>
-              <p className="text-muted-foreground mb-6">This payment confirmation link is invalid or has expired.</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your order details...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !sessionId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+        <Navigation />
+        <div className="container mx-auto px-4 py-16">
+          <Card className="max-w-md mx-auto">
+            <CardContent className="text-center p-8">
+              <h2 className="text-xl font-bold mb-4">Error</h2>
+              <p className="text-muted-foreground mb-6">{error || 'No session ID provided. Please return to the homepage and try again.'}</p>
               <Button onClick={() => navigate('/')}>
                 <Home className="h-4 w-4 mr-2" />
                 Return Home
@@ -262,7 +297,20 @@ const PaymentConfirmation = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ModernScheduler />
+                <ModernScheduler 
+                  serviceType={orderDetails?.service_details?.cleaning_type || "Deep Clean"}
+                  sessionId={sessionId}
+                  onComplete={handleSchedulingComplete}
+                />
+                <div className="mt-6 text-center">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsScheduling(false)}
+                    className="w-full sm:w-auto"
+                  >
+                    Back to Details
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}

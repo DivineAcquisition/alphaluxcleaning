@@ -12,11 +12,13 @@ import SlotTakenDialog from './SlotTakenDialog';
 interface ModernSchedulerProps {
   serviceType?: string;
   sessionId?: string;
+  onComplete?: (data: { scheduled_date: string; scheduled_time: string }) => void;
 }
 
 const ModernScheduler: React.FC<ModernSchedulerProps> = ({ 
   serviceType = 'general',
-  sessionId 
+  sessionId,
+  onComplete
 }) => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState('');
@@ -224,7 +226,13 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       // Create Google Calendar event
       await createGoogleCalendarEvent(selectedDate, selectedTime);
       
-      if (sessionId) {
+      // Call completion callback instead of navigating
+      if (onComplete) {
+        onComplete({
+          scheduled_date: selectedDate,
+          scheduled_time: selectedTime
+        });
+      } else if (sessionId) {
         navigate(`/service-details?session_id=${sessionId}`);
       } else {
         navigate('/');
