@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Send Welcome Email</title>
+</head>
+<body>
+    <h1>Sending Welcome Email...</h1>
+    <script>
+        // Call the edge function to send welcome email
+        fetch('https://kqoezqzogleaaupjzxch.supabase.co/functions/v1/send-subcontractor-welcome', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI'
+            },
+            body: JSON.stringify({
+                email: 'divineacquisition.io@gmail.com',
+                fullName: 'Divine Acquisition Test User',
+                splitTier: '60_40',
+                userId: '4692dd72-1675-4d2b-9ff6-2c2d4a07856b',
+                subcontractorId: '3b89be18-040c-4bad-8362-54e90eff3fe0'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            document.body.innerHTML = '<h1>✅ Welcome email sent successfully!</h1><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.body.innerHTML = '<h1>❌ Error sending email</h1><pre>' + error + '</pre>';
+        });
+    </script>
+</body>
+</html>
