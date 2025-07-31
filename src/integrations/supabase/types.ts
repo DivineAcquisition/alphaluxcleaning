@@ -1420,13 +1420,16 @@ export type Database = {
       }
       subcontractor_applications: {
         Row: {
+          address: string | null
           admin_notes: string | null
           availability: string
           background_check_consent: boolean
           brand_shirt_consent: boolean
           can_lift_heavy_items: boolean
+          city: string | null
           comfortable_with_chemicals: boolean
           created_at: string
+          drivers_license_image_url: string | null
           email: string
           emergency_contact_name: string
           emergency_contact_phone: string
@@ -1440,19 +1443,24 @@ export type Database = {
           reliable_transportation: boolean
           reviewed_at: string | null
           reviewed_by: string | null
+          state: string | null
           status: string
           subcontractor_agreement_consent: boolean
           updated_at: string
           why_join_us: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
           admin_notes?: string | null
           availability: string
           background_check_consent?: boolean
           brand_shirt_consent?: boolean
           can_lift_heavy_items?: boolean
+          city?: string | null
           comfortable_with_chemicals?: boolean
           created_at?: string
+          drivers_license_image_url?: string | null
           email: string
           emergency_contact_name: string
           emergency_contact_phone: string
@@ -1466,19 +1474,24 @@ export type Database = {
           reliable_transportation?: boolean
           reviewed_at?: string | null
           reviewed_by?: string | null
+          state?: string | null
           status?: string
           subcontractor_agreement_consent?: boolean
           updated_at?: string
           why_join_us: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
           admin_notes?: string | null
           availability?: string
           background_check_consent?: boolean
           brand_shirt_consent?: boolean
           can_lift_heavy_items?: boolean
+          city?: string | null
           comfortable_with_chemicals?: boolean
           created_at?: string
+          drivers_license_image_url?: string | null
           email?: string
           emergency_contact_name?: string
           emergency_contact_phone?: string
@@ -1492,10 +1505,12 @@ export type Database = {
           reliable_transportation?: boolean
           reviewed_at?: string | null
           reviewed_by?: string | null
+          state?: string | null
           status?: string
           subcontractor_agreement_consent?: boolean
           updated_at?: string
           why_join_us?: string
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -1724,6 +1739,62 @@ export type Database = {
           },
           {
             foreignKeyName: "subcontractor_payments_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_profiles: {
+        Row: {
+          account_number_last_four: string | null
+          background_check_consent: boolean | null
+          background_check_copy_consent: boolean | null
+          biography: string | null
+          created_at: string
+          date_of_birth: string | null
+          id: string
+          legal_name: string | null
+          profile_image_url: string | null
+          routing_number: string | null
+          ssn_last_four: string | null
+          subcontractor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number_last_four?: string | null
+          background_check_consent?: boolean | null
+          background_check_copy_consent?: boolean | null
+          biography?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          legal_name?: string | null
+          profile_image_url?: string | null
+          routing_number?: string | null
+          ssn_last_four?: string | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number_last_four?: string | null
+          background_check_consent?: boolean | null
+          background_check_copy_consent?: boolean | null
+          biography?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          id?: string
+          legal_name?: string | null
+          profile_image_url?: string | null
+          routing_number?: string | null
+          ssn_last_four?: string | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_profiles_subcontractor_id_fkey"
             columns: ["subcontractor_id"]
             isOneToOne: false
             referencedRelation: "subcontractors"

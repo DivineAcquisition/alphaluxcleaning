@@ -10,25 +10,32 @@ import ContractorAgreement from "@/components/ContractorAgreement";
 
 const SUBSCRIPTION_TIERS = {
   "60_40": {
-    name: "Starter",
+    name: "Basic",
     split: "60/40",
-    description: "60% to you, 40% to company",
+    description: "Company 60%, You 40%",
     price: 0,
-    features: ["Basic job matching", "Customer support", "Payment processing"]
+    features: ["Basic job matching", "Customer support", "Payment processing", "Free to start"]
   },
-  "70_30": {
-    name: "Professional", 
-    split: "70/30",
-    description: "70% to you, 30% to company",
-    price: 4999, // $49.99 in cents
-    features: ["Priority job matching", "Advanced scheduling", "Marketing support", "Customer support"]
+  "50_50": {
+    name: "Standard", 
+    split: "50/50",
+    description: "Company 50%, You 50%",
+    price: 2000, // $20.00 in cents
+    features: ["Enhanced job matching", "Priority scheduling", "Customer support", "Marketing support"]
   },
-  "80_20": {
+  "40_60": {
+    name: "Professional",
+    split: "40/60", 
+    description: "Company 40%, You 60%",
+    price: 5000, // $50.00 in cents
+    features: ["High priority jobs", "Advanced scheduling", "Premium marketing", "Dedicated support"]
+  },
+  "30_70": {
     name: "Elite",
-    split: "80/20", 
-    description: "80% to you, 20% to company",
-    price: 9999, // $99.99 in cents
-    features: ["Highest priority jobs", "Premium marketing", "Dedicated support", "Performance bonuses"]
+    split: "30/70", 
+    description: "Company 30%, You 70%",
+    price: 10000, // $100.00 in cents
+    features: ["Highest priority jobs", "Premium marketing", "VIP support", "Performance bonuses", "Exclusive opportunities"]
   }
 };
 

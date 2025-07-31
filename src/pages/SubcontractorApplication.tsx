@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase } from "lucide-react";
+import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase, FileImage, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import FileUpload from "@/components/FileUpload";
 
 export default function SubcontractorApplication() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,6 +33,7 @@ export default function SubcontractorApplication() {
     reliable_transportation: false,
     can_lift_heavy_items: false,
     comfortable_with_chemicals: false,
+    drivers_license_image_url: "",
     background_check_consent: false,
     brand_shirt_consent: false,
     subcontractor_agreement_consent: false
@@ -52,6 +54,23 @@ export default function SubcontractorApplication() {
         toast.error(`Please fill in ${field.replace('_', ' ')}`);
         return false;
       }
+    }
+
+    // MANDATORY filter: Must have valid driver's license AND own vehicle
+    if (!formData.has_drivers_license) {
+      toast.error("You must have a valid driver's license to apply");
+      return false;
+    }
+
+    if (!formData.has_own_vehicle) {
+      toast.error("You must have your own reliable vehicle to apply");
+      return false;
+    }
+
+    // Require driver's license image
+    if (!formData.drivers_license_image_url) {
+      toast.error("Please upload a photo of your driver's license");
+      return false;
     }
 
     const requiredConsents = [
@@ -101,6 +120,7 @@ export default function SubcontractorApplication() {
         reliable_transportation: false,
         can_lift_heavy_items: false,
         comfortable_with_chemicals: false,
+        drivers_license_image_url: "",
         background_check_consent: false,
         brand_shirt_consent: false,
         subcontractor_agreement_consent: false
@@ -345,7 +365,21 @@ export default function SubcontractorApplication() {
                 Please confirm your capabilities and qualifications
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-6">
+              {/* Warning Message */}
+              <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-warning mb-1">Required for Application</h4>
+                    <p className="text-sm text-warning/80">
+                      You must have a valid driver's license AND own reliable vehicle to be eligible for this position. 
+                      Applications without both requirements will be automatically rejected.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
@@ -354,7 +388,9 @@ export default function SubcontractorApplication() {
                       checked={formData.has_drivers_license}
                       onCheckedChange={(checked) => handleInputChange('has_drivers_license', checked)}
                     />
-                    <label htmlFor="has_drivers_license" className="text-sm">I have a valid driver's license</label>
+                    <label htmlFor="has_drivers_license" className="text-sm font-medium">
+                      I have a valid driver's license *
+                    </label>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Checkbox
@@ -362,7 +398,9 @@ export default function SubcontractorApplication() {
                       checked={formData.has_own_vehicle}
                       onCheckedChange={(checked) => handleInputChange('has_own_vehicle', checked)}
                     />
-                    <label htmlFor="has_own_vehicle" className="text-sm">I have my own reliable vehicle</label>
+                    <label htmlFor="has_own_vehicle" className="text-sm font-medium">
+                      I have my own reliable vehicle *
+                    </label>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Checkbox
@@ -391,6 +429,57 @@ export default function SubcontractorApplication() {
                     <label htmlFor="comfortable_with_chemicals" className="text-sm">I'm comfortable working with cleaning chemicals</label>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Driver's License Documentation */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <FileImage className="h-5 w-5" />
+                Driver's License Documentation
+              </CardTitle>
+              <CardDescription>
+                Upload a clear photo of your valid driver's license
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <FileUpload
+                label="Driver's License Photo"
+                description="Please upload a clear, readable photo of your driver's license (front side only)"
+                onUpload={(url) => handleInputChange('drivers_license_image_url', url)}
+                currentUrl={formData.drivers_license_image_url}
+                accept="image/*"
+                required
+              />
+            </CardContent>
+          </Card>
+
+          {/* Professional Background - Enhanced */}
+          <Card className="shadow-lg border-border/50">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Why Work With Us?
+              </CardTitle>
+              <CardDescription>
+                Tell us what motivates you to join our professional cleaning team
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="why_join_us_enhanced">Why do you want to work with us? *</Label>
+                <Textarea
+                  id="why_join_us_enhanced"
+                  value={formData.why_join_us}
+                  onChange={(e) => handleInputChange('why_join_us', e.target.value)}
+                  placeholder="Share your motivation for joining our team, your career goals, and what you hope to achieve as a professional cleaning contractor..."
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This helps us understand your commitment and fit for our team culture.
+                </p>
               </div>
             </CardContent>
           </Card>
