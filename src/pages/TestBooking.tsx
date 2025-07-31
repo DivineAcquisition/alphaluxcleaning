@@ -14,10 +14,13 @@ const TestBooking = () => {
   const createTestOrder = async () => {
     setCreating(true);
     try {
+      // Generate a unique session ID
+      const uniqueSessionId = `test_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const { data, error } = await supabase
         .from('orders')
         .insert({
-          stripe_session_id: testSessionId,
+          stripe_session_id: uniqueSessionId,
           amount: 9999, // $99.99 in cents
           status: 'paid',
           customer_name: 'Test Customer',
@@ -38,8 +41,9 @@ const TestBooking = () => {
       }
 
       console.log('Test order created:', data);
+      setTestSessionId(uniqueSessionId);
       // Navigate to payment confirmation with the test session ID
-      navigate(`/payment-confirmation?session_id=${testSessionId}`);
+      navigate(`/payment-confirmation?session_id=${uniqueSessionId}`);
     } catch (error) {
       console.error('Error:', error);
       alert('Error creating test order');
