@@ -12,26 +12,28 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-primary/5 to-secondary/5">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-muted/20 to-background">
         <AdminSidebar />
-        <SidebarInset className="flex-1">
-          {/* Header */}
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <div className="h-4 w-px bg-border" />
-              <div>
-                <h1 className="text-lg font-semibold">{title}</h1>
+        <SidebarInset className="flex-1 overflow-hidden">
+          {/* Enhanced Header with glass morphism */}
+          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
+            <div className="flex items-center gap-3 px-6 w-full">
+              <SidebarTrigger className="hover:bg-accent/50 rounded-lg transition-all duration-200" />
+              <div className="h-6 w-px bg-border/60" />
+              <div className="flex-1">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{title}</h1>
                 {description && (
-                  <p className="text-sm text-muted-foreground">{description}</p>
+                  <p className="text-sm text-muted-foreground/80 font-medium">{description}</p>
                 )}
               </div>
             </div>
           </header>
 
-          {/* Main Content */}
-          <main className="flex-1 p-6">
-            {children}
+          {/* Enhanced Main Content with proper scroll and spacing */}
+          <main className="flex-1 overflow-y-auto">
+            <div className="container mx-auto p-6 space-y-6 max-w-7xl">
+              {children}
+            </div>
           </main>
         </SidebarInset>
       </div>

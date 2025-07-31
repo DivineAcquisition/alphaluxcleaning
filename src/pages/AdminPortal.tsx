@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminCard } from "@/components/admin/AdminCard";
+import { AdminGrid } from "@/components/admin/AdminGrid";
+import { AdminSection } from "@/components/admin/AdminSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -126,149 +128,117 @@ const AdminPortal = () => {
   return (
     <AdminLayout 
       title="Admin Dashboard" 
-      description="Overview of business operations and key metrics"
+      description="Real-time insights into your cleaning business operations"
     >
-      <div className="space-y-6">
-        {/* Header Actions */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold">Business Overview</h2>
-            <p className="text-muted-foreground">
-              Real-time insights into your cleaning business operations
-            </p>
-          </div>
+      <AdminSection 
+        title="Business Overview"
+        description="Monitor key performance indicators and business metrics in real-time"
+        headerActions={
           <Button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
             variant="outline"
+            className="gap-2"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
           </Button>
-        </div>
-
+        }
+      >
         {/* Key Metrics Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.totalOrders}</div>
-              <p className="text-xs text-muted-foreground">
-                All time bookings
-              </p>
-            </CardContent>
-          </Card>
+        <AdminGrid columns={4} gap="md">
+          <AdminCard
+            variant="metric"
+            title="Total Orders"
+            icon={<Calendar className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight">{metrics.totalOrders}</div>
+            <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
+          </AdminCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${metrics.completedRevenue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                From completed services
-              </p>
-            </CardContent>
-          </Card>
+          <AdminCard
+            variant="metric"
+            title="Completed Revenue"
+            icon={<DollarSign className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-success">
+              ${metrics.completedRevenue.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">From completed services</p>
+          </AdminCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Revenue</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${metrics.pendingRevenue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                From pending bookings
-              </p>
-            </CardContent>
-          </Card>
+          <AdminCard
+            variant="metric"
+            title="Pending Revenue"
+            icon={<TrendingUp className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-warning">
+              ${metrics.pendingRevenue.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">From pending bookings</p>
+          </AdminCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.completionRate.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground">
-                Service completion rate
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <AdminCard
+            variant="metric"
+            title="Completion Rate"
+            icon={<CheckCircle className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-primary">
+              {metrics.completionRate.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Service completion rate</p>
+          </AdminCard>
+        </AdminGrid>
 
         {/* Additional Stats */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Pending Applications
-              </CardTitle>
-              <CardDescription>
-                Subcontractor applications waiting for review
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{metrics.pendingApplications}</div>
-              {metrics.pendingApplications > 0 && (
-                <Badge variant="secondary" className="mt-2">
-                  Requires Review
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
+        <AdminGrid columns={2} gap="lg">
+          <AdminCard
+            variant="stat"
+            title="Pending Applications"
+            description="Subcontractor applications waiting for review"
+            icon={<Users className="h-5 w-5" />}
+          >
+            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.pendingApplications}</div>
+            {metrics.pendingApplications > 0 && (
+              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-warning/20">
+                Requires Review
+              </Badge>
+            )}
+          </AdminCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Completed Services
-              </CardTitle>
-              <CardDescription>
-                Total number of successfully completed cleanings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{metrics.completedServices}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Customer satisfaction focused
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <AdminCard
+            variant="stat"
+            title="Completed Services"
+            description="Total number of successfully completed cleanings"
+            icon={<BarChart3 className="h-5 w-5" />}
+          >
+            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.completedServices}</div>
+            <p className="text-sm text-muted-foreground">Customer satisfaction focused</p>
+          </AdminCard>
+        </AdminGrid>
 
         {/* System Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-            <CardDescription>
-              Background integrations and data sync are operating automatically
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm">GoHighLevel Integration - Active</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm">Customer Pipeline Automation - Running</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm">Data Synchronization - Real-time</span>
-              </div>
+        <AdminCard
+          title="System Status"
+          description="Background integrations and data synchronization status"
+          variant="action"
+        >
+          <div className="grid gap-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+              <span className="text-sm font-medium">GoHighLevel Integration - Active</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+              <span className="text-sm font-medium">Customer Pipeline Automation - Running</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+              <span className="text-sm font-medium">Data Synchronization - Real-time</span>
+            </div>
+          </div>
+        </AdminCard>
+      </AdminSection>
     </AdminLayout>
   );
 };
