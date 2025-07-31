@@ -14,6 +14,7 @@ import OrderStatus from '@/pages/OrderStatus';
 // Subcontractor pages
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
+import SubcontractorApplication from '@/pages/SubcontractorApplication';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
@@ -61,67 +62,68 @@ function App() {
                 
                 {/* Subcontractor routes */}
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />
+                <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
                 <Route path="/subcontractor-dashboard" element={
-                  <ProtectedRoute allowedRoles={['subcontractor', 'admin']}>
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDashboard />
                   </ProtectedRoute>
                 } />
                 
                 {/* Admin routes */}
                 <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <AdminPortal />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin-dashboard" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <SubcontractorManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/application-manager" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <ApplicationManager />
                   </ProtectedRoute>
                 } />
                 <Route path="/metrics-dashboard" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <MetricsDashboard />
                   </ProtectedRoute>
                 } />
                 
                 {/* Admin tool routes */}
                 <Route path="/email-settings" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <EmailSettings />
                   </ProtectedRoute>
                 } />
                 <Route path="/user-management" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <UserManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/database-tools" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin']}>
                     <DatabaseTools />
                   </ProtectedRoute>
                 } />
                 <Route path="/api-keys" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin']}>
                     <ApiKeys />
                   </ProtectedRoute>
                 } />
                 <Route path="/security-settings" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin']}>
                     <SecuritySettings />
                   </ProtectedRoute>
                 } />
                 <Route path="/system-settings" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['super_admin']}>
                     <SystemSettings />
                   </ProtectedRoute>
                 } />

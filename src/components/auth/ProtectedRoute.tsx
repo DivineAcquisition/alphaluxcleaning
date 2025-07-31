@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'admin' | 'customer';
+  requiredRole?: 'super_admin' | 'enterprise_client' | 'subcontractor' | 'customer';
   allowedRoles?: string[];
   redirectTo?: string;
 }
@@ -36,10 +36,14 @@ export function ProtectedRoute({
       if (!hasAccess) {
         console.log('Access denied, redirecting...');
         // Redirect based on user's actual role
-        if (userRole === 'admin') {
+        if (userRole === 'super_admin' || userRole === 'enterprise_client') {
           // Don't redirect if already on admin pages
           if (!window.location.pathname.startsWith('/admin')) {
             navigate('/admin-dashboard');
+          }
+        } else if (userRole === 'subcontractor') {
+          if (window.location.pathname !== '/subcontractor-dashboard') {
+            navigate('/subcontractor-dashboard');
           }
         } else if (userRole === 'customer') {
           if (window.location.pathname !== '/my-services') {
