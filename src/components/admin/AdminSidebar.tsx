@@ -79,7 +79,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className={open ? "w-72" : "w-16"} collapsible="icon">
+    <Sidebar className="z-40 border-r shadow-lg" collapsible="icon">
       <SidebarHeader className="border-b p-4 bg-gradient-to-r from-primary/10 to-secondary/10">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
@@ -94,7 +94,6 @@ export function AdminSidebar() {
             </div>
           )}
         </div>
-        <SidebarTrigger className="ml-auto hover:bg-primary/10 rounded-lg transition-colors" />
       </SidebarHeader>
       
       <SidebarContent className="px-2">

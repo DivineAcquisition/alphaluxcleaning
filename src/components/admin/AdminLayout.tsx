@@ -14,11 +14,11 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-muted/20 to-background">
         <AdminSidebar />
-        <SidebarInset className="flex-1 overflow-hidden">
+        <SidebarInset className="flex-1 overflow-hidden ml-0">
           {/* Enhanced Header with glass morphism */}
-          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-3 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm">
+          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-3 border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-sm">
             <div className="flex items-center gap-3 px-6 w-full">
-              <SidebarTrigger className="hover:bg-accent/50 rounded-lg transition-all duration-200" />
+              <SidebarTrigger className="hover:bg-accent/50 rounded-lg transition-all duration-200 p-2" />
               <div className="h-6 w-px bg-border/60" />
               <div className="flex-1">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{title}</h1>
