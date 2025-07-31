@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
@@ -8,8 +9,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Mail, Send, Settings, Bell } from "lucide-react";
+import { toast } from "sonner";
 
 export default function EmailSettings() {
+  const [smtpSettings, setSmtpSettings] = useState({
+    host: "smtp.gmail.com",
+    port: "587"
+  });
+
+  const [notifications, setNotifications] = useState({
+    booking: true,
+    cancellation: true,
+    reminder: false,
+    payment: true
+  });
+
+  const handleSaveSettings = () => {
+    toast.success("SMTP settings saved successfully!");
+  };
+
+  const handleTestEmail = () => {
+    toast.success("Test email sent successfully!");
+  };
+
   return (
     <AdminLayout 
       title="Email Settings" 

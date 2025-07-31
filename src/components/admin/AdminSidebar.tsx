@@ -35,7 +35,7 @@ const navigationItems = [
   },
   {
     label: "Control Panel",
-    path: "/admin-panel",
+    path: "/admin-dashboard",
     icon: Settings,
     description: "Admin setup & configuration"
   },

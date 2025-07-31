@@ -19,7 +19,7 @@ import {
 import { JobManagementDashboard } from "@/components/admin/JobManagementDashboard";
 import { SubcontractorJobTracker } from "@/components/admin/SubcontractorJobTracker";
 
-export default function AdminPanel() {
+export default function AdminDashboard() {
   const navigate = useNavigate();
 
   const adminSections = [

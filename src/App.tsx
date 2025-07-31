@@ -17,7 +17,7 @@ import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
-import AdminPanel from '@/pages/AdminPanel';
+import AdminDashboard from '@/pages/AdminDashboard';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import ApplicationManager from '@/pages/ApplicationManager';
 import MetricsDashboard from '@/pages/MetricsDashboard';
@@ -73,9 +73,9 @@ function App() {
                     <AdminPortal />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-panel" element={
+                <Route path="/admin-dashboard" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminPanel />
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={
@@ -126,8 +126,6 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                {/* Legacy admin route redirects */}
-                <Route path="/admin-dashboard" element={<Navigate to="/admin" replace />} />
                 
                 {/* 404 fallback */}
                 <Route path="*" element={<NotFound />} />

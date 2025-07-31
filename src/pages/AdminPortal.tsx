@@ -39,22 +39,19 @@ const AdminPortal = () => {
     if (user) {
       fetchData();
       
-      // Auto-refresh every 2 minutes
+      // Auto-refresh every 5 minutes to avoid excessive API calls
       const interval = setInterval(() => {
-        console.log('AdminPortal: Auto-refreshing data...');
         fetchData(false);
-      }, 120000);
+      }, 300000);
       
       return () => clearInterval(interval);
     }
   }, [user]);
 
   const fetchData = async (showLoading = true) => {
-    console.log('AdminPortal: Starting to fetch data...');
     if (showLoading) setIsLoading(true);
     try {
       await calculateMetrics();
-      console.log('AdminPortal: Data fetched successfully');
     } catch (error) {
       console.error('AdminPortal: Error fetching data:', error);
       toast.error('Failed to load admin data');
