@@ -75,34 +75,45 @@ export default function SubcontractorOnboardingV2() {
   const applicationId = searchParams.get('application_id');
 
   useEffect(() => {
-    if (!token || !applicationId) {
-      toast.error("Invalid onboarding link");
+    if (!token) {
+      toast.error("Invalid onboarding link - missing token");
       navigate("/");
       return;
     }
-    fetchApplicationData();
-  }, [token, applicationId]);
+    validateTokenAndFetchData();
+  }, [token]);
 
-  const fetchApplicationData = async () => {
+  const validateTokenAndFetchData = async () => {
+    if (!token) return;
+    
     try {
-      const { data, error } = await supabase
-        .from("subcontractor_applications")
-        .select("*")
-        .eq("id", applicationId)
-        .eq("status", "approved")
-        .single();
+      // Validate token using the secure function
+      const { data: tokenValidation, error: tokenError } = await supabase
+        .rpc('validate_onboarding_token', { p_token: token });
 
-      if (error || !data) {
-        toast.error("Application not found or not approved");
+      if (tokenError) {
+        console.error("Token validation error:", tokenError);
+        toast.error("Failed to validate onboarding link");
         navigate("/");
         return;
       }
 
-      setApplicantData(data);
-      setBankingData(prev => ({ ...prev, legal_name: data.full_name }));
+      const validation = tokenValidation as any;
+      if (!validation?.valid) {
+        toast.error(validation?.error || "Invalid or expired onboarding link");
+        navigate("/");
+        return;
+      }
+
+      // Set application data from the token validation
+      setApplicantData(validation.application_data);
+      setBankingData(prev => ({ 
+        ...prev, 
+        legal_name: validation.application_data.full_name 
+      }));
     } catch (error) {
-      console.error("Error fetching application:", error);
-      toast.error("Failed to load application data");
+      console.error("Error validating token:", error);
+      toast.error("Failed to validate onboarding link");
       navigate("/");
     }
   };
@@ -166,10 +177,19 @@ export default function SubcontractorOnboardingV2() {
 
     setIsProcessing(true);
     try {
+      // Mark token as used first
+      const { data: tokenResult, error: tokenError } = await supabase
+        .rpc('mark_onboarding_token_used', { p_token: token });
+
+      const result = tokenResult as any;
+      if (tokenError || !result?.success) {
+        throw new Error(result?.error || "Failed to validate onboarding token");
+      }
+
       // Create subcontractor account with all collected data
       const { data, error } = await supabase.functions.invoke('complete-subcontractor-onboarding', {
         body: {
-          application_id: applicationId,
+          token: token,
           selected_tier: selectedTier,
           profile_data: profileData,
           banking_data: bankingData,

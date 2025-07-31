@@ -1679,6 +1679,47 @@ export type Database = {
           },
         ]
       }
+      subcontractor_onboarding_tokens: {
+        Row: {
+          application_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_onboarding_tokens_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_payments: {
         Row: {
           assignment_id: string | null
@@ -2001,6 +2042,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_onboarding_token_used: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       upsert_busy_slot: {
         Args:
           | {
@@ -2027,6 +2072,10 @@ export type Database = {
           p_user_name?: string
           p_order_id?: string
         }
+        Returns: Json
+      }
+      validate_onboarding_token: {
+        Args: { p_token: string }
         Returns: Json
       }
     }
