@@ -22,6 +22,14 @@ import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import ApplicationManager from '@/pages/ApplicationManager';
 import MetricsDashboard from '@/pages/MetricsDashboard';
 
+// Admin tool pages
+import EmailSettings from '@/pages/EmailSettings';
+import UserManagement from '@/pages/UserManagement';
+import DatabaseTools from '@/pages/DatabaseTools';
+import ApiKeys from '@/pages/ApiKeys';
+import SecuritySettings from '@/pages/SecuritySettings';
+import SystemSettings from '@/pages/SystemSettings';
+
 // Auth & utility pages
 import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
@@ -83,6 +91,38 @@ function App() {
                 <Route path="/metrics-dashboard" element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <MetricsDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin tool routes */}
+                <Route path="/email-settings" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <EmailSettings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user-management" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/database-tools" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <DatabaseTools />
+                  </ProtectedRoute>
+                } />
+                <Route path="/api-keys" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ApiKeys />
+                  </ProtectedRoute>
+                } />
+                <Route path="/security-settings" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SecuritySettings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/system-settings" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SystemSettings />
                   </ProtectedRoute>
                 } />
                 

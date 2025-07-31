@@ -75,7 +75,7 @@ export function AdminSidebar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/admin-auth');
+    navigate('/auth');
   };
 
   return (
