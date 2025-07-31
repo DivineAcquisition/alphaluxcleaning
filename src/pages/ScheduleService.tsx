@@ -17,13 +17,58 @@ const ScheduleService = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if admin preview mode
+    const isAdminPreview = searchParams.get('admin_preview');
+    if (isAdminPreview) {
+      checkAdminAccess();
+      return;
+    }
+
     if (!sessionId) {
       toast.error("No session ID found. Redirecting to home.");
       navigate('/');
       return;
     }
     fetchOrderDetails();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, searchParams]);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userRole } = await supabase.rpc('get_user_role', {
+          _user_id: user.id
+        });
+        
+        if (userRole === 'super_admin') {
+          // Set mock order data for admin preview
+          setOrderDetails({
+            id: 'admin-preview-order',
+            cleaning_type: 'deep_clean',
+            frequency: 'one_time',
+            square_footage: 2000,
+            customer_name: 'Admin Preview User',
+            customer_email: 'admin@bayareacleaningpros.com',
+            service_details: {
+              serviceAddress: {
+                street: '123 Admin Street',
+                city: 'San Francisco',
+                state: 'CA',
+                zipCode: '94102'
+              }
+            }
+          });
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.log("Not admin");
+    }
+    
+    // Fallback to regular flow
+    navigate('/');
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -62,8 +107,14 @@ const ScheduleService = () => {
 
   const handleSchedulingComplete = (data: { scheduled_date: string; scheduled_time: string }) => {
     toast.success('Your service has been scheduled successfully!');
-    // Navigate to confirmation page
-    navigate(`/booking-confirmation?session_id=${sessionId}`);
+    
+    // Check if admin preview mode
+    const isAdminPreview = searchParams.get('admin_preview');
+    if (isAdminPreview) {
+      navigate('/booking-confirmation?admin_preview=true');
+    } else {
+      navigate(`/booking-confirmation?session_id=${sessionId}`);
+    }
   };
 
   if (loading) {
@@ -153,7 +204,14 @@ const ScheduleService = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-between">
             <Button 
               variant="outline"
-              onClick={() => navigate(`/service-details?session_id=${sessionId}`)}
+              onClick={() => {
+                const isAdminPreview = searchParams.get('admin_preview');
+                if (isAdminPreview) {
+                  navigate('/service-details?admin_preview=true');
+                } else {
+                  navigate(`/service-details?session_id=${sessionId}`);
+                }
+              }}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />

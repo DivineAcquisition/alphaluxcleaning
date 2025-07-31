@@ -52,13 +52,48 @@ const ServiceDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is admin first
+    checkAdminAccess();
+  }, [sessionId, navigate]);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userRole } = await supabase.rpc('get_user_role', {
+          _user_id: user.id
+        });
+        
+        if (userRole === 'super_admin') {
+          // Admin can access without session ID - use mock data
+          setFormData(prev => ({
+            ...prev,
+            customerName: "Admin Preview User",
+            customerEmail: "admin@bayareacleaningpros.com",
+            customerPhone: "(555) 123-4567",
+            streetAddress: "123 Admin Street",
+            city: "San Francisco",
+            state: "CA",
+            zipCode: "94102",
+            flooringTypes: ["hardwood", "carpet"],
+            primaryFlooringType: "hardwood",
+            dwellingType: "house"
+          }));
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.log("Not admin, checking session ID");
+    }
+
     if (!sessionId) {
       toast.error("No session ID found. Redirecting to home.");
       navigate('/');
       return;
     }
     fetchOrderDetails();
-  }, [sessionId, navigate]);
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -175,6 +210,20 @@ const ServiceDetails = () => {
     setIsSubmitting(true);
 
     try {
+      // Check if admin preview mode
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userRole } = await supabase.rpc('get_user_role', {
+          _user_id: user.id
+        });
+        
+        if (userRole === 'super_admin' && !sessionId) {
+          toast.success("Admin preview: Service details saved!");
+          navigate('/schedule-service?admin_preview=true');
+          return;
+        }
+      }
+
       // Get the complete order data
       const { data: orderData, error: fetchError } = await supabase
         .from("orders")

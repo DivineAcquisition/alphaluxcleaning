@@ -16,13 +16,74 @@ const BookingConfirmation = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if admin preview mode
+    const isAdminPreview = searchParams.get('admin_preview');
+    if (isAdminPreview) {
+      checkAdminAccess();
+      return;
+    }
+
     if (!sessionId) {
       toast.error("No session ID found. Redirecting to home.");
       navigate('/');
       return;
     }
     fetchOrderDetails();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, searchParams]);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userRole } = await supabase.rpc('get_user_role', {
+          _user_id: user.id
+        });
+        
+        if (userRole === 'super_admin') {
+          // Set mock order data for admin preview
+          setOrderDetails({
+            id: 'admin-preview-order',
+            cleaning_type: 'deep_clean',
+            frequency: 'one_time',
+            square_footage: 2000,
+            amount: 9999,
+            customer_name: 'Admin Preview User',
+            customer_email: 'admin@bayareacleaningpros.com',
+            customer_phone: '(555) 123-4567',
+            scheduled_date: '2025-08-05',
+            scheduled_time: '10:00 AM - 12:00 PM',
+            service_details: {
+              serviceAddress: {
+                street: '123 Admin Street',
+                apartment: 'Unit 4B',
+                city: 'San Francisco',
+                state: 'CA',
+                zipCode: '94102'
+              },
+              property: {
+                dwellingType: 'house',
+                flooringTypes: ['hardwood', 'carpet', 'tile'],
+                primaryFlooringType: 'hardwood'
+              },
+              instructions: {
+                access: 'Key under doormat',
+                parking: 'Street parking available',
+                special: 'Extra attention to kitchen and bathrooms',
+                pets: true
+              }
+            }
+          });
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.log("Not admin");
+    }
+    
+    // Fallback to regular flow
+    navigate('/');
+  };
 
   const fetchOrderDetails = async () => {
     try {

@@ -11,6 +11,8 @@ import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import ServiceDetails from '@/pages/ServiceDetails';
 import ScheduleService from '@/pages/ScheduleService';
 import BookingConfirmation from '@/pages/BookingConfirmation';
+import AdminBookingPreview from '@/pages/AdminBookingPreview';
+import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
 import OrderStatus from '@/pages/OrderStatus';
 
@@ -38,7 +40,6 @@ import SystemSettings from '@/pages/SystemSettings';
 // Auth & utility pages
 import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
-import TestBooking from '@/pages/TestBooking';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -77,6 +78,7 @@ function App() {
                 <Route path="/service-details" element={<ServiceDetails />} />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+                <Route path="/admin-booking-preview" element={<AdminBookingPreview />} />
                 <Route path="/test-booking" element={<TestBooking />} />
                 
                 {/* Customer protected routes */}
