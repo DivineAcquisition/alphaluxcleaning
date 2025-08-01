@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
+import { ZapierTestButton } from "@/components/ZapierTestButton";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ScheduleService = () => {
@@ -186,6 +187,24 @@ const ScheduleService = () => {
                     )}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Zapier Integration Test - Only for admin users */}
+          {showCalendarIntegration && (
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Zapier Integration Test
+                </CardTitle>
+                <CardDescription>
+                  Test sending booking transaction data to Zapier
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ZapierTestButton />
               </CardContent>
             </Card>
           )}

@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.google-oauth-callback]
 verify_jwt = true
 
+[functions.send-booking-transaction-to-zapier]
+verify_jwt = false
+
 [functions.sync-calendar-busy-slots]
 verify_jwt = false
 
