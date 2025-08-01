@@ -78,13 +78,11 @@ export function LiveAvailabilityWidget({
         }
       });
 
-      if (error) {
-        console.error('Error checking calendar connection:', error);
+      if (!error && data?.has_connection) {
+        setIsConnected(true);
+      } else {
         setIsConnected(false);
-        return;
       }
-
-      setIsConnected(data?.has_connection || false);
     } catch (error) {
       console.error('Error checking connection:', error);
       setIsConnected(false);

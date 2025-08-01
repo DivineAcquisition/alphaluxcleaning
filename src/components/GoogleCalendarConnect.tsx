@@ -29,7 +29,7 @@ export function GoogleCalendarConnect() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check if user has any active calendar tokens by calling the edge function
+      // Check if user has any active calendar tokens by calling our edge function
       const { data, error } = await supabase.functions.invoke('get-live-availability', {
         body: { 
           date: new Date().toISOString().split('T')[0], 
@@ -37,14 +37,15 @@ export function GoogleCalendarConnect() {
         }
       });
 
-      if (error) {
-        console.error('Error checking calendar connection:', error);
-        return;
-      }
-
-      if (data?.has_connection) {
+      if (!error && data?.has_connection) {
         setIsConnected(true);
-        setCalendarToken({ id: 'temp', provider: 'google', calendar_id: null, is_active: true, created_at: new Date().toISOString() });
+        setCalendarToken({ 
+          id: 'temp', 
+          provider: 'google', 
+          calendar_id: null, 
+          is_active: true, 
+          created_at: new Date().toISOString() 
+        });
       }
     } catch (error) {
       console.error('Error checking connection status:', error);
@@ -87,7 +88,7 @@ export function GoogleCalendarConnect() {
 
     setIsLoading(true);
     try {
-      // For now, we'll call a mock disconnect via the edge function
+      // Call the OAuth callback function with disconnect action
       const { data, error } = await supabase.functions.invoke('google-oauth-callback', {
         body: { action: 'disconnect' }
       });
