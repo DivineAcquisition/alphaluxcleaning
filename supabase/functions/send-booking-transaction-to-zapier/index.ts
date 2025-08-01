@@ -285,7 +285,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         event_type: 'customer_data_collection',
-        customer_booking_data: transactionData,
+        'BACP Data': transactionData,
         metadata: {
           webhook_version: '1.0',
           sent_at: new Date().toISOString(),
