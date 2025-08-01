@@ -113,10 +113,10 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
 
   const orderAmountInDollars = orderAmount / 100;
   const suggestedTips = [
-    { percentage: 15, amount: Math.round(orderAmountInDollars * 0.15) },
-    { percentage: 18, amount: Math.round(orderAmountInDollars * 0.18) },
-    { percentage: 20, amount: Math.round(orderAmountInDollars * 0.20) },
-    { percentage: 25, amount: Math.round(orderAmountInDollars * 0.25) },
+    { percentage: 15, amount: Number((orderAmountInDollars * 0.15).toFixed(2)) },
+    { percentage: 18, amount: Number((orderAmountInDollars * 0.18).toFixed(2)) },
+    { percentage: 20, amount: Number((orderAmountInDollars * 0.20).toFixed(2)) },
+    { percentage: 25, amount: Number((orderAmountInDollars * 0.25).toFixed(2)) },
   ];
 
   return (
