@@ -7,6 +7,7 @@ import { Calendar, ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
+import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 
 const ScheduleService = () => {
   const [searchParams] = useSearchParams();
@@ -177,6 +178,22 @@ const ScheduleService = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Google Calendar Connection */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Calendar Integration
+              </CardTitle>
+              <CardDescription>
+                Connect your Google Calendar to see live availability
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GoogleCalendarConnect />
+            </CardContent>
+          </Card>
 
           {/* Scheduler */}
           <Card className="border-0 shadow-lg">

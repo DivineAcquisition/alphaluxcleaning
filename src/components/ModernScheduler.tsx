@@ -75,16 +75,23 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     console.log('Checking availability for date:', date);
     setIsCheckingAvailability(true);
     try {
-      const timeSlotValues = timeSlots.map(slot => slot.value);
-      const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
-        body: { date, timeSlots: timeSlotValues }
+      const { data, error } = await supabase.functions.invoke('get-live-availability', {
+        body: { 
+          date,
+          slot_duration: 120, // 2 hours
+          working_hours: {
+            start: '08:00',
+            end: '18:00'
+          }
+        }
       });
       
-      console.log('Availability response:', { data, error });
+      console.log('Live availability response:', { data, error });
       
       if (error) {
         console.error('Error checking availability:', error);
         // Default to all available on error
+        const timeSlotValues = timeSlots.map(slot => slot.value);
         const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
           acc[timeValue] = true;
           return acc;
@@ -93,17 +100,41 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
         setCalendarSource('error');
       } else {
-        const availability = data?.availability || [];
-        console.log('Parsed availability:', availability);
+        const availableSlots = data?.available_slots || [];
+        console.log('Available slots from API:', availableSlots);
         
-        const availabilityMap = availability.reduce((acc: {[key: string]: boolean}, slot: any) => {
-          acc[slot.time] = slot.available;
+        // Convert 24-hour API format to 12-hour display format
+        const convertTo12Hour = (time24: string) => {
+          const [hours, minutes] = time24.split(':');
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+        
+        // Create availability map based on our time slots
+        const availabilityMap = timeSlots.reduce((acc: {[key: string]: boolean}, slot) => {
+          // Extract hour from display format (e.g., "9:00 AM" -> "09:00")
+          const displayTime = slot.value;
+          const [time, period] = displayTime.split(' ');
+          const [hour, minute] = time.split(':');
+          let hour24 = parseInt(hour);
+          if (period === 'PM' && hour24 !== 12) hour24 += 12;
+          if (period === 'AM' && hour24 === 12) hour24 = 0;
+          const time24 = `${hour24.toString().padStart(2, '0')}:${minute}`;
+          
+          // Check if this time slot is available
+          const isAvailable = availableSlots.some((apiSlot: any) => {
+            return apiSlot.start === time24 && apiSlot.available;
+          });
+          
+          acc[slot.value] = isAvailable;
           return acc;
         }, {});
         
         console.log('Availability map:', availabilityMap);
         setAvailabilityData(prev => ({ ...prev, [date]: availabilityMap }));
-        setCalendarSource(data?.source || 'unknown');
+        setCalendarSource(data?.status === 'google_calendar' ? 'google' : data?.status || 'unknown');
       }
     } catch (error) {
       console.error('Error checking date availability:', error);
