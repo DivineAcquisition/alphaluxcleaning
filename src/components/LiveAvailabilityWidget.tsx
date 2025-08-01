@@ -70,10 +70,12 @@ export function LiveAvailabilityWidget({
         return;
       }
 
-      // Use RPC call to check calendar connection
-      const { data, error } = await supabase.rpc('get_user_calendar_token', {
-        p_user_id: user.id,
-        p_provider: 'google'
+      // Check connection by calling availability function with connection check flag
+      const { data, error } = await supabase.functions.invoke('get-live-availability', {
+        body: { 
+          date: new Date().toISOString().split('T')[0], 
+          check_connection_only: true 
+        }
       });
 
       if (error) {
@@ -82,7 +84,7 @@ export function LiveAvailabilityWidget({
         return;
       }
 
-      setIsConnected(data && data.length > 0);
+      setIsConnected(data?.has_connection || false);
     } catch (error) {
       console.error('Error checking connection:', error);
       setIsConnected(false);

@@ -29,10 +29,12 @@ export function GoogleCalendarConnect() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Use RPC call to check calendar tokens since table might not be in types yet
-      const { data, error } = await supabase.rpc('get_user_calendar_token', {
-        p_user_id: user.id,
-        p_provider: 'google'
+      // Check if user has any active calendar tokens by calling the edge function
+      const { data, error } = await supabase.functions.invoke('get-live-availability', {
+        body: { 
+          date: new Date().toISOString().split('T')[0], 
+          check_connection_only: true 
+        }
       });
 
       if (error) {
@@ -40,9 +42,9 @@ export function GoogleCalendarConnect() {
         return;
       }
 
-      if (data && data.length > 0) {
-        setCalendarToken(data[0]);
+      if (data?.has_connection) {
         setIsConnected(true);
+        setCalendarToken({ id: 'temp', provider: 'google', calendar_id: null, is_active: true, created_at: new Date().toISOString() });
       }
     } catch (error) {
       console.error('Error checking connection status:', error);
@@ -85,12 +87,12 @@ export function GoogleCalendarConnect() {
 
     setIsLoading(true);
     try {
-      // Use RPC call to disconnect calendar
-      const { error } = await supabase.rpc('disconnect_calendar_token', {
-        p_token_id: calendarToken.id
+      // For now, we'll call a mock disconnect via the edge function
+      const { data, error } = await supabase.functions.invoke('google-oauth-callback', {
+        body: { action: 'disconnect' }
       });
 
-      if (error) {
+      if (error || !data?.success) {
         toast({
           title: "Error",
           description: "Failed to disconnect calendar",

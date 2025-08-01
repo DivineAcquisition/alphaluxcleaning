@@ -1965,6 +1965,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          provider: string
+          refresh_token: string | null
+          scope: string
+          token_expires_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider?: string
+          refresh_token?: string | null
+          scope: string
+          token_expires_at: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider?: string
+          refresh_token?: string | null
+          scope?: string
+          token_expires_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2010,6 +2052,10 @@ export type Database = {
         }
         Returns: Json
       }
+      disconnect_calendar_token: {
+        Args: { p_token_id: string }
+        Returns: Json
+      }
       get_available_slots: {
         Args: {
           p_subcontractor_id: string
@@ -2036,6 +2082,10 @@ export type Database = {
           rating: number
           distance_priority: number
         }[]
+      }
+      get_user_calendar_token: {
+        Args: { p_user_id: string; p_provider: string }
+        Returns: Json[]
       }
       get_user_role: {
         Args: { _user_id: string }

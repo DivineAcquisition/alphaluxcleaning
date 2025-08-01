@@ -40,6 +40,7 @@ import SystemSettings from '@/pages/SystemSettings';
 // Auth & utility pages
 import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
+import OAuthCallback from '@/pages/OAuthCallback';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ function App() {
                 <Route path="/" element={<DomainRouter />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
+                <Route path="/oauth/callback" element={<OAuthCallback />} />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/service-details" element={<ServiceDetails />} />
