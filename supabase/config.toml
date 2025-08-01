@@ -1,5 +1,11 @@
 project_id = "kqoezqzogleaaupjzxch"
 
+[functions.google-oauth-initiate]
+verify_jwt = false
+
+[functions.google-oauth-callback]
+verify_jwt = true
+
 [functions.sync-calendar-busy-slots]
 verify_jwt = false
 
