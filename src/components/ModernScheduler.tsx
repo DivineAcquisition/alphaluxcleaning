@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight, Loader2 } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import SlotTakenDialog from './SlotTakenDialog';
+import { LiveAvailabilityWidget } from './LiveAvailabilityWidget';
 
 interface ModernSchedulerProps {
   serviceType?: string;
@@ -32,6 +33,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const [attemptedSlot, setAttemptedSlot] = useState({ date: '', time: '' });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error' | 'checking'>('checking');
+  const [useAdvancedView, setUseAdvancedView] = useState(false);
+  const [conflictCheckInterval, setConflictCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   const timeSlots = [
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false },
@@ -180,16 +183,65 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     }
   };
 
-  // Polling mechanism for live updates
+  // Real-time conflict detection
+  const checkForConflicts = async () => {
+    if (!selectedDate || !selectedTime) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-live-availability', {
+        body: { 
+          date: selectedDate,
+          slot_duration: 120,
+          working_hours: {
+            start: '08:00',
+            end: '18:00'
+          }
+        }
+      });
+      
+      if (!error && data?.available_slots) {
+        const [time, period] = selectedTime.split(' ');
+        const [hour, minute] = time.split(':');
+        let hour24 = parseInt(hour);
+        if (period === 'PM' && hour24 !== 12) hour24 += 12;
+        if (period === 'AM' && hour24 === 12) hour24 = 0;
+        const time24 = `${hour24.toString().padStart(2, '0')}:${minute}`;
+        
+        const isStillAvailable = data.available_slots.some((slot: any) => 
+          slot.start === time24 && slot.available
+        );
+        
+        if (!isStillAvailable) {
+          toast.error('Your selected time slot is no longer available. Please choose another time.');
+          setSelectedTime('');
+          // Refresh availability data
+          checkDateAvailability(selectedDate, true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for conflicts:', error);
+    }
+  };
+
+  // Start conflict checking when both date and time are selected
   useEffect(() => {
-    if (!selectedDate || nextDayUpsell) return;
-    
-    const interval = setInterval(() => {
-      checkDateAvailability(selectedDate, true);
-    }, 30000); // Poll every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, [selectedDate, nextDayUpsell]);
+    if (selectedDate && selectedTime && connectionStatus === 'connected') {
+      // Check immediately
+      checkForConflicts();
+      
+      // Set up interval for real-time conflict detection
+      const interval = setInterval(checkForConflicts, 15000); // Check every 15 seconds
+      setConflictCheckInterval(interval);
+      
+      return () => {
+        clearInterval(interval);
+        setConflictCheckInterval(null);
+      };
+    } else if (conflictCheckInterval) {
+      clearInterval(conflictCheckInterval);
+      setConflictCheckInterval(null);
+    }
+  }, [selectedDate, selectedTime, connectionStatus]);
 
   useEffect(() => {
     if (selectedDate && !nextDayUpsell) {
@@ -250,10 +302,40 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     }
   };
 
+  // Polling mechanism for live updates
+  useEffect(() => {
+    if (!selectedDate || nextDayUpsell) return;
+    
+    const interval = setInterval(() => {
+      checkDateAvailability(selectedDate, true);
+    }, 30000); // Poll every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [selectedDate, nextDayUpsell]);
+
+  const handleAdvancedSlotSelect = (slot: { start: string; end: string }) => {
+    // Convert 24-hour format to 12-hour format for consistency
+    const [hours, minutes] = slot.start.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const timeDisplay = `${hour12}:${minutes} ${ampm}`;
+    
+    setSelectedTime(timeDisplay);
+    toast.success(`Selected time: ${timeDisplay}`);
+  };
+
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error('Please select both a date and time');
       return;
+    }
+
+    // Final conflict check before submitting
+    if (connectionStatus === 'connected') {
+      await checkForConflicts();
+      // Small delay to allow conflict check to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     setIsSubmitting(true);
@@ -319,10 +401,34 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Schedule Your Service</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Choose your preferred date and time for your {serviceType} cleaning</p>
+      {/* Header with View Toggle */}
+      <div className="text-center space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Schedule Your Service</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Choose your preferred date and time for your {serviceType} cleaning</p>
+        </div>
+        
+        {/* View Toggle */}
+        <div className="flex items-center justify-center gap-3 p-2 bg-muted rounded-lg">
+          <span className={cn("text-sm font-medium", !useAdvancedView ? "text-primary" : "text-muted-foreground")}>
+            Standard View
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setUseAdvancedView(!useAdvancedView)}
+            className="h-6 w-12 p-0"
+          >
+            {useAdvancedView ? (
+              <ToggleRight className="h-6 w-6 text-primary" />
+            ) : (
+              <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+            )}
+          </Button>
+          <span className={cn("text-sm font-medium", useAdvancedView ? "text-primary" : "text-muted-foreground")}>
+            Advanced View
+          </span>
+        </div>
         
         {/* Enhanced Connection Status */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
@@ -344,6 +450,12 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
           {lastUpdated && connectionStatus === 'connected' && (
             <div className="text-muted-foreground">
               Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
+          
+          {selectedDate && selectedTime && connectionStatus === 'connected' && (
+            <div className="text-green-600 font-medium">
+              ⚡ Real-time conflict detection active
             </div>
           )}
         </div>
@@ -424,8 +536,27 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         </Card>
       )}
 
-      {/* Time Selection */}
-      {(selectedDate || nextDayUpsell) && (
+      {/* Advanced View - LiveAvailabilityWidget */}
+      {useAdvancedView && (selectedDate || nextDayUpsell) && (
+        <Card>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+              Live Availability Widget
+              <Badge variant="secondary" className="text-xs">Advanced</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LiveAvailabilityWidget
+              selectedDate={nextDayUpsell ? new Date(Date.now() + 24 * 60 * 60 * 1000) : new Date(selectedDate)}
+              onSlotSelect={handleAdvancedSlotSelect}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Standard Time Selection */}
+      {!useAdvancedView && (selectedDate || nextDayUpsell) && (
         <Card>
           <CardHeader className="pb-3 sm:pb-6">
             <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 text-lg sm:text-xl">
