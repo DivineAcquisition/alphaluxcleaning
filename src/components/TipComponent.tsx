@@ -68,7 +68,7 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
       return;
     }
 
-    if (amount > orderAmount) {
+    if (amount > orderAmountInDollars) {
       toast.error('Tip amount cannot exceed the order total');
       return;
     }
@@ -99,7 +99,7 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
           });
 
         if (error) throw error;
-        toast.success('Thank you for the tip! Your subcontractor will be notified.');
+        toast.success('Thank you for the tip! Your cleaner will be notified.');
       }
 
       fetchExistingTip();
@@ -111,11 +111,12 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
     }
   };
 
+  const orderAmountInDollars = orderAmount / 100;
   const suggestedTips = [
-    { percentage: 15, amount: Math.round(orderAmount * 0.15) },
-    { percentage: 18, amount: Math.round(orderAmount * 0.18) },
-    { percentage: 20, amount: Math.round(orderAmount * 0.20) },
-    { percentage: 25, amount: Math.round(orderAmount * 0.25) },
+    { percentage: 15, amount: Math.round(orderAmountInDollars * 0.15) },
+    { percentage: 18, amount: Math.round(orderAmountInDollars * 0.18) },
+    { percentage: 20, amount: Math.round(orderAmountInDollars * 0.20) },
+    { percentage: 25, amount: Math.round(orderAmountInDollars * 0.25) },
   ];
 
   return (
@@ -170,7 +171,7 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
                 id="tip-amount"
                 type="number"
                 min="0"
-                max={orderAmount}
+                max={orderAmountInDollars}
                 step="0.01"
                 value={tipAmount}
                 onChange={(e) => setTipAmount(e.target.value)}
@@ -184,7 +185,7 @@ export const TipComponent = ({ orderId, orderAmount }: TipComponentProps) => {
           </div>
 
           <div>
-            <Label htmlFor="customer-message">Message for Subcontractor (Optional)</Label>
+            <Label htmlFor="customer-message">Message for Cleaner (Optional)</Label>
             <Textarea
               id="customer-message"
               value={customerMessage}
