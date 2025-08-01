@@ -284,8 +284,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        event_type: 'booking_transaction_complete',
-        transaction_data: transactionData,
+        event_type: 'customer_data_collection',
+        customer_booking_data: transactionData,
         metadata: {
           webhook_version: '1.0',
           sent_at: new Date().toISOString(),
