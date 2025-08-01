@@ -30,6 +30,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const [calendarSource, setCalendarSource] = useState<string>('unknown');
   const [showSlotTakenDialog, setShowSlotTakenDialog] = useState(false);
   const [attemptedSlot, setAttemptedSlot] = useState({ date: '', time: '' });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error' | 'checking'>('checking');
 
   const timeSlots = [
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false },
@@ -69,11 +71,11 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     return dates;
   };
 
-  const checkDateAvailability = async (date: string) => {
-    if (!date || availabilityData[date]) return;
+  const checkDateAvailability = async (date: string, isPollingUpdate = false) => {
+    if (!date || (availabilityData[date] && !isPollingUpdate)) return;
     
-    console.log('Checking availability for date:', date);
-    setIsCheckingAvailability(true);
+    console.log('Checking availability for date:', date, 'polling:', isPollingUpdate);
+    if (!isPollingUpdate) setIsCheckingAvailability(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-live-availability', {
         body: { 
@@ -90,6 +92,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       
       if (error) {
         console.error('Error checking availability:', error);
+        setConnectionStatus('error');
         // Default to all available on error
         const timeSlotValues = timeSlots.map(slot => slot.value);
         const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
@@ -99,9 +102,25 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         
         setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
         setCalendarSource('error');
+        
+        if (!isPollingUpdate) {
+          toast.error('Failed to check calendar availability. Showing all slots as available.');
+        }
       } else {
         const availableSlots = data?.available_slots || [];
         console.log('Available slots from API:', availableSlots);
+        
+        // Update connection status
+        if (data?.status === 'google_calendar') {
+          setConnectionStatus('connected');
+          setCalendarSource('google');
+        } else if (data?.status === 'mock_data') {
+          setConnectionStatus('disconnected');
+          setCalendarSource('mock');
+        } else {
+          setConnectionStatus('error');
+          setCalendarSource(data?.status || 'unknown');
+        }
         
         // Convert 24-hour API format to 12-hour display format
         const convertTo12Hour = (time24: string) => {
@@ -134,10 +153,15 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         
         console.log('Availability map:', availabilityMap);
         setAvailabilityData(prev => ({ ...prev, [date]: availabilityMap }));
-        setCalendarSource(data?.status === 'google_calendar' ? 'google' : data?.status || 'unknown');
+        setLastUpdated(new Date());
+        
+        if (isPollingUpdate) {
+          console.log('Availability updated via polling');
+        }
       }
     } catch (error) {
       console.error('Error checking date availability:', error);
+      setConnectionStatus('error');
       // Default to all available on error
       const timeSlotValues = timeSlots.map(slot => slot.value);
       const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
@@ -147,10 +171,25 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       
       setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
       setCalendarSource('error');
+      
+      if (!isPollingUpdate) {
+        toast.error('Failed to connect to calendar. Showing all slots as available.');
+      }
     } finally {
-      setIsCheckingAvailability(false);
+      if (!isPollingUpdate) setIsCheckingAvailability(false);
     }
   };
+
+  // Polling mechanism for live updates
+  useEffect(() => {
+    if (!selectedDate || nextDayUpsell) return;
+    
+    const interval = setInterval(() => {
+      checkDateAvailability(selectedDate, true);
+    }, 30000); // Poll every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [selectedDate, nextDayUpsell]);
 
   useEffect(() => {
     if (selectedDate && !nextDayUpsell) {
@@ -284,15 +323,36 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Schedule Your Service</h1>
         <p className="text-sm sm:text-base text-muted-foreground">Choose your preferred date and time for your {serviceType} cleaning</p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${isCheckingAvailability ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`} />
-            <span>{isCheckingAvailability ? 'Checking...' : 'Live availability'}</span>
+        
+        {/* Enhanced Connection Status */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex items-center gap-2 p-2 rounded-lg border">
+            <div className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-400' :
+              connectionStatus === 'checking' || isCheckingAvailability ? 'bg-yellow-400 animate-pulse' :
+              connectionStatus === 'disconnected' ? 'bg-orange-400' :
+              'bg-red-400'
+            }`} />
+            <span className="font-medium">
+              {connectionStatus === 'connected' ? 'Google Calendar Connected' :
+               connectionStatus === 'checking' || isCheckingAvailability ? 'Checking availability...' :
+               connectionStatus === 'disconnected' ? 'Using mock data' :
+               'Calendar error - showing all available'}
+            </span>
           </div>
-          {calendarSource && calendarSource !== 'unknown' && (
-            <span>• {calendarSource === 'google' ? 'Google Calendar' : 'Calendar'} connected</span>
+          
+          {lastUpdated && connectionStatus === 'connected' && (
+            <div className="text-muted-foreground">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
           )}
         </div>
+        
+        {connectionStatus === 'disconnected' && (
+          <p className="text-xs text-orange-600">
+            Connect your Google Calendar above for live availability
+          </p>
+        )}
       </div>
 
       {/* Next Day Upsell */}
