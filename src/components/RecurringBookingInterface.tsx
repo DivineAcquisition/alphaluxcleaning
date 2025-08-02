@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw } from 'lucide-react';
+import { TermsOfServiceAgreement } from '@/components/TermsOfServiceAgreement';
 
 interface BookingTier {
   id: string;
@@ -314,26 +315,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
 
       {/* Terms Agreement */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="terms-agreement"
-              checked={termsAgreed}
-              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
-            />
-            <label htmlFor="terms-agreement" className="text-sm leading-relaxed cursor-pointer">
-              I agree to the Terms of Service and understand the time-based nature of services, 
-              recurring billing policy{addMembership ? ', membership terms,' : ''} and 24-hour cancellation policy.
-              {selectedRecurring !== 'one-time' && (
-                <span className="block mt-1 text-muted-foreground">
-                  Recurring services will auto-schedule based on selected frequency. Cancel or pause anytime.
-                </span>
-              )}
-            </label>
-          </div>
-        </CardContent>
-      </Card>
+      <TermsOfServiceAgreement
+        onAgreementChange={setTermsAgreed}
+        isAgreed={termsAgreed}
+        membershipSelected={addMembership}
+      />
 
       {/* Booking Summary */}
       <Card>
