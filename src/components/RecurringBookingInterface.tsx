@@ -83,7 +83,7 @@ const recurringOptions: RecurringOption[] = [
     id: 'weekly',
     name: 'Weekly',
     frequency: 'weekly',
-    discount: 20,
+    discount: 15,
     description: 'Every week - Maximum savings!'
   },
   {
