@@ -341,7 +341,16 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                         <RadioGroupItem value={tier.id} id={tier.id} />
                         <span className="font-semibold text-lg">{tier.hours}-Hour Clean</span>
                       </div>
-                      <div className="text-3xl font-bold mb-3 text-primary">${tier.basePrice}</div>
+                      <div className="text-3xl font-bold mb-3 text-primary">
+                        {(existingMember || addMembership) ? (
+                          <div>
+                            <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
+                            <span>${tier.basePrice - 20}</span>
+                          </div>
+                        ) : (
+                          `$${tier.basePrice}`
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                         <Users className="h-4 w-4" />
                         <span>{tier.cleaners} Professional Cleaners</span>
