@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText } from 'lucide-react';
-import { TermsOfServiceAgreement } from '@/components/TermsOfServiceAgreement';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface BookingTier {
@@ -255,38 +255,70 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>BACP Club Membership Terms</DialogTitle>
+                          <DialogTitle>Terms of Service Agreement</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 text-sm leading-relaxed">
-                          <div>
-                            <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
-                            <p className="text-muted-foreground">
-                              By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
-                            </p>
+                          <p className="font-medium">
+                            By booking a service with Bay Area Cleaning Pros, you agree to the following terms:
+                          </p>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-semibold mb-2">Time-Based Services</h4>
+                              <p className="text-muted-foreground">
+                                All bookings are based on the selected time duration (2, 4, or 6 hours) and include a team of professional cleaners (2 cleaners for 2-4 hour services, 3 cleaners for 6-hour services). If your cleaning requires additional time, we will notify you before proceeding. Extra time is billed in 30-minute increments at $50/hour per cleaner and must be approved prior to continuation.
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Service Scope</h4>
+                              <p className="text-muted-foreground">
+                                We clean according to the time purchased. If a full-home clean cannot be completed in the time selected, cleaners will prioritize based on your initial instructions. Deep cleaning, pet hair removal, wall washing, and other specialized tasks require proper add-ons.
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
+                              <p className="text-muted-foreground">
+                                By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Cancellation & Rescheduling</h4>
+                              <p className="text-muted-foreground">
+                                To avoid a cancellation fee, you must cancel or reschedule your appointment at least 24 hours before the scheduled time. Late cancellations or missed appointments may be subject to a fee of up to 50% of the booking cost.
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Access to Property</h4>
+                              <p className="text-muted-foreground">
+                                You are responsible for ensuring our cleaners can access your property at the scheduled time. If we cannot access the home within 15 minutes of arrival, the appointment may be canceled and a fee may apply.
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="font-semibold mb-2">Refunds</h4>
+                              <p className="text-muted-foreground">
+                                All bookings are non-refundable once services are rendered. If you're dissatisfied, please contact us within 24 hours so we can resolve the issue.
+                              </p>
+                            </div>
                           </div>
                           
-                          <div>
-                            <h4 className="font-semibold mb-2">Membership Benefits</h4>
-                            <ul className="space-y-1 text-muted-foreground ml-4">
-                              <li>• $20 off every cleaning service</li>
-                              <li>• Free add-ons every 3rd visit</li>
-                              <li>• Priority scheduling for appointments</li>
-                              <li>• Loyalty perks and exclusive rewards</li>
-                            </ul>
-                          </div>
-                          
-                          <div>
-                            <h4 className="font-semibold mb-2">Cancellation Policy</h4>
-                            <p className="text-muted-foreground">
-                              You may cancel your membership at any time without penalty. Cancellations can be processed through your customer portal or by contacting our support team. Your membership benefits will remain active until the end of your current billing cycle.
-                            </p>
-                          </div>
-                          
-                          <div>
-                            <h4 className="font-semibold mb-2">Credit System</h4>
-                            <p className="text-muted-foreground">
-                              Unused membership credits will roll over to the following month. Credits that remain unused for more than 30 days will expire. We'll send you reminders before credits expire to ensure you can use them.
-                            </p>
+                          <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20 mt-6">
+                            <Checkbox
+                              id="terms-agreement-popup"
+                              checked={termsAgreed}
+                              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+                              className="mt-1"
+                            />
+                            <label 
+                              htmlFor="terms-agreement-popup" 
+                              className="text-sm font-medium leading-relaxed cursor-pointer"
+                            >
+                              By checking this box, I agree to the Terms of Service and understand the time-based nature of the service, membership billing, and cancellation policy.
+                            </label>
                           </div>
                         </div>
                       </DialogContent>
@@ -361,13 +393,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardContent>
       </Card>
 
-
-      {/* Terms Agreement */}
-      <TermsOfServiceAgreement
-        onAgreementChange={setTermsAgreed}
-        isAgreed={termsAgreed}
-        membershipSelected={addMembership}
-      />
 
       {/* Booking Summary */}
       <Card>
