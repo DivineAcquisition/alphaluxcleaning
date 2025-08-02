@@ -58,8 +58,8 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "http://localhost:3000";
 
     // Calculate the service cost with membership discount applied
-    const serviceAmount = Math.round(bookingData.subtotal * 100); // Convert to cents
-    const membershipAmount = 3000; // $30 in cents
+    const serviceAmount = Math.round(bookingData.pricing.total * 100); // Convert to cents
+    const membershipAmount = 3900; // $39 in cents
 
     logStep("Creating checkout session", { 
       serviceAmount, 
@@ -78,7 +78,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: `${bookingData.tier.hours}-Hour Cleaning Service`,
-              description: "Professional cleaning service with BACP Club™ membership discount applied"
+              description: `Professional cleaning service with BACP Club™ membership benefits${bookingData.pricing.addonMemberDiscount > 0 ? ` (10% addon discount: $${bookingData.pricing.addonMemberDiscount})` : ''}`
             },
             unit_amount: serviceAmount,
           },

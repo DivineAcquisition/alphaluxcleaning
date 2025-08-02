@@ -380,19 +380,38 @@ export default function OrderStatus() {
                     </div>
                   </div>
 
-                  {/* Add-ons */}
-                  {order.add_ons && order.add_ons.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm sm:text-base">Additional Services</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {order.add_ons.map((addon, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {addon.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                   {/* Add-ons */}
+                   {order.add_ons && order.add_ons.length > 0 && (
+                     <div className="space-y-2">
+                       <h4 className="font-semibold text-sm sm:text-base">Additional Services</h4>
+                       <div className="flex flex-wrap gap-1">
+                         {order.add_ons.map((addon, index) => (
+                           <Badge key={index} variant="secondary" className="text-xs">
+                             {addon.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                           </Badge>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {/* Member Discounts */}
+                   {(order.service_details?.addon_member_discount > 0 || order.service_details?.membership_status) && (
+                     <div className="space-y-2">
+                       <h4 className="font-semibold text-sm sm:text-base text-green-600">Member Benefits Applied</h4>
+                       <div className="flex flex-wrap gap-1">
+                         {order.service_details?.membership_status && (
+                           <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                             BACP Club™ Member
+                           </Badge>
+                         )}
+                         {order.service_details?.addon_member_discount > 0 && (
+                           <Badge variant="secondary" className="text-xs bg-green-50 text-green-700">
+                             10% Add-on Discount: ${order.service_details.addon_member_discount}
+                           </Badge>
+                         )}
+                       </div>
+                     </div>
+                   )}
 
                   {/* Service Address */}
                   {order.service_details?.address && (

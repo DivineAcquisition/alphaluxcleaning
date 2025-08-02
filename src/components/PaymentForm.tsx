@@ -203,7 +203,9 @@ export function PaymentForm({
             scheduledDate: schedulingData?.scheduledDate || "",
             scheduledTime: schedulingData?.scheduledTime || "",
             nextDayUpcharge: schedulingData?.upchargeAmount || 0,
-            newClientSpecial: priceBreakdown?.basePrice === 349 && pricingData.hours === 4
+            newClientSpecial: priceBreakdown?.basePrice === 349 && pricingData.hours === 4,
+            membershipStatus: priceBreakdown?.existingMember || priceBreakdown?.addMembership || false,
+            addonMemberDiscount: priceBreakdown?.addonMemberDiscount || 0
           }
         });
         if (error) throw error;

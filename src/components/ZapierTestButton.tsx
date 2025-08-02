@@ -14,11 +14,54 @@ export function ZapierTestButton() {
   const sendSampleBookingTransaction = async () => {
     setIsLoading(true);
     try {
-      console.log("Sending sample booking transaction to Zapier...");
+      console.log("Sending comprehensive sample booking transaction to Zapier...");
+      
+      // Enhanced sample data with membership and addon discounts
+      const sampleData = {
+        transaction_id: `test_${Date.now()}`,
+        customer_name: "John Smith",
+        customer_email: "john.smith@example.com",
+        customer_phone: "(555) 123-4567",
+        service_date: "2024-08-15",
+        service_time: "10:00 AM",
+        cleaning_type: "complete_clean",
+        frequency: "bi_weekly",
+        amount: 349, // New client special pricing
+        currency: 'USD',
+        payment_status: 'completed',
+        stripe_session_id: `cs_test_${Date.now()}`,
+        add_ons: ["fridge", "oven", "baseboards"],
+        square_footage: 1500,
+        next_day_booking: false,
+        payment_type: "full",
+        new_client_special: true,
+        discount_applied: 71,
+        membership_status: true,
+        addon_member_discount: 13.5, // 10% off $135 in addons
+        membership_benefits: {
+          monthly_credit: 20,
+          addon_discount_percent: 10,
+          priority_scheduling: true,
+          free_addon_every_third: true
+        },
+        service_details: {
+          hours: 4,
+          cleaners: 2,
+          estimated_duration: "4 hours",
+          special_instructions: "Focus on kitchen deep clean"
+        },
+        pricing_breakdown: {
+          base_price: 420,
+          addon_total: 121.5, // After 10% member discount
+          new_client_discount: -71,
+          total_savings: 84.5
+        }
+      };
       
       const { data, error } = await supabase.functions.invoke('send-booking-transaction-to-zapier', {
         body: { 
-          send_sample_data: true
+          send_sample_data: true,
+          sample_data: sampleData
         }
       });
 
@@ -31,7 +74,7 @@ export function ZapierTestButton() {
       
       toast({
         title: "Success!",
-        description: "Sample booking transaction sent to Zapier webhook successfully",
+        description: "Enhanced sample booking data sent to Zapier webhook successfully",
       });
     } catch (error) {
       console.error("Error sending to Zapier:", error);
@@ -171,8 +214,8 @@ export function ZapierTestButton() {
         )}
         
         <div className="text-xs text-muted-foreground">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4d3bsb/</p>
-          <p>This sends comprehensive booking data including order details, payment info, service requirements, and analytics.</p>
+          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/</p>
+          <p>This sends comprehensive booking data including membership benefits, addon discounts, new client specials, pricing breakdowns, and complete transaction analytics.</p>
         </div>
       </CardContent>
     </Card>

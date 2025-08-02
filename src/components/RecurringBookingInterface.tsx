@@ -136,10 +136,21 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       basePrice = 349;
     }
     
+    // Calculate addon total with member discount
     const addOnsTotal = selectedAddOns.reduce((total, addOnId) => {
       const addOn = addOnServices.find(service => service.id === addOnId);
-      return total + (addOn?.price || 0);
+      const addOnPrice = addOn?.price || 0;
+      // Apply 10% discount for existing members or new membership signups
+      const discountedPrice = (existingMember || addMembership) ? addOnPrice * 0.9 : addOnPrice;
+      return total + discountedPrice;
     }, 0);
+    
+    const addonMemberDiscount = selectedAddOns.length > 0 && (existingMember || addMembership) 
+      ? selectedAddOns.reduce((total, addOnId) => {
+          const addOn = addOnServices.find(service => service.id === addOnId);
+          return total + ((addOn?.price || 0) * 0.1);
+        }, 0)
+      : 0;
     
     const subtotal = basePrice + addOnsTotal;
     const recurringDiscount = Math.round(subtotal * (selectedRecurringData.discount / 100));
@@ -154,6 +165,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       subtotal,
       recurringDiscount,
       membershipDiscount,
+      addonMemberDiscount,
       total: Math.max(0, total),
       membershipFee
     };
@@ -404,18 +416,28 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                     : 'hover:border-primary/50'
                 }`}>
                   <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox
-                        id={addOn.id}
-                        checked={selectedAddOns.includes(addOn.id)}
-                        onCheckedChange={() => handleAddOnToggle(addOn.id)}
-                        className="mt-1"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">{addOn.name}</div>
-                        <div className="text-sm font-semibold text-primary">+${addOn.price}</div>
-                        <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
-                      </div>
+                     <div className="flex items-start space-x-3">
+                       <Checkbox
+                         id={addOn.id}
+                         checked={selectedAddOns.includes(addOn.id)}
+                         onCheckedChange={() => handleAddOnToggle(addOn.id)}
+                         className="mt-1"
+                       />
+                       <div className="flex-1">
+                         <div className="font-medium">{addOn.name}</div>
+                         <div className="text-sm font-semibold text-primary">
+                           {(existingMember || addMembership) ? (
+                             <>
+                               <span className="line-through text-muted-foreground mr-1">${addOn.price}</span>
+                               +${(addOn.price * 0.9).toFixed(0)}
+                               <span className="text-xs text-green-600 ml-1">(10% off)</span>
+                             </>
+                           ) : (
+                             `+$${addOn.price}`
+                           )}
+                         </div>
+                         <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
+                       </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -509,11 +531,22 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             </div>
             
             {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
-              const addOn = addOnServices.find(service => service.id === addOnId)!;
+              const addOn = addOnServices.find(service => service.id === addOnId);
+              if (!addOn) return null;
+              const discountedPrice = (existingMember || addMembership) ? addOn.price * 0.9 : addOn.price;
               return (
                 <div key={addOnId} className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">{addOn.name}</span>
-                  <span className="text-sm font-medium">+${addOn.price}</span>
+                  <span className="text-sm">{addOn.name}</span>
+                  <span className="text-sm font-medium">
+                    {(existingMember || addMembership) ? (
+                      <>
+                        <span className="line-through text-muted-foreground mr-1">${addOn.price}</span>
+                        +${discountedPrice.toFixed(0)}
+                      </>
+                    ) : (
+                      `+$${addOn.price}`
+                    )}
+                  </span>
                 </div>
               );
             })}
@@ -529,6 +562,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               <div className="flex justify-between items-center text-green-600">
                 <span className="text-sm">New Client Special Discount</span>
                 <span className="text-sm font-medium">-$71</span>
+              </div>
+            )}
+
+            {pricing.addonMemberDiscount > 0 && (
+              <div className="flex justify-between items-center text-green-600">
+                <span className="text-sm">10% Member Discount on Add-ons</span>
+                <span className="text-sm font-medium">-${pricing.addonMemberDiscount.toFixed(0)}</span>
               </div>
             )}
 
@@ -554,12 +594,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             <span className="text-primary">${pricing.total + pricing.membershipFee}</span>
           </div>
 
-          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0 || (newClient && selectedTier === 'complete')) && (
+          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0 || pricing.addonMemberDiscount > 0 || (newClient && selectedTier === 'complete')) && (
             <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800 font-medium">
                 You're saving ${
                   pricing.recurringDiscount + 
                   pricing.membershipDiscount + 
+                  pricing.addonMemberDiscount +
                   (newClient && selectedTier === 'complete' ? 71 : 0)
                 } today! 🎉
               </p>

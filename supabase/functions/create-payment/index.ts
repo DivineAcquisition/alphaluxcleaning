@@ -42,7 +42,9 @@ serve(async (req) => {
       scheduledDate,
       scheduledTime,
       nextDayUpcharge,
-      newClientSpecial
+      newClientSpecial,
+      membershipStatus,
+      addonMemberDiscount
     } = requestBody;
 
     console.log("Validating required fields...");
@@ -84,8 +86,8 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning${newClientSpecial ? ' (New Client Special)' : ''}`,
-              description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}`
+              name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning${newClientSpecial ? ' (New Client Special)' : ''}${membershipStatus ? ' (Member)' : ''}`,
+              description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}${addonMemberDiscount > 0 ? ` • $${addonMemberDiscount} Member Addon Discount` : ''}`
             },
             unit_amount: paymentType === "prepayment" ? amount : Math.round(amount * 100), // Prepayment amount is already in cents
           },
@@ -126,7 +128,9 @@ serve(async (req) => {
         totalAmount: paymentType === "prepayment" ? amount / 100 : amount, // Convert back to dollars for display
         serviceAddress,
         bedrooms,
-        bathrooms
+        bathrooms,
+        membershipStatus: membershipStatus || false,
+        addonMemberDiscount: addonMemberDiscount || 0
       },
       status: "pending",
       created_at: new Date().toISOString()
@@ -211,7 +215,9 @@ serve(async (req) => {
         next_day_booking: nextDayUpcharge > 0,
         payment_type: paymentType,
         new_client_special: newClientSpecial || false,
-        discount_applied: newClientSpecial ? 71 : 0
+        discount_applied: newClientSpecial ? 71 : 0,
+        membership_status: membershipStatus || false,
+        addon_member_discount: addonMemberDiscount || 0
       };
 
       const zapierResponse = await fetch("https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/", {

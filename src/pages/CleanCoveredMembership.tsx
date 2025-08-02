@@ -298,16 +298,16 @@ const CleanCoveredMembership = () => {
                     >
                       <RefreshCw className={`h-4 w-4 ${subscriptionStatus.loading ? 'animate-spin' : ''}`} />
                     </Button>
-                    {subscriptionStatus.subscribed && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleManageSubscription}
-                        disabled={actionLoading}
-                      >
-                        {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Manage"}
-                      </Button>
-                    )}
+                     {subscriptionStatus.subscribed && (
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={handleManageSubscription}
+                         disabled={actionLoading}
+                       >
+                         {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Manage Billing"}
+                       </Button>
+                     )}
                   </div>
                 </div>
               </CardContent>
