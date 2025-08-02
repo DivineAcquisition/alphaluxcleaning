@@ -111,7 +111,8 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
       const addOn = addOnServices.find(service => service.id === addOnId);
       return total + (addOn?.price || 0);
     }, 0);
-    return tierPrice + addOnsTotal;
+    const membershipFee = membershipEnabled ? 30 : 0;
+    return tierPrice + addOnsTotal + membershipFee;
   };
 
   const calculateMonthlySavings = () => {
@@ -326,14 +327,20 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
                   })}
                 </div>
               )}
-              
+
               {membershipEnabled && (
-                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-green-800">Membership Savings</span>
-                    <span className="text-green-600 font-medium">-${calculateMonthlySavings()}</span>
+                <>
+                  <div className="flex justify-between text-sm border-t pt-2">
+                    <span>BACP Club™ Membership</span>
+                    <span>$30</span>
                   </div>
-                </div>
+                  <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-green-800">Service Discount Applied</span>
+                      <span className="text-green-600 font-medium">-${calculateMonthlySavings()}</span>
+                    </div>
+                  </div>
+                </>
               )}
               
               <div className="flex justify-between items-center text-lg font-bold border-t pt-4">
