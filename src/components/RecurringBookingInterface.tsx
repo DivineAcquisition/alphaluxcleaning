@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw } from 'lucide-react';
-import { TermsOfServiceAgreement } from '@/components/TermsOfServiceAgreement';
+import { ServiceIncluded } from '@/components/ServiceIncluded';
 
 interface BookingTier {
   id: string;
@@ -116,7 +116,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
-  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
 
   const selectedTierData = bookingTiers.find(tier => tier.id === selectedTier)!;
   const selectedRecurringData = recurringOptions.find(opt => opt.id === selectedRecurring)!;
@@ -156,29 +155,32 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     );
   };
 
-  const handleBookNow = () => {
+  useEffect(() => {
     const bookingData = {
       tier: selectedTierData,
       recurring: selectedRecurringData,
       addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)),
       membership: addMembership,
-      pricing,
-      termsAgreed
+      pricing
     };
     
     if (onBookingUpdate) {
       onBookingUpdate(bookingData);
     }
-  };
+  }, [selectedTier, selectedRecurring, selectedAddOns, addMembership, onBookingUpdate]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Professional Cleaning Services</h2>
-        <p className="text-muted-foreground">
-          Choose your perfect cleaning plan and save with recurring services
+    <div className="max-w-6xl mx-auto">
+      <div className="text-center space-y-2 mb-8">
+        <h2 className="text-3xl font-bold">Professional Cleaning Services</h2>
+        <p className="text-muted-foreground text-lg">
+          Explore our services and see exactly what's included
         </p>
       </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left Column - Service Configuration */}
+        <div className="lg:col-span-2 space-y-6">
 
       {/* Step 1: Service Selection */}
       <Card>
@@ -279,7 +281,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardContent>
       </Card>
 
-      {/* Step 2: Recurring Options */}
+      {/* What's Included Section */}
+      <ServiceIncluded 
+        cleaningType="general" 
+        serviceType={`${selectedTierData.hours}-hour`}
+      />
+
+      {/* Recurring Options */}
       <Card>
         <CardHeader>
           <CardTitle>Want to keep it clean all year?</CardTitle>
@@ -312,76 +320,67 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           </RadioGroup>
         </CardContent>
       </Card>
+        </div>
 
-
-      {/* Terms Agreement */}
-      <TermsOfServiceAgreement
-        onAgreementChange={setTermsAgreed}
-        isAgreed={termsAgreed}
-        membershipSelected={addMembership}
-      />
-
-      {/* Booking Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>{selectedTierData.hours}-Hour Clean</span>
-              <span>${selectedTierData.basePrice}</span>
-            </div>
-            
-            {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
-              const addOn = addOnServices.find(service => service.id === addOnId)!;
-              return (
-                <div key={addOnId} className="flex justify-between">
-                  <span>{addOn.name}</span>
-                  <span>+${addOn.price}</span>
+        {/* Right Column - Pricing Summary */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <CardTitle>Pricing Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>{selectedTierData.hours}-Hour Clean</span>
+                  <span>${selectedTierData.basePrice}</span>
                 </div>
-              );
-            })}
+                
+                {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
+                  const addOn = addOnServices.find(service => service.id === addOnId)!;
+                  return (
+                    <div key={addOnId} className="flex justify-between">
+                      <span>{addOn.name}</span>
+                      <span>+${addOn.price}</span>
+                    </div>
+                  );
+                })}
 
-            {addMembership && (
-              <div className="flex justify-between">
-                <span>BACP Club Membership</span>
-                <span>+$30/month</span>
+                {addMembership && (
+                  <div className="flex justify-between">
+                    <span>BACP Club Membership</span>
+                    <span>+$30/month</span>
+                  </div>
+                )}
+
+                {pricing.recurringDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>{selectedRecurringData.name} Discount</span>
+                    <span>-${pricing.recurringDiscount}</span>
+                  </div>
+                )}
+
+                {pricing.membershipDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>BACP Club Discount</span>
+                    <span>-${pricing.membershipDiscount}</span>
+                  </div>
+                )}
               </div>
-            )}
 
-            {pricing.recurringDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>{selectedRecurringData.name} Discount</span>
-                <span>-${pricing.recurringDiscount}</span>
+              <Separator />
+
+              <div className="flex justify-between text-lg font-bold">
+                <span>Total</span>
+                <span>${pricing.total + pricing.membershipFee}</span>
               </div>
-            )}
 
-            {pricing.membershipDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>BACP Club Discount</span>
-                <span>-${pricing.membershipDiscount}</span>
+              <div className="text-sm text-muted-foreground text-center pt-2">
+                Configure your service above to see what's included
               </div>
-            )}
-          </div>
-
-          <Separator />
-
-          <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
-            <span>${pricing.total + pricing.membershipFee}</span>
-          </div>
-
-          <Button 
-            onClick={handleBookNow} 
-            disabled={!termsAgreed}
-            className="w-full"
-            size="lg"
-          >
-            Book Now - ${pricing.total + pricing.membershipFee}
-          </Button>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
