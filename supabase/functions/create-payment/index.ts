@@ -84,8 +84,8 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning`,
-              description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}`
+              name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning${newClientSpecial ? ' (New Client Special)' : ''}`,
+              description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}`
             },
             unit_amount: paymentType === "prepayment" ? amount : Math.round(amount * 100), // Prepayment amount is already in cents
           },
@@ -209,7 +209,9 @@ serve(async (req) => {
         add_ons: addOns || [],
         square_footage: squareFootage,
         next_day_booking: nextDayUpcharge > 0,
-        payment_type: paymentType
+        payment_type: paymentType,
+        new_client_special: newClientSpecial || false,
+        discount_applied: newClientSpecial ? 71 : 0
       };
 
       const zapierResponse = await fetch("https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/", {

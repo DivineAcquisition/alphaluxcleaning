@@ -497,7 +497,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="font-medium">{selectedTierData.hours}-Hour Clean</span>
-              <span className="font-semibold">${selectedTierData.basePrice}</span>
+              {newClient && selectedTier === 'complete' ? (
+                <div className="text-right">
+                  <span className="line-through text-muted-foreground text-sm">${selectedTierData.basePrice}</span>
+                  <span className="font-semibold ml-2">${pricing.basePrice}</span>
+                  <div className="text-xs text-green-600 font-medium">New Client Special!</div>
+                </div>
+              ) : (
+                <span className="font-semibold">${pricing.basePrice}</span>
+              )}
             </div>
             
             {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
@@ -514,6 +522,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">BACP Club™ Membership</span>
                 <span className="text-sm font-medium">+$39/month</span>
+              </div>
+            )}
+
+            {newClient && selectedTier === 'complete' && (
+              <div className="flex justify-between items-center text-green-600">
+                <span className="text-sm">New Client Special Discount</span>
+                <span className="text-sm font-medium">-$71</span>
               </div>
             )}
 
@@ -539,10 +554,14 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             <span className="text-primary">${pricing.total + pricing.membershipFee}</span>
           </div>
 
-          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0) && (
+          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0 || (newClient && selectedTier === 'complete')) && (
             <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800 font-medium">
-                You're saving ${pricing.recurringDiscount + pricing.membershipDiscount} today! 🎉
+                You're saving ${
+                  pricing.recurringDiscount + 
+                  pricing.membershipDiscount + 
+                  (newClient && selectedTier === 'complete' ? 71 : 0)
+                } today! 🎉
               </p>
             </div>
           )}
