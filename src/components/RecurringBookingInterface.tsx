@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, User, Mail, Phone, Gift, Tag } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw } from 'lucide-react';
 import { ServiceIncluded } from '@/components/ServiceIncluded';
 
 interface BookingTier {
@@ -117,13 +116,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
-  
-  // Contact form state
-  const [fullName, setFullName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [referralCode, setReferralCode] = useState<string>('');
-  const [discountCode, setDiscountCode] = useState<string>('');
 
   const selectedTierData = bookingTiers.find(tier => tier.id === selectedTier)!;
   const selectedRecurringData = recurringOptions.find(opt => opt.id === selectedRecurring)!;
@@ -163,254 +155,176 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     );
   };
 
-  // Map tier hours to cleaning type for ServiceIncluded component
-  const getCleaningType = (hours: number) => {
-    return hours >= 6 ? 'deep' : 'general';
-  };
+  useEffect(() => {
+    const bookingData = {
+      tier: selectedTierData,
+      recurring: selectedRecurringData,
+      addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)),
+      membership: addMembership,
+      pricing
+    };
+    
+    if (onBookingUpdate) {
+      onBookingUpdate(bookingData);
+    }
+  }, [selectedTier, selectedRecurring, selectedAddOns, addMembership, onBookingUpdate]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Professional Cleaning Services</h2>
-        <p className="text-muted-foreground">
-          Explore our services and see what's included
+    <div className="max-w-6xl mx-auto">
+      <div className="text-center space-y-2 mb-8">
+        <h2 className="text-3xl font-bold">Professional Cleaning Services</h2>
+        <p className="text-muted-foreground text-lg">
+          Explore our services and see exactly what's included
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-8">
         {/* Left Column - Service Configuration */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Step 1: Service Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Choose Your Service
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-                <div className="grid md:grid-cols-3 gap-4">
-                  {bookingTiers.map((tier) => (
-                    <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
-                      <Card className={`transition-all ${selectedTier === tier.id ? 'ring-2 ring-primary' : ''}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-2 mb-3">
-                            <RadioGroupItem value={tier.id} id={tier.id} />
-                            <span className="font-semibold">{tier.hours}-Hour Clean</span>
-                          </div>
-                          <div className="text-2xl font-bold mb-2">${tier.basePrice}</div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-                            <Users className="h-4 w-4" />
-                            {tier.cleaners} Professional Cleaners
-                          </div>
-                          <p className="text-sm text-muted-foreground">{tier.description}</p>
-                        </CardContent>
-                      </Card>
-                    </Label>
-                  ))}
-                </div>
-              </RadioGroup>
 
-              {/* Add-ons */}
-              <div className="mt-6">
-                <h3 className="font-semibold mb-4">Optional Add-ons</h3>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {addOnServices.map((addOn) => (
-                    <div key={addOn.id} className="flex items-center space-x-3 p-3 rounded-lg border">
-                      <Checkbox
-                        id={addOn.id}
-                        checked={selectedAddOns.includes(addOn.id)}
-                        onCheckedChange={() => handleAddOnToggle(addOn.id)}
-                      />
-                      <div className="flex-1">
-                        <label htmlFor={addOn.id} className="font-medium cursor-pointer">
-                          {addOn.name} (+${addOn.price})
-                        </label>
-                        <p className="text-sm text-muted-foreground">{addOn.description}</p>
+      {/* Step 1: Service Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Choose Your Service
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
+            <div className="grid md:grid-cols-3 gap-4">
+              {bookingTiers.map((tier) => (
+                <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
+                  <Card className={`transition-all ${selectedTier === tier.id ? 'ring-2 ring-primary' : ''}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <RadioGroupItem value={tier.id} id={tier.id} />
+                        <span className="font-semibold">{tier.hours}-Hour Clean</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Membership Option */}
-              {!existingMember && (
-                <div className="mt-6">
-                  <h3 className="font-semibold mb-4">🌟 BACP Club Membership</h3>
-                  <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <div className="font-semibold">BACP Club Membership</div>
-                        <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
+                      <div className="text-2xl font-bold mb-2">${tier.basePrice}</div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                        <Users className="h-4 w-4" />
+                        {tier.cleaners} Professional Cleaners
                       </div>
-                      <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-3 mb-3">
-                      {membershipPerks.map((perk, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <span className="text-primary">{perk.icon}</span>
-                          {perk.text}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                      <strong>Sign up today and start saving!</strong>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {existingMember && (
-                <div className="mt-6">
-                  <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-green-800">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-semibold">BACP Club Member</span>
-                    </div>
-                    <p className="text-sm text-green-700 mt-1">
-                      Your membership discount has been applied!
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* What's Included Section */}
-          <ServiceIncluded 
-            cleaningType={getCleaningType(selectedTierData.hours)} 
-            serviceType="recurring" 
-          />
-
-          {/* Step 2: Recurring Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Want to keep it clean all year?</CardTitle>
-              <p className="text-muted-foreground">Save more with recurring services</p>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {recurringOptions.map((option) => (
-                    <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
-                      <Card className={`transition-all ${selectedRecurring === option.id ? 'ring-2 ring-primary' : ''}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value={option.id} id={option.id} />
-                              <span className="font-semibold">{option.name}</span>
-                            </div>
-                            {option.discount > 0 && (
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                {option.discount}% OFF
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{option.description}</p>
-                        </CardContent>
-                      </Card>
-                    </Label>
-                  ))}
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Contact Information
-              </CardTitle>
-              <p className="text-muted-foreground">Tell us how to reach you</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Full Name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="transition-all focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="transition-all focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Phone Number
+                      <p className="text-sm text-muted-foreground">{tier.description}</p>
+                    </CardContent>
+                  </Card>
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className="transition-all focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
+              ))}
+            </div>
+          </RadioGroup>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="referralCode" className="flex items-center gap-2">
-                    <Gift className="h-4 w-4" />
-                    Referral Code <span className="text-muted-foreground">(Optional)</span>
-                  </Label>
-                  <Input
-                    id="referralCode"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    placeholder="Enter referral code"
-                    className="transition-all focus:ring-2 focus:ring-primary/20"
+          {/* Add-ons */}
+          <div className="mt-6">
+            <h3 className="font-semibold mb-4">Optional Add-ons</h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              {addOnServices.map((addOn) => (
+                <div key={addOn.id} className="flex items-center space-x-3 p-3 rounded-lg border">
+                  <Checkbox
+                    id={addOn.id}
+                    checked={selectedAddOns.includes(addOn.id)}
+                    onCheckedChange={() => handleAddOnToggle(addOn.id)}
                   />
-                  <p className="text-xs text-muted-foreground">Get rewards for you and your friend!</p>
+                  <div className="flex-1">
+                    <label htmlFor={addOn.id} className="font-medium cursor-pointer">
+                      {addOn.name} (+${addOn.price})
+                    </label>
+                    <p className="text-sm text-muted-foreground">{addOn.description}</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discountCode" className="flex items-center gap-2">
-                    <Tag className="h-4 w-4" />
-                    Discount Code <span className="text-muted-foreground">(Optional)</span>
-                  </Label>
-                  <Input
-                    id="discountCode"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value)}
-                    placeholder="Enter discount code"
-                    className="transition-all focus:ring-2 focus:ring-primary/20"
-                  />
-                  <p className="text-xs text-muted-foreground">Have a promo code? Apply it here!</p>
+              ))}
+            </div>
+          </div>
+
+          {/* Membership Option */}
+          {!existingMember && (
+            <div className="mt-6">
+              <h3 className="font-semibold mb-4">🌟 BACP Club Membership</h3>
+              <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="font-semibold">BACP Club Membership</div>
+                    <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
+                  </div>
+                  <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 mb-3">
+                  {membershipPerks.map((perk, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <span className="text-primary">{perk.icon}</span>
+                      {perk.text}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  <strong>Sign up today and start saving!</strong>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
+
+          {existingMember && (
+            <div className="mt-6">
+              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-green-800">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-semibold">BACP Club Member</span>
+                </div>
+                <p className="text-sm text-green-700 mt-1">
+                  Your membership discount has been applied!
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* What's Included Section */}
+      <ServiceIncluded 
+        cleaningType="general" 
+        serviceType={`${selectedTierData.hours}-hour`}
+      />
+
+      {/* Recurring Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Want to keep it clean all year?</CardTitle>
+          <p className="text-muted-foreground">Save more with recurring services</p>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
+            <div className="grid md:grid-cols-2 gap-4">
+              {recurringOptions.map((option) => (
+                <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
+                  <Card className={`transition-all ${selectedRecurring === option.id ? 'ring-2 ring-primary' : ''}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value={option.id} id={option.id} />
+                          <span className="font-semibold">{option.name}</span>
+                        </div>
+                        {option.discount > 0 && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            {option.discount}% OFF
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{option.description}</p>
+                    </CardContent>
+                  </Card>
+                </Label>
+              ))}
+            </div>
+          </RadioGroup>
+        </CardContent>
+      </Card>
         </div>
 
         {/* Right Column - Pricing Summary */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card className="sticky top-6">
             <CardHeader>
               <CardTitle>Pricing Summary</CardTitle>
             </CardHeader>
@@ -460,14 +374,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                 <span>${pricing.total + pricing.membershipFee}</span>
               </div>
 
-              <div className="text-center pt-4">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Ready to book? Contact us to schedule your service!
-                </p>
-                <div className="space-y-1 text-xs text-muted-foreground">
-                  <p>📞 Call: (555) 123-CLEAN</p>
-                  <p>📧 Email: book@bacp.com</p>
-                </div>
+              <div className="text-sm text-muted-foreground text-center pt-2">
+                Configure your service above to see what's included
               </div>
             </CardContent>
           </Card>
