@@ -271,136 +271,159 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         <div className="space-y-6">
           {/* Payment Type Selection */}
           <div className="space-y-8">
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold text-primary">Choose Your Payment Option</h3>
-              <p className="text-muted-foreground">Select how you'd like to pay for your cleaning service</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {/* Full Payment Option */}
-              <div 
-                className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                  paymentType === "full" 
-                    ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                    : "border-border hover:border-primary/50"
-                }`}
-                onClick={() => setPaymentType("full")}
-              >
-                {paymentType === "full" && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                    paymentType === "full" ? "border-primary bg-primary" : "border-border"
-                  }`}>
+            {pricingData.hours === 6 ? (
+              <>
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl font-bold text-primary">Choose Your Payment Option</h3>
+                  <p className="text-muted-foreground">Select how you'd like to pay for your cleaning service</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                  {/* Full Payment Option */}
+                  <div 
+                    className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      paymentType === "full" 
+                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setPaymentType("full")}
+                  >
                     {paymentType === "full" && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                          Most Popular
+                        </Badge>
+                      </div>
                     )}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Pay Full Amount</h4>
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      ${getFinalPrice().toFixed(2)}
+                    <div className="text-center space-y-4">
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
+                        paymentType === "full" ? "border-primary bg-primary" : "border-border"
+                      }`}>
+                        {paymentType === "full" && (
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold mb-2">Pay Full Amount</h4>
+                        <div className="text-3xl font-bold text-primary mb-2">
+                          ${getFinalPrice().toFixed(2)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Complete payment today and you're all set
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ No future charges
+                        </div>
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ Simplest option
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Complete payment today and you're all set
-                    </p>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ No future charges
+                  
+                  {/* Split Payment Option */}
+                  <div 
+                    className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      paymentType === "split" 
+                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setPaymentType("split")}
+                  >
+                    <div className="text-center space-y-4">
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
+                        paymentType === "split" ? "border-primary bg-primary" : "border-border"
+                      }`}>
+                        {paymentType === "split" && (
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold mb-2">Split Payment</h4>
+                        <div className="text-3xl font-bold text-primary mb-1">
+                          ${Math.round(getFinalPrice() / 2).toFixed(2)}
+                        </div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          now, then ${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)} later
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          50% now, 50% auto-billed after service
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ Lower upfront cost
+                        </div>
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ Automatic billing
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Simplest option
+                  </div>
+                  
+                  {/* Prepayment Option */}
+                  <div 
+                    className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      paymentType === "prepayment" 
+                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
+                        : "border-border hover:border-primary/50"
+                    }`}
+                    onClick={() => setPaymentType("prepayment")}
+                  >
+                    <div className="text-center space-y-4">
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
+                        paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"
+                      }`}>
+                        {paymentType === "prepayment" && (
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold mb-2">Prepayment</h4>
+                        <div className="text-3xl font-bold text-primary mb-1">
+                          $150.00
+                        </div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          now, then ${(getFinalPrice() - 150).toFixed(2)} later
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Minimal upfront payment to secure booking
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ Lowest upfront cost
+                        </div>
+                        <div className="flex items-center justify-center text-green-600">
+                          ✓ Secures your slot
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center space-y-4">
+                <h3 className="text-2xl font-bold text-primary">Flexible Payment Options Available</h3>
+                <div className="bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl border-2 border-primary/20 p-8 max-w-2xl mx-auto">
+                  <div className="space-y-4">
+                    <div className="text-lg text-muted-foreground">
+                      We offer convenient financing options through
+                    </div>
+                    <div className="flex items-center justify-center gap-8">
+                      <div className="text-2xl font-bold text-primary">Affirm</div>
+                      <div className="text-xl text-muted-foreground">&</div>
+                      <div className="text-2xl font-bold text-primary">Klarna</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Split your payment into manageable installments at checkout
                     </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Split Payment Option */}
-              <div 
-                className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                  paymentType === "split" 
-                    ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                    : "border-border hover:border-primary/50"
-                }`}
-                onClick={() => setPaymentType("split")}
-              >
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                    paymentType === "split" ? "border-primary bg-primary" : "border-border"
-                  }`}>
-                    {paymentType === "split" && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Split Payment</h4>
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      ${Math.round(getFinalPrice() / 2).toFixed(2)}
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      now, then ${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)} later
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      50% now, 50% auto-billed after service
-                    </p>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Lower upfront cost
-                    </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Automatic billing
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Prepayment Option */}
-              <div 
-                className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                  paymentType === "prepayment" 
-                    ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                    : "border-border hover:border-primary/50"
-                }`}
-                onClick={() => setPaymentType("prepayment")}
-              >
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                    paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"
-                  }`}>
-                    {paymentType === "prepayment" && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Prepayment</h4>
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      $150.00
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      now, then ${(getFinalPrice() - 150).toFixed(2)} later
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Minimal upfront payment to secure booking
-                    </p>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Lowest upfront cost
-                    </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Secures your slot
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
             {/* Service Summary */}
