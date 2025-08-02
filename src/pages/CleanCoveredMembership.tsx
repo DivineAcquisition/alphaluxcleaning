@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
 import { Navigation } from '@/components/Navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Gift, 
   Star, 
@@ -18,12 +21,141 @@ import {
   Quote,
   ArrowRight,
   Phone,
-  Mail
+  Mail,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 const CleanCoveredMembership = () => {
   const [monthlyCleanings, setMonthlyCleanings] = useState([1]);
   const [showStickyButton, setShowStickyButton] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    subscribed: boolean;
+    subscription_tier: string | null;
+    subscription_end: string | null;
+    loading: boolean;
+  }>({ subscribed: false, subscription_tier: null, subscription_end: null, loading: true });
+  const [actionLoading, setActionLoading] = useState(false);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Check for URL parameters to show success/cancel messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      toast({
+        title: "Welcome to Clean & Covered™!",
+        description: "Your membership is now active. You'll receive your first $20 credit immediately.",
+      });
+      // Remove URL parameters
+      window.history.replaceState({}, '', '/membership');
+    } else if (urlParams.get('canceled') === 'true') {
+      toast({
+        title: "Membership signup canceled",
+        description: "No worries! You can join anytime to start saving on your cleanings.",
+        variant: "destructive"
+      });
+      // Remove URL parameters
+      window.history.replaceState({}, '', '/membership');
+    }
+  }, [toast]);
+
+  // Check subscription status when component mounts and when user changes
+  useEffect(() => {
+    if (user) {
+      checkSubscriptionStatus();
+    } else {
+      setSubscriptionStatus({ subscribed: false, subscription_tier: null, subscription_end: null, loading: false });
+    }
+  }, [user]);
+
+  const checkSubscriptionStatus = async () => {
+    if (!user) return;
+    
+    try {
+      setSubscriptionStatus(prev => ({ ...prev, loading: true }));
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) throw error;
+      
+      setSubscriptionStatus({
+        subscribed: data.subscribed || false,
+        subscription_tier: data.subscription_tier || null,
+        subscription_end: data.subscription_end || null,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setSubscriptionStatus(prev => ({ ...prev, loading: false }));
+      toast({
+        title: "Error checking subscription status",
+        description: "Please try refreshing the page.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleJoinNow = async () => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to join the membership.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (subscriptionStatus.subscribed) {
+      // Already subscribed, show manage subscription
+      handleManageSubscription();
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const { data, error } = await supabase.functions.invoke('create-membership-checkout');
+      
+      if (error) throw error;
+      
+      if (data.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast({
+        title: "Error starting membership signup",
+        description: "Please try again or contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+
+    try {
+      setActionLoading(true);
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) throw error;
+      
+      if (data.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast({
+        title: "Error opening subscription management",
+        description: "Please try again or contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const membershipPerks = [
     {
@@ -107,11 +239,6 @@ const CleanCoveredMembership = () => {
     }
   ];
 
-  const handleJoinNow = () => {
-    // Scroll to contact or redirect to signup
-    console.log("Joining Clean & Covered membership");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <Navigation />
@@ -129,6 +256,59 @@ const CleanCoveredMembership = () => {
       )}
 
       <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
+        {/* Subscription Status Bar */}
+        {user && !subscriptionStatus.loading && (
+          <div className="mb-8 max-w-4xl mx-auto">
+            <Card className={`${subscriptionStatus.subscribed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {subscriptionStatus.subscribed ? (
+                      <>
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="font-semibold text-green-800">Active Member</p>
+                          <p className="text-sm text-green-700">
+                            {subscriptionStatus.subscription_end && `Renews ${new Date(subscriptionStatus.subscription_end).toLocaleDateString()}`}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-6 w-6 text-blue-600" />
+                        <div>
+                          <p className="font-semibold text-blue-800">Not a Member</p>
+                          <p className="text-sm text-blue-700">Join today to start saving!</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={checkSubscriptionStatus}
+                      disabled={subscriptionStatus.loading}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${subscriptionStatus.loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                    {subscriptionStatus.subscribed && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleManageSubscription}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Manage"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="text-center py-16 md:py-24">
           <div className="max-w-4xl mx-auto space-y-8">
@@ -137,12 +317,19 @@ const CleanCoveredMembership = () => {
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-              Never Worry About Your Next Clean — 
-              <span className="text-primary"> You're Covered.</span>
+              {subscriptionStatus.subscribed ? (
+                <>Welcome Back, <span className="text-primary">Member!</span></>
+              ) : (
+                <>Never Worry About Your Next Clean — <span className="text-primary"> You're Covered.</span></>
+              )}
             </h1>
             
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
-              Join Clean & Covered™ for just $30/month and unlock exclusive perks, savings, and peace of mind.
+              {subscriptionStatus.subscribed ? (
+                "Enjoy your exclusive member benefits and $20 monthly cleaning credit."
+              ) : (
+                "Join Clean & Covered™ for just $30/month and unlock exclusive perks, savings, and peace of mind."
+              )}
             </p>
             
             <div className="space-y-4">
@@ -150,8 +337,14 @@ const CleanCoveredMembership = () => {
                 onClick={handleJoinNow}
                 size="lg" 
                 className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-6 text-xl"
+                disabled={actionLoading || subscriptionStatus.loading}
               >
-                Join Now – Only $30/month
+                {actionLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                {subscriptionStatus.subscribed ? (
+                  "Manage Membership"
+                ) : (
+                  user ? "Join Now – Only $30/month" : "Sign In to Join – $30/month"
+                )}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               

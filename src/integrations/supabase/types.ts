@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      applicants: {
+        Row: {
+          available_days: string[]
+          available_times: string[]
+          background_check_ok: boolean
+          cleaning_experience: string
+          client_id: string
+          created_at: string
+          email: string
+          form_1099_signature_url: string | null
+          form_1099_signed_at: string | null
+          full_name: string
+          has_car: boolean
+          id: string
+          interview_date: string | null
+          manager_id: string | null
+          notes: string | null
+          onboarding_token: string | null
+          orientation_date: string | null
+          orientation_time: string | null
+          phone: string
+          status: string
+          updated_at: string
+          why_work_with_us: string
+          zip_code: string
+        }
+        Insert: {
+          available_days: string[]
+          available_times: string[]
+          background_check_ok: boolean
+          cleaning_experience: string
+          client_id?: string
+          created_at?: string
+          email: string
+          form_1099_signature_url?: string | null
+          form_1099_signed_at?: string | null
+          full_name: string
+          has_car: boolean
+          id?: string
+          interview_date?: string | null
+          manager_id?: string | null
+          notes?: string | null
+          onboarding_token?: string | null
+          orientation_date?: string | null
+          orientation_time?: string | null
+          phone: string
+          status?: string
+          updated_at?: string
+          why_work_with_us: string
+          zip_code: string
+        }
+        Update: {
+          available_days?: string[]
+          available_times?: string[]
+          background_check_ok?: boolean
+          cleaning_experience?: string
+          client_id?: string
+          created_at?: string
+          email?: string
+          form_1099_signature_url?: string | null
+          form_1099_signed_at?: string | null
+          full_name?: string
+          has_car?: boolean
+          id?: string
+          interview_date?: string | null
+          manager_id?: string | null
+          notes?: string | null
+          onboarding_token?: string | null
+          orientation_date?: string | null
+          orientation_time?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+          why_work_with_us?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
       auth_redirects: {
         Row: {
           created_at: string | null
@@ -487,6 +565,85 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_slots: {
+        Row: {
+          applicant_id: string | null
+          client_id: string
+          created_at: string
+          datetime: string
+          id: string
+          is_available: boolean
+          updated_at: string
+        }
+        Insert: {
+          applicant_id?: string | null
+          client_id?: string
+          created_at?: string
+          datetime: string
+          id?: string
+          is_available?: boolean
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string | null
+          client_id?: string
+          created_at?: string
+          datetime?: string
+          id?: string
+          is_available?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_slots_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "applicants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_tokens: {
+        Row: {
+          applicant_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          applicant_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_tokens_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "applicants"
             referencedColumns: ["id"]
           },
         ]
@@ -1962,6 +2119,42 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           zip_code?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
