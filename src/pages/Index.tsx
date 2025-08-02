@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
+import { HourlyBookingInterface } from "@/components/HourlyBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
 import { PaymentForm } from "@/components/PaymentForm";
@@ -170,10 +171,21 @@ const Index = () => {
                       Customize your cleaning experience with our flexible options
                     </p>
                   </div>
-                  <PricingCalculator onPriceUpdate={(data, price, breakdown) => {
-                    setPricingData(data);
-                    setCalculatedPrice(price);
-                    setPriceBreakdown(breakdown);
+                  <HourlyBookingInterface onBookingUpdate={(data) => {
+                    setPricingData({
+                      hours: data.tier.hours,
+                      cleaningType: 'standard',
+                      serviceType: 'hourly',
+                      membership: data.membership,
+                      addOns: data.addOns
+                    });
+                    setCalculatedPrice(data.subtotal);
+                    setPriceBreakdown({
+                      basePrice: data.membership ? data.tier.membershipPrice : data.tier.price,
+                      addOns: data.addOns,
+                      membership: data.membership,
+                      savings: data.monthlySavings
+                    });
                   }} />
                 </CardContent>
               </Card>
