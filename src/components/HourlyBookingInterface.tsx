@@ -138,25 +138,25 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
 
   return (
     <TooltipProvider>
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl font-bold text-foreground">Choose Your Cleaning Duration</h2>
-          <p className="text-muted-foreground">Professional 2-cleaner teams • Flat-rate pricing • Same-day availability</p>
+        <div className="text-center space-y-2 sm:space-y-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Choose Your Cleaning Duration</h2>
+          <p className="text-sm sm:text-base text-muted-foreground px-2">Professional 2-cleaner teams • Flat-rate pricing • Same-day availability</p>
         </div>
 
         {/* Membership Toggle */}
         <Card className="border-primary/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">Membership Plan</h3>
-                  <Badge variant="secondary">$30/month</Badge>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold">Membership Plan</h3>
+                  <Badge variant="secondary" className="w-fit">$30/month</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">Save $20 on every cleaning + exclusive perks</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Save $20 on every cleaning + exclusive perks</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between sm:justify-end gap-3">
                 <Switch
                   checked={membershipEnabled}
                   onCheckedChange={setMembershipEnabled}
@@ -165,6 +165,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
                 <Button 
                   variant="ghost" 
                   size="sm"
+                  className="text-xs sm:text-sm"
                   onClick={() => setShowMembershipDetails(!showMembershipDetails)}
                 >
                   View Perks
@@ -184,7 +185,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {membershipPerks.map((perk, index) => (
                   <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-background/60">
                     {perk.icon}
@@ -200,7 +201,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
         )}
 
         {/* Booking Tiers */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {bookingTiers.map((tier) => (
             <Card 
               key={tier.hours}
@@ -257,7 +258,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
               <p className="text-sm text-muted-foreground">Enhance your cleaning with these optional services</p>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {addOnServices.map((addOn) => (
                   <div key={addOn.id} className="flex items-center space-x-3 p-3 rounded-lg border">
                     <Checkbox
