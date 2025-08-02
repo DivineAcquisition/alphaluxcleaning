@@ -317,6 +317,65 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </Card>
       )}
 
+      {/* Payment Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Choose Your Payment Option</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {selectedTier === '6-hour' ? (
+            <RadioGroup defaultValue="full">
+              <div className="space-y-3">
+                <Label htmlFor="full" className="cursor-pointer">
+                  <Card className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="full" id="full" />
+                      <div>
+                        <div className="font-semibold">Pay in Full</div>
+                        <div className="text-sm text-muted-foreground">Complete payment today</div>
+                      </div>
+                    </div>
+                  </Card>
+                </Label>
+                
+                <Label htmlFor="split" className="cursor-pointer">
+                  <Card className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="split" id="split" />
+                      <div>
+                        <div className="font-semibold">Split Payment</div>
+                        <div className="text-sm text-muted-foreground">50% now, 50% after service</div>
+                      </div>
+                    </div>
+                  </Card>
+                </Label>
+                
+                <Label htmlFor="prepay" className="cursor-pointer">
+                  <Card className="p-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="prepay" id="prepay" />
+                      <div>
+                        <div className="font-semibold">Prepayment Plan</div>
+                        <div className="text-sm text-muted-foreground">$100 deposit, pay remainder over time</div>
+                      </div>
+                    </div>
+                  </Card>
+                </Label>
+              </div>
+            </RadioGroup>
+          ) : (
+            <div className="text-center p-6 bg-muted/50 rounded-lg">
+              <CreditCard className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <h3 className="font-semibold mb-1">Flexible Payment Options</h3>
+              <p className="text-sm text-muted-foreground">
+                We offer convenient payment solutions through Affirm and Klarna. 
+                Split your payment into manageable installments with no hidden fees.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Terms Agreement */}
       <Card>
         <CardContent className="p-6">
