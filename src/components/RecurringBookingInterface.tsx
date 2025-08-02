@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText } from 'lucide-react';
-
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface BookingTier {
@@ -113,6 +113,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   onBookingUpdate,
   existingMember = false
 }) => {
+  const isMobile = useIsMobile();
   const [selectedTier, setSelectedTier] = useState<string>('2-hour');
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -181,29 +182,169 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </p>
       </div>
 
-      {/* Step 1: Service Selection */}
+      {/* Step 1: BACP Club Membership */}
+      {!existingMember && (
+        <Card className="border-primary/30 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Star className="h-5 w-5" />
+              🌟 BACP Club™ Membership
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Join today and save $20 on every cleaning service
+            </p>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <div className="font-semibold text-lg">BACP Club™ Membership</div>
+                <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
+              </div>
+              <div className="flex items-center gap-3">
+                {!isMobile && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-xs">
+                        <FileText className="h-3 w-3 mr-1" />
+                        View Terms
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Terms of Service Agreement</DialogTitle>
+                      </DialogHeader>
+                       <div className="space-y-4 text-sm leading-relaxed">
+                         <p className="font-medium">
+                           By booking a service with Bay Area Cleaning Pros, you agree to the following terms:
+                         </p>
+                         
+                         <div className="space-y-3">
+                           <div>
+                             <h4 className="font-semibold mb-2">Time-Based Services</h4>
+                             <p className="text-muted-foreground">
+                               All bookings are based on the selected time duration (2, 4, or 6 hours) and include a team of professional cleaners (2 cleaners for 2-4 hour services, 3 cleaners for 6-hour services). If your cleaning requires additional time, we will notify you before proceeding. Extra time is billed in 30-minute increments at $50/hour per cleaner and must be approved prior to continuation.
+                             </p>
+                           </div>
+
+                           <div>
+                             <h4 className="font-semibold mb-2">Service Scope</h4>
+                             <p className="text-muted-foreground">
+                               We clean according to the time purchased. If a full-home clean cannot be completed in the time selected, cleaners will prioritize based on your initial instructions. Deep cleaning, pet hair removal, wall washing, and other specialized tasks require proper add-ons.
+                             </p>
+                           </div>
+
+                           <div>
+                             <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
+                             <p className="text-muted-foreground">
+                               By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
+                             </p>
+                           </div>
+
+                           <div>
+                             <h4 className="font-semibold mb-2">Cancellation & Rescheduling</h4>
+                             <p className="text-muted-foreground">
+                               To avoid a cancellation fee, you must cancel or reschedule your appointment at least 24 hours before the scheduled time. Late cancellations or missed appointments may be subject to a fee of up to 50% of the booking cost.
+                             </p>
+                           </div>
+
+                           <div>
+                             <h4 className="font-semibold mb-2">Access to Property</h4>
+                             <p className="text-muted-foreground">
+                               You are responsible for ensuring our cleaners can access your property at the scheduled time. If we cannot access the home within 15 minutes of arrival, the appointment may be canceled and a fee may apply.
+                             </p>
+                           </div>
+
+                           <div>
+                             <h4 className="font-semibold mb-2">Refunds</h4>
+                             <p className="text-muted-foreground">
+                               All bookings are non-refundable once services are rendered. If you're dissatisfied, please contact us within 24 hours so we can resolve the issue.
+                             </p>
+                           </div>
+                         </div>
+                       </div>
+                     </DialogContent>
+                     </Dialog>
+                )}
+                <Switch 
+                  checked={addMembership} 
+                  onCheckedChange={(checked) => setAddMembership(checked)} 
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
+            </div>
+
+            {addMembership && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                <div className="col-span-full mb-3">
+                  <h4 className="font-semibold text-primary mb-2">Your Membership Benefits:</h4>
+                </div>
+                {membershipPerks.map((perk, index) => (
+                  <div key={index} className="flex items-center gap-3 text-sm">
+                    <span className="text-primary bg-primary/10 p-1 rounded">{perk.icon}</span>
+                    <span className="font-medium">{perk.text}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!addMembership && (
+              <div className="text-center p-4 bg-muted/30 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Turn on membership to see all the amazing benefits and start saving $20 on every clean!
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {existingMember && (
+        <Card className="border-green-300 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-semibold">BACP Club™ Member</span>
+              <Badge variant="secondary" className="bg-green-100 text-green-800 ml-auto">
+                Active
+              </Badge>
+            </div>
+            <p className="text-sm text-green-700 mt-1">
+              Your $20 membership discount has been applied to this booking!
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 2: Choose Your Service */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Choose Your Service
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            All services include professional cleaners and quality supplies
+          </p>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {bookingTiers.map((tier) => (
                 <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
-                  <Card className={`transition-all ${selectedTier === tier.id ? 'ring-2 ring-primary' : ''}`}>
-                    <CardContent className="p-4">
+                  <Card className={`transition-all hover:shadow-md ${
+                    selectedTier === tier.id 
+                      ? 'ring-2 ring-primary border-primary shadow-md' 
+                      : 'hover:border-primary/50'
+                  }`}>
+                    <CardContent className="p-5">
                       <div className="flex items-center space-x-2 mb-3">
                         <RadioGroupItem value={tier.id} id={tier.id} />
-                        <span className="font-semibold">{tier.hours}-Hour Clean</span>
+                        <span className="font-semibold text-lg">{tier.hours}-Hour Clean</span>
                       </div>
-                      <div className="text-2xl font-bold mb-2">${tier.basePrice}</div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                      <div className="text-3xl font-bold mb-3 text-primary">${tier.basePrice}</div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                         <Users className="h-4 w-4" />
-                        {tier.cleaners} Professional Cleaners
+                        <span>{tier.cleaners} Professional Cleaners</span>
                       </div>
                       <p className="text-sm text-muted-foreground">{tier.description}</p>
                     </CardContent>
@@ -212,178 +353,82 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               ))}
             </div>
           </RadioGroup>
-
-          {/* Add-ons */}
-          <div className="mt-6">
-            <h3 className="font-semibold mb-4">Optional Add-ons</h3>
-            <div className="grid md:grid-cols-2 gap-3">
-              {addOnServices.map((addOn) => (
-                <div key={addOn.id} className="flex items-center space-x-3 p-3 rounded-lg border">
-                  <Checkbox
-                    id={addOn.id}
-                    checked={selectedAddOns.includes(addOn.id)}
-                    onCheckedChange={() => handleAddOnToggle(addOn.id)}
-                  />
-                  <div className="flex-1">
-                    <label htmlFor={addOn.id} className="font-medium cursor-pointer">
-                      {addOn.name} (+${addOn.price})
-                    </label>
-                    <p className="text-sm text-muted-foreground">{addOn.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Membership Option */}
-          {!existingMember && (
-            <div className="mt-6">
-              <h3 className="font-semibold mb-4">🌟 BACP Club Membership</h3>
-              <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="font-semibold">BACP Club Membership</div>
-                    <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-xs">
-                          <FileText className="h-3 w-3 mr-1" />
-                          View Terms
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Terms of Service Agreement</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 text-sm leading-relaxed">
-                          <p className="font-medium">
-                            By booking a service with Bay Area Cleaning Pros, you agree to the following terms:
-                          </p>
-                          
-                          <div className="space-y-3">
-                            <div>
-                              <h4 className="font-semibold mb-2">Time-Based Services</h4>
-                              <p className="text-muted-foreground">
-                                All bookings are based on the selected time duration (2, 4, or 6 hours) and include a team of professional cleaners (2 cleaners for 2-4 hour services, 3 cleaners for 6-hour services). If your cleaning requires additional time, we will notify you before proceeding. Extra time is billed in 30-minute increments at $50/hour per cleaner and must be approved prior to continuation.
-                              </p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold mb-2">Service Scope</h4>
-                              <p className="text-muted-foreground">
-                                We clean according to the time purchased. If a full-home clean cannot be completed in the time selected, cleaners will prioritize based on your initial instructions. Deep cleaning, pet hair removal, wall washing, and other specialized tasks require proper add-ons.
-                              </p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
-                              <p className="text-muted-foreground">
-                                By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
-                              </p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold mb-2">Cancellation & Rescheduling</h4>
-                              <p className="text-muted-foreground">
-                                To avoid a cancellation fee, you must cancel or reschedule your appointment at least 24 hours before the scheduled time. Late cancellations or missed appointments may be subject to a fee of up to 50% of the booking cost.
-                              </p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold mb-2">Access to Property</h4>
-                              <p className="text-muted-foreground">
-                                You are responsible for ensuring our cleaners can access your property at the scheduled time. If we cannot access the home within 15 minutes of arrival, the appointment may be canceled and a fee may apply.
-                              </p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold mb-2">Refunds</h4>
-                              <p className="text-muted-foreground">
-                                All bookings are non-refundable once services are rendered. If you're dissatisfied, please contact us within 24 hours so we can resolve the issue.
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20 mt-6">
-                            <Checkbox
-                              id="terms-agreement-popup"
-                              checked={termsAgreed}
-                              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
-                              className="mt-1"
-                            />
-                            <label 
-                              htmlFor="terms-agreement-popup" 
-                              className="text-sm font-medium leading-relaxed cursor-pointer"
-                            >
-                              By checking this box, I agree to the Terms of Service and understand the time-based nature of the service, membership billing, and cancellation policy.
-                            </label>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-3 mb-3">
-                  {membershipPerks.map((perk, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <span className="text-primary">{perk.icon}</span>
-                      {perk.text}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  <strong>Sign up today and start saving!</strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {existingMember && (
-            <div className="mt-6">
-              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-green-800">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-semibold">BACP Club Member</span>
-                </div>
-                <p className="text-sm text-green-700 mt-1">
-                  Your membership discount has been applied!
-                </p>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Step 2: Recurring Options */}
+      {/* Step 3: Add-ons */}
       <Card>
         <CardHeader>
-          <CardTitle>Want to keep it clean all year?</CardTitle>
+          <CardTitle>Optional Add-ons</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Enhance your cleaning with these popular extras
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {addOnServices.map((addOn) => (
+              <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer">
+                <Card className={`transition-all hover:shadow-sm ${
+                  selectedAddOns.includes(addOn.id) 
+                    ? 'border-primary bg-primary/5' 
+                    : 'hover:border-primary/50'
+                }`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id={addOn.id}
+                        checked={selectedAddOns.includes(addOn.id)}
+                        onCheckedChange={() => handleAddOnToggle(addOn.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{addOn.name}</div>
+                        <div className="text-sm font-semibold text-primary">+${addOn.price}</div>
+                        <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Label>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Step 4: Recurring Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cleaning Frequency</CardTitle>
           <p className="text-muted-foreground">Save more with recurring services</p>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {recurringOptions.map((option) => (
                 <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
-                  <Card className={`transition-all ${selectedRecurring === option.id ? 'ring-2 ring-primary' : ''}`}>
-                    <CardContent className="p-4">
+                  <Card className={`transition-all hover:shadow-md ${
+                    selectedRecurring === option.id 
+                      ? 'ring-2 ring-primary border-primary shadow-md' 
+                      : 'hover:border-primary/50'
+                  }`}>
+                    <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value={option.id} id={option.id} />
-                          <span className="font-semibold">{option.name}</span>
+                          <span className="font-semibold text-lg">{option.name}</span>
                         </div>
                         {option.discount > 0 && (
-                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <Badge className="bg-green-500 hover:bg-green-600">
                             {option.discount}% OFF
                           </Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{option.description}</p>
+                      {option.discount > 0 && (
+                        <p className="text-xs text-green-600 mt-2 font-medium">
+                          Save ${Math.round(pricing.subtotal * (option.discount / 100))} per visit
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </Label>
@@ -393,65 +438,95 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardContent>
       </Card>
 
+      {/* Terms Checkbox - Outside membership for all users */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="terms-agreement"
+              checked={termsAgreed}
+              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+              className="mt-1"
+            />
+            <label 
+              htmlFor="terms-agreement" 
+              className="text-sm font-medium leading-relaxed cursor-pointer"
+            >
+              I agree to the Terms of Service and understand the time-based nature of the service, membership billing (if applicable), and cancellation policy.
+            </label>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Booking Summary */}
-      <Card>
+      <Card className="sticky top-4">
         <CardHeader>
-          <CardTitle>Booking Summary</CardTitle>
+          <CardTitle className="text-xl">Booking Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>{selectedTierData.hours}-Hour Clean</span>
-              <span>${selectedTierData.basePrice}</span>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">{selectedTierData.hours}-Hour Clean</span>
+              <span className="font-semibold">${selectedTierData.basePrice}</span>
             </div>
             
             {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
               const addOn = addOnServices.find(service => service.id === addOnId)!;
               return (
-                <div key={addOnId} className="flex justify-between">
-                  <span>{addOn.name}</span>
-                  <span>+${addOn.price}</span>
+                <div key={addOnId} className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">{addOn.name}</span>
+                  <span className="text-sm font-medium">+${addOn.price}</span>
                 </div>
               );
             })}
 
             {addMembership && (
-              <div className="flex justify-between">
-                <span>BACP Club Membership</span>
-                <span>+$30/month</span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">BACP Club™ Membership</span>
+                <span className="text-sm font-medium">+$30/month</span>
               </div>
             )}
 
             {pricing.recurringDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>{selectedRecurringData.name} Discount</span>
-                <span>-${pricing.recurringDiscount}</span>
+              <div className="flex justify-between items-center text-green-600">
+                <span className="text-sm">{selectedRecurringData.name} Discount</span>
+                <span className="text-sm font-medium">-${pricing.recurringDiscount}</span>
               </div>
             )}
 
             {pricing.membershipDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>BACP Club Discount</span>
-                <span>-${pricing.membershipDiscount}</span>
+              <div className="flex justify-between items-center text-green-600">
+                <span className="text-sm">BACP Club™ Discount</span>
+                <span className="text-sm font-medium">-${pricing.membershipDiscount}</span>
               </div>
             )}
           </div>
 
           <Separator />
 
-          <div className="flex justify-between text-lg font-bold">
+          <div className="flex justify-between items-center text-xl font-bold">
             <span>Total</span>
-            <span>${pricing.total + pricing.membershipFee}</span>
+            <span className="text-primary">${pricing.total + pricing.membershipFee}</span>
           </div>
+
+          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0) && (
+            <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800 font-medium">
+                You're saving ${pricing.recurringDiscount + pricing.membershipDiscount} today! 🎉
+              </p>
+            </div>
+          )}
 
           <Button 
             onClick={handleBookNow} 
             disabled={!termsAgreed}
-            className="w-full"
+            className="w-full h-14 text-lg font-semibold"
             size="lg"
           >
-            Book Now - ${pricing.total + pricing.membershipFee}
+            {termsAgreed 
+              ? `Book Now - $${pricing.total + pricing.membershipFee}` 
+              : 'Please agree to terms to continue'
+            }
           </Button>
         </CardContent>
       </Card>
