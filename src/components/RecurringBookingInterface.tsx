@@ -232,49 +232,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               ))}
             </div>
           </div>
-
-          {/* Membership Option */}
-          {!existingMember && (
-            <div className="mt-6">
-              <h3 className="font-semibold mb-4">🌟 BACP Club Membership</h3>
-              <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="font-semibold">BACP Club Membership</div>
-                    <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
-                  </div>
-                  <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-3 mb-3">
-                  {membershipPerks.map((perk, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <span className="text-primary">{perk.icon}</span>
-                      {perk.text}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  <strong>Sign up today and start saving!</strong>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {existingMember && (
-            <div className="mt-6">
-              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 text-green-800">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-semibold">BACP Club Member</span>
-                </div>
-                <p className="text-sm text-green-700 mt-1">
-                  Your membership discount has been applied!
-                </p>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -312,6 +269,53 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardContent>
       </Card>
 
+      {/* Step 3: Membership Upsell */}
+      {!existingMember && (
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-xl">🌟 Unlock Instant Savings with BACP Club Membership</CardTitle>
+            <p className="text-muted-foreground">Get more value from every cleaning</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                <div>
+                  <div className="font-semibold">BACP Club Membership</div>
+                  <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
+                </div>
+                <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                {membershipPerks.map((perk, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    <span className="text-primary">{perk.icon}</span>
+                    {perk.text}
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                <strong>Sign up today and start saving!</strong>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {existingMember && (
+        <Card className="border-2 border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-semibold">BACP Club Member</span>
+            </div>
+            <p className="text-sm text-green-700 mt-1">
+              Your membership discount has been applied!
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Terms Agreement */}
       <Card>
