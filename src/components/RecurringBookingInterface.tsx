@@ -37,6 +37,7 @@ interface RecurringOption {
 interface RecurringBookingInterfaceProps {
   onBookingUpdate?: (data: any) => void;
   existingMember?: boolean;
+  newClient?: boolean;
 }
 
 const bookingTiers: BookingTier[] = [
@@ -114,7 +115,8 @@ const membershipPerks = [
 
 export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps> = ({
   onBookingUpdate,
-  existingMember = false
+  existingMember = false,
+  newClient = false
 }) => {
   const isMobile = useIsMobile();
   const [selectedTier, setSelectedTier] = useState<string>('general');
@@ -127,7 +129,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const selectedRecurringData = recurringOptions.find(opt => opt.id === selectedRecurring)!;
 
   const calculatePricing = () => {
-    const basePrice = selectedTierData.basePrice;
+    let basePrice = selectedTierData.basePrice;
+    
+    // Apply new client special for Complete Clean
+    if (newClient && selectedTier === 'complete') {
+      basePrice = 349;
+    }
+    
     const addOnsTotal = selectedAddOns.reduce((total, addOnId) => {
       const addOn = addOnServices.find(service => service.id === addOnId);
       return total + (addOn?.price || 0);
@@ -348,16 +356,22 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                             'Premium Deep Clean'} ({tier.hours} Hours)
                          </span>
                       </div>
-                      <div className="text-3xl font-bold mb-3 text-primary">
-                        {(existingMember || addMembership) ? (
-                          <div>
-                            <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
-                            <span>${tier.basePrice - 20}</span>
-                          </div>
-                        ) : (
-                          `$${tier.basePrice}`
-                        )}
-                      </div>
+                       <div className="text-3xl font-bold mb-3 text-primary">
+                         {newClient && tier.id === 'complete' ? (
+                           <div>
+                             <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
+                             <span>$349</span>
+                             <div className="text-xs font-normal text-green-600 mt-1">New Client Special!</div>
+                           </div>
+                         ) : (existingMember || addMembership) ? (
+                           <div>
+                             <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
+                             <span>${tier.basePrice - 20}</span>
+                           </div>
+                         ) : (
+                           `$${tier.basePrice}`
+                         )}
+                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                         <Users className="h-4 w-4" />
                         <span>{tier.cleaners} Professional Cleaners</span>

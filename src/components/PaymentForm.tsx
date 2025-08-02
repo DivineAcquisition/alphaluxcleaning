@@ -202,7 +202,8 @@ export function PaymentForm({
             bathrooms: pricingData.bathrooms,
             scheduledDate: schedulingData?.scheduledDate || "",
             scheduledTime: schedulingData?.scheduledTime || "",
-            nextDayUpcharge: schedulingData?.upchargeAmount || 0
+            nextDayUpcharge: schedulingData?.upchargeAmount || 0,
+            newClientSpecial: priceBreakdown?.basePrice === 349 && pricingData.hours === 4
           }
         });
         if (error) throw error;

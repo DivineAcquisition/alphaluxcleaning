@@ -41,7 +41,8 @@ serve(async (req) => {
       bathrooms,
       scheduledDate,
       scheduledTime,
-      nextDayUpcharge
+      nextDayUpcharge,
+      newClientSpecial
     } = requestBody;
 
     console.log("Validating required fields...");
@@ -99,6 +100,7 @@ serve(async (req) => {
         cleaningType: cleaningType || "",
         frequency: frequency || "",
         addOns: addOns?.join(",") || "",
+        newClientSpecial: newClientSpecial ? "true" : "false",
       }
     });
     

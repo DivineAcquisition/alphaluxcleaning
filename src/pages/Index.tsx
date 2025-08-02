@@ -102,84 +102,57 @@ const Index = () => {
         </div>
 
         {/* New Client Special Banner */}
-        <div className="mb-8 max-w-5xl mx-auto">
-          <Card className="bg-gradient-to-br from-primary via-primary/90 to-accent border-none shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-            <CardContent className="p-8 relative">
+        <div className="mb-8 max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
+            <CardContent className="p-4 md:p-6">
               <div className="text-center text-white">
                 {/* Header */}
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <Sparkles className="h-8 w-8 animate-pulse text-yellow-300" />
-                  <h2 className="text-3xl md:text-4xl font-jakarta font-bold">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
+                  <h2 className="text-xl md:text-2xl font-jakarta font-bold">
                     🎉 New Client Special
                   </h2>
-                  <Sparkles className="h-8 w-8 animate-pulse text-yellow-300" />
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
                 </div>
                 
                 {/* Main Offer */}
-                <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
-                  <h3 className="text-2xl md:text-3xl font-jakarta font-bold mb-3 text-yellow-300">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+                  <h3 className="text-lg md:text-xl font-jakarta font-bold mb-2 text-yellow-300">
                     Complete Clean Package
                   </h3>
-                  <div className="flex items-center justify-center gap-4 mb-4">
-                    <span className="text-2xl line-through text-white/70">$420</span>
-                    <span className="text-4xl md:text-5xl font-bold text-yellow-300">$349</span>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <span className="text-lg md:text-xl line-through text-white/70">$420</span>
+                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">$349</span>
                   </div>
-                  <p className="text-xl font-semibold mb-2">Save $71 PLUS Get 2 Months FREE Membership</p>
-                  <div className="bg-yellow-300/20 rounded-lg p-3 mt-4">
-                    <p className="text-lg font-bold text-yellow-300">Total Package Value: $498</p>
-                    <p className="text-2xl font-bold">Total Savings: $149!</p>
-                  </div>
-                </div>
-
-                {/* What You Get */}
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <h4 className="text-lg font-bold mb-3 text-yellow-300">✨ 4-Hour Complete Deep Clean</h4>
-                    <ul className="text-left space-y-1 text-sm">
-                      <li>• 2 Professional Cleaners</li>
-                      <li>• All supplies included</li>
-                      <li>• Insured & bonded service</li>
-                      <li>• 100% satisfaction guarantee</li>
-                    </ul>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <h4 className="text-lg font-bold mb-3 text-yellow-300">🎁 2 Months FREE Membership</h4>
-                    <ul className="text-left space-y-1 text-sm">
-                      <li>• $20 credit each month ($40 total)</li>
-                      <li>• Free add-on on 3rd visit</li>
-                      <li>• Priority scheduling</li>
-                      <li>• Choose your team</li>
-                    </ul>
+                  <p className="text-sm md:text-base font-semibold">Save $71 + 2 Months FREE Membership</p>
+                  <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
+                    <p className="text-sm font-bold text-yellow-300">Total Savings: $149!</p>
                   </div>
                 </div>
 
                 {/* Countdown Timer */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/30">
-                  <div className="flex items-center justify-center gap-4 mb-2">
-                    <Clock className="h-6 w-6 text-yellow-300" />
-                    <span className="text-lg font-semibold">Offer Expires In:</span>
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 md:h-5 w-5 text-yellow-300" />
+                    <span className="text-sm md:text-base font-semibold">Offer Expires In:</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-2xl font-mono font-bold">
-                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
-                      <span>{String(timeLeft.hours).padStart(2, '0')}</span>
-                      <div className="text-xs">HRS</div>
+                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold">
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                      <span className="text-xs md:text-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
                     </div>
                     <span>:</span>
-                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
-                      <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
-                      <div className="text-xs">MIN</div>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                      <span className="text-xs md:text-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     </div>
                     <span>:</span>
-                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
-                      <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
-                      <div className="text-xs">SEC</div>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                      <span className="text-xs md:text-sm">{String(timeLeft.seconds).padStart(2, '0')}</span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-sm font-inter font-semibold text-white/90">
-                  ⚡ First-time clients only • Must book within 30 days • Service area restrictions apply
+                <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
+                  ⚡ First-time clients only • Book within 30 days
                 </p>
               </div>
             </CardContent>
@@ -212,24 +185,26 @@ const Index = () => {
                       Customize your cleaning experience with our flexible options
                     </p>
                   </div>
-                  <RecurringBookingInterface onBookingUpdate={data => {
-                  setPricingData({
-                    hours: data.tier.hours,
-                    cleaningType: 'standard',
-                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                    membership: data.membership,
-                    addOns: data.addOns,
-                    recurring: data.recurring
-                  });
-                  setCalculatedPrice(data.pricing.total);
-                  setPriceBreakdown({
-                    basePrice: data.tier.basePrice,
-                    addOns: data.addOns,
-                    membership: data.membership,
-                    recurring: data.recurring,
-                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                  });
-                }} />
+                  <RecurringBookingInterface 
+                    newClient={true}
+                    onBookingUpdate={data => {
+                    setPricingData({
+                      hours: data.tier.hours,
+                      cleaningType: 'standard',
+                      serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                      membership: data.membership,
+                      addOns: data.addOns,
+                      recurring: data.recurring
+                    });
+                    setCalculatedPrice(data.pricing.total);
+                    setPriceBreakdown({
+                      basePrice: data.tier.basePrice,
+                      addOns: data.addOns,
+                      membership: data.membership,
+                      recurring: data.recurring,
+                      savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+                    });
+                  }} />
                 </CardContent>
               </Card>
 
