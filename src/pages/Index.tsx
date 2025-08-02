@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { HourlyBookingInterface } from "@/components/HourlyBookingInterface";
@@ -231,6 +232,25 @@ const Index = () => {
               <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
                 <CardContent className="p-8">
                   <ReferralSection />
+                </CardContent>
+              </Card>
+
+              {/* Membership CTA */}
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
+                <CardContent className="p-8 text-center space-y-4">
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Want More Savings? Join Clean & Covered™
+                  </h3>
+                  <p className="text-gray-600 max-w-2xl mx-auto">
+                    Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
+                  </p>
+                  <Button 
+                    asChild 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <a href="/membership">Learn About Membership</a>
+                  </Button>
                 </CardContent>
               </Card>
             </div>

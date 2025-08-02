@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 
 // Core customer pages
 import Index from '@/pages/Index';
+import CleanCoveredMembership from '@/pages/CleanCoveredMembership';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import ServiceDetails from '@/pages/ServiceDetails';
 import ScheduleService from '@/pages/ScheduleService';
@@ -82,6 +83,7 @@ function App() {
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 <Route path="/admin-booking-preview" element={<AdminBookingPreview />} />
                 <Route path="/test-booking" element={<TestBooking />} />
+                <Route path="/membership" element={<CleanCoveredMembership />} />
                 
                 {/* Customer protected routes */}
                 <Route path="/my-services" element={
