@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, Clock, Star, Shield, MessageCircle, Calendar, Gift, CheckCircle } from 'lucide-react';
+import { TermsOfServiceAgreement } from './TermsOfServiceAgreement';
 
 interface BookingTier {
   hours: number;
@@ -103,6 +104,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
   const [membershipEnabled, setMembershipEnabled] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [showMembershipDetails, setShowMembershipDetails] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
 
   const calculateSubtotal = () => {
     if (!selectedTier) return 0;
@@ -129,7 +131,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
   };
 
   const handleBookNow = () => {
-    if (!selectedTier) return;
+    if (!selectedTier || !termsAgreed) return;
     
     const bookingData = {
       tier: selectedTier,
@@ -299,6 +301,15 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
           </Card>
         )}
 
+        {/* Terms of Service Agreement */}
+        {selectedTier && (
+          <TermsOfServiceAgreement
+            onAgreementChange={setTermsAgreed}
+            isAgreed={termsAgreed}
+            membershipSelected={membershipEnabled}
+          />
+        )}
+
         {/* Booking Summary */}
         {selectedTier && (
           <Card className="bg-primary/5 border-primary/30">
@@ -348,7 +359,12 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
                 <span className="text-primary">${calculateSubtotal()}</span>
               </div>
               
-              <Button onClick={handleBookNow} className="w-full" size="lg">
+              <Button 
+                onClick={handleBookNow} 
+                className="w-full" 
+                size="lg"
+                disabled={!termsAgreed}
+              >
                 Book Now - ${calculateSubtotal()}
               </Button>
               
