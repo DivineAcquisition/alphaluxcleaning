@@ -16,6 +16,8 @@ interface PaymentFormProps {
     addOns: string[];
     bedrooms?: number;
     bathrooms?: number;
+    membership?: boolean;
+    hours?: number;
   };
   calculatedPrice: number;
   priceBreakdown: any;
@@ -146,56 +148,84 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       return;
     }
 
-    // Scheduling will be handled after payment
-    // No need to check scheduling data here since it happens post-payment
-
     setIsProcessing(true);
 
     try {
-      const finalPrice = getFinalPrice();
-      let paymentAmount = finalPrice;
-      
-      if (paymentType === "split") {
-        paymentAmount = Math.round(finalPrice / 2);
-      } else if (paymentType === "prepayment") {
-        paymentAmount = 15000; // $150 in cents
-      }
-      
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          amount: paymentAmount,
-          fullAmount: finalPrice,
-          paymentType: paymentType,
-          squareFootage: pricingData.squareFootage,
-          cleaningType: pricingData.cleaningType,
-          frequency: pricingData.frequency,
-          addOns: pricingData.addOns,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-          bedrooms: pricingData.bedrooms,
-          bathrooms: pricingData.bathrooms,
-          scheduledDate: schedulingData?.scheduledDate || "",
-          scheduledTime: schedulingData?.scheduledTime || "",
-          nextDayUpcharge: schedulingData?.upchargeAmount || 0
+      // Check if membership is enabled from pricingData
+      if (pricingData.membership) {
+        // Handle membership booking with both service payment and recurring subscription
+        const { data, error } = await supabase.functions.invoke('create-membership-checkout', {
+          body: {
+            bookingData: {
+              tier: {
+                hours: pricingData.hours,
+                price: calculatedPrice,
+                membershipPrice: calculatedPrice // Already discounted
+              },
+              membership: true,
+              addOns: pricingData.addOns || [],
+              subtotal: calculatedPrice
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        // Redirect to Stripe checkout
+        if (data.url) {
+          window.open(data.url, '_blank');
+        } else {
+          throw new Error('No checkout URL received');
         }
-      });
-
-      if (error) throw error;
-
-      // Redirect to Stripe checkout
-      if (data.url) {
-        window.location.href = data.url;
+        
+        toast.success("Redirecting to membership checkout...");
       } else {
-        throw new Error('No checkout URL received');
-      }
-      
-      if (paymentType === "split") {
-        toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
-      } else if (paymentType === "prepayment") {
-        toast.success("Paying $150 prepayment. Remaining balance will be charged after job completion.");
-      } else {
-        toast.success("Redirecting to secure checkout...");
+        // Handle regular service booking (existing flow)
+        const finalPrice = getFinalPrice();
+        let paymentAmount = finalPrice;
+        
+        if (paymentType === "split") {
+          paymentAmount = Math.round(finalPrice / 2);
+        } else if (paymentType === "prepayment") {
+          paymentAmount = 15000; // $150 in cents
+        }
+        
+        const { data, error } = await supabase.functions.invoke('create-payment', {
+          body: {
+            amount: paymentAmount,
+            fullAmount: finalPrice,
+            paymentType: paymentType,
+            squareFootage: pricingData.squareFootage,
+            cleaningType: pricingData.cleaningType,
+            frequency: pricingData.frequency,
+            addOns: pricingData.addOns,
+            customerName: customerInfo.name,
+            customerEmail: customerInfo.email,
+            customerPhone: customerInfo.phone,
+            bedrooms: pricingData.bedrooms,
+            bathrooms: pricingData.bathrooms,
+            scheduledDate: schedulingData?.scheduledDate || "",
+            scheduledTime: schedulingData?.scheduledTime || "",
+            nextDayUpcharge: schedulingData?.upchargeAmount || 0
+          }
+        });
+
+        if (error) throw error;
+
+        // Redirect to Stripe checkout
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL received');
+        }
+        
+        if (paymentType === "split") {
+          toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
+        } else if (paymentType === "prepayment") {
+          toast.success("Paying $150 prepayment. Remaining balance will be charged after job completion.");
+        } else {
+          toast.success("Redirecting to secure checkout...");
+        }
       }
     } catch (error) {
       console.error("Payment error:", error);
