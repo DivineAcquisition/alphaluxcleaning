@@ -73,14 +73,19 @@ const membershipPerks: MembershipPerk[] = [
     description: "Fridge, microwave, or baseboard detailing — on us"
   },
   {
+    icon: <CheckCircle className="h-6 w-6 text-primary" />,
+    title: "50% Off Deep Cleans",
+    description: "Half price on 4+ hour deep cleaning services — members only"
+  },
+  {
     icon: <Calendar className="h-6 w-6 text-primary" />,
     title: "Priority Scheduling Access",
     description: "First pick for weekends, holidays, and last-minute slots"
   },
   {
-    icon: <CheckCircle className="h-6 w-6 text-primary" />,
+    icon: <Star className="h-6 w-6 text-primary" />,
     title: "Loyalty Reward at 6 Months",
-    description: "Earn a free standard cleaning or 50% off a deep clean"
+    description: "Earn a free standard cleaning or additional deep clean discount"
   },
   {
     icon: <MessageCircle className="h-6 w-6 text-primary" />,
@@ -151,7 +156,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-semibold">Membership Plan</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">BACP Club™ Membership</h3>
                   <Badge variant="secondary" className="w-fit">$30/month</Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Save $20 on every cleaning + exclusive perks</p>
@@ -172,6 +177,19 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
                 </Button>
               </div>
             </div>
+            
+            {/* Membership Disclaimer */}
+            {membershipEnabled && (
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-muted-foreground/20">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong>BACP Club™ Membership – $30/month</strong><br/>
+                  By selecting this option, you agree to be charged $30 today and every 30 days thereafter until canceled. 
+                  Membership includes a $20 credit toward this booking, as well as future bookings, along with exclusive perks listed on the Membership page.
+                  <br/><br/>
+                  You may cancel anytime from your account dashboard or by contacting support. Credit rollover is allowed once per month, and unused credits beyond that will expire.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
