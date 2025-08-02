@@ -215,9 +215,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
               <CardHeader className="text-center pb-4">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Clock className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-2xl">
-                    {tier.hours === 4 ? "Deep Clean" : `${tier.hours} Hours`}
-                  </CardTitle>
+                  <CardTitle className="text-2xl">{tier.hours} Hours</CardTitle>
                 </div>
                 <Badge variant="outline" className="mx-auto">
                   <Users className="h-3 w-3 mr-1" />
