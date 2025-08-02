@@ -305,21 +305,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                               </p>
                             </div>
                           </div>
-                          
-                          <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20 mt-6">
-                            <Checkbox
-                              id="terms-agreement-popup"
-                              checked={termsAgreed}
-                              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
-                              className="mt-1"
-                            />
-                            <label 
-                              htmlFor="terms-agreement-popup" 
-                              className="text-sm font-medium leading-relaxed cursor-pointer"
-                            >
-                              By checking this box, I agree to the Terms of Service and understand the time-based nature of the service, membership billing, and cancellation policy.
-                            </label>
-                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -393,58 +378,43 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardContent>
       </Card>
 
-
-      {/* Booking Summary */}
+      {/* Terms Agreement Checkbox */}
       <Card>
-        <CardHeader>
-          <CardTitle>Booking Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>{selectedTierData.hours}-Hour Clean</span>
-              <span>${selectedTierData.basePrice}</span>
-            </div>
-            
-            {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
-              const addOn = addOnServices.find(service => service.id === addOnId)!;
-              return (
-                <div key={addOnId} className="flex justify-between">
-                  <span>{addOn.name}</span>
-                  <span>+${addOn.price}</span>
-                </div>
-              );
-            })}
-
-            {addMembership && (
-              <div className="flex justify-between">
-                <span>BACP Club Membership</span>
-                <span>+$30/month</span>
-              </div>
-            )}
-
-            {pricing.recurringDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>{selectedRecurringData.name} Discount</span>
-                <span>-${pricing.recurringDiscount}</span>
-              </div>
-            )}
-
-            {pricing.membershipDiscount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>BACP Club Discount</span>
-                <span>-${pricing.membershipDiscount}</span>
-              </div>
-            )}
+        <CardContent className="p-4">
+          <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <Checkbox
+              id="terms-agreement"
+              checked={termsAgreed}
+              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+              className="mt-1"
+            />
+            <label 
+              htmlFor="terms-agreement" 
+              className="text-sm font-medium leading-relaxed cursor-pointer"
+            >
+              By checking this box, I agree to the Terms of Service and understand the time-based nature of the service{addMembership ? ', membership billing,' : ''} and cancellation policy.
+            </label>
           </div>
+          
+          {!termsAgreed && (
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              You must agree to the Terms of Service to continue with your booking.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-          <Separator />
-
-          <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
-            <span>${pricing.total + pricing.membershipFee}</span>
+      {/* Simple Pricing Display */}
+      <Card>
+        <CardContent className="p-6 text-center">
+          <div className="text-3xl font-bold text-primary mb-2">
+            ${pricing.total + pricing.membershipFee}
           </div>
-
+          <p className="text-muted-foreground mb-4">
+            {selectedTierData.hours}-hour cleaning service
+            {addMembership && ' + BACP Club Membership'}
+          </p>
+          
           <Button 
             onClick={handleBookNow} 
             disabled={!termsAgreed}
