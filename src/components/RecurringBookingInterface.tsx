@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText } from 'lucide-react';
 import { TermsOfServiceAgreement } from '@/components/TermsOfServiceAgreement';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface BookingTier {
   id: string;
@@ -244,7 +245,54 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                     <div className="font-semibold">BACP Club Membership</div>
                     <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
                   </div>
-                  <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
+                  <div className="flex items-center gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-xs">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View Terms
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>BACP Club Membership Terms</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 text-sm leading-relaxed">
+                          <div>
+                            <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
+                            <p className="text-muted-foreground">
+                              By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">Membership Benefits</h4>
+                            <ul className="space-y-1 text-muted-foreground ml-4">
+                              <li>• $20 off every cleaning service</li>
+                              <li>• Free add-ons every 3rd visit</li>
+                              <li>• Priority scheduling for appointments</li>
+                              <li>• Loyalty perks and exclusive rewards</li>
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">Cancellation Policy</h4>
+                            <p className="text-muted-foreground">
+                              You may cancel your membership at any time without penalty. Cancellations can be processed through your customer portal or by contacting our support team. Your membership benefits will remain active until the end of your current billing cycle.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-2">Credit System</h4>
+                            <p className="text-muted-foreground">
+                              Unused membership credits will roll over to the following month. Credits that remain unused for more than 30 days will expire. We'll send you reminders before credits expire to ensure you can use them.
+                            </p>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Switch checked={addMembership} onCheckedChange={(checked) => setAddMembership(checked)} />
+                  </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-3 mb-3">
