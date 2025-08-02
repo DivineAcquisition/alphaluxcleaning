@@ -390,14 +390,19 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             <span>${pricing.total + pricing.membershipFee}</span>
           </div>
 
-          <Button 
-            onClick={handleBookNow} 
-            disabled={!termsAgreed}
-            className="w-full"
-            size="lg"
-          >
-            Book Now - ${pricing.total + pricing.membershipFee}
-          </Button>
+          <div className="space-y-3">
+            <div className="text-center text-sm text-muted-foreground">
+              Flexible payment options available with Affirm & Klarna
+            </div>
+            <Button 
+              onClick={handleBookNow} 
+              disabled={!termsAgreed}
+              className="w-full"
+              size="lg"
+            >
+              Book Now - ${pricing.total + pricing.membershipFee}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
