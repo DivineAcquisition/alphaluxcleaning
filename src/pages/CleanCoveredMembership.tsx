@@ -175,8 +175,13 @@ const CleanCoveredMembership = () => {
     },
     {
       icon: <CheckCircle className="h-8 w-8 text-primary" />,
+      title: "50% Off Deep Cleans",
+      description: "Half price on 4+ hour deep cleaning services — members only"
+    },
+    {
+      icon: <Star className="h-8 w-8 text-primary" />,
       title: "Loyalty Reward at 6 Months",
-      description: "Earn a free standard cleaning or 50% off a deep clean"
+      description: "Earn a free standard cleaning or additional deep clean discount"
     },
     {
       icon: <MessageCircle className="h-8 w-8 text-primary" />,
@@ -198,6 +203,7 @@ const CleanCoveredMembership = () => {
   const comparisonFeatures = [
     { feature: "Monthly Cleaning Credit", nonMember: "❌ None", member: "✅ $20/month" },
     { feature: "Add-On Perks", nonMember: "❌ Paid Extra", member: "✅ Every 3rd booking" },
+    { feature: "Deep Clean Discount", nonMember: "❌ Full Price", member: "✅ 50% Off (4hr+)" },
     { feature: "Priority Booking Access", nonMember: "❌ No", member: "✅ Yes" },
     { feature: "Loyalty Bonus", nonMember: "❌ No", member: "✅ Yes" },
     { feature: "VIP Text Support", nonMember: "❌ Standard", member: "✅ Direct Line" }
