@@ -101,7 +101,7 @@ const recurringOptions: RecurringOption[] = [
 ];
 
 const membershipPerks = [
-  { icon: <CreditCard className="h-4 w-4" />, text: '$5 off first clean, $10 off monthly recurring' },
+  { icon: <CreditCard className="h-4 w-4" />, text: '$20 off every clean' },
   { icon: <Star className="h-4 w-4" />, text: 'Free add-ons every 3rd visit' },
   { icon: <CheckCircle className="h-4 w-4" />, text: 'Priority scheduling' },
   { icon: <RotateCcw className="h-4 w-4" />, text: 'Loyalty perks & rewards' }
@@ -129,18 +129,10 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     
     const subtotal = basePrice + addOnsTotal;
     const recurringDiscount = Math.round(subtotal * (selectedRecurringData.discount / 100));
-    
-    // Membership discounts: $5 off first clean, $10 off recurring monthly
-    let membershipDiscount = 0;
-    if (existingMember || addMembership) {
-      membershipDiscount = 5; // $5 off first clean
-      if (selectedRecurring !== 'one-time') {
-        membershipDiscount = 10; // $10 off for recurring services
-      }
-    }
+    const membershipDiscount = (existingMember || addMembership) ? 20 : 0;
     
     const total = subtotal - recurringDiscount - membershipDiscount;
-    const membershipFee = addMembership ? 30 : 0; // Add membership cost to total
+    const membershipFee = addMembership ? 30 : 0;
 
     return {
       basePrice,
