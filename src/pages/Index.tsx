@@ -101,44 +101,85 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Limited Time Offer Banner */}
-        <div className="mb-8 max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-primary to-primary/80 border-none shadow-lg animate-pulse">
-            <CardContent className="p-6">
+        {/* New Client Special Banner */}
+        <div className="mb-8 max-w-5xl mx-auto">
+          <Card className="bg-gradient-to-br from-primary via-primary/90 to-accent border-none shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            <CardContent className="p-8 relative">
               <div className="text-center text-white">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles className="h-6 w-6 animate-bounce" />
-                  <h2 className="text-2xl font-jakarta font-bold">LIMITED TIME OFFER!</h2>
-                  <Sparkles className="h-6 w-6 animate-bounce" />
+                {/* Header */}
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Sparkles className="h-8 w-8 animate-pulse text-yellow-300" />
+                  <h2 className="text-3xl md:text-4xl font-jakarta font-bold">
+                    🎉 New Client Special
+                  </h2>
+                  <Sparkles className="h-8 w-8 animate-pulse text-yellow-300" />
                 </div>
                 
-                <div className="mb-4">
-                  <p className="text-xl font-jakarta font-semibold mb-1">Save $75 On Deep Cleanings Or Get 25% Off All Recurring Services</p>
-                  <p className="font-inter font-semibold text-primary-foreground/90">
-                    Book now and enjoy ongoing savings on every clean!
-                  </p>
-                </div>
-
-                {/* Countdown Timer */}
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <Clock className="h-5 w-5" />
-                  <div className="flex items-center gap-1 text-lg font-mono font-bold">
-                    <span className="bg-white/20 px-2 py-1 rounded">
-                      {String(timeLeft.hours).padStart(2, '0')}
-                    </span>
-                    <span>:</span>
-                    <span className="bg-white/20 px-2 py-1 rounded">
-                      {String(timeLeft.minutes).padStart(2, '0')}
-                    </span>
-                    <span>:</span>
-                    <span className="bg-white/20 px-2 py-1 rounded">
-                      {String(timeLeft.seconds).padStart(2, '0')}
-                    </span>
+                {/* Main Offer */}
+                <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20">
+                  <h3 className="text-2xl md:text-3xl font-jakarta font-bold mb-3 text-yellow-300">
+                    Complete Clean Package
+                  </h3>
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    <span className="text-2xl line-through text-white/70">$420</span>
+                    <span className="text-4xl md:text-5xl font-bold text-yellow-300">$349</span>
+                  </div>
+                  <p className="text-xl font-semibold mb-2">Save $71 PLUS Get 2 Months FREE Membership</p>
+                  <div className="bg-yellow-300/20 rounded-lg p-3 mt-4">
+                    <p className="text-lg font-bold text-yellow-300">Total Package Value: $498</p>
+                    <p className="text-2xl font-bold">Total Savings: $149!</p>
                   </div>
                 </div>
 
-                <p className="text-sm font-inter font-semibold text-primary-foreground/80">
-                  ⏰ Offer expires at midnight! Don't miss out on these incredible savings.
+                {/* What You Get */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <h4 className="text-lg font-bold mb-3 text-yellow-300">✨ 4-Hour Complete Deep Clean</h4>
+                    <ul className="text-left space-y-1 text-sm">
+                      <li>• 2 Professional Cleaners</li>
+                      <li>• All supplies included</li>
+                      <li>• Insured & bonded service</li>
+                      <li>• 100% satisfaction guarantee</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <h4 className="text-lg font-bold mb-3 text-yellow-300">🎁 2 Months FREE Membership</h4>
+                    <ul className="text-left space-y-1 text-sm">
+                      <li>• $20 credit each month ($40 total)</li>
+                      <li>• Free add-on on 3rd visit</li>
+                      <li>• Priority scheduling</li>
+                      <li>• Choose your team</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/30">
+                  <div className="flex items-center justify-center gap-4 mb-2">
+                    <Clock className="h-6 w-6 text-yellow-300" />
+                    <span className="text-lg font-semibold">Offer Expires In:</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-2xl font-mono font-bold">
+                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
+                      <span>{String(timeLeft.hours).padStart(2, '0')}</span>
+                      <div className="text-xs">HRS</div>
+                    </div>
+                    <span>:</span>
+                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
+                      <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                      <div className="text-xs">MIN</div>
+                    </div>
+                    <span>:</span>
+                    <div className="bg-white/30 px-3 py-2 rounded-lg border border-white/40">
+                      <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                      <div className="text-xs">SEC</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-sm font-inter font-semibold text-white/90">
+                  ⚡ First-time clients only • Must book within 30 days • Service area restrictions apply
                 </p>
               </div>
             </CardContent>
