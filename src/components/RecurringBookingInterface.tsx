@@ -317,31 +317,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </Card>
       )}
 
-      {/* Payment Options or Affirm/Klarna Notice */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Options</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {selectedTier === '6-hour' ? (
-            <div className="space-y-4">
-              <p className="text-muted-foreground">Choose your preferred payment method for your 6-hour deep cleaning service.</p>
-              {/* Payment options would go here for 6-hour cleans */}
-              <div className="text-sm text-muted-foreground">
-                Payment options available at checkout
-              </div>
-            </div>
-          ) : (
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">
-                We offer flexible payment options including <strong>Affirm</strong> and <strong>Klarna</strong> 
-                to make your cleaning service more affordable with easy monthly payments.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Terms Agreement */}
       <Card>
         <CardContent className="p-6">
@@ -415,19 +390,14 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             <span>${pricing.total + pricing.membershipFee}</span>
           </div>
 
-          <div className="space-y-3">
-            <div className="text-center text-sm text-muted-foreground">
-              Flexible payment options available with Affirm & Klarna
-            </div>
-            <Button 
-              onClick={handleBookNow} 
-              disabled={!termsAgreed}
-              className="w-full"
-              size="lg"
-            >
-              Book Now - ${pricing.total + pricing.membershipFee}
-            </Button>
-          </div>
+          <Button 
+            onClick={handleBookNow} 
+            disabled={!termsAgreed}
+            className="w-full"
+            size="lg"
+          >
+            Book Now - ${pricing.total + pricing.membershipFee}
+          </Button>
         </CardContent>
       </Card>
     </div>
