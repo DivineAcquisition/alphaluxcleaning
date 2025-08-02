@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, User, Mail, Phone, Gift, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -28,8 +27,12 @@ interface PaymentFormProps {
     upchargeAmount?: number;
   };
 }
-
-export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, schedulingData }: PaymentFormProps) {
+export function PaymentForm({
+  pricingData,
+  calculatedPrice,
+  priceBreakdown,
+  schedulingData
+}: PaymentFormProps) {
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -50,44 +53,41 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
     }
     return finalPrice;
   };
-
   const handleInputChange = (field: string, value: string) => {
-    setCustomerInfo(prev => ({ ...prev, [field]: value }));
+    setCustomerInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-
   const handleApplyReferralCode = async () => {
     if (!referralCode.trim()) {
       toast.error("Please enter a referral code");
       return;
     }
-
     if (!customerInfo.email || !customerInfo.name) {
       toast.error("Please fill in your name and email first");
       return;
     }
-
     try {
-      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+      const {
+        data,
+        error
+      } = await supabase.rpc('validate_and_use_referral_code', {
         p_code: referralCode.trim(),
         p_user_email: customerInfo.email,
         p_user_name: customerInfo.name,
         p_order_id: null
       });
-
       if (error) throw error;
-
       const result = data as any;
       if (result?.success) {
         setAppliedReferral(result);
         toast.success(`Referral code applied! You get 10% off your service.`);
-        
-        // Get referrer's email and send reward email
-        const { data: referrerData } = await supabase
-          .from('referral_codes')
-          .select('owner_email')
-          .eq('code', referralCode.trim())
-          .single();
 
+        // Get referrer's email and send reward email
+        const {
+          data: referrerData
+        } = await supabase.from('referral_codes').select('owner_email').eq('code', referralCode.trim()).single();
         if (referrerData?.owner_email) {
           await supabase.functions.invoke('send-service-notification', {
             body: {
@@ -108,13 +108,11 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       toast.error("Failed to apply referral code");
     }
   };
-
   const handleApplyDiscountCode = async () => {
     if (!discountCode.trim()) {
       toast.error("Please enter a discount code");
       return;
     }
-
     if (discountCode.startsWith('FRIEND50')) {
       if (appliedReferral) {
         toast.error("Cannot combine discount codes with referral codes");
@@ -130,13 +128,11 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       toast.error("Invalid discount code");
     }
   };
-
   const handleBookService = async () => {
     if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
       toast.error("Please fill in all required fields");
       return;
     }
-
     if (calculatedPrice <= 0) {
       toast.error("Please complete the pricing calculator first");
       return;
@@ -147,14 +143,15 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       toast.error("Please select a service type first");
       return;
     }
-
     setIsProcessing(true);
-
     try {
       // Check if membership is enabled from pricingData
       if (pricingData.membership) {
         // Handle membership booking with both service payment and recurring subscription
-        const { data, error } = await supabase.functions.invoke('create-membership-checkout', {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('create-membership-checkout', {
           body: {
             bookingData: {
               tier: {
@@ -168,7 +165,6 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             }
           }
         });
-
         if (error) throw error;
 
         // Redirect to Stripe checkout
@@ -177,20 +173,20 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         } else {
           throw new Error('No checkout URL received');
         }
-        
         toast.success("Redirecting to membership checkout...");
       } else {
         // Handle regular service booking (existing flow)
         const finalPrice = getFinalPrice();
         let paymentAmount = finalPrice;
-        
         if (paymentType === "split") {
           paymentAmount = Math.round(finalPrice / 2);
         } else if (paymentType === "prepayment") {
           paymentAmount = 15000; // $150 in cents
         }
-        
-        const { data, error } = await supabase.functions.invoke('create-payment', {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('create-payment', {
           body: {
             amount: paymentAmount,
             fullAmount: finalPrice,
@@ -209,7 +205,6 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             nextDayUpcharge: schedulingData?.upchargeAmount || 0
           }
         });
-
         if (error) throw error;
 
         // Redirect to Stripe checkout
@@ -218,7 +213,6 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         } else {
           throw new Error('No checkout URL received');
         }
-        
         if (paymentType === "split") {
           toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
         } else if (paymentType === "prepayment") {
@@ -234,10 +228,8 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
       setIsProcessing(false);
     }
   };
-
   if (calculatedPrice <= 0) {
-    return (
-      <Card className="shadow-lg">
+    return <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-muted to-accent/20 rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
@@ -252,12 +244,9 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
             Please complete the pricing form to proceed with booking
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card className="shadow-lg">
+  return <Card className="shadow-lg">
       <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
         <CardTitle className="flex items-center justify-center gap-2 text-xl">
           <CreditCard className="h-6 w-6" />
@@ -271,8 +260,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
         <div className="space-y-6">
           {/* Payment Type Selection */}
           <div className="space-y-8">
-            {pricingData.hours === 6 ? (
-              <>
+            {pricingData.hours === 6 ? <>
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl font-bold text-primary">Choose Your Payment Option</h3>
                   <p className="text-muted-foreground">Select how you'd like to pay for your cleaning service</p>
@@ -280,28 +268,15 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
                   {/* Full Payment Option */}
-                  <div 
-                    className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      paymentType === "full" 
-                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setPaymentType("full")}
-                  >
-                    {paymentType === "full" && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "full" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("full")}>
+                    {paymentType === "full" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                         <Badge className="bg-primary text-primary-foreground px-3 py-1">
                           Most Popular
                         </Badge>
-                      </div>
-                    )}
+                      </div>}
                     <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                        paymentType === "full" ? "border-primary bg-primary" : "border-border"
-                      }`}>
-                        {paymentType === "full" && (
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
-                        )}
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "full" ? "border-primary bg-primary" : "border-border"}`}>
+                        {paymentType === "full" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                       </div>
                       <div>
                         <h4 className="text-xl font-bold mb-2">Pay Full Amount</h4>
@@ -324,21 +299,10 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   </div>
                   
                   {/* Split Payment Option */}
-                  <div 
-                    className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      paymentType === "split" 
-                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setPaymentType("split")}
-                  >
+                  <div className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "split" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("split")}>
                     <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                        paymentType === "split" ? "border-primary bg-primary" : "border-border"
-                      }`}>
-                        {paymentType === "split" && (
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
-                        )}
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "split" ? "border-primary bg-primary" : "border-border"}`}>
+                        {paymentType === "split" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                       </div>
                       <div>
                         <h4 className="text-xl font-bold mb-2">Split Payment</h4>
@@ -364,21 +328,10 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                   </div>
                   
                   {/* Prepayment Option */}
-                  <div 
-                    className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      paymentType === "prepayment" 
-                        ? "border-primary bg-primary/5 shadow-lg scale-105" 
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => setPaymentType("prepayment")}
-                  >
+                  <div className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "prepayment" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("prepayment")}>
                     <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${
-                        paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"
-                      }`}>
-                        {paymentType === "prepayment" && (
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
-                        )}
+                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"}`}>
+                        {paymentType === "prepayment" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                       </div>
                       <div>
                         <h4 className="text-xl font-bold mb-2">Prepayment</h4>
@@ -403,231 +356,20 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                     </div>
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="text-center space-y-4">
-                <h3 className="text-2xl font-bold text-primary">Flexible Payment Options Available</h3>
-                <div className="bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl border-2 border-primary/20 p-8 max-w-2xl mx-auto">
-                  <div className="space-y-4">
-                    <div className="text-lg text-muted-foreground">
-                      We offer convenient financing options through
-                    </div>
-                    <div className="flex items-center justify-center gap-8">
-                      <div className="text-2xl font-bold text-primary">Affirm</div>
-                      <div className="text-xl text-muted-foreground">&</div>
-                      <div className="text-2xl font-bold text-primary">Klarna</div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Split your payment into manageable installments at checkout
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+              </> : <div className="text-center space-y-4">
+                
+                
+              </div>}
           </div>
 
             {/* Service Summary */}
             <div className="space-y-8">
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-primary">Your Service Details</h3>
-                <p className="text-muted-foreground">Review your cleaning service and pricing breakdown</p>
+                
+                
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                {/* Service Information Card */}
-                <div className="bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl border-2 border-primary/20 p-6">
-                  <h4 className="text-xl font-bold mb-6 text-center text-primary">Service Information</h4>
-                  
-                  <div className="space-y-4">
-                    {/* Main Service Details */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/50 rounded-lg p-4 text-center">
-                        <div className="text-2xl font-bold text-primary">{pricingData.squareFootage}</div>
-                        <div className="text-sm text-muted-foreground">Square Feet</div>
-                      </div>
-                      <div className="bg-white/50 rounded-lg p-4 text-center">
-                        <div className="text-lg font-bold text-primary">
-                          {pricingData.cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Cleaning Type</div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/50 rounded-lg p-4 text-center">
-                      <div className="text-lg font-bold text-primary">
-                        {pricingData.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Service Frequency</div>
-                    </div>
-                    
-                    {(pricingData.bedrooms || pricingData.bathrooms) && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {pricingData.bedrooms && (
-                          <div className="bg-white/50 rounded-lg p-4 text-center">
-                            <div className="text-xl font-bold text-primary">{pricingData.bedrooms}</div>
-                            <div className="text-sm text-muted-foreground">Bedrooms</div>
-                          </div>
-                        )}
-                        {pricingData.bathrooms && (
-                          <div className="bg-white/50 rounded-lg p-4 text-center">
-                            <div className="text-xl font-bold text-primary">{pricingData.bathrooms}</div>
-                            <div className="text-sm text-muted-foreground">Bathrooms</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Add-ons Section */}
-                    {pricingData.addOns.length > 0 && (
-                      <div className="bg-white/50 rounded-lg p-4">
-                        <h5 className="font-bold text-primary mb-3 text-center">Included Add-ons</h5>
-                        <div className="space-y-2">
-                          {pricingData.addOns.map(addOn => (
-                            <div key={addOn} className="flex items-center gap-2 text-sm">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="font-medium">
-                                {addOn.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {schedulingData?.nextDayBooking && (
-                      <div className="bg-orange-100 border border-orange-300 rounded-lg p-4 text-center">
-                        <Badge className="bg-orange-500 text-white mb-2">
-                          Next Day Priority Booking
-                        </Badge>
-                        <div className="text-sm text-orange-700">
-                          Expedited service for next-day booking
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Scheduled Service Info */}
-                    {schedulingData?.scheduledTime && (
-                      <div className="bg-primary/10 rounded-lg p-4 text-center">
-                        <div className="text-sm text-muted-foreground font-medium mb-1">Scheduled Service:</div>
-                        <div className="text-base font-semibold">
-                          {schedulingData?.nextDayBooking ? (
-                            <>
-                              <strong className="text-orange-600">Tomorrow</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
-                            </>
-                          ) : (
-                            <>
-                              <strong className="text-primary">{schedulingData.scheduledDate}</strong> at <strong className="text-primary">{schedulingData.scheduledTime}</strong>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Pricing Breakdown Card */}
-                <div className="bg-gradient-to-br from-accent/5 to-primary/10 rounded-xl border-2 border-accent/20 p-6">
-                  <h4 className="text-xl font-bold mb-6 text-center text-primary">Pricing Breakdown</h4>
-                  
-                  <div className="space-y-4">
-                    {/* Show discount breakdown */}
-                    {(() => {
-                      const isDeepCleaning = pricingData.cleaningType === 'deep' || pricingData.cleaningType === 'moveout';
-                      const isRecurring = pricingData.frequency === 'weekly' || pricingData.frequency === 'biweekly';
-                      const isOneTime = pricingData.frequency === 'one_time';
-                      
-                      // Calculate original price before discounts
-                      let originalPrice = calculatedPrice;
-                      if (isRecurring) {
-                        originalPrice = Math.round((calculatedPrice / 0.75) * 100) / 100; // Add back 25% discount
-                      }
-                      if (isDeepCleaning && isOneTime) {
-                        originalPrice = calculatedPrice + 75; // Add back $75 discount
-                      }
-                      
-                      return (
-                        <>
-                          {(isRecurring || (isDeepCleaning && isOneTime)) && (
-                            <div className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
-                              <span className="font-medium text-muted-foreground">Original Price:</span>
-                              <span className="line-through font-mono text-muted-foreground">${originalPrice.toFixed(2)}</span>
-                            </div>
-                          )}
-                          
-                          {isRecurring && (
-                            <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <span className="font-medium text-green-700">
-                                25% Recurring Discount ({pricingData.frequency === 'weekly' ? 'Weekly' : 'Biweekly'}):
-                              </span>
-                              <span className="font-bold font-mono text-green-600">
-                                -${Math.round((originalPrice * 0.25) * 100) / 100}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {isDeepCleaning && isOneTime && (
-                            <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                              <span className="font-medium text-green-700">$75 Deep Cleaning Discount:</span>
-                              <span className="font-bold font-mono text-green-600">-$75.00</span>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                    
-                    {/* Show referral/discount code discounts */}
-                    {appliedReferral && (
-                      <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <span className="font-medium text-green-700">Referral Code (10% off):</span>
-                        <span className="font-bold font-mono text-green-600">-${(calculatedPrice * 0.1).toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    {appliedDiscount && (
-                      <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <span className="font-medium text-green-700">Discount Code (50% off):</span>
-                        <span className="font-bold font-mono text-green-600">-${(calculatedPrice * 0.5).toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center p-4 bg-primary/10 border border-primary/30 rounded-lg">
-                      <span className="font-semibold text-primary">Service Amount:</span>
-                      <span className="font-bold text-primary text-lg font-mono">${calculatedPrice.toFixed(2)}</span>
-                    </div>
-                    
-                    {schedulingData?.nextDayBooking && schedulingData?.upchargeAmount > 0 && (
-                      <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <span className="font-medium text-orange-700">Next Day Priority Booking:</span>
-                        <span className="font-bold font-mono text-orange-600">+${schedulingData.upchargeAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center p-4 bg-gradient-to-r from-primary to-accent text-white rounded-lg text-xl font-bold">
-                      <span>Total Amount:</span>
-                      <span className="font-mono">${getFinalPrice().toFixed(2)}</span>
-                    </div>
-                    
-                    {(paymentType === "split" || paymentType === "prepayment") && (
-                      <div className="space-y-3 p-4 bg-muted/20 border border-muted/40 rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-green-600">Paying Now:</span>
-                          <span className="font-bold text-lg font-mono text-green-600">
-                            ${paymentType === "prepayment" ? "150.00" : Math.round(getFinalPrice() / 2).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-orange-600">Charged After Service:</span>
-                          <span className="font-bold text-lg font-mono text-orange-600">
-                            ${paymentType === "prepayment" 
-                              ? (getFinalPrice() - 150).toFixed(2) 
-                              : (getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              
             </div>
 
             {/* Customer Information */}
@@ -650,14 +392,7 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                    </div>
                    <div className="space-y-2 text-left">
                      <Label htmlFor="customerName" className="text-left">Full Name *</Label>
-                     <Input
-                       id="customerName"
-                       value={customerInfo.name}
-                       onChange={(e) => handleInputChange("name", e.target.value)}
-                       placeholder="Enter your full name"
-                       className="text-left"
-                       required
-                     />
+                     <Input id="customerName" value={customerInfo.name} onChange={e => handleInputChange("name", e.target.value)} placeholder="Enter your full name" className="text-left" required />
                    </div>
                  </div>
 
@@ -669,28 +404,12 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                    <div className="space-y-4 text-left">
                      <div className="space-y-2 text-left">
                        <Label htmlFor="customerPhone" className="text-left">Phone Number *</Label>
-                       <Input
-                         id="customerPhone"
-                         type="tel"
-                         value={customerInfo.phone}
-                         onChange={(e) => handleInputChange("phone", e.target.value)}
-                         placeholder="Enter your phone number"
-                         className="text-left"
-                         required
-                       />
+                       <Input id="customerPhone" type="tel" value={customerInfo.phone} onChange={e => handleInputChange("phone", e.target.value)} placeholder="Enter your phone number" className="text-left" required />
                      </div>
 
                      <div className="space-y-2 text-left">
                        <Label htmlFor="customerEmail" className="text-left">Email Address *</Label>
-                       <Input
-                         id="customerEmail"
-                         type="email"
-                         value={customerInfo.email}
-                         onChange={(e) => handleInputChange("email", e.target.value)}
-                         placeholder="Enter your email address"
-                         className="text-left"
-                         required
-                       />
+                       <Input id="customerEmail" type="email" value={customerInfo.email} onChange={e => handleInputChange("email", e.target.value)} placeholder="Enter your email address" className="text-left" required />
                      </div>
                    </div>
                  </div>
@@ -716,41 +435,25 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                    <p className="text-sm text-muted-foreground text-left">Got referred by a friend? Use their code for instant savings</p>
                  </div>
                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                   {appliedReferral && (
-                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                   {appliedReferral && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
                        <p className="text-green-800 font-medium text-sm text-left">✓ Referral code applied!</p>
                        <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
-                     </div>
-                   )}
+                     </div>}
                    
-                   {!appliedReferral && (
-                     <div className="text-left">
+                   {!appliedReferral && <div className="text-left">
                        <div className="flex gap-2">
-                         <Input
-                           value={referralCode}
-                           onChange={(e) => setReferralCode(e.target.value)}
-                           placeholder="Enter your friend's referral code"
-                           className="flex-1 text-left"
-                         />
-                         <Button 
-                           onClick={handleApplyReferralCode}
-                           disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name}
-                           variant="outline"
-                           size="sm"
-                         >
+                         <Input value={referralCode} onChange={e => setReferralCode(e.target.value)} placeholder="Enter your friend's referral code" className="flex-1 text-left" />
+                         <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name} variant="outline" size="sm">
                            Apply
                          </Button>
                        </div>
                        <p className="text-xs text-muted-foreground text-left mt-2">
                          Get 10% off your service with a friend's referral code
                        </p>
-                       {(!customerInfo.email || !customerInfo.name) && (
-                         <p className="text-xs text-orange-600 text-left mt-1">
+                       {(!customerInfo.email || !customerInfo.name) && <p className="text-xs text-orange-600 text-left mt-1">
                            Please fill in your name and email first
-                         </p>
-                       )}
-                     </div>
-                   )}
+                         </p>}
+                     </div>}
                  </div>
                </div>
 
@@ -761,78 +464,39 @@ export function PaymentForm({ pricingData, calculatedPrice, priceBreakdown, sche
                    <p className="text-sm text-muted-foreground text-left">Have a special promotion code? Enter it for additional discounts</p>
                  </div>
                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                   {appliedDiscount && (
-                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                   {appliedDiscount && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
                        <p className="text-green-800 font-medium text-sm text-left">✓ Discount code applied!</p>
                        <p className="text-green-600 text-xs text-left">{appliedDiscount.description}</p>
-                     </div>
-                   )}
+                     </div>}
                    
-                   {!appliedDiscount && !appliedReferral && (
-                     <div className="text-left">
+                   {!appliedDiscount && !appliedReferral && <div className="text-left">
                        <div className="flex gap-2">
-                         <Input
-                           value={discountCode}
-                           onChange={(e) => setDiscountCode(e.target.value)}
-                           placeholder="Enter discount code (e.g., FRIEND50-ABC123)"
-                           className="flex-1 text-left"
-                         />
-                         <Button 
-                           onClick={handleApplyDiscountCode}
-                           disabled={!discountCode.trim()}
-                           variant="outline"
-                           size="sm"
-                         >
+                         <Input value={discountCode} onChange={e => setDiscountCode(e.target.value)} placeholder="Enter discount code (e.g., FRIEND50-ABC123)" className="flex-1 text-left" />
+                         <Button onClick={handleApplyDiscountCode} disabled={!discountCode.trim()} variant="outline" size="sm">
                            Apply
                          </Button>
                        </div>
                        <p className="text-xs text-muted-foreground text-left mt-2">
                          Have a discount code from a referral reward? Get 50% off deep cleaning
                        </p>
-                     </div>
-                   )}
+                     </div>}
                    
-                   {appliedReferral && (
-                     <p className="text-xs text-muted-foreground text-orange-600 text-left">
+                   {appliedReferral && <p className="text-xs text-muted-foreground text-orange-600 text-left">
                        Cannot apply discount code when referral code is already applied
-                     </p>
-                   )}
+                     </p>}
                  </div>
                </div>
             </div>
 
             {/* Book Service Button */}
-            <Button 
-              className="w-full" 
-              size="lg"
-              onClick={handleBookService}
-              disabled={
-                isProcessing || 
-                !customerInfo.name || 
-                !customerInfo.email ||
-                !customerInfo.phone ||
-                !pricingData.cleaningType
-              }
-            >
-              {isProcessing ? "Processing..." : (
-                paymentType === "split" 
-                  ? `Pay 50% Now - $${Math.round(getFinalPrice() / 2).toFixed(2)}`
-                  : paymentType === "prepayment"
-                  ? `Pay $150 Prepayment`
-                  : `Book Service - $${getFinalPrice().toFixed(2)}`
-              )}
+            <Button className="w-full" size="lg" onClick={handleBookService} disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}>
+              {isProcessing ? "Processing..." : paymentType === "split" ? `Pay 50% Now - $${Math.round(getFinalPrice() / 2).toFixed(2)}` : paymentType === "prepayment" ? `Pay $150 Prepayment` : `Book Service - $${getFinalPrice().toFixed(2)}`}
             </Button>
 
             <div className="text-xs text-muted-foreground text-center">
-              {paymentType === "split" 
-                ? "Remaining balance will be automatically charged after service completion"
-                : paymentType === "prepayment"
-                ? `Remaining $${(getFinalPrice() - 150).toFixed(2)} will be charged after job completion`
-                : "You will be redirected to our secure payment processor to complete your booking"
-              }
+              {paymentType === "split" ? "Remaining balance will be automatically charged after service completion" : paymentType === "prepayment" ? `Remaining $${(getFinalPrice() - 150).toFixed(2)} will be charged after job completion` : "You will be redirected to our secure payment processor to complete your booking"}
             </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }

@@ -29,7 +29,7 @@ const Index = () => {
   // Track page view on component mount
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
-    
+
     // Load chat widget
     const script = document.createElement('script');
     script.src = 'https://widgets.leadconnectorhq.com/loader.js';
@@ -37,7 +37,6 @@ const Index = () => {
     script.setAttribute('data-widget-id', '688b7acb81758b9cee3c0c05');
     script.async = true;
     document.head.appendChild(script);
-
     return () => {
       // Cleanup script on unmount
       const existingScript = document.querySelector('script[data-widget-id="688b7acb81758b9cee3c0c05"]');
@@ -172,63 +171,49 @@ const Index = () => {
                       Customize your cleaning experience with our flexible options
                     </p>
                   </div>
-                  <RecurringBookingInterface onBookingUpdate={(data) => {
-                    setPricingData({
-                      hours: data.tier.hours,
-                      cleaningType: 'standard',
-                      serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                      membership: data.membership,
-                      addOns: data.addOns,
-                      recurring: data.recurring
-                    });
-                    setCalculatedPrice(data.pricing.total);
-                    setPriceBreakdown({
-                      basePrice: data.tier.basePrice,
-                      addOns: data.addOns,
-                      membership: data.membership,
-                      recurring: data.recurring,
-                      savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                    });
-                  }} />
+                  <RecurringBookingInterface onBookingUpdate={data => {
+                  setPricingData({
+                    hours: data.tier.hours,
+                    cleaningType: 'standard',
+                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                    membership: data.membership,
+                    addOns: data.addOns,
+                    recurring: data.recurring
+                  });
+                  setCalculatedPrice(data.pricing.total);
+                  setPriceBreakdown({
+                    basePrice: data.tier.basePrice,
+                    addOns: data.addOns,
+                    membership: data.membership,
+                    recurring: data.recurring,
+                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+                  });
+                }} />
                 </CardContent>
               </Card>
 
               {/* Service Details Button */}
-              {pricingData && (
-                <Card className="border-0 shadow-lg">
+              {pricingData && <Card className="border-0 shadow-lg">
                   <CardContent className="p-6">
                     <div className="text-center space-y-4">
                       <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
-                      <ServiceDetailsDialog 
-                        cleaningType={pricingData.cleaningType} 
-                        serviceType={pricingData.serviceType} 
-                      />
+                      <ServiceDetailsDialog cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
               
               {/* Payment Section */}
-              {pricingData && (
-                <Card className="border-0 shadow-lg">
+              {pricingData && <Card className="border-0 shadow-lg">
                   <CardContent className="p-8">
                     <div className="text-center space-y-6">
                       <h2 className="text-2xl font-jakarta font-bold">
                         Complete Your Booking
                       </h2>
-                      <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Secure your spot with payment, then choose your preferred date and time on the next page.
-                      </p>
-                      <PaymentForm 
-                        pricingData={pricingData} 
-                        calculatedPrice={calculatedPrice} 
-                        priceBreakdown={priceBreakdown} 
-                        schedulingData={schedulingData} 
-                      />
+                      <p className="text-muted-foreground max-w-2xl mx-auto">Secure your spot with payment, then choose your preferred date and time on the next page.</p>
+                      <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
               
               {/* Referral Section */}
               <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
@@ -246,11 +231,7 @@ const Index = () => {
                   <p className="text-gray-600 max-w-2xl mx-auto">
                     Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
                   </p>
-                  <Button 
-                    asChild 
-                    size="lg" 
-                    className="bg-primary hover:bg-primary/90"
-                  >
+                  <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
                     <a href="/membership">Learn About Membership</a>
                   </Button>
                 </CardContent>
