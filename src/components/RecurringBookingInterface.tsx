@@ -41,34 +41,37 @@ interface RecurringBookingInterfaceProps {
 
 const bookingTiers: BookingTier[] = [
   {
-    id: '2-hour',
+    id: 'general',
     hours: 2,
-    basePrice: 200,
-    description: 'Perfect for maintenance cleaning',
+    basePrice: 250,
+    description: 'Perfect for regularly maintained homes',
     cleaners: 2
   },
   {
-    id: '4-hour',
+    id: 'complete',
     hours: 4,
-    basePrice: 400,
-    description: 'Ideal for thorough cleaning',
+    basePrice: 420,
+    description: 'Our most popular comprehensive service',
     cleaners: 2
   },
   {
-    id: '6-hour',
+    id: 'premium',
     hours: 6,
     basePrice: 600,
-    description: 'Complete deep cleaning',
+    description: 'Ultimate cleaning experience',
     cleaners: 3
   }
 ];
 
 const addOnServices: AddOnService[] = [
-  { id: 'deep-clean', name: 'Deep Clean', price: 50, description: 'Extra attention to detail' },
-  { id: 'fridge', name: 'Inside Fridge', price: 25, description: 'Complete fridge cleaning' },
-  { id: 'microwave', name: 'Inside Microwave', price: 15, description: 'Thorough microwave cleaning' },
-  { id: 'oven', name: 'Inside Oven', price: 35, description: 'Deep oven cleaning' },
-  { id: 'windows', name: 'Interior Windows', price: 30, description: 'Spotless window cleaning' },
+  { id: 'fridge', name: 'Inside Refrigerator', price: 35, description: 'Clean and organize inside refrigerator' },
+  { id: 'oven', name: 'Inside Oven', price: 35, description: 'Deep clean inside oven' },
+  { id: 'baseboards', name: 'Whole Home Baseboards', price: 50, description: 'Hand-wipe all baseboards' },
+  { id: 'cabinet-fronts', name: 'Cabinet Front Cleaning', price: 50, description: 'Clean all kitchen cabinet fronts' },
+  { id: 'blinds', name: 'Detailed Blind Cleaning', price: 15, description: 'Per blind detailed cleaning' },
+  { id: 'wall-washing', name: 'Wall Washing', price: 25, description: 'Per room wall washing' },
+  { id: 'laundry', name: 'Extra Laundry Folding', price: 20, description: 'Per basket laundry folding' },
+  { id: 'garage', name: 'Garage Sweeping', price: 30, description: 'Complete garage sweep' },
 ];
 
 const recurringOptions: RecurringOption[] = [
@@ -83,14 +86,14 @@ const recurringOptions: RecurringOption[] = [
     id: 'weekly',
     name: 'Weekly',
     frequency: 'weekly',
-    discount: 15,
+    discount: 10,
     description: 'Every week - Maximum savings!'
   },
   {
     id: 'bi-weekly',
     name: 'Bi-Weekly',
     frequency: 'bi-weekly',
-    discount: 10,
+    discount: 7,
     description: 'Every 2 weeks - Great value'
   },
   {
@@ -114,7 +117,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   existingMember = false
 }) => {
   const isMobile = useIsMobile();
-  const [selectedTier, setSelectedTier] = useState<string>('2-hour');
+  const [selectedTier, setSelectedTier] = useState<string>('general');
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
@@ -135,7 +138,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     const membershipDiscount = (existingMember || addMembership) ? 20 : 0;
     
     const total = subtotal - recurringDiscount - membershipDiscount;
-    const membershipFee = addMembership ? 30 : 0;
+    const membershipFee = addMembership ? 39 : 0;
 
     return {
       basePrice,
@@ -198,7 +201,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <div className="font-semibold text-lg">BACP Club™ Membership</div>
-                <div className="text-sm text-muted-foreground">$30/month • Cancel anytime</div>
+                <div className="text-sm text-muted-foreground">$39/month • Cancel anytime</div>
               </div>
               <div className="flex items-center gap-3">
                 {!isMobile && (
@@ -236,7 +239,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                            <div>
                              <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
                              <p className="text-muted-foreground">
-                               By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
+                               By selecting the BACP Club™ Membership, you agree to be billed $39/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
                              </p>
                            </div>
 
@@ -339,7 +342,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                     <CardContent className="p-5">
                       <div className="flex items-center space-x-2 mb-3">
                         <RadioGroupItem value={tier.id} id={tier.id} />
-                        <span className="font-semibold text-lg">{tier.hours}-Hour Clean</span>
+                         <span className="font-semibold text-lg">
+                           {tier.id === 'general' ? 'General Clean' : 
+                            tier.id === 'complete' ? 'Complete Clean' : 
+                            'Premium Deep Clean'} ({tier.hours} Hours)
+                         </span>
                       </div>
                       <div className="text-3xl font-bold mb-3 text-primary">
                         {(existingMember || addMembership) ? (
@@ -492,7 +499,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             {addMembership && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">BACP Club™ Membership</span>
-                <span className="text-sm font-medium">+$30/month</span>
+                <span className="text-sm font-medium">+$39/month</span>
               </div>
             )}
 
