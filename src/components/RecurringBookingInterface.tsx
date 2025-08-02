@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -187,47 +188,42 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             Choose Your Service
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid md:grid-cols-3 gap-4">
-              {bookingTiers.map((tier) => (
-                <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
-                  <Card className={`transition-all ${selectedTier === tier.id ? 'ring-2 ring-primary' : ''}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <RadioGroupItem value={tier.id} id={tier.id} />
-                        <span className="font-semibold">{tier.hours}-Hour Clean</span>
-                      </div>
-                      <div className="text-2xl font-bold mb-2">${tier.basePrice}</div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
-                        <Users className="h-4 w-4" />
-                        {tier.cleaners} Professional Cleaners
-                      </div>
-                      <p className="text-sm text-muted-foreground">{tier.description}</p>
-                    </CardContent>
-                  </Card>
-                </Label>
-              ))}
-            </div>
-          </RadioGroup>
+        <CardContent className="space-y-6">
+          <div>
+            <Label className="text-sm font-medium">Service Package</Label>
+            <Select value={selectedTier} onValueChange={setSelectedTier}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Select service package" />
+              </SelectTrigger>
+              <SelectContent>
+                {bookingTiers.map((tier) => (
+                  <SelectItem key={tier.id} value={tier.id}>
+                    {tier.hours}-Hour Clean - ${tier.basePrice} ({tier.cleaners} cleaners)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedTierData && (
+              <p className="text-sm text-muted-foreground mt-2">{selectedTierData.description}</p>
+            )}
+          </div>
 
-          {/* Add-ons */}
-          <div className="mt-6">
-            <h3 className="font-semibold mb-4">Optional Add-ons</h3>
-            <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-sm font-medium">Add-ons</Label>
+            <div className="mt-2 space-y-2">
               {addOnServices.map((addOn) => (
-                <div key={addOn.id} className="flex items-center space-x-3 p-3 rounded-lg border">
-                  <Checkbox
-                    id={addOn.id}
-                    checked={selectedAddOns.includes(addOn.id)}
-                    onCheckedChange={() => handleAddOnToggle(addOn.id)}
-                  />
-                  <div className="flex-1">
-                    <label htmlFor={addOn.id} className="font-medium cursor-pointer">
-                      {addOn.name} (+${addOn.price})
-                    </label>
-                    <p className="text-sm text-muted-foreground">{addOn.description}</p>
+                <div key={addOn.id} className="flex items-center justify-between p-2 border rounded">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedAddOns.includes(addOn.id)}
+                      onCheckedChange={() => handleAddOnToggle(addOn.id)}
+                    />
+                    <div>
+                      <span className="text-sm font-medium">{addOn.name}</span>
+                      <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                    </div>
                   </div>
+                  <span className="text-sm font-medium">+${addOn.price}</span>
                 </div>
               ))}
             </div>
