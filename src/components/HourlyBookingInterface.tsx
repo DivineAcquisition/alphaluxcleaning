@@ -148,7 +148,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
         {/* Header */}
         <div className="text-center space-y-2 sm:space-y-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Choose Your Cleaning Duration</h2>
-          <p className="text-sm sm:text-base text-muted-foreground px-2">Professional 2-cleaner teams • Flat-rate pricing • Same-day availability</p>
+          <p className="text-sm sm:text-base text-muted-foreground px-2">Professional cleaning teams • Flat-rate pricing • Same-day availability</p>
         </div>
 
         {/* Membership Toggle */}
@@ -238,7 +238,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
                 </div>
                 <Badge variant="outline" className="mx-auto">
                   <Users className="h-3 w-3 mr-1" />
-                  2 Cleaners Included
+                  {tier.hours === 6 ? '3 Cleaners' : '2 Cleaners'} Included
                 </Badge>
               </CardHeader>
               <CardContent className="text-center space-y-4">
@@ -353,7 +353,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
               </Button>
               
               <p className="text-xs text-center text-muted-foreground">
-                Estimated time on-site: {selectedTier.hours} hours • 2 professional cleaners included
+                Estimated time on-site: {selectedTier.hours} hours • {selectedTier.hours === 6 ? '3' : '2'} professional cleaners included
               </p>
             </CardContent>
           </Card>
