@@ -96,9 +96,9 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-8 overflow-x-hidden"
+      <div className="container mx-auto px-4 py-8"
            style={{ contain: 'layout' }}>
-        <div className="text-center mb-8 px-2">
+        <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
           </h1>
@@ -108,7 +108,7 @@ const Index = () => {
         </div>
 
         {/* New Client Special Banner */}
-        <div className="mb-8 max-w-4xl mx-auto">
+        <div className="mb-8 max-w-4xl mx-auto px-4">
           <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
             <CardContent className="p-4 md:p-6">
               <div className="text-center text-white">
@@ -165,7 +165,7 @@ const Index = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="residential" className="w-full max-w-7xl mx-auto">
+        <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto">
           <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
             <TabsTrigger value="residential" className="flex items-center gap-2 text-base">
               <HomeIcon className="h-5 w-5" />
@@ -179,9 +179,9 @@ const Index = () => {
           
           <TabsContent value="residential" className="space-y-8">
             {/* Modern card-based layout */}
-            <div className="grid gap-6 lg:gap-8">
+            <div className="grid gap-6 lg:gap-8 justify-items-center">
               {/* Service Configuration Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm w-full max-w-4xl">
                 <CardContent className="p-8">
                   <div className="text-center mb-8">
                     <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -215,7 +215,7 @@ const Index = () => {
               </Card>
 
               {/* Service Details Button */}
-              {pricingData && <Card className="border-0 shadow-lg">
+              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
                   <CardContent className="p-6">
                     <div className="text-center space-y-4">
                       <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
@@ -225,7 +225,7 @@ const Index = () => {
                 </Card>}
               
               {/* Payment Section */}
-              {pricingData && <Card className="border-0 shadow-lg">
+              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
                   <CardContent className="p-8">
                     <div className="text-center space-y-6">
                       <h2 className="text-2xl font-jakarta font-bold">
@@ -238,14 +238,14 @@ const Index = () => {
                 </Card>}
               
               {/* Referral Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5 w-full max-w-4xl">
                 <CardContent className="p-8">
                   <ReferralSection />
                 </CardContent>
               </Card>
 
               {/* Membership CTA */}
-              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50 w-full max-w-4xl">
                 <CardContent className="p-8 text-center space-y-4">
                   <h3 className="text-2xl font-bold text-gray-900">
                     Want More Savings? Join Clean & Covered™
@@ -262,7 +262,7 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="commercial">
-            <Card>
+            <Card className="w-full max-w-4xl mx-auto">
               <CardContent className="p-6">
                 <CommercialEstimateSection />
               </CardContent>
