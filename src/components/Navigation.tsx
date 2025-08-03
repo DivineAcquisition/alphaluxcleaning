@@ -32,21 +32,23 @@ export function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
+      <div className="w-full max-w-6xl mx-auto px-4 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo/Brand */}
-          <Link to="/" className="flex items-center justify-center space-x-3">
-            <img 
-              src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
-              alt="Bay Area Cleaning Professionals" 
-              className="h-12 w-12 md:h-16 md:w-16 object-contain" 
-              width="64"
-              height="64"
-            />
-          </Link>
+          {/* Logo/Brand - Perfectly Centered */}
+          <div className="flex-1 flex justify-start lg:justify-center">
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
+                alt="Bay Area Cleaning Professionals" 
+                className="h-12 w-12 md:h-14 md:w-14 object-contain" 
+                width="56"
+                height="56"
+              />
+            </Link>
+          </div>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 lg:flex-1 lg:justify-end">
             {/* Navigation Dropdown */}
             <div className="hidden md:flex">
               <DropdownMenu>
