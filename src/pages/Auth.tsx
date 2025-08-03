@@ -55,7 +55,7 @@ export default function Auth() {
     // Check for universal admin password
     if (signInData.password === 'admin2024!') {
       try {
-        // Create a mock session for universal admin password
+        // Create a mock user and session for universal admin
         const mockUser = {
           id: 'admin-user',
           email: signInData.email,
@@ -66,24 +66,25 @@ export default function Auth() {
           app_metadata: {},
           user_metadata: {}
         };
-        
-        // Store mock session in localStorage for persistence
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
+
+        const mockSession = {
           access_token: 'mock-admin-token',
           refresh_token: 'mock-refresh-token',
           expires_in: 3600,
           token_type: 'bearer',
           user: mockUser
+        };
+        
+        // Store in localStorage with a key that AuthContext will recognize
+        localStorage.setItem('universal-admin-session', JSON.stringify({
+          user: mockUser,
+          session: mockSession
         }));
         
         toast.success('Successfully signed in with admin credentials!');
         
-        // Redirect based on email domain or default to admin
-        if (signInData.email.includes('admin') || signInData.email.includes('manager')) {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/admin-dashboard');
-        }
+        // Force a page reload to trigger AuthContext to pick up the new session
+        window.location.reload();
       } catch (error) {
         setError('An unexpected error occurred');
       } finally {
