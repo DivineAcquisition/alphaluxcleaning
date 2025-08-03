@@ -171,24 +171,24 @@ function App() {
                 } />
                 
                 {/* Admin tool routes */}
-                <Route path="/email-settings" element={
+                <Route path="/admin-dashboard/email-settings" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <EmailSettings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/database-tools" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <DatabaseTools />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/api-keys" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <ApiKeys />
                   </ProtectedRoute>
                 } />
                 <Route path="/user-management" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <UserManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/database-tools" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <DatabaseTools />
-                  </ProtectedRoute>
-                } />
-                <Route path="/api-keys" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <ApiKeys />
                   </ProtectedRoute>
                 } />
                 <Route path="/security-settings" element={

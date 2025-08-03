@@ -20,7 +20,10 @@ import {
   Home,
   LogOut,
   FileText,
-  Crown
+  Crown,
+  Database,
+  Mail,
+  Key
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +41,24 @@ const navigationItems = [
     path: "/admin-dashboard",
     icon: Settings,
     description: "Settings"
+  },
+  {
+    label: "Database Tools",
+    path: "/admin-dashboard/database-tools",
+    icon: Database,
+    description: "DB Management"
+  },
+  {
+    label: "Email Settings",
+    path: "/admin-dashboard/email-settings",
+    icon: Mail,
+    description: "Mail Config"
+  },
+  {
+    label: "API Keys",
+    path: "/admin-dashboard/api-keys",
+    icon: Key,
+    description: "API Management"
   },
   {
     label: "Subcontractors",
