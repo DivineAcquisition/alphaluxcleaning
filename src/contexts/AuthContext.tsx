@@ -33,11 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user.id === 'admin-user') {
       console.log('AuthContext: Universal admin user detected');
       if (user.email?.includes('admin')) {
-        return 'admin';
+        console.log('AuthContext: Assigning super_admin role');
+        return 'super_admin';
       } else if (user.email?.includes('manager')) {
+        console.log('AuthContext: Assigning office_manager role');
         return 'office_manager';
       }
-      return 'admin'; // Default to admin
+      console.log('AuthContext: Assigning owner role as default');
+      return 'owner'; // Default to owner which has broad admin access
     }
     
     try {
