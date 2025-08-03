@@ -23,7 +23,6 @@ import {
   Crown,
   Calendar,
   Briefcase,
-  UsersIcon,
   BookOpen,
   Award,
   TrendingUp
@@ -60,7 +59,7 @@ const navigationItems = [
   {
     label: "Team",
     path: "/admin-dashboard/team",
-    icon: UsersIcon,
+    icon: Users,
     description: "Team Management"
   },
   {
