@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'super_admin' | 'enterprise_client' | 'subcontractor' | 'customer';
+  requiredRole?: 'owner' | 'office_manager' | 'field_cleaner' | 'recurring_cleaner' | 'subcontractor_partner' | 'client' | 'super_admin' | 'enterprise_client' | 'subcontractor' | 'customer';
   allowedRoles?: string[];
   redirectTo?: string;
 }
@@ -36,16 +36,20 @@ export function ProtectedRoute({
       if (!hasAccess) {
         console.log('Access denied, redirecting...');
         // Redirect based on user's actual role
-        if (userRole === 'super_admin' || userRole === 'enterprise_client') {
+        if (userRole === 'owner' || userRole === 'super_admin' || userRole === 'enterprise_client') {
           // Don't redirect if already on admin pages
           if (!window.location.pathname.startsWith('/admin')) {
             navigate('/admin-dashboard');
           }
-        } else if (userRole === 'subcontractor') {
+        } else if (userRole === 'office_manager') {
+          if (window.location.pathname !== '/admin-dashboard/schedule') {
+            navigate('/admin-dashboard/schedule');
+          }
+        } else if (userRole === 'field_cleaner' || userRole === 'recurring_cleaner' || userRole === 'subcontractor_partner' || userRole === 'subcontractor') {
           if (window.location.pathname !== '/subcontractor-dashboard') {
             navigate('/subcontractor-dashboard');
           }
-        } else if (userRole === 'customer') {
+        } else if (userRole === 'client' || userRole === 'customer') {
           if (window.location.pathname !== '/my-services') {
             navigate('/my-services');
           }
