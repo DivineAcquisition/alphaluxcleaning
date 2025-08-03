@@ -98,11 +98,11 @@ const Index = () => {
       
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-8 overflow-x-hidden"
            style={{ contain: 'layout' }}>
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-jakarta font-bold tracking-tight mb-4">
+        <div className="text-center mb-8 px-2">
+          <h1 className="text-3xl sm:text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
           </h1>
-          <p className="text-xl font-inter font-semibold text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl font-inter font-semibold text-muted-foreground max-w-2xl mx-auto">
             Bay Area's premier cleaning service for residential and commercial properties
           </p>
         </div>

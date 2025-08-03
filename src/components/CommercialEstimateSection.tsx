@@ -32,17 +32,17 @@ export function CommercialEstimateSection() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4">
       <div className="text-center space-y-4">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Commercial & Office Cleaning Services
         </h2>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
           Professional cleaning solutions tailored to your business needs. Get a custom quote with a free walkthrough.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Commercial Cleaning Card */}
         <Card className="relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
           <CardHeader className="bg-gradient-to-br from-primary/10 to-accent/10">
@@ -152,8 +152,8 @@ export function CommercialEstimateSection() {
             Simple steps to get your custom cleaning quote
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <div className="text-center space-y-3">
               <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <span className="text-lg font-bold text-primary">1</span>

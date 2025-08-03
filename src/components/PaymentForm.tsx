@@ -249,7 +249,7 @@ export function PaymentForm({
         </CardContent>
       </Card>;
   }
-  return <Card className="shadow-lg">
+  return <Card className="w-full max-w-4xl mx-auto shadow-lg">
       <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
         <CardTitle className="flex items-center justify-center gap-2 text-xl">
           <CreditCard className="h-6 w-6" />
@@ -259,8 +259,8 @@ export function PaymentForm({
           Secure booking with Bay Area Cleaning Pros
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-6">
+      <CardContent className="p-4 sm:p-6">
+        <div className="space-y-6 text-center">
           {/* Payment Type Selection */}
           <div className="space-y-8">
             {pricingData.hours === 6 ? <>
@@ -269,7 +269,7 @@ export function PaymentForm({
                   <p className="text-muted-foreground">Select how you'd like to pay for your cleaning service</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full max-w-6xl mx-auto">
                   {/* Full Payment Option */}
                   <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "full" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("full")}>
                     {paymentType === "full" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -376,16 +376,14 @@ export function PaymentForm({
             </div>
 
             {/* Customer Information */}
-             <div className="space-y-6 text-left">
-               <div className="space-y-2 text-left">
-                 <div className="flex items-start gap-2 text-left">
-                   <User className="h-5 w-5 text-primary mt-0.5" />
-                   <div className="text-left">
-                     <h4 className="text-lg font-semibold text-primary text-left">Contact Information</h4>
-                     <p className="text-sm text-muted-foreground text-left">We'll use this information to contact you about your service</p>
-                   </div>
-                 </div>
-               </div>
+             <div className="space-y-6 w-full max-w-2xl mx-auto">
+                <div className="space-y-2 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    <h4 className="text-lg font-semibold text-primary">Contact Information</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">We'll use this information to contact you about your service</p>
+                </div>
                
                <div className="space-y-6 text-left">
                  <div className="space-y-4 text-left">

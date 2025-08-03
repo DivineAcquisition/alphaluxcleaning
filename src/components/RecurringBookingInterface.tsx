@@ -198,9 +198,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-4 overflow-x-hidden">
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 px-2">
         <h2 className="text-xl sm:text-2xl font-bold">Professional Cleaning Services</h2>
-        <p className="text-sm sm:text-base text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
           Choose your perfect cleaning plan and save with recurring services
         </p>
       </div>

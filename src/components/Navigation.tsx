@@ -32,10 +32,10 @@ export function Navigation() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center justify-center space-x-3">
             <img 
               src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
               alt="Bay Area Cleaning Professionals" 
