@@ -2,30 +2,32 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserCheck, UserX, Star, Phone, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Users, UserCheck, UserX, Star, Phone, Mail, Search } from "lucide-react";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { useState } from "react";
 
 export default function SubcontractorManagement() {
-  // Mock data for demonstration
-  const subcontractors = [
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john@example.com",
-      phone: "(555) 123-4567",
-      status: "active",
-      rating: 4.8,
-      completedJobs: 45
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      phone: "(555) 987-6543",
-      status: "inactive",
-      rating: 4.6,
-      completedJobs: 32
-    }
-  ];
+  const { teamMembers: subcontractors, loading } = useTeamManagement();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredSubcontractors = subcontractors.filter(sub =>
+    sub.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sub.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <AdminLayout 
+        title="Subcontractor Management" 
+        description="Manage your subcontractor network"
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout 
@@ -41,8 +43,8 @@ export default function SubcontractorManagement() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">+2 from last month</p>
+              <div className="text-2xl font-bold">{subcontractors.length}</div>
+              <p className="text-xs text-muted-foreground">Total registered</p>
             </CardContent>
           </Card>
 
@@ -52,8 +54,8 @@ export default function SubcontractorManagement() {
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">18</div>
-              <p className="text-xs text-muted-foreground">75% availability</p>
+              <div className="text-2xl font-bold">{subcontractors.filter(s => s.is_available).length}</div>
+              <p className="text-xs text-muted-foreground">Currently available</p>
             </CardContent>
           </Card>
 
@@ -63,11 +65,34 @@ export default function SubcontractorManagement() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4.7</div>
-              <p className="text-xs text-muted-foreground">Excellent performance</p>
+              <div className="text-2xl font-bold">
+                {subcontractors.length > 0 
+                  ? (subcontractors.reduce((acc, s) => acc + s.rating, 0) / subcontractors.length).toFixed(1)
+                  : "0.0"
+                }
+              </div>
+              <p className="text-xs text-muted-foreground">Average rating</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Search */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Search Subcontractors</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name or email..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Subcontractor List */}
         <Card>
@@ -79,14 +104,14 @@ export default function SubcontractorManagement() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {subcontractors.map((contractor) => (
+              {filteredSubcontractors.map((contractor) => (
                 <div key={contractor.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{contractor.name}</h3>
+                      <h3 className="font-semibold">{contractor.full_name}</h3>
                       <p className="text-sm text-muted-foreground flex items-center gap-2">
                         <Mail className="h-3 w-3" />
                         {contractor.email}
@@ -95,6 +120,11 @@ export default function SubcontractorManagement() {
                         <Phone className="h-3 w-3" />
                         {contractor.phone}
                       </p>
+                      {contractor.city && contractor.state && (
+                        <p className="text-xs text-muted-foreground">
+                          {contractor.city}, {contractor.state}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -104,11 +134,14 @@ export default function SubcontractorManagement() {
                         <span className="font-medium">{contractor.rating}</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {contractor.completedJobs} jobs completed
+                        {contractor.jobsCompleted} jobs completed
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {contractor.split_tier || 'Standard'} tier
                       </p>
                     </div>
-                    <Badge variant={contractor.status === "active" ? "default" : "secondary"}>
-                      {contractor.status}
+                    <Badge variant={contractor.is_available ? "default" : "secondary"}>
+                      {contractor.is_available ? "active" : "inactive"}
                     </Badge>
                     <Button variant="outline" size="sm">
                       Manage
@@ -116,6 +149,11 @@ export default function SubcontractorManagement() {
                   </div>
                 </div>
               ))}
+              {filteredSubcontractors.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No subcontractors found matching your search.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

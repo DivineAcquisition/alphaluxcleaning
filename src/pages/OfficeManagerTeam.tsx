@@ -30,84 +30,39 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { format } from "date-fns";
 
 export default function OfficeManagerTeam() {
-  // Mock data - replace with real data from Supabase
-  const teamMembers = [
-    {
-      id: 1,
-      name: "Maria Garcia",
-      email: "maria@example.com",
-      phone: "(555) 123-4567",
-      role: "Senior Cleaner",
-      status: "available",
-      rating: 4.9,
-      jobsCompleted: 145,
-      payType: "hourly",
-      payRate: "$18/hr",
-      avatar: null,
-      lastActive: "2 hours ago"
-    },
-    {
-      id: 2,
-      name: "David Rodriguez", 
-      email: "david@example.com",
-      phone: "(555) 234-5678",
-      role: "Cleaner",
-      status: "working",
-      rating: 4.7,
-      jobsCompleted: 89,
-      payType: "split",
-      payRate: "60%",
-      avatar: null,
-      lastActive: "Online now"
-    },
-    {
-      id: 3,
-      name: "Anna Kowalski",
-      email: "anna@example.com", 
-      phone: "(555) 345-6789",
-      role: "Cleaner",
-      status: "available",
-      rating: 4.8,
-      jobsCompleted: 67,
-      payType: "hourly",
-      payRate: "$16/hr",
-      avatar: null,
-      lastActive: "30 minutes ago"
-    },
-    {
-      id: 4,
-      name: "James Wilson",
-      email: "james@example.com",
-      phone: "(555) 456-7890", 
-      role: "Team Lead",
-      status: "unavailable",
-      rating: 4.9,
-      jobsCompleted: 203,
-      payType: "salary",
-      payRate: "$3,200/mo",
-      avatar: null,
-      lastActive: "1 day ago"
-    }
-  ];
+  const { teamMembers, loading, searchTerm, setSearchTerm, updateMemberAvailability, removeMember } = useTeamManagement();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800';
-      case 'working':
-        return 'bg-blue-100 text-blue-800';
-      case 'unavailable':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusColor = (isAvailable: boolean) => {
+    return isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
+  const handleSetAvailability = (memberId: string, isAvailable: boolean) => {
+    updateMemberAvailability(memberId, isAvailable);
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    if (confirm('Are you sure you want to remove this team member?')) {
+      removeMember(memberId);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout title="Team Management" description="Manage cleaners and staff members">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Team Management" description="Manage cleaners and staff members">
@@ -129,18 +84,18 @@ export default function OfficeManagerTeam() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {teamMembers.filter(m => m.status === 'available').length}
+                {teamMembers.filter(m => m.is_available).length}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Currently Working</CardTitle>
+              <CardTitle className="text-sm font-medium">Unavailable</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {teamMembers.filter(m => m.status === 'working').length}
+              <div className="text-2xl font-bold text-red-600">
+                {teamMembers.filter(m => !m.is_available).length}
               </div>
             </CardContent>
           </Card>
@@ -165,6 +120,8 @@ export default function OfficeManagerTeam() {
               <Input
                 placeholder="Search team members..."
                 className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button variant="outline" size="icon">
@@ -201,13 +158,14 @@ export default function OfficeManagerTeam() {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={member.avatar || undefined} />
-                          <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                          <AvatarFallback>{getInitials(member.full_name)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">{member.role}</p>
-                          <p className="text-xs text-muted-foreground">Last seen: {member.lastActive}</p>
+                          <p className="font-medium">{member.full_name}</p>
+                          <p className="text-sm text-muted-foreground">{member.split_tier || 'Standard'}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Joined: {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -224,8 +182,8 @@ export default function OfficeManagerTeam() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(member.status)}>
-                        {member.status}
+                      <Badge className={getStatusColor(member.is_available)}>
+                        {member.is_available ? 'Available' : 'Unavailable'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -242,8 +200,10 @@ export default function OfficeManagerTeam() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="text-sm font-medium">{member.payRate}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{member.payType}</p>
+                        <p className="text-sm font-medium">{member.split_tier || 'Standard'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {member.city}, {member.state}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -260,8 +220,17 @@ export default function OfficeManagerTeam() {
                           <DropdownMenuItem>View Schedule</DropdownMenuItem>
                           <DropdownMenuItem>Performance History</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Set Unavailable</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Remove from Team</DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleSetAvailability(member.id, !member.is_available)}
+                          >
+                            {member.is_available ? 'Set Unavailable' : 'Set Available'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleRemoveMember(member.id)}
+                          >
+                            Remove from Team
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
