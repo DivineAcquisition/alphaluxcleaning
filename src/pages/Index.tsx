@@ -100,12 +100,8 @@ const Index = () => {
       contain: 'layout'
     }} className="container mx-auto py-8 px-[7px]">
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-jakarta font-bold tracking-tight mb-4">
-            Professional Cleaning Services
-          </h1>
-          <p className="text-lg sm:text-xl font-inter font-semibold text-muted-foreground max-w-2xl mx-auto">
-            Bay Area's premier cleaning service for residential and commercial properties
-          </p>
+          <h1 className="sm:text-4xl font-jakarta font-bold tracking-tight mb-4 px-0 mx-0 my-0 py-0 text-2xl text-center">Premium Cleaning Services</h1>
+          <p className="sm:text-xl font-inter text-muted-foreground max-w-2xl mx-auto font-semibold text-sm px-[10px]">BayAreaCleaningPros premier cleaning service for residential and commercial properties</p>
         </div>
 
         {/* New Client Special Banner */}
