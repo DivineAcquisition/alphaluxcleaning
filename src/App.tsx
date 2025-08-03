@@ -38,6 +38,14 @@ import ApiKeys from '@/pages/ApiKeys';
 import SecuritySettings from '@/pages/SecuritySettings';
 import SystemSettings from '@/pages/SystemSettings';
 
+// Office Manager pages
+import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
+import OfficeManagerJobs from '@/pages/OfficeManagerJobs';
+import OfficeManagerTeam from '@/pages/OfficeManagerTeam';
+import OfficeManagerBookings from '@/pages/OfficeManagerBookings';
+import OfficeManagerQuality from '@/pages/OfficeManagerQuality';
+import OfficeManagerPerformance from '@/pages/OfficeManagerPerformance';
+
 // Auth & utility pages
 import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
@@ -110,23 +118,55 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/admin-dashboard" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <SubcontractorManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/application-manager" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <ApplicationManager />
                   </ProtectedRoute>
                 } />
                 <Route path="/metrics-dashboard" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <MetricsDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Office Manager routes */}
+                <Route path="/admin-dashboard/schedule" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/jobs" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerJobs />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/team" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerTeam />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/bookings" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerBookings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/quality" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerQuality />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard/performance" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerPerformance />
                   </ProtectedRoute>
                 } />
                 
