@@ -96,7 +96,7 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="w-full max-w-7xl mx-auto px-4 py-8"
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-8 overflow-x-hidden"
            style={{ contain: 'layout' }}>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-jakarta font-bold tracking-tight mb-4">

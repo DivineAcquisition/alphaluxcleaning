@@ -197,7 +197,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-4 overflow-x-hidden">
       <div className="text-center space-y-2">
         <h2 className="text-xl sm:text-2xl font-bold">Professional Cleaning Services</h2>
         <p className="text-sm sm:text-base text-muted-foreground">
@@ -351,7 +351,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {bookingTiers.map((tier) => (
                 <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
                   <Card className={`transition-all hover:shadow-md ${
@@ -511,7 +511,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       </Card>
 
       {/* Booking Summary */}
-      <Card className="sticky top-4 mx-4 sm:mx-0">
+      <Card className="sticky top-4">
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">Booking Summary</CardTitle>
         </CardHeader>
