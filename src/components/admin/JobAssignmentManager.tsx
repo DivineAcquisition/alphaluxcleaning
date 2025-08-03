@@ -146,18 +146,23 @@ export function JobAssignmentManager() {
 
       if (bookingError) throw bookingError;
 
-      // Create notification for subcontractor
-      const selectedSub = availableSubcontractors.find(s => s.id === selectedSubcontractor);
-      if (selectedSub) {
-        await supabase
-          .from('subcontractor_notifications')
-          .insert({
-            subcontractor_id: selectedSubcontractor,
-            type: 'job_assignment',
-            title: 'New Job Assignment',
-            message: `You have been assigned a new cleaning job. Please review and accept the assignment.${assignmentNotes ? ` Additional notes: ${assignmentNotes}` : ''}`,
-            read: false
-          });
+      // Send job assignment email notification
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-job-assignment-notification', {
+          body: {
+            subcontractorId: selectedSubcontractor,
+            bookingId: bookingId,
+            assignmentId: assignment.id
+          }
+        });
+
+        if (emailError) {
+          console.error('Error sending job assignment email:', emailError);
+          // Don't fail the whole assignment process for email errors
+          toast.error('Job assigned but email notification failed to send');
+        }
+      } catch (emailError) {
+        console.error('Error sending job assignment email:', emailError);
       }
 
       toast.success('Job assigned successfully!');
