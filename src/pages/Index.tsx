@@ -12,7 +12,6 @@ import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
-
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
@@ -84,7 +83,6 @@ const Index = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
   const handleSchedulingUpdate = (data: any) => {
     setSchedulingData(data);
   };
@@ -95,75 +93,71 @@ const Index = () => {
       trackInitiateCheckout(calculatedPrice, pricingData.cleaningType);
     }
   }, [pricingData, calculatedPrice]);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      {/* Main Container with Unified System */}
-      <div className="w-full max-w-6xl mx-auto px-4 lg:px-8 py-12 space-y-12">
-        
-        {/* Hero Section */}
-        <div className="text-center space-y-6">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+      <div className="container mx-auto px-4 py-8"
+           style={{ contain: 'layout' }}>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
           </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl font-inter font-semibold text-muted-foreground max-w-2xl mx-auto">
             Bay Area's premier cleaning service for residential and commercial properties
           </p>
         </div>
 
         {/* New Client Special Banner */}
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="mb-8 max-w-4xl mx-auto px-4">
           <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
-            <CardContent className="p-6 lg:p-8">
-              <div className="text-center text-white space-y-6">
+            <CardContent className="p-4 md:p-6">
+              <div className="text-center text-white">
                 {/* Header */}
-                <div className="flex items-center justify-center gap-3">
-                  <Sparkles className="h-6 w-6 animate-pulse text-yellow-300" />
-                  <h2 className="text-2xl lg:text-3xl font-bold">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
+                  <h2 className="text-xl md:text-2xl font-jakarta font-bold">
                     🎉 New Client Special
                   </h2>
-                  <Sparkles className="h-6 w-6 animate-pulse text-yellow-300" />
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
                 </div>
                 
                 {/* Main Offer */}
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                  <h3 className="text-xl lg:text-2xl font-bold mb-4 text-yellow-300">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+                  <h3 className="text-lg md:text-xl font-jakarta font-bold mb-2 text-yellow-300">
                     Complete Clean Package
                   </h3>
-                  <div className="flex items-center justify-center gap-4 mb-3">
-                    <span className="text-xl line-through text-white/70">$420</span>
-                    <span className="text-3xl lg:text-4xl font-bold text-yellow-300">$349</span>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <span className="text-lg md:text-xl line-through text-white/70">$420</span>
+                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">$349</span>
                   </div>
-                  <p className="text-base lg:text-lg font-semibold mb-4">Save $71 + 2 Months FREE Membership</p>
-                  <div className="bg-yellow-300/20 rounded-lg p-3">
-                    <p className="text-base font-bold text-yellow-300">Total Savings: $149!</p>
+                  <p className="text-sm md:text-base font-semibold">Save $71 + 2 Months FREE Membership</p>
+                  <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
+                    <p className="text-sm font-bold text-yellow-300">Total Savings: $149!</p>
                   </div>
                 </div>
 
                 {/* Countdown Timer */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Clock className="h-5 w-5 text-yellow-300" />
-                    <span className="text-base font-semibold">Offer Expires In:</span>
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 md:h-5 w-5 text-yellow-300" />
+                    <span className="text-sm md:text-base font-semibold">Offer Expires In:</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-xl font-mono font-bold">
-                    <div className="bg-white/30 px-3 py-2 rounded border border-white/40 min-w-[48px] flex justify-center">
-                      <span>{String(timeLeft.hours).padStart(2, '0')}</span>
+                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold tabular-nums">
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
                     </div>
-                    <span>:</span>
-                    <div className="bg-white/30 px-3 py-2 rounded border border-white/40 min-w-[48px] flex justify-center">
-                      <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     </div>
-                    <span>:</span>
-                    <div className="bg-white/30 px-3 py-2 rounded border border-white/40 min-w-[48px] flex justify-center">
-                      <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.seconds).padStart(2, '0')}</span>
                     </div>
                   </div>
                 </div>
 
-                <p className="text-sm font-semibold text-white/90">
+                <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
                   ⚡ First-time clients only • Book within 30 days
                 </p>
               </div>
@@ -171,35 +165,35 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Service Tabs */}
-        <Tabs defaultValue="residential" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 h-12 mb-12">
-            <TabsTrigger value="residential" className="flex items-center gap-2">
+        <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto">
+          <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
+            <TabsTrigger value="residential" className="flex items-center gap-2 text-base">
               <HomeIcon className="h-5 w-5" />
               Residential
             </TabsTrigger>
-            <TabsTrigger value="commercial" className="flex items-center gap-2">
+            <TabsTrigger value="commercial" className="flex items-center gap-2 text-base">
               <Building2 className="h-5 w-5" />
               Commercial
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="residential" className="space-y-12">
-            {/* Service Configuration Section */}
-            <div className="text-center space-y-8">
-              <div className="space-y-4">
-                <h2 className="text-3xl lg:text-4xl font-bold">
-                  Choose Your Residential Services
-                </h2>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Customize your cleaning experience with our flexible options
-                </p>
-              </div>
-              
-              <div className="w-full">
-                <RecurringBookingInterface 
-                  newClient={true}
-                  onBookingUpdate={data => {
+          <TabsContent value="residential" className="space-y-8">
+            {/* Modern card-based layout */}
+            <div className="grid gap-6 lg:gap-8 justify-items-center">
+              {/* Service Configuration Section */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm w-full max-w-4xl">
+                <CardContent className="p-8">
+                  <div className="text-center mb-8">
+                    <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      Choose Your Residential Services
+                    </h2>
+                    <p className="font-inter font-semibold text-muted-foreground text-lg">
+                      Customize your cleaning experience with our flexible options
+                    </p>
+                  </div>
+                  <RecurringBookingInterface 
+                    newClient={true}
+                    onBookingUpdate={data => {
                     setPricingData({
                       hours: data.tier.hours,
                       cleaningType: 'standard',
@@ -216,69 +210,66 @@ const Index = () => {
                       recurring: data.recurring,
                       savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
                     });
-                  }} 
-                />
-              </div>
-            </div>
+                  }} />
+                </CardContent>
+              </Card>
 
-            {/* Service Details */}
-            {pricingData && (
-              <div className="text-center space-y-6">
-                <h3 className="text-2xl font-bold">Want to know exactly what's included?</h3>
-                <ServiceDetailsDialog cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
-              </div>
-            )}
-            
-            {/* Payment Section */}
-            {pricingData && (
-              <div className="space-y-8">
-                <div className="text-center space-y-4">
-                  <h2 className="text-3xl font-bold">Complete Your Booking</h2>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Secure your spot with payment, then choose your preferred date and time on the next page.
+              {/* Service Details Button */}
+              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
+                      <ServiceDetailsDialog cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
+                    </div>
+                  </CardContent>
+                </Card>}
+              
+              {/* Payment Section */}
+              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
+                  <CardContent className="p-8">
+                    <div className="text-center space-y-6">
+                      <h2 className="text-2xl font-jakarta font-bold">
+                        Complete Your Booking
+                      </h2>
+                      <p className="text-muted-foreground max-w-2xl mx-auto">Secure your spot with payment, then choose your preferred date and time on the next page.</p>
+                      <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
+                    </div>
+                  </CardContent>
+                </Card>}
+              
+              {/* Referral Section */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5 w-full max-w-4xl">
+                <CardContent className="p-8">
+                  <ReferralSection />
+                </CardContent>
+              </Card>
+
+              {/* Membership CTA */}
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50 w-full max-w-4xl">
+                <CardContent className="p-8 text-center space-y-4">
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Want More Savings? Join Clean & Covered™
+                  </h3>
+                  <p className="text-gray-600 max-w-2xl mx-auto">
+                    Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
                   </p>
-                </div>
-                <PaymentForm 
-                  pricingData={pricingData} 
-                  calculatedPrice={calculatedPrice} 
-                  priceBreakdown={priceBreakdown} 
-                  schedulingData={schedulingData} 
-                />
-              </div>
-            )}
-            
-            {/* Referral Section */}
-            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-0">
-              <CardContent className="p-8">
-                <ReferralSection />
-              </CardContent>
-            </Card>
-
-            {/* Membership CTA */}
-            <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
-              <CardContent className="p-8 text-center space-y-6">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Want More Savings? Join Clean & Covered™
-                </h3>
-                <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-                  Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
-                </p>
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                  <a href="/membership">Learn About Membership</a>
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+                    <a href="/membership">Learn About Membership</a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
           
           <TabsContent value="commercial">
-            <div className="w-full max-w-4xl mx-auto">
-              <CommercialEstimateSection />
-            </div>
+            <Card className="w-full max-w-4xl mx-auto">
+              <CardContent className="p-6">
+                <CommercialEstimateSection />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

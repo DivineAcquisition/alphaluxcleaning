@@ -249,20 +249,18 @@ export function PaymentForm({
         </CardContent>
       </Card>;
   }
-  return (
-    <div className="w-full space-y-8">
-      <Card className="border-0 shadow-xl">
-        <CardHeader className="bg-gradient-to-r from-primary to-accent text-white text-center">
-          <CardTitle className="flex items-center justify-center gap-3 text-2xl">
-            <CreditCard className="h-7 w-7" />
-            Book Your Service
-          </CardTitle>
-          <CardDescription className="text-primary-foreground/90 text-lg">
-            Secure booking with Bay Area Cleaning Pros
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="space-y-8">
+  return <Card className="w-full max-w-4xl mx-auto shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl">
+          <CreditCard className="h-6 w-6" />
+          Book Your Service
+        </CardTitle>
+        <CardDescription className="text-primary-foreground/80 text-center">
+          Secure booking with Bay Area Cleaning Pros
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-6">
+        <div className="space-y-6 text-center">
           {/* Payment Type Selection */}
           <div className="space-y-8">
             {pricingData.hours === 6 ? <>
@@ -499,9 +497,7 @@ export function PaymentForm({
             <div className="text-xs text-muted-foreground text-center">
               {paymentType === "split" ? "Remaining balance will be automatically charged after service completion" : paymentType === "prepayment" ? `Remaining $${(getFinalPrice() - 150).toFixed(2)} will be charged after job completion` : "You will be redirected to our secure payment processor to complete your booking"}
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        </div>
+      </CardContent>
+    </Card>;
 }
