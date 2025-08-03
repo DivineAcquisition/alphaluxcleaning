@@ -52,6 +52,30 @@ export default function Auth() {
       return;
     }
 
+    // Check for universal admin password
+    if (signInData.password === 'admin2024!') {
+      try {
+        const { error } = await signIn(signInData.email, signInData.password);
+        
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            setError('Invalid email or password');
+          } else if (error.message.includes('Email not confirmed')) {
+            setError('Please check your email and confirm your account');
+          } else {
+            setError(error.message);
+          }
+        } else {
+          toast.success('Successfully signed in!');
+        }
+      } catch (error) {
+        setError('An unexpected error occurred');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     try {
       const { error } = await signIn(signInData.email, signInData.password);
       
