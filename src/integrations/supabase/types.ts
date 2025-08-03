@@ -438,6 +438,84 @@ export type Database = {
           },
         ]
       }
+      customer_feedback: {
+        Row: {
+          booking_id: string | null
+          category: string | null
+          cleanliness_rating: number | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          feedback_text: string | null
+          id: string
+          overall_rating: number | null
+          photos: Json | null
+          professionalism_rating: number | null
+          responded_at: string | null
+          responded_by: string | null
+          response_text: string | null
+          status: string | null
+          subcontractor_id: string | null
+          timeliness_rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          category?: string | null
+          cleanliness_rating?: number | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          feedback_text?: string | null
+          id?: string
+          overall_rating?: number | null
+          photos?: Json | null
+          professionalism_rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response_text?: string | null
+          status?: string | null
+          subcontractor_id?: string | null
+          timeliness_rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          category?: string | null
+          cleanliness_rating?: number | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          feedback_text?: string | null
+          id?: string
+          overall_rating?: number | null
+          photos?: Json | null
+          professionalism_rating?: number | null
+          responded_at?: string | null
+          responded_by?: string | null
+          response_text?: string | null
+          status?: string | null
+          subcontractor_id?: string | null
+          timeliness_rating?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           actual_close_date: string | null
@@ -565,6 +643,69 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          incident_date: string
+          incident_type: string
+          reported_by: string | null
+          resolution: string | null
+          resolved_at: string | null
+          severity: string | null
+          status: string | null
+          subcontractor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_date: string
+          incident_type: string
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_date?: string
+          incident_type?: string
+          reported_by?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
             referencedColumns: ["id"]
           },
         ]
@@ -719,6 +860,56 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_tracking: {
+        Row: {
+          actual_duration: unknown | null
+          assignment_id: string | null
+          check_in_location: string | null
+          check_in_time: string | null
+          check_out_location: string | null
+          check_out_time: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          photos: Json | null
+          updated_at: string
+        }
+        Insert: {
+          actual_duration?: unknown | null
+          assignment_id?: string | null
+          check_in_location?: string | null
+          check_in_time?: string | null
+          check_out_location?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photos?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          actual_duration?: unknown | null
+          assignment_id?: string | null
+          check_in_location?: string | null
+          check_in_time?: string | null
+          check_out_location?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photos?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_tracking_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_job_assignments"
             referencedColumns: ["id"]
           },
         ]
@@ -1102,6 +1293,53 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_metrics: {
+        Row: {
+          bonus_eligible: boolean | null
+          complaints_count: number | null
+          created_at: string
+          customer_rating: number | null
+          id: string
+          jobs_completed: number | null
+          month_year: string
+          on_time_percentage: number | null
+          subcontractor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bonus_eligible?: boolean | null
+          complaints_count?: number | null
+          created_at?: string
+          customer_rating?: number | null
+          id?: string
+          jobs_completed?: number | null
+          month_year: string
+          on_time_percentage?: number | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bonus_eligible?: boolean | null
+          complaints_count?: number | null
+          created_at?: string
+          customer_rating?: number | null
+          id?: string
+          jobs_completed?: number | null
+          month_year?: string
+          on_time_percentage?: number | null
+          subcontractor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_metrics_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
             referencedColumns: ["id"]
           },
         ]
