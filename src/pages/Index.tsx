@@ -108,7 +108,7 @@ const Index = () => {
         </div>
 
         {/* New Client Special Banner */}
-        <div className="mb-8 max-w-4xl mx-auto px-4">
+        <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4 mb-8">
           <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
             <CardContent className="p-4 md:p-6">
               <div className="text-center text-white">
@@ -177,56 +177,56 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="residential" className="space-y-8">
-            {/* Modern card-based layout */}
-            <div className="grid gap-6 lg:gap-8 justify-items-center">
+          <TabsContent value="residential">
+            <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4">
+              {/* Header Section */}
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  Choose Your Residential Services
+                </h2>
+                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto">
+                  Customize your cleaning experience with our flexible options
+                </p>
+              </div>
+
               {/* Service Configuration Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-background/60 backdrop-blur-sm w-full max-w-4xl">
-                <CardContent className="p-8">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      Choose Your Residential Services
-                    </h2>
-                    <p className="font-inter font-semibold text-muted-foreground text-lg">
-                      Customize your cleaning experience with our flexible options
-                    </p>
-                  </div>
-                  <RecurringBookingInterface 
-                    newClient={true}
-                    onBookingUpdate={data => {
-                    setPricingData({
-                      hours: data.tier.hours,
-                      cleaningType: 'standard',
-                      serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                      membership: data.membership,
-                      addOns: data.addOns,
-                      recurring: data.recurring
-                    });
-                    setCalculatedPrice(data.pricing.total);
-                    setPriceBreakdown({
-                      basePrice: data.tier.basePrice,
-                      addOns: data.addOns,
-                      membership: data.membership,
-                      recurring: data.recurring,
-                      savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                    });
-                  }} />
-                </CardContent>
-              </Card>
+              <RecurringBookingInterface 
+                newClient={true}
+                onBookingUpdate={data => {
+                setPricingData({
+                  hours: data.tier.hours,
+                  cleaningType: 'standard',
+                  serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                  membership: data.membership,
+                  addOns: data.addOns,
+                  recurring: data.recurring
+                });
+                setCalculatedPrice(data.pricing.total);
+                setPriceBreakdown({
+                  basePrice: data.tier.basePrice,
+                  addOns: data.addOns,
+                  membership: data.membership,
+                  recurring: data.recurring,
+                  savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+                });
+              }} />
 
               {/* Service Details Button */}
-              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
+              {pricingData && (
+                <Card>
                   <CardContent className="p-6">
                     <div className="text-center space-y-4">
                       <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
                       <ServiceDetailsDialog cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
                     </div>
                   </CardContent>
-                </Card>}
+                </Card>
+              )}
               
               {/* Payment Section */}
-              {pricingData && <Card className="border-0 shadow-lg w-full max-w-4xl">
-                  <CardContent className="p-8">
+              {pricingData && (
+                <Card>
+                  <CardContent className="p-6">
                     <div className="text-center space-y-6">
                       <h2 className="text-2xl font-jakarta font-bold">
                         Complete Your Booking
@@ -235,18 +235,19 @@ const Index = () => {
                       <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
                     </div>
                   </CardContent>
-                </Card>}
+                </Card>
+              )}
               
               {/* Referral Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-primary/5 to-accent/5 w-full max-w-4xl">
-                <CardContent className="p-8">
+              <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
+                <CardContent className="p-6">
                   <ReferralSection />
                 </CardContent>
               </Card>
 
               {/* Membership CTA */}
-              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50 w-full max-w-4xl">
-                <CardContent className="p-8 text-center space-y-4">
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
+                <CardContent className="p-6 text-center space-y-4">
                   <h3 className="text-2xl font-bold text-gray-900">
                     Want More Savings? Join Clean & Covered™
                   </h3>

@@ -197,13 +197,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6 px-4">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl sm:text-2xl font-bold">Professional Cleaning Services</h2>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-          Choose your perfect cleaning plan and save with recurring services
-        </p>
-      </div>
+    <div className="w-full space-y-6">
 
       {/* Step 1: BACP Club Membership */}
       {!existingMember && (
