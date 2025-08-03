@@ -197,8 +197,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-2 sm:px-4 overflow-x-hidden">
-      <div className="text-center space-y-2 px-2">
+    <div className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6 px-4">
+      <div className="text-center space-y-2">
         <h2 className="text-xl sm:text-2xl font-bold">Professional Cleaning Services</h2>
         <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
           Choose your perfect cleaning plan and save with recurring services
@@ -340,8 +340,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
       {/* Step 2: Choose Your Service */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
             <Clock className="h-5 w-5" />
             Choose Your Service
           </CardTitle>
@@ -351,7 +351,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 justify-items-center">
               {bookingTiers.map((tier) => (
                 <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
                   <Card className={`transition-all hover:shadow-md ${
@@ -400,14 +400,14 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
       {/* Step 3: Add-ons */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Optional Add-ons</CardTitle>
           <p className="text-sm text-muted-foreground">
             Enhance your cleaning with these popular extras
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 justify-items-center">
             {addOnServices.map((addOn) => (
               <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer">
                 <Card className={`transition-all hover:shadow-sm ${
@@ -449,13 +449,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
       {/* Step 4: Recurring Options */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Cleaning Frequency</CardTitle>
           <p className="text-muted-foreground">Save more with recurring services</p>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 justify-items-center">
               {recurringOptions.map((option) => (
                 <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
                   <Card className={`transition-all hover:shadow-md ${
@@ -511,8 +511,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       </Card>
 
       {/* Booking Summary */}
-      <Card className="sticky top-4">
-        <CardHeader>
+      <Card className="sticky top-4 mx-auto max-w-md">
+        <CardHeader className="text-center">
           <CardTitle className="text-lg sm:text-xl">Booking Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
