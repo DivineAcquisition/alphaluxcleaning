@@ -197,10 +197,10 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Professional Cleaning Services</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl font-bold">Professional Cleaning Services</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Choose your perfect cleaning plan and save with recurring services
         </p>
       </div>
@@ -218,16 +218,16 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             </p>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="font-semibold text-lg">BACP Club™ Membership</div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex-1">
+                <div className="font-semibold text-base sm:text-lg">BACP Club™ Membership</div>
                 <div className="text-sm text-muted-foreground">$39/month • Cancel anytime</div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 justify-end">
                 {!isMobile && (
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-xs">
+                      <Button variant="outline" size="sm" className="text-xs shrink-0">
                         <FileText className="h-3 w-3 mr-1" />
                         View Terms
                       </Button>
@@ -351,7 +351,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
               {bookingTiers.map((tier) => (
                 <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
                   <Card className={`transition-all hover:shadow-md ${
@@ -359,16 +359,16 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                       ? 'ring-2 ring-primary border-primary shadow-md' 
                       : 'hover:border-primary/50'
                   }`}>
-                    <CardContent className="p-5">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <RadioGroupItem value={tier.id} id={tier.id} />
-                         <span className="font-semibold text-lg">
-                           {tier.id === 'general' ? 'General Clean' : 
-                            tier.id === 'complete' ? 'Complete Clean' : 
-                            'Premium Deep Clean'} ({tier.hours} Hours)
-                         </span>
-                      </div>
-                       <div className="text-3xl font-bold mb-3 text-primary">
+                    <CardContent className="p-4 sm:p-5">
+                       <div className="flex items-center space-x-2 mb-3">
+                         <RadioGroupItem value={tier.id} id={tier.id} />
+                          <span className="font-semibold text-base sm:text-lg">
+                            {tier.id === 'general' ? 'General Clean' : 
+                             tier.id === 'complete' ? 'Complete Clean' : 
+                             'Premium Deep Clean'} ({tier.hours} Hours)
+                          </span>
+                       </div>
+                        <div className="text-2xl sm:text-3xl font-bold mb-3 text-primary">
                          {newClient && tier.id === 'complete' ? (
                            <div>
                              <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
@@ -407,7 +407,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {addOnServices.map((addOn) => (
               <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer">
                 <Card className={`transition-all hover:shadow-sm ${
@@ -415,7 +415,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                     ? 'border-primary bg-primary/5' 
                     : 'hover:border-primary/50'
                 }`}>
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                      <div className="flex items-start space-x-3">
                        <Checkbox
                          id={addOn.id}
@@ -455,7 +455,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {recurringOptions.map((option) => (
                 <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
                   <Card className={`transition-all hover:shadow-md ${
@@ -463,11 +463,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                       ? 'ring-2 ring-primary border-primary shadow-md' 
                       : 'hover:border-primary/50'
                   }`}>
-                    <CardContent className="p-5">
+                    <CardContent className="p-4 sm:p-5">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value={option.id} id={option.id} />
-                          <span className="font-semibold text-lg">{option.name}</span>
+                          <span className="font-semibold text-base sm:text-lg">{option.name}</span>
                         </div>
                         {option.discount > 0 && (
                           <Badge className="bg-green-500 hover:bg-green-600">
@@ -511,9 +511,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       </Card>
 
       {/* Booking Summary */}
-      <Card className="sticky top-4">
+      <Card className="sticky top-4 mx-4 sm:mx-0">
         <CardHeader>
-          <CardTitle className="text-xl">Booking Summary</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Booking Summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
@@ -610,7 +610,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           <Button 
             onClick={handleBookNow} 
             disabled={!termsAgreed}
-            className="w-full h-14 text-lg font-semibold"
+            className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
             size="lg"
           >
             {termsAgreed 

@@ -431,15 +431,15 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
         </div>
         
         {/* Enhanced Connection Status */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
-          <div className="flex items-center gap-2 p-2 rounded-lg border">
+        <div className="flex flex-col items-center justify-center gap-2 text-xs sm:text-sm px-2">
+          <div className="flex items-center gap-2 p-2 rounded-lg border w-full sm:w-auto justify-center">
             <div className={`w-2 h-2 rounded-full ${
               connectionStatus === 'connected' ? 'bg-green-400' :
               connectionStatus === 'checking' || isCheckingAvailability ? 'bg-yellow-400 animate-pulse' :
               connectionStatus === 'disconnected' ? 'bg-orange-400' :
               'bg-red-400'
             }`} />
-            <span className="font-medium">
+            <span className="font-medium text-center">
               {connectionStatus === 'connected' ? 'Google Calendar Connected' :
                connectionStatus === 'checking' || isCheckingAvailability ? 'Checking availability...' :
                connectionStatus === 'disconnected' ? 'Using mock data' :
@@ -448,13 +448,13 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
           </div>
           
           {lastUpdated && connectionStatus === 'connected' && (
-            <div className="text-muted-foreground">
+            <div className="text-muted-foreground text-center">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </div>
           )}
           
           {selectedDate && selectedTime && connectionStatus === 'connected' && (
-            <div className="text-green-600 font-medium">
+            <div className="text-green-600 font-medium text-center">
               ⚡ Real-time conflict detection active
             </div>
           )}

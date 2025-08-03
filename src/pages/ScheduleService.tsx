@@ -173,13 +173,13 @@ const ScheduleService = () => {
                 <CardTitle className="text-lg">Service Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-1">
                     <p><strong>Service Type:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}</p>
                     <p><strong>Frequency:</strong> {orderDetails.frequency}</p>
                     <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <p><strong>Customer:</strong> {orderDetails.customer_name}</p>
                     <p><strong>Email:</strong> {orderDetails.customer_email}</p>
                     {orderDetails.service_details?.serviceAddress && (
@@ -250,7 +250,7 @@ const ScheduleService = () => {
           </Card>
 
           {/* Navigation */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between px-4 sm:px-0">
             <Button 
               variant="outline"
               onClick={() => {
@@ -261,7 +261,7 @@ const ScheduleService = () => {
                   navigate(`/service-details?session_id=${sessionId}`);
                 }
               }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Details
