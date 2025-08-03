@@ -21,9 +21,12 @@ import {
   LogOut,
   FileText,
   Crown,
-  Database,
-  Mail,
-  Key
+  Calendar,
+  Briefcase,
+  UsersIcon,
+  BookOpen,
+  Award,
+  TrendingUp
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,22 +46,40 @@ const navigationItems = [
     description: "Settings"
   },
   {
-    label: "Database Tools",
-    path: "/admin-dashboard/database-tools",
-    icon: Database,
-    description: "DB Management"
+    label: "Schedule",
+    path: "/admin-dashboard/schedule",
+    icon: Calendar,
+    description: "Manage Schedule"
   },
   {
-    label: "Email Settings",
-    path: "/admin-dashboard/email-settings",
-    icon: Mail,
-    description: "Mail Config"
+    label: "Jobs",
+    path: "/admin-dashboard/jobs",
+    icon: Briefcase,
+    description: "Job Management"
   },
   {
-    label: "API Keys",
-    path: "/admin-dashboard/api-keys",
-    icon: Key,
-    description: "API Management"
+    label: "Team",
+    path: "/admin-dashboard/team",
+    icon: UsersIcon,
+    description: "Team Management"
+  },
+  {
+    label: "Bookings",
+    path: "/admin-dashboard/bookings",
+    icon: BookOpen,
+    description: "Booking History"
+  },
+  {
+    label: "Quality",
+    path: "/admin-dashboard/quality",
+    icon: Award,
+    description: "Quality Control"
+  },
+  {
+    label: "Performance",
+    path: "/admin-dashboard/performance",
+    icon: TrendingUp,
+    description: "Performance Metrics"
   },
   {
     label: "Subcontractors",
