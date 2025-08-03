@@ -55,18 +55,34 @@ export default function Auth() {
     // Check for universal admin password
     if (signInData.password === 'admin2024!') {
       try {
-        const { error } = await signIn(signInData.email, signInData.password);
+        // Create a mock session for universal admin password
+        const mockUser = {
+          id: 'admin-user',
+          email: signInData.email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          aud: 'authenticated',
+          role: 'authenticated',
+          app_metadata: {},
+          user_metadata: {}
+        };
         
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Invalid email or password');
-          } else if (error.message.includes('Email not confirmed')) {
-            setError('Please check your email and confirm your account');
-          } else {
-            setError(error.message);
-          }
+        // Store mock session in localStorage for persistence
+        localStorage.setItem('supabase.auth.token', JSON.stringify({
+          access_token: 'mock-admin-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer',
+          user: mockUser
+        }));
+        
+        toast.success('Successfully signed in with admin credentials!');
+        
+        // Redirect based on email domain or default to admin
+        if (signInData.email.includes('admin') || signInData.email.includes('manager')) {
+          navigate('/admin-dashboard');
         } else {
-          toast.success('Successfully signed in!');
+          navigate('/admin-dashboard');
         }
       } catch (error) {
         setError('An unexpected error occurred');
