@@ -2334,6 +2334,12 @@ export type Database = {
         | "enterprise_client"
         | "subcontractor"
         | "customer"
+        | "owner"
+        | "office_manager"
+        | "field_cleaner"
+        | "recurring_cleaner"
+        | "subcontractor_partner"
+        | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2466,6 +2472,12 @@ export const Constants = {
         "enterprise_client",
         "subcontractor",
         "customer",
+        "owner",
+        "office_manager",
+        "field_cleaner",
+        "recurring_cleaner",
+        "subcontractor_partner",
+        "client",
       ],
     },
   },
