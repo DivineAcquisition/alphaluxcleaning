@@ -30,13 +30,18 @@ const Index = () => {
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
 
-    // Load chat widget
-    const script = document.createElement('script');
-    script.src = 'https://widgets.leadconnectorhq.com/loader.js';
-    script.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
-    script.setAttribute('data-widget-id', '688b7acb81758b9cee3c0c05');
-    script.async = true;
-    document.head.appendChild(script);
+    // Load chat widget with defer to prevent layout shift
+    const loadChatWidget = () => {
+      const script = document.createElement('script');
+      script.src = 'https://widgets.leadconnectorhq.com/loader.js';
+      script.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
+      script.setAttribute('data-widget-id', '688b7acb81758b9cee3c0c05');
+      script.async = true;
+      document.head.appendChild(script);
+    };
+    
+    // Defer chat widget loading
+    setTimeout(loadChatWidget, 2000);
     return () => {
       // Cleanup script on unmount
       const existingScript = document.querySelector('script[data-widget-id="688b7acb81758b9cee3c0c05"]');
@@ -91,7 +96,8 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full max-w-7xl mx-auto px-4 py-8"
+           style={{ contain: 'layout' }}>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
@@ -136,16 +142,16 @@ const Index = () => {
                     <Clock className="h-4 w-4 md:h-5 w-5 text-yellow-300" />
                     <span className="text-sm md:text-base font-semibold">Offer Expires In:</span>
                   </div>
-                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold">
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold tabular-nums">
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
                       <span className="text-xs md:text-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
                     </div>
-                    <span>:</span>
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
                       <span className="text-xs md:text-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
                     </div>
-                    <span>:</span>
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40">
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
                       <span className="text-xs md:text-sm">{String(timeLeft.seconds).padStart(2, '0')}</span>
                     </div>
                   </div>

@@ -39,7 +39,9 @@ export function Navigation() {
             <img 
               src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
               alt="Bay Area Cleaning Professionals" 
-              className="h-20 w-20 object-contain" 
+              className="h-12 w-12 md:h-16 md:w-16 object-contain" 
+              width="64"
+              height="64"
             />
           </Link>
 
