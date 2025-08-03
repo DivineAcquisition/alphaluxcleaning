@@ -39,7 +39,7 @@ const Index = () => {
       script.async = true;
       document.head.appendChild(script);
     };
-    
+
     // Defer chat widget loading
     setTimeout(loadChatWidget, 2000);
     return () => {
@@ -96,8 +96,9 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8"
-           style={{ contain: 'layout' }}>
+      <div style={{
+      contain: 'layout'
+    }} className="container mx-auto py-8 px-[7px]">
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-jakarta font-bold tracking-tight mb-4">
             Professional Cleaning Services
@@ -165,7 +166,7 @@ const Index = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto">
+        <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto px-0">
           <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
             <TabsTrigger value="residential" className="flex items-center gap-2 text-base">
               <HomeIcon className="h-5 w-5" />
@@ -190,42 +191,37 @@ const Index = () => {
               </div>
 
               {/* Service Configuration Section */}
-              <RecurringBookingInterface 
-                newClient={true}
-                onBookingUpdate={data => {
-                setPricingData({
-                  hours: data.tier.hours,
-                  cleaningType: 'standard',
-                  serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                  membership: data.membership,
-                  addOns: data.addOns,
-                  recurring: data.recurring
-                });
-                setCalculatedPrice(data.pricing.total);
-                setPriceBreakdown({
-                  basePrice: data.tier.basePrice,
-                  addOns: data.addOns,
-                  membership: data.membership,
-                  recurring: data.recurring,
-                  savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                });
-              }} />
+              <RecurringBookingInterface newClient={true} onBookingUpdate={data => {
+              setPricingData({
+                hours: data.tier.hours,
+                cleaningType: 'standard',
+                serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                membership: data.membership,
+                addOns: data.addOns,
+                recurring: data.recurring
+              });
+              setCalculatedPrice(data.pricing.total);
+              setPriceBreakdown({
+                basePrice: data.tier.basePrice,
+                addOns: data.addOns,
+                membership: data.membership,
+                recurring: data.recurring,
+                savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+              });
+            }} />
 
               {/* Service Details Button */}
-              {pricingData && (
-                <Card>
+              {pricingData && <Card>
                   <CardContent className="p-6">
                     <div className="text-center space-y-4">
                       <h3 className="text-xl font-jakarta font-bold">Want to know exactly what's included?</h3>
                       <ServiceDetailsDialog cleaningType={pricingData.cleaningType} serviceType={pricingData.serviceType} />
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
               
               {/* Payment Section */}
-              {pricingData && (
-                <Card>
+              {pricingData && <Card>
                   <CardContent className="p-6">
                     <div className="text-center space-y-6">
                       <h2 className="text-2xl font-jakarta font-bold">
@@ -235,8 +231,7 @@ const Index = () => {
                       <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
               
               {/* Referral Section */}
               <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
