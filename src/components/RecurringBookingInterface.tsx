@@ -345,15 +345,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
               {bookingTiers.map((tier) => (
-                <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer">
-                  <Card className={`transition-all hover:shadow-md ${
+                <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer w-full">
+                  <Card className={`w-full h-full transition-all hover:shadow-md ${
                     selectedTier === tier.id 
                       ? 'ring-2 ring-primary border-primary shadow-md' 
                       : 'hover:border-primary/50'
                   }`}>
-                    <CardContent className="p-4 sm:p-5">
+                    <CardContent className="p-4 sm:p-5 h-full flex flex-col justify-between">
                        <div className="flex items-center space-x-2 mb-3">
                          <RadioGroupItem value={tier.id} id={tier.id} />
                           <span className="font-semibold text-base sm:text-lg">
@@ -401,15 +401,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {addOnServices.map((addOn) => (
-              <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer">
-                <Card className={`transition-all hover:shadow-sm ${
+              <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer w-full">
+                <Card className={`w-full h-full transition-all hover:shadow-sm ${
                   selectedAddOns.includes(addOn.id) 
-                    ? 'border-primary bg-primary/5' 
+                    ? 'ring-2 ring-primary border-primary shadow-md bg-primary/5' 
                     : 'hover:border-primary/50'
                 }`}>
-                  <CardContent className="p-3 sm:p-4">
+                  <CardContent className="p-4 h-full flex flex-col justify-between">
                      <div className="flex items-start space-x-3">
                        <Checkbox
                          id={addOn.id}
@@ -449,32 +449,34 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 justify-items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
               {recurringOptions.map((option) => (
-                <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
-                  <Card className={`transition-all hover:shadow-md ${
+                <Label key={option.id} htmlFor={option.id} className="cursor-pointer w-full">
+                  <Card className={`w-full h-full transition-all hover:shadow-md ${
                     selectedRecurring === option.id 
                       ? 'ring-2 ring-primary border-primary shadow-md' 
                       : 'hover:border-primary/50'
                   }`}>
-                    <CardContent className="p-4 sm:p-5">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value={option.id} id={option.id} />
-                          <span className="font-semibold text-base sm:text-lg">{option.name}</span>
-                        </div>
-                        {option.discount > 0 && (
-                          <Badge className="bg-green-500 hover:bg-green-600">
-                            {option.discount}% OFF
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{option.description}</p>
-                      {option.discount > 0 && (
-                        <p className="text-xs text-green-600 mt-2 font-medium">
-                          Save ${Math.round(pricing.subtotal * (option.discount / 100))} per visit
-                        </p>
-                      )}
+                     <CardContent className="p-4 text-center h-full flex flex-col justify-between">
+                       <div>
+                         <div className="flex items-center justify-between mb-2">
+                           <div className="flex items-center space-x-2">
+                             <RadioGroupItem value={option.id} id={option.id} />
+                             <span className="font-semibold text-base sm:text-lg">{option.name}</span>
+                           </div>
+                           {option.discount > 0 && (
+                             <Badge className="bg-green-500 hover:bg-green-600">
+                               {option.discount}% OFF
+                             </Badge>
+                           )}
+                         </div>
+                         <p className="text-sm text-muted-foreground">{option.description}</p>
+                         {option.discount > 0 && (
+                           <p className="text-xs text-green-600 mt-2 font-medium">
+                             Save ${Math.round(pricing.subtotal * (option.discount / 100))} per visit
+                           </p>
+                         )}
+                       </div>
                     </CardContent>
                   </Card>
                 </Label>
