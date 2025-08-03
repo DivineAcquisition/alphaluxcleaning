@@ -93,8 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Only update if we're not in universal admin mode
+        if (!localStorage.getItem('universal-admin-session')) {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
         setLoading(false);
       }
     );
