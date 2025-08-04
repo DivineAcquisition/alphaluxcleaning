@@ -33,11 +33,26 @@ import {
   ArrowRight,
   CheckCircle2,
   TrendingUp,
-  Heart
+  Heart,
+  Copy,
+  Percent,
+  Tags,
+  Car,
+  Refrigerator,
+  DoorOpen,
+  Wind,
+  Trash2,
+  Wrench,
+  FlowerIcon,
+  Droplets,
+  Lightbulb,
+  Shirt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { ReferralSection } from '@/components/ReferralSection';
 
 interface ServiceTier {
   id: string;
@@ -102,12 +117,13 @@ const serviceTiers: ServiceTier[] = [
 ];
 
 const addOnServices: AddOnService[] = [
+  // Essential Add-ons
   {
     id: 'fridge',
     name: 'Inside Fridge',
     price: 25,
     description: 'Deep clean refrigerator interior',
-    icon: <Home className="h-4 w-4" />,
+    icon: <Refrigerator className="h-4 w-4" />,
     category: 'essential'
   },
   {
@@ -118,6 +134,15 @@ const addOnServices: AddOnService[] = [
     icon: <Timer className="h-4 w-4" />,
     category: 'essential'
   },
+  {
+    id: 'garage',
+    name: 'Garage Cleaning',
+    price: 50,
+    description: 'Basic garage sweep and organize',
+    icon: <Car className="h-4 w-4" />,
+    category: 'essential'
+  },
+  // Premium Add-ons
   {
     id: 'windows',
     name: 'Interior Windows',
@@ -133,6 +158,71 @@ const addOnServices: AddOnService[] = [
     description: 'Detailed baseboard cleaning',
     icon: <CheckCircle2 className="h-4 w-4" />,
     category: 'premium'
+  },
+  {
+    id: 'doors',
+    name: 'Door Frame Cleaning',
+    price: 20,
+    description: 'Clean all door frames and handles',
+    icon: <DoorOpen className="h-4 w-4" />,
+    category: 'premium'
+  },
+  {
+    id: 'fans',
+    name: 'Ceiling Fan Cleaning',
+    price: 35,
+    description: 'Deep clean all ceiling fans',
+    icon: <Wind className="h-4 w-4" />,
+    category: 'premium'
+  },
+  // Specialty Add-ons
+  {
+    id: 'laundry',
+    name: 'Laundry Service',
+    price: 45,
+    description: 'Wash, dry, and fold one load',
+    icon: <Shirt className="h-4 w-4" />,
+    category: 'specialty'
+  },
+  {
+    id: 'dishes',
+    name: 'Dishes & Kitchen',
+    price: 25,
+    description: 'Complete kitchen cleanup',
+    icon: <Trash2 className="h-4 w-4" />,
+    category: 'specialty'
+  },
+  {
+    id: 'organization',
+    name: 'Light Organization',
+    price: 60,
+    description: 'Basic room organization',
+    icon: <Wrench className="h-4 w-4" />,
+    category: 'specialty'
+  },
+  {
+    id: 'plant_care',
+    name: 'Plant Care',
+    price: 15,
+    description: 'Water and basic plant care',
+    icon: <FlowerIcon className="h-4 w-4" />,
+    category: 'specialty'
+  },
+  {
+    id: 'blinds',
+    name: 'Blind Cleaning',
+    price: 30,
+    description: 'Clean all window blinds',
+    icon: <Lightbulb className="h-4 w-4" />,
+    category: 'specialty'
+  },
+  {
+    id: 'deep_sanitize',
+    name: 'Deep Sanitization',
+    price: 55,
+    description: 'Extra sanitization service',
+    icon: <Droplets className="h-4 w-4" />,
+    category: 'specialty'
   }
 ];
 
@@ -162,6 +252,12 @@ export const ModernBookingPage: React.FC = () => {
     address: '',
     specialInstructions: ''
   });
+  const [referralCode, setReferralCode] = useState('');
+  const [discountCode, setDiscountCode] = useState('');
+  const [referralDiscount, setReferralDiscount] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [showReferralGenerator, setShowReferralGenerator] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const steps: BookingStep[] = [
@@ -169,7 +265,7 @@ export const ModernBookingPage: React.FC = () => {
     { id: 2, title: 'Add Extras', description: 'Customize with add-ons', completed: currentStep > 2 },
     { id: 3, title: 'Schedule', description: 'Pick date and time', completed: !!selectedDate && !!selectedTime },
     { id: 4, title: 'Details', description: 'Contact information', completed: !!customerInfo.name && !!customerInfo.email },
-    { id: 5, title: 'Payment', description: 'Secure checkout', completed: false }
+    { id: 5, title: 'Payment', description: 'Secure checkout', completed: showReferralGenerator }
   ];
 
   // Calculate progress based on completed steps
@@ -178,6 +274,51 @@ export const ModernBookingPage: React.FC = () => {
     setProgress((completedSteps / steps.length) * 100);
   }, [steps]);
 
+  // Referral and discount validation
+  const validateReferralCode = async (code: string) => {
+    if (!code.trim()) return;
+    
+    setIsValidatingCode(true);
+    try {
+      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+        p_code: code,
+        p_user_email: customerInfo.email,
+        p_user_name: customerInfo.name
+      });
+
+      if (error) throw error;
+
+      const result = data as { success?: boolean; error?: string; reward_type?: string };
+      if (result?.success) {
+        if (result.reward_type === 'deep_clean_50_percent' && selectedTier?.id === 'standard') {
+          setReferralDiscount(selectedTier.price * 0.5);
+          toast.success('Referral code applied! 50% off your deep clean!');
+        } else {
+          setReferralDiscount(20); // Default $20 discount
+          toast.success('Referral code applied! $20 discount!');
+        }
+      } else {
+        toast.error(result?.error || 'Invalid referral code');
+        setReferralDiscount(0);
+      }
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+      toast.error('Error validating referral code');
+      setReferralDiscount(0);
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  const calculateAddOnDiscount = () => {
+    if (!membershipEnabled) return 0;
+    const addOnsTotal = selectedAddOns.reduce((total, addOnId) => {
+      const addOn = addOnServices.find(service => service.id === addOnId);
+      return total + (addOn?.price || 0);
+    }, 0);
+    return addOnsTotal * 0.1; // 10% discount for members
+  };
+
   const calculateTotal = () => {
     if (!selectedTier) return 0;
     const tierPrice = membershipEnabled ? selectedTier.memberPrice : selectedTier.price;
@@ -185,8 +326,13 @@ export const ModernBookingPage: React.FC = () => {
       const addOn = addOnServices.find(service => service.id === addOnId);
       return total + (addOn?.price || 0);
     }, 0);
+    
     const membershipFee = membershipEnabled ? 30 : 0;
-    return tierPrice + addOnsTotal + membershipFee;
+    const addOnDiscount = calculateAddOnDiscount();
+    const totalBeforeDiscounts = tierPrice + addOnsTotal + membershipFee - addOnDiscount;
+    
+    // Apply referral discount (cannot combine with other discount codes)
+    return Math.max(0, totalBeforeDiscounts - referralDiscount - discountAmount);
   };
 
   const getSavings = () => {
@@ -347,39 +493,92 @@ export const ModernBookingPage: React.FC = () => {
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-bold">Add Extra Services</h2>
               <p className="text-muted-foreground text-lg">Enhance your cleaning with these premium add-ons</p>
+              {membershipEnabled && (
+                <Badge variant="secondary" className="text-sm">
+                  <Percent className="h-3 w-3 mr-1" />
+                  Members get 10% off all add-ons!
+                </Badge>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {addOnServices.map((addOn) => (
-                <Card 
-                  key={addOn.id}
-                  className={cn(
-                    "cursor-pointer transition-all duration-200",
-                    selectedAddOns.includes(addOn.id) ? "ring-2 ring-primary border-primary" : ""
-                  )}
-                  onClick={() => handleAddOnToggle(addOn.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <Checkbox
-                        checked={selectedAddOns.includes(addOn.id)}
-                        onCheckedChange={() => {}}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {addOn.icon}
-                            <h3 className="font-semibold">{addOn.name}</h3>
-                          </div>
-                          <span className="font-bold text-primary">${addOn.price}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {/* Special Offers Banner */}
+            {selectedTier?.id === 'standard' && (
+              <Card className="border-success/30 bg-gradient-to-r from-success/10 to-primary/10">
+                <CardContent className="p-4 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Gift className="h-5 w-5 text-success" />
+                    <h3 className="font-bold text-success">First Cleaning Special!</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Deep Clean customers: Get your 6th cleaning FREE when you book recurring service!
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Tabs defaultValue="essential" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="essential">Essential</TabsTrigger>
+                <TabsTrigger value="premium">Premium</TabsTrigger>
+                <TabsTrigger value="specialty">Specialty</TabsTrigger>
+              </TabsList>
+              
+              {(['essential', 'premium', 'specialty'] as const).map((category) => (
+                <TabsContent key={category} value={category} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {addOnServices
+                      .filter((addOn) => addOn.category === category)
+                      .map((addOn) => {
+                        const memberPrice = membershipEnabled ? addOn.price * 0.9 : addOn.price;
+                        return (
+                          <Card 
+                            key={addOn.id}
+                            className={cn(
+                              "cursor-pointer transition-all duration-200",
+                              selectedAddOns.includes(addOn.id) ? "ring-2 ring-primary border-primary" : ""
+                            )}
+                            onClick={() => handleAddOnToggle(addOn.id)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-4">
+                                <Checkbox
+                                  checked={selectedAddOns.includes(addOn.id)}
+                                  onCheckedChange={() => {}}
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {addOn.icon}
+                                      <div>
+                                        <h3 className="font-semibold">{addOn.name}</h3>
+                                        <Badge variant="outline" className="text-xs">
+                                          {category}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="font-bold text-primary">
+                                        ${memberPrice.toFixed(0)}
+                                      </span>
+                                      {membershipEnabled && (
+                                        <div className="text-xs text-muted-foreground">
+                                          <span className="line-through">${addOn.price}</span>
+                                          <span className="ml-1 text-success">10% off</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                </TabsContent>
               ))}
-            </div>
+            </Tabs>
 
             <div className="flex justify-center">
               <Button onClick={handleNextStep} size="lg">
@@ -534,6 +733,71 @@ export const ModernBookingPage: React.FC = () => {
                     placeholder="Any special requests or instructions"
                   />
                 </div>
+
+                <Separator />
+
+                {/* Referral and Discount Codes */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Tags className="h-5 w-5" />
+                    Promo & Referral Codes
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Referral Code */}
+                    <div className="space-y-2">
+                      <Label htmlFor="referral-code">Referral Code (50% off Deep Clean)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="referral-code"
+                          value={referralCode}
+                          onChange={(e) => setReferralCode(e.target.value)}
+                          placeholder="Enter referral code"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={isValidatingCode || !referralCode.trim() || !customerInfo.email}
+                          onClick={() => validateReferralCode(referralCode)}
+                        >
+                          {isValidatingCode ? "..." : "Apply"}
+                        </Button>
+                      </div>
+                      {referralDiscount > 0 && (
+                        <div className="text-sm text-success flex items-center gap-1">
+                          <Check className="h-4 w-4" />
+                          Referral discount applied: -${referralDiscount}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Discount Code */}
+                    <div className="space-y-2">
+                      <Label htmlFor="discount-code">Discount Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="discount-code"
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value)}
+                          placeholder="Enter discount code"
+                          disabled={referralDiscount > 0}
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={referralDiscount > 0 || !discountCode.trim()}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                      {referralDiscount > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          Cannot combine with referral codes
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -650,8 +914,8 @@ export const ModernBookingPage: React.FC = () => {
                     className="w-full" 
                     size="lg"
                     onClick={() => {
-                      toast.success('Booking confirmed! Redirecting to payment...');
-                      // Add payment integration here
+                      setShowReferralGenerator(true);
+                      toast.success('Booking confirmed! Thank you for choosing us!');
                     }}
                   >
                     Complete Booking
@@ -729,7 +993,80 @@ export const ModernBookingPage: React.FC = () => {
 
         {/* Main Content */}
         <div className="max-w-6xl mx-auto">
-          {renderStepContent()}
+          {showReferralGenerator ? (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="h-10 w-10 text-success" />
+                </div>
+                <h2 className="text-3xl font-bold text-success">Booking Confirmed!</h2>
+                <p className="text-muted-foreground text-lg">
+                  Thank you for choosing Bay Area Cleaning Pros. Your cleaning is scheduled for{' '}
+                  {selectedDate ? formatDate(selectedDate) : ''} at {selectedTime}.
+                </p>
+              </div>
+
+              <Card className="max-w-2xl mx-auto border-success/30">
+                <CardHeader className="text-center">
+                  <CardTitle className="flex items-center justify-center gap-2">
+                    <Gift className="h-6 w-6 text-success" />
+                    Earn Rewards - Generate Your Referral Code
+                  </CardTitle>
+                  <p className="text-muted-foreground">
+                    Share with friends and earn 50% off your next deep cleaning!
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ReferralSection />
+                </CardContent>
+              </Card>
+
+              <div className="text-center space-y-4">
+                <h3 className="text-xl font-semibold">What's Next?</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Clock className="h-8 w-8 mx-auto mb-2 text-primary" />
+                      <h4 className="font-semibold mb-1">Confirmation Email</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Check your email for booking details and preparation tips
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Phone className="h-8 w-8 mx-auto mb-2 text-primary" />
+                      <h4 className="font-semibold mb-1">Day Before Reminder</h4>
+                      <p className="text-sm text-muted-foreground">
+                        We'll call/text you 24 hours before your appointment
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <Star className="h-8 w-8 mx-auto mb-2 text-primary" />
+                      <h4 className="font-semibold mb-1">Quality Guarantee</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Not satisfied? We'll return within 24 hours at no charge
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Button 
+                  onClick={() => navigate('/')}
+                  size="lg"
+                  variant="outline"
+                >
+                  Return to Home
+                </Button>
+              </div>
+            </div>
+          ) : (
+            renderStepContent()
+          )}
         </div>
 
         {/* Navigation */}
