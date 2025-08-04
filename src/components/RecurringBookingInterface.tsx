@@ -14,6 +14,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
 import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface BookingTier {
   id: string;
@@ -155,6 +157,19 @@ const membershipPerks = [
   { icon: <RotateCcw className="h-4 w-4" />, text: 'Loyalty perks & rewards' }
 ];
 
+// Original square footage pricing tiers from PricingCalculator
+const squareFootageTiers = [
+  { min: 0, max: 1000, label: "Under 1,000 sq ft" },
+  { min: 1001, max: 1400, label: "1,001 - 1,400 sq ft" },
+  { min: 1401, max: 1800, label: "1,401 - 1,800 sq ft" },
+  { min: 1801, max: 2400, label: "1,801 - 2,400 sq ft" },
+  { min: 2401, max: 2800, label: "2,401 - 2,800 sq ft" },
+  { min: 2801, max: 3300, label: "2,801 - 3,300 sq ft" },
+  { min: 3301, max: 3900, label: "3,301 - 3,900 sq ft" },
+  { min: 3901, max: 4500, label: "3,901 - 4,500 sq ft" },
+  { min: 4501, max: 5100, label: "4,501 - 5,100 sq ft" }
+];
+
 export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps> = ({
   onBookingUpdate,
   existingMember = false,
@@ -162,14 +177,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedTier, setSelectedTier] = useState<string>('general');
   const [selectedRecurring, setSelectedRecurring] = useState<string>('bi-weekly');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
   const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
   
-  // Home details state
-  const [squareFootage, setSquareFootage] = useState<string>('');
+  // Home details state - using original square footage ranges
+  const [squareFootage, setSquareFootage] = useState<number>(1000);
   const [bedrooms, setBedrooms] = useState<string>('');
   const [bathrooms, setBathrooms] = useState<string>('');
   
@@ -251,28 +267,80 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }, 100);
   };
 
-  const handleCompleteBooking = () => {
-    const bookingData = {
-      tier: selectedTierData,
-      recurring: selectedRecurringData,
-      addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)),
-      membership: addMembership,
-      homeDetails: {
-        squareFootage,
-        bedrooms,
-        bathrooms
-      },
-      paymentOption: selectedPaymentOption,
-      pricing,
-      termsAgreed
-    };
-    
-    if (onBookingUpdate) {
-      onBookingUpdate(bookingData);
+  const handleCompleteBooking = async () => {
+    try {
+      // Prepare booking data for payment
+      const bookingData = {
+        tier: selectedTierData,
+        recurring: selectedRecurringData,
+        addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)),
+        membership: addMembership,
+        homeDetails: {
+          squareFootage,
+          bedrooms,
+          bathrooms
+        },
+        paymentOption: selectedPaymentOption,
+        pricing,
+        termsAgreed
+      };
+      
+      // Update parent component
+      if (onBookingUpdate) {
+        onBookingUpdate(bookingData);
+      }
+
+      // Determine which payment function to use
+      const functionName = addMembership ? 'create-membership-checkout' : 'create-payment';
+      
+      let response;
+      
+      if (addMembership) {
+        // For membership checkout, use the membership function
+        response = await supabase.functions.invoke(functionName, {
+          body: { bookingData }
+        });
+      } else {
+        // For regular checkout, format data for the create-payment function
+        const paymentData = {
+          amount: pricing.total,
+          customerEmail: 'user@example.com', // This would come from auth
+          customerName: 'Customer Name', // This would come from form
+          customerPhone: '', // This would come from form
+          cleaningType: selectedTier,
+          frequency: selectedRecurring,
+          squareFootage: squareFootage,
+          addOns: selectedAddOns,
+          bedrooms: parseInt(bedrooms) || undefined,
+          bathrooms: parseInt(bathrooms) || undefined,
+          membershipStatus: existingMember,
+          addonMemberDiscount: pricing.addonMemberDiscount
+        };
+        
+        response = await supabase.functions.invoke(functionName, {
+          body: paymentData
+        });
+      }
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      if (response.data?.url) {
+        // Redirect to Stripe checkout
+        window.open(response.data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+      
+    } catch (error) {
+      console.error('Error creating payment session:', error);
+      toast({
+        title: "Payment Error",
+        description: "There was an error processing your request. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    // Navigate to scheduling page
-    navigate('/schedule-service');
   };
 
   const steps = [
@@ -528,18 +596,19 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="square-footage" className="text-sm font-medium">Square Footage</Label>
-                  <Select value={squareFootage} onValueChange={setSquareFootage}>
+                  <Select value={squareFootage.toString()} onValueChange={(value) => setSquareFootage(parseInt(value))}>
                     <SelectTrigger id="square-footage">
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="under-1000">Under 1,000 sq ft</SelectItem>
-                      <SelectItem value="1000-1500">1,000-1,500 sq ft</SelectItem>
-                      <SelectItem value="1500-2000">1,500-2,000 sq ft</SelectItem>
-                      <SelectItem value="2000-2500">2,000-2,500 sq ft</SelectItem>
-                      <SelectItem value="2500-3000">2,500-3,000 sq ft</SelectItem>
-                      <SelectItem value="3000-4000">3,000-4,000 sq ft</SelectItem>
-                      <SelectItem value="over-4000">Over 4,000 sq ft</SelectItem>
+                      {squareFootageTiers.map((tier, index) => (
+                        <SelectItem key={index} value={Math.floor((tier.min + tier.max) / 2).toString()}>
+                          <div className="flex items-center gap-2">
+                            <Home className="h-4 w-4" />
+                            {tier.label}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -658,7 +727,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
                 <Button 
                   onClick={handleSubmitSelection}
-                  disabled={!termsAgreed || !squareFootage || !bedrooms || !bathrooms}
+                  disabled={!termsAgreed || squareFootage === 0 || !bedrooms || !bathrooms}
                   size="lg"
                   className="w-full flex items-center gap-2"
                 >
@@ -736,7 +805,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div><strong>Service:</strong> {selectedTierData.id === 'general' ? 'General Clean' : selectedTierData.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
                       <div><strong>Frequency:</strong> {selectedRecurringData.name}</div>
-                      <div><strong>Square Footage:</strong> {squareFootage}</div>
+                      <div><strong>Square Footage:</strong> {squareFootageTiers.find(tier => Math.floor((tier.min + tier.max) / 2) === squareFootage)?.label || squareFootage + ' sq ft'}</div>
                       <div><strong>Bedrooms:</strong> {bedrooms}</div>
                       <div><strong>Bathrooms:</strong> {bathrooms}</div>
                       <div><strong>Payment:</strong> {selectedPaymentOption === 'half' ? 'Pay Half' : selectedPaymentOption === 'prepayment' ? 'Prepayment $150' : 'Pay in Full'}</div>
