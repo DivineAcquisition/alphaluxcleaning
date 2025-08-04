@@ -12,26 +12,6 @@ const Index = () => {
   // Track page view on component mount
   useEffect(() => {
     trackViewContent('Modern Booking Page');
-
-    // Load chat widget with defer to prevent layout shift
-    const loadChatWidget = () => {
-      const script = document.createElement('script');
-      script.src = 'https://widgets.leadconnectorhq.com/loader.js';
-      script.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
-      script.setAttribute('data-widget-id', '688b7acb81758b9cee3c0c05');
-      script.async = true;
-      document.head.appendChild(script);
-    };
-
-    // Defer chat widget loading
-    setTimeout(loadChatWidget, 2000);
-    return () => {
-      // Cleanup script on unmount
-      const existingScript = document.querySelector('script[data-widget-id="688b7acb81758b9cee3c0c05"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
   }, []);
   return (
     <div className="min-h-screen">
