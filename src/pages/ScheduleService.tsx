@@ -141,8 +141,8 @@ const ScheduleService = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-8">
+        <div className="max-w-full mx-auto space-y-8">
           
           {/* Header */}
           <Card className="border-0 shadow-lg">
@@ -195,7 +195,7 @@ const ScheduleService = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="w-full h-[600px] sm:h-[800px] md:h-[900px] lg:h-[1000px] relative">
+              <div className="w-full h-[700px] sm:h-[900px] md:h-[1100px] lg:h-[1200px] xl:h-[1300px] relative">
                 <iframe 
                   src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
                   style={{ 
