@@ -227,25 +227,37 @@ const ScheduleService = () => {
             </Card>
           )}
 
-          {/* Scheduler */}
+          {/* Embedded Calendar Scheduler */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                Choose Your Preferred Date & Time
+                Schedule Your Service
               </CardTitle>
               <CardDescription>
-                Select a convenient time for your cleaning service
+                Select your preferred date and time using our booking calendar
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {orderDetails && (
-                <ModernScheduler 
-                  serviceType={orderDetails.cleaning_type || "Deep Clean"}
-                  sessionId={sessionId}
-                  onComplete={handleSchedulingComplete}
+            <CardContent className="p-0">
+              <div className="w-full min-h-[600px] relative">
+                <iframe 
+                  src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
+                  style={{ 
+                    width: '100%', 
+                    height: '600px',
+                    border: 'none', 
+                    overflow: 'hidden' 
+                  }}
+                  scrolling="no" 
+                  id="39tuCeWMXzsnqMcYpkCD_1754330109315"
+                  title="Bay Area Cleaning Pros Booking Calendar"
+                  className="rounded-lg"
                 />
-              )}
+              </div>
+              <script 
+                src="https://app.bayareacleaningpros.com/js/form_embed.js" 
+                type="text/javascript"
+              />
             </CardContent>
           </Card>
 

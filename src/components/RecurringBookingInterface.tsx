@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
@@ -121,11 +123,22 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   newClient = false
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [selectedTier, setSelectedTier] = useState<string>('general');
   const [selectedRecurring, setSelectedRecurring] = useState<string>('bi-weekly');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
   const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
+  
+  // Home details state
+  const [squareFootage, setSquareFootage] = useState<string>('');
+  const [bedrooms, setBedrooms] = useState<string>('');
+  const [bathrooms, setBathrooms] = useState<string>('');
+  
+  // Payment flow state
+  const [showPaymentOptions, setShowPaymentOptions] = useState<boolean>(false);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<string>('');
+  const [showCompleteBooking, setShowCompleteBooking] = useState<boolean>(false);
 
   const selectedTierData = bookingTiers.find(tier => tier.id === selectedTier)!;
   const selectedRecurringData = recurringOptions.find(opt => opt.id === selectedRecurring)!;
@@ -183,12 +196,35 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     );
   };
 
-  const handleBookNow = () => {
+  const handleSubmitSelection = () => {
+    setShowPaymentOptions(true);
+    // Scroll to payment options
+    setTimeout(() => {
+      document.getElementById('payment-options')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handlePaymentOptionSelect = (option: string) => {
+    setSelectedPaymentOption(option);
+    setShowCompleteBooking(true);
+    // Scroll to complete booking section
+    setTimeout(() => {
+      document.getElementById('complete-booking')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const handleCompleteBooking = () => {
     const bookingData = {
       tier: selectedTierData,
       recurring: selectedRecurringData,
       addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)),
       membership: addMembership,
+      homeDetails: {
+        squareFootage,
+        bedrooms,
+        bathrooms
+      },
+      paymentOption: selectedPaymentOption,
       pricing,
       termsAgreed
     };
@@ -196,6 +232,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     if (onBookingUpdate) {
       onBookingUpdate(bookingData);
     }
+    
+    // Navigate to scheduling page
+    navigate('/schedule-service');
   };
 
   const steps = [
@@ -402,6 +441,81 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             </CardContent>
           </Card>
 
+          {/* Home Details */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Building className="h-5 w-5" />
+                Home Details
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Tell us about your space to ensure accurate pricing
+              </p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="square-footage" className="text-sm font-medium">Square Footage</Label>
+                  <Select value={squareFootage} onValueChange={setSquareFootage}>
+                    <SelectTrigger id="square-footage">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under-1000">Under 1,000 sq ft</SelectItem>
+                      <SelectItem value="1000-1500">1,000-1,500 sq ft</SelectItem>
+                      <SelectItem value="1500-2000">1,500-2,000 sq ft</SelectItem>
+                      <SelectItem value="2000-2500">2,000-2,500 sq ft</SelectItem>
+                      <SelectItem value="2500-3000">2,500-3,000 sq ft</SelectItem>
+                      <SelectItem value="3000-4000">3,000-4,000 sq ft</SelectItem>
+                      <SelectItem value="over-4000">Over 4,000 sq ft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bedrooms" className="text-sm font-medium flex items-center gap-1">
+                    <Bed className="h-4 w-4" />
+                    Bedrooms
+                  </Label>
+                  <Select value={bedrooms} onValueChange={setBedrooms}>
+                    <SelectTrigger id="bedrooms">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Bedroom</SelectItem>
+                      <SelectItem value="2">2 Bedrooms</SelectItem>
+                      <SelectItem value="3">3 Bedrooms</SelectItem>
+                      <SelectItem value="4">4 Bedrooms</SelectItem>
+                      <SelectItem value="5">5 Bedrooms</SelectItem>
+                      <SelectItem value="6+">6+ Bedrooms</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bathrooms" className="text-sm font-medium flex items-center gap-1">
+                    <Bath className="h-4 w-4" />
+                    Bathrooms
+                  </Label>
+                  <Select value={bathrooms} onValueChange={setBathrooms}>
+                    <SelectTrigger id="bathrooms">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Bathroom</SelectItem>
+                      <SelectItem value="1.5">1.5 Bathrooms</SelectItem>
+                      <SelectItem value="2">2 Bathrooms</SelectItem>
+                      <SelectItem value="2.5">2.5 Bathrooms</SelectItem>
+                      <SelectItem value="3">3 Bathrooms</SelectItem>
+                      <SelectItem value="3.5">3.5 Bathrooms</SelectItem>
+                      <SelectItem value="4+">4+ Bathrooms</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Add-ons */}
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-secondary/5 to-secondary/10">
@@ -471,8 +585,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                 </div>
 
                 <Button 
-                  onClick={handleBookNow}
-                  disabled={!termsAgreed}
+                  onClick={handleSubmitSelection}
+                  disabled={!termsAgreed || !squareFootage || !bedrooms || !bathrooms}
                   size="lg"
                   className="w-full flex items-center gap-2"
                 >
@@ -482,6 +596,93 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               </div>
             </CardContent>
           </Card>
+
+          {/* Payment Options */}
+          {showPaymentOptions && (
+            <Card id="payment-options" className="border-2 border-primary/30 shadow-xl bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Choose Your Payment Option
+                </CardTitle>
+                <p className="text-primary-foreground/80 text-sm">
+                  Select how you'd like to pay for your service
+                </p>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button
+                    variant={selectedPaymentOption === 'half' ? 'default' : 'outline'}
+                    onClick={() => handlePaymentOptionSelect('half')}
+                    className="h-auto p-4 flex flex-col gap-2"
+                  >
+                    <div className="text-lg font-bold">Pay Half</div>
+                    <div className="text-sm opacity-80">${Math.round(pricing.total / 2)}</div>
+                    <div className="text-xs opacity-70">50% now, 50% after service</div>
+                  </Button>
+                  
+                  <Button
+                    variant={selectedPaymentOption === 'prepayment' ? 'default' : 'outline'}
+                    onClick={() => handlePaymentOptionSelect('prepayment')}
+                    className="h-auto p-4 flex flex-col gap-2"
+                  >
+                    <div className="text-lg font-bold">Prepayment</div>
+                    <div className="text-sm opacity-80">$150</div>
+                    <div className="text-xs opacity-70">Fixed prepayment amount</div>
+                  </Button>
+                  
+                  <Button
+                    variant={selectedPaymentOption === 'full' ? 'default' : 'outline'}
+                    onClick={() => handlePaymentOptionSelect('full')}
+                    className="h-auto p-4 flex flex-col gap-2"
+                  >
+                    <div className="text-lg font-bold">Pay in Full</div>
+                    <div className="text-sm opacity-80">${pricing.total}</div>
+                    <div className="text-xs opacity-70">Complete payment now</div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Complete Booking */}
+          {showCompleteBooking && (
+            <Card id="complete-booking" className="border-2 border-green-300 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50">
+              <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Ready to Book!
+                </CardTitle>
+                <p className="text-green-100 text-sm">
+                  Your selections are complete. Proceed to schedule your service.
+                </p>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="bg-white rounded-lg p-4 border border-green-200">
+                    <h4 className="font-semibold text-green-800 mb-2">Booking Summary:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><strong>Service:</strong> {selectedTierData.id === 'general' ? 'General Clean' : selectedTierData.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
+                      <div><strong>Frequency:</strong> {selectedRecurringData.name}</div>
+                      <div><strong>Square Footage:</strong> {squareFootage}</div>
+                      <div><strong>Bedrooms:</strong> {bedrooms}</div>
+                      <div><strong>Bathrooms:</strong> {bathrooms}</div>
+                      <div><strong>Payment:</strong> {selectedPaymentOption === 'half' ? 'Pay Half' : selectedPaymentOption === 'prepayment' ? 'Prepayment $150' : 'Pay in Full'}</div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleCompleteBooking}
+                    size="lg"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  >
+                    Complete Booking & Schedule Service
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right: Price Summary Sticky Card (1/3 width) */}
