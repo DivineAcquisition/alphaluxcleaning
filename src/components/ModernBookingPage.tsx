@@ -46,7 +46,8 @@ import {
   FlowerIcon,
   Droplets,
   Lightbulb,
-  Shirt
+  Shirt,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -252,12 +253,16 @@ export const ModernBookingPage: React.FC = () => {
     address: '',
     specialInstructions: ''
   });
-  const [referralCode, setReferralCode] = useState('');
-  const [discountCode, setDiscountCode] = useState('');
-  const [referralDiscount, setReferralDiscount] = useState(0);
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [isValidatingCode, setIsValidatingCode] = useState(false);
   const [showReferralGenerator, setShowReferralGenerator] = useState(false);
+  
+  // Payment state
+  const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // Promo/Referral code state for summary page
+  const [discountCode, setDiscountCode] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{type: 'referral' | 'promo', amount: number, code: string} | null>(null);
+  const [validatingCode, setValidatingCode] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const steps: BookingStep[] = [
@@ -274,40 +279,81 @@ export const ModernBookingPage: React.FC = () => {
     setProgress((completedSteps / steps.length) * 100);
   }, [steps]);
 
-  // Referral and discount validation
+  // Referral code validation with Supabase RPC
   const validateReferralCode = async (code: string) => {
-    if (!code.trim()) return;
+    if (!code.trim()) return false;
     
-    setIsValidatingCode(true);
     try {
       const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
-        p_code: code,
-        p_user_email: customerInfo.email,
-        p_user_name: customerInfo.name
+        p_code: code.trim(),
+        p_user_email: customerInfo.email || 'guest@example.com',
+        p_user_name: customerInfo.name || 'Guest User'
       });
-
-      if (error) throw error;
-
-      const result = data as { success?: boolean; error?: string; reward_type?: string };
-      if (result?.success) {
-        if (result.reward_type === 'deep_clean_50_percent' && selectedTier?.id === 'standard') {
-          setReferralDiscount(selectedTier.price * 0.5);
-          toast.success('Referral code applied! 50% off your deep clean!');
-        } else {
-          setReferralDiscount(20); // Default $20 discount
-          toast.success('Referral code applied! $20 discount!');
-        }
-      } else {
-        toast.error(result?.error || 'Invalid referral code');
-        setReferralDiscount(0);
+      
+      if (error || !data || typeof data !== 'object' || !('success' in data)) {
+        return false;
       }
+      
+      return data;
     } catch (error) {
       console.error('Error validating referral code:', error);
-      toast.error('Error validating referral code');
-      setReferralDiscount(0);
-    } finally {
-      setIsValidatingCode(false);
+      return false;
     }
+  };
+
+  const handleApplyDiscount = async (code: string, type: 'referral' | 'promo') => {
+    if (!code.trim()) {
+      toast.error('Please enter a code');
+      return;
+    }
+
+    setValidatingCode(true);
+    
+    try {
+      if (type === 'referral') {
+        const result = await validateReferralCode(code);
+        if (result && typeof result === 'object' && 'success' in result && result.success) {
+          setAppliedDiscount({
+            type: 'referral',
+            amount: 50, // 50% off for referrals
+            code: code
+          });
+          toast.success(`Referral code applied! 50% off your service.`);
+          setReferralCode('');
+        } else {
+          toast.error('Invalid referral code');
+        }
+      } else {
+        // Mock promo code validation
+        const promoCodes: Record<string, number> = {
+          'SAVE25': 25,
+          'NEWCLIENT': 71,
+          'WELCOME50': 50
+        };
+        
+        const discount = promoCodes[code.toUpperCase()];
+        if (discount) {
+          setAppliedDiscount({
+            type: 'promo',
+            amount: discount,
+            code: code
+          });
+          toast.success(`Promo code applied! $${discount} off your service.`);
+          setDiscountCode('');
+        } else {
+          toast.error('Invalid promo code');
+        }
+      }
+    } catch (error) {
+      toast.error('Error validating code');
+    } finally {
+      setValidatingCode(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    toast.success('Discount removed');
   };
 
   const calculateAddOnDiscount = () => {
@@ -321,18 +367,44 @@ export const ModernBookingPage: React.FC = () => {
 
   const calculateTotal = () => {
     if (!selectedTier) return 0;
-    const tierPrice = membershipEnabled ? selectedTier.memberPrice : selectedTier.price;
-    const addOnsTotal = selectedAddOns.reduce((total, addOnId) => {
-      const addOn = addOnServices.find(service => service.id === addOnId);
-      return total + (addOn?.price || 0);
+    
+    let total = selectedTier.price;
+    
+    // Apply membership pricing first if enabled
+    if (membershipEnabled && selectedTier.memberPrice) {
+      total = selectedTier.memberPrice;
+    }
+    
+    // Calculate add-ons total
+    const addOnsTotal = selectedAddOns.reduce((sum, addOnId) => {
+      const addon = addOnServices.find(service => service.id === addOnId);
+      let addonPrice = addon?.price || 0;
+      // Apply member discount to add-ons if membership is enabled
+      if (membershipEnabled) {
+        addonPrice = addonPrice * 0.9; // 10% discount
+      }
+      return sum + addonPrice;
     }, 0);
     
-    const membershipFee = membershipEnabled ? 30 : 0;
-    const addOnDiscount = calculateAddOnDiscount();
-    const totalBeforeDiscounts = tierPrice + addOnsTotal + membershipFee - addOnDiscount;
+    total += addOnsTotal;
     
-    // Apply referral discount (cannot combine with other discount codes)
-    return Math.max(0, totalBeforeDiscounts - referralDiscount - discountAmount);
+    // Add membership fee if enabled
+    if (membershipEnabled) {
+      total += 19; // Monthly membership fee
+    }
+    
+    // Apply discount if available
+    if (appliedDiscount) {
+      if (appliedDiscount.type === 'referral') {
+        // Referral codes usually offer percentage discounts
+        total = total * (1 - appliedDiscount.amount / 100);
+      } else {
+        // Promo codes usually offer fixed amount discounts
+        total = Math.max(0, total - appliedDiscount.amount);
+      }
+    }
+    
+    return total;
   };
 
   const getSavings = () => {
@@ -349,6 +421,74 @@ export const ModernBookingPage: React.FC = () => {
   const handlePrevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCompleteBooking = async () => {
+    if (!selectedTier || !selectedDate || !selectedTime || !customerInfo.name || !customerInfo.email) {
+      toast.error('Please complete all required fields');
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    try {
+      const bookingData = {
+        amount: calculateTotal(),
+        squareFootage: 1500, // Default value, you could add this as input
+        cleaningType: selectedTier.id,
+        frequency: 'one_time',
+        addOns: selectedAddOns,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
+        serviceAddress: customerInfo.address,
+        bedrooms: 3, // Default value, you could add this as input
+        bathrooms: 2, // Default value, you could add this as input
+        scheduledDate: selectedDate?.toISOString().split('T')[0],
+        scheduledTime: selectedTime,
+        membershipStatus: membershipEnabled,
+        addonMemberDiscount: membershipEnabled ? selectedAddOns.reduce((sum, addOnId) => {
+          const addon = addOnServices.find(service => service.id === addOnId);
+          return sum + ((addon?.price || 0) * 0.1);
+        }, 0) : 0,
+        appliedDiscount: appliedDiscount
+      };
+
+      let response;
+      
+      if (membershipEnabled) {
+        // Use membership checkout for combined service + subscription
+        response = await supabase.functions.invoke('create-membership-checkout', {
+          body: bookingData
+        });
+      } else {
+        // Use regular payment for one-time service
+        response = await supabase.functions.invoke('create-payment', {
+          body: bookingData
+        });
+      }
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to create payment session');
+      }
+
+      if (!response.data?.url) {
+        throw new Error('No payment URL received');
+      }
+
+      // Open Stripe checkout in a new tab
+      window.open(response.data.url, '_blank');
+      
+      // Show success message and referral generator
+      toast.success('Payment session created! Complete your payment in the new tab.');
+      setShowReferralGenerator(true);
+      
+    } catch (error) {
+      console.error('Booking error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process booking');
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -733,71 +873,6 @@ export const ModernBookingPage: React.FC = () => {
                     placeholder="Any special requests or instructions"
                   />
                 </div>
-
-                <Separator />
-
-                {/* Referral and Discount Codes */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Tags className="h-5 w-5" />
-                    Promo & Referral Codes
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Referral Code */}
-                    <div className="space-y-2">
-                      <Label htmlFor="referral-code">Referral Code (50% off Deep Clean)</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="referral-code"
-                          value={referralCode}
-                          onChange={(e) => setReferralCode(e.target.value)}
-                          placeholder="Enter referral code"
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          disabled={isValidatingCode || !referralCode.trim() || !customerInfo.email}
-                          onClick={() => validateReferralCode(referralCode)}
-                        >
-                          {isValidatingCode ? "..." : "Apply"}
-                        </Button>
-                      </div>
-                      {referralDiscount > 0 && (
-                        <div className="text-sm text-success flex items-center gap-1">
-                          <Check className="h-4 w-4" />
-                          Referral discount applied: -${referralDiscount}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Discount Code */}
-                    <div className="space-y-2">
-                      <Label htmlFor="discount-code">Discount Code</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="discount-code"
-                          value={discountCode}
-                          onChange={(e) => setDiscountCode(e.target.value)}
-                          placeholder="Enter discount code"
-                          disabled={referralDiscount > 0}
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          disabled={referralDiscount > 0 || !discountCode.trim()}
-                        >
-                          Apply
-                        </Button>
-                      </div>
-                      {referralDiscount > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          Cannot combine with referral codes
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
@@ -895,7 +970,7 @@ export const ModernBookingPage: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${calculateTotal()}</span>
+                      <span>${calculateTotal().toFixed(2)}</span>
                     </div>
                     {membershipEnabled && getSavings() > 0 && (
                       <div className="flex justify-between text-success">
@@ -903,23 +978,106 @@ export const ModernBookingPage: React.FC = () => {
                         <span>-${getSavings()}</span>
                       </div>
                     )}
+                    
+                    {appliedDiscount && (
+                      <div className="flex justify-between text-destructive">
+                        <span>Discount ({appliedDiscount.code})</span>
+                        <span>-${appliedDiscount.type === 'referral' 
+                          ? ((selectedTier?.price || 0) * appliedDiscount.amount / 100).toFixed(2)
+                          : appliedDiscount.amount.toFixed(2)
+                        }</span>
+                      </div>
+                    )}
+                    
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary">${calculateTotal()}</span>
+                      <span className="text-primary">${calculateTotal().toFixed(2)}</span>
                     </div>
+                  </div>
+
+                  {/* Discount/Promo Code Section */}
+                  <div className="space-y-4 mb-6">
+                    <h4 className="font-semibold">Discount Codes</h4>
+                    
+                    {appliedDiscount ? (
+                      <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-medium text-success">
+                              {appliedDiscount.type === 'referral' ? 'Referral Code' : 'Promo Code'} Applied
+                            </span>
+                            <div className="text-sm text-muted-foreground">
+                              Code: {appliedDiscount.code} • {appliedDiscount.type === 'referral' ? `${appliedDiscount.amount}% off` : `$${appliedDiscount.amount} off`}
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={removeDiscount}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter referral code"
+                            value={referralCode}
+                            onChange={(e) => setReferralCode(e.target.value)}
+                            disabled={validatingCode}
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => handleApplyDiscount(referralCode, 'referral')}
+                            disabled={validatingCode || !referralCode.trim()}
+                          >
+                            {validatingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                          </Button>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter promo code"
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value)}
+                            disabled={validatingCode}
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => handleApplyDiscount(discountCode, 'promo')}
+                            disabled={validatingCode || !discountCode.trim()}
+                          >
+                            {validatingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                          </Button>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          Have a referral code? Enter it above for special discounts!
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <Button 
                     className="w-full" 
                     size="lg"
-                    onClick={() => {
-                      setShowReferralGenerator(true);
-                      toast.success('Booking confirmed! Thank you for choosing us!');
-                    }}
+                    onClick={handleCompleteBooking}
+                    disabled={processingPayment}
                   >
-                    Complete Booking
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {processingPayment ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Complete Payment
+                      </>
+                    )}
                   </Button>
 
                   <div className="text-center text-xs text-muted-foreground">
@@ -1070,7 +1228,7 @@ export const ModernBookingPage: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        {currentStep > 1 && (
+        {currentStep > 1 && !showReferralGenerator && (
           <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
             <Button variant="outline" onClick={handlePrevStep}>
               <ChevronLeft className="mr-2 h-4 w-4" />
@@ -1080,7 +1238,7 @@ export const ModernBookingPage: React.FC = () => {
         )}
 
         {/* Floating Summary (shows after step 1) */}
-        {selectedTier && currentStep > 1 && currentStep < 5 && (
+        {selectedTier && currentStep > 1 && currentStep < 5 && !showReferralGenerator && (
           <Card className="fixed bottom-8 right-8 w-80 shadow-lg border-primary/20">
             <CardContent className="p-4">
               <div className="space-y-3">
@@ -1095,7 +1253,7 @@ export const ModernBookingPage: React.FC = () => {
                 )}
                 <div className="flex items-center justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">${calculateTotal()}</span>
+                  <span className="text-primary">${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>
