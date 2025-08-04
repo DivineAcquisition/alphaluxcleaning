@@ -53,6 +53,10 @@ import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
 import NotFound from '@/pages/NotFound';
 import ReviewsPortal from '@/pages/ReviewsPortal';
+import ClientOverview from '@/pages/ClientOverview';
+import SubcontractorPayments from '@/pages/SubcontractorPayments';
+import AutomationControls from '@/pages/AutomationControls';
+import SystemLogs from '@/pages/SystemLogs';
 
 const queryClient = new QueryClient();
 
@@ -232,6 +236,28 @@ function App() {
                 
                 {/* Review Portal Route */}
                 <Route path="/reviews" element={<ReviewsPortal />} />
+                
+                {/* Phase 4: Admin & System Oversight Routes */}
+                <Route path="/client-overview" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <ClientOverview />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subcontractor-payments" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <SubcontractorPayments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/automation-controls" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <AutomationControls />
+                  </ProtectedRoute>
+                } />
+                <Route path="/system-logs" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                    <SystemLogs />
+                  </ProtectedRoute>
+                } />
                 
                 {/* Admin tool routes */}
                 <Route path="/admin-dashboard/email-settings" element={
