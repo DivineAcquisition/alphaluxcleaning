@@ -332,19 +332,24 @@ function App() {
                 } />
                 
                 
-                {/* Phase 5: Advanced Features & Business Intelligence Routes */}
-                <Route path="/analytics-dashboard" element={
+                {/* Phase 5: Advanced Features & Business Intelligence Routes - Open Access for Testing */}
+                <Route path="/analytics-dashboard" element={<AnalyticsDashboard />} />
+                <Route path="/support-portal" element={<SupportPortal />} />
+                <Route path="/training-portal" element={<TrainingPortal />} />
+                <Route path="/api-portal" element={<ApiPortal />} />
+                
+                {/* Protected versions for production */}
+                <Route path="/protected/analytics-dashboard" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
                     <AnalyticsDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/support-portal" element={<SupportPortal />} />
-                <Route path="/training-portal" element={
+                <Route path="/protected/training-portal" element={
                   <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client', 'owner']}>
                     <TrainingPortal />
                   </ProtectedRoute>
                 } />
-                <Route path="/api-portal" element={
+                <Route path="/protected/api-portal" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
                     <ApiPortal />
                   </ProtectedRoute>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminGrid } from "@/components/admin/AdminGrid";
-import { Key, Code, Zap, BarChart3, Shield, Globe, Settings, Copy } from "lucide-react";
+import { Key, Code, Zap, BarChart3, Shield, Globe, Settings, Copy, Play, TestTube, Activity } from "lucide-react";
 
 export default function ApiPortal() {
   const [apiKey, setApiKey] = useState("sk_live_51H...");
@@ -120,10 +120,11 @@ export default function ApiPortal() {
       </AdminGrid>
 
       <Tabs defaultValue="documentation" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="documentation">Documentation</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+          <TabsTrigger value="testing">API Testing</TabsTrigger>
           <TabsTrigger value="usage">Usage Analytics</TabsTrigger>
         </TabsList>
 
@@ -255,6 +256,84 @@ export default function ApiPortal() {
                 <Zap className="h-4 w-4 mr-2" />
                 Add New Webhook
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="testing">
+          <Card className="bg-gradient-card border-0 shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TestTube className="h-5 w-5" />
+                Interactive API Testing
+              </CardTitle>
+              <CardDescription>
+                Test API endpoints directly from the browser with real-time monitoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Select Endpoint</label>
+                    <select className="w-full p-2 border rounded-lg bg-background">
+                      <option>GET /api/v1/bookings</option>
+                      <option>POST /api/v1/bookings</option>
+                      <option>GET /api/v1/customers</option>
+                      <option>PUT /api/v1/bookings/{"{id}"}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">API Key</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="Enter your API key" className="flex-1" />
+                      <Button size="sm" variant="outline">
+                        <Key className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Request Body (JSON)</label>
+                  <textarea 
+                    className="w-full h-32 p-3 border rounded-lg bg-muted/30 font-mono text-sm"
+                    placeholder={`{
+  "customer_name": "John Doe",
+  "service_type": "deep-clean",
+  "date": "2024-01-15"
+}`}
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button className="flex-1">
+                    <Play className="h-4 w-4 mr-2" />
+                    Send Request
+                  </Button>
+                  <Button variant="outline">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Monitor Response
+                  </Button>
+                </div>
+
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Response
+                  </h4>
+                  <div className="bg-muted p-3 rounded text-sm font-mono">
+                    <span className="text-success">Status: 200 OK</span><br />
+                    <span className="text-muted-foreground">Response Time: 145ms</span>
+                    <pre className="mt-2 text-xs">{`{
+  "success": true,
+  "data": {
+    "bookings": [...]
+  }
+}`}</pre>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

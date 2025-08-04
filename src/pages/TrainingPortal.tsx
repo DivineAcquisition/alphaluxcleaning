@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminGrid } from "@/components/admin/AdminGrid";
-import { PlayCircle, BookOpen, Award, Clock, CheckCircle, Users, Target, TrendingUp } from "lucide-react";
+import { PlayCircle, BookOpen, Award, Clock, CheckCircle, Users, Target, TrendingUp, Video, MessageSquare, Star } from "lucide-react";
 
 export default function TrainingPortal() {
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -175,10 +175,24 @@ export default function TrainingPortal() {
                     </div>
                   </div>
                   
-                  <Button variant="outline" className="ml-4">
-                    <PlayCircle className="h-4 w-4 mr-2" />
-                    {course.status === "Not Started" ? "Start" : "Continue"}
-                  </Button>
+                  <div className="ml-4 space-y-2">
+                    <Button variant="outline" className="w-full">
+                      <PlayCircle className="h-4 w-4 mr-2" />
+                      {course.status === "Not Started" ? "Start Course" : "Continue Learning"}
+                    </Button>
+                    {course.progress > 0 && (
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm">
+                          <Video className="h-4 w-4 mr-1" />
+                          Watch
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Discuss
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

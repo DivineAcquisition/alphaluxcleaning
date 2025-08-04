@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminGrid } from "@/components/admin/AdminGrid";
-import { Search, MessageCircle, Phone, Mail, Clock, CheckCircle, AlertCircle, HelpCircle } from "lucide-react";
+import { Search, MessageCircle, Phone, Mail, Clock, CheckCircle, AlertCircle, HelpCircle, FileText, Upload, Video } from "lucide-react";
 
 export default function SupportPortal() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -188,10 +188,21 @@ export default function SupportPortal() {
             ))}
           </div>
           
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             <Button className="w-full" variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
               Create New Ticket
             </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Files
+              </Button>
+              <Button variant="outline" size="sm">
+                <Video className="h-4 w-4 mr-2" />
+                Video Call
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

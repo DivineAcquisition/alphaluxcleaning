@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminCard } from "@/components/admin/AdminCard";
-import { BarChart, TrendingUp, Users, DollarSign, PieChart, Target, Clock, Star } from "lucide-react";
+import { BarChart, TrendingUp, Users, DollarSign, PieChart, Target, Clock, Star, Filter, Download, Calendar } from "lucide-react";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { BookingsChart } from "@/components/dashboard/BookingsChart";
 import { LTVMetrics } from "@/components/dashboard/LTVMetrics";
@@ -27,6 +28,34 @@ export default function AnalyticsDashboard() {
       title="Business Intelligence Portal" 
       description="Advanced analytics and predictive insights for business growth"
     >
+      {/* Interactive Controls */}
+      <Card className="bg-gradient-card border-0 shadow-soft">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+              <Button variant="outline" size="sm">
+                <Calendar className="h-4 w-4 mr-2" />
+                Date Range
+              </Button>
+              <select className="px-3 py-1 border rounded-lg bg-background text-sm">
+                <option>Last 30 days</option>
+                <option>Last 90 days</option>
+                <option>Last 12 months</option>
+                <option>Custom range</option>
+              </select>
+            </div>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Key Performance Metrics */}
       <AdminGrid columns="auto" gap="lg">
         <AdminCard title="Revenue Growth" icon={<DollarSign className="h-5 w-5" />} variant="metric">
