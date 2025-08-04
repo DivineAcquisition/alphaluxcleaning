@@ -194,18 +194,18 @@ const ScheduleService = () => {
                 Select your preferred date and time using our booking calendar
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              <div className="w-full min-h-[800px] sm:min-h-[1000px] relative rounded-lg overflow-hidden">
+            <CardContent className="p-0">
+              <div className="w-full h-[600px] sm:h-[800px] md:h-[900px] lg:h-[1000px] relative">
                 <iframe 
                   src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
                   style={{ 
                     width: '100%', 
-                    height: '800px',
+                    height: '100%',
                     border: 'none', 
-                    overflow: 'auto' 
+                    overflow: 'hidden' 
                   }}
-                  className="sm:h-[1000px] rounded-lg"
-                  scrolling="auto" 
+                  className="w-full h-full"
+                  scrolling="no" 
                   id="39tuCeWMXzsnqMcYpkCD_1754330109315"
                   title="Bay Area Cleaning Pros Booking Calendar"
                 />
