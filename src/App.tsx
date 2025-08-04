@@ -58,6 +58,12 @@ import SubcontractorPayments from '@/pages/SubcontractorPayments';
 import AutomationControls from '@/pages/AutomationControls';
 import SystemLogs from '@/pages/SystemLogs';
 
+// Phase 5: Advanced Features & Business Intelligence
+import AnalyticsDashboard from '@/pages/AnalyticsDashboard';
+import SupportPortal from '@/pages/SupportPortal';
+import TrainingPortal from '@/pages/TrainingPortal';
+import ApiPortal from '@/pages/ApiPortal';
+
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
@@ -92,6 +98,20 @@ function DomainRouter() {
   }
   if (hostname.includes('jobs.')) {
     return <Navigate to="/subcontractor-application" replace />;
+  }
+  
+  // Phase 5: Advanced Features & Business Intelligence
+  if (hostname.includes('analytics.')) {
+    return <Navigate to="/analytics-dashboard" replace />;
+  }
+  if (hostname.includes('support.')) {
+    return <Navigate to="/support-portal" replace />;
+  }
+  if (hostname.includes('training.')) {
+    return <Navigate to="/training-portal" replace />;
+  }
+  if (hostname.includes('api.')) {
+    return <Navigate to="/api-portal" replace />;
   }
   
   // Default to main landing page
@@ -291,6 +311,24 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
+                
+                {/* Phase 5: Advanced Features & Business Intelligence Routes */}
+                <Route path="/analytics-dashboard" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <AnalyticsDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/support-portal" element={<SupportPortal />} />
+                <Route path="/training-portal" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client', 'owner']}>
+                    <TrainingPortal />
+                  </ProtectedRoute>
+                } />
+                <Route path="/api-portal" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <ApiPortal />
+                  </ProtectedRoute>
+                } />
                 
                 {/* 404 fallback */}
                 <Route path="*" element={<NotFound />} />
