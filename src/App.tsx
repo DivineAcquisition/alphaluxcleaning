@@ -20,6 +20,7 @@ import OrderStatus from '@/pages/OrderStatus';
 // Subcontractor pages
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
+import SubcontractorMobile from '@/pages/SubcontractorMobile';
 import SubcontractorApplication from '@/pages/SubcontractorApplication';
 import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 
@@ -78,7 +79,7 @@ function DomainRouter() {
     return <Navigate to="/office-dashboard" replace />;
   }
   if (hostname.includes('subcon.')) {
-    return <Navigate to="/subcontractor" replace />;
+    return <Navigate to="/subcontractor-mobile" replace />;
   }
   
   // Phase 3: Specialized Services
@@ -127,6 +128,11 @@ function App() {
                 <Route path="/subcontractor-auth" element={<SubcontractorPortal />} />
                 <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
                 <Route path="/subcontractor-onboarding" element={<SubcontractorOnboardingV2 />} />
+                <Route path="/subcontractor-mobile" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
+                    <SubcontractorMobile />
+                  </ProtectedRoute>
+                } />
                 <Route path="/subcontractor-dashboard" element={
                   <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDashboard />

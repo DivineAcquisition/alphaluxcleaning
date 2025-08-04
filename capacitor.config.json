@@ -1,0 +1,17 @@
+{
+  "appId": "app.lovable.fc9bf4c25143427083ecc7de4b1ed612",
+  "appName": "bayareacleaningpros",
+  "webDir": "dist",
+  "server": {
+    "url": "https://fc9bf4c2-5143-4270-83ec-c7de4b1ed612.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "plugins": {
+    "Geolocation": {
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "Camera": {
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+    }
+  }
+}
