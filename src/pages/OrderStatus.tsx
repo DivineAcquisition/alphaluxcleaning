@@ -25,6 +25,10 @@ import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
 import { SubcontractorStatusUpdate } from "@/components/SubcontractorStatusUpdate";
 import { TipComponent } from "@/components/TipComponent";
+import { RescheduleRequestDialog } from "@/components/RescheduleRequestDialog";
+import { UpdateAddressDialog } from "@/components/UpdateAddressDialog";
+import { UpdateContactDialog } from "@/components/UpdateContactDialog";
+import { ServiceRequestsDisplay } from "@/components/ServiceRequestsDisplay";
 
 interface Order {
   id: string;
@@ -54,6 +58,11 @@ export default function OrderStatus() {
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  
+  // Dialog states
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   // Auto-search if sessionId or orderId is provided
   useEffect(() => {
@@ -466,20 +475,35 @@ export default function OrderStatus() {
                   {/* Quick Actions */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm sm:text-base">Quick Actions</h4>
-                    <div className="grid grid-cols-1 gap-2">
-                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                        Request Reschedule
-                      </Button>
-                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                        Update Address
-                      </Button>
-                      <Button variant="outline" size="sm" className="justify-start text-xs sm:text-sm">
-                        <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                        Update Contact Info
-                      </Button>
-                    </div>
+                     <div className="grid grid-cols-1 gap-2">
+                       <Button 
+                         variant="outline" 
+                         size="sm" 
+                         className="justify-start text-xs sm:text-sm"
+                         onClick={() => setRescheduleDialogOpen(true)}
+                       >
+                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                         Request Reschedule
+                       </Button>
+                       <Button 
+                         variant="outline" 
+                         size="sm" 
+                         className="justify-start text-xs sm:text-sm"
+                         onClick={() => setAddressDialogOpen(true)}
+                       >
+                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                         Update Address
+                       </Button>
+                       <Button 
+                         variant="outline" 
+                         size="sm" 
+                         className="justify-start text-xs sm:text-sm"
+                         onClick={() => setContactDialogOpen(true)}
+                       >
+                         <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                         Update Contact Info
+                       </Button>
+                     </div>
                   </div>
 
                   {/* Send Message */}
@@ -529,6 +553,11 @@ export default function OrderStatus() {
               </Card>
             </div>
 
+            {/* Service Requests Display */}
+            <div className="mt-6">
+              <ServiceRequestsDisplay orderId={order.id} />
+            </div>
+
             {/* Additional Features Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-6">
               {/* Subcontractor Status Update */}
@@ -537,6 +566,35 @@ export default function OrderStatus() {
               {/* Tip Component */}
               <TipComponent orderId={order.id} orderAmount={order.amount} />
             </div>
+
+            {/* Dialogs */}
+            <RescheduleRequestDialog
+              open={rescheduleDialogOpen}
+              onOpenChange={setRescheduleDialogOpen}
+              order={order}
+              onSuccess={() => {
+                // Refresh service requests when a new one is created
+                window.location.reload();
+              }}
+            />
+            
+            <UpdateAddressDialog
+              open={addressDialogOpen}
+              onOpenChange={setAddressDialogOpen}
+              order={order}
+              onSuccess={() => {
+                window.location.reload();
+              }}
+            />
+            
+            <UpdateContactDialog
+              open={contactDialogOpen}
+              onOpenChange={setContactDialogOpen}
+              order={order}
+              onSuccess={() => {
+                window.location.reload();
+              }}
+            />
           </>
         )}
 
