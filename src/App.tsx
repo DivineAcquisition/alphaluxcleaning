@@ -64,40 +64,63 @@ import SupportPortal from '@/pages/SupportPortal';
 import TrainingPortal from '@/pages/TrainingPortal';
 import ApiPortal from '@/pages/ApiPortal';
 
+// Phase 6: System Integration & New Pages
+import InstantQuote from '@/pages/InstantQuote';
+import PaymentPortal from '@/pages/PaymentPortal';
+import ConnectPortal from '@/pages/ConnectPortal';
+
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
 function DomainRouter() {
   const hostname = window.location.hostname;
   
-  // Phase 1: Customer-Facing Subdomains
+  // Phase 1: Core Client Experience
   if (hostname.includes('booking.')) {
-    return <Navigate to="/schedule-service" replace />;
+    return <Navigate to="/instant-quote" replace />;
   }
   if (hostname.includes('pay.')) {
-    return <Navigate to="/payment-confirmation" replace />;
+    return <Navigate to="/payment-portal" replace />;
   }
   if (hostname.includes('members.')) {
     return <Navigate to="/my-services" replace />;
   }
   
-  // Phase 2: Internal Operations
-  if (hostname.includes('admin.')) {
-    return <Navigate to="/admin" replace />;
+  // Phase 2: Internal Ops & Office Manager Tools  
+  if (hostname.includes('app.')) {
+    return <Navigate to="/auth" replace />;
   }
   if (hostname.includes('office.')) {
     return <Navigate to="/office-dashboard" replace />;
   }
-  if (hostname.includes('subcon.')) {
+  
+  // Phase 3: Cleaner Portal (Mobile First)
+  if (hostname.includes('cleaners.')) {
     return <Navigate to="/subcontractor-mobile" replace />;
   }
   
-  // Phase 3: Specialized Services
+  // Phase 4: Admin & System Oversight
+  if (hostname.includes('admin.')) {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  // Phase 5: Marketing, Referrals, Hiring
   if (hostname.includes('reviews.')) {
     return <Navigate to="/reviews" replace />;
   }
+  if (hostname.includes('referrals.')) {
+    return <Navigate to="/?section=referrals" replace />;
+  }
   if (hostname.includes('jobs.')) {
     return <Navigate to="/subcontractor-application" replace />;
+  }
+  
+  // Phase 6: System Integration & APIs
+  if (hostname.includes('api.')) {
+    return <Navigate to="/api-portal" replace />;
+  }
+  if (hostname.includes('connect.')) {
+    return <Navigate to="/connect" replace />;
   }
   
   // Phase 5: Advanced Features & Business Intelligence
@@ -109,9 +132,6 @@ function DomainRouter() {
   }
   if (hostname.includes('training.')) {
     return <Navigate to="/training-portal" replace />;
-  }
-  if (hostname.includes('api.')) {
-    return <Navigate to="/api-portal" replace />;
   }
   
   // Default to main landing page
@@ -329,6 +349,11 @@ function App() {
                     <ApiPortal />
                   </ProtectedRoute>
                 } />
+                
+                {/* Phase 6: System Integration & New Pages */}
+                <Route path="/instant-quote" element={<InstantQuote />} />
+                <Route path="/payment-portal" element={<PaymentPortal />} />
+                <Route path="/connect" element={<ConnectPortal />} />
                 
                 {/* 404 fallback */}
                 <Route path="*" element={<NotFound />} />
