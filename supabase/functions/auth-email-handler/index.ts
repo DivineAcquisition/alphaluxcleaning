@@ -98,7 +98,7 @@ serve(async (req) => {
 
       // Send the email using Resend
       const emailResponse = await resend.emails.send({
-        from: "Bay Area Cleaning Professionals <noreply@bayareacleaningpros.com>",
+        from: "Bay Area Cleaning Professionals <onboarding@resend.dev>",
         to: [user.email],
         subject: "Reset Your Password - Bay Area Cleaning Professionals",
         html: emailHtml,
