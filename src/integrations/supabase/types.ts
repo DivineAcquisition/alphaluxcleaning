@@ -1148,25 +1148,31 @@ export type Database = {
           amount: number
           created_at: string
           customer_message: string | null
+          distribution_method: string | null
           id: string
           order_id: string | null
           subcontractor_id: string | null
+          tip_type: string | null
         }
         Insert: {
           amount: number
           created_at?: string
           customer_message?: string | null
+          distribution_method?: string | null
           id?: string
           order_id?: string | null
           subcontractor_id?: string | null
+          tip_type?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
           customer_message?: string | null
+          distribution_method?: string | null
           id?: string
           order_id?: string | null
           subcontractor_id?: string | null
+          tip_type?: string | null
         }
         Relationships: [
           {
@@ -1540,6 +1546,56 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_tip_schedules: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_message: string | null
+          distribution_method: string | null
+          frequency: string
+          id: string
+          is_active: boolean | null
+          next_tip_date: string
+          order_id: string | null
+          tip_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_message?: string | null
+          distribution_method?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          next_tip_date: string
+          order_id?: string | null
+          tip_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_message?: string | null
+          distribution_method?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          next_tip_date?: string
+          order_id?: string | null
+          tip_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_tip_schedules_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2452,6 +2508,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tip_analytics: {
+        Row: {
+          average_tip: number | null
+          created_at: string
+          id: string
+          month_year: string
+          tip_count: number | null
+          total_tips: number | null
+          updated_at: string
+        }
+        Insert: {
+          average_tip?: number | null
+          created_at?: string
+          id?: string
+          month_year: string
+          tip_count?: number | null
+          total_tips?: number | null
+          updated_at?: string
+        }
+        Update: {
+          average_tip?: number | null
+          created_at?: string
+          id?: string
+          month_year?: string
+          tip_count?: number | null
+          total_tips?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_calendar_tokens: {
         Row: {
           access_token: string
@@ -2515,6 +2601,33 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          event_data: Json
+          event_type: string
+          id: string
+          processed_at: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          id?: string
+          processed_at?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          id?: string
+          processed_at?: string
+          source?: string | null
         }
         Relationships: []
       }
