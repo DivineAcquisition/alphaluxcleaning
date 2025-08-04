@@ -329,6 +329,15 @@ const BookingConfirmation = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
+              onClick={() => navigate(`/order-status?session_id=${sessionId}`)}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Track Your Order
+            </Button>
+            <Button 
+              variant="outline"
               onClick={() => navigate('/my-services')}
               size="lg"
               className="flex items-center gap-2"

@@ -170,10 +170,10 @@ export function PaymentForm({
         // Redirect to Stripe checkout
         if (data.url) {
           window.open(data.url, '_blank');
+          toast.success("Opening membership checkout in new tab. Complete payment to start your Clean & Covered™ membership and book your service.");
         } else {
           throw new Error('No checkout URL received');
         }
-        toast.success("Redirecting to membership checkout...");
       } else {
         // Handle regular service booking (existing flow)
         const finalPrice = getFinalPrice();
@@ -213,15 +213,16 @@ export function PaymentForm({
         // Redirect to Stripe checkout in new tab for better UX
         if (data.url) {
           window.open(data.url, '_blank');
+          // Enhanced success messaging with clear next steps
+          if (paymentType === "split") {
+            toast.success("Opening secure checkout in new tab. Complete payment to finish booking. Remaining balance will be auto-billed after service completion.");
+          } else if (paymentType === "prepayment") {
+            toast.success("Opening secure checkout in new tab. Complete your $150 prepayment to secure your booking. Remaining balance will be charged after job completion.");
+          } else {
+            toast.success("Opening secure checkout in new tab. Complete payment to confirm your booking and schedule your cleaning service.");
+          }
         } else {
           throw new Error('No checkout URL received');
-        }
-        if (paymentType === "split") {
-          toast.success("Paying 50% now. Remaining balance will be auto-billed after service completion.");
-        } else if (paymentType === "prepayment") {
-          toast.success("Paying $150 prepayment. Remaining balance will be charged after job completion.");
-        } else {
-          toast.success("Redirecting to secure checkout...");
         }
       }
     } catch (error) {
@@ -375,7 +376,7 @@ export function PaymentForm({
               
             </div>
 
-            {/* Customer Information */}
+          {/* Customer Information */}
              <div className="space-y-6 w-full max-w-2xl mx-auto">
                 <div className="space-y-2 text-center">
                   <div className="flex items-center justify-center gap-2">
