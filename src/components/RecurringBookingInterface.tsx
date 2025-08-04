@@ -20,7 +20,12 @@ interface BookingTier {
   hours: number;
   basePrice: number;
   description: string;
+  shortDescription: string;
   cleaners: number;
+  icon: string;
+  popular: boolean;
+  bestFor: string;
+  includes: string[];
 }
 
 interface AddOnService {
@@ -49,22 +54,55 @@ const bookingTiers: BookingTier[] = [
     id: 'general',
     hours: 2,
     basePrice: 250,
-    description: 'Perfect for regularly maintained homes',
-    cleaners: 2
+    description: 'Maintenance Clean',
+    shortDescription: 'Perfect for regularly maintained homes',
+    cleaners: 2,
+    icon: 'home',
+    popular: false,
+    bestFor: 'Weekly maintained homes',
+    includes: [
+      'All surfaces dusted and wiped',
+      'Floors vacuumed and mopped', 
+      'Bathrooms deep cleaned',
+      'Kitchen cleaned and sanitized'
+    ]
   },
   {
     id: 'complete',
     hours: 4,
     basePrice: 420,
-    description: 'Our most popular comprehensive service',
-    cleaners: 2
+    description: 'Signature Clean',
+    shortDescription: 'Our most popular comprehensive service',
+    cleaners: 2,
+    icon: 'star',
+    popular: true,
+    bestFor: 'Most homes every 2-4 weeks',
+    includes: [
+      'Everything in Maintenance Clean',
+      'Inside appliances cleaned',
+      'Detailed bathroom sanitization',
+      'Light fixture dusting',
+      'Window sill cleaning'
+    ]
   },
   {
     id: 'premium',
     hours: 6,
     basePrice: 600,
-    description: 'Ultimate cleaning experience',
-    cleaners: 3
+    description: 'Ultimate Deep Clean',
+    shortDescription: 'Complete top-to-bottom transformation',
+    cleaners: 3,
+    icon: 'sparkles',
+    popular: false,
+    bestFor: 'Move-ins, special occasions, deep refresh',
+    includes: [
+      'Everything in Signature Clean',
+      'Baseboards hand-wiped',
+      'Cabinet fronts detailed',
+      'Light switch plates cleaned',
+      'Door frames and trim detailed',
+      'Extra attention to problem areas'
+    ]
   }
 ];
 
@@ -349,22 +387,52 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                             <div className="flex items-center space-x-4">
                               <RadioGroupItem value={tier.id} id={tier.id} className="mt-1" />
                               <div>
-                                <div className="font-bold text-lg mb-1">
-                                  {tier.id === 'general' ? 'General Clean' : 
-                                   tier.id === 'complete' ? 'Complete Clean' : 
-                                   'Premium Deep Clean'}
-                                </div>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
-                                    {tier.hours} Hours
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Users className="h-4 w-4" />
-                                    {tier.cleaners} Cleaners
-                                  </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground">{tier.description}</p>
+                <div className="flex items-center gap-3 mb-2">
+                                   {tier.icon === 'home' && <Home className="h-6 w-6 text-blue-600" />}
+                                   {tier.icon === 'star' && <Star className="h-6 w-6 text-yellow-500" />}
+                                   {tier.icon === 'sparkles' && <Sparkles className="h-6 w-6 text-purple-600" />}
+                                   <div>
+                                     <div className="flex items-center gap-2">
+                                       <span className="font-bold text-xl">{tier.description}</span>
+                                       {tier.popular && (
+                                         <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0">
+                                           Most Popular
+                                         </Badge>
+                                       )}
+                                     </div>
+                                     <p className="text-sm text-muted-foreground font-medium">{tier.shortDescription}</p>
+                                   </div>
+                                 </div>
+                                 
+                                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                                   <span className="flex items-center gap-1">
+                                     <Clock className="h-4 w-4" />
+                                     {tier.hours} Hours
+                                   </span>
+                                   <span className="flex items-center gap-1">
+                                     <Users className="h-4 w-4" />
+                                     {tier.cleaners} Cleaners
+                                   </span>
+                                 </div>
+
+                                 <div className="mb-3">
+                                   <p className="text-sm font-medium text-primary mb-1">Best for: {tier.bestFor}</p>
+                                   <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">✓ What's Included:</p>
+                                 </div>
+
+                                 <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
+                                   {tier.includes.slice(0, 3).map((item, index) => (
+                                     <div key={index} className="flex items-center gap-1">
+                                       <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
+                                       <span>{item}</span>
+                                     </div>
+                                   ))}
+                                   {tier.includes.length > 3 && (
+                                     <div className="text-xs text-primary font-medium mt-1">
+                                       + {tier.includes.length - 3} more included
+                                     </div>
+                                   )}
+                                 </div>
                               </div>
                             </div>
                             <div className="text-right">
