@@ -374,78 +374,82 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             </CardHeader>
             <CardContent className="p-6">
               <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-                <div className="grid grid-cols-1 gap-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                   {bookingTiers.map((tier) => (
                     <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer w-full">
-                      <Card className={`w-full transition-all duration-300 hover:shadow-lg ${
+                      <Card className={`w-full h-full transition-all duration-300 hover:shadow-lg ${
                         selectedTier === tier.id 
                           ? 'ring-2 ring-primary border-primary shadow-lg bg-primary/5' 
                           : 'hover:border-primary/30 hover:shadow-md'
-                      }`}>
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <RadioGroupItem value={tier.id} id={tier.id} className="mt-1" />
-                              <div>
-                <div className="flex items-center gap-3 mb-2">
-                                   {tier.icon === 'home' && <Home className="h-6 w-6 text-blue-600" />}
-                                   {tier.icon === 'star' && <Star className="h-6 w-6 text-yellow-500" />}
-                                   {tier.icon === 'sparkles' && <Sparkles className="h-6 w-6 text-purple-600" />}
-                                   <div>
-                                     <div className="flex items-center gap-2">
-                                       <span className="font-bold text-xl">{tier.description}</span>
-                                       {tier.popular && (
-                                         <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0">
-                                           Most Popular
-                                         </Badge>
-                                       )}
-                                     </div>
-                                     <p className="text-sm text-muted-foreground font-medium">{tier.shortDescription}</p>
-                                   </div>
-                                 </div>
-                                 
-                                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                                   <span className="flex items-center gap-1">
-                                     <Clock className="h-4 w-4" />
-                                     {tier.hours} Hours
-                                   </span>
-                                   <span className="flex items-center gap-1">
-                                     <Users className="h-4 w-4" />
-                                     {tier.cleaners} Cleaners
-                                   </span>
-                                 </div>
-
-                                 <div className="mb-3">
-                                   <p className="text-sm font-medium text-primary mb-1">Best for: {tier.bestFor}</p>
-                                   <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">✓ What's Included:</p>
-                                 </div>
-
-                                 <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
-                                   {tier.includes.slice(0, 3).map((item, index) => (
-                                     <div key={index} className="flex items-center gap-1">
-                                       <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
-                                       <span>{item}</span>
-                                     </div>
-                                   ))}
-                                   {tier.includes.length > 3 && (
-                                     <div className="text-xs text-primary font-medium mt-1">
-                                       + {tier.includes.length - 3} more included
-                                     </div>
-                                   )}
-                                 </div>
+                      } ${tier.popular ? 'ring-1 ring-yellow-400/50' : ''}`}>
+                        <CardContent className="p-4 h-full flex flex-col">
+                          {/* Header with Radio and Icon */}
+                          <div className="flex items-start gap-3 mb-4">
+                            <RadioGroupItem value={tier.id} id={tier.id} className="mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {tier.icon === 'home' && <Home className="h-5 w-5 text-blue-600" />}
+                                {tier.icon === 'star' && <Star className="h-5 w-5 text-yellow-500" />}
+                                {tier.icon === 'sparkles' && <Sparkles className="h-5 w-5 text-purple-600" />}
+                                <span className="font-bold text-lg leading-tight">{tier.description}</span>
                               </div>
+                              {tier.popular && (
+                                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 text-xs mb-2">
+                                  Most Popular
+                                </Badge>
+                              )}
+                              <p className="text-xs text-muted-foreground">{tier.shortDescription}</p>
                             </div>
+                          </div>
+
+                          {/* Hours and Cleaners */}
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {tier.hours}h
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {tier.cleaners} cleaners
+                            </span>
+                          </div>
+
+                          {/* Best For */}
+                          <div className="mb-3">
+                            <p className="text-xs font-medium text-primary mb-2">Best for: {tier.bestFor}</p>
+                          </div>
+
+                          {/* What's Included - Flexible height */}
+                          <div className="flex-1">
+                            <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mb-2">✓ What's Included:</p>
+                            <div className="space-y-1">
+                              {tier.includes.slice(0, 3).map((item, index) => (
+                                <div key={index} className="flex items-start gap-1 text-xs text-muted-foreground">
+                                  <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <span className="leading-tight">{item}</span>
+                                </div>
+                              ))}
+                              {tier.includes.length > 3 && (
+                                <div className="text-xs text-primary font-medium">
+                                  + {tier.includes.length - 3} more included
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Pricing */}
+                          <div className="mt-4 pt-3 border-t">
                             <div className="text-right">
-                              <div className="text-2xl font-bold text-primary">
+                              <div className="text-xl font-bold text-primary">
                                 {newClient && tier.id === 'complete' ? (
                                   <div>
-                                    <span className="line-through text-muted-foreground text-lg mr-2">${tier.basePrice}</span>
+                                    <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
                                     <span>$349</span>
                                     <div className="text-xs font-normal text-green-600 mt-1">New Client Special!</div>
                                   </div>
                                 ) : (existingMember || addMembership) ? (
                                   <div>
-                                    <span className="line-through text-muted-foreground text-lg mr-2">${tier.basePrice}</span>
+                                    <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
                                     <span>${tier.basePrice - 20}</span>
                                     <div className="text-xs font-normal text-green-600 mt-1">Member Price</div>
                                   </div>
