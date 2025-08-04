@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
+import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
 
 interface BookingTier {
   id: string;
@@ -120,7 +122,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 }) => {
   const isMobile = useIsMobile();
   const [selectedTier, setSelectedTier] = useState<string>('general');
-  const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time');
+  const [selectedRecurring, setSelectedRecurring] = useState<string>('bi-weekly');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
   const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
@@ -196,426 +198,310 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }
   };
 
+  const steps = [
+    { id: 1, title: 'Service', description: 'Choose your service' },
+    { id: 2, title: 'Details', description: 'Date & address' },
+    { id: 3, title: 'Payment', description: 'Review & pay' },
+    { id: 4, title: 'Confirmation', description: 'Complete' }
+  ];
+
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full">
+      {/* Progress Indicator */}
+      <ProgressIndicator currentStep={1} steps={steps} />
+      
+      {/* Main Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Form (2/3 width) */}
+        <div className="lg:col-span-2 space-y-6">
 
-      {/* Step 1: BACP Club Membership */}
-      {!existingMember && (
-        <Card className="border-primary/30 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <Star className="h-5 w-5" />
-              🌟 BACP Club™ Membership
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Join today and save $20 on every cleaning service
-            </p>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div className="flex-1">
-                <div className="font-semibold text-base sm:text-lg">BACP Club™ Membership</div>
-                <div className="text-sm text-muted-foreground">$39/month • Cancel anytime</div>
-              </div>
-              <div className="flex items-center gap-3 justify-end">
-                {!isMobile && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-xs shrink-0">
-                        <FileText className="h-3 w-3 mr-1" />
-                        View Terms
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Terms of Service Agreement</DialogTitle>
-                      </DialogHeader>
-                       <div className="space-y-4 text-sm leading-relaxed">
-                         <p className="font-medium">
-                           By booking a service with Bay Area Cleaning Pros, you agree to the following terms:
-                         </p>
-                         
-                         <div className="space-y-3">
-                           <div>
-                             <h4 className="font-semibold mb-2">Time-Based Services</h4>
-                             <p className="text-muted-foreground">
-                               All bookings are based on the selected time duration (2, 4, or 6 hours) and include a team of professional cleaners (2 cleaners for 2-4 hour services, 3 cleaners for 6-hour services). If your cleaning requires additional time, we will notify you before proceeding. Extra time is billed in 30-minute increments at $50/hour per cleaner and must be approved prior to continuation.
-                             </p>
-                           </div>
-
-                           <div>
-                             <h4 className="font-semibold mb-2">Service Scope</h4>
-                             <p className="text-muted-foreground">
-                               We clean according to the time purchased. If a full-home clean cannot be completed in the time selected, cleaners will prioritize based on your initial instructions. Deep cleaning, pet hair removal, wall washing, and other specialized tasks require proper add-ons.
-                             </p>
-                           </div>
-
-                           <div>
-                             <h4 className="font-semibold mb-2">BACP Club™ Membership Terms</h4>
-                             <p className="text-muted-foreground">
-                               By selecting the BACP Club™ Membership, you agree to be billed $39/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
-                             </p>
-                           </div>
-
-                           <div>
-                             <h4 className="font-semibold mb-2">Cancellation & Rescheduling</h4>
-                             <p className="text-muted-foreground">
-                               To avoid a cancellation fee, you must cancel or reschedule your appointment at least 24 hours before the scheduled time. Late cancellations or missed appointments may be subject to a fee of up to 50% of the booking cost.
-                             </p>
-                           </div>
-
-                           <div>
-                             <h4 className="font-semibold mb-2">Access to Property</h4>
-                             <p className="text-muted-foreground">
-                               You are responsible for ensuring our cleaners can access your property at the scheduled time. If we cannot access the home within 15 minutes of arrival, the appointment may be canceled and a fee may apply.
-                             </p>
-                           </div>
-
-                           <div>
-                             <h4 className="font-semibold mb-2">Refunds</h4>
-                             <p className="text-muted-foreground">
-                               All bookings are non-refundable once services are rendered. If you're dissatisfied, please contact us within 24 hours so we can resolve the issue.
-                             </p>
-                           </div>
-                         </div>
-                       </div>
-                     </DialogContent>
-                     </Dialog>
-                )}
-                <Switch 
-                  checked={addMembership} 
-                  onCheckedChange={(checked) => setAddMembership(checked)} 
-                  className="data-[state=checked]:bg-primary"
-                />
-              </div>
-            </div>
-
-            {addMembership && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <div className="col-span-full mb-3">
-                  <h4 className="font-semibold text-primary mb-2">Your Membership Benefits:</h4>
-                </div>
-                {membershipPerks.map((perk, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm">
-                    <span className="text-primary bg-primary/10 p-1 rounded">{perk.icon}</span>
-                    <span className="font-medium">{perk.text}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!addMembership && (
-              <div className="text-center p-4 bg-muted/30 rounded-lg">
+          {/* Step 1: BACP Club Membership */}
+          {!existingMember && (
+            <Card className="border-primary/30 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Star className="h-5 w-5" />
+                  🌟 BACP Club™ Membership
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Turn on membership to see all the amazing benefits and start saving $20 on every clean!
+                  Join today and save $20 on every cleaning service
                 </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="font-semibold text-base sm:text-lg">BACP Club™ Membership</div>
+                    <div className="text-sm text-muted-foreground">$39/month • Cancel anytime</div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-end">
+                    <Switch 
+                      checked={addMembership} 
+                      onCheckedChange={(checked) => setAddMembership(checked)} 
+                      className="data-[state=checked]:bg-primary"
+                    />
+                  </div>
+                </div>
 
-      {existingMember && (
-        <Card className="border-green-300 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-semibold">BACP Club™ Member</span>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 ml-auto">
-                Active
-              </Badge>
-            </div>
-            <p className="text-sm text-green-700 mt-1">
-              Your $20 membership discount has been applied to this booking!
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Choose Your Service */}
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Clock className="h-5 w-5" />
-            Choose Your Service
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            All services include professional cleaners and quality supplies
-          </p>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-              {bookingTiers.map((tier) => (
-                <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer w-full">
-                  <Card className={`w-full h-full transition-all hover:shadow-md ${
-                    selectedTier === tier.id 
-                      ? 'ring-2 ring-primary border-primary shadow-md' 
-                      : 'hover:border-primary/50'
-                  }`}>
-                    <CardContent className="p-4 sm:p-5 h-full flex flex-col justify-between">
-                       <div className="flex items-center space-x-2 mb-3">
-                         <RadioGroupItem value={tier.id} id={tier.id} />
-                          <span className="font-semibold text-base sm:text-lg">
-                            {tier.id === 'general' ? 'General Clean' : 
-                             tier.id === 'complete' ? 'Complete Clean' : 
-                             'Premium Deep Clean'} ({tier.hours} Hours)
-                          </span>
-                       </div>
-                        <div className="text-2xl sm:text-3xl font-bold mb-3 text-primary">
-                         {newClient && tier.id === 'complete' ? (
-                           <div>
-                             <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
-                             <span>$349</span>
-                             <div className="text-xs font-normal text-green-600 mt-1">New Client Special!</div>
-                           </div>
-                         ) : (existingMember || addMembership) ? (
-                           <div>
-                             <span className="line-through text-muted-foreground text-xl mr-2">${tier.basePrice}</span>
-                             <span>${tier.basePrice - 20}</span>
-                           </div>
-                         ) : (
-                           `$${tier.basePrice}`
-                         )}
-                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                        <Users className="h-4 w-4" />
-                        <span>{tier.cleaners} Professional Cleaners</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{tier.description}</p>
-                    </CardContent>
-                  </Card>
-                </Label>
-              ))}
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
-
-      {/* Step 3: Add-ons */}
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Optional Add-ons</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Enhance your cleaning with these popular extras
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            {addOnServices.map((addOn) => (
-              <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer w-full">
-                <Card className={`w-full h-full transition-all hover:shadow-sm ${
-                  selectedAddOns.includes(addOn.id) 
-                    ? 'ring-2 ring-primary border-primary shadow-md bg-primary/5' 
-                    : 'hover:border-primary/50'
-                }`}>
-                  <CardContent className="p-4 h-full flex flex-col justify-between">
-                     <div className="flex items-start space-x-3">
-                       <Checkbox
-                         id={addOn.id}
-                         checked={selectedAddOns.includes(addOn.id)}
-                         onCheckedChange={() => handleAddOnToggle(addOn.id)}
-                         className="mt-1"
-                       />
-                       <div className="flex-1">
-                         <div className="font-medium">{addOn.name}</div>
-                         <div className="text-sm font-semibold text-primary">
-                           {(existingMember || addMembership) ? (
-                             <>
-                               <span className="line-through text-muted-foreground mr-1">${addOn.price}</span>
-                               +${(addOn.price * 0.9).toFixed(0)}
-                               <span className="text-xs text-green-600 ml-1">(10% off)</span>
-                             </>
-                           ) : (
-                             `+$${addOn.price}`
-                           )}
-                         </div>
-                         <p className="text-sm text-muted-foreground mt-1">{addOn.description}</p>
-                       </div>
+                {addMembership && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="col-span-full mb-3">
+                      <h4 className="font-semibold text-primary mb-2">Your Membership Benefits:</h4>
                     </div>
-                  </CardContent>
-                </Card>
-              </Label>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                    {membershipPerks.map((perk, index) => (
+                      <div key={index} className="flex items-center gap-3 text-sm">
+                        <span className="text-primary bg-primary/10 p-1 rounded">{perk.icon}</span>
+                        <span className="font-medium">{perk.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-      {/* Step 4: Recurring Options */}
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Cleaning Frequency</CardTitle>
-          <p className="text-muted-foreground">Save more with recurring services</p>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-              {recurringOptions.map((option) => (
-                <Label key={option.id} htmlFor={option.id} className="cursor-pointer w-full">
-                  <Card className={`w-full h-full transition-all hover:shadow-md ${
-                    selectedRecurring === option.id 
-                      ? 'ring-2 ring-primary border-primary shadow-md' 
-                      : 'hover:border-primary/50'
-                  }`}>
-                     <CardContent className="p-4 text-center h-full flex flex-col justify-between">
-                       <div>
-                         <div className="flex items-center justify-between mb-2">
-                           <div className="flex items-center space-x-2">
-                             <RadioGroupItem value={option.id} id={option.id} />
-                             <span className="font-semibold text-base sm:text-lg">{option.name}</span>
-                           </div>
-                           {option.discount > 0 && (
-                             <Badge className="bg-green-500 hover:bg-green-600">
-                               {option.discount}% OFF
-                             </Badge>
-                           )}
-                         </div>
-                         <p className="text-sm text-muted-foreground">{option.description}</p>
-                         {option.discount > 0 && (
-                           <p className="text-xs text-green-600 mt-2 font-medium">
-                             Save ${Math.round(pricing.subtotal * (option.discount / 100))} per visit
-                           </p>
-                         )}
-                       </div>
-                    </CardContent>
-                  </Card>
-                </Label>
-              ))}
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
-
-      {/* Terms Checkbox - Outside membership for all users */}
-      <Card className="border-orange-200 bg-orange-50">
-        <CardContent className="pt-6">
-          <div className="flex items-start space-x-3">
-            <Checkbox
-              id="terms-agreement"
-              checked={termsAgreed}
-              onCheckedChange={(checked) => setTermsAgreed(checked === true)}
-              className="mt-1"
-            />
-            <label 
-              htmlFor="terms-agreement" 
-              className="text-sm font-medium leading-relaxed cursor-pointer"
-            >
-              I agree to the Terms of Service and understand the time-based nature of the service, membership billing (if applicable), and cancellation policy.
-            </label>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Booking Summary */}
-      <Card className="sticky top-4 mx-auto max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-lg sm:text-xl">Booking Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">{selectedTierData.hours}-Hour Clean</span>
-              {newClient && selectedTier === 'complete' ? (
-                <div className="text-right">
-                  <span className="line-through text-muted-foreground text-sm">${selectedTierData.basePrice}</span>
-                  <span className="font-semibold ml-2">${pricing.basePrice}</span>
-                  <div className="text-xs text-green-600 font-medium">New Client Special!</div>
-                </div>
-              ) : (
-                <span className="font-semibold">${pricing.basePrice}</span>
-              )}
-            </div>
-            
-            {selectedAddOns.length > 0 && selectedAddOns.map(addOnId => {
-              const addOn = addOnServices.find(service => service.id === addOnId);
-              if (!addOn) return null;
-              const discountedPrice = (existingMember || addMembership) ? addOn.price * 0.9 : addOn.price;
-              return (
-                <div key={addOnId} className="flex justify-between items-center">
-                  <span className="text-sm">{addOn.name}</span>
-                  <span className="text-sm font-medium">
-                    {(existingMember || addMembership) ? (
-                      <>
-                        <span className="line-through text-muted-foreground mr-1">${addOn.price}</span>
-                        +${discountedPrice.toFixed(0)}
-                      </>
-                    ) : (
-                      `+$${addOn.price}`
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-
-            {addMembership && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">BACP Club™ Membership</span>
-                <span className="text-sm font-medium">+$39/month</span>
-              </div>
-            )}
-
-            {newClient && selectedTier === 'complete' && (
-              <div className="flex justify-between items-center text-green-600">
-                <span className="text-sm">New Client Special Discount</span>
-                <span className="text-sm font-medium">-$71</span>
-              </div>
-            )}
-
-            {pricing.addonMemberDiscount > 0 && (
-              <div className="flex justify-between items-center text-green-600">
-                <span className="text-sm">10% Member Discount on Add-ons</span>
-                <span className="text-sm font-medium">-${pricing.addonMemberDiscount.toFixed(0)}</span>
-              </div>
-            )}
-
-            {pricing.recurringDiscount > 0 && (
-              <div className="flex justify-between items-center text-green-600">
-                <span className="text-sm">{selectedRecurringData.name} Discount</span>
-                <span className="text-sm font-medium">-${pricing.recurringDiscount}</span>
-              </div>
-            )}
-
-            {pricing.membershipDiscount > 0 && (
-              <div className="flex justify-between items-center text-green-600">
-                <span className="text-sm">BACP Club™ Discount</span>
-                <span className="text-sm font-medium">-${pricing.membershipDiscount}</span>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          <div className="flex justify-between items-center text-xl font-bold">
-            <span>Total</span>
-            <span className="text-primary">${pricing.total + pricing.membershipFee}</span>
-          </div>
-
-          {(pricing.recurringDiscount > 0 || pricing.membershipDiscount > 0 || pricing.addonMemberDiscount > 0 || (newClient && selectedTier === 'complete')) && (
-            <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-800 font-medium">
-                You're saving ${
-                  pricing.recurringDiscount + 
-                  pricing.membershipDiscount + 
-                  pricing.addonMemberDiscount +
-                  (newClient && selectedTier === 'complete' ? 71 : 0)
-                } today! 🎉
-              </p>
-            </div>
+                {!addMembership && (
+                  <div className="text-center p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      Turn on membership to see all the amazing benefits and start saving $20 on every clean!
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          <Button 
-            onClick={handleBookNow} 
-            disabled={!termsAgreed}
-            className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
-            size="lg"
-          >
-            {termsAgreed 
-              ? `Book Now - $${pricing.total + pricing.membershipFee}` 
-              : 'Please agree to terms to continue'
-            }
-          </Button>
-        </CardContent>
-      </Card>
+          {existingMember && (
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-green-800">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-semibold">BACP Club™ Member</span>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 ml-auto">
+                    Active
+                  </Badge>
+                </div>
+                <p className="text-sm text-green-700 mt-1">
+                  Your $20 membership discount has been applied to this booking!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Service Selection */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Home className="h-5 w-5" />
+                Choose Your Service
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                All services include professional cleaners and quality supplies
+              </p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <RadioGroup value={selectedTier} onValueChange={setSelectedTier}>
+                <div className="grid grid-cols-1 gap-4 w-full">
+                  {bookingTiers.map((tier) => (
+                    <Label key={tier.id} htmlFor={tier.id} className="cursor-pointer w-full">
+                      <Card className={`w-full transition-all duration-300 hover:shadow-lg ${
+                        selectedTier === tier.id 
+                          ? 'ring-2 ring-primary border-primary shadow-lg bg-primary/5' 
+                          : 'hover:border-primary/30 hover:shadow-md'
+                      }`}>
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <RadioGroupItem value={tier.id} id={tier.id} className="mt-1" />
+                              <div>
+                                <div className="font-bold text-lg mb-1">
+                                  {tier.id === 'general' ? 'General Clean' : 
+                                   tier.id === 'complete' ? 'Complete Clean' : 
+                                   'Premium Deep Clean'}
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-4 w-4" />
+                                    {tier.hours} Hours
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Users className="h-4 w-4" />
+                                    {tier.cleaners} Cleaners
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{tier.description}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-primary">
+                                {newClient && tier.id === 'complete' ? (
+                                  <div>
+                                    <span className="line-through text-muted-foreground text-lg mr-2">${tier.basePrice}</span>
+                                    <span>$349</span>
+                                    <div className="text-xs font-normal text-green-600 mt-1">New Client Special!</div>
+                                  </div>
+                                ) : (existingMember || addMembership) ? (
+                                  <div>
+                                    <span className="line-through text-muted-foreground text-lg mr-2">${tier.basePrice}</span>
+                                    <span>${tier.basePrice - 20}</span>
+                                    <div className="text-xs font-normal text-green-600 mt-1">Member Price</div>
+                                  </div>
+                                ) : (
+                                  `$${tier.basePrice}`
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Label>
+                  ))}
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* Frequency Selection */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-accent/5 to-accent/10">
+              <CardTitle className="flex items-center gap-2 text-accent">
+                <RotateCcw className="h-5 w-5" />
+                Service Frequency
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Choose how often you'd like service (recurring saves more!)
+              </p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <RadioGroup value={selectedRecurring} onValueChange={setSelectedRecurring}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {recurringOptions.map((option) => (
+                    <Label key={option.id} htmlFor={option.id} className="cursor-pointer">
+                      <Card className={`transition-all duration-300 hover:shadow-md ${
+                        selectedRecurring === option.id 
+                          ? 'ring-2 ring-accent border-accent shadow-md bg-accent/5' 
+                          : 'hover:border-accent/30'
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <RadioGroupItem value={option.id} id={option.id} />
+                              <div>
+                                <div className="font-semibold">{option.name}</div>
+                                <div className="text-sm text-muted-foreground">{option.description}</div>
+                              </div>
+                            </div>
+                            {option.discount > 0 && (
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                Save {option.discount}%
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Label>
+                  ))}
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* Add-ons */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-secondary/5 to-secondary/10">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Optional Add-ons
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Enhance your cleaning with these popular extras
+              </p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                {addOnServices.map((addOn) => (
+                  <Label key={addOn.id} htmlFor={addOn.id} className="cursor-pointer w-full">
+                    <div className={`w-full transition-all duration-300 hover:shadow-sm border rounded-lg p-4 ${
+                      selectedAddOns.includes(addOn.id) 
+                        ? 'ring-2 ring-primary border-primary shadow-md bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}>
+                      <div className="flex items-center justify-between h-full">
+                        <div className="flex items-center space-x-3">
+                          <Checkbox 
+                            id={addOn.id}
+                            checked={selectedAddOns.includes(addOn.id)}
+                            onCheckedChange={(checked) => handleAddOnToggle(addOn.id)}
+                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <div>
+                            <div className="font-semibold">{addOn.name}</div>
+                            <div className="text-sm text-muted-foreground">{addOn.description}</div>
+                          </div>
+                        </div>
+                        <div className="text-lg font-bold text-primary">
+                          {(existingMember || addMembership) ? (
+                            <div className="text-right">
+                              <span className="line-through text-muted-foreground text-sm mr-2">${addOn.price}</span>
+                              <span>${Math.round(addOn.price * 0.9)}</span>
+                              <div className="text-xs text-green-600">Member price</div>
+                            </div>
+                          ) : (
+                            `$${addOn.price}`
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Label>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Terms Agreement */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="terms"
+                    checked={termsAgreed}
+                    onCheckedChange={(checked) => setTermsAgreed(checked as boolean)}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <Label htmlFor="terms" className="text-sm leading-tight cursor-pointer">
+                    I agree to the Terms of Service and understand that this booking is time-based service.
+                  </Label>
+                </div>
+
+                <Button 
+                  onClick={handleBookNow}
+                  disabled={!termsAgreed}
+                  size="lg"
+                  className="w-full flex items-center gap-2"
+                >
+                  Continue to Details
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right: Price Summary Sticky Card (1/3 width) */}
+        <div className="lg:col-span-1">
+          <PriceSummaryCard
+            basePrice={pricing.basePrice}
+            addOnsTotal={pricing.addOnsTotal}
+            subtotal={pricing.subtotal}
+            recurringDiscount={pricing.recurringDiscount}
+            membershipDiscount={pricing.membershipDiscount}
+            total={pricing.total}
+            membershipFee={pricing.membershipFee}
+            selectedTier={selectedTierData}
+            selectedAddOns={selectedAddOns.map(id => addOnServices.find(service => service.id === id)).filter(Boolean)}
+            selectedRecurring={selectedRecurringData}
+            membership={addMembership}
+            newClient={newClient}
+          />
+        </div>
+      </div>
     </div>
   );
 };
