@@ -44,9 +44,13 @@ All colors MUST be HSL.
 
     --gradient-primary: linear-gradient(135deg, hsl(273 100% 50%), hsl(280 100% 70%));
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(273 100% 98%));
+    --gradient-booking: linear-gradient(135deg, hsl(273 100% 50% / 0.1), hsl(280 100% 70% / 0.1));
+    --gradient-hero: linear-gradient(135deg, hsl(273 100% 50%), hsl(280 100% 60%), hsl(320 100% 70%));
     
     --shadow-clean: 0 4px 20px -4px hsl(273 100% 50% / 0.15);
     --shadow-soft: 0 2px 10px -2px hsl(210 40% 8% / 0.1);
+    --shadow-booking: 0 8px 32px -8px hsl(273 100% 50% / 0.2);
+    --shadow-hover: 0 12px 40px -8px hsl(273 100% 50% / 0.25);
 
     --radius: 0.5rem;
 
@@ -119,5 +123,58 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .booking-card {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-clean);
+  }
+  
+  .booking-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+  
+  .booking-selected {
+    @apply ring-2 ring-primary border-primary;
+    box-shadow: var(--shadow-booking);
+  }
+  
+  .booking-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .booking-progress {
+    @apply relative overflow-hidden rounded-full bg-muted;
+  }
+  
+  .booking-progress-bar {
+    @apply h-full transition-all duration-500 ease-out;
+    background: var(--gradient-primary);
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .glassmorphism {
+    @apply backdrop-blur-md border border-white/20;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
