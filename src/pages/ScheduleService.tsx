@@ -195,17 +195,17 @@ const ScheduleService = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
-              <div className="w-full min-h-[600px] sm:min-h-[800px] relative rounded-lg overflow-hidden">
+              <div className="w-full min-h-[800px] sm:min-h-[1000px] relative rounded-lg overflow-hidden">
                 <iframe 
                   src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
                   style={{ 
                     width: '100%', 
-                    height: '600px',
+                    height: '800px',
                     border: 'none', 
-                    overflow: 'hidden' 
+                    overflow: 'auto' 
                   }}
-                  className="sm:h-[800px] rounded-lg"
-                  scrolling="no" 
+                  className="sm:h-[1000px] rounded-lg"
+                  scrolling="auto" 
                   id="39tuCeWMXzsnqMcYpkCD_1754330109315"
                   title="Bay Area Cleaning Pros Booking Calendar"
                 />
