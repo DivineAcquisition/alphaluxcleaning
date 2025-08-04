@@ -68,6 +68,7 @@ import ApiPortal from '@/pages/ApiPortal';
 import InstantQuote from '@/pages/InstantQuote';
 import PaymentPortal from '@/pages/PaymentPortal';
 import ConnectPortal from '@/pages/ConnectPortal';
+import TestingPortal from '@/pages/TestingPortal';
 
 const queryClient = new QueryClient();
 
@@ -359,6 +360,13 @@ function App() {
                 <Route path="/instant-quote" element={<InstantQuote />} />
                 <Route path="/payment-portal" element={<PaymentPortal />} />
                 <Route path="/connect" element={<ConnectPortal />} />
+                
+                {/* Testing Portal - Admin Only */}
+                <Route path="/testing-portal" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                    <TestingPortal />
+                  </ProtectedRoute>
+                } />
                 
                 {/* 404 fallback */}
                 <Route path="*" element={<NotFound />} />

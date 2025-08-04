@@ -7,8 +7,6 @@ import { Calendar, ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
-import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
-import { ZapierTestButton } from "@/components/ZapierTestButton";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ScheduleService = () => {
@@ -19,7 +17,7 @@ const ScheduleService = () => {
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showCalendarIntegration, setShowCalendarIntegration] = useState(false);
+  
 
   useEffect(() => {
     // Check if admin preview mode
@@ -37,13 +35,6 @@ const ScheduleService = () => {
     fetchOrderDetails();
   }, [sessionId, navigate, searchParams]);
 
-  // Check if user should see calendar integration
-  useEffect(() => {
-    if (user && userRole) {
-      // Show calendar integration only for admin users
-      setShowCalendarIntegration(userRole === 'super_admin' || userRole === 'admin');
-    }
-  }, [user, userRole]);
 
   const checkAdminAccess = async () => {
     try {
@@ -191,41 +182,6 @@ const ScheduleService = () => {
             </Card>
           )}
 
-          {/* Zapier Integration Test - Only for admin users */}
-          {showCalendarIntegration && (
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Zapier Integration Test
-                </CardTitle>
-                <CardDescription>
-                  Test sending booking transaction data to Zapier
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ZapierTestButton />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Google Calendar Connection - Only for admin users */}
-          {showCalendarIntegration && (
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Calendar Integration
-                </CardTitle>
-                <CardDescription>
-                  Connect your Google Calendar to see live availability
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <GoogleCalendarConnect />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Embedded Calendar Scheduler */}
           <Card className="border-0 shadow-lg">
