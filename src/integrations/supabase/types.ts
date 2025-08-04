@@ -516,6 +516,62 @@ export type Database = {
           },
         ]
       }
+      customer_service_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          customer_notes: string | null
+          id: string
+          order_id: string | null
+          request_data: Json
+          request_type: string
+          requested_by_email: string
+          requested_by_name: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          id?: string
+          order_id?: string | null
+          request_data?: Json
+          request_type: string
+          requested_by_email: string
+          requested_by_name?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_notes?: string | null
+          id?: string
+          order_id?: string | null
+          request_data?: Json
+          request_type?: string
+          requested_by_email?: string
+          requested_by_name?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_service_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           actual_close_date: string | null
