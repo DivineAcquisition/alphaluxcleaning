@@ -51,23 +51,45 @@ import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
 import NotFound from '@/pages/NotFound';
+import ReviewsPortal from '@/pages/ReviewsPortal';
 
 const queryClient = new QueryClient();
 
-// Domain detection component
+// Enhanced Domain Router for Multi-Subdomain Architecture
 function DomainRouter() {
   const hostname = window.location.hostname;
   
-  // Check for subdomains and redirect appropriately
+  // Phase 1: Customer-Facing Subdomains
+  if (hostname.includes('booking.')) {
+    return <Navigate to="/schedule-service" replace />;
+  }
+  if (hostname.includes('pay.')) {
+    return <Navigate to="/payment-confirmation" replace />;
+  }
+  if (hostname.includes('members.')) {
+    return <Navigate to="/my-services" replace />;
+  }
+  
+  // Phase 2: Internal Operations
+  if (hostname.includes('admin.')) {
+    return <Navigate to="/admin" replace />;
+  }
+  if (hostname.includes('office.')) {
+    return <Navigate to="/office-dashboard" replace />;
+  }
   if (hostname.includes('subcon.')) {
     return <Navigate to="/subcontractor" replace />;
   }
   
-  if (hostname.includes('admin.')) {
-    return <Navigate to="/admin" replace />;
+  // Phase 3: Specialized Services
+  if (hostname.includes('reviews.')) {
+    return <Navigate to="/reviews" replace />;
+  }
+  if (hostname.includes('jobs.')) {
+    return <Navigate to="/subcontractor-application" replace />;
   }
   
-  // Default to main landing page for main domain
+  // Default to main landing page
   return <Index />;
 }
 
@@ -169,6 +191,41 @@ function App() {
                     <OfficeManagerPerformance />
                   </ProtectedRoute>
                 } />
+                
+                {/* Phase 2: Office Manager Portal Routes */}
+                <Route path="/office-dashboard" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/office-jobs" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerJobs />
+                  </ProtectedRoute>
+                } />
+                <Route path="/office-bookings" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerBookings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/office-team" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerTeam />
+                  </ProtectedRoute>
+                } />
+                <Route path="/office-performance" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerPerformance />
+                  </ProtectedRoute>
+                } />
+                <Route path="/office-quality" element={
+                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
+                    <OfficeManagerQuality />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Review Portal Route */}
+                <Route path="/reviews" element={<ReviewsPortal />} />
                 
                 {/* Admin tool routes */}
                 <Route path="/admin-dashboard/email-settings" element={
