@@ -229,12 +229,6 @@ const Index = () => {
                   </CardContent>
                 </Card>}
               
-              {/* Referral Section */}
-              <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
-                <CardContent className="p-6">
-                  <ReferralSection />
-                </CardContent>
-              </Card>
 
               {/* Membership CTA */}
               <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
@@ -248,6 +242,13 @@ const Index = () => {
                   <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
                     <a href="/membership">Learn About Membership</a>
                   </Button>
+                </CardContent>
+              </Card>
+
+              {/* Referral Section */}
+              <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
+                <CardContent className="p-6">
+                  <ReferralSection />
                 </CardContent>
               </Card>
             </div>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone } from "lucide-react";
+import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -311,6 +312,19 @@ const BookingConfirmation = () => {
               <p>• We'll send you reminders before your appointment</p>
             </CardContent>
           </Card>
+
+          {/* Referral Code Generation */}
+          <div className="mb-8">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-green-800 mb-2">
+                🎉 Spread the Love & Earn Rewards!
+              </h3>
+              <p className="text-green-600">
+                Generate your personal referral code and start earning when friends book with us
+              </p>
+            </div>
+            <PostPaymentReferralSection />
+          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

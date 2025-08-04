@@ -210,9 +210,9 @@ export function PaymentForm({
         });
         if (error) throw error;
 
-        // Redirect to Stripe checkout
+        // Redirect to Stripe checkout in new tab for better UX
         if (data.url) {
-          window.location.href = data.url;
+          window.open(data.url, '_blank');
         } else {
           throw new Error('No checkout URL received');
         }
