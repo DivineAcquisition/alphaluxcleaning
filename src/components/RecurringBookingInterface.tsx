@@ -476,7 +476,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                   size="lg"
                   className="w-full flex items-center gap-2"
                 >
-                  Continue to Details
+                  Submit Selection & Scroll Down
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
