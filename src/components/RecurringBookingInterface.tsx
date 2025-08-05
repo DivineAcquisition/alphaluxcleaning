@@ -55,9 +55,9 @@ const bookingTiers: BookingTier[] = [
   {
     id: 'general',
     hours: 2,
-    basePrice: 250,
+    basePrice: 220,
     description: 'Signature Clean',
-    shortDescription: 'Perfect for regular maintenance with 15% savings on recurring',
+    shortDescription: 'Perfect for regular maintenance with 15% off one-time service',
     cleaners: 2,
     icon: 'home',
     popular: false,
@@ -74,7 +74,7 @@ const bookingTiers: BookingTier[] = [
     hours: 4,
     basePrice: 420,
     description: 'Signature Clean',
-    shortDescription: 'Our most popular comprehensive service with 15% savings on recurring',
+    shortDescription: 'Our most popular comprehensive service with 15% off one-time service',
     cleaners: 2,
     icon: 'star',
     popular: true,
@@ -93,9 +93,9 @@ const bookingTiers: BookingTier[] = [
   {
     id: 'premium',
     hours: 6,
-    basePrice: 480,
+    basePrice: 500,
     description: 'Ultimate Deep Clean',
-    shortDescription: 'Complete top-to-bottom transformation with 20% automatic savings',
+    shortDescription: 'Complete top-to-bottom transformation with 20% off one-time service',
     cleaners: 3,
     icon: 'sparkles',
     popular: false,
@@ -216,13 +216,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
     let basePrice = selectedTierData.basePrice;
     
-    // Apply new discount structure
-    if (selectedTier === 'premium') {
-      // Ultimate Deep Clean gets 20% automatic discount
-      basePrice = Math.round(basePrice * 0.8);
-    } else if ((selectedTier === 'general' || selectedTier === 'complete') && selectedRecurringData && selectedRecurringData.frequency !== 'once') {
-      // Signature Clean gets 15% discount on recurring services
-      basePrice = Math.round(basePrice * 0.85);
+    // Apply one-time service discounts only
+    if (selectedRecurringData && selectedRecurringData.frequency === 'once') {
+      if (selectedTier === 'premium') {
+        // Ultimate Deep Clean gets 20% discount for one-time service
+        basePrice = Math.round(basePrice * 0.8);
+      } else if (selectedTier === 'general' || selectedTier === 'complete') {
+        // Signature Clean gets 15% discount for one-time service
+        basePrice = Math.round(basePrice * 0.85);
+      }
     }
     
     // Apply new client special for Complete Clean
