@@ -26,29 +26,23 @@ serve(async (req) => {
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
-
-    // Parse request body to get booking details
-    const { bookingData } = await req.json();
+    // Parse request body to get customer info
+    const { bookingData, customerInfo } = await req.json();
     if (!bookingData) throw new Error("Booking data is required");
-    logStep("Booking data received", bookingData);
+    if (!customerInfo?.email) throw new Error("Customer email is required");
+    
+    const customerEmail = customerInfo.email;
+    const customerName = customerInfo.name || 'Guest Customer';
+    logStep("Customer info received", { email: customerEmail, name: customerName });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
     // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -70,7 +64,7 @@ serve(async (req) => {
     // Create checkout session with both one-time service payment and recurring membership
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : customerEmail,
       line_items: [
         {
           // One-time payment for the cleaning service (with membership discount already applied)
@@ -102,7 +96,8 @@ serve(async (req) => {
       success_url: `${origin}/payment-confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/`,
       metadata: {
-        user_id: user.id,
+        customer_email: customerEmail,
+        customer_name: customerName,
         booking_data: JSON.stringify(bookingData),
         membership_enabled: "true"
       }

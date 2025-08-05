@@ -298,15 +298,21 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       if (addMembership) {
         // For membership checkout, use the membership function
         response = await supabase.functions.invoke(functionName, {
-          body: { bookingData }
+          body: { 
+            bookingData,
+            customerInfo: {
+              email: 'guest@bayareacleaningpros.com',
+              name: 'Guest Customer'
+            }
+          }
         });
       } else {
         // For regular checkout, format data for the create-payment function
         const paymentData = {
           amount: pricing.total,
-          customerEmail: 'user@example.com', // This would come from auth
-          customerName: 'Customer Name', // This would come from form
-          customerPhone: '', // This would come from form
+          customerEmail: 'guest@bayareacleaningpros.com', // Guest user email
+          customerName: 'Guest Customer', // Default guest name
+          customerPhone: '', // Optional for guest
           cleaningType: selectedTier,
           frequency: selectedRecurring,
           squareFootage: squareFootage,

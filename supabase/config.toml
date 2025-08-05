@@ -1,5 +1,8 @@
 project_id = "kqoezqzogleaaupjzxch"
 
+[functions.create-membership-checkout]
+verify_jwt = false
+
 [functions.google-oauth-initiate]
 verify_jwt = false
 

@@ -159,9 +159,17 @@ export function PaymentForm({
                 price: calculatedPrice,
                 membershipPrice: calculatedPrice // Already discounted
               },
+              pricing: {
+                total: calculatedPrice,
+                addonMemberDiscount: priceBreakdown?.addonMemberDiscount || 0
+              },
               membership: true,
               addOns: pricingData.addOns || [],
               subtotal: calculatedPrice
+            },
+            customerInfo: {
+              email: customerInfo.email,
+              name: customerInfo.name
             }
           }
         });
