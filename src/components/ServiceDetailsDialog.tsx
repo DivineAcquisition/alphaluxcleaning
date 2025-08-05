@@ -46,7 +46,7 @@ export const ServiceDetailsDialog = ({
   const serviceDetails = getServiceDetails();
   return <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full font-normal">
+        <Button variant="outline" className="w-full font-normal text-xs">
           <Info className="h-4 w-4 mr-2" />
           See What's Included With This Service
         </Button>
