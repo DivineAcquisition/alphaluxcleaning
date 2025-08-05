@@ -87,7 +87,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning${newClientSpecial ? ' (New Client Special)' : ''}${membershipStatus ? ' (Member)' : ''}`,
-              description: `${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}${addonMemberDiscount > 0 ? ` • $${addonMemberDiscount} Member Addon Discount` : ''}`
+              description: `${paymentType === 'half' ? '50% Payment' : paymentType === 'prepayment' ? '$150 Prepayment' : 'Full Payment'} • ${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}${addonMemberDiscount > 0 ? ` • $${addonMemberDiscount} Member Addon Discount` : ''}`
             },
             unit_amount: paymentType === "prepayment" ? amount : Math.round(amount * 100), // Prepayment amount is already in cents
           },

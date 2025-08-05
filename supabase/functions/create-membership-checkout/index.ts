@@ -37,7 +37,8 @@ serve(async (req) => {
     
     const customerEmail = customerInfo.email;
     const customerName = customerInfo.name || 'Guest Customer';
-    logStep("Customer info received", { email: customerEmail, name: customerName });
+    const customerPhone = customerInfo.phone || '';
+    logStep("Customer info received", { email: customerEmail, name: customerName, phone: customerPhone });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -72,7 +73,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: `${bookingData.tier.hours}-Hour Cleaning Service`,
-              description: `Professional cleaning service with BACP Club™ membership benefits${bookingData.pricing.addonMemberDiscount > 0 ? ` (10% addon discount: $${bookingData.pricing.addonMemberDiscount})` : ''}`
+              description: `${bookingData.paymentOption === 'half' ? '50% Payment' : bookingData.paymentOption === 'prepayment' ? '$150 Prepayment' : 'Full Payment'} • Professional cleaning service with BACP Club™ membership benefits${bookingData.pricing.addonMemberDiscount > 0 ? ` (10% addon discount: $${bookingData.pricing.addonMemberDiscount})` : ''}`
             },
             unit_amount: serviceAmount,
           },
@@ -98,6 +99,7 @@ serve(async (req) => {
       metadata: {
         customer_email: customerEmail,
         customer_name: customerName,
+        customer_phone: customerPhone,
         booking_data: JSON.stringify(bookingData),
         membership_enabled: "true"
       }

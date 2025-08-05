@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
@@ -196,6 +197,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [showPaymentOptions, setShowPaymentOptions] = useState<boolean>(false);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<string>('');
   const [showCompleteBooking, setShowCompleteBooking] = useState<boolean>(false);
+  
+  // Customer information state
+  const [customerInfo, setCustomerInfo] = useState({
+    name: "",
+    email: "",
+    phone: ""
+  });
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -295,6 +303,16 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   const handleCompleteBooking = async () => {
+    // Validate customer information
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all customer information fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Prepare booking data for payment
       const bookingData = {
@@ -328,18 +346,21 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           body: { 
             bookingData,
             customerInfo: {
-              email: 'guest@bayareacleaningpros.com',
-              name: 'Guest Customer'
+              email: customerInfo.email,
+              name: customerInfo.name,
+              phone: customerInfo.phone
             }
           }
         });
       } else {
         // For regular checkout, format data for the create-payment function
         const paymentData = {
-          amount: pricing.total,
-          customerEmail: 'guest@bayareacleaningpros.com', // Guest user email
-          customerName: 'Guest Customer', // Default guest name
-          customerPhone: '', // Optional for guest
+          amount: selectedPaymentOption === 'half' ? Math.round(pricing.total / 2) : 
+                 selectedPaymentOption === 'prepayment' ? 150 : pricing.total,
+          paymentType: selectedPaymentOption,
+          customerEmail: customerInfo.email,
+          customerName: customerInfo.name,
+          customerPhone: customerInfo.phone,
           cleaningType: selectedTier,
           frequency: selectedRecurring,
           squareFootage: squareFootage,
@@ -829,7 +850,51 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                 </p>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Customer Information Form */}
+                  <div className="bg-white rounded-lg p-4 border border-green-200">
+                    <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Customer Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="customer-name" className="text-sm font-medium">Full Name *</Label>
+                        <Input
+                          id="customer-name"
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={customerInfo.name}
+                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customer-email" className="text-sm font-medium">Email Address *</Label>
+                        <Input
+                          id="customer-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={customerInfo.email}
+                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customer-phone" className="text-sm font-medium">Phone Number *</Label>
+                        <Input
+                          id="customer-phone"
+                          type="tel"
+                          placeholder="Enter your phone number"
+                          value={customerInfo.phone}
+                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Booking Summary */}
                   <div className="bg-white rounded-lg p-4 border border-green-200">
                     <h4 className="font-semibold text-green-800 mb-2">Booking Summary:</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -839,13 +904,17 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                       <div><strong>Bedrooms:</strong> {bedrooms}</div>
                       <div><strong>Bathrooms:</strong> {bathrooms}</div>
                       <div><strong>Payment:</strong> {selectedPaymentOption === 'half' ? 'Pay Half' : selectedPaymentOption === 'prepayment' ? 'Prepayment $150' : 'Pay in Full'}</div>
+                      {customerInfo.name && <div><strong>Customer:</strong> {customerInfo.name}</div>}
+                      {customerInfo.email && <div><strong>Email:</strong> {customerInfo.email}</div>}
+                      {customerInfo.phone && <div><strong>Phone:</strong> {customerInfo.phone}</div>}
                     </div>
                   </div>
                   
                   <Button 
                     onClick={handleCompleteBooking}
+                    disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
                     size="lg"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Complete Booking & Schedule Service
                     <ArrowRight className="h-4 w-4" />
