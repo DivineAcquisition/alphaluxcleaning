@@ -82,7 +82,31 @@ export function PriceSummaryCard({
                   {selectedTier.hours} hours • {selectedTier.cleaners} cleaners
                 </div>
               </div>
-              <span className="font-semibold">${basePrice}</span>
+              <div className="text-right">
+                {newClient && selectedTier.id === 'complete' ? (
+                  <div>
+                    <span className="line-through text-muted-foreground text-sm mr-2">${selectedTier.basePrice}</span>
+                    <span className="font-semibold">$349</span>
+                  </div>
+                ) : membership ? (
+                  <div>
+                    <span className="line-through text-muted-foreground text-sm mr-2">${selectedTier.basePrice}</span>
+                    <span className="font-semibold">${selectedTier.basePrice - 20}</span>
+                  </div>
+                ) : selectedRecurring === 'one-time' ? (
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <span className="line-through text-muted-foreground text-sm mr-2">${selectedTier.basePrice}</span>
+                      <span className="font-semibold">${selectedTier.id === 'premium' ? Math.round(selectedTier.basePrice * 0.8) : Math.round(selectedTier.basePrice * 0.85)}</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                      {selectedTier.id === 'premium' ? '20% off' : '15% off'}
+                    </Badge>
+                  </div>
+                ) : (
+                  <span className="font-semibold">${basePrice}</span>
+                )}
+              </div>
             </div>
             
             {newClient && selectedTier.id === 'complete' && (

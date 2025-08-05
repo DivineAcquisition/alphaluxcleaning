@@ -520,24 +520,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                             <p className="text-xs font-medium text-primary mb-2">Best for: {tier.bestFor}</p>
                           </div>
 
-                          {/* What's Included - Flexible height */}
-                          <div className="flex-1">
-                            <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mb-2">✓ What's Included:</p>
-                            <div className="space-y-1">
-                              {tier.includes.slice(0, 3).map((item, index) => (
-                                <div key={index} className="flex items-start gap-1 text-xs text-muted-foreground">
-                                  <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
-                                  <span className="leading-tight">{item}</span>
-                                </div>
-                              ))}
-                              {tier.includes.length > 3 && (
-                                <div className="text-xs text-primary font-medium">
-                                  + {tier.includes.length - 3} more included
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
                           {/* Pricing */}
                           <div className="mt-4 pt-3 border-t">
                             <div className="text-right">
@@ -553,6 +535,21 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                     <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
                                     <span>${tier.basePrice - 20}</span>
                                     <div className="text-xs font-normal text-green-600 mt-1">Member Price</div>
+                                  </div>
+                                ) : selectedRecurring === 'one-time' ? (
+                                  <div>
+                                    <div className="flex items-center justify-end gap-2 mb-1">
+                                      <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                                        {tier.id === 'premium' ? '20% off' : '15% off'}
+                                      </Badge>
+                                    </div>
+                                    <div>
+                                      <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
+                                      <span>${tier.id === 'premium' ? Math.round(tier.basePrice * 0.8) : Math.round(tier.basePrice * 0.85)}</span>
+                                    </div>
+                                    <div className="text-xs font-normal text-green-600 mt-1">
+                                      One-Time Discount!
+                                    </div>
                                   </div>
                                 ) : (
                                   `$${tier.basePrice}`
