@@ -10,6 +10,8 @@ interface PriceSummaryProps {
   subtotal: number;
   recurringDiscount: number;
   membershipDiscount: number;
+  referralDiscount?: number;
+  codeDiscount?: number;
   total: number;
   membershipFee?: number;
   selectedTier?: any;
@@ -25,6 +27,8 @@ export function PriceSummaryCard({
   subtotal,
   recurringDiscount,
   membershipDiscount,
+  referralDiscount = 0,
+  codeDiscount = 0,
   total,
   membershipFee = 0,
   selectedTier,
@@ -33,7 +37,7 @@ export function PriceSummaryCard({
   membership = false,
   newClient = false
 }: PriceSummaryProps) {
-  const totalSavings = recurringDiscount + membershipDiscount;
+  const totalSavings = recurringDiscount + membershipDiscount + referralDiscount + codeDiscount;
   
   // Show placeholder when no service is selected
   if (!selectedTier) {
@@ -153,6 +157,22 @@ export function PriceSummaryCard({
             <div className="flex justify-between text-green-600">
               <span>BACP Club™ Discount</span>
               <span>-${membershipDiscount}</span>
+            </div>
+          )}
+
+          {/* Referral Discount */}
+          {referralDiscount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Referral Discount (10%)</span>
+              <span>-${referralDiscount.toFixed(2)}</span>
+            </div>
+          )}
+
+          {/* Discount Code */}
+          {codeDiscount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Discount Code (50%)</span>
+              <span>-${codeDiscount.toFixed(2)}</span>
             </div>
           )}
 

@@ -9,12 +9,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
 import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
+import { ServiceIncluded } from '@/components/ServiceIncluded';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -204,6 +206,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     email: "",
     phone: ""
   });
+  const [referralCode, setReferralCode] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedReferral, setAppliedReferral] = useState<any>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [showServiceDetails, setShowServiceDetails] = useState(false);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -263,6 +270,20 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     const total = subtotal - recurringDiscount - membershipDiscount;
     const membershipFee = addMembership ? 39 : 0;
 
+    // Apply referral discount (10% off)
+    let referralDiscount = 0;
+    if (appliedReferral) {
+      referralDiscount = (subtotal - recurringDiscount - membershipDiscount) * 0.10;
+    }
+
+    // Apply discount code (50% off for FRIEND50 codes)
+    let codeDiscount = 0;
+    if (appliedDiscount && appliedDiscount.type === 'deep_clean_50_percent') {
+      codeDiscount = (subtotal - recurringDiscount - membershipDiscount - referralDiscount) * 0.50;
+    }
+
+    const finalTotal = subtotal - recurringDiscount - membershipDiscount - referralDiscount - codeDiscount;
+
     return {
       basePrice,
       addOnsTotal,
@@ -270,7 +291,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       recurringDiscount,
       membershipDiscount,
       addonMemberDiscount,
-      total: Math.max(0, total),
+      referralDiscount,
+      codeDiscount,
+      total: Math.max(0, finalTotal),
       membershipFee
     };
   };
@@ -291,6 +314,91 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     setTimeout(() => {
       document.getElementById('payment-options')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  const handleApplyReferralCode = async () => {
+    if (!referralCode.trim()) {
+      toast({
+        title: "Missing Code",
+        description: "Please enter a referral code",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!customerInfo.email || !customerInfo.name) {
+      toast({
+        title: "Missing Information", 
+        description: "Please fill in your name and email first",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+        p_code: referralCode.trim(),
+        p_user_email: customerInfo.email,
+        p_user_name: customerInfo.name,
+        p_order_id: null
+      });
+      if (error) throw error;
+      const result = data as any;
+      if (result?.success) {
+        setAppliedReferral(result);
+        toast({
+          title: "Success!",
+          description: "Referral code applied! You get 10% off your service."
+        });
+      } else {
+        toast({
+          title: "Invalid Code",
+          description: "The referral code you entered is not valid",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error applying referral code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to apply referral code. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleApplyDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      toast({
+        title: "Missing Code",
+        description: "Please enter a discount code",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (discountCode.startsWith('FRIEND50')) {
+      if (appliedReferral) {
+        toast({
+          title: "Cannot Combine",
+          description: "Cannot combine discount codes with referral codes",
+          variant: "destructive"
+        });
+        return;
+      }
+      setAppliedDiscount({
+        code: discountCode,
+        type: 'deep_clean_50_percent',
+        description: '50% off deep cleaning service'
+      });
+      toast({
+        title: "Success!",
+        description: "Discount code applied! 50% off your deep cleaning service."
+      });
+    } else {
+      toast({
+        title: "Invalid Code",
+        description: "The discount code you entered is not valid",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePaymentOptionSelect = (option: string) => {
@@ -851,64 +959,166 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  {/* Customer Information Form */}
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Customer Information
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="customer-name" className="text-sm font-medium">Full Name *</Label>
-                        <Input
-                          id="customer-name"
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={customerInfo.name}
-                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="customer-email" className="text-sm font-medium">Email Address *</Label>
-                        <Input
-                          id="customer-email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={customerInfo.email}
-                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="customer-phone" className="text-sm font-medium">Phone Number *</Label>
-                        <Input
-                          id="customer-phone"
-                          type="tel"
-                          placeholder="Enter your phone number"
-                          value={customerInfo.phone}
-                          onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                   {/* Customer Information Form */}
+                   <div className="bg-white rounded-lg p-4 border border-green-200">
+                     <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+                       <User className="h-4 w-4" />
+                       Customer Information
+                     </h4>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       <div className="space-y-2">
+                         <Label htmlFor="customer-name" className="text-sm font-medium">Full Name *</Label>
+                         <Input
+                           id="customer-name"
+                           type="text"
+                           placeholder="Enter your full name"
+                           value={customerInfo.name}
+                           onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                           className="w-full"
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="customer-email" className="text-sm font-medium">Email Address *</Label>
+                         <Input
+                           id="customer-email"
+                           type="email"
+                           placeholder="Enter your email"
+                           value={customerInfo.email}
+                           onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                           className="w-full"
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="customer-phone" className="text-sm font-medium">Phone Number *</Label>
+                         <Input
+                           id="customer-phone"
+                           type="tel"
+                           placeholder="Enter your phone number"
+                           value={customerInfo.phone}
+                           onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                           className="w-full"
+                         />
+                       </div>
+                     </div>
+                   </div>
 
-                  {/* Booking Summary */}
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <h4 className="font-semibold text-green-800 mb-2">Booking Summary:</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div><strong>Service:</strong> {selectedTierData?.id === 'general' ? 'General Clean' : selectedTierData?.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
-                      <div><strong>Frequency:</strong> {selectedRecurringData?.name || 'Not selected'}</div>
-                      <div><strong>Square Footage:</strong> {squareFootageTiers.find(tier => Math.floor((tier.min + tier.max) / 2) === squareFootage)?.label || squareFootage + ' sq ft'}</div>
-                      <div><strong>Bedrooms:</strong> {bedrooms}</div>
-                      <div><strong>Bathrooms:</strong> {bathrooms}</div>
-                      <div><strong>Payment:</strong> {selectedPaymentOption === 'half' ? 'Pay Half' : selectedPaymentOption === 'prepayment' ? 'Prepayment $150' : 'Pay in Full'}</div>
-                      {customerInfo.name && <div><strong>Customer:</strong> {customerInfo.name}</div>}
-                      {customerInfo.email && <div><strong>Email:</strong> {customerInfo.email}</div>}
-                      {customerInfo.phone && <div><strong>Phone:</strong> {customerInfo.phone}</div>}
-                    </div>
-                  </div>
+                   {/* See What's Included Section */}
+                   <div className="bg-white rounded-lg p-4 border border-green-200">
+                     <Collapsible open={showServiceDetails} onOpenChange={setShowServiceDetails}>
+                       <CollapsibleTrigger asChild>
+                         <Button 
+                           variant="outline" 
+                           className="w-full justify-between text-green-800 border-green-300 hover:bg-green-50"
+                         >
+                           <span className="flex items-center gap-2">
+                             <Check className="h-4 w-4" />
+                             See What's Included in Your Service
+                           </span>
+                           {showServiceDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                         </Button>
+                       </CollapsibleTrigger>
+                       <CollapsibleContent className="mt-4">
+                         <ServiceIncluded 
+                           cleaningType={selectedTierData?.id === 'premium' ? 'deep' : 'general'}
+                           serviceType="recurring"
+                         />
+                       </CollapsibleContent>
+                     </Collapsible>
+                   </div>
+
+                   {/* Referral & Discount Codes Section */}
+                   <div className="bg-white rounded-lg p-4 border border-green-200">
+                     <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+                       <Tag className="h-4 w-4" />
+                       Referral & Discount Codes
+                     </h4>
+                     <div className="space-y-4">
+                       {/* Referral Code */}
+                       <div className="space-y-2">
+                         <Label htmlFor="referral-code" className="text-sm font-medium">
+                           Referral Code (10% off)
+                         </Label>
+                         <div className="flex gap-2">
+                           <Input
+                             id="referral-code"
+                             type="text"
+                             placeholder="Enter friend's referral code"
+                             value={referralCode}
+                             onChange={(e) => setReferralCode(e.target.value)}
+                             className="flex-1"
+                             disabled={!!appliedReferral || !!appliedDiscount}
+                           />
+                           <Button 
+                             onClick={handleApplyReferralCode}
+                             disabled={!referralCode.trim() || !!appliedReferral || !!appliedDiscount || !customerInfo.name || !customerInfo.email}
+                             size="sm"
+                           >
+                             Apply
+                           </Button>
+                         </div>
+                         {appliedReferral && (
+                           <div className="text-sm text-green-600 flex items-center gap-1">
+                             <Check className="h-3 w-3" />
+                             Referral code applied! 10% discount active.
+                           </div>
+                         )}
+                       </div>
+
+                       {/* Discount Code */}
+                       <div className="space-y-2">
+                         <Label htmlFor="discount-code" className="text-sm font-medium">
+                           Discount Code
+                         </Label>
+                         <div className="flex gap-2">
+                           <Input
+                             id="discount-code"
+                             type="text"
+                             placeholder="Enter promotional code (e.g., FRIEND50)"
+                             value={discountCode}
+                             onChange={(e) => setDiscountCode(e.target.value)}
+                             className="flex-1"
+                             disabled={!!appliedDiscount || !!appliedReferral}
+                           />
+                           <Button 
+                             onClick={handleApplyDiscountCode}
+                             disabled={!discountCode.trim() || !!appliedDiscount || !!appliedReferral}
+                             size="sm"
+                           >
+                             Apply
+                           </Button>
+                         </div>
+                         {appliedDiscount && (
+                           <div className="text-sm text-green-600 flex items-center gap-1">
+                             <Check className="h-3 w-3" />
+                             Discount code applied! {appliedDiscount.description}
+                           </div>
+                         )}
+                         {(appliedReferral || appliedDiscount) && (
+                           <p className="text-xs text-muted-foreground">
+                             Note: Only one discount can be applied per booking.
+                           </p>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+
+                   {/* Booking Summary */}
+                   <div className="bg-white rounded-lg p-4 border border-green-200">
+                     <h4 className="font-semibold text-green-800 mb-2">Booking Summary:</h4>
+                     <div className="grid grid-cols-2 gap-2 text-sm">
+                       <div><strong>Service:</strong> {selectedTierData?.id === 'general' ? 'General Clean' : selectedTierData?.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
+                       <div><strong>Frequency:</strong> {selectedRecurringData?.name || 'Not selected'}</div>
+                       <div><strong>Square Footage:</strong> {squareFootageTiers.find(tier => Math.floor((tier.min + tier.max) / 2) === squareFootage)?.label || squareFootage + ' sq ft'}</div>
+                       <div><strong>Bedrooms:</strong> {bedrooms}</div>
+                       <div><strong>Bathrooms:</strong> {bathrooms}</div>
+                       <div><strong>Payment:</strong> {selectedPaymentOption === 'half' ? 'Pay Half ($' + Math.round(pricing.total / 2) + ')' : selectedPaymentOption === 'prepayment' ? 'Prepayment ($150)' : 'Pay in Full ($' + pricing.total + ')'}</div>
+                       {customerInfo.name && <div><strong>Customer:</strong> {customerInfo.name}</div>}
+                       {customerInfo.email && <div><strong>Email:</strong> {customerInfo.email}</div>}
+                       {customerInfo.phone && <div><strong>Phone:</strong> {customerInfo.phone}</div>}
+                       {appliedReferral && <div className="col-span-2"><strong className="text-green-600">Referral Applied:</strong> <span className="text-green-600">10% off (Code: {appliedReferral.code})</span></div>}
+                       {appliedDiscount && <div className="col-span-2"><strong className="text-green-600">Discount Applied:</strong> <span className="text-green-600">{appliedDiscount.description} (Code: {appliedDiscount.code})</span></div>}
+                     </div>
+                   </div>
                   
                   <Button 
                     onClick={handleCompleteBooking}
@@ -933,6 +1143,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             subtotal={pricing.subtotal}
             recurringDiscount={pricing.recurringDiscount}
             membershipDiscount={pricing.membershipDiscount}
+            referralDiscount={pricing.referralDiscount}
+            codeDiscount={pricing.codeDiscount}
             total={pricing.total}
             membershipFee={pricing.membershipFee}
             selectedTier={selectedTierData}
