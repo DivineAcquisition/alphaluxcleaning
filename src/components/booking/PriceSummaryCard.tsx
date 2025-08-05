@@ -121,9 +121,9 @@ export function PriceSummaryCard({
 
         {/* Total */}
         <div className="space-y-3">
-          <div className="flex justify-between items-center text-lg font-bold">
+          <div className="flex justify-between items-center text-xl font-bold bg-primary/10 p-3 rounded-lg">
             <span>Total</span>
-            <span className="text-primary">${total}</span>
+            <span className="text-primary text-2xl">${total}</span>
           </div>
 
           {/* Savings Highlight */}

@@ -178,7 +178,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedTier, setSelectedTier] = useState<string>('general');
+  const [selectedTier, setSelectedTier] = useState<string>('complete'); // Default to complete for better visibility
   const [selectedRecurring, setSelectedRecurring] = useState<string>('bi-weekly');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
