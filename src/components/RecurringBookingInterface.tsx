@@ -317,6 +317,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   };
 
   const handleApplyReferralCode = async () => {
+    console.log("handleApplyReferralCode called");
     if (!referralCode.trim()) {
       toast({
         title: "Missing Code",
@@ -512,6 +513,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     { id: 4, title: 'Confirmation', description: 'Complete' }
   ];
 
+  console.log("RecurringBookingInterface rendering, handleApplyReferralCode exists:", typeof handleApplyReferralCode);
+  
   return (
     <div className="w-full">
       {/* Progress Indicator */}
