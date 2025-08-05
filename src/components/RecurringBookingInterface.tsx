@@ -9,14 +9,13 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
 import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
-import { ServiceIncluded } from '@/components/ServiceIncluded';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ServiceDetailsDialog } from '@/components/ServiceDetailsDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -210,7 +209,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [discountCode, setDiscountCode] = useState("");
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
-  const [showServiceDetails, setShowServiceDetails] = useState(false);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -1005,29 +1003,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      </div>
                    </div>
 
-                   {/* See What's Included Section */}
-                   <div className="bg-white rounded-lg p-4 border border-green-200">
-                     <Collapsible open={showServiceDetails} onOpenChange={setShowServiceDetails}>
-                       <CollapsibleTrigger asChild>
-                         <Button 
-                           variant="outline" 
-                           className="w-full justify-between text-green-800 border-green-300 hover:bg-green-50"
-                         >
-                           <span className="flex items-center gap-2">
-                             <Check className="h-4 w-4" />
-                             See What's Included in Your Service
-                           </span>
-                           {showServiceDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                         </Button>
-                       </CollapsibleTrigger>
-                       <CollapsibleContent className="mt-4">
-                         <ServiceIncluded 
-                           cleaningType={selectedTierData?.id === 'premium' ? 'deep' : 'general'}
-                           serviceType="recurring"
-                         />
-                       </CollapsibleContent>
-                     </Collapsible>
-                   </div>
+                    {/* See What's Included Section */}
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
+                      <ServiceDetailsDialog 
+                        cleaningType={selectedTierData?.id === 'premium' ? 'deep' : 'general'}
+                        serviceType="recurring"
+                      />
+                    </div>
 
                    {/* Referral & Discount Codes Section */}
                    <div className="bg-white rounded-lg p-4 border border-green-200">
