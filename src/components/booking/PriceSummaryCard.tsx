@@ -119,7 +119,7 @@ export function PriceSummaryCard({
           {/* Recurring Discount */}
           {recurringDiscount > 0 && selectedRecurring && (
             <div className="flex justify-between text-green-600">
-              <span>{selectedRecurring.name} Discount ({selectedRecurring.discount}%)</span>
+              <span>{selectedRecurring?.name || 'Recurring'} Discount ({selectedRecurring?.discount || 0}%)</span>
               <span>-${recurringDiscount}</span>
             </div>
           )}
@@ -159,7 +159,7 @@ export function PriceSummaryCard({
               </div>
               {selectedRecurring?.frequency !== 'once' && (
                 <p className="text-sm text-green-700 mt-1">
-                  With {selectedRecurring?.name.toLowerCase()} service
+                  With {selectedRecurring?.name?.toLowerCase() || 'recurring'} service
                 </p>
               )}
             </div>
@@ -169,7 +169,7 @@ export function PriceSummaryCard({
           {selectedRecurring?.frequency !== 'once' && (
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
               <div className="text-primary font-medium text-sm">
-                🔄 Recurring {selectedRecurring.name} Service
+                🔄 Recurring {selectedRecurring?.name || 'Service'} Service
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Your next service will be automatically scheduled
