@@ -74,9 +74,9 @@ export function PriceSummaryCard({
             <div className="flex justify-between items-center">
               <div>
                 <span className="font-medium">
-                  {selectedTier.id === 'general' ? 'Signature Clean' : 
-                   selectedTier.id === 'complete' ? 'Signature Clean' : 
-                   'Ultimate Deep Clean'}
+                  {selectedTier.id === 'general' ? 'General Cleaning' : 
+                   selectedTier.id === 'complete' ? 'Deep Clean' : 
+                   'Premium Deep Clean'}
                 </span>
                 <div className="text-sm text-muted-foreground">
                   {selectedTier.hours} hours • {selectedTier.cleaners} cleaners
