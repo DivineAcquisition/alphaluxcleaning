@@ -283,13 +283,13 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                   <SelectItem value="general">
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4" />
-                      General Cleaning
+                      Signature Clean
                     </div>
                   </SelectItem>
                   <SelectItem value="deep">
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 fill-current" />
-                      Deep Cleaning
+                      Ultimate Deep Cleaning
                     </div>
                   </SelectItem>
                   <SelectItem value="moveout">

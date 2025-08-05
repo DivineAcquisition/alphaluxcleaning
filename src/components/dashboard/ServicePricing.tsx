@@ -126,42 +126,47 @@ const originalPricingTiers = [
   }
 ];
 
-// These are the final prices - no additional discounting needed
-const pricingTiers = originalPricingTiers.map(tier => ({
-  ...tier,
-  pricing: {
-    weekly: {
-      original: tier.originalPricing.weekly,
-      discount: 0,
-      final: tier.originalPricing.weekly
-    },
-    biweekly: {
-      original: tier.originalPricing.biweekly,
-      discount: 0,
-      final: tier.originalPricing.biweekly
-    },
-    monthly: {
-      original: tier.originalPricing.monthly,
-      discount: 0,
-      final: tier.originalPricing.monthly
-    },
-    oneTime: {
-      original: tier.originalPricing.oneTime,
-      discount: 0,
-      final: tier.originalPricing.oneTime
-    },
-    deepClean: {
-      original: tier.originalPricing.deepClean,
-      discount: tier.originalPricing.deepClean > 0 ? 75 : 0,
-      final: tier.originalPricing.deepClean > 0 ? Math.round((tier.originalPricing.deepClean - 75) * 100) / 100 : 0
+// Apply maintenance discount (15%) and premium discount (20%)
+const pricingTiers = originalPricingTiers.map(tier => {
+  const maintenanceDiscount = 0.15; // 15% for recurring services
+  const premiumDiscount = 0.20; // 20% for premium deep clean
+  
+  return {
+    ...tier,
+    pricing: {
+      weekly: {
+        original: tier.originalPricing.weekly,
+        discount: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * maintenanceDiscount * 100) / 100 : 0,
+        final: tier.originalPricing.weekly > 0 ? Math.round(tier.originalPricing.weekly * (1 - maintenanceDiscount) * 100) / 100 : 0
+      },
+      biweekly: {
+        original: tier.originalPricing.biweekly,
+        discount: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * maintenanceDiscount * 100) / 100 : 0,
+        final: tier.originalPricing.biweekly > 0 ? Math.round(tier.originalPricing.biweekly * (1 - maintenanceDiscount) * 100) / 100 : 0
+      },
+      monthly: {
+        original: tier.originalPricing.monthly,
+        discount: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * maintenanceDiscount * 100) / 100 : 0,
+        final: tier.originalPricing.monthly > 0 ? Math.round(tier.originalPricing.monthly * (1 - maintenanceDiscount) * 100) / 100 : 0
+      },
+      oneTime: {
+        original: tier.originalPricing.oneTime,
+        discount: 0,
+        final: tier.originalPricing.oneTime
+      },
+      deepClean: {
+        original: tier.originalPricing.deepClean,
+        discount: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * premiumDiscount * 100) / 100 : 0,
+        final: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * (1 - premiumDiscount) * 100) / 100 : 0
+      }
     }
-  }
-}));
+  };
+});
 
 const serviceTypes = [
   { 
-    name: "General Cleaning", 
-    description: "Standard maintenance cleaning for occupied homes",
+    name: "Signature Clean", 
+    description: "Deep cleaning service for regular maintenance (15% off recurring)",
     icon: Home, 
     color: "text-primary",
     features: [
@@ -177,12 +182,12 @@ const serviceTypes = [
     ]
   },
     { 
-    name: "Deep Cleaning", 
-    description: "Comprehensive cleaning with detailed work ($75 off regular price)",
+    name: "Ultimate Deep Cleaning", 
+    description: "Premium deep clean - optimal for larger homes over 3,000 sq ft (20% off)",
     icon: Star, 
     color: "text-accent",
     features: [
-      "Everything in General Cleaning",
+      "Everything in Signature Clean",
       "Dust ceiling fans, air vents, baseboards",
       "Clean windowsills & mini blinds",
       "Windex mirrors & picture glass",
@@ -246,10 +251,14 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Weekly Service:</span>
+                      {tier.pricing.weekly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs">15% OFF</Badge>
+                      )}
                     </div>
                     {tier.pricing.weekly.original > 0 ? (
-                      <div className="font-bold text-primary">
-                        ${tier.pricing.weekly.final}
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground line-through">${tier.pricing.weekly.original}</div>
+                        <div className="font-bold text-primary">${tier.pricing.weekly.final}</div>
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>
@@ -260,10 +269,14 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Every Other Week:</span>
+                      {tier.pricing.biweekly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs">15% OFF</Badge>
+                      )}
                     </div>
                     {tier.pricing.biweekly.original > 0 ? (
-                      <div className="font-bold text-primary">
-                        ${tier.pricing.biweekly.final}
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground line-through">${tier.pricing.biweekly.original}</div>
+                        <div className="font-bold text-primary">${tier.pricing.biweekly.final}</div>
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>
@@ -274,10 +287,14 @@ export function ServicePricing() {
                   <div className="p-3 bg-muted/50 rounded relative">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-muted-foreground font-medium">Monthly Service:</span>
+                      {tier.pricing.monthly.original > 0 && (
+                        <Badge variant="secondary" className="text-xs">15% OFF</Badge>
+                      )}
                     </div>
                     {tier.pricing.monthly.original > 0 ? (
-                      <div className="font-bold text-primary">
-                        ${tier.pricing.monthly.final}
+                      <div className="space-y-1">
+                        <div className="text-xs text-muted-foreground line-through">${tier.pricing.monthly.original}</div>
+                        <div className="font-bold text-primary">${tier.pricing.monthly.final}</div>
                       </div>
                     ) : (
                       <div className="font-semibold text-primary">Call for Quote</div>
@@ -299,13 +316,13 @@ export function ServicePricing() {
                   </div>
                 </div>
 
-                {/* Deep Clean Special */}
+                {/* Ultimate Deep Clean Special */}
                 <div className="p-4 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20 relative">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-accent">Deep Clean Special:</span>
+                    <span className="font-medium text-accent">Ultimate Deep Clean:</span>
                     {tier.pricing.deepClean.original > 0 && (
                        <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
-                         $75 OFF!
+                         20% OFF!
                        </Badge>
                     )}
                   </div>
@@ -316,7 +333,7 @@ export function ServicePricing() {
                         <span className="line-through">${tier.pricing.deepClean.original}</span>
                       </div>
                       <div className="flex justify-between text-sm text-destructive">
-                        <span>Huge Savings:</span>
+                        <span>Premium Savings:</span>
                         <span>-${tier.pricing.deepClean.discount}</span>
                       </div>
                       <div className="flex justify-between font-bold text-accent text-lg border-t border-accent/30 pt-2">
@@ -340,10 +357,10 @@ export function ServicePricing() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {serviceTypes.map((service) => (
             <Card key={service.name} className="relative overflow-hidden h-full">
-              {service.name === "Deep Cleaning" && (
+              {service.name === "Ultimate Deep Cleaning" && (
                 <div className="absolute top-2 right-2 z-10">
                   <Badge variant="destructive" className="animate-pulse bg-destructive text-destructive-foreground">
-                    $75 OFF!
+                    20% OFF!
                   </Badge>
                 </div>
               )}
@@ -402,14 +419,18 @@ export function ServicePricing() {
       <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
         <CardContent className="p-6">
           <h3 className="text-xl font-bold mb-4 text-center">Special Offers</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="text-center p-4 bg-primary/10 rounded-lg">
-              <h4 className="font-semibold text-primary mb-2">Deep Clean Discount</h4>
-              <p className="text-sm text-muted-foreground">$75 off all deep cleaning services</p>
+              <h4 className="font-semibold text-primary mb-2">Maintenance Clean Discount</h4>
+              <p className="text-sm text-muted-foreground">15% off all recurring services</p>
             </div>
             <div className="text-center p-4 bg-accent/10 rounded-lg">
-              <h4 className="font-semibold text-accent mb-2">Recurring Service Benefits</h4>
-              <p className="text-sm text-muted-foreground">25% off recurring services + 6th cleaning FREE</p>
+              <h4 className="font-semibold text-accent mb-2">Premium Discount</h4>
+              <p className="text-sm text-muted-foreground">20% off Ultimate Deep Cleaning</p>
+            </div>
+            <div className="text-center p-4 bg-success/10 rounded-lg">
+              <h4 className="font-semibold text-success mb-2">Recurring Benefits</h4>
+              <p className="text-sm text-muted-foreground">6th cleaning FREE with recurring service</p>
             </div>
           </div>
         </CardContent>
