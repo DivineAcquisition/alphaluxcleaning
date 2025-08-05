@@ -35,6 +35,30 @@ export function PriceSummaryCard({
 }: PriceSummaryProps) {
   const totalSavings = recurringDiscount + membershipDiscount;
   
+  // Show placeholder when no service is selected
+  if (!selectedTier) {
+    return (
+      <Card className="sticky top-4 border-0 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5" />
+            Order Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="text-center py-8">
+            <div className="text-muted-foreground mb-2">
+              Select a service to see pricing
+            </div>
+            <div className="text-2xl font-bold text-primary">
+              $--
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="sticky top-4 border-0 shadow-xl">
       <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
@@ -50,9 +74,9 @@ export function PriceSummaryCard({
             <div className="flex justify-between items-center">
               <div>
                 <span className="font-medium">
-                  {selectedTier.id === 'general' ? 'General Clean' : 
-                   selectedTier.id === 'complete' ? 'Complete Clean' : 
-                   'Premium Deep Clean'}
+                  {selectedTier.id === 'general' ? 'Signature Clean' : 
+                   selectedTier.id === 'complete' ? 'Signature Clean' : 
+                   'Ultimate Deep Clean'}
                 </span>
                 <div className="text-sm text-muted-foreground">
                   {selectedTier.hours} hours • {selectedTier.cleaners} cleaners

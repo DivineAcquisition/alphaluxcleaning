@@ -56,8 +56,8 @@ const bookingTiers: BookingTier[] = [
     id: 'general',
     hours: 2,
     basePrice: 250,
-    description: 'Maintenance Clean',
-    shortDescription: 'Perfect for regularly maintained homes',
+    description: 'Signature Clean',
+    shortDescription: 'Perfect for regular maintenance with 15% savings on recurring',
     cleaners: 2,
     icon: 'home',
     popular: false,
@@ -74,13 +74,16 @@ const bookingTiers: BookingTier[] = [
     hours: 4,
     basePrice: 420,
     description: 'Signature Clean',
-    shortDescription: 'Our most popular comprehensive service',
+    shortDescription: 'Our most popular comprehensive service with 15% savings on recurring',
     cleaners: 2,
     icon: 'star',
     popular: true,
     bestFor: 'Most homes every 2-4 weeks',
     includes: [
-      'Everything in Maintenance Clean',
+      'All surfaces dusted and wiped',
+      'Floors vacuumed and mopped', 
+      'Bathrooms deep cleaned',
+      'Kitchen cleaned and sanitized',
       'Inside appliances cleaned',
       'Detailed bathroom sanitization',
       'Light fixture dusting',
@@ -90,9 +93,9 @@ const bookingTiers: BookingTier[] = [
   {
     id: 'premium',
     hours: 6,
-    basePrice: 600,
+    basePrice: 480,
     description: 'Ultimate Deep Clean',
-    shortDescription: 'Complete top-to-bottom transformation',
+    shortDescription: 'Complete top-to-bottom transformation with 20% automatic savings',
     cleaners: 3,
     icon: 'sparkles',
     popular: false,
@@ -178,8 +181,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedTier, setSelectedTier] = useState<string>('complete'); // Default to complete for better visibility
-  const [selectedRecurring, setSelectedRecurring] = useState<string>('bi-weekly');
+  const [selectedTier, setSelectedTier] = useState<string>(''); // No default selection
+  const [selectedRecurring, setSelectedRecurring] = useState<string>(''); // No default selection
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
   const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
@@ -194,11 +197,33 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<string>('');
   const [showCompleteBooking, setShowCompleteBooking] = useState<boolean>(false);
 
-  const selectedTierData = bookingTiers.find(tier => tier.id === selectedTier)!;
-  const selectedRecurringData = recurringOptions.find(opt => opt.id === selectedRecurring)!;
+  const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
+  const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
 
   const calculatePricing = () => {
+    if (!selectedTierData) {
+      return {
+        basePrice: 0,
+        addOnsTotal: 0,
+        subtotal: 0,
+        recurringDiscount: 0,
+        membershipDiscount: 0,
+        addonMemberDiscount: 0,
+        total: 0,
+        membershipFee: 0
+      };
+    }
+
     let basePrice = selectedTierData.basePrice;
+    
+    // Apply new discount structure
+    if (selectedTier === 'premium') {
+      // Ultimate Deep Clean gets 20% automatic discount
+      basePrice = Math.round(basePrice * 0.8);
+    } else if ((selectedTier === 'general' || selectedTier === 'complete') && selectedRecurringData && selectedRecurringData.frequency !== 'once') {
+      // Signature Clean gets 15% discount on recurring services
+      basePrice = Math.round(basePrice * 0.85);
+    }
     
     // Apply new client special for Complete Clean
     if (newClient && selectedTier === 'complete') {
@@ -222,7 +247,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       : 0;
     
     const subtotal = basePrice + addOnsTotal;
-    const recurringDiscount = Math.round(subtotal * (selectedRecurringData.discount / 100));
+    const recurringDiscount = selectedRecurringData ? Math.round(subtotal * (selectedRecurringData.discount / 100)) : 0;
     const membershipDiscount = (existingMember || addMembership) ? 20 : 0;
     
     const total = subtotal - recurringDiscount - membershipDiscount;
