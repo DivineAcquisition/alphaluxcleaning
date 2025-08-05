@@ -836,8 +836,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                   <div className="bg-white rounded-lg p-4 border border-green-200">
                     <h4 className="font-semibold text-green-800 mb-2">Booking Summary:</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div><strong>Service:</strong> {selectedTierData.id === 'general' ? 'General Clean' : selectedTierData.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
-                      <div><strong>Frequency:</strong> {selectedRecurringData.name}</div>
+                      <div><strong>Service:</strong> {selectedTierData?.id === 'general' ? 'General Clean' : selectedTierData?.id === 'complete' ? 'Complete Clean' : 'Premium Deep Clean'}</div>
+                      <div><strong>Frequency:</strong> {selectedRecurringData?.name || 'Not selected'}</div>
                       <div><strong>Square Footage:</strong> {squareFootageTiers.find(tier => Math.floor((tier.min + tier.max) / 2) === squareFootage)?.label || squareFootage + ' sq ft'}</div>
                       <div><strong>Bedrooms:</strong> {bedrooms}</div>
                       <div><strong>Bathrooms:</strong> {bathrooms}</div>
