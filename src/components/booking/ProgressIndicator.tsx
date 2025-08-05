@@ -25,7 +25,7 @@ export function ProgressIndicator({
       </div>
       
       {/* Step Indicators */}
-      <div className="flex items-center justify-between px-[240px]">
+      <div className="flex items-center justify-between px-[47px]">
         {steps.map((step, index) => <div key={step.id} className="flex items-center">
             <div className={`flex items-center space-x-3 ${index < steps.length - 1 ? 'flex-1' : ''}`}>
               <div className="flex flex-col items-center">
