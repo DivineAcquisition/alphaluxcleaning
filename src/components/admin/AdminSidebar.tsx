@@ -25,7 +25,11 @@ import {
   Briefcase,
   BookOpen,
   Award,
-  TrendingUp
+  TrendingUp,
+  ClipboardList,
+  CheckCircle,
+  Eye,
+  Building2
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,42 +47,6 @@ const navigationItems = [
     path: "/admin-dashboard",
     icon: Settings,
     description: "Settings"
-  },
-  {
-    label: "Schedule",
-    path: "/admin-dashboard/schedule",
-    icon: Calendar,
-    description: "Manage Schedule"
-  },
-  {
-    label: "Jobs",
-    path: "/admin-dashboard/jobs",
-    icon: Briefcase,
-    description: "Job Management"
-  },
-  {
-    label: "Team",
-    path: "/admin-dashboard/team",
-    icon: Users,
-    description: "Team Management"
-  },
-  {
-    label: "Bookings",
-    path: "/admin-dashboard/bookings",
-    icon: BookOpen,
-    description: "Booking History"
-  },
-  {
-    label: "Quality",
-    path: "/admin-dashboard/quality",
-    icon: Award,
-    description: "Quality Control"
-  },
-  {
-    label: "Performance",
-    path: "/admin-dashboard/performance",
-    icon: TrendingUp,
-    description: "Performance Metrics"
   },
   {
     label: "Subcontractors",
@@ -103,6 +71,51 @@ const navigationItems = [
     path: "/subcontractor-dashboard",
     icon: UserCheck,
     description: "Sub view"
+  },
+  {
+    label: "Booking Preview",
+    path: "/admin-booking-preview",
+    icon: Eye,
+    description: "Test booking flow"
+  }
+];
+
+const officeManagerItems = [
+  {
+    label: "Office Dashboard",
+    path: "/office-dashboard",
+    icon: Building2,
+    description: "Operations hub"
+  },
+  {
+    label: "Daily Jobs",
+    path: "/office-jobs",
+    icon: ClipboardList,
+    description: "Manage today's jobs"
+  },
+  {
+    label: "Team Management",
+    path: "/office-team",
+    icon: Users,
+    description: "Manage cleaners"
+  },
+  {
+    label: "Bookings",
+    path: "/office-bookings",
+    icon: Calendar,
+    description: "Customer bookings"
+  },
+  {
+    label: "Quality Control",
+    path: "/office-quality",
+    icon: CheckCircle,
+    description: "Quality reports"
+  },
+  {
+    label: "Performance",
+    path: "/office-performance",
+    icon: TrendingUp,
+    description: "Team metrics"
   }
 ];
 
@@ -140,7 +153,7 @@ export function AdminSidebar() {
       <SidebarContent className="px-2">
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2">
-            Management Hub
+            Admin Tools
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -180,6 +193,61 @@ export function AdminSidebar() {
                               {item.label}
                             </span>
                             <p className={`text-xs opacity-80 ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                              {item.description}
+                            </p>
+                          </div>
+                        )}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2">
+            Office Operations
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {officeManagerItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton 
+                      asChild
+                      isActive={active}
+                      className={`
+                        group relative transition-all duration-200 hover:shadow-md
+                        ${active 
+                          ? "bg-gradient-to-r from-secondary to-secondary/90 text-secondary-foreground shadow-lg scale-[1.02] border-secondary/20" 
+                          : "hover:bg-secondary/5 hover:border-secondary/10 border-transparent"
+                        }
+                        border rounded-xl p-3 min-h-[3rem]
+                      `}
+                    >
+                      <button 
+                        onClick={() => navigate(item.path)}
+                        className="w-full flex items-center gap-3 text-left"
+                      >
+                        <div className={`
+                          p-2 rounded-lg transition-colors
+                          ${active 
+                            ? "bg-secondary-foreground/20" 
+                            : "bg-secondary/10 group-hover:bg-secondary/20"
+                          }
+                        `}>
+                          <Icon className={`h-4 w-4 ${active ? "text-secondary-foreground" : "text-secondary"}`} />
+                        </div>
+                        {open && (
+                          <div className="flex-1 min-w-0">
+                            <span className={`font-semibold text-sm block ${active ? "text-secondary-foreground" : ""}`}>
+                              {item.label}
+                            </span>
+                            <p className={`text-xs opacity-80 ${active ? "text-secondary-foreground/80" : "text-muted-foreground"}`}>
                               {item.description}
                             </p>
                           </div>

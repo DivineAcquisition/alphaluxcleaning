@@ -12,40 +12,15 @@ const AdminBookingPreview = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const checkAdminAccess = async () => {
+  const navigateToPage = (path: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in to access admin features");
-        navigate('/auth');
-        return false;
-      }
-
-      const { data: userRole } = await supabase.rpc('get_user_role', {
-        _user_id: user.id
-      });
-      
-      if (userRole !== 'super_admin') {
-        toast.error("Access denied. Super admin role required.");
-        navigate('/');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error checking admin access:", error);
-      toast.error("Error checking permissions");
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const navigateToPage = async (path: string) => {
-    const hasAccess = await checkAdminAccess();
-    if (hasAccess) {
       navigate(path);
+    } catch (error) {
+      console.error("Navigation error:", error);
+      toast.error("Error navigating to page");
+    } finally {
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
