@@ -68,6 +68,11 @@ interface Subcontractor {
   total_earnings: number;
   rating: number;
   is_available: boolean;
+  review_count: number;
+  completed_jobs_count: number;
+  hourly_rate: number;
+  monthly_fee: number;
+  tier_level: number;
 }
 
 interface JobAssignment {

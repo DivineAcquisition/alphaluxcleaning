@@ -2,218 +2,201 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { CreditCard, TrendingUp, Star, CheckCircle } from "lucide-react";
+import { useSubcontractorTiers, type SubcontractorWithTier } from "@/hooks/useSubcontractorTiers";
+import { CreditCard, TrendingUp, Star, CheckCircle, Clock, DollarSign, Target } from "lucide-react";
 
 interface SubcontractorSubscriptionSettingsProps {
-  subcontractor: {
-    id: string;
-    split_tier: string;
-    subscription_status: string;
-    user_id: string;
-    full_name: string;
-  };
+  subcontractor: SubcontractorWithTier;
   onUpdate: () => void;
 }
 
-const SPLIT_TIERS = [
-  {
-    id: '60_40',
-    name: 'Starter',
-    split: '60/40',
-    yourShare: '40%',
-    price: 'Free',
-    features: ['Basic job assignments', 'No guaranteed jobs', 'Standard support', 'Weekly payments'],
-    isPopular: false,
-  },
-  {
-    id: '50_50',
-    name: 'Professional',
-    split: '50/50',
-    yourShare: '50%',
-    price: '$25/month',
-    features: ['Priority job assignments', '8 guaranteed jobs/month', 'Priority support', 'Bi-weekly payments'],
-    isPopular: true,
-  },
-  {
-    id: '35_65',
-    name: 'Premium',
-    split: '35/65',
-    yourShare: '65%',
-    price: '$75/month',
-    features: ['First priority on all jobs', '12 guaranteed jobs/month', 'Premium support', 'Weekly payments', 'Performance bonuses'],
-    isPopular: false,
-  },
-  {
-    id: '25_75',
-    name: 'Elite',
-    split: '25/75',
-    yourShare: '75%',
-    price: '$150/month',
-    features: ['Exclusive priority access', '20 guaranteed jobs/month', 'Dedicated support', 'Daily payments', 'Maximum bonuses', 'Territory protection'],
-    isPopular: false,
-  },
-];
-
 export const SubcontractorSubscriptionSettings = ({ subcontractor, onUpdate }: SubcontractorSubscriptionSettingsProps) => {
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<number | null>(null);
   const { toast } = useToast();
+  const { getTierInfo, getAllTiers, getNextTier, canUpgradeToTier } = useSubcontractorTiers();
 
-  const handleUpgrade = async (newTier: string) => {
-    if (newTier === '60_40') {
-      toast({
-        variant: "destructive",
-        title: "Downgrade Not Available",
-        description: "Contact support to downgrade your subscription.",
-      });
-      return;
-    }
+  const currentTierInfo = getTierInfo(subcontractor.tier_level);
+  const nextTier = getNextTier(subcontractor.tier_level);
+  const allTiers = getAllTiers();
 
-    setLoading(newTier);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-subcontractor-subscription', {
-        body: {
-          splitTier: newTier,
-          subcontractorData: {
-            fullName: subcontractor.full_name,
-            currentTier: subcontractor.split_tier
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
-        
-        toast({
-          title: "Redirecting to Payment",
-          description: "Complete your payment to upgrade your subscription.",
-        });
-      }
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      toast({
-        variant: "destructive",
-        title: "Upgrade Failed",
-        description: "Failed to start subscription upgrade. Please try again.",
-      });
-    } finally {
-      setLoading(null);
-    }
+  const getProgressToNextTier = () => {
+    if (!nextTier) return { reviewProgress: 100, jobProgress: 100 };
+    
+    const reviewProgress = Math.min((subcontractor.review_count / nextTier.requirements.reviews) * 100, 100);
+    const jobProgress = Math.min((subcontractor.completed_jobs_count / nextTier.requirements.jobs) * 100, 100);
+    
+    return { reviewProgress, jobProgress };
   };
 
-  const currentTier = SPLIT_TIERS.find(tier => tier.id === subcontractor.split_tier);
+  const { reviewProgress, jobProgress } = getProgressToNextTier();
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Subscription & Split Tier
+          <Clock className="h-5 w-5" />
+          Hourly Tier System
         </CardTitle>
         <CardDescription>
-          Upgrade your split tier to earn more per job and get priority access
+          Advance through tiers by completing jobs and collecting reviews to increase your hourly rate
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Current Plan */}
-        <div className="p-4 border rounded-lg bg-muted/50">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold">Current Plan</h3>
+        {/* Current Tier Status */}
+        <div className="p-4 border rounded-lg bg-gradient-to-r from-primary/10 to-primary/5">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">Current Tier</h3>
             <Badge variant={subcontractor.subscription_status === 'active' ? 'default' : 'secondary'}>
               {subcontractor.subscription_status}
             </Badge>
           </div>
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-2xl font-bold">{currentTier?.yourShare}</p>
-              <p className="text-sm text-muted-foreground">Your earnings share</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Star className="h-5 w-5 text-primary" />
+                <span className="text-2xl font-bold">{currentTierInfo.tier_name}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Tier {currentTierInfo.tier_level}</p>
             </div>
-            <div>
-              <p className="font-medium">{currentTier?.name}</p>
-              <p className="text-sm text-muted-foreground">{currentTier?.price}</p>
+            
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <span className="text-2xl font-bold">${subcontractor.hourly_rate}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Per Hour</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+                <span className="text-2xl font-bold">${subcontractor.monthly_fee}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Monthly Fee</p>
             </div>
           </div>
         </div>
 
-        {/* Available Plans */}
-        <div className="grid gap-4">
-          <h3 className="font-semibold">Available Plans</h3>
-          {SPLIT_TIERS.map((tier) => (
-            <Card 
-              key={tier.id} 
-              className={`relative ${tier.isPopular ? 'border-primary' : ''} ${tier.id === subcontractor.split_tier ? 'bg-muted/30' : ''}`}
-            >
-              {tier.isPopular && (
-                <div className="absolute -top-2 left-4">
-                  <Badge variant="default" className="bg-primary">
-                    <Star className="h-3 w-3 mr-1" />
-                    Most Popular
-                  </Badge>
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                <span className="font-medium">Reviews Collected</span>
+              </div>
+              <div className="text-2xl font-bold">{subcontractor.review_count}</div>
+              <p className="text-sm text-muted-foreground">Total customer reviews</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="font-medium">Jobs Completed</span>
+              </div>
+              <div className="text-2xl font-bold">{subcontractor.completed_jobs_count}</div>
+              <p className="text-sm text-muted-foreground">Successfully finished jobs</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Progress to Next Tier */}
+        {nextTier && (
+          <div className="p-4 border rounded-lg">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Progress to {nextTier.tier_name}</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Reviews: {subcontractor.review_count} / {nextTier.requirements.reviews}</span>
+                  <span>{reviewProgress.toFixed(0)}%</span>
                 </div>
-              )}
+                <Progress value={reviewProgress} className="h-2" />
+              </div>
               
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2">
-                      {tier.name}
-                      {tier.id === subcontractor.split_tier && (
-                        <Badge variant="outline" className="text-xs">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Current
-                        </Badge>
-                      )}
-                    </h4>
-                    <p className="text-2xl font-bold text-primary">{tier.yourShare}</p>
-                    <p className="text-sm text-muted-foreground">earnings per job</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{tier.price}</p>
-                    <p className="text-xs text-muted-foreground">Split: {tier.split}</p>
-                  </div>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Jobs: {subcontractor.completed_jobs_count} / {nextTier.requirements.jobs}</span>
+                  <span>{jobProgress.toFixed(0)}%</span>
                 </div>
+                <Progress value={jobProgress} className="h-2" />
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div>
+                  <p className="font-medium">Next Tier Benefits:</p>
+                  <p className="text-sm text-muted-foreground">
+                    ${nextTier.hourly_rate}/hr (${nextTier.monthly_fee}/month)
+                  </p>
+                </div>
+                <Badge variant={canUpgradeToTier(subcontractor, nextTier.tier_level) ? "default" : "secondary"}>
+                  {canUpgradeToTier(subcontractor, nextTier.tier_level) ? "Ready to Upgrade!" : "Keep Working!"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <ul className="space-y-1 mb-4">
-                  {tier.features.map((feature, index) => (
-                    <li key={index} className="text-sm flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3 text-green-500" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {tier.id !== subcontractor.split_tier && (
-                  <Button
-                    onClick={() => handleUpgrade(tier.id)}
-                    disabled={loading === tier.id}
-                    variant={tier.isPopular ? "default" : "outline"}
-                    className="w-full"
-                  >
-                    {loading === tier.id ? (
-                      "Processing..."
-                    ) : tier.id === '60_40' ? (
-                      "Contact Support"
-                    ) : (
-                      <>
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        Upgrade to {tier.name}
-                      </>
-                    )}
-                  </Button>
+        {/* All Tier Information */}
+        <div className="space-y-4">
+          <h3 className="font-semibold">Tier Structure</h3>
+          <div className="grid gap-3">
+            {allTiers.map((tier) => (
+              <Card 
+                key={tier.tier_level} 
+                className={`relative ${tier.tier_level === 2 ? 'border-primary' : ''} ${tier.tier_level === subcontractor.tier_level ? 'bg-primary/5 border-primary' : ''}`}
+              >
+                {tier.tier_level === 2 && (
+                  <div className="absolute -top-2 left-4">
+                    <Badge variant="default" className="bg-primary">
+                      <Star className="h-3 w-3 mr-1" />
+                      Most Popular
+                    </Badge>
+                  </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold">{tier.tier_name}</h4>
+                        {tier.tier_level === subcontractor.tier_level && (
+                          <Badge variant="outline" className="text-xs">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Current
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {tier.requirements.reviews > 0 
+                          ? `${tier.requirements.reviews} reviews • ${tier.requirements.jobs} jobs`
+                          : 'Starting tier'
+                        }
+                      </p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-primary">${tier.hourly_rate}/hr</p>
+                      <p className="text-sm text-muted-foreground">${tier.monthly_fee}/month</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <div className="text-xs text-muted-foreground p-3 bg-muted/50 rounded">
-          <p><strong>Note:</strong> Subscription changes take effect immediately upon successful payment. 
-          Guaranteed job minimums are calculated monthly. Contact support for downgrades or cancellations.</p>
+          <p><strong>Note:</strong> Tier advancement is automatic based on performance metrics. 
+          Monthly fees are charged automatically. Hourly rates can be manually adjusted by management when needed.</p>
         </div>
       </CardContent>
     </Card>
