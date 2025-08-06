@@ -94,7 +94,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription", // This handles both one-time and recurring items
-      success_url: `${origin}/payment-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/service-details?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/`,
       metadata: {
         customer_email: customerEmail,
