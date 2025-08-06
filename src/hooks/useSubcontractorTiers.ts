@@ -32,8 +32,52 @@ export function useSubcontractorTiers() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Static tier definitions based on database functions
+  // Dynamic tier definitions from database
+  const [tierConfigs, setTierConfigs] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchTierConfigs();
+  }, []);
+
+  const fetchTierConfigs = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('tier_system_config')
+        .select('*')
+        .eq('is_active', true)
+        .order('tier_level');
+      
+      if (error) throw error;
+      setTierConfigs(data || []);
+    } catch (error) {
+      console.error('Error fetching tier configs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tier configurations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getTierInfo = (tierLevel: number): TierInfo => {
+    const config = tierConfigs.find(c => c.tier_level === tierLevel);
+    if (config) {
+      return {
+        tier_level: config.tier_level,
+        tier_name: config.tier_name,
+        hourly_rate: config.hourly_rate,
+        monthly_fee: config.monthly_fee,
+        requirements: { 
+          reviews: config.reviews_required, 
+          jobs: config.jobs_required 
+        }
+      };
+    }
+    
+    // Fallback to static definitions
     switch (tierLevel) {
       case 3:
         return {
@@ -63,6 +107,9 @@ export function useSubcontractorTiers() {
   };
 
   const getAllTiers = (): TierInfo[] => {
+    if (tierConfigs.length > 0) {
+      return tierConfigs.map(config => getTierInfo(config.tier_level));
+    }
     return [1, 2, 3].map(level => getTierInfo(level));
   };
 

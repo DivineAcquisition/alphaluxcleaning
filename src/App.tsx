@@ -75,6 +75,8 @@ import SubcontractorTierManagement from '@/pages/SubcontractorTierManagement';
 import TierSystemConfig from '@/pages/TierSystemConfig';
 import TierPerformanceAnalytics from '@/pages/TierPerformanceAnalytics';
 import SubcontractorPaymentDashboard from '@/pages/SubcontractorPaymentDashboard';
+import { TierProgressionDashboard } from '@/components/admin/TierProgressionDashboard';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 const queryClient = new QueryClient();
 
@@ -393,6 +395,13 @@ function App() {
                 <Route path="/payment-dashboard" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
                     <SubcontractorPaymentDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tier-progression-dashboard" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <AdminLayout title="Tier Progression Dashboard" description="Monitor and manage automated tier progressions">
+                      <TierProgressionDashboard />
+                    </AdminLayout>
                   </ProtectedRoute>
                 } />
                 
