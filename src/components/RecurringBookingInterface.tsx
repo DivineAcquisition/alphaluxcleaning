@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
 import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
 import { ServiceDetailsDialog } from '@/components/ServiceDetailsDialog';
+import { ReferralCodeDialog } from '@/components/ReferralCodeDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -1018,25 +1019,30 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                        Referral & Discount Codes
                      </h4>
                      <div className="space-y-4">
-                       {/* Referral Code */}
-                       <div className="space-y-2">
-                         <Label htmlFor="referral-code" className="text-sm font-medium">
-                           Referral Code (10% off)
-                         </Label>
-                         <div className="flex gap-2">
-                           <Input
-                             id="referral-code"
-                             type="text"
-                             placeholder="Enter friend's referral code"
-                             value={referralCode}
-                             onChange={(e) => setReferralCode(e.target.value)}
-                             className="flex-1"
-                             disabled={!!appliedReferral || !!appliedDiscount}
-                           />
-                           <Button 
-                             onClick={handleApplyReferralCode}
-                             disabled={!referralCode.trim() || !!appliedReferral || !!appliedDiscount || !customerInfo.name || !customerInfo.email}
-                             size="sm"
+                        {/* Referral Code */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="referral-code" className="text-sm font-medium">
+                              Referral Code (10% off)
+                            </Label>
+                            <ReferralCodeDialog 
+                              onCodeGenerated={(code) => setReferralCode(code)}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              id="referral-code"
+                              type="text"
+                              placeholder="Enter friend's referral code"
+                              value={referralCode}
+                              onChange={(e) => setReferralCode(e.target.value)}
+                              className="flex-1"
+                              disabled={!!appliedReferral || !!appliedDiscount}
+                            />
+                            <Button 
+                              onClick={handleApplyReferralCode}
+                              disabled={!referralCode.trim() || !!appliedReferral || !!appliedDiscount || !customerInfo.name || !customerInfo.email}
+                              size="sm"
                            >
                              Apply
                            </Button>
