@@ -138,11 +138,23 @@ export function Navigation() {
                     <div className="text-xs text-muted-foreground">Role: {userRole}</div>
                   </div>
                   
-                  {userRole === 'admin' && <>
+                  {(userRole === 'admin' || userRole === 'super_admin') && <>
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2">
                           <Shield className="h-4 w-4" />
                           Admin Portal
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/tier-management" className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Tier Management
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/payment-dashboard" className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          Payment Dashboard
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

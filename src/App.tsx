@@ -70,6 +70,12 @@ import PaymentPortal from '@/pages/PaymentPortal';
 import ConnectPortal from '@/pages/ConnectPortal';
 import TestingPortal from '@/pages/TestingPortal';
 
+// Phase 4B: Advanced Tier Management System
+import SubcontractorTierManagement from '@/pages/SubcontractorTierManagement';
+import TierSystemConfig from '@/pages/TierSystemConfig';
+import TierPerformanceAnalytics from '@/pages/TierPerformanceAnalytics';
+import SubcontractorPaymentDashboard from '@/pages/SubcontractorPaymentDashboard';
+
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
@@ -365,6 +371,28 @@ function App() {
                 <Route path="/testing-portal" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                     <TestingPortal />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Phase 4B: Advanced Tier Management System Routes */}
+                <Route path="/tier-management" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <SubcontractorTierManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tier-config" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
+                    <TierSystemConfig />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tier-analytics" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <TierPerformanceAnalytics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/payment-dashboard" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <SubcontractorPaymentDashboard />
                   </ProtectedRoute>
                 } />
                 
