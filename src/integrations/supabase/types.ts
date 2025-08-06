@@ -2233,12 +2233,15 @@ export type Database = {
           booking_id: string | null
           company_amount: number
           created_at: string
+          hourly_rate: number | null
           id: string
+          monthly_fee: number | null
           paid_at: string | null
           payment_status: string | null
           split_percentage: number
           subcontractor_amount: number
           subcontractor_id: string | null
+          tier_level: number | null
           total_amount: number
           updated_at: string
         }
@@ -2247,12 +2250,15 @@ export type Database = {
           booking_id?: string | null
           company_amount: number
           created_at?: string
+          hourly_rate?: number | null
           id?: string
+          monthly_fee?: number | null
           paid_at?: string | null
           payment_status?: string | null
           split_percentage: number
           subcontractor_amount: number
           subcontractor_id?: string | null
+          tier_level?: number | null
           total_amount: number
           updated_at?: string
         }
@@ -2261,12 +2267,15 @@ export type Database = {
           booking_id?: string | null
           company_amount?: number
           created_at?: string
+          hourly_rate?: number | null
           id?: string
+          monthly_fee?: number | null
           paid_at?: string | null
           payment_status?: string | null
           split_percentage?: number
           subcontractor_amount?: number
           subcontractor_id?: string | null
+          tier_level?: number | null
           total_amount?: number
           updated_at?: string
         }
@@ -2520,6 +2529,86 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      tier_change_history: {
+        Row: {
+          automatic: boolean | null
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          new_tier: number | null
+          old_tier: number | null
+          subcontractor_id: string | null
+        }
+        Insert: {
+          automatic?: boolean | null
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          new_tier?: number | null
+          old_tier?: number | null
+          subcontractor_id?: string | null
+        }
+        Update: {
+          automatic?: boolean | null
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          new_tier?: number | null
+          old_tier?: number | null
+          subcontractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tier_change_history_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tier_system_config: {
+        Row: {
+          created_at: string | null
+          hourly_rate: number
+          id: string
+          is_active: boolean | null
+          jobs_required: number
+          monthly_fee: number
+          reviews_required: number
+          tier_level: number
+          tier_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hourly_rate: number
+          id?: string
+          is_active?: boolean | null
+          jobs_required: number
+          monthly_fee: number
+          reviews_required: number
+          tier_level: number
+          tier_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hourly_rate?: number
+          id?: string
+          is_active?: boolean | null
+          jobs_required?: number
+          monthly_fee?: number
+          reviews_required?: number
+          tier_level?: number
+          tier_name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
