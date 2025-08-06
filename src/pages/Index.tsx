@@ -127,7 +127,7 @@ const Index = () => {
                     <span className="text-lg md:text-xl line-through text-white/70">$420</span>
                     <span className="text-2xl md:text-3xl font-bold text-yellow-300">$349</span>
                   </div>
-                  <p className="text-sm md:text-base font-semibold">Save $71 + 2 Months FREE Membership</p>
+                  <p className="text-sm md:text-base font-semibold">Save $71 + $20 Credit With BACP Membership</p>
                   <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
                     <p className="text-sm font-bold text-yellow-300">Total Savings: $149!</p>
                   </div>
@@ -217,7 +217,17 @@ const Index = () => {
                 </Card>}
               
               {/* Payment Section */}
-              {pricingData}
+              {pricingData && <Card>
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-6">
+                      <h2 className="text-2xl font-jakarta font-bold">
+                        Complete Your Booking
+                      </h2>
+                      <p className="text-muted-foreground max-w-2xl mx-auto">Secure your spot with payment, then choose your preferred date and time on the next page.</p>
+                      <PaymentForm pricingData={pricingData} calculatedPrice={calculatedPrice} priceBreakdown={priceBreakdown} schedulingData={schedulingData} />
+                    </div>
+                  </CardContent>
+                </Card>}
               
 
               {/* Membership CTA */}
