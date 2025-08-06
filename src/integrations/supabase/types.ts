@@ -2408,19 +2408,24 @@ export type Database = {
           address: string
           calendar_id: string | null
           city: string
+          completed_jobs_count: number | null
           created_at: string
           email: string
           full_name: string
+          hourly_rate: number | null
           id: string
           is_available: boolean | null
           jobs_completed_this_month: number | null
+          monthly_fee: number | null
           phone: string | null
           rating: number | null
+          review_count: number | null
           split_tier: string
           state: string
           stripe_customer_id: string | null
           subscription_id: string | null
           subscription_status: string | null
+          tier_level: number | null
           total_earnings: number | null
           updated_at: string
           user_id: string | null
@@ -2430,19 +2435,24 @@ export type Database = {
           address: string
           calendar_id?: string | null
           city: string
+          completed_jobs_count?: number | null
           created_at?: string
           email: string
           full_name: string
+          hourly_rate?: number | null
           id?: string
           is_available?: boolean | null
           jobs_completed_this_month?: number | null
+          monthly_fee?: number | null
           phone?: string | null
           rating?: number | null
+          review_count?: number | null
           split_tier: string
           state: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tier_level?: number | null
           total_earnings?: number | null
           updated_at?: string
           user_id?: string | null
@@ -2452,19 +2462,24 @@ export type Database = {
           address?: string
           calendar_id?: string | null
           city?: string
+          completed_jobs_count?: number | null
           created_at?: string
           email?: string
           full_name?: string
+          hourly_rate?: number | null
           id?: string
           is_available?: boolean | null
           jobs_completed_this_month?: number | null
+          monthly_fee?: number | null
           phone?: string | null
           rating?: number | null
+          review_count?: number | null
           split_tier?: string
           state?: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tier_level?: number | null
           total_earnings?: number | null
           updated_at?: string
           user_id?: string | null
@@ -2636,6 +2651,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_subcontractor_tier: {
+        Args: { p_review_count: number; p_completed_jobs: number }
+        Returns: number
+      }
       check_job_drop_restrictions: {
         Args: { p_subcontractor_id: string; p_service_date: string }
         Returns: Json
@@ -2683,6 +2702,10 @@ export type Database = {
           distance_priority: number
         }[]
       }
+      get_tier_benefits: {
+        Args: { p_tier_level: number }
+        Returns: Json
+      }
       get_user_calendar_token: {
         Args: { p_user_id: string; p_provider: string }
         Returns: Json[]
@@ -2700,6 +2723,10 @@ export type Database = {
       }
       mark_onboarding_token_used: {
         Args: { p_token: string }
+        Returns: Json
+      }
+      update_subcontractor_tier: {
+        Args: { p_subcontractor_id: string }
         Returns: Json
       }
       upsert_busy_slot: {
