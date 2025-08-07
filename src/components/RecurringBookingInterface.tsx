@@ -185,7 +185,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedTier, setSelectedTier] = useState<string>(''); // No default selection
-  const [selectedRecurring, setSelectedRecurring] = useState<string>(''); // No default selection
+  const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time'); // Default to one-time for discounts
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addMembership, setAddMembership] = useState<boolean>(false);
   const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
@@ -215,6 +215,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
 
   const calculatePricing = () => {
+    console.log('Calculating pricing with:', {
+      selectedTier,
+      selectedRecurring,
+      selectedTierData,
+      selectedRecurringData
+    });
+    
     if (!selectedTierData) {
       return {
         basePrice: 0,
@@ -229,15 +236,19 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }
 
     let basePrice = selectedTierData.basePrice;
+    console.log('Original base price:', basePrice);
     
     // Apply one-time service discounts
     if (selectedRecurringData && selectedRecurringData.frequency === 'once') {
+      console.log('Applying one-time discount for:', selectedTier);
       if (selectedTier === 'general' || selectedTier === 'complete') {
         // General and Deep Clean get 15% discount for one-time service
         basePrice = Math.round(basePrice * 0.85);
+        console.log('Applied 15% discount, new price:', basePrice);
       } else if (selectedTier === 'premium') {
         // Premium Deep Clean gets 20% discount for one-time service
         basePrice = Math.round(basePrice * 0.80);
+        console.log('Applied 20% discount, new price:', basePrice);
       }
     }
     
@@ -295,9 +306,35 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       total: Math.max(0, finalTotal),
       membershipFee
     };
+    
+    console.log('Final pricing result:', {
+      basePrice,
+      addOnsTotal,
+      subtotal,
+      total: Math.max(0, finalTotal)
+    });
+    
+    return {
+      basePrice,
+      addOnsTotal,
+      subtotal,
+      recurringDiscount,
+      membershipDiscount,
+      addonMemberDiscount,
+      referralDiscount,
+      codeDiscount,
+      total: Math.max(0, finalTotal),
+      membershipFee
+    };
   };
 
   const pricing = calculatePricing();
+  
+  // Force calculation on component mount and selection changes
+  useEffect(() => {
+    console.log('Selection changed - triggering calculation');
+    calculatePricing();
+  }, [selectedTier, selectedRecurring, selectedAddOns, addMembership]);
 
   const handleAddOnToggle = (addOnId: string) => {
     setSelectedAddOns(prev => 
