@@ -28,6 +28,18 @@ export function ProtectedRoute({
         allowedRoles 
       });
 
+      // Skip protection for test routes
+      if (window.location.pathname.startsWith('/test/')) {
+        console.log('Test route detected, allowing access');
+        return;
+      }
+
+      // Super admin bypass - can access everything
+      if (userRole === 'super_admin') {
+        console.log('Super admin access granted');
+        return;
+      }
+
       // Determine if user has access
       const hasAccess = allowedRoles 
         ? allowedRoles.includes(userRole || '')
@@ -35,24 +47,30 @@ export function ProtectedRoute({
 
       if (!hasAccess) {
         console.log('Access denied, redirecting...');
+        // Prevent infinite redirects by checking current path
+        const currentPath = window.location.pathname;
+        
         // Redirect based on user's actual role
-        if (userRole === 'owner' || userRole === 'super_admin' || userRole === 'enterprise_client') {
-          // Don't redirect if already on admin pages
-          if (!window.location.pathname.startsWith('/admin')) {
+        if (userRole === 'owner' || userRole === 'enterprise_client') {
+          if (!currentPath.startsWith('/admin') && currentPath !== '/admin-dashboard') {
             navigate('/admin-dashboard');
           }
         } else if (userRole === 'office_manager') {
-          if (window.location.pathname !== '/admin-dashboard/schedule') {
-            navigate('/admin-dashboard/schedule');
+          if (currentPath !== '/admin-dashboard/schedule' && currentPath !== '/office-dashboard') {
+            navigate('/office-dashboard');
           }
         } else if (userRole === 'field_cleaner' || userRole === 'recurring_cleaner' || userRole === 'subcontractor_partner' || userRole === 'subcontractor') {
-          if (window.location.pathname !== '/subcontractor-dashboard') {
+          if (currentPath !== '/subcontractor-dashboard' && currentPath !== '/subcontractor-mobile') {
             navigate('/subcontractor-dashboard');
           }
         } else if (userRole === 'client' || userRole === 'customer') {
-          if (window.location.pathname !== '/my-services') {
+          if (currentPath !== '/my-services') {
             navigate('/my-services');
           }
+        } else if (!userRole) {
+          // User has no role, don't redirect endlessly
+          console.log('User has no role assigned');
+          return;
         } else {
           navigate('/auth');
         }
@@ -78,6 +96,16 @@ export function ProtectedRoute({
   // If user is not authenticated, don't render children
   if (!user) {
     return null;
+  }
+
+  // Skip protection for test routes
+  if (window.location.pathname.startsWith('/test/')) {
+    return <>{children}</>;
+  }
+
+  // Super admin bypass
+  if (userRole === 'super_admin') {
+    return <>{children}</>;
   }
 
   // Check if user has required access

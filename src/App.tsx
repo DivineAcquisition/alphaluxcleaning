@@ -77,6 +77,7 @@ import TierPerformanceAnalytics from '@/pages/TierPerformanceAnalytics';
 import SubcontractorPaymentDashboard from '@/pages/SubcontractorPaymentDashboard';
 import { TierProgressionDashboard } from '@/components/admin/TierProgressionDashboard';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import TestDashboard from '@/pages/TestDashboard';
 
 const queryClient = new QueryClient();
 
@@ -376,6 +377,17 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
+                {/* Testing Routes - Open Access for Development */}
+                <Route path="/test" element={<TestDashboard />} />
+                <Route path="/test/subcontractor-dashboard" element={<SubcontractorDashboard />} />
+                <Route path="/test/subcontractor-mobile" element={<SubcontractorMobile />} />
+                <Route path="/test/subcontractor-management" element={<SubcontractorManagement />} />
+                <Route path="/test/tier-management" element={<SubcontractorTierManagement />} />
+                <Route path="/test/tier-config" element={<TierSystemConfig />} />
+                <Route path="/test/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
+                <Route path="/test/office-dashboard" element={<OfficeManagerDashboard />} />
+                <Route path="/test/admin-dashboard" element={<AdminDashboard />} />
+
                 {/* Phase 4B: Advanced Tier Management System Routes */}
                 <Route path="/tier-management" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
