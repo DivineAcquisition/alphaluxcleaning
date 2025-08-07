@@ -98,7 +98,7 @@ const bookingTiers: BookingTier[] = [
     hours: 6,
     basePrice: 500,
     description: 'Premium Deep Clean',
-    shortDescription: 'Complete top-to-bottom transformation with 20% off one-time service',
+    shortDescription: 'Complete top-to-bottom transformation - premium pricing',
     cleaners: 3,
     icon: 'sparkles',
     popular: false,
@@ -230,15 +230,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
     let basePrice = selectedTierData.basePrice;
     
-    // Apply one-time service discounts only
+    // Apply one-time service discounts for general and complete only
     if (selectedRecurringData && selectedRecurringData.frequency === 'once') {
-      if (selectedTier === 'premium') {
-        // Ultimate Deep Clean gets 20% discount for one-time service
-        basePrice = Math.round(basePrice * 0.8);
-      } else if (selectedTier === 'general' || selectedTier === 'complete') {
-        // Signature Clean gets 15% discount for one-time service
+      if (selectedTier === 'general' || selectedTier === 'complete') {
+        // General and Deep Clean get 15% discount for one-time service
         basePrice = Math.round(basePrice * 0.85);
       }
+      // Premium Deep Clean shows full price without discount
     }
     
     // Apply new client special for Complete Clean

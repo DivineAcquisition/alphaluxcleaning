@@ -79,6 +79,12 @@ import { TierProgressionDashboard } from '@/components/admin/TierProgressionDash
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import TestDashboard from '@/pages/TestDashboard';
 
+// New unified admin pages
+import JobAssignments from '@/pages/JobAssignments';
+import CommercialEstimates from '@/pages/CommercialEstimates';
+import CustomerDashboardAdmin from '@/pages/CustomerDashboardAdmin';
+import PaymentPortalAdmin from '@/pages/PaymentPortalAdmin';
+
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
@@ -217,6 +223,28 @@ function App() {
                 <Route path="/metrics-dashboard" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <MetricsDashboard />
+                  </ProtectedRoute>
+                } />
+                
+                {/* New unified admin routes */}
+                <Route path="/job-assignments" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <JobAssignments />
+                  </ProtectedRoute>
+                } />
+                <Route path="/commercial-estimates" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <CommercialEstimates />
+                  </ProtectedRoute>
+                } />
+                <Route path="/customer-dashboard" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <CustomerDashboardAdmin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/payment-portal" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <PaymentPortalAdmin />
                   </ProtectedRoute>
                 } />
                 
