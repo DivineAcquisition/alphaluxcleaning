@@ -187,172 +187,83 @@ const ScheduleService = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex flex-col">
       <Navigation />
       
-      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-8">
-        <div className="max-w-full mx-auto space-y-8">
-          
-          {/* Header */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Schedule Your Service
-              </CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Choose your preferred date and time for your cleaning service
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          {/* Order Status Display */}
-          {orderDetails && (
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Current Order Status
-                    </CardTitle>
-                    <CardDescription>Order #{orderDetails.id?.slice(-8) || 'Preview'}</CardDescription>
-                  </div>
-                  <Badge className={getStatusColor(orderDetails.status || 'pending')}>
-                    {getStatusIcon(orderDetails.status || 'pending')}
-                    <span className="ml-1 capitalize">{(orderDetails.status || 'pending').replace('_', ' ')}</span>
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <p><strong>Service Type:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}</p>
-                    <p><strong>Frequency:</strong> {orderDetails.frequency}</p>
-                    <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p><strong>Customer:</strong> {orderDetails.customer_name}</p>
-                    <p><strong>Email:</strong> {orderDetails.customer_email}</p>
-                    {orderDetails.service_details?.serviceAddress && (
-                      <p><strong>Address:</strong> {orderDetails.service_details.serviceAddress.street}, {orderDetails.service_details.serviceAddress.city}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quick Booking Options */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Booking Options</CardTitle>
-              <CardDescription>Need immediate service or different scheduling?</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <NextDayBookingDialog>
-                  <Button 
-                    className="h-auto p-4 flex flex-col items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Plus className="h-5 w-5" />
-                      <span className="font-semibold">Book for Next Day</span>
-                    </div>
-                    <div className="text-sm opacity-90 text-center">
-                      Priority scheduling available
-                    </div>
-                    <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
-                      <DollarSign className="h-3 w-3" />
-                      <span>+$50 rush fee</span>
-                    </div>
-                  </Button>
-                </NextDayBookingDialog>
-
-                <Button 
-                  variant="outline"
-                  onClick={handleTextSupport}
-                  className="h-auto p-4 flex flex-col items-center gap-2 border-2 hover:bg-accent/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="font-semibold">Text for Better Time</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground text-center">
-                    Get personalized scheduling help
-                  </div>
-                  <div className="text-sm font-medium text-primary">
-                    +1 (281) 809-9901
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-
-          {/* Embedded Calendar Scheduler */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Schedule Your Service
-              </CardTitle>
-              <CardDescription>
-                Select your preferred date and time using our booking calendar
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="w-full min-h-[500px] h-auto relative">
-                <iframe 
-                  src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
-                  style={{ 
-                    width: '100%', 
-                    minHeight: '500px',
-                    height: isMobile ? '500px' : '800px',
-                    border: 'none'
-                  }}
-                  className="w-full"
-                  id="39tuCeWMXzsnqMcYpkCD_1754330109315"
-                  title="Bay Area Cleaning Pros Booking Calendar"
-                />
-              </div>
-              <script 
-                src="https://app.bayareacleaningpros.com/js/form_embed.js" 
-                type="text/javascript"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Order Status Check */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="text-center py-6">
-              <p className="text-muted-foreground mb-4">
-                Need to check on an existing order?
-              </p>
-              <OrderStatusLookup triggerClassName="mx-auto" />
-            </CardContent>
-          </Card>
-
-          {/* Navigation */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between px-4 sm:px-0">
-            <Button 
-              variant="outline"
-              onClick={() => {
-                const isAdminPreview = searchParams.get('admin_preview');
-                if (isAdminPreview) {
-                  navigate('/service-details?admin_preview=true');
-                } else {
-                  navigate(`/service-details?session_id=${sessionId}`);
-                }
-              }}
-              className="flex items-center gap-2 w-full sm:w-auto"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Details
-            </Button>
+      {/* Compact Header Section */}
+      <div className="bg-gradient-to-r from-primary to-accent text-white py-4 px-4 flex-shrink-0">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              <h1 className="text-lg font-semibold">Schedule Your Service</h1>
+            </div>
+            {orderDetails && (
+              <Badge className="bg-white/20 text-white border-white/30">
+                Order #{orderDetails.id?.slice(-8) || 'Preview'}
+              </Badge>
+            )}
           </div>
         </div>
+      </div>
+      
+      {/* Quick Actions Bar */}
+      <div className="bg-background border-b flex-shrink-0 py-3 px-4">
+        <div className="container mx-auto flex flex-wrap gap-2 justify-center">
+          <NextDayBookingDialog>
+            <Button 
+              size="sm"
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Next Day (+$50)
+            </Button>
+          </NextDayBookingDialog>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={handleTextSupport}
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Text Support
+          </Button>
+          
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const isAdminPreview = searchParams.get('admin_preview');
+              if (isAdminPreview) {
+                navigate('/service-details?admin_preview=true');
+              } else {
+                navigate(`/service-details?session_id=${sessionId}`);
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+      </div>
+
+      {/* Full Screen Calendar */}
+      <div className="flex-1 overflow-hidden">
+        <iframe 
+          src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            border: 'none'
+          }}
+          className="w-full h-full"
+          id="39tuCeWMXzsnqMcYpkCD_1754330109315"
+          title="Bay Area Cleaning Pros Booking Calendar"
+        />
+        <script 
+          src="https://app.bayareacleaningpros.com/js/form_embed.js" 
+          type="text/javascript"
+        />
       </div>
     </div>
   );
