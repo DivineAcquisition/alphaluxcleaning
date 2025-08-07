@@ -10,12 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrderStatusLookup } from "@/components/OrderStatusLookup";
+import { useIsMobile } from "@/hooks/use-mobile";
+import NextDayBookingDialog from "@/components/NextDayBookingDialog";
 
 const ScheduleService = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
   const { user, userRole } = useAuth();
+  const isMobile = useIsMobile();
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -50,11 +53,6 @@ const ScheduleService = () => {
     }
   };
 
-  const handleNextDayBooking = () => {
-    toast.info("Redirecting to next day booking with $50 surcharge...");
-    // In a real implementation, this would redirect to a modified booking flow
-    // with next day availability and additional $50 charge
-  };
 
   const handleTextSupport = () => {
     const phoneNumber = "+12818099901";
@@ -253,22 +251,23 @@ const ScheduleService = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button 
-                  onClick={handleNextDayBooking}
-                  className="h-auto p-4 flex flex-col items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                >
-                  <div className="flex items-center gap-2">
-                    <Plus className="h-5 w-5" />
-                    <span className="font-semibold">Book for Next Day</span>
-                  </div>
-                  <div className="text-sm opacity-90 text-center">
-                    Priority scheduling available
-                  </div>
-                  <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
-                    <DollarSign className="h-3 w-3" />
-                    <span>+$50 rush fee</span>
-                  </div>
-                </Button>
+                <NextDayBookingDialog>
+                  <Button 
+                    className="h-auto p-4 flex flex-col items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Plus className="h-5 w-5" />
+                      <span className="font-semibold">Book for Next Day</span>
+                    </div>
+                    <div className="text-sm opacity-90 text-center">
+                      Priority scheduling available
+                    </div>
+                    <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
+                      <DollarSign className="h-3 w-3" />
+                      <span>+$50 rush fee</span>
+                    </div>
+                  </Button>
+                </NextDayBookingDialog>
 
                 <Button 
                   variant="outline"
@@ -304,13 +303,13 @@ const ScheduleService = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="w-full min-h-[600px] h-auto relative">
+              <div className="w-full min-h-[500px] h-auto relative">
                 <iframe 
                   src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
                   style={{ 
                     width: '100%', 
-                    minHeight: '600px',
-                    height: '800px',
+                    minHeight: '500px',
+                    height: isMobile ? '500px' : '800px',
                     border: 'none'
                   }}
                   className="w-full"
