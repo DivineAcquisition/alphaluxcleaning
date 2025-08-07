@@ -75,6 +75,20 @@ export default function OrderStatus() {
     }
   }, [sessionId, orderId]);
 
+  // Check for additional URL parameters for pre-populated search
+  useEffect(() => {
+    const email = searchParams.get("email");
+    const search = searchParams.get("search");
+    
+    if (email) {
+      setSearchValue(email);
+      handleSearchByEmail();
+    } else if (search) {
+      setSearchValue(search);
+      handleSearch(search);
+    }
+  }, [searchParams]);
+
   const handleSearch = async (searchTerm?: string) => {
     const term = searchTerm || searchValue;
     if (!term.trim()) {

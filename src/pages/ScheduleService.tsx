@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Navigation } from "@/components/Navigation";
-import { Calendar, ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import { Calendar, ArrowLeft, ArrowRight, Clock, MessageSquare, CheckCircle, XCircle, AlertCircle, Package, Plus, DollarSign, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
@@ -18,6 +19,55 @@ const ScheduleService = () => {
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100';
+      case 'scheduled':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4" />;
+      case 'scheduled':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Package className="h-4 w-4" />;
+    }
+  };
+
+  const handleNextDayBooking = () => {
+    toast.info("Redirecting to next day booking with $50 surcharge...");
+    // In a real implementation, this would redirect to a modified booking flow
+    // with next day availability and additional $50 charge
+  };
+
+  const handleTextSupport = () => {
+    const phoneNumber = "+12818099901";
+    const message = "Hi! I need help scheduling a better time for my cleaning service. Order ID: " + (orderDetails?.id?.slice(-8) || "");
+    const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+    
+    try {
+      window.open(smsUrl, '_blank');
+    } catch (error) {
+      // Fallback for browsers that don't support SMS links
+      toast.info(`Please text ${phoneNumber} for scheduling assistance`);
+    }
+  };
   
 
   useEffect(() => {
@@ -158,11 +208,23 @@ const ScheduleService = () => {
             </CardHeader>
           </Card>
 
-          {/* Service Summary */}
+          {/* Order Status Display */}
           {orderDetails && (
             <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg">Service Summary</CardTitle>
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Current Order Status
+                    </CardTitle>
+                    <CardDescription>Order #{orderDetails.id?.slice(-8) || 'Preview'}</CardDescription>
+                  </div>
+                  <Badge className={getStatusColor(orderDetails.status || 'pending')}>
+                    {getStatusIcon(orderDetails.status || 'pending')}
+                    <span className="ml-1 capitalize">{(orderDetails.status || 'pending').replace('_', ' ')}</span>
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -182,6 +244,52 @@ const ScheduleService = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Quick Booking Options */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg">Quick Booking Options</CardTitle>
+              <CardDescription>Need immediate service or different scheduling?</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button 
+                  onClick={handleNextDayBooking}
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                >
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    <span className="font-semibold">Book for Next Day</span>
+                  </div>
+                  <div className="text-sm opacity-90 text-center">
+                    Priority scheduling available
+                  </div>
+                  <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
+                    <DollarSign className="h-3 w-3" />
+                    <span>+$50 rush fee</span>
+                  </div>
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={handleTextSupport}
+                  className="h-auto p-4 flex flex-col items-center gap-2 border-2 hover:bg-accent/10"
+                >
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="font-semibold">Text for Better Time</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground text-center">
+                    Get personalized scheduling help
+                  </div>
+                  <div className="text-sm font-medium text-primary">
+                    +1 (281) 809-9901
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
 
           {/* Embedded Calendar Scheduler */}

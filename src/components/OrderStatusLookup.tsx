@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Clock, CheckCircle, XCircle, AlertCircle, Package } from "lucide-react";
+import { Search, Clock, CheckCircle, XCircle, AlertCircle, Package, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ interface StatusUpdate {
 }
 
 export const OrderStatusLookup = ({ triggerClassName }: OrderStatusLookupProps) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -120,6 +122,14 @@ export const OrderStatusLookup = ({ triggerClassName }: OrderStatusLookupProps) 
     setSearchQuery("");
     setOrder(null);
     setStatusUpdates([]);
+  };
+
+  const handleViewFullStatus = () => {
+    if (order) {
+      // Navigate to dedicated order status page with the order details
+      navigate(`/order-status?order_id=${order.id}`);
+      setIsOpen(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -247,8 +257,9 @@ export const OrderStatusLookup = ({ triggerClassName }: OrderStatusLookupProps) 
                 <Button variant="outline" onClick={resetSearch} className="flex-1">
                   Search Another Order
                 </Button>
-                <Button onClick={() => setIsOpen(false)} className="flex-1">
-                  Close
+                <Button onClick={handleViewFullStatus} className="flex-1">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Full Status
                 </Button>
               </div>
             </div>
