@@ -172,7 +172,11 @@ function App() {
                 <Route path="/service-details" element={<ServiceDetails />} />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-                <Route path="/admin-booking-preview" element={<AdminBookingPreview />} />
+                <Route path="/admin-booking-preview" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'owner', 'admin', 'enterprise_client']}>
+                    <AdminBookingPreview />
+                  </ProtectedRoute>
+                } />
                 <Route path="/test-booking" element={<TestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 
