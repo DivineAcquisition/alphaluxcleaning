@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ const NextDayBookingDialog = ({ children }: NextDayBookingDialogProps) => {
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const navigate = useNavigate();
 
   const timeSlots = [
     { value: "morning", label: "Morning", time: "8:00 AM - 12:00 PM", available: true },
@@ -55,6 +57,7 @@ const NextDayBookingDialog = ({ children }: NextDayBookingDialogProps) => {
       
       setIsOpen(false);
       setSelectedTime("");
+      navigate("/order-status");
     } catch (error) {
       toast.error("Failed to book next day service. Please try again.");
     } finally {
