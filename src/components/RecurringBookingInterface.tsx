@@ -230,13 +230,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
     let basePrice = selectedTierData.basePrice;
     
-    // Apply one-time service discounts for general and complete only
+    // Apply one-time service discounts
     if (selectedRecurringData && selectedRecurringData.frequency === 'once') {
       if (selectedTier === 'general' || selectedTier === 'complete') {
         // General and Deep Clean get 15% discount for one-time service
         basePrice = Math.round(basePrice * 0.85);
+      } else if (selectedTier === 'premium') {
+        // Premium Deep Clean gets 20% discount for one-time service
+        basePrice = Math.round(basePrice * 0.80);
       }
-      // Premium Deep Clean shows full price without discount
     }
     
     // Apply new client special for Complete Clean
