@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ModernScheduler from "@/components/ModernScheduler";
 import { useAuth } from "@/contexts/AuthContext";
+import { OrderStatusLookup } from "@/components/OrderStatusLookup";
 
 const ScheduleService = () => {
   const [searchParams] = useSearchParams();
@@ -213,6 +214,16 @@ const ScheduleService = () => {
                 src="https://app.bayareacleaningpros.com/js/form_embed.js" 
                 type="text/javascript"
               />
+            </CardContent>
+          </Card>
+
+          {/* Order Status Check */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground mb-4">
+                Need to check on an existing order?
+              </p>
+              <OrderStatusLookup triggerClassName="mx-auto" />
             </CardContent>
           </Card>
 
