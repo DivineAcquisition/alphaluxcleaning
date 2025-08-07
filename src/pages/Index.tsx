@@ -207,10 +207,32 @@ const Index = () => {
             }} />
 
               {/* Service Details Button */}
-              {pricingData}
+              {pricingData && (
+                <div className="text-center">
+                  <ServiceDetailsDialog 
+                    cleaningType={pricingData.cleaningType || 'standard'}
+                    serviceType={pricingData.serviceType || 'hourly'}
+                  />
+                </div>
+              )}
               
               {/* Payment Section */}
-              {pricingData}
+              {pricingData && (
+                <div className="text-center">
+                  <PaymentForm 
+                    pricingData={{
+                      squareFootage: 1000,
+                      cleaningType: pricingData.cleaningType || 'standard',
+                      frequency: pricingData.recurring?.frequency || 'once',
+                      addOns: pricingData.addOns || [],
+                      hours: pricingData.hours,
+                      membership: pricingData.membership
+                    }}
+                    calculatedPrice={calculatedPrice}
+                    priceBreakdown={priceBreakdown}
+                  />
+                </div>
+              )}
               
 
               {/* Membership CTA */}
