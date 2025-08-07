@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar } from "./AdminSidebar";
+import { UnifiedAdminSidebar } from "./UnifiedAdminSidebar";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -13,7 +13,7 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-muted/20 to-background">
-        <AdminSidebar />
+        <UnifiedAdminSidebar />
         <SidebarInset className="flex-1 overflow-hidden ml-0">
           {/* Enhanced Header with glass morphism */}
           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-3 border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 shadow-sm">
