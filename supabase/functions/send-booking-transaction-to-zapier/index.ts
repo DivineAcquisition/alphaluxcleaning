@@ -7,6 +7,50 @@ const corsHeaders = {
 };
 
 interface ComprehensiveBookingData {
+  // Pre-booking journey data
+  customer_journey?: {
+    first_website_visit: string;
+    total_website_visits: number;
+    pages_visited: any[];
+    marketing_touchpoints: any[];
+    abandoned_carts: any[];
+    quotes_requested: any[];
+    customer_inquiries: any[];
+  };
+  
+  // Enhanced booking process data
+  booking_process?: {
+    form_interactions: any;
+    pricing_calculator_usage: any;
+    referral_application: any;
+    membership_consideration: any;
+  };
+  
+  // Service preparation phase
+  service_preparation?: {
+    cleaner_preparation: any;
+    customer_notifications: any[];
+    pre_service_communication: any;
+  };
+  
+  // During service enhancements
+  service_execution?: {
+    real_time_updates: any[];
+    supply_usage: any;
+    issues_encountered: any[];
+    customer_communication: any[];
+    quality_checks: any[];
+  };
+  
+  // Post-service follow-up
+  post_service_followup?: {
+    follow_up_sequence: any[];
+    rebooking_attempts: any[];
+    loyalty_interactions: any[];
+    review_management: any;
+    retention_metrics: any;
+  };
+
   // Order Information
   order: {
     id: string;
@@ -29,6 +73,7 @@ interface ComprehensiveBookingData {
     recurring_frequency?: string;
     next_service_date?: string;
     add_ons: string[];
+    payment_breakdown?: any;
   };
   
   // Booking Information
@@ -196,11 +241,240 @@ serve(async (req) => {
 
     if (send_sample_data) {
       // Send comprehensive sample data with full booking lifecycle
+      const now = new Date();
+      const serviceDate = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000); // 4 days ago
+      const bookingDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+      const firstVisit = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days ago
+      
       transactionData = {
+        // Pre-booking journey data
+        customer_journey: {
+          first_website_visit: firstVisit.toISOString(),
+          total_website_visits: 5,
+          pages_visited: [
+            { page: "/", time_spent: 120, timestamp: firstVisit.toISOString() },
+            { page: "/services", time_spent: 180, timestamp: new Date(firstVisit.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { page: "/pricing", time_spent: 240, timestamp: new Date(firstVisit.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString() },
+            { page: "/schedule", time_spent: 320, timestamp: new Date(firstVisit.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString() },
+            { page: "/booking", time_spent: 480, timestamp: bookingDate.toISOString() }
+          ],
+          marketing_touchpoints: [
+            { type: "google_ad_click", campaign: "Deep Cleaning Special", cost: 2.45, timestamp: firstVisit.toISOString() },
+            { type: "email_open", campaign: "Weekly Newsletter", timestamp: new Date(firstVisit.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "email_click", campaign: "15% Off First Clean", timestamp: new Date(firstVisit.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString() }
+          ],
+          abandoned_carts: [{
+            cart_id: "cart_sample_456",
+            abandoned_at: new Date(firstVisit.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            cart_value: 12999,
+            recovery_email_sent: true,
+            recovery_email_opened: true,
+            recovery_email_clicked: false
+          }],
+          quotes_requested: [{
+            quote_id: "quote_789",
+            service_type: "standard_clean",
+            estimated_price: 9999,
+            requested_at: new Date(firstVisit.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+            responded_at: new Date(firstVisit.getTime() + 4 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString()
+          }],
+          customer_inquiries: [{
+            inquiry_id: "inq_101",
+            type: "live_chat",
+            question: "Do you provide cleaning supplies?",
+            response_time_minutes: 3,
+            resolved: true,
+            timestamp: new Date(firstVisit.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString()
+          }]
+        },
+        
+        // Enhanced booking process data
+        booking_process: {
+          form_interactions: {
+            total_time_on_form: "00:08:32",
+            field_interactions: [
+              { field: "service_type", time_spent: 45, changes_made: 2 },
+              { field: "home_size", time_spent: 30, changes_made: 1 },
+              { field: "frequency", time_spent: 60, changes_made: 3 },
+              { field: "add_ons", time_spent: 120, changes_made: 4 },
+              { field: "date_time", time_spent: 90, changes_made: 2 },
+              { field: "address", time_spent: 75, changes_made: 1 }
+            ],
+            form_completion_rate: 100,
+            form_abandonment_points: []
+          },
+          pricing_calculator_usage: {
+            times_used: 8,
+            final_price_locked: true,
+            price_changes: [
+              { from: 9999, to: 12999, reason: "added_deep_clean" },
+              { from: 12999, to: 15999, reason: "added_carpet_cleaning" },
+              { from: 15999, to: 15999, reason: "added_window_cleaning" }
+            ]
+          },
+          referral_application: {
+            code_entered: "FRIEND20",
+            code_valid: true,
+            discount_applied: 2000,
+            referrer_name: "Mike Thompson",
+            referrer_email: "mike.thompson@email.com"
+          },
+          membership_consideration: {
+            membership_offered: true,
+            membership_accepted: false,
+            membership_decline_reason: "want_to_try_first"
+          }
+        },
+
+        // Service preparation phase
+        service_preparation: {
+          cleaner_preparation: {
+            supplies_checked: true,
+            route_optimized: true,
+            estimated_travel_time: 25,
+            preparation_duration: 15,
+            supplies_needed: ["eco_friendly_all_purpose", "microfiber_cloths", "vacuum_bags", "carpet_cleaner"],
+            special_equipment: ["carpet_cleaning_machine", "window_cleaning_tools"]
+          },
+          customer_notifications: [
+            { type: "booking_confirmation", sent_at: bookingDate.toISOString(), opened: true },
+            { type: "24hr_reminder", sent_at: new Date(serviceDate.getTime() - 24 * 60 * 60 * 1000).toISOString(), opened: true },
+            { type: "2hr_reminder", sent_at: new Date(serviceDate.getTime() - 2 * 60 * 60 * 1000).toISOString(), opened: true },
+            { type: "on_the_way", sent_at: new Date(serviceDate.getTime() - 30 * 60 * 1000).toISOString(), opened: true }
+          ],
+          pre_service_communication: {
+            customer_called: true,
+            call_duration: "2:15",
+            access_confirmed: true,
+            special_requests_noted: ["use eco-friendly products", "focus on pet hair areas"],
+            cleaner_notes_added: "Customer has two cats, focus on pet hair removal"
+          }
+        },
+
+        // During service execution data
+        service_execution: {
+          real_time_updates: [
+            { timestamp: new Date(serviceDate.getTime() + 30 * 60 * 1000).toISOString(), update: "Arrived and starting kitchen deep clean", room: "kitchen" },
+            { timestamp: new Date(serviceDate.getTime() + 90 * 60 * 1000).toISOString(), update: "Kitchen completed, moving to bathrooms", room: "bathroom" },
+            { timestamp: new Date(serviceDate.getTime() + 150 * 60 * 1000).toISOString(), update: "Carpet cleaning in progress", room: "living_room" },
+            { timestamp: new Date(serviceDate.getTime() + 180 * 60 * 1000).toISOString(), update: "Final touches and quality check", room: "all" }
+          ],
+          supply_usage: {
+            eco_friendly_products: { used: true, quantity: "2 bottles", cost: 12.50 },
+            microfiber_cloths: { used: true, quantity: "8 cloths", cost: 4.00 },
+            carpet_cleaner_solution: { used: true, quantity: "1 bottle", cost: 18.75 },
+            window_cleaning_solution: { used: true, quantity: "1 bottle", cost: 8.25 }
+          },
+          issues_encountered: [
+            {
+              issue_id: "iss_001",
+              type: "minor",
+              description: "Stubborn stain on carpet required extra treatment",
+              resolution: "Applied specialized stain remover, successfully removed",
+              time_impact: 15,
+              resolved: true
+            }
+          ],
+          customer_communication: [
+            {
+              type: "text_message",
+              direction: "to_customer",
+              message: "Hi Sarah! I'm Marcus, your cleaner. Just arrived and starting with the kitchen as requested.",
+              timestamp: new Date(serviceDate.getTime() + 5 * 60 * 1000).toISOString(),
+              delivered: true
+            },
+            {
+              type: "text_message", 
+              direction: "from_customer",
+              message: "Great! Please pay special attention to the pet hair in the living room. Thank you!",
+              timestamp: new Date(serviceDate.getTime() + 8 * 60 * 1000).toISOString(),
+              read: true
+            }
+          ],
+          quality_checks: [
+            { room: "kitchen", checklist_items: ["surfaces_cleaned", "appliances_wiped", "floor_mopped"], score: 100, timestamp: new Date(serviceDate.getTime() + 85 * 60 * 1000).toISOString() },
+            { room: "bathroom", checklist_items: ["toilet_sanitized", "shower_scrubbed", "mirror_cleaned"], score: 100, timestamp: new Date(serviceDate.getTime() + 145 * 60 * 1000).toISOString() },
+            { room: "living_room", checklist_items: ["carpet_cleaned", "dusting_complete", "vacuum_thorough"], score: 98, timestamp: new Date(serviceDate.getTime() + 175 * 60 * 1000).toISOString() }
+          ]
+        },
+
+        // Post-service follow-up data
+        post_service_followup: {
+          follow_up_sequence: [
+            {
+              type: "completion_notification",
+              sent_at: new Date(serviceDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+              channel: "email_sms",
+              opened: true,
+              clicked: true
+            },
+            {
+              type: "feedback_request",
+              sent_at: new Date(serviceDate.getTime() + 4 * 60 * 60 * 1000).toISOString(),
+              channel: "email",
+              opened: true,
+              responded: true,
+              response_time_hours: 0.5
+            },
+            {
+              type: "thank_you_message",
+              sent_at: new Date(serviceDate.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+              channel: "email",
+              opened: true,
+              clicked: false
+            }
+          ],
+          rebooking_attempts: [
+            {
+              attempt_id: "rebook_001",
+              type: "automated_email",
+              sent_at: new Date(serviceDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              offer: "15% off next deep clean",
+              opened: true,
+              clicked: true,
+              converted: false
+            },
+            {
+              attempt_id: "rebook_002", 
+              type: "follow_up_call",
+              scheduled_at: new Date(serviceDate.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+              completed: false,
+              outcome: "left_voicemail"
+            }
+          ],
+          loyalty_interactions: [
+            {
+              program: "referral_program",
+              action: "referral_code_generated",
+              code: "SARAH20",
+              discount_value: 20,
+              status: "active",
+              created_at: new Date(serviceDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+            }
+          ],
+          review_management: {
+            google_review_requested: true,
+            google_review_submitted: true,
+            google_review_rating: 5,
+            google_review_text: "Exceptional service! Marcus was professional and thorough.",
+            yelp_review_requested: true,
+            yelp_review_submitted: false,
+            facebook_review_requested: false
+          },
+          retention_metrics: {
+            satisfaction_score: 5,
+            likelihood_to_recommend: 10,
+            likelihood_to_rebook: 9,
+            preferred_frequency: "monthly",
+            price_sensitivity: "low",
+            service_preferences: ["eco_friendly", "same_cleaner", "flexible_scheduling"]
+          }
+        },
+
         order: {
           id: "sample-order-123",
           stripe_session_id: "cs_test_sample123",
-          amount: 15999, // $159.99
+          amount: 15999,
           currency: "usd",
           status: "completed",
           customer_name: "Sarah Johnson",
@@ -215,12 +489,21 @@ serve(async (req) => {
             kitchen: true,
             living_areas: 2
           },
-          scheduled_date: "2025-08-03",
+          scheduled_date: serviceDate.toISOString().split('T')[0],
           scheduled_time: "10:00 AM",
-          created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-          completed_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+          created_at: bookingDate.toISOString(),
+          completed_at: new Date(serviceDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
           is_recurring: false,
-          add_ons: ["carpet_cleaning", "window_cleaning"]
+          add_ons: ["carpet_cleaning", "window_cleaning"],
+          payment_breakdown: {
+            base_service: 9999,
+            deep_clean_upgrade: 4000,
+            carpet_cleaning: 1500,
+            window_cleaning: 1000,
+            referral_discount: -2000,
+            tax: 1500,
+            total: 15999
+          }
         },
         booking: {
           id: "booking-sample-456",
