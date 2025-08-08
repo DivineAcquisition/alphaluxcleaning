@@ -270,49 +270,6 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
 
       if (error) throw error;
 
-      // Send transaction data to Zapier webhook
-      try {
-        const transactionData = {
-          ...orderData,
-          service_details: {
-            address: {
-              street: formData.streetAddress,
-              apartment: formData.apartmentUnit,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode
-            },
-            property: {
-              dwellingType: formData.dwellingType,
-              flooringType: formData.flooringType
-            },
-            source: formData.hearAboutUs,
-            instructions: {
-              access: formData.accessInstructions,
-              parking: formData.parkingInstructions,
-              special: formData.specialRequests,
-              pets: formData.petsPresent,
-              alarmCode: formData.alarmCode
-            },
-            contact: {
-              method: formData.contactMethod,
-              time: formData.contactTime
-            }
-          },
-          customer_email: formData.customerEmail,
-          customer_name: formData.customerName
-        };
-
-        await supabase.functions.invoke('send-transaction-to-zapier', {
-          body: {
-            transactionData,
-            type: 'residential_booking'
-          }
-        });
-      } catch (zapierError) {
-        console.error('Error sending to Zapier:', zapierError);
-        // Don't fail the main flow if Zapier fails
-      }
 
       // Create booking in GoHighLevel if scheduling data exists
       try {

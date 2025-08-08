@@ -118,6 +118,30 @@ const BookingConfirmation = () => {
     }
   };
 
+  // Send booking to Zapier exactly once after confirmation
+  useEffect(() => {
+    if (!sessionId || !orderDetails) return;
+    if (!orderDetails?.scheduled_date) return; // ensure scheduled
+    const key = `zapier_booking_sent_${sessionId}`;
+    try {
+      if (typeof window !== 'undefined' && !localStorage.getItem(key)) {
+        (async () => {
+          try {
+            await supabase.functions.invoke('send-booking-transaction-to-zapier', {
+              body: { session_id: sessionId, send_sample_data: false },
+            });
+            localStorage.setItem(key, '1');
+            console.log('Booking data sent to Zapier');
+          } catch (err) {
+            console.error('Failed to send booking to Zapier', err);
+          }
+        })();
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [orderDetails, sessionId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
