@@ -112,10 +112,73 @@ export function ModernBookingFlow() {
     }
   };
 
-  const handlePaymentSuccess = (sessionId: string) => {
+  const handlePaymentSuccess = async (sessionId: string) => {
     updateBookingData({ stripeSessionId: sessionId });
+    
+    // Send to Zapier if next-day booking is selected
+    if (bookingData.nextDayFee > 0) {
+      await sendBookingToZapier(bookingData, sessionId);
+    }
+    
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const sendBookingToZapier = async (booking: BookingData, sessionId: string) => {
+    try {
+      const zapierData = {
+        // Booking Details
+        booking_id: sessionId,
+        service_type: booking.serviceType,
+        home_size: booking.homeSize,
+        frequency: booking.frequency,
+        
+        // Scheduling
+        service_date: booking.serviceDate,
+        service_time: booking.serviceTime,
+        is_next_day_priority: booking.nextDayFee > 0,
+        next_day_fee: booking.nextDayFee,
+        
+        // Customer Info
+        customer_name: 'Guest', // Will be updated with real data
+        customer_phone: booking.contactNumber,
+        customer_address: {
+          street: booking.address.street,
+          city: booking.address.city,
+          state: booking.address.state,
+          zip_code: booking.address.zipCode
+        },
+        
+        // Service Details
+        add_ons: booking.addOns,
+        special_instructions: booking.specialInstructions,
+        
+        // Pricing
+        base_price: booking.basePrice,
+        add_on_prices: booking.addOnPrices,
+        frequency_discount: booking.frequencyDiscount,
+        promo_discount: booking.promoDiscount,
+        total_price: booking.totalPrice,
+        payment_type: booking.paymentType,
+        
+        // Metadata
+        booking_source: 'website',
+        created_at: new Date().toISOString(),
+        requires_priority_handling: true
+      };
+
+      await supabase.functions.invoke('send-transaction-to-zapier', {
+        body: {
+          transactionData: zapierData,
+          type: 'next_day_booking'
+        }
+      });
+
+      toast.success('Priority booking notification sent successfully!');
+    } catch (error) {
+      console.error('Failed to send booking to Zapier:', error);
+      toast.error('Booking confirmed, but notification failed. We will contact you directly.');
+    }
   };
 
   const renderCurrentStep = () => {

@@ -15,6 +15,7 @@ interface BookingData {
   addOnPrices: { [key: string]: number };
   frequencyDiscount: number;
   totalPrice: number;
+  nextDayFee?: number;
 }
 
 interface Props {
@@ -139,7 +140,8 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
       }, 0);
       
       const frequencyDiscount = frequency.discount * basePrice;
-      const totalPrice = basePrice + addOnTotal - frequencyDiscount;
+      const nextDayFee = bookingData.nextDayFee || 0;
+      const totalPrice = basePrice + addOnTotal + nextDayFee - frequencyDiscount;
 
       const addOnPrices = selectedAddOns.reduce((acc, addOn) => {
         const addOnItem = addOns.find(a => a.value === addOn);
@@ -155,7 +157,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
         addOns: selectedAddOns
       });
     }
-  }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, selectedAddOns]);
+  }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, selectedAddOns, bookingData.nextDayFee]);
 
   const toggleAddOn = (addOnValue: string) => {
     const updated = selectedAddOns.includes(addOnValue)
@@ -385,6 +387,12 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                   <span>Total</span>
                   <span className="text-primary">${bookingData.totalPrice}</span>
                 </div>
+                
+                {bookingData.nextDayFee && bookingData.nextDayFee > 0 && (
+                  <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-primary">Includes $50 Next Day Priority Fee</p>
+                  </div>
+                )}
                 
                 {selectedFrequency && bookingData.frequency !== 'one-time' && (
                   <p className="text-sm text-muted-foreground text-center">

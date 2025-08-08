@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRight, Star } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRight, Star, Sparkles } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -22,6 +23,7 @@ interface BookingData {
   };
   contactNumber: string;
   specialInstructions: string;
+  nextDayFee?: number;
 }
 
 interface Props {
@@ -47,6 +49,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined
   );
+  const [nextDayBooking, setNextDayBooking] = useState(false);
 
   // Generate available dates (next 21 days, excluding Sundays)
   const generateAvailableDates = () => {
@@ -87,7 +90,25 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      updateBookingData({ serviceDate: date.toISOString().split('T')[0] });
+      const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
+      updateBookingData({ 
+        serviceDate: date.toISOString().split('T')[0],
+        nextDayFee
+      });
+    }
+  };
+
+  const isNextDay = (date: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return date.toDateString() === tomorrow.toDateString();
+  };
+
+  const handleNextDayToggle = (checked: boolean) => {
+    setNextDayBooking(checked);
+    if (selectedDate) {
+      const nextDayFee = isNextDay(selectedDate) && checked ? 50 : 0;
+      updateBookingData({ nextDayFee });
     }
   };
 
@@ -124,6 +145,33 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
   return (
     <div className="space-y-8">
       
+      {/* Next Day Priority */}
+      <Card className="shadow-clean border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Next Day Priority Service
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-background">
+            <div className="flex-1">
+              <h4 className="font-semibold text-primary">Get Priority Booking Tomorrow</h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Guaranteed service within 24 hours with premium scheduling
+              </p>
+              <Badge className="mt-2 bg-primary text-primary-foreground">
+                +$50 Priority Fee
+              </Badge>
+            </div>
+            <Switch
+              checked={nextDayBooking}
+              onCheckedChange={handleNextDayToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Date Selection */}
       <Card className="shadow-clean animate-fade-in">
         <CardHeader>

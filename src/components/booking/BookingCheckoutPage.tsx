@@ -32,6 +32,7 @@ interface BookingData {
   totalPrice: number;
   paymentType: 'full' | 'deposit';
   promoDiscount: number;
+  nextDayFee?: number;
 }
 
 interface Props {
@@ -53,7 +54,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
   const recurringDiscount = isRecurring ? bookingData.frequencyDiscount : 0;
   const totalDiscount = recurringDiscount + promoDiscount;
-  const finalTotal = baseTotal - totalDiscount;
+  const nextDayFee = bookingData.nextDayFee || 0;
+  const finalTotal = baseTotal + nextDayFee - totalDiscount;
   const paymentAmount = paymentType === 'deposit' ? Math.round(finalTotal * 0.3) : finalTotal;
 
   useEffect(() => {
@@ -336,16 +338,23 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               
               {Object.keys(bookingData.addOnPrices).length > 0 && (
                 <div className="space-y-1">
-                  {Object.entries(bookingData.addOnPrices).map(([addOn, price]) => (
-                    <div key={addOn} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{addOn.replace(/-/g, ' ')}</span>
-                      <span>+${price}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {recurringDiscount > 0 && (
+               {Object.entries(bookingData.addOnPrices).map(([addOn, price]) => (
+                   <div key={addOn} className="flex justify-between text-sm">
+                     <span className="text-muted-foreground">{addOn.replace(/-/g, ' ')}</span>
+                     <span>+${price}</span>
+                   </div>
+                 ))}
+               </div>
+             )}
+             
+             {nextDayFee > 0 && (
+               <div className="flex justify-between text-primary">
+                 <span>Next Day Priority Fee</span>
+                 <span>+${nextDayFee}</span>
+               </div>
+             )}
+             
+             {recurringDiscount > 0 && (
                 <div className="flex justify-between text-success">
                   <span>Recurring Discount</span>
                   <span>-${recurringDiscount}</span>
