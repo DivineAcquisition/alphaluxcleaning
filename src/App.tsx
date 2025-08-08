@@ -427,6 +427,11 @@ function App() {
                 <Route path="/test/admin-dashboard" element={<AdminDashboard />} />
 
                 {/* Phase 4B: Advanced Tier Management System Routes */}
+                <Route path="/subcontractor-tiers" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
+                    <SubcontractorTierManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="/tier-management" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
                     <SubcontractorTierManagement />
