@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   DollarSign, 
   TrendingUp,
@@ -21,7 +21,9 @@ import {
   Activity,
   Briefcase,
   Settings,
-  ArrowRight
+  ArrowRight,
+  Target,
+  Award
 } from "lucide-react";
 import { JobManagementDashboard } from "@/components/admin/JobManagementDashboard";
 import { SubcontractorJobTracker } from "@/components/admin/SubcontractorJobTracker";
@@ -175,10 +177,14 @@ const AdminPortal = () => {
       description="Comprehensive management hub for Bay Area Cleaning Pros"
     >
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Business Overview
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Analytics
           </TabsTrigger>
           <TabsTrigger value="jobs" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
@@ -304,6 +310,61 @@ const AdminPortal = () => {
               </div>
             </AdminCard>
           </AdminSection>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Analytics Dashboard</h3>
+              <p className="text-sm text-muted-foreground">
+                Comprehensive business intelligence and performance insights
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/business-analytics">
+                View Full Analytics
+              </Link>
+            </Button>
+          </div>
+          
+          {/* Quick Analytics Preview */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <AdminCard
+              variant="metric"
+              title="Revenue Growth"
+              icon={<TrendingUp className="h-4 w-4" />}
+            >
+              <div className="text-2xl font-bold text-success">+24.5%</div>
+              <p className="text-xs text-muted-foreground">vs last month</p>
+            </AdminCard>
+            
+            <AdminCard
+              variant="metric"
+              title="Customer LTV"
+              icon={<Target className="h-4 w-4" />}
+            >
+              <div className="text-2xl font-bold text-primary">$2,847</div>
+              <p className="text-xs text-muted-foreground">Average lifetime value</p>
+            </AdminCard>
+            
+            <AdminCard
+              variant="metric"
+              title="Retention Rate"
+              icon={<Users className="h-4 w-4" />}
+            >
+              <div className="text-2xl font-bold text-accent">91.8%</div>
+              <p className="text-xs text-muted-foreground">Customer retention</p>
+            </AdminCard>
+            
+            <AdminCard
+              variant="metric"
+              title="Performance Score"
+              icon={<Award className="h-4 w-4" />}
+            >
+              <div className="text-2xl font-bold text-warning">4.8/5</div>
+              <p className="text-xs text-muted-foreground">Overall rating</p>
+            </AdminCard>
+          </div>
         </TabsContent>
 
         <TabsContent value="jobs" className="space-y-4">

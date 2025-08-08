@@ -31,6 +31,7 @@ import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import TipsManagement from '@/pages/TipsManagement';
 import FeedbackCenter from '@/pages/FeedbackCenter';
 import CommunicationHub from '@/pages/CommunicationHub';
+import BusinessAnalytics from '@/pages/BusinessAnalytics';
 import ApplicationManager from '@/pages/ApplicationManager';
 import MetricsDashboard from '@/pages/MetricsDashboard';
 
@@ -231,6 +232,11 @@ function App() {
                 <Route path="/communication-hub" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <CommunicationHub />
+                  </ProtectedRoute>
+                } />
+                <Route path="/business-analytics" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <BusinessAnalytics />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={

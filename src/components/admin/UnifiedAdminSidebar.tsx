@@ -107,8 +107,8 @@ const businessItems = [
     description: "Message center"
   },
   {
-    label: "Analytics",
-    path: "/metrics-dashboard",
+    label: "Business Analytics",
+    path: "/business-analytics",
     icon: BarChart3,
     description: "Performance insights"
   }
