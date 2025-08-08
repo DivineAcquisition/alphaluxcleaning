@@ -113,6 +113,101 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_executions: {
+        Row: {
+          automation_rule_id: string
+          error_message: string | null
+          executed_at: string
+          execution_data: Json | null
+          id: string
+          message_content: string | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          status: string
+        }
+        Insert: {
+          automation_rule_id: string
+          error_message?: string | null
+          executed_at?: string
+          execution_data?: Json | null
+          id?: string
+          message_content?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          status: string
+        }
+        Update: {
+          automation_rule_id?: string
+          error_message?: string | null
+          executed_at?: string
+          execution_data?: Json | null
+          id?: string
+          message_content?: string | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_executions_automation_rule_id_fkey"
+            columns: ["automation_rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          action_config: Json | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          failure_count: number | null
+          id: string
+          last_run_at: string | null
+          name: string
+          success_count: number | null
+          trigger_conditions: Json | null
+          trigger_event: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          failure_count?: number | null
+          id?: string
+          last_run_at?: string | null
+          name: string
+          success_count?: number | null
+          trigger_conditions?: Json | null
+          trigger_event: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          failure_count?: number | null
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          success_count?: number | null
+          trigger_conditions?: Json | null
+          trigger_event?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           assigned_employee_id: string | null
@@ -2767,6 +2862,10 @@ export type Database = {
       disconnect_calendar_token: {
         Args: { p_token_id: string }
         Returns: Json
+      }
+      get_automation_success_rate: {
+        Args: { rule_id: string }
+        Returns: number
       }
       get_available_slots: {
         Args: {

@@ -7,10 +7,10 @@ import { AdminGrid } from "@/components/admin/AdminGrid";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { CreateAutomationDialog } from "@/components/automation/CreateAutomationDialog";
+import { SendMessageDialog } from "@/components/automation/SendMessageDialog";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Zap, 
   Mail, 
@@ -20,7 +20,8 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Settings
+  Settings,
+  Plus
 } from "lucide-react";
 
 interface AutomationRule {
@@ -43,128 +44,110 @@ interface QueuedMessage {
   status: 'queued' | 'sent' | 'failed';
 }
 
+interface AutomationStats {
+  activeAutomations: number;
+  queuedMessages: number;
+  avgSuccessRate: number;
+  messagesThisWeek: number;
+  totalRules: number;
+  totalExecutions: number;
+  successCount: number;
+  failureCount: number;
+}
+
 export default function AutomationControls() {
   const { user } = useAuth();
   const [automations, setAutomations] = useState<AutomationRule[]>([]);
   const [queuedMessages, setQueuedMessages] = useState<QueuedMessage[]>([]);
+  const [stats, setStats] = useState<AutomationStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [customMessage, setCustomMessage] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [sendMessageDialogOpen, setSendMessageDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
-      fetchAutomations();
-      fetchQueuedMessages();
+      fetchData();
     }
   }, [user]);
 
-  const fetchAutomations = async () => {
-    // Mock automation rules - in real app, this would come from database
-    const mockAutomations: AutomationRule[] = [
-      {
-        id: '1',
-        name: 'Welcome Email Sequence',
-        type: 'email',
-        trigger: 'New customer signup',
-        description: 'Send welcome email with service overview and first booking discount',
-        enabled: true,
-        last_run: '2024-01-03T10:30:00Z',
-        success_rate: 98.5
-      },
-      {
-        id: '2',
-        name: 'Service Reminder',
-        type: 'sms',
-        trigger: '24 hours before service',
-        description: 'SMS reminder to customer with cleaner details and contact info',
-        enabled: true,
-        last_run: '2024-01-03T08:15:00Z',
-        success_rate: 94.2
-      },
-      {
-        id: '3',
-        name: 'Post-Service Follow-up',
-        type: 'email',
-        trigger: '2 hours after service completion',
-        description: 'Email requesting feedback and offering next booking incentive',
-        enabled: true,
-        last_run: '2024-01-03T16:45:00Z',
-        success_rate: 87.3
-      },
-      {
-        id: '4',
-        name: 'Churn Prevention',
-        type: 'email',
-        trigger: '30 days since last booking',
-        description: 'Re-engagement email with special offer for returning customers',
-        enabled: false,
-        last_run: '2024-01-02T12:00:00Z',
-        success_rate: 76.8
-      },
-      {
-        id: '5',
-        name: 'Subcontractor Check-in',
-        type: 'notification',
-        trigger: 'Job not started 30 min past scheduled time',
-        description: 'Alert office managers when cleaners are running late',
-        enabled: true,
-        last_run: '2024-01-03T14:20:00Z',
-        success_rate: 100
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch automation rules
+      const { data: rulesData, error: rulesError } = await supabase.functions.invoke('manage-automation-rules');
+      if (rulesError) throw rulesError;
+      
+      setAutomations(rulesData.rules || []);
+
+      // Fetch queued messages - Create a custom query for our specific needs
+      const { data: messages, error: messagesError } = await supabase
+        .from('automation_executions')
+        .select('*')
+        .eq('status', 'pending')
+        .order('executed_at', { ascending: false })
+        .limit(20);
+
+      if (messagesError) {
+        console.warn('Could not fetch queued messages:', messagesError);
+        setQueuedMessages([]);
+      } else {
+        const formattedMessages: QueuedMessage[] = messages.map(msg => ({
+          id: msg.id,
+          recipient: msg.recipient_email || msg.recipient_phone || 'Unknown',
+          type: msg.recipient_email ? 'email' : 'sms',
+          subject: 'Automated Message',
+          scheduled_for: msg.executed_at,
+          status: 'queued' as const
+        }));
+
+        setQueuedMessages(formattedMessages);
       }
-    ];
 
-    setAutomations(mockAutomations);
-  };
-
-  const fetchQueuedMessages = async () => {
-    // Mock queued messages
-    const mockQueued: QueuedMessage[] = [
-      {
-        id: '1',
-        recipient: 'john.doe@email.com',
-        type: 'email',
-        subject: 'Your cleaning service is confirmed!',
-        scheduled_for: '2024-01-04T09:00:00Z',
-        status: 'queued'
-      },
-      {
-        id: '2',
-        recipient: '+1-555-123-4567',
-        type: 'sms',
-        subject: 'Service reminder: Tomorrow at 2PM',
-        scheduled_for: '2024-01-04T13:00:00Z',
-        status: 'queued'
-      },
-      {
-        id: '3',
-        recipient: 'sarah.wilson@email.com',
-        type: 'email',
-        subject: 'How was your cleaning service?',
-        scheduled_for: '2024-01-04T18:00:00Z',
-        status: 'sent'
-      }
-    ];
-
-    setQueuedMessages(mockQueued);
-    setLoading(false);
+      // Fetch stats
+      const { data: statsData, error: statsError } = await supabase.functions.invoke('get-automation-stats');
+      if (statsError) throw statsError;
+      
+      setStats(statsData.stats);
+    } catch (error: any) {
+      console.error('Error fetching automation data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load automation data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleAutomation = async (automationId: string, enabled: boolean) => {
-    setAutomations(prev => prev.map(automation => 
-      automation.id === automationId 
-        ? { ...automation, enabled }
-        : automation
-    ));
-    
-    // In real app, this would update the database
-    console.log(`Automation ${automationId} ${enabled ? 'enabled' : 'disabled'}`);
-  };
+    try {
+      const { error } = await supabase.functions.invoke(`manage-automation-rules/${automationId}`, {
+        method: 'PUT',
+        body: { enabled }
+      });
 
-  const sendCustomMessage = async () => {
-    if (!customMessage.trim()) return;
-    
-    // In real app, this would queue the message
-    console.log('Sending custom message:', customMessage);
-    setCustomMessage('');
+      if (error) throw error;
+
+      setAutomations(prev => prev.map(automation => 
+        automation.id === automationId 
+          ? { ...automation, enabled }
+          : automation
+      ));
+
+      toast({
+        title: "Success",
+        description: `Automation ${enabled ? 'enabled' : 'disabled'} successfully`
+      });
+    } catch (error: any) {
+      console.error('Error toggling automation:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update automation",
+        variant: "destructive"
+      });
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -185,11 +168,11 @@ export default function AutomationControls() {
     }
   };
 
-  const stats = {
-    activeAutomations: automations.filter(a => a.enabled).length,
-    queuedMessages: queuedMessages.filter(m => m.status === 'queued').length,
-    avgSuccessRate: automations.reduce((sum, a) => sum + a.success_rate, 0) / automations.length,
-    messagesThisWeek: 247
+  const displayStats = stats || {
+    activeAutomations: 0,
+    queuedMessages: 0,
+    avgSuccessRate: 0,
+    messagesThisWeek: 0
   };
 
   return (
@@ -206,7 +189,7 @@ export default function AutomationControls() {
             icon={<Zap className="h-4 w-4" />}
           >
             <div className="text-3xl font-bold tracking-tight text-primary">
-              {stats.activeAutomations}
+              {displayStats.activeAutomations}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Running workflows</p>
           </AdminCard>
@@ -217,7 +200,7 @@ export default function AutomationControls() {
             icon={<Clock className="h-4 w-4" />}
           >
             <div className="text-3xl font-bold tracking-tight text-warning">
-              {stats.queuedMessages}
+              {displayStats.queuedMessages}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Scheduled to send</p>
           </AdminCard>
@@ -228,7 +211,7 @@ export default function AutomationControls() {
             icon={<CheckCircle className="h-4 w-4" />}
           >
             <div className="text-3xl font-bold tracking-tight text-success">
-              {stats.avgSuccessRate.toFixed(1)}%
+              {displayStats.avgSuccessRate.toFixed(1)}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">Average delivery</p>
           </AdminCard>
@@ -238,7 +221,7 @@ export default function AutomationControls() {
             title="Messages This Week"
             icon={<MessageSquare className="h-4 w-4" />}
           >
-            <div className="text-3xl font-bold tracking-tight">{stats.messagesThisWeek}</div>
+            <div className="text-3xl font-bold tracking-tight">{displayStats.messagesThisWeek}</div>
             <p className="text-xs text-muted-foreground mt-1">All channels</p>
           </AdminCard>
         </AdminGrid>
@@ -247,9 +230,15 @@ export default function AutomationControls() {
           {/* Automation Rules */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Automation Rules
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Automation Rules
+                </div>
+                <Button onClick={() => setCreateDialogOpen(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Rule
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -316,35 +305,37 @@ export default function AutomationControls() {
         {/* Custom Message Sender */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Send Custom Message
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Send Custom Message
+              </div>
+              <Button onClick={() => setSendMessageDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Message
+              </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="custom-message">Message Content</Label>
-              <Textarea
-                id="custom-message"
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                placeholder="Enter your message to send to all customers..."
-                rows={4}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={sendCustomMessage} disabled={!customMessage.trim()}>
-                <Mail className="h-4 w-4 mr-2" />
-                Send Email
-              </Button>
-              <Button variant="outline" onClick={sendCustomMessage} disabled={!customMessage.trim()}>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Send SMS
-              </Button>
-            </div>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Send custom emails or SMS messages to your customers. You can target specific recipients, 
+              schedule messages for later, or send immediately to all customers.
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      <CreateAutomationDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={fetchData}
+      />
+
+      <SendMessageDialog
+        open={sendMessageDialogOpen}
+        onOpenChange={setSendMessageDialogOpen}
+        onSuccess={fetchData}
+      />
     </AdminLayout>
   );
 }
