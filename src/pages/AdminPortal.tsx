@@ -138,6 +138,24 @@ const AdminPortal = () => {
       path: "/subcontractor-management"
     },
     {
+      title: "Tips Management",
+      description: "Monitor customer tips and appreciation distribution",
+      action: "View Tips",
+      path: "/tips-management"
+    },
+    {
+      title: "Feedback Center",
+      description: "Manage customer reviews and feedback responses",
+      action: "View Feedback",
+      path: "/feedback-center"
+    },
+    {
+      title: "Communication Hub",
+      description: "Manage customer-subcontractor communications",
+      action: "Message Center",
+      path: "/communication-hub"
+    },
+    {
       title: "Application Manager",
       description: "Review and process new subcontractor applications",
       action: "View Applications",
@@ -148,12 +166,6 @@ const AdminPortal = () => {
       description: "Manage payments, billing, and financial transactions",
       action: "Payment Center",
       path: "/payment-portal"
-    },
-    {
-      title: "Support Requests",
-      description: "Handle customer support tickets and service requests",
-      action: "Support Center",
-      path: "/support-portal"
     }
   ];
 
@@ -310,9 +322,9 @@ const AdminPortal = () => {
         <TabsContent value="tools" className="space-y-4">
           <AdminSection 
             title="Core Admin Tools"
-            description="Essential administrative functions and management tools"
+            description="Essential administrative functions and customer-subcontractor synchronization"
           >
-            <AdminGrid columns={2} gap="lg">
+            <AdminGrid columns={3} gap="lg">
               {coreAdminSections.map((section) => (
                 <AdminCard
                   key={section.title}

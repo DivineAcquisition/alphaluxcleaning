@@ -41,7 +41,8 @@ import {
   Zap,
   Users2,
   Webhook,
-  TestTube
+  TestTube,
+  DollarSign
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,10 +89,22 @@ const businessItems = [
     description: "Customer support"
   },
   {
-    label: "Commercial Estimates",
-    path: "/commercial-estimates",
-    icon: Building2,
-    description: "Business quotes"
+    label: "Tips Management",
+    path: "/tips-management",
+    icon: DollarSign,
+    description: "Customer tips tracking"
+  },
+  {
+    label: "Feedback Center",
+    path: "/feedback-center",
+    icon: MessageSquare,
+    description: "Reviews & responses"
+  },
+  {
+    label: "Communication Hub",
+    path: "/communication-hub",
+    icon: MessageSquare,
+    description: "Message center"
   },
   {
     label: "Analytics",

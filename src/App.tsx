@@ -28,6 +28,9 @@ import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 import AdminPortal from '@/pages/AdminPortal';
 import SubcontractorDetail from '@/pages/SubcontractorDetail';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
+import TipsManagement from '@/pages/TipsManagement';
+import FeedbackCenter from '@/pages/FeedbackCenter';
+import CommunicationHub from '@/pages/CommunicationHub';
 import ApplicationManager from '@/pages/ApplicationManager';
 import MetricsDashboard from '@/pages/MetricsDashboard';
 
@@ -213,6 +216,21 @@ function App() {
                 <Route path="/subcontractor-detail/:id" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/tips-management" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <TipsManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/feedback-center" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <FeedbackCenter />
+                  </ProtectedRoute>
+                } />
+                <Route path="/communication-hub" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <CommunicationHub />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={
