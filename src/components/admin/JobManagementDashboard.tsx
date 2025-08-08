@@ -222,36 +222,6 @@ export function JobManagementDashboard() {
             <p className="text-xs text-muted-foreground mt-1">Customer satisfaction</p>
           </AdminCard>
         </AdminGrid>
-
-        {/* Secondary Metrics */}
-        <AdminGrid columns={3} gap="lg">
-          <AdminCard
-            variant="stat"
-            title="Accepted Jobs"
-            description="Jobs accepted by subcontractors"
-            icon={<CheckCircle className="h-5 w-5" />}
-          >
-            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.acceptedJobs}</div>
-          </AdminCard>
-
-          <AdminCard
-            variant="stat"
-            title="Completed Jobs"
-            description="Successfully completed assignments"
-            icon={<Calendar className="h-5 w-5" />}
-          >
-            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.completedJobs}</div>
-          </AdminCard>
-
-          <AdminCard
-            variant="stat"
-            title="Total Revenue"
-            description="Revenue from completed jobs"
-            icon={<DollarSign className="h-5 w-5" />}
-          >
-            <div className="text-4xl font-bold tracking-tight mb-3">${metrics.totalRevenue.toFixed(2)}</div>
-          </AdminCard>
-        </AdminGrid>
       </AdminSection>
 
       {/* Job Management Tabs */}

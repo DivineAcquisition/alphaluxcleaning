@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminCard } from "@/components/admin/AdminCard";
-import { AdminGrid } from "@/components/admin/AdminGrid";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,8 +23,6 @@ import {
   UserCheck,
   UserX,
   Calendar,
-  DollarSign,
-  TrendingUp,
   AlertTriangle
 } from "lucide-react";
 
@@ -248,138 +245,138 @@ export function SubcontractorJobTracker() {
         </div>
       </AdminCard>
 
-      {/* Subcontractor Cards */}
-      <AdminGrid columns={1} gap="md">
-        {filteredSubcontractors.map((sub) => {
-          const performance = getPerformanceBadge(sub.completion_rate, sub.avg_customer_rating);
-          
-          return (
-            <AdminCard key={sub.id} title={`${sub.full_name} - Performance Overview`} variant="action">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <UserCheck className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">{sub.full_name}</h4>
-                      <p className="text-sm text-muted-foreground">{sub.email}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant={sub.is_available ? 'default' : 'secondary'}>
-                        {sub.is_available ? 'Available' : 'Unavailable'}
-                      </Badge>
-                      <Badge variant={performance.variant}>
-                        {performance.label}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-6 mb-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{sub.total_assignments}</div>
-                      <div className="text-sm text-muted-foreground">Total Jobs</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`text-2xl font-bold ${getPerformanceColor(sub.completion_rate, sub.avg_customer_rating)}`}>
-                        {sub.completion_rate.toFixed(1)}%
-                      </div>
-                      <div className="text-sm text-muted-foreground">Completion Rate</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">{sub.avg_customer_rating.toFixed(1)}</div>
-                      <div className="text-sm text-muted-foreground">Avg Rating</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">${sub.total_earnings.toFixed(0)}</div>
-                      <div className="text-sm text-muted-foreground">Total Earnings</div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">This Month:</span> {sub.current_month_jobs} jobs
-                    </div>
-                    <div>
-                      <span className="font-medium">Split Tier:</span> {sub.split_tier.replace('_', '/')}
-                    </div>
-                    <div>
-                      <span className="font-medium">Last Job:</span> {
-                        sub.last_job_date 
-                          ? new Date(sub.last_job_date).toLocaleDateString()
-                          : 'Never'
-                      }
-                    </div>
-                  </div>
-
-                  {sub.dropped_jobs > 0 && (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-warning">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>{sub.dropped_jobs} dropped jobs</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="ml-4 flex flex-col gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant={sub.is_available ? "destructive" : "default"} size="sm">
-                        {sub.is_available ? (
-                          <>
-                            <UserX className="h-4 w-4 mr-2" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Activate
-                          </>
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          {sub.is_available ? 'Deactivate' : 'Activate'} Subcontractor
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to {sub.is_available ? 'deactivate' : 'activate'} {sub.full_name}? 
-                          {sub.is_available 
-                            ? ' They will no longer receive new job assignments.'
-                            : ' They will be able to receive new job assignments.'
-                          }
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => toggleAvailability(sub.id, sub.is_available)}
-                          className={sub.is_available ? "bg-destructive hover:bg-destructive/90" : ""}
-                        >
-                          {sub.is_available ? 'Deactivate' : 'Activate'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  
-                  <Button variant="outline" size="sm">
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </AdminCard>
-          );
-        })}
-      </AdminGrid>
-
-      {filteredSubcontractors.length === 0 && (
-        <AdminCard title="No Results Found">
+      {/* Subcontractor Table */}
+      <AdminCard title="Subcontractor Performance" description="Monitor and manage your cleaning team">
+        {filteredSubcontractors.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Filter className="h-12 w-12 mx-auto mb-4" />
             <p>No subcontractors match the current filters.</p>
           </div>
-        </AdminCard>
-      )}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4">Subcontractor</th>
+                  <th className="text-left py-3 px-4">Status</th>
+                  <th className="text-center py-3 px-4">Jobs</th>
+                  <th className="text-center py-3 px-4">Completion</th>
+                  <th className="text-center py-3 px-4">Rating</th>
+                  <th className="text-center py-3 px-4">Earnings</th>
+                  <th className="text-center py-3 px-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSubcontractors.map((sub) => {
+                  const performance = getPerformanceBadge(sub.completion_rate, sub.avg_customer_rating);
+                  
+                  return (
+                    <tr key={sub.id} className="border-b hover:bg-muted/50">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                            <UserCheck className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{sub.full_name}</div>
+                            <div className="text-sm text-muted-foreground">{sub.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={sub.is_available ? 'default' : 'secondary'} className="w-fit">
+                            {sub.is_available ? 'Available' : 'Unavailable'}
+                          </Badge>
+                          <Badge variant={performance.variant} className="w-fit text-xs">
+                            {performance.label}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="font-semibold">{sub.total_assignments}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {sub.current_month_jobs} this month
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className={`font-semibold ${getPerformanceColor(sub.completion_rate, sub.avg_customer_rating)}`}>
+                          {sub.completion_rate.toFixed(1)}%
+                        </div>
+                        {sub.dropped_jobs > 0 && (
+                          <div className="text-xs text-warning flex items-center justify-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {sub.dropped_jobs} dropped
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="font-semibold">⭐ {sub.avg_customer_rating.toFixed(1)}</div>
+                        <div className="text-xs text-muted-foreground">{sub.split_tier.replace('_', '/')}</div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="font-semibold">${sub.total_earnings.toFixed(0)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {sub.last_job_date 
+                            ? new Date(sub.last_job_date).toLocaleDateString()
+                            : 'No jobs'
+                          }
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex gap-2 justify-center">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant={sub.is_available ? "destructive" : "default"} 
+                                size="sm"
+                                className="h-8"
+                              >
+                                {sub.is_available ? (
+                                  <UserX className="h-3 w-3" />
+                                ) : (
+                                  <UserCheck className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {sub.is_available ? 'Deactivate' : 'Activate'} Subcontractor
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to {sub.is_available ? 'deactivate' : 'activate'} {sub.full_name}? 
+                                  {sub.is_available 
+                                    ? ' They will no longer receive new job assignments.'
+                                    : ' They will be able to receive new job assignments.'
+                                  }
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => toggleAvailability(sub.id, sub.is_available)}
+                                  className={sub.is_available ? "bg-destructive hover:bg-destructive/90" : ""}
+                                >
+                                  {sub.is_available ? 'Deactivate' : 'Activate'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          
+                          <Button variant="outline" size="sm" className="h-8">
+                            <Calendar className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </AdminCard>
     </div>
   );
 }
