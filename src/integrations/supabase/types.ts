@@ -2740,6 +2740,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_onboard_existing_cleaners: {
+        Args: { p_cleaners: Json }
+        Returns: Json
+      }
       calculate_subcontractor_tier: {
         Args: { p_review_count: number; p_completed_jobs: number }
         Returns: number

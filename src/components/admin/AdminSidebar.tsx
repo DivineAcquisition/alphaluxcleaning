@@ -61,6 +61,12 @@ const navigationItems = [
     description: "Review apps"
   },
   {
+    label: "Bulk Onboard",
+    path: "/bulk-onboard-cleaners", 
+    icon: UserCheck,
+    description: "Onboard existing cleaners"
+  },
+  {
     label: "Analytics",
     path: "/metrics-dashboard",
     icon: BarChart3,

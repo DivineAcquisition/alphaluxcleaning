@@ -84,6 +84,7 @@ import JobAssignments from '@/pages/JobAssignments';
 import CommercialEstimates from '@/pages/CommercialEstimates';
 import CustomerDashboardAdmin from '@/pages/CustomerDashboardAdmin';
 import PaymentPortalAdmin from '@/pages/PaymentPortalAdmin';
+import BulkOnboardExistingCleaners from '@/pages/BulkOnboardExistingCleaners';
 
 const queryClient = new QueryClient();
 
@@ -249,6 +250,11 @@ function App() {
                 <Route path="/payment-portal" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <PaymentPortalAdmin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/bulk-onboard-cleaners" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <BulkOnboardExistingCleaners />
                   </ProtectedRoute>
                 } />
                 
