@@ -5,15 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation } from "@/components/Navigation";
-import { CreditCard, Receipt, Search, DollarSign, Heart } from "lucide-react";
+import { CreditCard, Receipt, Search, DollarSign, Heart, User, History, Settings, LogIn } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePaymentData } from "@/hooks/usePaymentData";
+import { PaymentHistory } from "@/components/payment/PaymentHistory";
+import { PaymentMethods } from "@/components/payment/PaymentMethods";
+import { SubscriptionManagement } from "@/components/payment/SubscriptionManagement";
+import { useNavigate } from "react-router-dom";
 
 const PaymentPortal = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { orders, paymentMethods, subscriptions, loading, refreshAll } = usePaymentData();
   const [invoiceId, setInvoiceId] = useState("");
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
   const [tipAmount, setTipAmount] = useState("");
 
   const lookupInvoice = async () => {
@@ -22,7 +31,7 @@ const PaymentPortal = () => {
       return;
     }
 
-    setLoading(true);
+    setLookupLoading(true);
     try {
       const { data, error } = await supabase
         .from("orders")
@@ -41,7 +50,7 @@ const PaymentPortal = () => {
       console.error("Error looking up invoice:", error);
       toast.error("Failed to lookup invoice");
     } finally {
-      setLoading(false);
+      setLookupLoading(false);
     }
   };
 
@@ -71,12 +80,47 @@ const PaymentPortal = () => {
     }
   };
 
+  // Redirect to login if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+        <Navigation />
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto">
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white text-center">
+                <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+                  <CreditCard className="h-6 w-6" />
+                  Payment Portal
+                </CardTitle>
+                <p className="text-primary-foreground/80">
+                  Please sign in to access your payment information
+                </p>
+              </CardHeader>
+              <CardContent className="text-center py-8">
+                <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-6">
+                  You need to be signed in to view your payment history, manage payment methods, and access subscription settings.
+                </p>
+                <Button onClick={() => navigate('/auth')} size="lg">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8">
           
           {/* Header */}
           <Card className="border-0 shadow-lg">
@@ -86,17 +130,108 @@ const PaymentPortal = () => {
                 Payment Portal
               </CardTitle>
               <p className="text-primary-foreground/80">
-                Pay invoices, add tips, and manage your payments
+                Manage your payments, subscriptions, and billing information
               </p>
             </CardHeader>
           </Card>
 
-          <Tabs defaultValue="lookup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="dashboard" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="methods">Payment Methods</TabsTrigger>
+              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
               <TabsTrigger value="lookup">Invoice Lookup</TabsTrigger>
-              <TabsTrigger value="tip">Add Tip</TabsTrigger>
             </TabsList>
-            
+
+            <TabsContent value="dashboard" className="space-y-6">
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Receipt className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Orders</p>
+                        <p className="text-2xl font-semibold">{orders.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-accent/10 rounded-lg">
+                        <CreditCard className="h-6 w-6 text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Payment Methods</p>
+                        <p className="text-2xl font-semibold">{paymentMethods.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-secondary/10 rounded-lg">
+                        <Settings className="h-6 w-6 text-secondary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                        <p className="text-2xl font-semibold">{subscriptions.length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {orders.slice(0, 3).map((order) => (
+                    <div key={order.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                      <div>
+                        <p className="font-medium">{order.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">${(order.amount / 100).toFixed(2)}</span>
+                        <Badge variant={order.status === 'paid' ? 'default' : 'secondary'}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {orders.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">No recent activity</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="history" className="space-y-6">
+              <PaymentHistory orders={orders} loading={loading} />
+            </TabsContent>
+
+            <TabsContent value="methods" className="space-y-6">
+              <PaymentMethods paymentMethods={paymentMethods} onRefresh={refreshAll} />
+            </TabsContent>
+
+            <TabsContent value="subscriptions" className="space-y-6">
+              <SubscriptionManagement subscriptions={subscriptions} onRefresh={refreshAll} />
+            </TabsContent>
+
             <TabsContent value="lookup" className="space-y-6">
               {/* Invoice Lookup */}
               <Card>
@@ -117,8 +252,8 @@ const PaymentPortal = () => {
                         onChange={(e) => setInvoiceId(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && lookupInvoice()}
                       />
-                      <Button onClick={lookupInvoice} disabled={loading}>
-                        {loading ? "Searching..." : "Search"}
+                      <Button onClick={lookupInvoice} disabled={lookupLoading}>
+                        {lookupLoading ? "Searching..." : "Search"}
                       </Button>
                     </div>
                   </div>
@@ -176,9 +311,7 @@ const PaymentPortal = () => {
                   </CardContent>
                 </Card>
               )}
-            </TabsContent>
 
-            <TabsContent value="tip" className="space-y-6">
               {/* Tip Section */}
               <Card>
                 <CardHeader>
@@ -236,19 +369,6 @@ const PaymentPortal = () => {
                   <p className="text-xs text-muted-foreground text-center">
                     Tips go directly to your cleaning team. Thank you for your generosity!
                   </p>
-                </CardContent>
-              </Card>
-
-              {/* Recent Tips */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Tips</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center text-muted-foreground py-8">
-                    <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <p>No tips yet. Be the first to show appreciation!</p>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
