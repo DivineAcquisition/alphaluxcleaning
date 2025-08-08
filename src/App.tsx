@@ -26,7 +26,7 @@ import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
-import AdminDashboard from '@/pages/AdminDashboard';
+import SubcontractorDetail from '@/pages/SubcontractorDetail';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import ApplicationManager from '@/pages/ApplicationManager';
 import MetricsDashboard from '@/pages/MetricsDashboard';
@@ -210,9 +210,9 @@ function App() {
                     <AdminPortal />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard" element={
+                <Route path="/subcontractor-detail/:id" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <AdminDashboard />
+                    <SubcontractorDetail />
                   </ProtectedRoute>
                 } />
                 <Route path="/subcontractor-management" element={
@@ -424,7 +424,7 @@ function App() {
                 <Route path="/test/tier-config" element={<TierSystemConfig />} />
                 <Route path="/test/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
                 <Route path="/test/office-dashboard" element={<OfficeManagerDashboard />} />
-                <Route path="/test/admin-dashboard" element={<AdminDashboard />} />
+                <Route path="/test/admin-portal" element={<AdminPortal />} />
 
                 {/* Phase 4B: Advanced Tier Management System Routes */}
                 <Route path="/subcontractor-tiers" element={

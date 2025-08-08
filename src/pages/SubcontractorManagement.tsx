@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Users, UserCheck, UserX, Star, Phone, Mail, Search } from "lucide-react";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function SubcontractorManagement() {
   const { teamMembers: subcontractors, loading } = useTeamManagement();
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const filteredSubcontractors = subcontractors.filter(sub =>
     sub.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,7 +145,11 @@ export default function SubcontractorManagement() {
                     <Badge variant={contractor.is_available ? "default" : "secondary"}>
                       {contractor.is_available ? "active" : "inactive"}
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/subcontractor-detail/${contractor.id}`)}
+                    >
                       Manage
                     </Button>
                   </div>

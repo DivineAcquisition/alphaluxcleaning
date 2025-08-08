@@ -7,7 +7,9 @@ import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { 
   DollarSign, 
   TrendingUp,
@@ -16,10 +18,16 @@ import {
   Calendar,
   BarChart3,
   RefreshCw,
-  Activity
+  Activity,
+  Briefcase,
+  Settings,
+  ArrowRight
 } from "lucide-react";
+import { JobManagementDashboard } from "@/components/admin/JobManagementDashboard";
+import { SubcontractorJobTracker } from "@/components/admin/SubcontractorJobTracker";
 
 const AdminPortal = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -122,120 +130,212 @@ const AdminPortal = () => {
     );
   }
 
+  const coreAdminSections = [
+    {
+      title: "Subcontractor Management",
+      description: "Manage your team of subcontractors, performance, and assignments",
+      action: "Manage Team",
+      path: "/subcontractor-management"
+    },
+    {
+      title: "Application Manager",
+      description: "Review and process new subcontractor applications",
+      action: "View Applications",
+      path: "/application-manager"
+    },
+    {
+      title: "Payment Portal",
+      description: "Manage payments, billing, and financial transactions",
+      action: "Payment Center",
+      path: "/payment-portal"
+    },
+    {
+      title: "Support Requests",
+      description: "Handle customer support tickets and service requests",
+      action: "Support Center",
+      path: "/support-portal"
+    }
+  ];
+
   return (
     <AdminLayout 
       title="Admin Dashboard" 
-      description="Real-time insights into your cleaning business operations"
+      description="Comprehensive management hub for Bay Area Cleaning Pros"
     >
-      <AdminSection 
-        title="Business Overview"
-        description="Monitor key performance indicators and business metrics in real-time"
-        headerActions={
-          <Button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
-          </Button>
-        }
-      >
-        {/* Key Metrics Grid */}
-        <AdminGrid columns={4} gap="md">
-          <AdminCard
-            variant="metric"
-            title="Total Orders"
-            icon={<Calendar className="h-4 w-4" />}
-          >
-            <div className="text-3xl font-bold tracking-tight">{metrics.totalOrders}</div>
-            <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
-          </AdminCard>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Business Overview
+          </TabsTrigger>
+          <TabsTrigger value="jobs" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Job Management
+          </TabsTrigger>
+          <TabsTrigger value="subcontractors" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Subcontractors
+          </TabsTrigger>
+          <TabsTrigger value="tools" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Admin Tools
+          </TabsTrigger>
+        </TabsList>
 
-          <AdminCard
-            variant="metric"
-            title="Completed Revenue"
-            icon={<DollarSign className="h-4 w-4" />}
+        <TabsContent value="overview" className="space-y-6">
+          <AdminSection 
+            title="Business Metrics"
+            description="Real-time insights into your cleaning business operations"
+            headerActions={
+              <Button
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                variant="outline"
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+              </Button>
+            }
           >
-            <div className="text-3xl font-bold tracking-tight text-success">
-              ${metrics.completedRevenue.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">From completed services</p>
-          </AdminCard>
+            {/* Key Metrics Grid */}
+            <AdminGrid columns={4} gap="md">
+              <AdminCard
+                variant="metric"
+                title="Total Orders"
+                icon={<Calendar className="h-4 w-4" />}
+              >
+                <div className="text-3xl font-bold tracking-tight">{metrics.totalOrders}</div>
+                <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
+              </AdminCard>
 
-          <AdminCard
-            variant="metric"
-            title="Pending Revenue"
-            icon={<TrendingUp className="h-4 w-4" />}
+              <AdminCard
+                variant="metric"
+                title="Completed Revenue"
+                icon={<DollarSign className="h-4 w-4" />}
+              >
+                <div className="text-3xl font-bold tracking-tight text-success">
+                  ${metrics.completedRevenue.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">From completed services</p>
+              </AdminCard>
+
+              <AdminCard
+                variant="metric"
+                title="Pending Revenue"
+                icon={<TrendingUp className="h-4 w-4" />}
+              >
+                <div className="text-3xl font-bold tracking-tight text-warning">
+                  ${metrics.pendingRevenue.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">From pending bookings</p>
+              </AdminCard>
+
+              <AdminCard
+                variant="metric"
+                title="Completion Rate"
+                icon={<CheckCircle className="h-4 w-4" />}
+              >
+                <div className="text-3xl font-bold tracking-tight text-primary">
+                  {metrics.completionRate.toFixed(1)}%
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Service completion rate</p>
+              </AdminCard>
+            </AdminGrid>
+
+            {/* Additional Stats */}
+            <AdminGrid columns={2} gap="lg">
+              <AdminCard
+                variant="stat"
+                title="Pending Applications"
+                description="Subcontractor applications waiting for review"
+                icon={<Users className="h-5 w-5" />}
+              >
+                <div className="text-4xl font-bold tracking-tight mb-3">{metrics.pendingApplications}</div>
+                {metrics.pendingApplications > 0 && (
+                  <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-warning/20">
+                    Requires Review
+                  </Badge>
+                )}
+              </AdminCard>
+
+              <AdminCard
+                variant="stat"
+                title="Completed Services"
+                description="Total number of successfully completed cleanings"
+                icon={<BarChart3 className="h-5 w-5" />}
+              >
+                <div className="text-4xl font-bold tracking-tight mb-3">{metrics.completedServices}</div>
+                <p className="text-sm text-muted-foreground">Customer satisfaction focused</p>
+              </AdminCard>
+            </AdminGrid>
+
+            {/* System Status */}
+            <AdminCard
+              title="System Status"
+              description="Background integrations and data synchronization status"
+              variant="action"
+            >
+              <div className="grid gap-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                  <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+                  <span className="text-sm font-medium">GoHighLevel Integration - Active</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                  <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+                  <span className="text-sm font-medium">Customer Pipeline Automation - Running</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                  <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
+                  <span className="text-sm font-medium">Data Synchronization - Real-time</span>
+                </div>
+              </div>
+            </AdminCard>
+          </AdminSection>
+        </TabsContent>
+
+        <TabsContent value="jobs" className="space-y-4">
+          <JobManagementDashboard />
+        </TabsContent>
+
+        <TabsContent value="subcontractors" className="space-y-4">
+          <AdminSection 
+            title="Subcontractor Performance Tracker"
+            description="Monitor and manage subcontractor performance, availability, and job completion rates"
           >
-            <div className="text-3xl font-bold tracking-tight text-warning">
-              ${metrics.pendingRevenue.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">From pending bookings</p>
-          </AdminCard>
+            <SubcontractorJobTracker />
+          </AdminSection>
+        </TabsContent>
 
-          <AdminCard
-            variant="metric"
-            title="Completion Rate"
-            icon={<CheckCircle className="h-4 w-4" />}
+        <TabsContent value="tools" className="space-y-4">
+          <AdminSection 
+            title="Core Admin Tools"
+            description="Essential administrative functions and management tools"
           >
-            <div className="text-3xl font-bold tracking-tight text-primary">
-              {metrics.completionRate.toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Service completion rate</p>
-          </AdminCard>
-        </AdminGrid>
-
-        {/* Additional Stats */}
-        <AdminGrid columns={2} gap="lg">
-          <AdminCard
-            variant="stat"
-            title="Pending Applications"
-            description="Subcontractor applications waiting for review"
-            icon={<Users className="h-5 w-5" />}
-          >
-            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.pendingApplications}</div>
-            {metrics.pendingApplications > 0 && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-warning/20">
-                Requires Review
-              </Badge>
-            )}
-          </AdminCard>
-
-          <AdminCard
-            variant="stat"
-            title="Completed Services"
-            description="Total number of successfully completed cleanings"
-            icon={<BarChart3 className="h-5 w-5" />}
-          >
-            <div className="text-4xl font-bold tracking-tight mb-3">{metrics.completedServices}</div>
-            <p className="text-sm text-muted-foreground">Customer satisfaction focused</p>
-          </AdminCard>
-        </AdminGrid>
-
-        {/* System Status */}
-        <AdminCard
-          title="System Status"
-          description="Background integrations and data synchronization status"
-          variant="action"
-        >
-          <div className="grid gap-3">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
-              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
-              <span className="text-sm font-medium">GoHighLevel Integration - Active</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
-              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
-              <span className="text-sm font-medium">Customer Pipeline Automation - Running</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
-              <div className="h-3 w-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50"></div>
-              <span className="text-sm font-medium">Data Synchronization - Real-time</span>
-            </div>
-          </div>
-        </AdminCard>
-      </AdminSection>
+            <AdminGrid columns={2} gap="lg">
+              {coreAdminSections.map((section) => (
+                <AdminCard
+                  key={section.title}
+                  title={section.title}
+                  description={section.description}
+                  variant="action"
+                >
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => navigate(section.path)}
+                      className="w-full justify-between group"
+                      variant="outline"
+                    >
+                      <span>{section.action}</span>
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </AdminCard>
+              ))}
+            </AdminGrid>
+          </AdminSection>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 };

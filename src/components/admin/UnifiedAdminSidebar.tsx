@@ -47,63 +47,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-const dashboardItems = [
+const coreItems = [
   {
-    label: "Main Dashboard",
+    label: "Dashboard",
     path: "/admin",
     icon: LayoutDashboard,
     description: "Overview & metrics"
   },
   {
-    label: "Analytics",
-    path: "/metrics-dashboard",
-    icon: BarChart3,
-    description: "Data insights"
-  }
-];
-
-const operationsItems = [
-  {
-    label: "Office Dashboard",
-    path: "/office-dashboard",
-    icon: Building2,
-    description: "Operations hub"
-  },
-  {
-    label: "Daily Jobs",
-    path: "/office-jobs",
-    icon: ClipboardList,
-    description: "Manage today's jobs"
-  },
-  {
-    label: "Job Assignments",
-    path: "/job-assignments",
-    icon: ClipboardList,
-    description: "Assign jobs"
-  },
-  {
-    label: "Bookings",
-    path: "/office-bookings",
-    icon: Calendar,
-    description: "Customer bookings"
-  },
-  {
-    label: "Quality Control",
-    path: "/office-quality",
-    icon: CheckCircle,
-    description: "Quality reports"
-  },
-  {
-    label: "Commercial Estimates",
-    path: "/commercial-estimates",
-    icon: Building2,
-    description: "Business quotes"
-  }
-];
-
-const peopleManagementItems = [
-  {
-    label: "Subcontractors",
+    label: "Subcontractor Management",
     path: "/subcontractor-management",
     icon: Users,
     description: "Team overview"
@@ -115,38 +67,14 @@ const peopleManagementItems = [
     description: "Review applications"
   },
   {
-    label: "Team Performance",
-    path: "/office-performance",
-    icon: TrendingUp,
-    description: "Team metrics"
-  },
-  {
-    label: "Customer Dashboard",
-    path: "/customer-dashboard",
-    icon: UserPlus,
-    description: "Customer overview"
-  },
-  {
-    label: "User Management",
-    path: "/user-management",
-    icon: Users2,
-    description: "System users"
+    label: "Job Assignments",
+    path: "/job-assignments",
+    icon: ClipboardList,
+    description: "Assign jobs"
   }
 ];
 
-const businessToolsItems = [
-  {
-    label: "Tier Management",
-    path: "/subcontractor-tiers",
-    icon: Award,
-    description: "Manage tiers"
-  },
-  {
-    label: "Payments",
-    path: "/subcontractor-payments",
-    icon: CreditCard,
-    description: "Payment tracking"
-  },
+const businessItems = [
   {
     label: "Payment Portal",
     path: "/payment-portal",
@@ -160,31 +88,31 @@ const businessToolsItems = [
     description: "Customer support"
   },
   {
-    label: "Availability",
-    path: "/subcontractor-availability",
-    icon: Calendar,
-    description: "Schedule management"
+    label: "Commercial Estimates",
+    path: "/commercial-estimates",
+    icon: Building2,
+    description: "Business quotes"
+  },
+  {
+    label: "Analytics",
+    path: "/metrics-dashboard",
+    icon: BarChart3,
+    description: "Performance insights"
   }
 ];
 
 const systemItems = [
   {
-    label: "Control Panel",
-    path: "/admin-dashboard",
+    label: "System Settings",
+    path: "/system-settings",
     icon: Settings,
-    description: "System settings"
-  },
-  {
-    label: "API Management",
-    path: "/api-portal",
-    icon: Globe,
-    description: "API tools"
+    description: "App configuration"
   },
   {
     label: "API Keys",
     path: "/api-keys",
     icon: Key,
-    description: "Manage keys"
+    description: "Manage integrations"
   },
   {
     label: "Database Tools",
@@ -193,59 +121,17 @@ const systemItems = [
     description: "DB management"
   },
   {
-    label: "Security Settings",
-    path: "/security-settings",
-    icon: Shield,
-    description: "Security config"
-  },
-  {
-    label: "Email Settings",
-    path: "/email-settings",
-    icon: Mail,
-    description: "Email config"
-  },
-  {
     label: "Automation",
     path: "/automation-controls",
     icon: Zap,
     description: "Workflows"
-  },
-  {
-    label: "System Logs",
-    path: "/system-logs",
-    icon: Terminal,
-    description: "Debug logs"
-  }
-];
-
-const testingItems = [
-  {
-    label: "Test Dashboard",
-    path: "/test",
-    icon: TestTube,
-    description: "All test routes"
-  },
-  {
-    label: "Booking Preview",
-    path: "/admin-booking-preview",
-    icon: Eye,
-    description: "Test booking flow"
-  },
-  {
-    label: "Testing Portal",
-    path: "/testing-portal",
-    icon: Terminal,
-    description: "Dev tools"
   }
 ];
 
 const sectionGroups = [
-  { title: "Dashboard", items: dashboardItems, color: "primary" },
-  { title: "Operations", items: operationsItems, color: "blue" },
-  { title: "People Management", items: peopleManagementItems, color: "green" },
-  { title: "Business Tools", items: businessToolsItems, color: "orange" },
-  { title: "System", items: systemItems, color: "purple" },
-  { title: "Testing", items: testingItems, color: "gray" }
+  { title: "Core", items: coreItems, color: "primary" },
+  { title: "Business", items: businessItems, color: "blue" },
+  { title: "System", items: systemItems, color: "purple" }
 ];
 
 export function UnifiedAdminSidebar() {
