@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 export function Navigation() {
   const location = useLocation();
@@ -27,6 +27,11 @@ export function Navigation() {
           path: "/my-services",
           label: "My Services",
           icon: Settings
+        });
+        baseItems.push({
+          path: "/billing",
+          label: "Billing",
+          icon: CreditCard
         });
       } else if (userRole === 'subcontractor') {
         baseItems.push({
@@ -165,6 +170,12 @@ export function Navigation() {
                         <Link to="/my-services" className="flex items-center gap-2">
                           <Settings className="h-4 w-4" />
                           My Services
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/billing" className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          Billing
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

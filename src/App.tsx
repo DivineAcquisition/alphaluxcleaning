@@ -73,6 +73,7 @@ import InstantQuote from '@/pages/InstantQuote';
 import PaymentPortal from '@/pages/PaymentPortal';
 import ConnectPortal from '@/pages/ConnectPortal';
 import TestingPortal from '@/pages/TestingPortal';
+import Billing from '@/pages/Billing';
 
 // Phase 4B: Advanced Tier Management System
 import SubcontractorTierManagement from '@/pages/SubcontractorTierManagement';
@@ -436,6 +437,11 @@ function App() {
                 {/* Phase 6: System Integration & New Pages */}
                 <Route path="/instant-quote" element={<InstantQuote />} />
                 <Route path="/payment-portal" element={<PaymentPortal />} />
+                <Route path="/billing" element={
+                  <ProtectedRoute requiredRole="customer">
+                    <Billing />
+                  </ProtectedRoute>
+                } />
                 <Route path="/connect" element={<ConnectPortal />} />
                 
                 {/* Testing Portal - Admin Only */}
