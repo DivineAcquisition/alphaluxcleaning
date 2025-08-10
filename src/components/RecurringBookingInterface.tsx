@@ -204,6 +204,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Debug customer info
+  console.log('🔍 RecurringBookingInterface Debug:', {
+    onPaymentRequest: !!onPaymentRequest,
+    existingMember,
+    newClient
+  });
   const [selectedTier, setSelectedTier] = useState<string>(''); // No default selection
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time'); // Default to one-time for discounts
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -1204,15 +1211,29 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      </div>
                    )}
 
-                    <Button 
-                      onClick={() => {
-                        if (customerInfo.name && customerInfo.email && customerInfo.phone && onPaymentRequest) {
-                          const pricing = calculatePricing();
-                          onPaymentRequest({
-                            amount: pricing.total,
-                            customerEmail: customerInfo.email,
-                            customerName: customerInfo.name,
-                            customerPhone: customerInfo.phone,
+                     <Button 
+                       onClick={() => {
+                         console.log('🚀 Button clicked! Customer info:', {
+                           name: customerInfo.name,
+                           email: customerInfo.email,
+                           phone: customerInfo.phone,
+                           isComplete: !!(customerInfo.name && customerInfo.email && customerInfo.phone),
+                           onPaymentRequest: !!onPaymentRequest
+                         });
+                         
+                         if (customerInfo.name && customerInfo.email && customerInfo.phone && onPaymentRequest) {
+                           const pricing = calculatePricing();
+                           console.log('📊 Initiating payment with data:', {
+                             amount: pricing.total,
+                             customerEmail: customerInfo.email,
+                             customerName: customerInfo.name,
+                             customerPhone: customerInfo.phone
+                           });
+                           onPaymentRequest({
+                             amount: pricing.total,
+                             customerEmail: customerInfo.email,
+                             customerName: customerInfo.name,
+                             customerPhone: customerInfo.phone,
                             cleaningType: selectedTierData?.description || 'General Cleaning',
                             frequency: selectedRecurringData?.frequency || 'once',
                             squareFootage: squareFootage,
@@ -1231,12 +1252,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      size="lg"
                      className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                    >
-                     {(!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
-                       <>
-                         <Clock className="h-4 w-4" />
-                         Complete Information to Continue
-                       </>
-                     ) : (
+                      {(!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
+                        <>
+                          <Clock className="h-4 w-4" />
+                          Complete Information to Continue
+                        </>
+                      ) : (
                        <>
                          <CreditCard className="h-4 w-4" />
                          Continue to Secure Payment

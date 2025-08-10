@@ -64,6 +64,23 @@ function PaymentForm({
   const [progress, setProgress] = useState(0);
   const [isElementReady, setIsElementReady] = useState(false);
 
+  // Debug: Log payment button state
+  const isPaymentDisabled = isLoading || !stripe || !elements || !isElementReady;
+  
+  console.log('🔍 Payment Debug Info:', {
+    stripe: !!stripe,
+    elements: !!elements,
+    isLoading,
+    isElementReady,
+    isPaymentDisabled,
+    paymentData: {
+      customerName: paymentData.customerName,
+      customerEmail: paymentData.customerEmail,
+      customerPhone: paymentData.customerPhone,
+      amount: paymentData.amount
+    }
+  });
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -170,8 +187,8 @@ function PaymentForm({
           <CardContent>
             <PaymentElement
               onReady={() => {
+                console.log('✅ PaymentElement is ready');
                 setIsElementReady(true);
-                console.log('PaymentElement ready');
               }}
               options={{ layout: 'tabs' }}
             />
@@ -225,23 +242,47 @@ function PaymentForm({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={isLoading || !stripe || !elements || !isElementReady}
-            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Processing...
-              </>
-            ) : (
-              <>
-                Pay ${paymentData.amount.toFixed(2)}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </>
+          <div className="flex-1 space-y-2">
+            {/* Debug info for user */}
+            {(!stripe || !elements) && (
+              <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                ⏳ Loading payment system...
+              </div>
             )}
-          </Button>
+            {!isElementReady && stripe && elements && (
+              <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                ⏳ Preparing payment form...
+              </div>
+            )}
+            
+            <Button
+              type="submit"
+              disabled={isPaymentDisabled}
+              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Pay ${paymentData.amount.toFixed(2)}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+            
+            {/* Debug button state */}
+            <div className="text-xs text-muted-foreground text-center">
+              Button status: {isPaymentDisabled ? 'Disabled' : 'Enabled'} 
+              {isPaymentDisabled && (
+                <span className="ml-1">
+                  ({!stripe ? 'Stripe loading' : !elements ? 'Elements loading' : !isElementReady ? 'Payment form loading' : 'Processing'})
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </form>
     </div>
