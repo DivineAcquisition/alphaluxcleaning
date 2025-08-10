@@ -7,13 +7,14 @@ import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { RecurringBookingInterface } from "@/components/RecurringBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
-import { EnhancedPaymentInterface } from "@/components/payment/EnhancedPaymentInterface";
+
 import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
+import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
@@ -29,6 +30,8 @@ const Index = () => {
     minutes: 59,
     seconds: 59
   });
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentData, setPaymentData] = useState(null);
 
   // Track page view on component mount
   useEffect(() => {
@@ -191,30 +194,51 @@ const Index = () => {
               </div>
 
               {/* Service Configuration Section */}
-              <RecurringBookingInterface newClient={true} onBookingUpdate={data => {
-              setPricingData({
-                hours: data.tier.hours,
-                cleaningType: 'standard',
-                serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                membership: data.membership,
-                addOns: data.addOns,
-                recurring: data.recurring
-              });
-              setCalculatedPrice(data.pricing.total);
-              setPriceBreakdown({
-                basePrice: data.tier.basePrice,
-                addOns: data.addOns,
-                membership: data.membership,
-                recurring: data.recurring,
-                savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-              });
-              
-              // Set client secret and customer info for embedded payments
-              if (data.clientSecret) {
-                setClientSecret(data.clientSecret);
-                setCustomerInfo(data.customerInfo);
-              }
-            }} />
+              <RecurringBookingInterface 
+                newClient={true} 
+                onBookingUpdate={data => {
+                  setPricingData({
+                    hours: data.tier.hours,
+                    cleaningType: 'standard',
+                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                    membership: data.membership,
+                    addOns: data.addOns,
+                    recurring: data.recurring
+                  });
+                  setCalculatedPrice(data.pricing.total);
+                  setPriceBreakdown({
+                    basePrice: data.tier.basePrice,
+                    addOns: data.addOns,
+                    membership: data.membership,
+                    recurring: data.recurring,
+                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+                  });
+                }}
+                onPaymentRequest={(data) => {
+                  setPaymentData(data);
+                  setShowPayment(true);
+                  console.log('Payment requested:', data);
+                }}
+              />
+
+              {/* Custom Stripe Payment Interface */}
+              {showPayment && paymentData && (
+                <div className="mt-8">
+                  <CustomStripePayment
+                    paymentData={paymentData}
+                    onSuccess={(paymentIntentId) => {
+                      console.log('Payment successful:', paymentIntentId);
+                      setShowPayment(false);
+                      setPaymentData(null);
+                      // Handle successful payment (redirect, show success message, etc.)
+                    }}
+                    onCancel={() => {
+                      setShowPayment(false);
+                      setPaymentData(null);
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Service Details Button */}
               {pricingData && (
@@ -226,41 +250,6 @@ const Index = () => {
                 </div>
               )}
               
-              {/* Enhanced Payment Section */}
-              {pricingData && clientSecret && (
-                <div className="text-center">
-                  <Elements 
-                    stripe={stripePromise} 
-                    options={{
-                      clientSecret,
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: 'hsl(var(--primary))',
-                          colorBackground: 'hsl(var(--background))',
-                          colorText: 'hsl(var(--foreground))',
-                          borderRadius: '8px'
-                        }
-                      }
-                    }}
-                  >
-                    <EnhancedPaymentInterface 
-                      amount={calculatedPrice}
-                      onSuccess={(paymentIntentId) => {
-                        console.log('Payment successful:', paymentIntentId);
-                        // Handle successful payment - could redirect to confirmation page
-                        window.location.href = `/payment-confirmation?payment_intent=${paymentIntentId}`;
-                      }}
-                      onCancel={() => {
-                        console.log('Payment cancelled');
-                        setClientSecret(null);
-                        setCustomerInfo(null);
-                      }}
-                      customerData={customerInfo}
-                    />
-                  </Elements>
-                </div>
-              )}
               
 
               {/* Membership CTA */}
