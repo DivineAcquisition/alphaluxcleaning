@@ -164,8 +164,7 @@ serve(async (req) => {
       },
       stripe_session_id: paymentIntent.id,
       stripe_customer_id: customer.id,
-      status: 'pending_payment',
-      payment_method: 'payment_intent'
+      status: 'pending_payment'
     };
 
     const { data: order, error: orderError } = await supabaseClient
