@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
-import { StripePaymentForm } from '@/components/payment/StripePaymentForm';
+import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 
 interface BookingData {
@@ -359,7 +359,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           amount={paymentAmount}
         />
 
-        {/* Embedded Payment Form */}
+        {/* Enhanced Payment Form */}
         {showPaymentForm && clientSecret && paymentMethod === 'embedded_payment' && (
           <Elements 
             stripe={stripePromise} 
@@ -378,12 +378,14 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               }
             }}
           >
-            <StripePaymentForm
+            <EnhancedPaymentInterface
               amount={paymentAmount}
               onSuccess={handlePaymentSuccess}
               onCancel={handlePaymentCancel}
-              isProcessing={isProcessingPayment}
-              setIsProcessing={setIsProcessingPayment}
+              customerData={{
+                email: 'guest@example.com',
+                name: 'Guest User'
+              }}
             />
           </Elements>
         )}
