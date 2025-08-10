@@ -7,7 +7,7 @@ import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { RecurringBookingInterface } from "@/components/RecurringBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
-
+import { PaymentForm } from "@/components/PaymentForm";
 import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
@@ -25,7 +25,6 @@ const Index = () => {
     minutes: 59,
     seconds: 59
   });
-
 
   // Track page view on component mount
   useEffect(() => {
@@ -188,28 +187,24 @@ const Index = () => {
               </div>
 
               {/* Service Configuration Section */}
-              <RecurringBookingInterface 
-                newClient={true} 
-                onBookingUpdate={data => {
-                  setPricingData({
-                    hours: data.tier.hours,
-                    cleaningType: 'standard',
-                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                    membership: data.membership,
-                    addOns: data.addOns,
-                    recurring: data.recurring
-                  });
-                  setCalculatedPrice(data.pricing.total);
-                  setPriceBreakdown({
-                    basePrice: data.tier.basePrice,
-                    addOns: data.addOns,
-                    membership: data.membership,
-                    recurring: data.recurring,
-                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                  });
-                }}
-              />
-
+              <RecurringBookingInterface newClient={true} onBookingUpdate={data => {
+              setPricingData({
+                hours: data.tier.hours,
+                cleaningType: 'standard',
+                serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                membership: data.membership,
+                addOns: data.addOns,
+                recurring: data.recurring
+              });
+              setCalculatedPrice(data.pricing.total);
+              setPriceBreakdown({
+                basePrice: data.tier.basePrice,
+                addOns: data.addOns,
+                membership: data.membership,
+                recurring: data.recurring,
+                savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+              });
+            }} />
 
               {/* Service Details Button */}
               {pricingData && (
@@ -221,6 +216,23 @@ const Index = () => {
                 </div>
               )}
               
+              {/* Payment Section */}
+              {pricingData && (
+                <div className="text-center">
+                  <PaymentForm 
+                    pricingData={{
+                      squareFootage: 1000,
+                      cleaningType: pricingData.cleaningType || 'standard',
+                      frequency: pricingData.recurring?.frequency || 'once',
+                      addOns: pricingData.addOns || [],
+                      hours: pricingData.hours,
+                      membership: pricingData.membership
+                    }}
+                    calculatedPrice={calculatedPrice}
+                    priceBreakdown={priceBreakdown}
+                  />
+                </div>
+              )}
               
 
               {/* Membership CTA */}

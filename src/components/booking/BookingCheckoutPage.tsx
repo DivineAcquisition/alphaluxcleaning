@@ -10,10 +10,6 @@ import { CreditCard, Shield, Sparkles, ArrowLeft, ArrowRight, Check, Tag, X } fr
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
-import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
-import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 
 interface BookingData {
   homeSize: string;
@@ -53,9 +49,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe_checkout' | 'embedded_payment'>('embedded_payment');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   // Calculate final pricing
   const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
@@ -119,61 +112,26 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
   const processPayment = async () => {
-    if (paymentMethod === 'embedded_payment') {
-      await createPaymentIntent();
-    } else {
-      await processStripeCheckout();
-    }
-  };
-
-  const createPaymentIntent = async () => {
     setIsProcessingPayment(true);
     try {
+      // Create payment session
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           amount: paymentAmount * 100, // Convert to cents
           currency: 'usd',
           booking_data: bookingData,
           payment_type: paymentType,
-          promo_code: promoCode || null,
-          payment_method: 'payment_intent' // Signal to create Payment Intent
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.client_secret) {
-        setClientSecret(data.client_secret);
-        setShowPaymentForm(true);
-      } else {
-        throw new Error('No client secret received');
-      }
-    } catch (error) {
-      console.error('Payment intent creation error:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const processStripeCheckout = async () => {
-    setIsProcessingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          amount: paymentAmount * 100, // Convert to cents
-          currency: 'usd',
-          booking_data: bookingData,
-          payment_type: paymentType,
-          promo_code: promoCode || null,
-          payment_method: 'checkout' // Signal to create Checkout Session
+          promo_code: promoCode || null
         }
       });
 
       if (error) throw error;
 
       if (data?.url) {
+        // Open Stripe checkout in new tab
         window.open(data.url, '_blank');
+        
+        // For demo purposes, simulate payment success after 3 seconds
         setTimeout(() => {
           onPaymentSuccess(data.session_id || 'demo_session_' + Date.now());
         }, 3000);
@@ -186,15 +144,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     } finally {
       setIsProcessingPayment(false);
     }
-  };
-
-  const handlePaymentSuccess = (paymentIntentId: string) => {
-    onPaymentSuccess(paymentIntentId);
-  };
-
-  const handlePaymentCancel = () => {
-    setShowPaymentForm(false);
-    setClientSecret(null);
   };
 
   return (
@@ -352,44 +301,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           </CardContent>
         </Card>
 
-        {/* Payment Method Selection */}
-        <PaymentMethodSelector
-          selectedMethod={paymentMethod}
-          onMethodChange={setPaymentMethod}
-          amount={paymentAmount}
-        />
-
-        {/* Enhanced Payment Form */}
-        {showPaymentForm && clientSecret && paymentMethod === 'embedded_payment' && (
-          <Elements 
-            stripe={stripePromise} 
-            options={{
-              clientSecret,
-              appearance: {
-                theme: 'stripe',
-                variables: {
-                  colorPrimary: 'hsl(273 100% 50%)',
-                  colorBackground: 'hsl(0 0% 100%)',
-                  colorText: 'hsl(210 40% 8%)',
-                  colorDanger: 'hsl(0 84.2% 60.2%)',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  borderRadius: '8px',
-                }
-              }
-            }}
-          >
-            <EnhancedPaymentInterface
-              amount={paymentAmount}
-              onSuccess={handlePaymentSuccess}
-              onCancel={handlePaymentCancel}
-              customerData={{
-                email: 'guest@example.com',
-                name: 'Guest User'
-              }}
-            />
-          </Elements>
-        )}
-
         {/* Security Badge */}
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Shield className="h-4 w-4" />
@@ -480,23 +391,21 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               )}
             </div>
 
-            {!showPaymentForm && (
-              <Button 
-                onClick={processPayment}
-                disabled={isProcessingPayment}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessingPayment ? (
-                  'Processing...'
-                ) : (
-                  <>
-                    {paymentMethod === 'embedded_payment' ? 'Continue to Payment' : `Complete Booking - $${paymentAmount}`}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            )}
+            <Button 
+              onClick={processPayment}
+              disabled={isProcessingPayment}
+              className="w-full"
+              size="lg"
+            >
+              {isProcessingPayment ? (
+                'Processing...'
+              ) : (
+                <>
+                  Complete Booking - ${paymentAmount}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </div>

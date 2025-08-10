@@ -56,7 +56,6 @@ import Auth from '@/pages/Auth';
 import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
 import NotFound from '@/pages/NotFound';
-import ModernBooking from '@/pages/ModernBooking';
 import ReviewsPortal from '@/pages/ReviewsPortal';
 import ClientOverview from '@/pages/ClientOverview';
 import SubcontractorPayments from '@/pages/SubcontractorPayments';
@@ -187,7 +186,6 @@ function App() {
                 } />
                 <Route path="/test-booking" element={<TestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
-                <Route path="/modern-booking" element={<ModernBooking />} />
                 
                 {/* Customer protected routes */}
                 <Route path="/my-services" element={

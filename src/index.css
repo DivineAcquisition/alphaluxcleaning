@@ -47,13 +47,8 @@ All colors MUST be HSL.
     
     --shadow-clean: 0 4px 20px -4px hsl(273 100% 50% / 0.15);
     --shadow-soft: 0 2px 10px -2px hsl(210 40% 8% / 0.1);
-    --shadow-glow: 0 0 30px hsl(273 100% 50% / 0.2);
 
     --radius: 0.5rem;
-    
-    /* Enhanced animations for payment UI */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --sidebar-background: 0 0% 98%;
 

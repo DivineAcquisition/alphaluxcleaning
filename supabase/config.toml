@@ -2,6 +2,3 @@ project_id = "kqoezqzogleaaupjzxch"
 
 [functions.send-booking-transaction-to-zapier]
 verify_jwt = false
-
-[functions.create-payment-intent]
-verify_jwt = false
