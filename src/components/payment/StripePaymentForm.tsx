@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, Lock } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { CreditCard, Lock, AlertCircle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+
+type PaymentStatus = 
+  | 'idle' 
+  | 'validating' 
+  | 'processing' 
+  | 'authenticating' 
+  | 'finalizing' 
+  | 'succeeded' 
+  | 'failed';
+
+type ErrorType = 
+  | 'validation_error'
+  | 'payment_method_error' 
+  | 'authentication_error'
+  | 'network_error'
+  | 'server_error'
+  | 'unknown_error';
 
 interface StripePaymentFormProps {
   amount: number;
@@ -23,6 +41,143 @@ export function StripePaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<ErrorType | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('idle');
+  const [retryCount, setRetryCount] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000;
+
+  // Progress tracking effect
+  useEffect(() => {
+    if (paymentStatus === 'validating') {
+      setProgress(25);
+      setStatusMessage('Validating payment information...');
+    } else if (paymentStatus === 'processing') {
+      setProgress(50);
+      setStatusMessage('Processing payment...');
+    } else if (paymentStatus === 'authenticating') {
+      setProgress(75);
+      setStatusMessage('Authenticating with your bank...');
+    } else if (paymentStatus === 'finalizing') {
+      setProgress(90);
+      setStatusMessage('Finalizing payment...');
+    } else if (paymentStatus === 'succeeded') {
+      setProgress(100);
+      setStatusMessage('Payment successful!');
+    }
+  }, [paymentStatus]);
+
+  const categorizeError = (error: any): ErrorType => {
+    if (!error) return 'unknown_error';
+    
+    const errorCode = error.code || '';
+    const errorType = error.type || '';
+    
+    if (errorCode.includes('card_') || errorType === 'card_error') {
+      return 'payment_method_error';
+    }
+    if (errorCode.includes('authentication_') || errorType === 'authentication_error') {
+      return 'authentication_error';
+    }
+    if (errorType === 'validation_error') {
+      return 'validation_error';
+    }
+    if (errorCode.includes('network') || error.message?.includes('network')) {
+      return 'network_error';
+    }
+    if (errorType === 'api_error') {
+      return 'server_error';
+    }
+    
+    return 'unknown_error';
+  };
+
+  const getErrorMessage = (error: string, type: ErrorType): string => {
+    switch (type) {
+      case 'payment_method_error':
+        return 'There was an issue with your payment method. Please check your card details and try again.';
+      case 'authentication_error':
+        return 'Payment authentication failed. Please verify with your bank and try again.';
+      case 'network_error':
+        return 'Network connection issue. Please check your internet connection and try again.';
+      case 'server_error':
+        return 'Payment processing temporarily unavailable. Please try again in a moment.';
+      case 'validation_error':
+        return 'Please check that all required fields are filled correctly.';
+      default:
+        return error || 'An unexpected error occurred. Please try again.';
+    }
+  };
+
+  const canRetry = (type: ErrorType): boolean => {
+    return ['network_error', 'server_error', 'unknown_error'].includes(type);
+  };
+
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const processPayment = async (): Promise<void> => {
+    if (!stripe || !elements) {
+      throw new Error('Stripe is not loaded');
+    }
+
+    setPaymentStatus('validating');
+    setError(null);
+    setErrorType(null);
+
+    // Submit payment form
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      const type = categorizeError(submitError);
+      setErrorType(type);
+      throw new Error(submitError.message || 'Payment submission failed');
+    }
+
+    setPaymentStatus('processing');
+
+    // Confirm payment
+    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.origin + '/booking-confirmation',
+      },
+      redirect: 'if_required',
+    });
+
+    if (confirmError) {
+      const type = categorizeError(confirmError);
+      setErrorType(type);
+      throw new Error(confirmError.message || 'Payment confirmation failed');
+    }
+
+    if (!paymentIntent) {
+      throw new Error('Payment intent not found');
+    }
+
+    // Handle different payment statuses
+    switch (paymentIntent.status) {
+      case 'succeeded':
+        setPaymentStatus('succeeded');
+        toast.success('Payment successful!');
+        onSuccess(paymentIntent.id);
+        break;
+      case 'requires_action':
+        setPaymentStatus('authenticating');
+        // 3D Secure or other authentication required
+        // Stripe handles this automatically with confirmPayment
+        break;
+      case 'processing':
+        setPaymentStatus('finalizing');
+        // Payment is being processed
+        break;
+      case 'requires_payment_method':
+        throw new Error('Payment method was declined. Please try a different payment method.');
+      default:
+        throw new Error(`Payment status: ${paymentIntent.status}`);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -33,36 +188,66 @@ export function StripePaymentForm({
     }
 
     setIsProcessing(true);
-    setError(null);
+    setProgress(0);
 
     try {
-      const { error: submitError } = await elements.submit();
-      if (submitError) {
-        setError(submitError.message || 'Payment submission failed');
-        return;
-      }
-
-      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + '/booking-confirmation',
-        },
-        redirect: 'if_required',
-      });
-
-      if (confirmError) {
-        setError(confirmError.message || 'Payment confirmation failed');
-      } else if (paymentIntent?.status === 'succeeded') {
-        toast.success('Payment successful!');
-        onSuccess(paymentIntent.id);
-      } else {
-        setError('Payment was not completed');
-      }
-    } catch (err) {
+      await processPayment();
+    } catch (err: any) {
       console.error('Payment error:', err);
-      setError('An unexpected error occurred');
+      const type = errorType || categorizeError(err);
+      const message = getErrorMessage(err.message, type);
+      
+      setError(message);
+      setErrorType(type);
+      setPaymentStatus('failed');
+
+      // Show appropriate toast based on error type
+      if (type === 'payment_method_error') {
+        toast.error('Card declined', { description: message });
+      } else if (type === 'authentication_error') {
+        toast.error('Authentication failed', { description: message });
+      } else {
+        toast.error('Payment failed', { description: message });
+      }
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    if (retryCount >= MAX_RETRIES) {
+      toast.error('Maximum retry attempts reached. Please try again later.');
+      return;
+    }
+
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    setErrorType(null);
+    setPaymentStatus('idle');
+    setProgress(0);
+
+    // Add delay before retry
+    await delay(RETRY_DELAY * retryCount);
+    
+    const form = document.querySelector('form');
+    if (form) {
+      form.requestSubmit();
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (paymentStatus) {
+      case 'validating':
+      case 'processing':
+      case 'authenticating':
+      case 'finalizing':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
+      case 'succeeded':
+        return <CheckCircle className="h-4 w-4 text-success" />;
+      case 'failed':
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
+      default:
+        return <CreditCard className="h-4 w-4" />;
     }
   };
 
@@ -70,9 +255,18 @@ export function StripePaymentForm({
     <Card className="shadow-clean">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+          {getStatusIcon()}
           Payment Information
         </CardTitle>
+        {paymentStatus !== 'idle' && paymentStatus !== 'failed' && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{statusMessage}</span>
+              <span className="text-muted-foreground">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -85,7 +279,32 @@ export function StripePaymentForm({
           
           {error && (
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-destructive text-sm">{error}</p>
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-destructive text-sm font-medium">
+                    {errorType === 'payment_method_error' ? 'Payment Method Error' :
+                     errorType === 'authentication_error' ? 'Authentication Error' :
+                     errorType === 'network_error' ? 'Connection Error' :
+                     errorType === 'server_error' ? 'Service Error' :
+                     'Payment Error'}
+                  </p>
+                  <p className="text-destructive text-sm mt-1">{error}</p>
+                  {errorType && canRetry(errorType) && retryCount < MAX_RETRIES && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetry}
+                      className="mt-2 h-8"
+                      disabled={isProcessing}
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Retry ({retryCount + 1}/{MAX_RETRIES})
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -101,11 +320,19 @@ export function StripePaymentForm({
             </Button>
             <Button
               type="submit"
-              disabled={!stripe || isProcessing}
+              disabled={!stripe || isProcessing || paymentStatus === 'succeeded'}
               className="flex-1"
             >
               {isProcessing ? (
-                'Processing...'
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {statusMessage || 'Processing...'}
+                </div>
+              ) : paymentStatus === 'succeeded' ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Payment Complete
+                </div>
               ) : (
                 <>
                   Pay ${amount}
