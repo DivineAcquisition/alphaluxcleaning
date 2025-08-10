@@ -7,7 +7,7 @@ import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { RecurringBookingInterface } from "@/components/RecurringBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
-import { PaymentForm } from "@/components/PaymentForm";
+import { EnhancedPaymentInterface } from "@/components/payment/EnhancedPaymentInterface";
 import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
@@ -216,20 +216,22 @@ const Index = () => {
                 </div>
               )}
               
-              {/* Payment Section */}
+              {/* Enhanced Payment Section */}
               {pricingData && (
                 <div className="text-center">
-                  <PaymentForm 
-                    pricingData={{
-                      squareFootage: 1000,
-                      cleaningType: pricingData.cleaningType || 'standard',
-                      frequency: pricingData.recurring?.frequency || 'once',
-                      addOns: pricingData.addOns || [],
-                      hours: pricingData.hours,
-                      membership: pricingData.membership
+                  <EnhancedPaymentInterface 
+                    amount={calculatedPrice}
+                    onSuccess={(sessionId) => {
+                      console.log('Payment successful:', sessionId);
+                      // Handle successful payment
                     }}
-                    calculatedPrice={calculatedPrice}
-                    priceBreakdown={priceBreakdown}
+                    onCancel={() => {
+                      console.log('Payment cancelled');
+                    }}
+                    customerData={{
+                      email: "customer@example.com",
+                      name: "Customer"
+                    }}
                   />
                 </div>
               )}
