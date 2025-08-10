@@ -27,6 +27,12 @@ serve(async (req) => {
     
     const { 
       amount, 
+      currency,
+      booking_data,
+      payment_type,
+      promo_code,
+      payment_method = 'checkout', // Default to checkout for backward compatibility
+      // Legacy fields for backward compatibility
       fullAmount,
       paymentType,
       squareFootage, 
@@ -47,9 +53,16 @@ serve(async (req) => {
       addonMemberDiscount
     } = requestBody;
 
+    // Extract data from booking_data if provided (new format)
+    const finalCustomerEmail = booking_data?.contactNumber || customerEmail;
+    const finalCustomerName = booking_data ? `Customer` : customerName;
+    const finalServiceAddress = booking_data?.address ? 
+      `${booking_data.address.street}, ${booking_data.address.city}, ${booking_data.address.state} ${booking_data.address.zipCode}` : 
+      serviceAddress;
+
     console.log("Validating required fields...");
-    if (!amount || !customerEmail) {
-      console.error("Missing required fields:", { amount, customerEmail });
+    if (!amount || !finalCustomerEmail) {
+      console.error("Missing required fields:", { amount, finalCustomerEmail });
       throw new Error("Missing required fields: amount and customerEmail");
     }
 
@@ -67,7 +80,7 @@ serve(async (req) => {
 
     console.log("Checking for existing Stripe customer...");
     // Check if a Stripe customer record exists for this email
-    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+    const customers = await stripe.customers.list({ email: finalCustomerEmail, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -76,11 +89,70 @@ serve(async (req) => {
       console.log("No existing customer found, will create new one");
     }
 
+    // Handle Payment Intent vs Checkout Session based on payment_method
+    if (payment_method === 'payment_intent') {
+      console.log("Creating Payment Intent for embedded payment...");
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount), // amount should already be in cents
+        currency: currency || 'usd',
+        customer: customerId,
+        metadata: {
+          booking_data: JSON.stringify(booking_data || {}),
+          payment_type: payment_type || paymentType || 'full',
+          promo_code: promo_code || '',
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      console.log("Payment Intent created:", paymentIntent.id);
+
+      // Create order record in database
+      const orderData = {
+        stripe_session_id: paymentIntent.id,
+        amount: Math.round(amount),
+        customer_name: finalCustomerName,
+        customer_email: finalCustomerEmail,
+        customer_phone: booking_data?.contactNumber || customerPhone,
+        service_details: booking_data || {
+          squareFootage,
+          cleaningType,
+          frequency,
+          addOns,
+          totalAmount: amount / 100,
+          serviceAddress: finalServiceAddress,
+          bedrooms,
+          bathrooms,
+          membershipStatus: membershipStatus || false,
+          addonMemberDiscount: addonMemberDiscount || 0
+        },
+        status: "pending",
+        created_at: new Date().toISOString()
+      };
+
+      const { error: orderError } = await supabaseClient.from("orders").insert(orderData);
+      
+      if (orderError) {
+        console.error("Database insert error:", orderError);
+        throw new Error(`Database error: ${orderError.message}`);
+      }
+
+      return new Response(JSON.stringify({ 
+        client_secret: paymentIntent.client_secret,
+        payment_intent_id: paymentIntent.id 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     console.log("Creating Stripe checkout session...");
-    // Create a one-time payment session
+    // Create a one-time payment session (legacy flow)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : customerEmail,
+      customer_email: customerId ? undefined : finalCustomerEmail,
       line_items: [
         {
           price_data: {
@@ -112,10 +184,10 @@ serve(async (req) => {
     // Create order record in Supabase
     const orderData = {
       stripe_session_id: session.id,
-      amount: Math.round(amount * 100), // Store all amounts in cents
-      customer_name: customerName,
-      customer_email: customerEmail,
-      customer_phone: customerPhone,
+      amount: Math.round(amount), // amount should already be in cents
+      customer_name: finalCustomerName,
+      customer_email: finalCustomerEmail,
+      customer_phone: booking_data?.contactNumber || customerPhone,
       square_footage: squareFootage,
       cleaning_type: cleaningType,
       frequency: frequency,
