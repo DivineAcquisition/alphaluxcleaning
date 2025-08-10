@@ -211,6 +211,9 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFor
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isElementReady, setIsElementReady] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  
+  console.log('PaymentElement Status:', { stripe: !!stripe, elements: !!elements, isElementReady });
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -256,11 +259,50 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFor
       </div>
 
       <PaymentElement 
-        onReady={() => setIsElementReady(true)}
+        onReady={() => {
+          console.log('PaymentElement is ready!');
+          setIsElementReady(true);
+          setPaymentError(null);
+        }}
+        onLoadError={(errorEvent) => {
+          console.error('PaymentElement load error:', errorEvent);
+          const errorMessage = errorEvent.error?.message || 'Payment form failed to load';
+          setPaymentError(errorMessage);
+          toast({
+            title: "Payment Form Error",
+            description: "Unable to load payment form. Please refresh and try again.",
+            variant: "destructive"
+          });
+        }}
         options={{
           layout: 'tabs'
         }}
       />
+      
+      {paymentError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertCircle className="h-4 w-4" />
+            <span className="font-medium">Payment Form Error:</span>
+          </div>
+          <p className="text-sm text-red-600 mt-1">{paymentError}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => window.location.reload()}
+          >
+            Refresh Page
+          </Button>
+        </div>
+      )}
+      
+      {!isElementReady && !paymentError && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading secure payment form...</span>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-4">
         <Button
