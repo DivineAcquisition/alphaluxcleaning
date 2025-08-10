@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, Tag } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, Tag, Lock, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +19,9 @@ import { ServiceDetailsDialog } from '@/components/ServiceDetailsDialog';
 import { ReferralCodeDialog } from '@/components/ReferralCodeDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { stripePromise } from '@/lib/stripe';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface BookingTier {
   id: string;
@@ -195,6 +198,102 @@ const squareFootageTiers = [
   { min: 4501, max: 5100, label: "4,501 - 5,100 sq ft" }
 ];
 
+// Embedded Payment Form Component
+interface EmbeddedPaymentFormProps {
+  amount: number;
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFormProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/payment-success`,
+      },
+    });
+
+    if (error) {
+      console.error('Payment confirmation error:', error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "An error occurred during payment processing.",
+        variant: "destructive"
+      });
+    } else {
+      onSuccess();
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h5 className="font-semibold">Payment Amount</h5>
+          <p className="text-2xl font-bold text-green-600">${amount}</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Shield className="h-4 w-4" />
+          <span>Secured by Stripe</span>
+        </div>
+      </div>
+
+      <PaymentElement 
+        onReady={() => setIsElementReady(true)}
+        options={{
+          layout: 'tabs'
+        }}
+      />
+
+      <div className="flex gap-3 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={isLoading || !stripe || !elements || !isElementReady}
+          className="flex-1 bg-green-600 hover:bg-green-700"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <Lock className="h-4 w-4 mr-2" />
+              Pay ${amount}
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps> = ({
   onBookingUpdate,
   onPaymentRequest,
@@ -244,6 +343,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [discountCode, setDiscountCode] = useState("");
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  
+  // Stripe payment state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -436,6 +540,39 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }
   };
 
+  // Real-time referral code validation
+  const handleReferralCodeChange = async (value: string) => {
+    setReferralCode(value);
+    
+    // Clear existing referral if input is empty
+    if (!value.trim()) {
+      setAppliedReferral(null);
+      return;
+    }
+    
+    // Auto-validate if we have customer info and a code
+    if (value.trim().length >= 3 && customerInfo.email && customerInfo.name) {
+      try {
+        const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+          p_code: value.trim(),
+          p_user_email: customerInfo.email,
+          p_user_name: customerInfo.name,
+          p_order_id: null
+        });
+        if (error) throw error;
+        const result = data as any;
+        if (result?.success) {
+          setAppliedReferral(result);
+        } else {
+          setAppliedReferral(null);
+        }
+      } catch (error) {
+        console.error("Error validating referral code:", error);
+        setAppliedReferral(null);
+      }
+    }
+  };
+
   const handleApplyDiscountCode = async () => {
     if (!discountCode.trim()) {
       toast({
@@ -469,6 +606,72 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         description: "The discount code you entered is not valid",
         variant: "destructive"
       });
+    }
+  };
+
+  // Real-time discount code validation
+  const handleDiscountCodeChange = (value: string) => {
+    setDiscountCode(value);
+    
+    if (!value.trim()) {
+      setAppliedDiscount(null);
+      return;
+    }
+    
+    if (value.startsWith('FRIEND50') && !appliedReferral) {
+      setAppliedDiscount({
+        code: value,
+        type: 'deep_clean_50_percent',
+        description: '50% off deep cleaning service'
+      });
+    } else {
+      setAppliedDiscount(null);
+    }
+  };
+
+  // Create payment intent when ready to book
+  const initializePayment = async () => {
+    setPaymentLoading(true);
+    try {
+      const paymentData = {
+        amount: pricing.total,
+        customerEmail: customerInfo.email,
+        customerName: customerInfo.name,
+        customerPhone: customerInfo.phone,
+        cleaningType: selectedTierData?.description || 'General Cleaning',
+        frequency: selectedRecurringData?.frequency || 'once',
+        squareFootage: squareFootage,
+        addOns: selectedAddOns,
+        bedrooms: Number(bedrooms) || 0,
+        bathrooms: Number(bathrooms) || 0,
+        serviceAddress: customerInfo.address,
+        city: customerInfo.city,
+        state: customerInfo.state,
+        zipCode: customerInfo.zipCode,
+        paymentType: 'full'
+      };
+
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: paymentData
+      });
+
+      if (error) throw error;
+
+      if (data?.client_secret) {
+        setClientSecret(data.client_secret);
+        setShowPaymentForm(true);
+      } else {
+        throw new Error('No client secret received');
+      }
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to initialize payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -1111,33 +1314,24 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                               Referral Code (10% off)
                             </Label>
                             <ReferralCodeDialog 
-                              onCodeGenerated={(code) => setReferralCode(code)}
+                              onCodeGenerated={(code) => handleReferralCodeChange(code)}
                             />
                           </div>
-                          <div className="flex gap-2">
-                            <Input
-                              id="referral-code"
-                              type="text"
-                              placeholder="Enter friend's referral code"
-                              value={referralCode}
-                              onChange={(e) => setReferralCode(e.target.value)}
-                              className="flex-1"
-                              disabled={!!appliedReferral || !!appliedDiscount}
-                            />
-                            <Button 
-                              onClick={handleApplyReferralCode}
-                              disabled={!referralCode.trim() || !!appliedReferral || !!appliedDiscount || !customerInfo.name || !customerInfo.email}
-                              size="sm"
-                           >
-                             Apply
-                           </Button>
-                         </div>
-                         {appliedReferral && (
-                           <div className="text-sm text-green-600 flex items-center gap-1">
-                             <Check className="h-3 w-3" />
-                             Referral code applied! 10% discount active.
-                           </div>
-                         )}
+                          <Input
+                            id="referral-code"
+                            type="text"
+                            placeholder="Enter friend's referral code"
+                            value={referralCode}
+                            onChange={(e) => handleReferralCodeChange(e.target.value)}
+                            className="flex-1"
+                            disabled={!!appliedDiscount}
+                          />
+                          {appliedReferral && (
+                            <div className="text-sm text-green-600 flex items-center gap-1">
+                              <Check className="h-3 w-3" />
+                              Referral code applied! 10% discount active.
+                            </div>
+                          )}
                        </div>
 
                        {/* Discount Code */}
@@ -1145,24 +1339,15 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                          <Label htmlFor="discount-code" className="text-sm font-medium">
                            Discount Code
                          </Label>
-                         <div className="flex gap-2">
-                           <Input
-                             id="discount-code"
-                             type="text"
-                             placeholder="Enter promotional code (e.g., FRIEND50)"
-                             value={discountCode}
-                             onChange={(e) => setDiscountCode(e.target.value)}
-                             className="flex-1"
-                             disabled={!!appliedDiscount || !!appliedReferral}
-                           />
-                           <Button 
-                             onClick={handleApplyDiscountCode}
-                             disabled={!discountCode.trim() || !!appliedDiscount || !!appliedReferral}
-                             size="sm"
-                           >
-                             Apply
-                           </Button>
-                         </div>
+                         <Input
+                           id="discount-code"
+                           type="text"
+                           placeholder="Enter promotional code (e.g., FRIEND50)"
+                           value={discountCode}
+                           onChange={(e) => handleDiscountCodeChange(e.target.value)}
+                           className="flex-1"
+                           disabled={!!appliedReferral}
+                         />
                          {appliedDiscount && (
                            <div className="text-sm text-green-600 flex items-center gap-1">
                              <Check className="h-3 w-3" />
@@ -1211,60 +1396,77 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      </div>
                    )}
 
-                     <Button 
-                       onClick={() => {
-                         console.log('🚀 Button clicked! Customer info:', {
-                           name: customerInfo.name,
-                           email: customerInfo.email,
-                           phone: customerInfo.phone,
-                           isComplete: !!(customerInfo.name && customerInfo.email && customerInfo.phone),
-                           onPaymentRequest: !!onPaymentRequest
-                         });
-                         
-                         if (customerInfo.name && customerInfo.email && customerInfo.phone && onPaymentRequest) {
-                           const pricing = calculatePricing();
-                           console.log('📊 Initiating payment with data:', {
-                             amount: pricing.total,
-                             customerEmail: customerInfo.email,
-                             customerName: customerInfo.name,
-                             customerPhone: customerInfo.phone
-                           });
-                           onPaymentRequest({
-                             amount: pricing.total,
-                             customerEmail: customerInfo.email,
-                             customerName: customerInfo.name,
-                             customerPhone: customerInfo.phone,
-                            cleaningType: selectedTierData?.description || 'General Cleaning',
-                            frequency: selectedRecurringData?.frequency || 'once',
-                            squareFootage: squareFootage,
-                            addOns: selectedAddOns,
-                            bedrooms: Number(bedrooms) || 0,
-                            bathrooms: Number(bathrooms) || 0,
-                            serviceAddress: customerInfo.address,
-                            city: customerInfo.city,
-                            state: customerInfo.state,
-                            zipCode: customerInfo.zipCode,
-                            paymentType: paymentType
-                          });
-                        }
-                      }}
-                     disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
-                     size="lg"
-                     className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                   >
-                      {(!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
-                        <>
-                          <Clock className="h-4 w-4" />
-                          Complete Information to Continue
-                        </>
+                      {!showPaymentForm ? (
+                        <Button 
+                          onClick={initializePayment}
+                          disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || paymentLoading}
+                          size="lg"
+                          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          {paymentLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Preparing Payment...
+                            </>
+                          ) : (!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
+                            <>
+                              <Clock className="h-4 w-4" />
+                              Complete Information to Continue
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="h-4 w-4" />
+                              Continue to Secure Payment
+                              <ArrowRight className="h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
                       ) : (
-                       <>
-                         <CreditCard className="h-4 w-4" />
-                         Continue to Secure Payment
-                         <ArrowRight className="h-4 w-4" />
-                       </>
-                     )}
-                   </Button>
+                        // Stripe Payment Form
+                        <div className="bg-white rounded-lg p-4 border border-green-200">
+                          <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+                            <Lock className="h-4 w-4" />
+                            Secure Payment
+                          </h4>
+                          {clientSecret && (
+                            <Elements 
+                              stripe={stripePromise} 
+                              options={{
+                                clientSecret,
+                                appearance: {
+                                  theme: 'stripe',
+                                  variables: {
+                                    colorPrimary: '#16a34a',
+                                    colorBackground: '#ffffff',
+                                    colorText: '#1f2937',
+                                    colorDanger: '#dc2626',
+                                    fontFamily: 'system-ui, sans-serif',
+                                    spacingUnit: '6px',
+                                    borderRadius: '8px'
+                                  }
+                                }
+                              }}
+                            >
+                              <EmbeddedPaymentForm 
+                                amount={pricing.total}
+                                onSuccess={() => {
+                                  toast({
+                                    title: "Payment Successful!",
+                                    description: "Your booking has been confirmed. You'll receive an email confirmation shortly."
+                                  });
+                                  // Reset form or redirect
+                                  setShowPaymentForm(false);
+                                  setClientSecret(null);
+                                }}
+                                onCancel={() => {
+                                  setShowPaymentForm(false);
+                                  setClientSecret(null);
+                                }}
+                              />
+                            </Elements>
+                          )}
+                        </div>
+                      )}
                 </div>
               </CardContent>
             </Card>

@@ -12,13 +12,10 @@ import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
-import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [priceBreakdown, setPriceBreakdown] = useState({});
-  const [clientSecret, setClientSecret] = useState(null);
-  const [customerInfo, setCustomerInfo] = useState(null);
   const [schedulingData, setSchedulingData] = useState({
     scheduledDate: "",
     scheduledTime: ""
@@ -28,14 +25,7 @@ const Index = () => {
     minutes: 59,
     seconds: 59
   });
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentData, setPaymentData] = useState(null);
 
-  useEffect(() => {
-    if (showPayment) {
-      document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [showPayment]);
 
   // Track page view on component mount
   useEffect(() => {
@@ -218,31 +208,8 @@ const Index = () => {
                     savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
                   });
                 }}
-                onPaymentRequest={(data) => {
-                  setPaymentData(data);
-                  setShowPayment(true);
-                  console.log('Payment requested:', data);
-                }}
               />
 
-              {/* Custom Stripe Payment Interface */}
-              {showPayment && paymentData && (
-                <div id="payment-section" className="mt-8">
-                  <CustomStripePayment
-                    paymentData={paymentData}
-                    onSuccess={(paymentIntentId) => {
-                      console.log('Payment successful:', paymentIntentId);
-                      setShowPayment(false);
-                      setPaymentData(null);
-                      // Handle successful payment (redirect, show success message, etc.)
-                    }}
-                    onCancel={() => {
-                      setShowPayment(false);
-                      setPaymentData(null);
-                    }}
-                  />
-                </div>
-              )}
 
               {/* Service Details Button */}
               {pricingData && (
