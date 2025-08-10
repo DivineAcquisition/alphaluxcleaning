@@ -502,6 +502,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         const paymentData = {
           amount: selectedPaymentOption === 'half' ? Math.round(pricing.total / 2) : 
                  selectedPaymentOption === 'prepayment' ? 150 : pricing.total,
+          payment_method: 'payment_intent', // Request Payment Intent for embedded payments
           paymentType: selectedPaymentOption,
           customerEmail: customerInfo.email,
           customerName: customerInfo.name,
@@ -525,11 +526,24 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         throw new Error(response.error.message);
       }
       
+      // Handle different response types based on payment method
       if (response.data?.url) {
-        // Redirect to Stripe checkout
+        // Legacy checkout session - open in new tab
         window.open(response.data.url, '_blank');
+      } else if (response.data?.client_secret) {
+        // Payment Intent for embedded payment - pass to parent component
+        const enhancedBookingData = {
+          ...bookingData,
+          clientSecret: response.data.client_secret,
+          paymentIntentId: response.data.payment_intent_id,
+          customerInfo
+        };
+        
+        if (onBookingUpdate) {
+          onBookingUpdate(enhancedBookingData);
+        }
       } else {
-        throw new Error('No checkout URL received');
+        throw new Error('No valid payment response received');
       }
       
     } catch (error) {

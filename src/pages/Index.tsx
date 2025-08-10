@@ -12,10 +12,14 @@ import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
+import { Elements } from '@stripe/react-stripe-js';
+import { stripePromise } from '@/lib/stripe';
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [priceBreakdown, setPriceBreakdown] = useState({});
+  const [clientSecret, setClientSecret] = useState(null);
+  const [customerInfo, setCustomerInfo] = useState(null);
   const [schedulingData, setSchedulingData] = useState({
     scheduledDate: "",
     scheduledTime: ""
@@ -204,6 +208,12 @@ const Index = () => {
                 recurring: data.recurring,
                 savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
               });
+              
+              // Set client secret and customer info for embedded payments
+              if (data.clientSecret) {
+                setClientSecret(data.clientSecret);
+                setCustomerInfo(data.customerInfo);
+              }
             }} />
 
               {/* Service Details Button */}
@@ -217,22 +227,38 @@ const Index = () => {
               )}
               
               {/* Enhanced Payment Section */}
-              {pricingData && (
+              {pricingData && clientSecret && (
                 <div className="text-center">
-                  <EnhancedPaymentInterface 
-                    amount={calculatedPrice}
-                    onSuccess={(sessionId) => {
-                      console.log('Payment successful:', sessionId);
-                      // Handle successful payment
+                  <Elements 
+                    stripe={stripePromise} 
+                    options={{
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: 'hsl(var(--primary))',
+                          colorBackground: 'hsl(var(--background))',
+                          colorText: 'hsl(var(--foreground))',
+                          borderRadius: '8px'
+                        }
+                      }
                     }}
-                    onCancel={() => {
-                      console.log('Payment cancelled');
-                    }}
-                    customerData={{
-                      email: "customer@example.com",
-                      name: "Customer"
-                    }}
-                  />
+                  >
+                    <EnhancedPaymentInterface 
+                      amount={calculatedPrice}
+                      onSuccess={(paymentIntentId) => {
+                        console.log('Payment successful:', paymentIntentId);
+                        // Handle successful payment - could redirect to confirmation page
+                        window.location.href = `/payment-confirmation?payment_intent=${paymentIntentId}`;
+                      }}
+                      onCancel={() => {
+                        console.log('Payment cancelled');
+                        setClientSecret(null);
+                        setCustomerInfo(null);
+                      }}
+                      customerData={customerInfo}
+                    />
+                  </Elements>
                 </div>
               )}
               
