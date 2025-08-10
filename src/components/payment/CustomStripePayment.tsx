@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
+import React, { useState, useEffect, useRef } from 'react';
+import { stripePromise } from '@/lib/stripe';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -23,7 +18,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const stripePromise = loadStripe('pk_test_51QPW5FDN8hM6Ej1bOaUNNafIjV0eTK3EgjXi7J1RA9z4LsOQ3HlHwLtD0JkFMf6wRQv2fA73qCgIQVjJJ3l4WZdF00DkHVLTVN');
+
 
 interface PaymentData {
   amount: number;
@@ -67,16 +62,32 @@ function PaymentForm({
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [isElementReady, setIsElementReady] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
+      setMessage('Payment form is still loading. Please wait and try again.');
+      return;
+    }
+
+    // Ensure the Payment Element is mounted and validated
+    const paymentElement = elements.getElement(PaymentElement);
+    if (!paymentElement || !isElementReady) {
+      setMessage('Payment form is still initializing. Please wait a moment.');
       return;
     }
 
     setIsLoading(true);
     setProgress(25);
+
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setIsLoading(false);
+      setMessage(submitError.message ?? 'Please check your payment details.');
+      return;
+    }
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -157,11 +168,12 @@ function PaymentForm({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PaymentElement 
-              options={{
-                layout: 'tabs',
-                paymentMethodOrder: ['card', 'apple_pay', 'google_pay']
+            <PaymentElement
+              onReady={() => {
+                setIsElementReady(true);
+                console.log('PaymentElement ready');
               }}
+              options={{ layout: 'tabs' }}
             />
           </CardContent>
         </Card>
@@ -215,7 +227,7 @@ function PaymentForm({
           </Button>
           <Button
             type="submit"
-            disabled={isLoading || !stripe || !elements}
+            disabled={isLoading || !stripe || !elements || !isElementReady}
             className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
           >
             {isLoading ? (
@@ -246,8 +258,10 @@ export function CustomStripePayment({
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
+  const createdRef = useRef(false);
   useEffect(() => {
+    if (createdRef.current) return;
+    createdRef.current = true;
     createPaymentIntent();
   }, []);
 
@@ -265,6 +279,7 @@ export function CustomStripePayment({
       }
 
       if (data?.client_secret) {
+        console.log('Received client secret');
         setClientSecret(data.client_secret);
       } else {
         throw new Error('No client secret received');
@@ -343,7 +358,7 @@ export function CustomStripePayment({
 
   return (
     <div className={className}>
-      <Elements options={options} stripe={stripePromise}>
+      <Elements key={clientSecret} options={options} stripe={stripePromise}>
         <PaymentForm
           paymentData={paymentData}
           onSuccess={onSuccess}

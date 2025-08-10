@@ -12,8 +12,6 @@ import { Navigation } from "@/components/Navigation";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
@@ -32,6 +30,12 @@ const Index = () => {
   });
   const [showPayment, setShowPayment] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
+
+  useEffect(() => {
+    if (showPayment) {
+      document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showPayment]);
 
   // Track page view on component mount
   useEffect(() => {
@@ -223,7 +227,7 @@ const Index = () => {
 
               {/* Custom Stripe Payment Interface */}
               {showPayment && paymentData && (
-                <div className="mt-8">
+                <div id="payment-section" className="mt-8">
                   <CustomStripePayment
                     paymentData={paymentData}
                     onSuccess={(paymentIntentId) => {
