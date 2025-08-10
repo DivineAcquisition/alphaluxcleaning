@@ -162,8 +162,7 @@ serve(async (req) => {
         state: state || '',
         zipCode: zipCode || ''
       },
-      stripe_session_id: paymentIntent.id,
-      stripe_customer_id: customer.id,
+      stripe_payment_intent_id: paymentIntent.id,
       status: 'pending_payment'
     };
 
