@@ -2,7 +2,7 @@ import { loadStripe } from '@stripe/stripe-js';
 
 // Stripe publishable key for test mode
 // TODO: Replace with your actual Stripe publishable key
-const stripePublishableKey = 'pk_test_51QY7t1HTFfnl4EZOAZhkW8X7K8VJ1X1qTW8DxqNJKf5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K5K';
+const stripePublishableKey = 'YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
 
 // Validate the key format
 if (!stripePublishableKey || (!stripePublishableKey.startsWith('pk_test_') && !stripePublishableKey.startsWith('pk_live_'))) {
