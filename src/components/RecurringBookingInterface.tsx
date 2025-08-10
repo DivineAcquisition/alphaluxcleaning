@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, Tag } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Users, Star, Shield, CreditCard, RotateCcw, FileText, Home, Sparkles, ArrowRight, Building, Bed, Bath, User, Mail, Phone, Check, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -1162,15 +1162,40 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      </div>
                    </div>
                   
-                  <Button 
-                    onClick={handleCompleteBooking}
-                    disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
-                    size="lg"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Complete Booking & Schedule Service
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                   {/* Validation feedback */}
+                   {(!customerInfo.name || !customerInfo.email || !customerInfo.phone) && (
+                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-md mb-4">
+                       <div className="flex items-center gap-2 text-amber-700">
+                         <AlertCircle className="h-4 w-4" />
+                         <span className="font-medium">Complete these steps to proceed to payment:</span>
+                       </div>
+                       <ul className="mt-2 text-sm text-amber-600 space-y-1">
+                         {!customerInfo.name && <li>• Enter your full name</li>}
+                         {!customerInfo.email && <li>• Enter your email address</li>}
+                         {!customerInfo.phone && <li>• Enter your phone number</li>}
+                       </ul>
+                     </div>
+                   )}
+
+                   <Button 
+                     onClick={handleCompleteBooking}
+                     disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
+                     size="lg"
+                     className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                   >
+                     {(!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
+                       <>
+                         <Clock className="h-4 w-4" />
+                         Complete Information to Continue
+                       </>
+                     ) : (
+                       <>
+                         <CreditCard className="h-4 w-4" />
+                         Continue to Secure Payment
+                         <ArrowRight className="h-4 w-4" />
+                       </>
+                     )}
+                   </Button>
                 </div>
               </CardContent>
             </Card>
