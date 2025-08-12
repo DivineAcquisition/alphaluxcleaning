@@ -3650,6 +3650,10 @@ export type Database = {
           distance_priority: number
         }[]
       }
+      get_customer_order_status_secure: {
+        Args: { p_order_id: string; p_customer_email: string }
+        Returns: Json
+      }
       get_estimate_status_safe: {
         Args: { p_estimate_id: string; p_email: string }
         Returns: Json
