@@ -208,6 +208,84 @@ export type Database = {
         }
         Relationships: []
       }
+      bi_insights_cache: {
+        Row: {
+          data: Json
+          expires_at: string
+          generated_at: string
+          id: string
+          insight_type: string
+          time_period: string
+        }
+        Insert: {
+          data: Json
+          expires_at: string
+          generated_at?: string
+          id?: string
+          insight_type: string
+          time_period: string
+        }
+        Update: {
+          data?: Json
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          insight_type?: string
+          time_period?: string
+        }
+        Relationships: []
+      }
+      bi_reports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_sources: string[]
+          description: string | null
+          filters: Json | null
+          generation_count: number | null
+          id: string
+          is_public: boolean | null
+          last_generated: string | null
+          name: string
+          report_type: string
+          schedule_config: Json | null
+          updated_at: string
+          visualization_config: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_sources: string[]
+          description?: string | null
+          filters?: Json | null
+          generation_count?: number | null
+          id?: string
+          is_public?: boolean | null
+          last_generated?: string | null
+          name: string
+          report_type: string
+          schedule_config?: Json | null
+          updated_at?: string
+          visualization_config?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_sources?: string[]
+          description?: string | null
+          filters?: Json | null
+          generation_count?: number | null
+          id?: string
+          is_public?: boolean | null
+          last_generated?: string | null
+          name?: string
+          report_type?: string
+          schedule_config?: Json | null
+          updated_at?: string
+          visualization_config?: Json | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           assigned_employee_id: string | null
@@ -924,6 +1002,42 @@ export type Database = {
           },
         ]
       }
+      integration_configs: {
+        Row: {
+          config_data: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          last_sync: string | null
+          service_name: string
+          sync_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          config_data: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          service_name: string
+          sync_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config_data?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          service_name?: string
+          sync_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interview_slots: {
         Row: {
           applicant_id: string | null
@@ -1255,6 +1369,104 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_deliveries: {
+        Row: {
+          content: Json | null
+          delivered_at: string | null
+          delivery_type: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          recipient_email: string | null
+          recipient_id: string | null
+          recipient_phone: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          content?: Json | null
+          delivered_at?: string | null
+          delivery_type: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          content?: Json | null
+          delivered_at?: string | null
+          delivery_type?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          content_template: Json
+          created_at: string
+          created_by: string | null
+          delivery_settings: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: string | null
+          recipient_rules: Json
+          trigger_event: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content_template: Json
+          created_at?: string
+          created_by?: string | null
+          delivery_settings?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: string | null
+          recipient_rules: Json
+          trigger_event: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content_template?: Json
+          created_at?: string
+          created_by?: string | null
+          delivery_settings?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: string | null
+          recipient_rules?: Json
+          trigger_event?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       order_status_updates: {
         Row: {
@@ -2046,6 +2258,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      search_indices: {
+        Row: {
+          entity_id: string
+          entity_type: string
+          id: string
+          indexed_at: string
+          metadata: Json | null
+          searchable_content: string
+        }
+        Insert: {
+          entity_id: string
+          entity_type: string
+          id?: string
+          indexed_at?: string
+          metadata?: Json | null
+          searchable_content: string
+        }
+        Update: {
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          indexed_at?: string
+          metadata?: Json | null
+          searchable_content?: string
+        }
+        Relationships: []
       }
       security_audit_log: {
         Row: {
@@ -3211,6 +3450,101 @@ export type Database = {
           id?: string
           processed_at?: string
           source?: string | null
+        }
+        Relationships: []
+      }
+      workflow_executions: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          execution_data: Json | null
+          execution_time_ms: number | null
+          id: string
+          started_at: string
+          status: string
+          template_id: string | null
+          trigger_data: Json | null
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          execution_data?: Json | null
+          execution_time_ms?: number | null
+          id?: string
+          started_at?: string
+          status?: string
+          template_id?: string | null
+          trigger_data?: Json | null
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          execution_data?: Json | null
+          execution_time_ms?: number | null
+          id?: string
+          started_at?: string
+          status?: string
+          template_id?: string | null
+          trigger_data?: Json | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          actions: Json
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          success_rate: number | null
+          trigger_conditions: Json | null
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          success_rate?: number | null
+          trigger_conditions?: Json | null
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          success_rate?: number | null
+          trigger_conditions?: Json | null
+          trigger_event?: string
+          updated_at?: string
         }
         Relationships: []
       }
