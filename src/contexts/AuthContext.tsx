@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useSecurityAudit } from '@/hooks/useSecurityAudit';
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { logSecurityEvent, logFailedLogin } = useSecurityAudit();
 
   const getUserRole = async (): Promise<string | null> => {
     if (!user) {
@@ -85,12 +87,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        // Log failed login attempt
+        await logFailedLogin(email, error.message);
+        return { error };
+      }
+      
+      // Log successful login
+      await logSecurityEvent({
+        action_type: 'login_success',
+        resource_type: 'auth',
+        risk_level: 'low'
+      });
+      
+      return { error: null };
+    } catch (error: any) {
+      await logFailedLogin(email, error?.message || 'Unknown error');
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
@@ -111,6 +131,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Log logout before signing out
+    if (user) {
+      await logSecurityEvent({
+        action_type: 'logout',
+        resource_type: 'auth',
+        risk_level: 'low'
+      });
+    }
+    
     await supabase.auth.signOut();
     setUserRole(null);
     setUser(null);
