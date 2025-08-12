@@ -2932,6 +2932,10 @@ export type Database = {
         Args: { p_token_id: string }
         Returns: Json
       }
+      get_application_by_token: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       get_automation_success_rate: {
         Args: { rule_id: string }
         Returns: number
