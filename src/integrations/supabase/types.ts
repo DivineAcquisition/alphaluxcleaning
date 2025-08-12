@@ -825,6 +825,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          feature_name: string
+          id: string
+          last_used: string
+          total_time_spent_ms: number | null
+          usage_count: number | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          feature_name: string
+          id?: string
+          last_used?: string
+          total_time_spent_ms?: number | null
+          usage_count?: number | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          feature_name?: string
+          id?: string
+          last_used?: string
+          total_time_spent_ms?: number | null
+          usage_count?: number | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       incidents: {
         Row: {
           booking_id: string | null
@@ -1596,6 +1632,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_metrics_log: {
+        Row: {
+          bundle_size_kb: number | null
+          connection_type: string | null
+          cumulative_layout_shift: number | null
+          device_type: string | null
+          first_contentful_paint_ms: number | null
+          first_input_delay_ms: number | null
+          id: string
+          largest_contentful_paint_ms: number | null
+          load_time_ms: number | null
+          page_url: string
+          session_id: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bundle_size_kb?: number | null
+          connection_type?: string | null
+          cumulative_layout_shift?: number | null
+          device_type?: string | null
+          first_contentful_paint_ms?: number | null
+          first_input_delay_ms?: number | null
+          id?: string
+          largest_contentful_paint_ms?: number | null
+          load_time_ms?: number | null
+          page_url: string
+          session_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bundle_size_kb?: number | null
+          connection_type?: string | null
+          cumulative_layout_shift?: number | null
+          device_type?: string | null
+          first_contentful_paint_ms?: number | null
+          first_input_delay_ms?: number | null
+          id?: string
+          largest_contentful_paint_ms?: number | null
+          load_time_ms?: number | null
+          page_url?: string
+          session_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -2768,6 +2855,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health_metrics: {
+        Row: {
+          alert_threshold: number | null
+          environment: string | null
+          id: string
+          is_critical: boolean | null
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          service_name: string | null
+          timestamp: string
+        }
+        Insert: {
+          alert_threshold?: number | null
+          environment?: string | null
+          id?: string
+          is_critical?: boolean | null
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          service_name?: string | null
+          timestamp?: string
+        }
+        Update: {
+          alert_threshold?: number | null
+          environment?: string | null
+          id?: string
+          is_critical?: boolean | null
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          service_name?: string | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
       tier_change_history: {
         Row: {
           automatic: boolean | null
@@ -2920,6 +3043,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interactions: {
+        Row: {
+          duration_ms: number | null
+          element_id: string | null
+          element_type: string | null
+          error_message: string | null
+          id: string
+          interaction_type: string
+          metadata: Json | null
+          page_url: string
+          session_id: string
+          success: boolean | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          duration_ms?: number | null
+          element_id?: string | null
+          element_type?: string | null
+          error_message?: string | null
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+          page_url: string
+          session_id: string
+          success?: boolean | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          duration_ms?: number | null
+          element_id?: string | null
+          element_type?: string | null
+          error_message?: string | null
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+          page_url?: string
+          session_id?: string
+          success?: boolean | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2941,6 +3109,42 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_satisfaction: {
+        Row: {
+          category: string | null
+          feedback_text: string | null
+          id: string
+          page_url: string | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          satisfaction_score: number | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          feedback_text?: string | null
+          id?: string
+          page_url?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          satisfaction_score?: number | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          feedback_text?: string | null
+          id?: string
+          page_url?: string | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          satisfaction_score?: number | null
+          timestamp?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -3108,6 +3312,10 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: Json
       }
+      get_performance_insights: {
+        Args: { p_days?: number }
+        Returns: Json
+      }
       get_tier_benefits: {
         Args: { p_tier_level: number }
         Returns: Json
@@ -3127,6 +3335,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_performance_metric: {
+        Args: {
+          p_user_id?: string
+          p_session_id?: string
+          p_page_url?: string
+          p_load_time_ms?: number
+          p_fcp_ms?: number
+          p_lcp_ms?: number
+          p_cls?: number
+          p_fid_ms?: number
+          p_user_agent?: string
+          p_device_type?: string
+          p_connection_type?: string
+          p_bundle_size_kb?: number
+        }
+        Returns: string
+      }
       log_security_event: {
         Args: {
           p_user_id: string
@@ -3144,6 +3369,16 @@ export type Database = {
       mark_onboarding_token_used: {
         Args: { p_token: string }
         Returns: Json
+      }
+      track_feature_usage: {
+        Args: {
+          p_user_id: string
+          p_feature_name: string
+          p_time_spent_ms?: number
+          p_user_role?: string
+          p_device_type?: string
+        }
+        Returns: undefined
       }
       update_subcontractor_tier: {
         Args: { p_subcontractor_id: string }
