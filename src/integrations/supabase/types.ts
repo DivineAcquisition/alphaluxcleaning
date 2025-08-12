@@ -3599,8 +3599,20 @@ export type Database = {
         Args: { p_token_id: string }
         Returns: Json
       }
+      execute_workflow: {
+        Args: {
+          p_template_id: string
+          p_trigger_data?: Json
+          p_triggered_by?: string
+        }
+        Returns: string
+      }
       fix_admin_users_secure: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      generate_bi_insights: {
+        Args: { p_insight_type: string; p_time_period?: string }
         Returns: Json
       }
       get_application_by_token: {
@@ -3669,6 +3681,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      intelligent_search: {
+        Args: { p_query: string; p_entity_types?: string[]; p_limit?: number }
+        Returns: {
+          entity_type: string
+          entity_id: string
+          relevance_score: number
+          highlight: string
+          metadata: Json
+        }[]
+      }
       log_performance_metric: {
         Args: {
           p_user_id?: string
@@ -3703,6 +3725,15 @@ export type Database = {
       mark_onboarding_token_used: {
         Args: { p_token: string }
         Returns: Json
+      }
+      send_intelligent_notification: {
+        Args: {
+          p_template_id: string
+          p_recipient_id?: string
+          p_recipient_email?: string
+          p_context_data?: Json
+        }
+        Returns: string
       }
       track_feature_usage: {
         Args: {
