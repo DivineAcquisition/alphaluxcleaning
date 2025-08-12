@@ -1306,6 +1306,7 @@ export type Database = {
           is_recurring: boolean | null
           next_service_date: string | null
           paused_until: string | null
+          payment_metadata: Json | null
           preferred_time: string | null
           recurring_frequency: string | null
           retention_discount_accepted: boolean | null
@@ -1316,6 +1317,7 @@ export type Database = {
           service_status: string | null
           square_footage: number | null
           status: string | null
+          stripe_payment_intent_id: string | null
           stripe_session_id: string | null
           updated_at: string
           user_id: string | null
@@ -1339,6 +1341,7 @@ export type Database = {
           is_recurring?: boolean | null
           next_service_date?: string | null
           paused_until?: string | null
+          payment_metadata?: Json | null
           preferred_time?: string | null
           recurring_frequency?: string | null
           retention_discount_accepted?: boolean | null
@@ -1349,6 +1352,7 @@ export type Database = {
           service_status?: string | null
           square_footage?: number | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1372,6 +1376,7 @@ export type Database = {
           is_recurring?: boolean | null
           next_service_date?: string | null
           paused_until?: string | null
+          payment_metadata?: Json | null
           preferred_time?: string | null
           recurring_frequency?: string | null
           retention_discount_accepted?: boolean | null
@@ -1382,9 +1387,73 @@ export type Database = {
           service_status?: string | null
           square_footage?: number | null
           status?: string | null
+          stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          payment_data: Json | null
+          timestamp: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          payment_data?: Json | null
+          timestamp?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          payment_data?: Json | null
+          timestamp?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      payment_retries: {
+        Row: {
+          created_at: string
+          failure_code: string | null
+          id: string
+          last_retry_at: string | null
+          payment_intent_id: string
+          retry_count: number | null
+          retry_reason: string | null
+          retry_strategy: string | null
+        }
+        Insert: {
+          created_at?: string
+          failure_code?: string | null
+          id?: string
+          last_retry_at?: string | null
+          payment_intent_id: string
+          retry_count?: number | null
+          retry_reason?: string | null
+          retry_strategy?: string | null
+        }
+        Update: {
+          created_at?: string
+          failure_code?: string | null
+          id?: string
+          last_retry_at?: string | null
+          payment_intent_id?: string
+          retry_count?: number | null
+          retry_reason?: string | null
+          retry_strategy?: string | null
         }
         Relationships: []
       }
@@ -2893,6 +2962,10 @@ export type Database = {
           rating: number
           distance_priority: number
         }[]
+      }
+      get_order_status_safe: {
+        Args: { p_order_id: string }
+        Returns: Json
       }
       get_tier_benefits: {
         Args: { p_tier_level: number }
