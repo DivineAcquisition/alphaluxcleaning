@@ -92,69 +92,88 @@ import CustomerDashboardAdmin from '@/pages/CustomerDashboardAdmin';
 import PaymentPortalAdmin from '@/pages/PaymentPortalAdmin';
 import AdminPaymentCenter from '@/pages/AdminPaymentCenter';
 import BulkOnboardExistingCleaners from '@/pages/BulkOnboardExistingCleaners';
+import SecurityCenter from '@/pages/SecurityCenter';
 
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
 function DomainRouter() {
   const hostname = window.location.hostname;
+  const isDevelopment = import.meta.env.DEV;
+  
+  // In development, log domain routing for debugging
+  if (isDevelopment) {
+    console.log('Domain router processing:', hostname);
+  }
+  
+  // Only apply subdomain routing for specific subdomains, not all
+  const isSpecificSubdomain = [
+    'booking', 'pay', 'members', 'app', 'office', 'cleaners', 
+    'admin', 'reviews', 'referrals', 'jobs', 'api', 'connect',
+    'analytics', 'support', 'training'
+  ].some(subdomain => hostname.startsWith(`${subdomain}.`));
+  
+  // If not a specific subdomain, return to normal routing
+  if (!isSpecificSubdomain) {
+    return <Index />;
+  }
   
   // Phase 1: Core Client Experience
-  if (hostname.includes('booking.')) {
+  if (hostname.startsWith('booking.')) {
     return <Navigate to="/instant-quote" replace />;
   }
-  if (hostname.includes('pay.')) {
+  if (hostname.startsWith('pay.')) {
     return <Navigate to="/payment-portal" replace />;
   }
-  if (hostname.includes('members.')) {
+  if (hostname.startsWith('members.')) {
     return <Navigate to="/my-services" replace />;
   }
   
   // Phase 2: Internal Ops & Office Manager Tools  
-  if (hostname.includes('app.')) {
+  if (hostname.startsWith('app.')) {
     return <Navigate to="/auth" replace />;
   }
-  if (hostname.includes('office.')) {
+  if (hostname.startsWith('office.')) {
     return <Navigate to="/office-dashboard" replace />;
   }
   
   // Phase 3: Cleaner Portal (Mobile First)
-  if (hostname.includes('cleaners.')) {
+  if (hostname.startsWith('cleaners.')) {
     return <Navigate to="/subcontractor-mobile" replace />;
   }
   
   // Phase 4: Admin & System Oversight
-  if (hostname.includes('admin.')) {
+  if (hostname.startsWith('admin.')) {
     return <Navigate to="/admin" replace />;
   }
   
   // Phase 5: Marketing, Referrals, Hiring
-  if (hostname.includes('reviews.')) {
+  if (hostname.startsWith('reviews.')) {
     return <Navigate to="/reviews" replace />;
   }
-  if (hostname.includes('referrals.')) {
+  if (hostname.startsWith('referrals.')) {
     return <Navigate to="/?section=referrals" replace />;
   }
-  if (hostname.includes('jobs.')) {
+  if (hostname.startsWith('jobs.')) {
     return <Navigate to="/subcontractor-application" replace />;
   }
   
   // Phase 6: System Integration & APIs
-  if (hostname.includes('api.')) {
+  if (hostname.startsWith('api.')) {
     return <Navigate to="/api-portal" replace />;
   }
-  if (hostname.includes('connect.')) {
+  if (hostname.startsWith('connect.')) {
     return <Navigate to="/connect" replace />;
   }
   
   // Phase 5: Advanced Features & Business Intelligence
-  if (hostname.includes('analytics.')) {
+  if (hostname.startsWith('analytics.')) {
     return <Navigate to="/analytics-dashboard" replace />;
   }
-  if (hostname.includes('support.')) {
+  if (hostname.startsWith('support.')) {
     return <Navigate to="/support-portal" replace />;
   }
-  if (hostname.includes('training.')) {
+  if (hostname.startsWith('training.')) {
     return <Navigate to="/training-portal" replace />;
   }
   
@@ -288,6 +307,11 @@ function App() {
                 <Route path="/bulk-onboard-cleaners" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <BulkOnboardExistingCleaners />
+                  </ProtectedRoute>
+                } />
+                <Route path="/security-center" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <SecurityCenter />
                   </ProtectedRoute>
                 } />
                 
@@ -453,16 +477,23 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                {/* Testing Routes - Open Access for Development */}
-                <Route path="/test" element={<TestDashboard />} />
-                <Route path="/test/subcontractor-dashboard" element={<SubcontractorDashboard />} />
-                <Route path="/test/subcontractor-mobile" element={<SubcontractorMobile />} />
-                <Route path="/test/subcontractor-management" element={<SubcontractorManagement />} />
-                <Route path="/test/tier-management" element={<SubcontractorTierManagement />} />
-                <Route path="/test/tier-config" element={<TierSystemConfig />} />
-                <Route path="/test/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
-                <Route path="/test/office-dashboard" element={<OfficeManagerDashboard />} />
-                <Route path="/test/admin-portal" element={<AdminPortal />} />
+                {/* Testing Routes - Development Only */}
+                <Route path="/test/*" element={
+                  <ProtectedRoute allowedRoles={['super_admin', 'admin']} redirectTo="/auth">
+                    <Routes>
+                      <Route path="/" element={<TestDashboard />} />
+                      <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
+                      <Route path="/subcontractor-mobile" element={<SubcontractorMobile />} />
+                      <Route path="/subcontractor-management" element={<SubcontractorManagement />} />
+                      <Route path="/tier-management" element={<SubcontractorTierManagement />} />
+                      <Route path="/tier-config" element={<TierSystemConfig />} />
+                      <Route path="/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
+                      <Route path="/office-dashboard" element={<OfficeManagerDashboard />} />
+                      <Route path="/admin-portal" element={<AdminPortal />} />
+                      <Route path="/security-center" element={<SecurityCenter />} />
+                    </Routes>
+                  </ProtectedRoute>
+                } />
 
                 {/* Phase 4B: Advanced Tier Management System Routes */}
                 <Route path="/subcontractor-tiers" element={
