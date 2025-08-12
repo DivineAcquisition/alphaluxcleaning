@@ -2938,8 +2938,16 @@ export type Database = {
         }
         Returns: Json
       }
+      create_test_admin_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       disconnect_calendar_token: {
         Args: { p_token_id: string }
+        Returns: Json
+      }
+      fix_admin_users_secure: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       get_application_by_token: {
