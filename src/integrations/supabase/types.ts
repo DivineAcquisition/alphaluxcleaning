@@ -2920,6 +2920,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      create_notification_safe: {
+        Args: {
+          p_subcontractor_id: string
+          p_user_id: string
+          p_title: string
+          p_message: string
+          p_type?: string
+        }
+        Returns: Json
+      }
       create_referral_code: {
         Args: {
           p_owner_email: string
