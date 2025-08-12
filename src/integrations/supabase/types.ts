@@ -2967,6 +2967,10 @@ export type Database = {
           distance_priority: number
         }[]
       }
+      get_estimate_status_safe: {
+        Args: { p_estimate_id: string; p_email: string }
+        Returns: Json
+      }
       get_order_status_safe: {
         Args: { p_order_id: string }
         Returns: Json
