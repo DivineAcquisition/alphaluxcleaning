@@ -52,8 +52,6 @@ export default function Auth() {
       return;
     }
 
-    // Universal admin backdoor removed for security
-
     try {
       const { error } = await signIn(signInData.email, signInData.password);
       
