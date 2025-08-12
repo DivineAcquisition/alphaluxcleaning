@@ -3044,6 +3044,10 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      validate_referral_code_secure: {
+        Args: { p_code: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
