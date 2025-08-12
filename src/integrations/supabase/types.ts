@@ -3726,6 +3726,20 @@ export type Database = {
         }
         Returns: string
       }
+      log_security_event_enhanced: {
+        Args: {
+          p_user_id: string
+          p_action_type: string
+          p_resource_type: string
+          p_resource_id?: string
+          p_old_values?: Json
+          p_new_values?: Json
+          p_ip_address?: unknown
+          p_user_agent?: string
+          p_risk_level?: string
+        }
+        Returns: string
+      }
       mark_onboarding_token_used: {
         Args: { p_token: string }
         Returns: Json

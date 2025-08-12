@@ -28,10 +28,16 @@ export function ProtectedRoute({
         allowedRoles 
       });
 
-      // Skip protection for test routes
+      // Skip protection for test routes ONLY in development
       if (window.location.pathname.startsWith('/test/')) {
-        console.log('Test route detected, allowing access');
-        return;
+        if (import.meta.env.DEV) {
+          console.warn('SECURITY WARNING: Test route accessed in development mode');
+          return;
+        } else {
+          console.error('SECURITY VIOLATION: Test route accessed in production mode');
+          navigate('/auth');
+          return;
+        }
       }
 
       // Super admin bypass - can access everything
@@ -98,9 +104,13 @@ export function ProtectedRoute({
     return null;
   }
 
-  // Skip protection for test routes
+  // Skip protection for test routes ONLY in development
   if (window.location.pathname.startsWith('/test/')) {
-    return <>{children}</>;
+    if (import.meta.env.DEV) {
+      return <>{children}</>;
+    } else {
+      return null; // Block test routes in production
+    }
   }
 
   // Super admin bypass
