@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield, CreditCard } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield, CreditCard, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 export function Navigation() {
   const location = useLocation();
@@ -16,6 +16,10 @@ export function Navigation() {
       path: "/",
       label: "Home",
       icon: Home
+    }, {
+      path: "/modern-booking",
+      label: "Enhanced Booking",
+      icon: Calendar
     }, {
       path: "/order-status",
       label: "Order Status",
