@@ -3666,6 +3666,25 @@ export type Database = {
         Args: { p_days?: number }
         Returns: Json
       }
+      get_subcontractors_admin_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          city: string
+          completed_jobs_count: number
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_available: boolean
+          phone: string
+          rating: number
+          review_count: number
+          state: string
+          subscription_status: string
+          tier_level: number
+          updated_at: string
+        }[]
+      }
       get_tier_benefits: {
         Args: { p_tier_level: number }
         Returns: Json
