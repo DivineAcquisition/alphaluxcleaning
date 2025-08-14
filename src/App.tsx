@@ -92,6 +92,7 @@ import CustomerDashboardAdmin from '@/pages/CustomerDashboardAdmin';
 import PaymentPortalAdmin from '@/pages/PaymentPortalAdmin';
 import AdminPaymentCenter from '@/pages/AdminPaymentCenter';
 import BulkOnboardExistingCleaners from '@/pages/BulkOnboardExistingCleaners';
+import AddSpreadsheetCleaners from '@/pages/AddSpreadsheetCleaners';
 import SecurityCenter from '@/pages/SecurityCenter';
 
 const queryClient = new QueryClient();
@@ -307,6 +308,11 @@ function App() {
                 <Route path="/bulk-onboard-cleaners" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <BulkOnboardExistingCleaners />
+                  </ProtectedRoute>
+                } />
+                <Route path="/add-spreadsheet-cleaners" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <AddSpreadsheetCleaners />
                   </ProtectedRoute>
                 } />
                 <Route path="/security-center" element={
