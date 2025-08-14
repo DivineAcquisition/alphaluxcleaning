@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const { logSecurityEvent, logFailedLogin } = useSecurityAudit();
 
   const getUserRole = async (): Promise<string | null> => {
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     console.log('AuthContext: Getting role for user:', user.id, user.email);
+    setRoleLoading(true);
     
     try {
       const { data, error } = await supabase
@@ -47,6 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error getting user role:', error);
       return null;
+    } finally {
+      setRoleLoading(false);
     }
   };
 
@@ -57,7 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('AuthContext: Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
+        
+        // Don't set loading to false yet - wait for role to load
+        if (!session?.user) {
+          setLoading(false);
+        }
       }
     );
 
@@ -66,7 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('AuthContext: Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      
+      // Don't set loading to false yet - wait for role to load
+      if (!session?.user) {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -79,10 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getUserRole().then((role) => {
         console.log('AuthContext: Role set to:', role);
         setUserRole(role);
+        // Now we can set loading to false since we have both user and role
+        setLoading(false);
       });
     } else {
       console.log('AuthContext: No user, setting role to null');
       setUserRole(null);
+      setLoading(false);
     }
   }, [user]);
 
@@ -150,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     userRole,
-    loading,
+    loading: loading || roleLoading,
     signIn,
     signUp,
     signOut,

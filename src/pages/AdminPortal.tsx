@@ -168,6 +168,12 @@ const AdminPortal = () => {
       description: "Manage payments, billing, and financial transactions",
       action: "Payment Center",
       path: "/payment-portal"
+    },
+    {
+      title: "Onboard Cleaners",
+      description: "Add existing cleaners from spreadsheet to subcontractor network",
+      action: "Add Cleaners",
+      path: "/add-spreadsheet-cleaners"
     }
   ];
 
