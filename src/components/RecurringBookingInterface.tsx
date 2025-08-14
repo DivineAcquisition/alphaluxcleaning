@@ -675,8 +675,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const initializePayment = async () => {
     setPaymentLoading(true);
     try {
+      // Calculate the correct payment amount based on selected payment option
+      const actualPaymentAmount = selectedPaymentOption === 'half' ? Math.round(pricing.total / 2) : 
+                                 selectedPaymentOption === 'prepayment' ? 150 : pricing.total;
+      
       const paymentData = {
-        amount: pricing.total,
+        amount: actualPaymentAmount,
         customerEmail: customerInfo.email,
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
@@ -690,7 +694,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         city: customerInfo.city,
         state: customerInfo.state,
         zipCode: customerInfo.zipCode,
-        paymentType: 'full'
+        paymentType: selectedPaymentOption
       };
 
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
@@ -1490,7 +1494,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                               }}
                             >
                               <EmbeddedPaymentForm 
-                                amount={pricing.total}
+                                amount={selectedPaymentOption === 'half' ? Math.round(pricing.total / 2) : 
+                                       selectedPaymentOption === 'prepayment' ? 150 : pricing.total}
                                 onSuccess={() => {
                                   toast({
                                     title: "Payment Successful!",
