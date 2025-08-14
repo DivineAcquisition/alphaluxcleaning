@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Lock, AlertCircle, CheckCircle, Loader2, RefreshCw, Shield, Smartphone, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatPrice } from '@/lib/pricing-utils';
 
 type PaymentStatus = 
   | 'idle' 
@@ -432,7 +433,7 @@ export function StripePaymentForm({
                 </div>
               ) : (
                 <>
-                  Pay ${amount}
+                  Pay {formatPrice(amount)}
                   <Lock className="h-4 w-4 ml-2" />
                 </>
               )}

@@ -57,6 +57,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [paymentMethod, setPaymentMethod] = useState<'stripe_checkout' | 'embedded_payment'>('embedded_payment');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
 
   // Calculate final pricing
   const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
@@ -73,6 +74,34 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       totalPrice: finalTotal
     });
   }, [paymentType, promoDiscount, finalTotal]);
+
+  // Monitor payment amount changes for embedded payments
+  useEffect(() => {
+    const updatePaymentIntent = async () => {
+      // Only update if embedded payment is active and showing payment form
+      if (paymentMethod === 'embedded_payment' && showPaymentForm && clientSecret) {
+        setIsUpdatingPaymentIntent(true);
+        try {
+          // Clear current payment form and recreate with new amount
+          setShowPaymentForm(false);
+          setClientSecret(null);
+          
+          // Small delay to ensure UI updates
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Create new payment intent with updated amount
+          await createPaymentIntent();
+        } catch (error) {
+          console.error('Failed to update payment intent:', error);
+          toast.error('Failed to update payment amount');
+        } finally {
+          setIsUpdatingPaymentIntent(false);
+        }
+      }
+    };
+
+    updatePaymentIntent();
+  }, [paymentAmount, paymentMethod, showPaymentForm]); // Only react to amount changes
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {
@@ -360,8 +389,20 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           amount={paymentAmount}
         />
 
+        {/* Payment Intent Update Loading */}
+        {isUpdatingPaymentIntent && (
+          <Card className="shadow-clean">
+            <CardContent className="flex items-center justify-center p-8">
+              <div className="text-center space-y-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-sm text-muted-foreground">Updating payment amount...</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Enhanced Payment Form */}
-        {showPaymentForm && clientSecret && paymentMethod === 'embedded_payment' && (
+        {showPaymentForm && clientSecret && paymentMethod === 'embedded_payment' && !isUpdatingPaymentIntent && (
           <Elements 
             stripe={stripePromise} 
             options={{
