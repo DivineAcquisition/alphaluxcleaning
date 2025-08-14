@@ -14,6 +14,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
 import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
+import { calculatePaymentAmount, toStripeAmount, formatPrice } from '@/lib/pricing-utils';
 
 interface BookingData {
   homeSize: string;
@@ -63,7 +64,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const totalDiscount = recurringDiscount + promoDiscount;
   const nextDayFee = bookingData.nextDayFee || 0;
   const finalTotal = baseTotal + nextDayFee - totalDiscount;
-  const paymentAmount = paymentType === 'deposit' ? Math.round(finalTotal * 0.3) : finalTotal;
+  const paymentAmount = calculatePaymentAmount(finalTotal, paymentType);
 
   useEffect(() => {
     updateBookingData({ 
@@ -100,8 +101,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         }
 
         setPromoDiscount(discount);
-        toast.success(`Promo code applied! You saved $${discount}`);
-      } else {
+         toast.success(`Promo code applied! You saved ${formatPrice(discount)}`);
+       } else {
         toast.error(result.error || 'Invalid promo code');
       }
     } catch (error) {
@@ -131,7 +132,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          amount: paymentAmount * 100, // Convert to cents
+          amount: toStripeAmount(paymentAmount), // Convert to cents
           currency: 'usd',
           booking_data: bookingData,
           payment_type: paymentType,
@@ -161,7 +162,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          amount: paymentAmount * 100, // Convert to cents
+          amount: toStripeAmount(paymentAmount), // Convert to cents
           currency: 'usd',
           booking_data: bookingData,
           payment_type: paymentType,
@@ -219,9 +220,9 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   Save money and keep your home consistently clean
                 </p>
                 {isRecurring && (
-                  <Badge className="mt-2 bg-success text-success-foreground">
-                    You're saving ${recurringDiscount} with {bookingData.frequency} cleanings!
-                  </Badge>
+                   <Badge className="mt-2 bg-success text-success-foreground">
+                     You're saving {formatPrice(recurringDiscount)} with {bookingData.frequency} cleanings!
+                   </Badge>
                 )}
               </div>
               <Switch
@@ -267,7 +268,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   Complete payment today
                 </p>
                 <p className="text-lg font-bold text-primary mt-2">
-                  ${finalTotal}
+                  {formatPrice(finalTotal)}
                 </p>
               </button>
 
@@ -295,7 +296,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   30% now, 70% on service day
                 </p>
                 <p className="text-lg font-bold text-primary mt-2">
-                  ${paymentAmount}
+                  {formatPrice(paymentAmount)}
                 </p>
               </button>
             </div>
@@ -321,7 +322,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-success">-${promoDiscount}</span>
+                  <span className="font-bold text-success">-{formatPrice(promoDiscount)}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -422,7 +423,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span>Base Service</span>
-                <span>${bookingData.basePrice}</span>
+                <span>${formatPrice(bookingData.basePrice, { showCurrency: false })}</span>
               </div>
               
               {Object.keys(bookingData.addOnPrices).length > 0 && (
@@ -430,7 +431,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                {Object.entries(bookingData.addOnPrices).map(([addOn, price]) => (
                    <div key={addOn} className="flex justify-between text-sm">
                      <span className="text-muted-foreground">{addOn.replace(/-/g, ' ')}</span>
-                     <span>+${price}</span>
+                     <span>+${formatPrice(price, { showCurrency: false })}</span>
                    </div>
                  ))}
                </div>
@@ -439,21 +440,21 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
              {nextDayFee > 0 && (
                <div className="flex justify-between text-primary">
                  <span>Next Day Priority Fee</span>
-                 <span>+${nextDayFee}</span>
+                 <span>+${formatPrice(nextDayFee, { showCurrency: false })}</span>
                </div>
              )}
              
              {recurringDiscount > 0 && (
                 <div className="flex justify-between text-success">
                   <span>Recurring Discount</span>
-                  <span>-${recurringDiscount}</span>
+                  <span>-${formatPrice(recurringDiscount, { showCurrency: false })}</span>
                 </div>
               )}
               
               {promoDiscount > 0 && (
                 <div className="flex justify-between text-success">
                   <span>Promo Discount</span>
-                  <span>-${promoDiscount}</span>
+                  <span>-${formatPrice(promoDiscount, { showCurrency: false })}</span>
                 </div>
               )}
               
@@ -461,21 +462,21 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
-                <span className="text-primary">${finalTotal}</span>
+                <span className="text-primary">${formatPrice(finalTotal, { showCurrency: false })}</span>
               </div>
               
               {paymentType === 'deposit' && (
                 <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium">Paying Today: ${paymentAmount}</p>
+                  <p className="text-sm font-medium">Paying Today: {formatPrice(paymentAmount)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Remaining ${finalTotal - paymentAmount} due on service day
+                    Remaining {formatPrice(finalTotal - paymentAmount)} due on service day
                   </p>
                 </div>
               )}
               
               {totalDiscount > 0 && (
                 <div className="text-center text-success font-medium">
-                  Total Savings: ${totalDiscount}
+                  Total Savings: {formatPrice(totalDiscount)}
                 </div>
               )}
             </div>
@@ -491,7 +492,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   'Processing...'
                 ) : (
                   <>
-                    {paymentMethod === 'embedded_payment' ? 'Continue to Payment' : `Complete Booking - $${paymentAmount}`}
+                    {paymentMethod === 'embedded_payment' ? 'Continue to Payment' : `Complete Booking - ${formatPrice(paymentAmount)}`}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 )}

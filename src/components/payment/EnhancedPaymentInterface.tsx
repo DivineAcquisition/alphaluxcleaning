@@ -20,6 +20,7 @@ import { PaymentSecurityIndicator } from './PaymentSecurityIndicator';
 import { MobilePaymentOptimizations } from './MobilePaymentOptimizations';
 import { PaymentFormValidation } from './PaymentFormValidation';
 import { usePaymentSecurity } from '@/hooks/usePaymentSecurity';
+import { formatPrice, toDisplayAmount } from '@/lib/pricing-utils';
 
 interface EnhancedPaymentInterfaceProps {
   amount: number;
@@ -167,7 +168,7 @@ export function EnhancedPaymentInterface({
               <span>Secure Payment</span>
             </div>
             <Badge variant="outline" className="text-xs">
-              ${amount}
+              {formatPrice(toDisplayAmount(amount))}
             </Badge>
           </CardTitle>
           
