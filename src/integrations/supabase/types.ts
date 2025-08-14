@@ -3650,6 +3650,10 @@ export type Database = {
           subcontractor_id: string
         }[]
       }
+      get_booking_status_safe: {
+        Args: { p_booking_id: string; p_customer_email: string }
+        Returns: Json
+      }
       get_customer_order_status_secure: {
         Args: { p_customer_email: string; p_order_id: string }
         Returns: Json
