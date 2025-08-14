@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -3558,11 +3558,11 @@ export type Database = {
         Returns: Json
       }
       calculate_subcontractor_tier: {
-        Args: { p_review_count: number; p_completed_jobs: number }
+        Args: { p_completed_jobs: number; p_review_count: number }
         Returns: number
       }
       check_job_drop_restrictions: {
-        Args: { p_subcontractor_id: string; p_service_date: string }
+        Args: { p_service_date: string; p_subcontractor_id: string }
         Returns: Json
       }
       check_suspicious_activity: {
@@ -3575,19 +3575,19 @@ export type Database = {
       }
       create_notification_safe: {
         Args: {
-          p_subcontractor_id: string
-          p_user_id: string
-          p_title: string
           p_message: string
+          p_subcontractor_id: string
+          p_title: string
           p_type?: string
+          p_user_id: string
         }
         Returns: Json
       }
       create_referral_code: {
         Args: {
+          p_custom_code?: string
           p_owner_email: string
           p_owner_name?: string
-          p_custom_code?: string
         }
         Returns: Json
       }
@@ -3625,13 +3625,13 @@ export type Database = {
       }
       get_available_slots: {
         Args: {
-          p_subcontractor_id: string
           p_date: string
+          p_subcontractor_id: string
           p_time_slots: string[]
         }
         Returns: {
-          time_slot: string
           available: boolean
+          time_slot: string
         }[]
       }
       get_available_subcontractors_by_location: {
@@ -3641,21 +3641,21 @@ export type Database = {
           p_service_date: string
         }
         Returns: {
-          subcontractor_id: string
-          full_name: string
-          email: string
-          phone: string
-          split_tier: string
-          rating: number
           distance_priority: number
+          email: string
+          full_name: string
+          phone: string
+          rating: number
+          split_tier: string
+          subcontractor_id: string
         }[]
       }
       get_customer_order_status_secure: {
-        Args: { p_order_id: string; p_customer_email: string }
+        Args: { p_customer_email: string; p_order_id: string }
         Returns: Json
       }
       get_estimate_status_safe: {
-        Args: { p_estimate_id: string; p_email: string }
+        Args: { p_email: string; p_estimate_id: string }
         Returns: Json
       }
       get_order_status_safe: {
@@ -3671,7 +3671,7 @@ export type Database = {
         Returns: Json
       }
       get_user_calendar_token: {
-        Args: { p_user_id: string; p_provider: string }
+        Args: { p_provider: string; p_user_id: string }
         Returns: Json[]
       }
       get_user_role: {
@@ -3680,63 +3680,63 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       intelligent_search: {
-        Args: { p_query: string; p_entity_types?: string[]; p_limit?: number }
+        Args: { p_entity_types?: string[]; p_limit?: number; p_query: string }
         Returns: {
-          entity_type: string
           entity_id: string
-          relevance_score: number
+          entity_type: string
           highlight: string
           metadata: Json
+          relevance_score: number
         }[]
       }
       log_performance_metric: {
         Args: {
-          p_user_id?: string
-          p_session_id?: string
-          p_page_url?: string
-          p_load_time_ms?: number
-          p_fcp_ms?: number
-          p_lcp_ms?: number
-          p_cls?: number
-          p_fid_ms?: number
-          p_user_agent?: string
-          p_device_type?: string
-          p_connection_type?: string
           p_bundle_size_kb?: number
+          p_cls?: number
+          p_connection_type?: string
+          p_device_type?: string
+          p_fcp_ms?: number
+          p_fid_ms?: number
+          p_lcp_ms?: number
+          p_load_time_ms?: number
+          p_page_url?: string
+          p_session_id?: string
+          p_user_agent?: string
+          p_user_id?: string
         }
         Returns: string
       }
       log_security_event: {
         Args: {
-          p_user_id: string
           p_action_type: string
-          p_resource_type: string
-          p_resource_id?: string
-          p_old_values?: Json
-          p_new_values?: Json
           p_ip_address?: unknown
-          p_user_agent?: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_resource_id?: string
+          p_resource_type: string
           p_risk_level?: string
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
       log_security_event_enhanced: {
         Args: {
-          p_user_id: string
           p_action_type: string
-          p_resource_type: string
-          p_resource_id?: string
-          p_old_values?: Json
-          p_new_values?: Json
           p_ip_address?: unknown
-          p_user_agent?: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_resource_id?: string
+          p_resource_type: string
           p_risk_level?: string
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -3746,20 +3746,20 @@ export type Database = {
       }
       send_intelligent_notification: {
         Args: {
-          p_template_id: string
-          p_recipient_id?: string
-          p_recipient_email?: string
           p_context_data?: Json
+          p_recipient_email?: string
+          p_recipient_id?: string
+          p_template_id: string
         }
         Returns: string
       }
       track_feature_usage: {
         Args: {
-          p_user_id: string
+          p_device_type?: string
           p_feature_name: string
           p_time_spent_ms?: number
+          p_user_id: string
           p_user_role?: string
-          p_device_type?: string
         }
         Returns: undefined
       }
@@ -3771,27 +3771,27 @@ export type Database = {
         Args:
           | {
               p_calendar_id: string
-              p_start_time: string
+              p_calendar_type?: string
               p_end_time: string
-              p_event_title?: string
               p_event_id?: string
+              p_event_title?: string
+              p_start_time: string
             }
           | {
               p_calendar_id: string
-              p_start_time: string
               p_end_time: string
-              p_event_title?: string
               p_event_id?: string
-              p_calendar_type?: string
+              p_event_title?: string
+              p_start_time: string
             }
         Returns: Json
       }
       validate_and_use_referral_code: {
         Args: {
           p_code: string
+          p_order_id?: string
           p_user_email: string
           p_user_name?: string
-          p_order_id?: string
         }
         Returns: Json
       }
