@@ -13,6 +13,15 @@ import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "@/components/FileUpload";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { applicationToasts } from "@/lib/toast-messages";
+import { 
+  validatePhoneNumber, 
+  formatPhoneNumber, 
+  validateZipCode, 
+  validateEmail, 
+  validateName,
+  sanitizeTextInput,
+  sanitizeAddress 
+} from "@/lib/validation-utils";
 
 export default function SubcontractorApplication() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,11 +56,42 @@ export default function SubcontractorApplication() {
   };
 
   const validateForm = () => {
-    const requiredFields = [
-      'full_name', 'email', 'phone', 'why_join_us', 'availability',
-      'emergency_contact_name', 'emergency_contact_phone'
-    ];
+    // Enhanced validation with proper formatting
+    const nameValidation = validateName(formData.full_name);
+    if (!nameValidation.isValid) {
+      toast.error(nameValidation.message);
+      return false;
+    }
 
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.message);
+      return false;
+    }
+
+    const phoneValidation = validatePhoneNumber(formData.phone);
+    if (!phoneValidation.isValid) {
+      toast.error(phoneValidation.message);
+      return false;
+    }
+
+    const emergencyPhoneValidation = validatePhoneNumber(formData.emergency_contact_phone);
+    if (!emergencyPhoneValidation.isValid) {
+      toast.error(`Emergency contact: ${emergencyPhoneValidation.message}`);
+      return false;
+    }
+
+    // Validate ZIP code if provided
+    if (formData.zip_code) {
+      const zipValidation = validateZipCode(formData.zip_code);
+      if (!zipValidation.isValid) {
+        toast.error(zipValidation.message);
+        return false;
+      }
+    }
+
+    // Check other required fields
+    const requiredFields = ['why_join_us', 'availability', 'emergency_contact_name'];
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]) {
         toast.error(`Please fill in ${field.replace('_', ' ')}`);
@@ -96,7 +136,17 @@ export default function SubcontractorApplication() {
     setIsSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke('submit-subcontractor-application', {
-        body: formData
+        body: {
+          ...formData,
+          full_name: sanitizeTextInput(formData.full_name),
+          email: formData.email.trim().toLowerCase(),
+          phone: formatPhoneNumber(formData.phone),
+          address: sanitizeAddress(formData.address),
+          city: sanitizeTextInput(formData.city),
+          zip_code: formData.zip_code.trim(),
+          emergency_contact_name: sanitizeTextInput(formData.emergency_contact_name),
+          emergency_contact_phone: formatPhoneNumber(formData.emergency_contact_phone)
+        }
       });
 
       if (error) throw error;
@@ -218,7 +268,10 @@ export default function SubcontractorApplication() {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      handleInputChange('phone', formatted);
+                    }}
                     placeholder="(555) 123-4567"
                   />
                 </div>
@@ -262,7 +315,9 @@ export default function SubcontractorApplication() {
                     id="zip_code"
                     value={formData.zip_code}
                     onChange={(e) => handleInputChange('zip_code', e.target.value)}
-                    placeholder="94102"
+                    placeholder="12345 or 12345-6789"
+                    pattern="^\d{5}(-\d{4})?$"
+                    title="Please enter a valid ZIP code"
                   />
                 </div>
               </div>
@@ -370,7 +425,10 @@ export default function SubcontractorApplication() {
                   <Input
                     id="emergency_contact_phone"
                     value={formData.emergency_contact_phone}
-                    onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatPhoneNumber(e.target.value);
+                      handleInputChange('emergency_contact_phone', formatted);
+                    }}
                     placeholder="(555) 123-4567"
                   />
                 </div>

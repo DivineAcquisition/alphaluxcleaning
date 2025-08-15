@@ -9,6 +9,15 @@ import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckC
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { trackCommercialEstimateRequest, trackLead } from "@/lib/facebook-pixel";
+import { 
+  validatePhoneNumber, 
+  formatPhoneNumber, 
+  validateZipCode, 
+  validateEmail, 
+  validateBusinessName,
+  sanitizeTextInput,
+  sanitizeAddress 
+} from "@/lib/validation-utils";
 
 interface CommercialEstimateData {
   // Business Information
@@ -177,23 +186,79 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
     return slot ? slot.available : true; // Default to available if not checked
   };
 
+  // Enhanced form validation
+  const validateForm = (): boolean => {
+    // Validate business name
+    const businessNameValidation = validateBusinessName(formData.businessName);
+    if (!businessNameValidation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: businessNameValidation.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      toast({
+        title: "Validation Error", 
+        description: emailValidation.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validate phone number
+    const phoneValidation = validatePhoneNumber(formData.phone);
+    if (!phoneValidation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: phoneValidation.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validate ZIP code
+    if (formData.zipCode) {
+      const zipValidation = validateZipCode(formData.zipCode);
+      if (!zipValidation.isValid) {
+        toast({
+          title: "Validation Error",
+          description: zipValidation.message,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase
         .from('commercial_estimates')
         .insert([{
-          business_name: formData.businessName,
+          business_name: sanitizeTextInput(formData.businessName),
           business_type: formData.businessType,
-          contact_person: formData.contactPerson,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
+          contact_person: sanitizeTextInput(formData.contactPerson),
+          email: formData.email.trim().toLowerCase(),
+          phone: formatPhoneNumber(formData.phone),
+          address: sanitizeAddress(formData.address),
+          city: sanitizeTextInput(formData.city),
           state: formData.state,
-          zip_code: formData.zipCode,
+          zip_code: formData.zipCode.trim(),
           square_footage: parseInt(formData.squareFootage.replace(/[^\d]/g, '')) || 0,
           number_of_floors: formData.numberOfFloors,
           number_of_restrooms: formData.numberOfRestrooms,
@@ -316,7 +381,11 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   id="phone"
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setFormData(prev => ({ ...prev, phone: formatted }));
+                  }}
+                  placeholder="(555) 123-4567"
                   required
                 />
               </div>
@@ -374,6 +443,9 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                   id="zipCode"
                   value={formData.zipCode}
                   onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
+                  placeholder="12345 or 12345-6789"
+                  pattern="^\d{5}(-\d{4})?$"
+                  title="Please enter a valid ZIP code"
                   required
                 />
               </div>
