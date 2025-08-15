@@ -14,8 +14,8 @@ const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_tes
 
 // Initialize Supabase client
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
+  "https://kqoezqzogleaaupjzxch.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI"
 );
 
 // Function to fetch Stripe publishable key from Supabase

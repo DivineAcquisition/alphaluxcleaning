@@ -3577,6 +3577,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      can_access_subcontractor_data: {
+        Args: { p_subcontractor_user_id: string }
+        Returns: boolean
+      }
       check_job_drop_restrictions: {
         Args: { p_service_date: string; p_subcontractor_id: string }
         Returns: Json
@@ -3684,6 +3688,10 @@ export type Database = {
       }
       get_performance_insights: {
         Args: { p_days?: number }
+        Returns: Json
+      }
+      get_subcontractor_summary_safe: {
+        Args: { p_subcontractor_id: string }
         Returns: Json
       }
       get_subcontractors_admin_summary: {
