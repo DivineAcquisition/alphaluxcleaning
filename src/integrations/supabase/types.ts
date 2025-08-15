@@ -1597,6 +1597,7 @@ export type Database = {
           status: string | null
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
+          stripe_setup_intent_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1632,6 +1633,7 @@ export type Database = {
           status?: string | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
+          stripe_setup_intent_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1667,6 +1669,7 @@ export type Database = {
           status?: string | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
+          stripe_setup_intent_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
