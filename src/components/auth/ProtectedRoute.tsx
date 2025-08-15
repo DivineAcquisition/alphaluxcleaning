@@ -32,13 +32,19 @@ export function ProtectedRoute({
     setAccessDenied(false);
     setDenialReason('');
 
-    if (!loading && user) {
+    // Add debug logging
+    console.log('ProtectedRoute: useEffect - loading:', loading, 'user:', !!user, 'userRole:', userRole, 'path:', location.pathname);
+
+    // CRITICAL FIX: Don't make access decisions until we have BOTH user AND role
+    // The loading state from AuthContext includes both auth loading AND role loading
+    if (!loading && user && userRole !== null) {
       if (isDevelopment) {
         console.log('ProtectedRoute check:', { 
           currentPath: location.pathname, 
           userRole, 
           requiredRole, 
-          allowedRoles 
+          allowedRoles,
+          userEmail: user.email
         });
       }
 
@@ -59,7 +65,7 @@ export function ProtectedRoute({
       // Super admin bypass - can access everything
       if (userRole === 'super_admin') {
         if (isDevelopment) {
-          console.log('Super admin access granted');
+          console.log('Super admin access granted to:', user.email);
         }
         return;
       }
@@ -113,14 +119,22 @@ export function ProtectedRoute({
           }
         }, 3000);
       }
+    } else if (!loading && user && userRole === null) {
+      // User exists but role is still loading - this is the race condition we're fixing
+      if (isDevelopment) {
+        console.log('ProtectedRoute: User exists but role is null, still loading role for:', user.email);
+      }
     } else if (!loading && !user) {
       console.log('No user, redirecting to auth');
       navigate(redirectTo);
     }
   }, [user, userRole, loading, navigate, requiredRole, allowedRoles, redirectTo, location.pathname, isDevelopment]);
 
-  // Show loading spinner while checking authentication
-  if (loading) {
+  // Show loading spinner while checking authentication OR while role is loading
+  if (loading || (user && userRole === null)) {
+    if (isDevelopment) {
+      console.log('ProtectedRoute: Showing loading screen - loading:', loading, 'user:', !!user, 'userRole:', userRole);
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex items-center gap-2">
