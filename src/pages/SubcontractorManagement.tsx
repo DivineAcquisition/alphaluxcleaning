@@ -23,11 +23,13 @@ import {
   Bell,
   Zap
 } from 'lucide-react';
-import { useSubcontractorManagement } from '@/hooks/useSubcontractorManagement';
+import { useSubcontractorManagement, EnhancedSubcontractor } from '@/hooks/useSubcontractorManagement';
 import { BulkActionsPanel } from '@/components/admin/BulkActionsPanel';
 import { SubcontractorCard } from '@/components/admin/SubcontractorCard';
 import { PerformanceAnalyticsDashboard } from '@/components/admin/PerformanceAnalyticsDashboard';
 import { AdvancedFilters, FilterOptions } from '@/components/admin/AdvancedFilters';
+import { AccountStatusManager } from '@/components/admin/AccountStatusManager';
+import { SecurityAuditPanel } from '@/components/admin/SecurityAuditPanel';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +55,7 @@ export default function SubcontractorManagement() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [completingOnboarding, setCompletingOnboarding] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [selectedSubcontractorForStatus, setSelectedSubcontractorForStatus] = useState<EnhancedSubcontractor | null>(null);
   const [processingNotifications, setProcessingNotifications] = useState(false);
 
   // Filters
@@ -479,6 +482,14 @@ export default function SubcontractorManagement() {
                 <BarChart3 className="h-4 w-4" />
                 Analytics
               </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Performance
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Security
+              </TabsTrigger>
             </TabsList>
             
             <Button onClick={refreshSubcontractors} variant="outline">
@@ -617,6 +628,30 @@ export default function SubcontractorManagement() {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <PerformanceAnalyticsDashboard />
+          </TabsContent>
+
+          {/* Performance Tab */}
+          <TabsContent value="performance" className="space-y-6">
+            <PerformanceAnalyticsDashboard />
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security" className="space-y-6">
+            <div className="grid gap-6">
+              <SecurityAuditPanel />
+              
+              {selectedSubcontractorForStatus && (
+                <AccountStatusManager
+                  subcontractorId={selectedSubcontractorForStatus.id}
+                  currentStatus={selectedSubcontractorForStatus.account_status || 'active'}
+                  subcontractorName={selectedSubcontractorForStatus.full_name}
+                  onStatusUpdate={() => {
+                    refreshSubcontractors();
+                    setSelectedSubcontractorForStatus(null);
+                  }}
+                />
+              )}
+            </div>
           </TabsContent>
         </Tabs>
 

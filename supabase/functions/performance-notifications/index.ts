@@ -86,7 +86,7 @@ serve(async (req) => {
       }
     ];
 
-    // Get all active subcontractors with performance data
+    // Get all subcontractors with performance data (including account_status)
     const { data: subcontractors, error: subError } = await supabase
       .from('subcontractors')
       .select(`
@@ -100,7 +100,8 @@ serve(async (req) => {
         is_available,
         account_status,
         created_at
-      `);
+      `)
+      .eq('account_status', 'active'); // Only process active subcontractors
 
     if (subError) {
       throw new Error(`Failed to fetch subcontractors: ${subError.message}`);
