@@ -36,7 +36,7 @@ export default function SubcontractorManagement() {
   const { toast } = useToast();
   const {
     subcontractors,
-    isLoading,
+    loading,
     suspendAccount,
     unsuspendAccount,
     banAccount,
@@ -341,7 +341,7 @@ export default function SubcontractorManagement() {
     setTierDialog(true);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <AdminLayout title="Subcontractor Management" description="Loading...">
         <div className="flex items-center justify-center h-64">
