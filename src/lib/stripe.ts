@@ -1,20 +1,33 @@
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, type Stripe } from '@stripe/stripe-js';
 
-// Use environment variable for Stripe publishable key
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Robust, non-crashing Stripe loader for frontend-only environments
+// Avoids relying on VITE_* envs (not supported here) and never throws at import time.
 
-// Validate the key format
-if (!stripePublishableKey) {
-  console.error('STRIPE_PUBLISHABLE_KEY environment variable is required but not set');
-  throw new Error('Stripe publishable key is required. Please set VITE_STRIPE_PUBLISHABLE_KEY environment variable.');
+declare global {
+  interface Window {
+    STRIPE_PUBLISHABLE_KEY?: string;
+  }
 }
 
-if (!stripePublishableKey.startsWith('pk_test_') && !stripePublishableKey.startsWith('pk_live_')) {
-  console.error('Invalid Stripe publishable key format. Please provide a valid key starting with pk_test_ or pk_live_');
-  throw new Error('Invalid Stripe publishable key format');
+// Try multiple sources for a publishable key (safe to expose):
+const candidateKey = (
+  typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
+) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY) || '';
+
+const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_test_') || k.startsWith('pk_live_'));
+
+if (!isValidKey(candidateKey)) {
+  console.warn(
+    'Stripe publishable key missing or invalid. Payment UI will be disabled until a valid key is provided.'
+  );
 }
 
-export const stripePromise = loadStripe(stripePublishableKey).catch(error => {
-  console.error('Failed to load Stripe:', error);
-  return null;
-});
+// Always export a promise to keep <Elements stripe={...}> stable
+export const stripePromise: Promise<Stripe | null> = isValidKey(candidateKey)
+  ? loadStripe(candidateKey).catch((error) => {
+      console.error('Failed to load Stripe:', error);
+      return null;
+    })
+  : Promise.resolve(null);
+
+export const hasStripeKey = isValidKey(candidateKey);
