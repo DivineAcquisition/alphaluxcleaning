@@ -1,7 +1,8 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
+import { createClient } from '@supabase/supabase-js';
 
-// Robust, non-crashing Stripe loader with better error handling and fallback options
+// Dynamic Stripe loader that fetches publishable key from Supabase
 
 declare global {
   interface Window {
@@ -9,40 +10,79 @@ declare global {
   }
 }
 
-// Try multiple sources for a publishable key (safe to expose):
-const candidateKey = (
-  typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
-) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY) || 
-// Fallback test key for development (replace with your actual test key)
-'pk_test_51234567890abcdef' || '';
-
 const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_test_') || k.startsWith('pk_live_'));
 
-// Enhanced error reporting
-if (!isValidKey(candidateKey)) {
-  const errorMessage = 'Stripe publishable key missing or invalid. Payment processing unavailable.';
-  console.error('🔴 STRIPE CONFIG ERROR:', errorMessage);
-  
-  // Show user-friendly notification
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      toast.error('Payment system configuration needed. Please contact support.');
-    }, 1000);
+// Initialize Supabase client
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_ANON_KEY!
+);
+
+// Function to fetch Stripe publishable key from Supabase
+const fetchStripeKey = async (): Promise<string | null> => {
+  try {
+    console.log('🔄 Fetching Stripe configuration from Supabase...');
+    
+    const { data, error } = await supabase.functions.invoke('get-stripe-config');
+    
+    if (error) {
+      console.error('🔴 Failed to fetch Stripe config:', error);
+      return null;
+    }
+    
+    if (data?.publishableKey && isValidKey(data.publishableKey)) {
+      console.log('✅ Stripe publishable key retrieved successfully');
+      return data.publishableKey;
+    }
+    
+    console.error('🔴 Invalid or missing Stripe publishable key in response');
+    return null;
+  } catch (error) {
+    console.error('🔴 Error fetching Stripe configuration:', error);
+    return null;
   }
-} else {
-  console.log('✅ Stripe configuration loaded successfully');
-}
+};
+
+// Create a promise that resolves to the Stripe instance
+const createStripePromise = async (): Promise<Stripe | null> => {
+  try {
+    // Try local sources first (for development)
+    let publishableKey = (
+      typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
+    ) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY);
+
+    // If no local key, fetch from Supabase
+    if (!publishableKey || !isValidKey(publishableKey)) {
+      publishableKey = await fetchStripeKey();
+    }
+
+    if (!publishableKey || !isValidKey(publishableKey)) {
+      console.error('🔴 No valid Stripe publishable key found');
+      if (typeof window !== 'undefined') {
+        toast.error('Payment system configuration needed. Please contact support.');
+      }
+      return null;
+    }
+
+    console.log('✅ Initializing Stripe with valid key');
+    return await loadStripe(publishableKey);
+  } catch (error) {
+    console.error('🔴 Failed to initialize Stripe:', error);
+    if (typeof window !== 'undefined') {
+      toast.error('Unable to load payment system. Please refresh the page.');
+    }
+    return null;
+  }
+};
 
 // Enhanced promise with better error handling
-export const stripePromise: Promise<Stripe | null> = isValidKey(candidateKey)
-  ? loadStripe(candidateKey).catch((error) => {
-      console.error('🔴 Failed to initialize Stripe:', error);
-      toast.error('Unable to load payment system. Please refresh the page.');
-      return null;
-    })
-  : Promise.resolve(null);
+export const stripePromise: Promise<Stripe | null> = createStripePromise();
 
-export const hasStripeKey = isValidKey(candidateKey);
+// Function to check if we have a Stripe key available
+export const hasStripeKey = async (): Promise<boolean> => {
+  const stripe = await stripePromise;
+  return stripe !== null;
+};
 
 // Utility function to check if Stripe is ready
 export const checkStripeReady = async (): Promise<boolean> => {
