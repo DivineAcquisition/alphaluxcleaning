@@ -2497,6 +2497,7 @@ export type Database = {
           can_lift_heavy_items: boolean
           city: string | null
           comfortable_with_chemicals: boolean
+          completed_at: string | null
           created_at: string
           drivers_license_image_url: string | null
           email: string
@@ -2528,6 +2529,7 @@ export type Database = {
           can_lift_heavy_items?: boolean
           city?: string | null
           comfortable_with_chemicals?: boolean
+          completed_at?: string | null
           created_at?: string
           drivers_license_image_url?: string | null
           email: string
@@ -2559,6 +2561,7 @@ export type Database = {
           can_lift_heavy_items?: boolean
           city?: string | null
           comfortable_with_chemicals?: boolean
+          completed_at?: string | null
           created_at?: string
           drivers_license_image_url?: string | null
           email?: string

@@ -1,232 +1,347 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
+import { Resend } from "npm:resend@2.0.0";
+import { renderAsync } from "npm:@react-email/components@0.0.22";
+import React from "npm:react@18.3.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[COMPLETE-ONBOARDING] ${step}${detailsStr}`);
-};
+// Email template for subcontractor welcome
+const SubcontractorWelcomeEmail = ({ 
+  fullName, 
+  email, 
+  tempPassword, 
+  dashboardUrl, 
+  tierName, 
+  hourlyRate, 
+  monthlyFee 
+}: {
+  fullName: string;
+  email: string;
+  tempPassword: string;
+  dashboardUrl: string;
+  tierName: string;
+  hourlyRate: number;
+  monthlyFee: number;
+}) => React.createElement(
+  'html',
+  {},
+  React.createElement(
+    'body',
+    { style: { fontFamily: 'Arial, sans-serif', lineHeight: '1.6', color: '#333' } },
+    React.createElement(
+      'div',
+      { style: { maxWidth: '600px', margin: '0 auto', padding: '20px' } },
+      React.createElement(
+        'h1',
+        { style: { color: '#2563eb', borderBottom: '2px solid #2563eb', paddingBottom: '10px' } },
+        'Welcome to Bay Area Cleaning Professionals!'
+      ),
+      React.createElement(
+        'p',
+        {},
+        `Hi ${fullName},`
+      ),
+      React.createElement(
+        'p',
+        {},
+        'Congratulations! Your application has been approved and your subcontractor account is now active.'
+      ),
+      React.createElement(
+        'div',
+        { style: { backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', margin: '20px 0' } },
+        React.createElement(
+          'h3',
+          { style: { color: '#1e40af', marginTop: '0' } },
+          'Your Account Details:'
+        ),
+        React.createElement('p', {}, `🎯 Tier Level: ${tierName}`),
+        React.createElement('p', {}, `💰 Hourly Rate: $${hourlyRate}/hour`),
+        React.createElement('p', {}, `📅 Monthly Fee: $${monthlyFee}/month`),
+        React.createElement('p', {}, `✉️ Login Email: ${email}`),
+        React.createElement('p', {}, `🔑 Temporary Password: ${tempPassword}`)
+      ),
+      React.createElement(
+        'div',
+        { style: { backgroundColor: '#fef3c7', padding: '15px', borderRadius: '6px', margin: '20px 0' } },
+        React.createElement(
+          'p',
+          { style: { margin: '0', fontWeight: 'bold' } },
+          '⚠️ Important: Please change your password immediately after logging in for security.'
+        )
+      ),
+      React.createElement(
+        'p',
+        {},
+        'Next Steps:'
+      ),
+      React.createElement(
+        'ol',
+        {},
+        React.createElement('li', {}, 'Click the button below to access your dashboard'),
+        React.createElement('li', {}, 'Change your temporary password'),
+        React.createElement('li', {}, 'Complete your profile setup'),
+        React.createElement('li', {}, 'Review available job assignments')
+      ),
+      React.createElement(
+        'div',
+        { style: { textAlign: 'center', margin: '30px 0' } },
+        React.createElement(
+          'a',
+          {
+            href: dashboardUrl,
+            style: {
+              backgroundColor: '#2563eb',
+              color: 'white',
+              padding: '12px 24px',
+              textDecoration: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold'
+            }
+          },
+          'Access Your Dashboard'
+        )
+      ),
+      React.createElement(
+        'p',
+        { style: { fontSize: '14px', color: '#666' } },
+        'If you have any questions, please contact our support team.'
+      ),
+      React.createElement(
+        'p',
+        { style: { fontSize: '14px', color: '#666' } },
+        'Best regards,',
+        React.createElement('br'),
+        'Bay Area Cleaning Professionals Team'
+      )
+    )
+  )
+);
 
-serve(async (req) => {
+interface CompleteOnboardingRequest {
+  applicationId: string;
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
-
-    const supabaseService = createClient(
+    // Initialize Supabase client with service role key for admin operations
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { 
-      token,
-      selected_tier, 
-      profile_data, 
-      banking_data, 
-      application_data 
-    } = await req.json();
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    logStep("Processing onboarding", { token, selected_tier });
+    const { applicationId }: CompleteOnboardingRequest = await req.json();
 
-    // Validate and mark token as used first
-    const { data: tokenResult, error: tokenError } = await supabaseService
-      .rpc('validate_onboarding_token', { p_token: token });
-
-    if (tokenError || !tokenResult?.valid) {
-      logStep("Token validation failed", { tokenError, tokenResult });
-      throw new Error(tokenResult?.error || "Invalid onboarding token");
+    if (!applicationId) {
+      return new Response(
+        JSON.stringify({ error: "Application ID is required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    const application_id = tokenResult.application_id;
+    console.log(`Starting onboarding completion for application: ${applicationId}`);
 
-    // Create auth user first
-    const { data: authUser, error: authError } = await supabaseService.auth.admin.createUser({
-      email: application_data.email,
-      password: crypto.randomUUID(), // Temporary password
-      email_confirm: true,
+    // 1. Get the approved application
+    const { data: application, error: appError } = await supabaseAdmin
+      .from('subcontractor_applications')
+      .select('*')
+      .eq('id', applicationId)
+      .eq('status', 'approved')
+      .single();
+
+    if (appError || !application) {
+      console.error('Application not found or not approved:', appError);
+      return new Response(
+        JSON.stringify({ error: "Application not found or not approved" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // 2. Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+
+    // 3. Create auth user account
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: application.email,
+      password: tempPassword,
+      email_confirm: true, // Auto-confirm email
       user_metadata: {
-        full_name: application_data.full_name,
-        phone: application_data.phone
+        full_name: application.full_name,
+        phone: application.phone,
+        role: 'subcontractor'
       }
     });
 
     if (authError) {
-      logStep("Auth user creation failed", authError);
-      throw new Error(`Failed to create user account: ${authError.message}`);
+      console.error('Failed to create auth user:', authError);
+      return new Response(
+        JSON.stringify({ error: "Failed to create user account: " + authError.message }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    logStep("Auth user created", { user_id: authUser.user.id });
+    console.log(`Created auth user: ${authUser.user.id}`);
 
-    // Assign subcontractor role
-    await supabaseService.from("user_roles").insert({
-      user_id: authUser.user.id,
-      role: "subcontractor"
-    });
+    // 4. Get Tier 2 (Professional) configuration
+    const { data: tierConfig, error: tierError } = await supabaseAdmin
+      .from('tier_system_config')
+      .select('*')
+      .eq('tier_level', 2)
+      .single();
 
-    // Create subcontractor record
-    const { data: subcontractor, error: subError } = await supabaseService
-      .from("subcontractors")
+    if (tierError || !tierConfig) {
+      console.error('Failed to get tier config:', tierError);
+      // Fallback to default values
+      tierConfig = {
+        tier_level: 2,
+        tier_name: 'Professional',
+        hourly_rate: 18.00,
+        monthly_fee: 50.00
+      };
+    }
+
+    // 5. Create subcontractor record
+    const { data: subcontractor, error: subError } = await supabaseAdmin
+      .from('subcontractors')
       .insert({
         user_id: authUser.user.id,
-        full_name: application_data.full_name,
-        email: application_data.email,
-        phone: application_data.phone,
-        address: application_data.address,
-        city: application_data.city,
-        state: application_data.state,
-        zip_code: application_data.zip_code,
-        split_tier: selected_tier,
-        subscription_status: selected_tier === "60_40" ? "active" : "pending"
+        full_name: application.full_name,
+        email: application.email,
+        phone: application.phone,
+        address: application.address || '',
+        city: application.city || '',
+        state: application.state || 'CA',
+        zip_code: application.zip_code || '',
+        is_available: true,
+        tier_level: tierConfig.tier_level,
+        hourly_rate: tierConfig.hourly_rate,
+        monthly_fee: tierConfig.monthly_fee,
+        rating: 5.0,
+        review_count: 0,
+        completed_jobs_count: 0,
+        subscription_status: 'active',
+        split_tier: 'Professional'
       })
       .select()
       .single();
 
     if (subError) {
-      logStep("Subcontractor creation failed", subError);
-      throw new Error(`Failed to create subcontractor record: ${subError.message}`);
+      console.error('Failed to create subcontractor:', subError);
+      // Clean up auth user if subcontractor creation fails
+      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+      return new Response(
+        JSON.stringify({ error: "Failed to create subcontractor profile: " + subError.message }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
-    logStep("Subcontractor created", { id: subcontractor.id });
+    console.log(`Created subcontractor: ${subcontractor.id}`);
 
-    // Create profile record
-    await supabaseService.from("subcontractor_profiles").insert({
-      subcontractor_id: subcontractor.id,
-      profile_image_url: profile_data.profile_image_url,
-      biography: profile_data.biography,
-      legal_name: banking_data.legal_name,
-      date_of_birth: banking_data.date_of_birth,
-      ssn: banking_data.ssn,
-      account_number: banking_data.account_number,
-      routing_number: banking_data.routing_number,
-      background_check_consent: banking_data.background_check_consent,
-      background_check_copy_consent: banking_data.background_check_copy_consent
-    });
+    // 6. Update application status to completed
+    const { error: updateError } = await supabaseAdmin
+      .from('subcontractor_applications')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        admin_notes: `Onboarding completed on ${new Date().toISOString()}. User ID: ${authUser.user.id}`
+      })
+      .eq('id', applicationId);
 
-    logStep("Profile created");
+    if (updateError) {
+      console.error('Failed to update application status:', updateError);
+    }
 
-    // Update application status and mark token as used
-    await supabaseService
-      .from("subcontractor_applications")
-      .update({ status: "onboarded" })
-      .eq("id", application_id);
-
-    // Mark token as used
-    await supabaseService.rpc('mark_onboarding_token_used', { p_token: token });
-
-    if (selected_tier === "60_40") {
-      // Free tier - create auth session for auto-login
-      logStep("Free tier onboarding complete - creating session");
+    // 7. Send welcome email
+    try {
+      const dashboardUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/subcontractor-dashboard` || "https://app.bayareacleaningpros.com/subcontractor-dashboard";
       
-      // Generate a one-time login link
-      const { data: linkData, error: linkError } = await supabaseService.auth.admin.generateLink({
-        type: 'magiclink',
-        email: application_data.email,
-        options: {
-          redirectTo: `${req.headers.get("origin")}/subcontractor-dashboard`
-        }
-      });
-
-      if (linkError) {
-        logStep("Magic link generation failed", linkError);
-        // Return success but redirect to login
-        return new Response(JSON.stringify({ 
-          success: true, 
-          redirect_to_login: true,
-          message: "Account created successfully. Please check your email to log in."
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
-      }
-
-      logStep("Magic link generated", { link_url: linkData.properties.action_link });
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        auto_login_url: linkData.properties.action_link,
-        message: "Onboarding completed successfully"
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    } else {
-      // Paid tier - create Stripe checkout
-      const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-        apiVersion: "2023-10-16",
-      });
-
-      const customers = await stripe.customers.list({ 
-        email: application_data.email, 
-        limit: 1 
-      });
-
-      let customerId;
-      if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
-      }
-
-      const tierPrices = {
-        "50_50": 2000,
-        "40_60": 5000,
-        "30_70": 10000
-      };
-
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        customer_email: customerId ? undefined : application_data.email,
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: { 
-                name: `${selected_tier.replace('_', '/')} Revenue Share Plan`,
-                description: `Monthly subscription for enhanced job matching and support`
-              },
-              unit_amount: tierPrices[selected_tier as keyof typeof tierPrices],
-              recurring: { interval: "month" },
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "subscription",
-        success_url: `${req.headers.get("origin")}/subcontractor-dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.get("origin")}/subcontractor-onboarding?token=${crypto.randomUUID()}&application_id=${application_id}`,
-        metadata: {
-          subcontractor_id: subcontractor.id,
-          split_tier: selected_tier
-        }
-      });
-
-      // Store Stripe customer ID
-      await supabaseService
-        .from("subcontractors")
-        .update({ 
-          stripe_customer_id: customerId || session.customer,
-          subscription_id: session.subscription 
+      const emailHtml = await renderAsync(
+        React.createElement(SubcontractorWelcomeEmail, {
+          fullName: application.full_name,
+          email: application.email,
+          tempPassword,
+          dashboardUrl,
+          tierName: tierConfig.tier_name,
+          hourlyRate: tierConfig.hourly_rate,
+          monthlyFee: tierConfig.monthly_fee
         })
-        .eq("id", subcontractor.id);
+      );
 
-      logStep("Stripe checkout created", { session_id: session.id });
-
-      return new Response(JSON.stringify({ url: session.url }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+      const { error: emailError } = await resend.emails.send({
+        from: "Bay Area Cleaning Pros <onboarding@resend.dev>",
+        to: [application.email],
+        subject: "Welcome to Bay Area Cleaning Professionals - Account Activated!",
+        html: emailHtml,
       });
+
+      if (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail the entire process for email issues
+      } else {
+        console.log(`Welcome email sent to: ${application.email}`);
+      }
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
     }
+
+    // 8. Log the tier change for tracking
+    const { error: tierLogError } = await supabaseAdmin
+      .from('tier_change_history')
+      .insert({
+        subcontractor_id: subcontractor.id,
+        old_tier: null,
+        new_tier: tierConfig.tier_level,
+        change_reason: 'Initial onboarding - assigned Professional tier',
+        automatic: false
+      });
+
+    if (tierLogError) {
+      console.error('Failed to log tier change:', tierLogError);
+    }
+
+    console.log(`Onboarding completed successfully for: ${application.full_name}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Subcontractor onboarding completed successfully",
+        subcontractor: {
+          id: subcontractor.id,
+          full_name: subcontractor.full_name,
+          email: subcontractor.email,
+          tier_level: subcontractor.tier_level,
+          hourly_rate: subcontractor.hourly_rate
+        }
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
 
   } catch (error: any) {
-    logStep("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error("Onboarding completion error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: "Internal server error",
+        details: error.message 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
-});
+};
+
+serve(handler);

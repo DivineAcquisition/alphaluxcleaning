@@ -33,6 +33,7 @@ export default function SubcontractorManagement() {
   const [selectedAccountStatus, setSelectedAccountStatus] = useState<string>('all');
   const [selectedSubcontractors, setSelectedSubcontractors] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+  const [onboardingInProgress, setOnboardingInProgress] = useState<string[]>([]);
 
   // Tier management states
   const [selectedForTierChange, setSelectedForTierChange] = useState<any>(null);
@@ -160,6 +161,25 @@ export default function SubcontractorManagement() {
     await updateTier(selectedForTierChange.id, newTierLevel, tierChangeReason);
     setSelectedForTierChange(null);
     setTierChangeReason('');
+  };
+
+  const handleCompleteOnboarding = async (applicationId: string) => {
+    setOnboardingInProgress(prev => [...prev, applicationId]);
+    try {
+      await completeOnboarding(applicationId);
+      toast({
+        title: "Onboarding Completed!",
+        description: "Subcontractor account created successfully. Welcome email sent.",
+      });
+    } catch (error) {
+      toast({
+        title: "Onboarding Failed",
+        description: "There was an error completing the onboarding process.",
+        variant: "destructive",
+      });
+    } finally {
+      setOnboardingInProgress(prev => prev.filter(id => id !== applicationId));
+    }
   };
 
   const uniqueLocations = [...new Set(subcontractors.map(sub => sub.state).filter(Boolean))];
@@ -384,11 +404,12 @@ export default function SubcontractorManagement() {
                         {subcontractor.type === 'application' ? (
                           <Button 
                             size="sm" 
-                            onClick={() => completeOnboarding(subcontractor.id)}
+                            onClick={() => handleCompleteOnboarding(subcontractor.id)}
+                            disabled={onboardingInProgress.includes(subcontractor.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <UserPlus className="h-4 w-4 mr-1" />
-                            Complete Onboarding
+                            {onboardingInProgress.includes(subcontractor.id) ? 'Processing...' : 'Complete Onboarding'}
                           </Button>
                         ) : (
                           <Dialog>
