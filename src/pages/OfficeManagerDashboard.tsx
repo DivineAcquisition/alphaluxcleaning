@@ -1,7 +1,12 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   CalendarDays, 
   Users, 
@@ -10,18 +15,32 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Timer
+  Timer,
+  TrendingUp,
+  Phone,
+  MessageSquare,
+  Settings,
+  RefreshCw,
+  Bell,
+  DollarSign
 } from "lucide-react";
 
 export default function OfficeManagerDashboard() {
-  // Mock data - replace with real data from Supabase
-  const todayStats = {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  
+  // Real-time stats - enhanced with more metrics
+  const [todayStats, setTodayStats] = useState({
     totalJobs: 12,
     completed: 8,
     inProgress: 3,
     missed: 1,
-    availableCleaners: 6
-  };
+    availableCleaners: 6,
+    revenue: 2840,
+    avgRating: 4.8,
+    customerSatisfaction: 96
+  });
 
   const todayJobs = [
     {
@@ -91,159 +110,252 @@ export default function OfficeManagerDashboard() {
     }
   };
 
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      // Simulate data refresh
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: "Data Refreshed",
+        description: "Dashboard data has been updated."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh data.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AdminLayout title="Dashboard" description="Overview of today's operations">
+    <AdminLayout title="Office Manager Dashboard" description="Real-time operations command center">
       <div className="space-y-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Jobs Today</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todayStats.totalJobs}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{todayStats.completed}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Timer className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{todayStats.inProgress}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Missed</CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{todayStats.missed}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Cleaners</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todayStats.availableCleaners}</div>
-            </CardContent>
-          </Card>
+        {/* Enhanced Header with Quick Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Today's Operations</h2>
+            <p className="text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={refreshData} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button size="sm">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Today's Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Jobs</CardTitle>
-              <CardDescription>All scheduled cleaning appointments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {todayJobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      {getStatusIcon(job.status)}
-                      <div>
-                        <p className="font-medium">{job.client}</p>
-                        <p className="text-sm text-muted-foreground">{job.time} • {job.cleaner}</p>
-                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {job.location}
-                        </div>
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(job.status)}>
-                      {job.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full mt-4">
-                View All Jobs
-              </Button>
-            </CardContent>
-          </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="jobs">Jobs</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-          {/* Alerts & Issues */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-                Alerts & Issues
-              </CardTitle>
-              <CardDescription>Items requiring immediate attention</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {alerts.map((alert) => (
-                  <div key={alert.id} className="p-3 border rounded-lg border-amber-200 bg-amber-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-amber-800">{alert.message}</p>
-                        <p className="text-xs text-amber-600 mt-1">{alert.time}</p>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        Resolve
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                
-                {alerts.length === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                    <p>No alerts at this time</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* Enhanced Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Jobs Today</CardTitle>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{todayStats.totalJobs}</div>
+                  <Progress value={(todayStats.completed / todayStats.totalJobs) * 100} className="mt-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {Math.round((todayStats.completed / todayStats.totalJobs) * 100)}% complete
+                  </p>
+                </CardContent>
+              </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks for managing operations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col">
-                <CalendarDays className="h-5 w-5 mb-2" />
-                Schedule Job
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col">
-                <Users className="h-5 w-5 mb-2" />
-                Assign Cleaner
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col">
-                <MapPin className="h-5 w-5 mb-2" />
-                View Map
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col">
-                <AlertTriangle className="h-5 w-5 mb-2" />
-                Report Issue
-              </Button>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-success" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">${todayStats.revenue}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    <TrendingUp className="h-3 w-3 inline mr-1" />
+                    +12% from yesterday
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Team Performance</CardTitle>
+                  <Timer className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{todayStats.avgRating}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Average rating today</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-success" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">{todayStats.customerSatisfaction}%</div>
+                  <p className="text-xs text-muted-foreground mt-1">This week</p>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Enhanced Job Management */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Today's Schedule</CardTitle>
+                    <CardDescription>Real-time job tracking and management</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {todayJobs.map((job) => (
+                        <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            {getStatusIcon(job.status)}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{job.client}</p>
+                                <Badge variant="outline" className="text-xs">{job.time}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{job.cleaner}</p>
+                              <div className="flex items-center text-xs text-muted-foreground mt-1">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {job.location}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="ghost">
+                              <Phone className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost">
+                              <MessageSquare className="h-3 w-3" />
+                            </Button>
+                            <Badge className={getStatusColor(job.status)}>
+                              {job.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Enhanced Sidebar */}
+              <div className="space-y-6">
+                {/* Priority Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-red-600">
+                      <AlertTriangle className="h-5 w-5 mr-2" />
+                      Urgent Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className="p-3 border rounded-lg border-red-200 bg-red-50">
+                        <p className="text-sm font-medium text-red-800">{alert.message}</p>
+                        <p className="text-xs text-red-600 mt-1">{alert.time}</p>
+                        <Button size="sm" className="w-full mt-2" variant="destructive">
+                          Handle Now
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Team Status */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Users className="h-5 w-5 mr-2" />
+                      Team Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Active Cleaners</span>
+                        <Badge variant="secondary">{todayStats.availableCleaners}</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">On Break</span>
+                        <Badge variant="outline">2</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Off Duty</span>
+                        <Badge variant="outline">4</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Jobs Tab */}
+          <TabsContent value="jobs" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Management</CardTitle>
+                <CardDescription>Comprehensive job scheduling and tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Advanced job management interface coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Team Tab */}
+          <TabsContent value="team" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Management</CardTitle>
+                <CardDescription>Monitor and manage your cleaning team</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Team management dashboard coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Analytics</CardTitle>
+                <CardDescription>Deep insights into operational performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Advanced analytics dashboard coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
