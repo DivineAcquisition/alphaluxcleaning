@@ -93,6 +93,64 @@ serve(async (req) => {
     if (payment_method === 'payment_intent') {
       console.log("Creating Payment Intent for embedded payment...");
       
+      // Check if this is a "pay_after_service" request - use SetupIntent for authorization only
+      if (payment_type === 'pay_after_service' || paymentType === 'pay_after_service') {
+        console.log("Creating SetupIntent for card authorization...");
+        
+        const setupIntent = await stripe.setupIntents.create({
+          customer: customerId,
+          usage: 'off_session',
+          metadata: {
+            booking_data: JSON.stringify(booking_data || {}),
+            payment_type: 'pay_after_service',
+            promo_code: promo_code || '',
+            full_amount: Math.round(fullAmount || amount), // Store full amount for later charging
+          }
+        });
+
+        console.log("SetupIntent created:", setupIntent.id);
+
+        // Create order record with authorization status
+        const orderData = {
+          stripe_session_id: setupIntent.id,
+          amount: Math.round(fullAmount || amount), // Store full amount
+          customer_name: finalCustomerName,
+          customer_email: finalCustomerEmail,
+          customer_phone: booking_data?.contactNumber || customerPhone,
+          service_details: booking_data || {
+            squareFootage,
+            cleaningType,
+            frequency,
+            addOns,
+            totalAmount: (fullAmount || amount) / 100,
+            serviceAddress: finalServiceAddress,
+            bedrooms,
+            bathrooms,
+            membershipStatus: membershipStatus || false,
+            addonMemberDiscount: addonMemberDiscount || 0,
+            paymentType: 'pay_after_service'
+          },
+          status: "authorized", // Different status for authorized payments
+          created_at: new Date().toISOString()
+        };
+
+        const { error: orderError } = await supabaseClient.from("orders").insert(orderData);
+        
+        if (orderError) {
+          console.error("Database insert error:", orderError);
+          throw new Error(`Database error: ${orderError.message}`);
+        }
+
+        return new Response(JSON.stringify({ 
+          client_secret: setupIntent.client_secret,
+          setup_intent_id: setupIntent.id,
+          payment_type: 'pay_after_service'
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+      
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount), // amount should already be in cents
         currency: currency || 'usd',
@@ -101,6 +159,7 @@ serve(async (req) => {
           booking_data: JSON.stringify(booking_data || {}),
           payment_type: payment_type || paymentType || 'full',
           promo_code: promo_code || '',
+          full_amount: Math.round(fullAmount || amount), // Store full amount for 25% payments
         },
         automatic_payment_methods: {
           enabled: true,

@@ -380,7 +380,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   });
   
   // Payment type state
-  const [paymentType, setPaymentType] = useState<string>('full');
+  const [paymentType, setPaymentType] = useState<string>('pay_after_service');
   const [referralCode, setReferralCode] = useState("");
   const [discountCode, setDiscountCode] = useState("");
   const [appliedReferral, setAppliedReferral] = useState<any>(null);

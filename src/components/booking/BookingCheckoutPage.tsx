@@ -35,7 +35,7 @@ interface BookingData {
   addOnPrices: { [key: string]: number };
   frequencyDiscount: number;
   totalPrice: number;
-  paymentType: 'full' | 'deposit';
+  paymentType: 'pay_after_service' | '25_percent_with_discount';
   promoDiscount: number;
   nextDayFee?: number;
 }
@@ -49,7 +49,7 @@ interface Props {
 
 export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentSuccess, onBack }: Props) {
   const [isRecurring, setIsRecurring] = useState(bookingData.frequency !== 'one-time');
-  const [paymentType, setPaymentType] = useState<'full' | 'deposit'>(bookingData.paymentType);
+  const [paymentType, setPaymentType] = useState<'pay_after_service' | '25_percent_with_discount'>('pay_after_service');
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
@@ -65,7 +65,15 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const totalDiscount = recurringDiscount + promoDiscount;
   const nextDayFee = bookingData.nextDayFee || 0;
   const finalTotal = baseTotal + nextDayFee - totalDiscount;
-  const paymentAmount = calculatePaymentAmount(finalTotal, paymentType);
+  let paymentAmount = 0;
+  
+  if (paymentType === '25_percent_with_discount') {
+    // Apply 5% discount to total, then calculate 25% of discounted amount
+    const discountedTotal = finalTotal * 0.95;
+    paymentAmount = discountedTotal * 0.25;
+  } else if (paymentType === 'pay_after_service') {
+    paymentAmount = 0; // No charge now, authorize only
+  }
 
   useEffect(() => {
     updateBookingData({ 
@@ -160,14 +168,15 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     setIsProcessingPayment(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          amount: toStripeAmount(paymentAmount), // Convert to cents
-          currency: 'usd',
-          booking_data: bookingData,
-          payment_type: paymentType,
-          promo_code: promoCode || null,
-          payment_method: 'payment_intent' // Signal to create Payment Intent
-        }
+          body: {
+            amount: toStripeAmount(paymentAmount), // Convert to cents
+            currency: 'usd',
+            booking_data: bookingData,
+            payment_type: paymentType,
+            promo_code: promoCode || null,
+            payment_method: 'payment_intent', // Signal to create Payment Intent
+            fullAmount: toStripeAmount(finalTotal) // Store full amount for later charging
+          }
       });
 
       if (error) throw error;
@@ -190,14 +199,15 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     setIsProcessingPayment(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          amount: toStripeAmount(paymentAmount), // Convert to cents
-          currency: 'usd',
-          booking_data: bookingData,
-          payment_type: paymentType,
-          promo_code: promoCode || null,
-          payment_method: 'checkout' // Signal to create Checkout Session
-        }
+          body: {
+            amount: toStripeAmount(paymentAmount), // Convert to cents
+            currency: 'usd',
+            booking_data: bookingData,
+            payment_type: paymentType,
+            promo_code: promoCode || null,
+            payment_method: 'checkout', // Signal to create Checkout Session
+            fullAmount: toStripeAmount(finalTotal) // Store full amount for later charging
+          }
       });
 
       if (error) throw error;
@@ -268,16 +278,16 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              Payment Options
+              Choose Your Payment
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
-                onClick={() => setPaymentType('full')}
+                onClick={() => setPaymentType('pay_after_service')}
                 className={cn(
                   "p-4 rounded-lg border-2 text-left transition-all duration-200",
-                  paymentType === 'full'
+                  paymentType === 'pay_after_service'
                     ? "border-primary bg-primary/5 shadow-clean"
                     : "border-border hover:border-primary/50"
                 )}
@@ -285,48 +295,59 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn(
                     "w-4 h-4 rounded-full border-2",
-                    paymentType === 'full' ? "border-primary bg-primary" : "border-muted"
+                    paymentType === 'pay_after_service' ? "border-primary bg-primary" : "border-muted"
                   )}>
-                    {paymentType === 'full' && (
+                    {paymentType === 'pay_after_service' && (
                       <div className="w-2 h-2 rounded-full bg-white m-0.5" />
                     )}
                   </div>
-                  <span className="font-semibold">Pay in Full</span>
+                  <span className="font-semibold">Pay After Service</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Complete payment today
+                  We'll charge your card after completion
                 </p>
                 <p className="text-lg font-bold text-primary mt-2">
-                  {formatPrice(finalTotal)}
+                  $0.00 now, {formatPrice(finalTotal)} after
                 </p>
+                <div className="mt-2 text-xs text-green-600">
+                  🔒 Secure card authorization only
+                </div>
               </button>
 
               <button
-                onClick={() => setPaymentType('deposit')}
+                onClick={() => setPaymentType('25_percent_with_discount')}
                 className={cn(
-                  "p-4 rounded-lg border-2 text-left transition-all duration-200",
-                  paymentType === 'deposit'
+                  "p-4 rounded-lg border-2 text-left transition-all duration-200 relative",
+                  paymentType === '25_percent_with_discount'
                     ? "border-primary bg-primary/5 shadow-clean"
                     : "border-border hover:border-primary/50"
                 )}
               >
+                <div className="absolute -top-2 -right-2">
+                  <Badge className="bg-green-600 text-white text-xs px-2 py-1">
+                    Save 5%
+                  </Badge>
+                </div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn(
                     "w-4 h-4 rounded-full border-2",
-                    paymentType === 'deposit' ? "border-primary bg-primary" : "border-muted"
+                    paymentType === '25_percent_with_discount' ? "border-primary bg-primary" : "border-muted"
                   )}>
-                    {paymentType === 'deposit' && (
+                    {paymentType === '25_percent_with_discount' && (
                       <div className="w-2 h-2 rounded-full bg-white m-0.5" />
                     )}
                   </div>
-                  <span className="font-semibold">Pay Deposit</span>
+                  <span className="font-semibold">Pay 25% + Get 5% Discount</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  30% now, 70% on service day
+                  25% now, 75% after service with 5% total discount
                 </p>
                 <p className="text-lg font-bold text-primary mt-2">
-                  {formatPrice(paymentAmount)}
+                  {formatPrice(finalTotal * 0.95 * 0.25)} now, {formatPrice(finalTotal * 0.95 * 0.75)} after
                 </p>
+                <div className="mt-2 text-xs text-green-600">
+                  💰 Save {formatPrice(finalTotal * 0.05)} total
+                </div>
               </button>
             </div>
           </CardContent>
@@ -506,11 +527,20 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                 <span className="text-primary">${formatPrice(finalTotal, { showCurrency: false })}</span>
               </div>
               
-              {paymentType === 'deposit' && (
+              {paymentType === '25_percent_with_discount' && (
                 <div className="text-center p-3 bg-muted/50 rounded-lg">
                   <p className="text-sm font-medium">Paying Today: {formatPrice(paymentAmount)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Remaining {formatPrice(finalTotal - paymentAmount)} due on service day
+                    Save {formatPrice(finalTotal * 0.05)} with 5% discount! Remaining {formatPrice(finalTotal * 0.95 - paymentAmount)} due after service
+                  </p>
+                </div>
+              )}
+              
+              {paymentType === 'pay_after_service' && (
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium">Paying Today: $0.00 (Authorization Only)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Full amount {formatPrice(finalTotal)} will be charged after service completion
                   </p>
                 </div>
               )}

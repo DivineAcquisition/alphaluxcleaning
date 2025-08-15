@@ -34,7 +34,7 @@ interface BookingData {
     zipCode: string;
   };
   contactNumber: string;
-  paymentType: 'full' | 'deposit';
+  paymentType: 'pay_after_service' | '25_percent_with_discount';
   totalPrice: number;
   stripeSessionId?: string;
 }
@@ -223,7 +223,7 @@ END:VCALENDAR`;
                 <div>
                   <p className="font-semibold">Payment</p>
                   <p className="text-muted-foreground">
-                    {bookingData.paymentType === 'full' ? 'Paid in Full' : 'Deposit Paid'} - ${bookingData.totalPrice}
+                    {bookingData.paymentType === '25_percent_with_discount' ? '25% Paid (5% Discount Applied)' : 'Card Authorized - Pay After Service'} - ${bookingData.totalPrice}
                   </p>
                 </div>
               </div>

@@ -43,7 +43,7 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"full" | "split" | "prepayment">("full");
+  const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount">("pay_after_service");
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
   const getFinalPrice = () => {
@@ -186,10 +186,12 @@ export function PaymentForm({
         // Handle regular service booking (existing flow)
         const finalPrice = getFinalPrice();
         let paymentAmount = finalPrice;
-        if (paymentType === "split") {
-          paymentAmount = Math.round(finalPrice / 2);
-        } else if (paymentType === "prepayment") {
-          paymentAmount = 15000; // $150 in cents
+        if (paymentType === "25_percent_with_discount") {
+          // Apply 5% discount to total, then pay 25% now
+          const discountedTotal = finalPrice * 0.95;
+          paymentAmount = discountedTotal * 0.25;
+        } else if (paymentType === "pay_after_service") {
+          paymentAmount = 0; // Card authorization only
         }
         const {
           data,
@@ -222,10 +224,10 @@ export function PaymentForm({
         if (data.url) {
           window.open(data.url, '_blank');
           // Enhanced success messaging with clear next steps
-          if (paymentType === "split") {
-            toast.success("Opening secure checkout in new tab. Complete payment to finish booking. Remaining balance will be auto-billed after service completion.");
-          } else if (paymentType === "prepayment") {
-            toast.success("Opening secure checkout in new tab. Complete your $150 prepayment to secure your booking. Remaining balance will be charged after job completion.");
+          if (paymentType === "25_percent_with_discount") {
+            toast.success("Opening secure checkout in new tab. Complete your 25% payment to get 5% discount. Remaining balance will be charged after service completion.");
+          } else if (paymentType === "pay_after_service") {
+            toast.success("Opening secure checkout in new tab. We'll securely store your card details and charge after service completion.");
           } else {
             toast.success("Opening secure checkout in new tab. Complete payment to confirm your booking and schedule your cleaning service.");
           }
@@ -272,106 +274,80 @@ export function PaymentForm({
         <div className="space-y-6 text-center">
           {/* Payment Type Selection */}
           <div className="space-y-8">
-            {pricingData.hours === 6 ? <>
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl font-bold text-primary">Choose Your Payment Option</h3>
-                  <p className="text-muted-foreground">Select how you'd like to pay for your cleaning service</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full max-w-6xl mx-auto">
-                  {/* Full Payment Option */}
-                  <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "full" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("full")}>
-                    {paymentType === "full" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                          Most Popular
-                        </Badge>
-                      </div>}
-                    <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "full" ? "border-primary bg-primary" : "border-border"}`}>
-                        {paymentType === "full" && <div className="w-3 h-3 bg-white rounded-full"></div>}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold mb-2">Pay Full Amount</h4>
-                        <div className="text-3xl font-bold text-primary mb-2">
-                          ${getFinalPrice().toFixed(2)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Complete payment today and you're all set
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ No future charges
-                        </div>
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ Simplest option
-                        </div>
-                      </div>
-                    </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold text-primary">Choose Your Payment</h3>
+              <p className="text-muted-foreground">Select your preferred payment option</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+              {/* Pay After Service Option */}
+              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "pay_after_service" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("pay_after_service")}>
+                {paymentType === "pay_after_service" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge variant="secondary" className="bg-secondary text-secondary-foreground px-3 py-1">
+                      Most Popular
+                    </Badge>
+                  </div>}
+                <div className="text-center space-y-4">
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "pay_after_service" ? "border-primary bg-primary" : "border-border"}`}>
+                    {paymentType === "pay_after_service" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                   </div>
-                  
-                  {/* Split Payment Option */}
-                  <div className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "split" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("split")}>
-                    <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "split" ? "border-primary bg-primary" : "border-border"}`}>
-                        {paymentType === "split" && <div className="w-3 h-3 bg-white rounded-full"></div>}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold mb-2">Split Payment</h4>
-                        <div className="text-3xl font-bold text-primary mb-1">
-                          ${Math.round(getFinalPrice() / 2).toFixed(2)}
-                        </div>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          now, then ${(getFinalPrice() - Math.round(getFinalPrice() / 2)).toFixed(2)} later
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          50% now, 50% auto-billed after service
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ Lower upfront cost
-                        </div>
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ Automatic billing
-                        </div>
-                      </div>
+                  <div>
+                    <h4 className="text-xl font-bold mb-2">Pay After Service</h4>
+                    <div className="text-3xl font-bold text-primary mb-2">
+                      $0.00
                     </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      now, then ${getFinalPrice().toFixed(2)} after service
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      We'll securely store your card and charge after completion
+                    </p>
                   </div>
-                  
-                  {/* Prepayment Option */}
-                  <div className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "prepayment" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("prepayment")}>
-                    <div className="text-center space-y-4">
-                      <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "prepayment" ? "border-primary bg-primary" : "border-border"}`}>
-                        {paymentType === "prepayment" && <div className="w-3 h-3 bg-white rounded-full"></div>}
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-bold mb-2">Prepayment</h4>
-                        <div className="text-3xl font-bold text-primary mb-1">
-                          $150.00
-                        </div>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          now, then ${(getFinalPrice() - 150).toFixed(2)} later
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Minimal upfront payment to secure booking
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ Lowest upfront cost
-                        </div>
-                        <div className="flex items-center justify-center text-green-600">
-                          ✓ Secures your slot
-                        </div>
-                      </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center text-green-600">
+                      🔒 Your card details are secure and encrypted
+                    </div>
+                    <div className="flex items-center justify-center text-green-600">
+                      ⚡ Only charged after your cleaning is complete
                     </div>
                   </div>
                 </div>
-              </> : <div className="text-center space-y-4">
-                
-                
-              </div>}
+              </div>
+              
+              {/* Pay 25% Now + Get 5% Discount Option */}
+              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "25_percent_with_discount" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("25_percent_with_discount")}>
+                {paymentType === "25_percent_with_discount" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-green-600 text-white px-3 py-1">
+                      Save 5%
+                    </Badge>
+                  </div>}
+                <div className="text-center space-y-4">
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "25_percent_with_discount" ? "border-primary bg-primary" : "border-border"}`}>
+                    {paymentType === "25_percent_with_discount" && <div className="w-3 h-3 bg-white rounded-full"></div>}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold mb-2">Pay 25% Now + Get 5% Discount</h4>
+                    <div className="text-3xl font-bold text-primary mb-1">
+                      ${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      now, then ${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} after service
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      💰 Save ${(getFinalPrice() * 0.05).toFixed(2)} with upfront payment
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center text-green-600">
+                      ✓ 5% discount on total bill
+                    </div>
+                    <div className="flex items-center justify-center text-green-600">
+                      ✓ Lower remaining balance
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
             {/* Service Summary */}
@@ -500,11 +476,11 @@ export function PaymentForm({
 
             {/* Book Service Button */}
             <Button className="w-full" size="lg" onClick={handleBookService} disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}>
-              {isProcessing ? "Processing..." : paymentType === "split" ? `Pay 50% Now - $${Math.round(getFinalPrice() / 2).toFixed(2)}` : paymentType === "prepayment" ? `Pay $150 Prepayment` : `Book Service - $${getFinalPrice().toFixed(2)}`}
+              {isProcessing ? "Processing..." : paymentType === "25_percent_with_discount" ? `Pay 25% Now - $${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}` : `Authorize Card - $0.00 Now`}
             </Button>
 
             <div className="text-xs text-muted-foreground text-center">
-              {paymentType === "split" ? "Remaining balance will be automatically charged after service completion" : paymentType === "prepayment" ? `Remaining $${(getFinalPrice() - 150).toFixed(2)} will be charged after job completion` : "You will be redirected to our secure payment processor to complete your booking"}
+              {paymentType === "25_percent_with_discount" ? `Save $${(getFinalPrice() * 0.05).toFixed(2)} with 5% discount! Remaining $${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} charged after service.` : `Your card will be securely stored and charged $${getFinalPrice().toFixed(2)} after service completion.`}
             </div>
         </div>
       </CardContent>

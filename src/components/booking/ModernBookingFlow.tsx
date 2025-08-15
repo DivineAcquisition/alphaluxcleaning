@@ -39,7 +39,7 @@ interface BookingData {
   totalPrice: number;
   
   // Payment
-  paymentType: 'full' | 'deposit';
+  paymentType: 'pay_after_service' | '25_percent_with_discount';
   stripeSessionId?: string;
 }
 
@@ -74,7 +74,7 @@ export function ModernBookingFlow() {
     nextDayFee: 0,
     promoDiscount: 0,
     totalPrice: 0,
-    paymentType: 'full'
+    paymentType: 'pay_after_service'
   });
 
   const progress = (currentStep / steps.length) * 100;
