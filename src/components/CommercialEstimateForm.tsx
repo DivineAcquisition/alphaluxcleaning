@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X } from "lucide-react";
+import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { trackCommercialEstimateRequest, trackLead } from "@/lib/facebook-pixel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   validatePhoneNumber, 
   formatPhoneNumber, 
@@ -67,6 +68,8 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isAuthRequired, setIsAuthRequired] = useState(false);
   const [formData, setFormData] = useState<CommercialEstimateData>({
     businessName: "",
     businessType: "",
@@ -173,7 +176,21 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
     }
   };
 
-  // Check availability when preferred date changes
+  // Check authentication status and availability
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (formData.preferredWalkthroughDate) {
       checkAvailability(formData.preferredWalkthroughDate);
@@ -240,6 +257,17 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if user is authenticated
+    if (!user) {
+      setIsAuthRequired(true);
+      toast({
+        title: "Authentication Required",
+        description: "Please sign up or log in to submit an estimate request. This protects your business information.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!validateForm()) {
       return;
     }
@@ -250,6 +278,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
       const { error } = await supabase
         .from('commercial_estimates')
         .insert([{
+          user_id: user.id, // Link estimate to authenticated user
           business_name: sanitizeTextInput(formData.businessName),
           business_type: formData.businessType,
           contact_person: sanitizeTextInput(formData.contactPerson),
@@ -316,6 +345,27 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        {/* Authentication Warning */}
+        {!user && (
+          <Alert className="mb-6">
+            <LogIn className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Secure Estimate Submission:</strong> You'll need to sign up or log in to submit an estimate request. 
+              This protects your business information and ensures only you can view your submitted estimates.
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => window.location.href = '/auth'}
+                  className="mr-2"
+                >
+                  Sign Up / Login
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Business Information */}
           <div className="space-y-4">
