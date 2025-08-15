@@ -3567,6 +3567,10 @@ export type Database = {
         Args: { p_completed_jobs: number; p_review_count: number }
         Returns: number
       }
+      can_access_sensitive_data: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       check_job_drop_restrictions: {
         Args: { p_service_date: string; p_subcontractor_id: string }
         Returns: Json
@@ -3769,9 +3773,21 @@ export type Database = {
         }
         Returns: string
       }
+      log_sensitive_data_access: {
+        Args: {
+          p_operation: string
+          p_table_name: string
+          p_target_user_id?: string
+        }
+        Returns: undefined
+      }
       mark_onboarding_token_used: {
         Args: { p_token: string }
         Returns: Json
+      }
+      mask_sensitive_field: {
+        Args: { field_value: string }
+        Returns: string
       }
       send_intelligent_notification: {
         Args: {
@@ -3831,6 +3847,10 @@ export type Database = {
       validate_referral_code_secure: {
         Args: { p_code: string }
         Returns: Json
+      }
+      verify_admin_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {
