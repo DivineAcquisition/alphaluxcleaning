@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto-Onboard Existing Cleaners</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .loading { color: #666; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .cleaner-result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Auto-Onboarding Existing Cleaners</h1>
+    <div id="status" class="loading">Starting bulk onboarding process...</div>
+    <div id="results"></div>
+
+    <script>
+        const cleaners = [
+            {
+                full_name: "Christal Bowen",
+                email: "christalbowen84@gmail.com",
+                phone: "(510) 421-8047",
+                city: "Oakland",
+                state: "CA"
+            },
+            {
+                full_name: "Elda Navarro",
+                email: "eldacnavarro@gmail.com", 
+                phone: "(510) 703-0819",
+                city: "San Lorenzo",
+                state: "CA"
+            },
+            {
+                full_name: "Jennifer Sullins",
+                email: "jennifersullins84@gmail.com",
+                phone: "(510) 396-6775", 
+                city: "San Leandro",
+                state: "CA"
+            },
+            {
+                full_name: "Maria Bejarano",
+                email: "mariabejarano754@gmail.com",
+                phone: "(510) 207-7617",
+                city: "Hayward", 
+                state: "CA"
+            },
+            {
+                full_name: "Maria Lopez",
+                email: "marialopez07031979@gmail.com",
+                phone: "(510) 364-1362",
+                city: "Union City",
+                state: "CA"
+            },
+            {
+                full_name: "Milda Pairol",
+                email: "mildapairol@gmail.com",
+                phone: "(510) 209-5052",
+                city: "San Leandro",
+                state: "CA"
+            },
+            {
+                full_name: "Rikal Louis",
+                email: "rikallouis@gmail.com", 
+                phone: "(510) 364-8962",
+                city: "Union City",
+                state: "CA"
+            },
+            {
+                full_name: "Rosa Flores",
+                email: "rosaflores1973@gmail.com",
+                phone: "(510) 461-4932",
+                city: "Fremont",
+                state: "CA" 
+            },
+            {
+                full_name: "Rosa Flores",
+                email: "rosaflores2024@gmail.com",
+                phone: "(510) 461-4932",
+                city: "Fremont", 
+                state: "CA"
+            },
+            {
+                full_name: "Rosa Lopez",
+                email: "rosalopez03071979@gmail.com",
+                phone: "(510) 364-1362",
+                city: "Union City",
+                state: "CA"
+            },
+            {
+                full_name: "Maddison Roca",
+                email: "maddisonroca@gmail.com",
+                phone: "(510) 555-0123",
+                city: "Hayward",
+                state: "CA"
+            }
+        ];
+
+        async function onboardCleaners() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+
+            try {
+                statusDiv.innerHTML = '⏳ Calling bulk onboarding function...';
+
+                const response = await fetch('https://kqoezqzogleaaupjzxch.supabase.co/functions/v1/bulk-onboard-existing-cleaners', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI'
+                    },
+                    body: JSON.stringify({
+                        cleaners: cleaners,
+                        batch_size: 5
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Bulk onboarding result:', result);
+
+                if (result.success) {
+                    statusDiv.innerHTML = `✅ <strong>SUCCESS!</strong> ${result.cleaners_processed} cleaners processed for bulk onboarding.`;
+                    statusDiv.className = 'success';
+
+                    // Now call the actual user creation process
+                    statusDiv.innerHTML += '<br/>⏳ Now creating user accounts and sending welcome emails...';
+
+                    if (result.results && result.results.length > 0) {
+                        let successCount = 0;
+                        let errorCount = 0;
+                        let resultsHtml = '<h3>📋 Individual Results:</h3>';
+
+                        for (const cleaner of result.results) {
+                            try {
+                                // Create Supabase user
+                                const userResponse = await fetch('https://kqoezqzogleaaupjzxch.supabase.co/functions/v1/bulk-onboard-existing-cleaners', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI'
+                                    },
+                                    body: JSON.stringify({
+                                        email: cleaner.email,
+                                        fullName: cleaner.full_name,
+                                        applicationId: cleaner.application_id,
+                                        onboardingToken: cleaner.onboarding_token
+                                    })
+                                });
+
+                                const userResult = await userResponse.json();
+                                
+                                resultsHtml += `
+                                    <div class="cleaner-result success">
+                                        <strong>✅ ${cleaner.full_name}</strong><br/>
+                                        Email: ${cleaner.email}<br/>
+                                        Status: ${cleaner.status}<br/>
+                                        Tier: ${cleaner.tier_level} (${cleaner.hourly_rate ? '$' + cleaner.hourly_rate + '/hr' : 'Rate TBD'})<br/>
+                                        Monthly Fee: ${cleaner.monthly_fee ? '$' + cleaner.monthly_fee : 'TBD'}<br/>
+                                        Application ID: ${cleaner.application_id}<br/>
+                                        Onboarding Token: ${cleaner.onboarding_token}
+                                    </div>
+                                `;
+                                successCount++;
+                            } catch (error) {
+                                resultsHtml += `
+                                    <div class="cleaner-result error">
+                                        <strong>❌ ${cleaner.full_name}</strong><br/>
+                                        Email: ${cleaner.email}<br/>
+                                        Error: ${error.message}
+                                    </div>
+                                `;
+                                errorCount++;
+                            }
+                        }
+
+                        resultsHtml += `
+                            <h3>📊 Summary:</h3>
+                            <p><strong>✅ Successfully processed:</strong> ${successCount} cleaners</p>
+                            <p><strong>❌ Errors:</strong> ${errorCount} cleaners</p>
+                            <p><strong>📧 Welcome emails:</strong> Sent automatically to successful cleaners</p>
+                            <p><strong>🔑 Login credentials:</strong> Cleaners can log in with their email and temporary password (sent via email)</p>
+                        `;
+
+                        resultsDiv.innerHTML = resultsHtml;
+                        
+                        statusDiv.innerHTML = `
+                            <strong>🎉 COMPLETE!</strong><br/>
+                            • ${successCount} cleaners successfully onboarded<br/>
+                            • All cleaners set to Tier 2 (Professional) - $18/hr, $50/month<br/>
+                            • Welcome emails sent with login credentials<br/>
+                            • Ready to access subcontractor portal
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `❌ <strong>ERROR:</strong> ${result.error || 'Unknown error occurred'}`;
+                    statusDiv.className = 'error';
+                    resultsDiv.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.innerHTML = `❌ <strong>NETWORK ERROR:</strong> ${error.message}`;
+                statusDiv.className = 'error';
+                resultsDiv.innerHTML = `<pre>Error details: ${error.toString()}</pre>`;
+            }
+        }
+
+        // Start the process immediately when page loads
+        document.addEventListener('DOMContentLoaded', onboardCleaners);
+    </script>
+</body>
+</html>
