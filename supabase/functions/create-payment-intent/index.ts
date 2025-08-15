@@ -42,7 +42,8 @@ serve(async (req) => {
       city,
       state,
       zipCode,
-      paymentType = "full"
+      paymentType = "full",
+      booking_data
     } = await req.json();
 
     logStep("Request data received", { 
@@ -52,10 +53,13 @@ serve(async (req) => {
       paymentType 
     });
 
-    // Validate required fields
-    if (!amount || !customerEmail || !customerName) {
+    // Validate required fields - allow amount to be 0 for "pay after service"
+    if (amount < 0 || !customerEmail || !customerName) {
       throw new Error("Missing required fields: amount, customerEmail, or customerName");
     }
+    
+    // For "pay after service", we create a SetupIntent instead of PaymentIntent
+    const isPayAfterService = paymentType === 'pay_after_service' || amount === 0;
 
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -112,40 +116,79 @@ serve(async (req) => {
       logStep("Created new customer", { customerId: customer.id });
     }
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      customer: customer.id,
-      payment_method_types: ['card'],
-      capture_method: 'automatic',
-      setup_future_usage: frequency !== 'one-time' ? 'off_session' : undefined,
-      metadata: {
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone || '',
-        cleaning_type: cleaningType || '',
-        frequency: frequency || '',
-        square_footage: squareFootage?.toString() || '',
-        bedrooms: bedrooms?.toString() || '',
-        bathrooms: bathrooms?.toString() || '',
-        add_ons: JSON.stringify(addOns),
-        payment_type: paymentType,
-        service_address: serviceAddress || '',
-        city: city || '',
-        state: state || '',
-        zip_code: zipCode || ''
-      }
-    });
+    let paymentIntent;
+    let setupIntent;
+    let clientSecret;
 
-    logStep("Payment intent created", { 
-      paymentIntentId: paymentIntent.id,
-      amount: paymentIntent.amount 
-    });
+    if (isPayAfterService) {
+      // Create SetupIntent for card authorization without charge
+      setupIntent = await stripe.setupIntents.create({
+        customer: customer.id,
+        payment_method_types: ['card'],
+        usage: 'off_session',
+        metadata: {
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone || '',
+          cleaning_type: cleaningType || '',
+          frequency: frequency || '',
+          square_footage: squareFootage?.toString() || '',
+          bedrooms: bedrooms?.toString() || '',
+          bathrooms: bathrooms?.toString() || '',
+          add_ons: JSON.stringify(addOns),
+          payment_type: paymentType,
+          service_address: serviceAddress || '',
+          city: city || '',
+          state: state || '',
+          zip_code: zipCode || '',
+          booking_data: JSON.stringify(booking_data || {})
+        }
+      });
+      clientSecret = setupIntent.client_secret;
+      
+      logStep("Setup intent created for authorization", { 
+        setupIntentId: setupIntent.id,
+        paymentType: paymentType 
+      });
+    } else {
+      // Create PaymentIntent for immediate payment
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        customer: customer.id,
+        payment_method_types: ['card'],
+        capture_method: 'automatic',
+        setup_future_usage: frequency !== 'one-time' ? 'off_session' : undefined,
+        metadata: {
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone || '',
+          cleaning_type: cleaningType || '',
+          frequency: frequency || '',
+          square_footage: squareFootage?.toString() || '',
+          bedrooms: bedrooms?.toString() || '',
+          bathrooms: bathrooms?.toString() || '',
+          add_ons: JSON.stringify(addOns),
+          payment_type: paymentType,
+          service_address: serviceAddress || '',
+          city: city || '',
+          state: state || '',
+          zip_code: zipCode || '',
+          booking_data: JSON.stringify(booking_data || {})
+        }
+      });
+      clientSecret = paymentIntent.client_secret;
+      
+      logStep("Payment intent created", { 
+        paymentIntentId: paymentIntent.id,
+        amount: paymentIntent.amount 
+      });
+    }
+
 
     // Create order record in Supabase
     const orderData = {
-      amount: Math.round(amount * 100), // Store in cents
+      amount: Math.round(amount * 100), // Store in cents (0 for pay after service)
       customer_email: customerEmail,
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -160,10 +203,12 @@ serve(async (req) => {
         serviceAddress: serviceAddress || '',
         city: city || '',
         state: state || '',
-        zipCode: zipCode || ''
+        zipCode: zipCode || '',
+        bookingData: booking_data || {}
       },
-      stripe_payment_intent_id: paymentIntent.id,
-      status: 'pending_payment'
+      stripe_payment_intent_id: paymentIntent?.id || null,
+      stripe_setup_intent_id: setupIntent?.id || null,
+      status: isPayAfterService ? 'authorized' : 'pending_payment'
     };
 
     const { data: order, error: orderError } = await supabaseClient
@@ -181,11 +226,14 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      client_secret: paymentIntent.client_secret,
-      payment_intent_id: paymentIntent.id,
+      client_secret: clientSecret,
+      payment_intent_id: paymentIntent?.id || null,
+      setup_intent_id: setupIntent?.id || null,
       customer_id: customer.id,
       order_id: order.id,
-      amount: paymentIntent.amount
+      amount: paymentIntent?.amount || 0,
+      payment_type: paymentType,
+      is_setup_intent: isPayAfterService
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

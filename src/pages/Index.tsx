@@ -210,6 +210,35 @@ const Index = () => {
                 }}
               />
 
+              {/* Secure Booking Button */}
+              {pricingData && calculatedPrice > 0 && (
+                <div className="text-center mt-8">
+                  <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
+                    <CardContent className="p-6">
+                      <div className="text-center text-white space-y-4">
+                        <h3 className="text-xl font-bold">Ready to Book Your Service?</h3>
+                        <p className="text-white/90">
+                          Secure your booking with our protected payment system
+                        </p>
+                        <Button 
+                          asChild
+                          size="lg"
+                          variant="secondary"
+                          className="bg-white text-primary hover:bg-white/90 font-semibold"
+                        >
+                          <a href="/auth?redirect=/modern-booking">
+                            Book Now - Secure Payment Required
+                          </a>
+                        </Button>
+                        <p className="text-xs text-white/70">
+                          🔒 Sign in required to protect your payment information
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
 
               {/* Service Details Button */}
               {pricingData && (

@@ -15,6 +15,7 @@ import { stripePromise } from '@/lib/stripe';
 import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { calculatePaymentAmount, toStripeAmount, formatPrice } from '@/lib/pricing-utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
   homeSize: string;
@@ -48,6 +49,7 @@ interface Props {
 }
 
 export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentSuccess, onBack }: Props) {
+  const { user } = useAuth(); // Get authenticated user info
   const [isRecurring, setIsRecurring] = useState(bookingData.frequency !== 'one-time');
   const [paymentType, setPaymentType] = useState<'pay_after_service' | '25_percent_with_discount'>('pay_after_service');
   const [promoCode, setPromoCode] = useState('');
@@ -167,15 +169,24 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const createPaymentIntent = async () => {
     setIsProcessingPayment(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
+      // Use authenticated user info
+      const customerEmail = user?.email || 'guest@example.com';
+      const customerName = user?.user_metadata?.full_name || 'Guest User';
+      
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
           body: {
-            amount: toStripeAmount(paymentAmount), // Convert to cents
-            currency: 'usd',
+            amount: paymentAmount, // Already in dollars
+            customerEmail: customerEmail,
+            customerName: customerName,
+            customerPhone: bookingData.contactNumber,
+            paymentType: paymentType,
             booking_data: bookingData,
-            payment_type: paymentType,
-            promo_code: promoCode || null,
-            payment_method: 'payment_intent', // Signal to create Payment Intent
-            fullAmount: toStripeAmount(finalTotal) // Store full amount for later charging
+            cleaningType: bookingData.serviceType,
+            frequency: bookingData.frequency,
+            serviceAddress: `${bookingData.address.street}`,
+            city: bookingData.address.city,
+            state: bookingData.address.state,
+            zipCode: bookingData.address.zipCode
           }
       });
 
@@ -184,6 +195,11 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       if (data?.client_secret) {
         setClientSecret(data.client_secret);
         setShowPaymentForm(true);
+        
+        // Show different message based on setup intent vs payment intent
+        if (data.is_setup_intent) {
+          toast.success('Card authorization ready - no charge will occur now');
+        }
       } else {
         throw new Error('No client secret received');
       }
@@ -198,15 +214,18 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const processStripeCheckout = async () => {
     setIsProcessingPayment(true);
     try {
+      // For Stripe Checkout, we'll use the create-payment edge function
+      // This is for the legacy checkout flow if needed
       const { data, error } = await supabase.functions.invoke('create-payment', {
           body: {
-            amount: toStripeAmount(paymentAmount), // Convert to cents
+            amount: paymentAmount, // Already in dollars
             currency: 'usd',
             booking_data: bookingData,
             payment_type: paymentType,
             promo_code: promoCode || null,
-            payment_method: 'checkout', // Signal to create Checkout Session
-            fullAmount: toStripeAmount(finalTotal) // Store full amount for later charging
+            payment_method: 'checkout',
+            customerEmail: 'guest@example.com',
+            customerName: 'Guest User'
           }
       });
 
@@ -446,8 +465,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               onSuccess={handlePaymentSuccess}
               onCancel={handlePaymentCancel}
               customerData={{
-                email: 'guest@example.com',
-                name: 'Guest User'
+                email: user?.email || 'guest@example.com',
+                name: user?.user_metadata?.full_name || 'Guest User'
               }}
             />
           </Elements>
