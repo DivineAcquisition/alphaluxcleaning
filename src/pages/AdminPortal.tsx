@@ -174,6 +174,24 @@ const AdminPortal = () => {
       description: "Add existing cleaners from spreadsheet to subcontractor network",
       action: "Add Cleaners",
       path: "/add-spreadsheet-cleaners"
+    },
+    {
+      title: "Database Tools",
+      description: "Manage database operations, backups, and performance monitoring",
+      action: "Database Admin",
+      path: "/database-tools"
+    },
+    {
+      title: "Email Settings",
+      description: "Configure email delivery, templates, and notification preferences",
+      action: "Email Config",
+      path: "/email-settings"
+    },
+    {
+      title: "API Keys",
+      description: "Manage API keys, authentication tokens, and integrations",
+      action: "API Management",
+      path: "/api-keys"
     }
   ];
 
