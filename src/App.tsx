@@ -95,6 +95,12 @@ import BulkOnboardExistingCleaners from '@/pages/BulkOnboardExistingCleaners';
 import AddSpreadsheetCleaners from '@/pages/AddSpreadsheetCleaners';
 import SecurityCenter from '@/pages/SecurityCenter';
 
+// New multi-subdomain pages
+import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
+import TrialLandingPage from '@/pages/TrialLandingPage';
+import ClientReportsPortal from '@/pages/ClientReportsPortal';
+import SubcontractorDesktopPortal from '@/pages/SubcontractorDesktopPortal';
+
 const queryClient = new QueryClient();
 
 // Enhanced Domain Router for Multi-Subdomain Architecture
@@ -111,7 +117,7 @@ function DomainRouter() {
   const isSpecificSubdomain = [
     'booking', 'pay', 'members', 'app', 'office', 'cleaners', 
     'admin', 'reviews', 'referrals', 'jobs', 'api', 'connect',
-    'analytics', 'support', 'training'
+    'analytics', 'support', 'training', 'portal', 'try', 'reports', 'subcon'
   ].some(subdomain => hostname.startsWith(`${subdomain}.`));
   
   // If not a specific subdomain, return to normal routing
@@ -129,6 +135,15 @@ function DomainRouter() {
   if (hostname.startsWith('members.')) {
     return <Navigate to="/my-services" replace />;
   }
+  if (hostname.startsWith('portal.')) {
+    return <Navigate to="/customer-portal-dashboard" replace />;
+  }
+  if (hostname.startsWith('try.')) {
+    return <Navigate to="/trial-landing" replace />;
+  }
+  if (hostname.startsWith('reports.')) {
+    return <Navigate to="/client-reports-portal" replace />;
+  }
   
   // Phase 2: Internal Ops & Office Manager Tools  
   if (hostname.startsWith('app.')) {
@@ -141,6 +156,9 @@ function DomainRouter() {
   // Phase 3: Cleaner Portal (Mobile First)
   if (hostname.startsWith('cleaners.')) {
     return <Navigate to="/subcontractor-mobile" replace />;
+  }
+  if (hostname.startsWith('subcon.')) {
+    return <Navigate to="/subcontractor-desktop-portal" replace />;
   }
   
   // Phase 4: Admin & System Oversight
@@ -209,6 +227,24 @@ function App() {
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
                 
+                {/* New multi-subdomain pages */}
+                <Route path="/customer-portal-dashboard" element={
+                  <ProtectedRoute requiredRole="customer">
+                    <CustomerPortalDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/trial-landing" element={<TrialLandingPage />} />
+                <Route path="/client-reports-portal" element={
+                  <ProtectedRoute requiredRole="customer">
+                    <ClientReportsPortal />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subcontractor-desktop-portal" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
+                    <SubcontractorDesktopPortal />
+                  </ProtectedRoute>
+                } />
+
                 {/* Customer protected routes */}
                 <Route path="/my-services" element={
                   <ProtectedRoute requiredRole="customer">
