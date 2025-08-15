@@ -62,6 +62,12 @@ const coreItems = [
     description: "Team overview"
   },
   {
+    label: "Tier Management",
+    path: "/tier-management",
+    icon: Award,
+    description: "Manage tiers & progression"
+  },
+  {
     label: "Applications",
     path: "/application-manager",
     icon: FileText,

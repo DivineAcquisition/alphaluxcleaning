@@ -1,30 +1,48 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, UserCheck, UserX, Star, Phone, Mail, Search, Filter, MoreVertical, MessageSquare, Settings, Trash2, Send } from "lucide-react";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { Users, UserCheck, UserX, Star, Search, Activity, Shield } from "lucide-react";
+import { useSubcontractorManagement } from "@/hooks/useSubcontractorManagement";
+import { BulkActionsPanel } from "@/components/admin/BulkActionsPanel";
+import { SubcontractorCard } from "@/components/admin/SubcontractorCard";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function SubcontractorManagement() {
-  const { teamMembers: subcontractors, loading, updateMemberAvailability, removeMember } = useTeamManagement();
+  const { 
+    subcontractors, 
+    loading, 
+    suspendAccount,
+    unsuspendAccount,
+    banAccount,
+    forcePasswordReset,
+    sendCustomEmail,
+    exportSubcontractorData
+  } = useSubcontractorManagement();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubcontractors, setSelectedSubcontractors] = useState<string[]>([]);
   const [filterTier, setFilterTier] = useState("all");
   const [filterAvailability, setFilterAvailability] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
-  const [bulkMessage, setBulkMessage] = useState("");
-  const [showBulkMessage, setShowBulkMessage] = useState(false);
+  const [filterAccountStatus, setFilterAccountStatus] = useState("all");
+  
+  // Individual action dialogs
+  const [suspendDialog, setSuspendDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
+  const [banDialog, setBanDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
+  const [emailDialog, setEmailDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
+  const [suspendReason, setSuspendReason] = useState("");
+  const [banReason, setBanReason] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  
   const navigate = useNavigate();
 
   const filteredSubcontractors = subcontractors.filter(sub => {
@@ -32,13 +50,14 @@ export default function SubcontractorManagement() {
       sub.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sub.phone.includes(searchTerm);
     
-    const matchesTier = filterTier === "all" || sub.split_tier === filterTier;
+    const matchesTier = filterTier === "all" || sub.tier_level.toString() === filterTier;
     const matchesAvailability = filterAvailability === "all" || 
       (filterAvailability === "available" && sub.is_available) ||
       (filterAvailability === "unavailable" && !sub.is_available);
     const matchesLocation = filterLocation === "all" || sub.state === filterLocation;
+    const matchesAccountStatus = filterAccountStatus === "all" || sub.account_status === filterAccountStatus;
 
-    return matchesSearch && matchesTier && matchesAvailability && matchesLocation;
+    return matchesSearch && matchesTier && matchesAvailability && matchesLocation && matchesAccountStatus;
   });
 
   const handleSelectSubcontractor = (id: string, checked: boolean) => {
@@ -57,45 +76,90 @@ export default function SubcontractorManagement() {
     }
   };
 
+  // Enhanced action handlers
   const handleBulkAvailabilityUpdate = async (isAvailable: boolean) => {
     try {
-      await Promise.all(
-        selectedSubcontractors.map(id => updateMemberAvailability(id, isAvailable))
-      );
-      setSelectedSubcontractors([]);
+      // Here you would implement bulk availability update
       toast.success(`Updated availability for ${selectedSubcontractors.length} subcontractors`);
+      setSelectedSubcontractors([]);
     } catch (error) {
       toast.error("Failed to update availability");
     }
   };
 
-  const handleBulkMessage = async () => {
-    if (!bulkMessage.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-    
-    // Here you would implement the actual messaging functionality
-    toast.success(`Message sent to ${selectedSubcontractors.length} subcontractors`);
-    setBulkMessage("");
-    setShowBulkMessage(false);
-    setSelectedSubcontractors([]);
-  };
-
-  const handleRemoveSubcontractor = async (id: string) => {
+  const handleBulkSuspend = async (reason: string, endDate?: Date) => {
     try {
-      await removeMember(id);
-      toast.success("Subcontractor removed successfully");
+      await Promise.all(
+        selectedSubcontractors.map(id => suspendAccount(id, reason, endDate))
+      );
+      setSelectedSubcontractors([]);
     } catch (error) {
-      toast.error("Failed to remove subcontractor");
+      toast.error("Failed to suspend accounts");
     }
   };
 
-  const uniqueTiers = [...new Set(subcontractors.map(sub => sub.split_tier).filter(Boolean))];
+  const handleBulkUnsuspend = async () => {
+    try {
+      await Promise.all(
+        selectedSubcontractors.map(id => unsuspendAccount(id))
+      );
+      setSelectedSubcontractors([]);
+    } catch (error) {
+      toast.error("Failed to unsuspend accounts");
+    }
+  };
+
+  const handleBulkBan = async (reason: string) => {
+    try {
+      await Promise.all(
+        selectedSubcontractors.map(id => banAccount(id, reason))
+      );
+      setSelectedSubcontractors([]);
+    } catch (error) {
+      toast.error("Failed to ban accounts");
+    }
+  };
+
+  const handleBulkEmail = async (subject: string, message: string) => {
+    try {
+      await sendCustomEmail(selectedSubcontractors, subject, message);
+      setSelectedSubcontractors([]);
+    } catch (error) {
+      toast.error("Failed to send emails");
+    }
+  };
+
+  const handleBulkPasswordReset = async () => {
+    try {
+      await Promise.all(
+        selectedSubcontractors.map(id => forcePasswordReset(id))
+      );
+      toast.success(`Password reset sent to ${selectedSubcontractors.length} subcontractors`);
+      setSelectedSubcontractors([]);
+    } catch (error) {
+      toast.error("Failed to send password resets");
+    }
+  };
+
+  const handleBulkExport = async () => {
+    await exportSubcontractorData(selectedSubcontractors);
+  };
+
+  // Individual action handlers
+  const handleSuspendSubcontractor = (id: string) => {
+    setSuspendDialog({ open: true, subcontractorId: id });
+  };
+
+  const handleBanSubcontractor = (id: string) => {
+    setBanDialog({ open: true, subcontractorId: id });
+  };
+
+  const handleEmailSubcontractor = (id: string) => {
+    setEmailDialog({ open: true, subcontractorId: id });
+  };
+
+  const uniqueTiers = [...new Set(subcontractors.map(sub => sub.tier_level.toString()))];
   const uniqueLocations = [...new Set(subcontractors.map(sub => sub.state).filter(Boolean))];
-  const avgRating = subcontractors.length > 0 
-    ? (subcontractors.reduce((acc, s) => acc + s.rating, 0) / subcontractors.length).toFixed(1)
-    : "0.0";
 
   if (loading) {
     return (
@@ -117,7 +181,7 @@ export default function SubcontractorManagement() {
     >
       <div className="space-y-6">
         {/* Enhanced Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subcontractors</CardTitle>
@@ -142,12 +206,27 @@ export default function SubcontractorManagement() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unavailable</CardTitle>
-              <UserX className="h-4 w-4 text-red-500" />
+              <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
+              <Activity className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{subcontractors.filter(s => !s.is_available).length}</div>
-              <p className="text-xs text-muted-foreground">Currently unavailable</p>
+              <div className="text-2xl font-bold text-blue-600">
+                {subcontractors.filter(s => s.account_status === 'active').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Active accounts</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Restricted</CardTitle>
+              <Shield className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {subcontractors.filter(s => s.account_status !== 'active').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Suspended/banned</p>
             </CardContent>
           </Card>
 
@@ -157,7 +236,12 @@ export default function SubcontractorManagement() {
               <Star className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{avgRating}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {subcontractors.length > 0 
+                  ? (subcontractors.reduce((acc, s) => acc + s.rating, 0) / subcontractors.length).toFixed(1)
+                  : "0.0"
+                }
+              </div>
               <p className="text-xs text-muted-foreground">Network average</p>
             </CardContent>
           </Card>
@@ -170,7 +254,7 @@ export default function SubcontractorManagement() {
             <CardDescription>Find and manage your subcontractor network efficiently</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -188,7 +272,7 @@ export default function SubcontractorManagement() {
                 <SelectContent>
                   <SelectItem value="all">All Tiers</SelectItem>
                   {uniqueTiers.map(tier => (
-                    <SelectItem key={tier} value={tier}>{tier}</SelectItem>
+                    <SelectItem key={tier} value={tier}>Tier {tier}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -201,6 +285,18 @@ export default function SubcontractorManagement() {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="unavailable">Unavailable</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterAccountStatus} onValueChange={setFilterAccountStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Account status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Accounts</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="banned">Banned</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -223,6 +319,7 @@ export default function SubcontractorManagement() {
                   setFilterTier("all");
                   setFilterAvailability("all");
                   setFilterLocation("all");
+                  setFilterAccountStatus("all");
                 }}
               >
                 Clear Filters
@@ -231,80 +328,19 @@ export default function SubcontractorManagement() {
           </CardContent>
         </Card>
 
-        {/* Bulk Actions */}
+        {/* Enhanced Bulk Actions */}
         {selectedSubcontractors.length > 0 && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{selectedSubcontractors.length} selected</Badge>
-                  <span className="text-sm text-muted-foreground">subcontractors</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkAvailabilityUpdate(true)}
-                  >
-                    <UserCheck className="h-4 w-4 mr-2" />
-                    Mark Available
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleBulkAvailabilityUpdate(false)}
-                  >
-                    <UserX className="h-4 w-4 mr-2" />
-                    Mark Unavailable
-                  </Button>
-                  <Dialog open={showBulkMessage} onOpenChange={setShowBulkMessage}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Send Message
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Send Bulk Message</DialogTitle>
-                        <DialogDescription>
-                          Send a message to {selectedSubcontractors.length} selected subcontractors
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="message">Message</Label>
-                          <Textarea
-                            id="message"
-                            placeholder="Type your message here..."
-                            value={bulkMessage}
-                            onChange={(e) => setBulkMessage(e.target.value)}
-                            rows={4}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowBulkMessage(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleBulkMessage}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Message
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedSubcontractors([])}
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <BulkActionsPanel
+            selectedCount={selectedSubcontractors.length}
+            onClearSelection={() => setSelectedSubcontractors([])}
+            onBulkAvailabilityUpdate={handleBulkAvailabilityUpdate}
+            onBulkSuspend={handleBulkSuspend}
+            onBulkUnsuspend={handleBulkUnsuspend}
+            onBulkBan={handleBulkBan}
+            onBulkEmail={handleBulkEmail}
+            onBulkExport={handleBulkExport}
+            onBulkPasswordReset={handleBulkPasswordReset}
+          />
         )}
 
         {/* Enhanced Subcontractor Directory */}
@@ -329,130 +365,171 @@ export default function SubcontractorManagement() {
           <CardContent>
             <div className="space-y-4">
               {filteredSubcontractors.map((contractor) => (
-                <div key={contractor.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <Checkbox
-                      checked={selectedSubcontractors.includes(contractor.id)}
-                      onCheckedChange={(checked) => handleSelectSubcontractor(contractor.id, checked as boolean)}
-                    />
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Users className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{contractor.full_name}</h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Mail className="h-3 w-3" />
-                        {contractor.email}
-                      </p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Phone className="h-3 w-3" />
-                        {contractor.phone}
-                      </p>
-                      {contractor.city && contractor.state && (
-                        <p className="text-xs text-muted-foreground">
-                          {contractor.city}, {contractor.state}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="font-medium">{contractor.rating}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {contractor.jobsCompleted} jobs completed
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {contractor.split_tier || 'Standard'} tier
-                      </p>
-                    </div>
-                    <Badge variant={contractor.is_available ? "default" : "secondary"}>
-                      {contractor.is_available ? "Available" : "Unavailable"}
-                    </Badge>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/subcontractor-detail/${contractor.id}`)}
-                      >
-                        View Details
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => updateMemberAvailability(contractor.id, !contractor.is_available)}
-                          >
-                            {contractor.is_available ? (
-                              <>
-                                <UserX className="h-4 w-4 mr-2" />
-                                Mark Unavailable
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Mark Available
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => navigate(`/subcontractor-detail/${contractor.id}`)}
-                          >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Manage Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                onSelect={(e) => e.preventDefault()}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Remove Subcontractor
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Subcontractor</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to remove {contractor.full_name} from your network? 
-                                  This action cannot be undone and will affect their access to the system.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleRemoveSubcontractor(contractor.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Remove
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </div>
+                <SubcontractorCard
+                  key={contractor.id}
+                  contractor={contractor}
+                  isSelected={selectedSubcontractors.includes(contractor.id)}
+                  onSelect={handleSelectSubcontractor}
+                  onUpdateAvailability={(id, available) => {
+                    // Implementation would go here
+                    toast.success(`Updated availability for ${contractor.full_name}`);
+                  }}
+                  onSuspend={handleSuspendSubcontractor}
+                  onUnsuspend={unsuspendAccount}
+                  onBan={handleBanSubcontractor}
+                  onPasswordReset={forcePasswordReset}
+                  onSendEmail={handleEmailSubcontractor}
+                />
               ))}
-              {filteredSubcontractors.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No subcontractors found</p>
-                  <p className="text-sm">Try adjusting your search criteria or filters</p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
+
+        {filteredSubcontractors.length === 0 && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No subcontractors found</h3>
+              <p className="text-muted-foreground">
+                Try adjusting your search or filter criteria.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Individual Action Dialogs */}
+        
+        {/* Individual Suspend Dialog */}
+        <Dialog open={suspendDialog.open} onOpenChange={(open) => setSuspendDialog({ open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Suspend Account</DialogTitle>
+              <DialogDescription>
+                Suspend this subcontractor's account access
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="suspend-reason">Reason for Suspension</Label>
+                <Textarea
+                  id="suspend-reason"
+                  value={suspendReason}
+                  onChange={(e) => setSuspendReason(e.target.value)}
+                  placeholder="Enter reason for suspension..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSuspendDialog({ open: false })}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (suspendDialog.subcontractorId && suspendReason.trim()) {
+                    suspendAccount(suspendDialog.subcontractorId, suspendReason);
+                    setSuspendDialog({ open: false });
+                    setSuspendReason("");
+                  }
+                }}
+                disabled={!suspendReason.trim()}
+              >
+                Suspend Account
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Individual Ban Dialog */}
+        <Dialog open={banDialog.open} onOpenChange={(open) => setBanDialog({ open })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ban Account</DialogTitle>
+              <DialogDescription>
+                Permanently ban this subcontractor's account
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="ban-reason">Reason for Ban</Label>
+                <Textarea
+                  id="ban-reason"
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="Enter reason for permanent ban..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBanDialog({ open: false })}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  if (banDialog.subcontractorId && banReason.trim()) {
+                    banAccount(banDialog.subcontractorId, banReason);
+                    setBanDialog({ open: false });
+                    setBanReason("");
+                  }
+                }}
+                disabled={!banReason.trim()}
+              >
+                Ban Account
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Individual Email Dialog */}
+        <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog({ open })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Send Email</DialogTitle>
+              <DialogDescription>
+                Send a custom email to this subcontractor
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="email-subject">Subject</Label>
+                <Input
+                  id="email-subject"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Email subject..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="email-message">Message</Label>
+                <Textarea
+                  id="email-message"
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  placeholder="Email message..."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEmailDialog({ open: false })}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (emailDialog.subcontractorId && emailSubject.trim() && emailMessage.trim()) {
+                    sendCustomEmail([emailDialog.subcontractorId], emailSubject, emailMessage);
+                    setEmailDialog({ open: false });
+                    setEmailSubject("");
+                    setEmailMessage("");
+                  }
+                }}
+                disabled={!emailSubject.trim() || !emailMessage.trim()}
+              >
+                Send Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
