@@ -1,535 +1,477 @@
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Users, UserCheck, UserX, Star, Search, Activity, Shield } from "lucide-react";
-import { useSubcontractorManagement } from "@/hooks/useSubcontractorManagement";
-import { BulkActionsPanel } from "@/components/admin/BulkActionsPanel";
-import { SubcontractorCard } from "@/components/admin/SubcontractorCard";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { useSubcontractorManagement } from '@/hooks/useSubcontractorManagement';
+import { BulkActionsPanel } from '@/components/admin/BulkActionsPanel';
+import { SubcontractorCard } from '@/components/admin/SubcontractorCard';
+import { Users, CheckCircle, AlertTriangle, UserCheck, Star, Crown, Clock, UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface TierConfig {
+  tier_level: number;
+  tier_name: string;
+  hourly_rate: number;
+  monthly_fee: number;
+  reviews_required: number;
+  jobs_required: number;
+}
 
 export default function SubcontractorManagement() {
-  const { 
-    subcontractors, 
-    loading, 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedAccountStatus, setSelectedAccountStatus] = useState<string>('all');
+  const [selectedSubcontractors, setSelectedSubcontractors] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState('all');
+
+  // Tier management states
+  const [selectedForTierChange, setSelectedForTierChange] = useState<any>(null);
+  const [newTierLevel, setNewTierLevel] = useState<number>(1);
+  const [tierChangeReason, setTierChangeReason] = useState('');
+
+  // Dialog states for individual actions
+  const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedForAction, setSelectedForAction] = useState<any>(null);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendEndDate, setSuspendEndDate] = useState('');
+  const [banReason, setBanReason] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+
+  const { toast } = useToast();
+
+  const {
+    subcontractors,
+    loading,
     suspendAccount,
     unsuspendAccount,
     banAccount,
     forcePasswordReset,
     sendCustomEmail,
-    exportSubcontractorData
+    exportSubcontractorData,
+    completeOnboarding,
+    updateTier,
+    refreshSubcontractors
   } = useSubcontractorManagement();
-  
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSubcontractors, setSelectedSubcontractors] = useState<string[]>([]);
-  const [filterTier, setFilterTier] = useState("all");
-  const [filterAvailability, setFilterAvailability] = useState("all");
-  const [filterLocation, setFilterLocation] = useState("all");
-  const [filterAccountStatus, setFilterAccountStatus] = useState("all");
-  
-  // Individual action dialogs
-  const [suspendDialog, setSuspendDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
-  const [banDialog, setBanDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
-  const [emailDialog, setEmailDialog] = useState<{ open: boolean; subcontractorId?: string }>({ open: false });
-  const [suspendReason, setSuspendReason] = useState("");
-  const [banReason, setBanReason] = useState("");
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-  
-  const navigate = useNavigate();
 
-  const filteredSubcontractors = subcontractors.filter(sub => {
-    const matchesSearch = sub.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.phone.includes(searchTerm);
-    
-    const matchesTier = filterTier === "all" || sub.tier_level.toString() === filterTier;
-    const matchesAvailability = filterAvailability === "all" || 
-      (filterAvailability === "available" && sub.is_available) ||
-      (filterAvailability === "unavailable" && !sub.is_available);
-    const matchesLocation = filterLocation === "all" || sub.state === filterLocation;
-    const matchesAccountStatus = filterAccountStatus === "all" || sub.account_status === filterAccountStatus;
-
-    return matchesSearch && matchesTier && matchesAvailability && matchesLocation && matchesAccountStatus;
+  // Fetch tier configurations
+  const { data: tierConfigs = [] } = useQuery({
+    queryKey: ['tier-configs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tier_system_config')
+        .select('*')
+        .order('tier_level');
+      
+      if (error) throw error;
+      return data as TierConfig[];
+    }
   });
 
-  const handleSelectSubcontractor = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedSubcontractors(prev => [...prev, id]);
-    } else {
-      setSelectedSubcontractors(prev => prev.filter(subId => subId !== id));
+  // Filter subcontractors based on search, tier, status, and tab
+  const filteredSubcontractors = subcontractors.filter(sub => {
+    const matchesSearch = sub.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sub.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTier = selectedTier === 'all' || sub.tier_level?.toString() === selectedTier;
+    const matchesLocation = selectedLocation === 'all' || sub.state === selectedLocation;
+    const matchesStatus = selectedAccountStatus === 'all' || sub.account_status === selectedAccountStatus;
+    
+    // Tab filtering
+    let matchesTab = true;
+    if (activeTab === 'applications') {
+      matchesTab = sub.type === 'application';
+    } else if (activeTab === 'active') {
+      matchesTab = sub.type === 'subcontractor' && sub.account_status === 'active';
     }
+    
+    return matchesSearch && matchesTier && matchesLocation && matchesStatus && matchesTab;
+  });
+
+  // Statistics
+  const stats = {
+    total: subcontractors.length,
+    applications: subcontractors.filter(s => s.type === 'application').length,
+    active: subcontractors.filter(s => s.type === 'subcontractor' && s.account_status === 'active').length,
+    suspended: subcontractors.filter(s => s.account_status === 'suspended').length,
+    avgRating: subcontractors.reduce((acc, sub) => acc + (sub.rating || 0), 0) / Math.max(subcontractors.length, 1)
+  };
+
+  // Tier statistics
+  const tierStats = tierConfigs.map(config => ({
+    ...config,
+    count: subcontractors.filter(s => s.tier_level === config.tier_level && s.type === 'subcontractor').length
+  }));
+
+  const handleSelectSubcontractor = (id: string, checked: boolean) => {
+    setSelectedSubcontractors(prev =>
+      checked ? [...prev, id] : prev.filter(subId => subId !== id)
+    );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedSubcontractors(filteredSubcontractors.map(sub => sub.id));
-    } else {
-      setSelectedSubcontractors([]);
+    setSelectedSubcontractors(checked ? filteredSubcontractors.map(s => s.id) : []);
+  };
+
+  const getTierBadgeVariant = (tier: number) => {
+    switch (tier) {
+      case 3: return "default";
+      case 2: return "secondary";
+      default: return "outline";
     }
   };
 
-  // Enhanced action handlers
-  const handleBulkAvailabilityUpdate = async (isAvailable: boolean) => {
-    try {
-      // Here you would implement bulk availability update
-      toast.success(`Updated availability for ${selectedSubcontractors.length} subcontractors`);
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to update availability");
+  const getTierName = (tier: number) => {
+    const config = tierConfigs.find(t => t.tier_level === tier);
+    return config?.tier_name || `Tier ${tier}`;
+  };
+
+  const getStatusBadge = (sub: any) => {
+    if (sub.type === 'application') {
+      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending Onboarding</Badge>;
+    }
+    
+    switch (sub.account_status) {
+      case 'active':
+        return <Badge variant="default" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
+      case 'suspended':
+        return <Badge variant="destructive">Suspended</Badge>;
+      case 'banned':
+        return <Badge variant="destructive">Banned</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
-  const handleBulkSuspend = async (reason: string, endDate?: Date) => {
-    try {
-      await Promise.all(
-        selectedSubcontractors.map(id => suspendAccount(id, reason, endDate))
-      );
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to suspend accounts");
-    }
+  const handleTierUpdate = async () => {
+    if (!selectedForTierChange || !tierChangeReason.trim()) return;
+    
+    await updateTier(selectedForTierChange.id, newTierLevel, tierChangeReason);
+    setSelectedForTierChange(null);
+    setTierChangeReason('');
   };
 
-  const handleBulkUnsuspend = async () => {
-    try {
-      await Promise.all(
-        selectedSubcontractors.map(id => unsuspendAccount(id))
-      );
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to unsuspend accounts");
-    }
-  };
-
-  const handleBulkBan = async (reason: string) => {
-    try {
-      await Promise.all(
-        selectedSubcontractors.map(id => banAccount(id, reason))
-      );
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to ban accounts");
-    }
-  };
-
-  const handleBulkEmail = async (subject: string, message: string) => {
-    try {
-      await sendCustomEmail(selectedSubcontractors, subject, message);
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to send emails");
-    }
-  };
-
-  const handleBulkPasswordReset = async () => {
-    try {
-      await Promise.all(
-        selectedSubcontractors.map(id => forcePasswordReset(id))
-      );
-      toast.success(`Password reset sent to ${selectedSubcontractors.length} subcontractors`);
-      setSelectedSubcontractors([]);
-    } catch (error) {
-      toast.error("Failed to send password resets");
-    }
-  };
-
-  const handleBulkExport = async () => {
-    await exportSubcontractorData(selectedSubcontractors);
-  };
-
-  // Individual action handlers
-  const handleSuspendSubcontractor = (id: string) => {
-    setSuspendDialog({ open: true, subcontractorId: id });
-  };
-
-  const handleBanSubcontractor = (id: string) => {
-    setBanDialog({ open: true, subcontractorId: id });
-  };
-
-  const handleEmailSubcontractor = (id: string) => {
-    setEmailDialog({ open: true, subcontractorId: id });
-  };
-
-  const uniqueTiers = [...new Set(subcontractors.map(sub => sub.tier_level.toString()))];
   const uniqueLocations = [...new Set(subcontractors.map(sub => sub.state).filter(Boolean))];
 
   if (loading) {
     return (
-      <AdminLayout 
-        title="Subcontractor Management" 
-        description="Manage your subcontractor network"
-      >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading...</div>
-        </div>
+      <AdminLayout title="Subcontractor Management" description="Loading...">
+        <div>Loading subcontractor management data...</div>
       </AdminLayout>
     );
   }
 
   return (
     <AdminLayout 
-      title="Subcontractor Management" 
-      description="Comprehensive subcontractor network management"
+      title="Subcontractor & Tier Management" 
+      description="Unified subcontractor management with applications, tiers, and comprehensive controls"
     >
       <div className="space-y-6">
-        {/* Enhanced Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-5">
+        {/* Overview Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Subcontractors</CardTitle>
+              <CardTitle className="text-sm font-medium">Total</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{subcontractors.length}</div>
-              <p className="text-xs text-muted-foreground">Total registered</p>
+              <div className="text-2xl font-bold">{stats.total}</div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available</CardTitle>
-              <UserCheck className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{subcontractors.filter(s => s.is_available).length}</div>
-              <p className="text-xs text-muted-foreground">Currently available</p>
+              <div className="text-2xl font-bold text-yellow-600">{stats.applications}</div>
+              <p className="text-xs text-muted-foreground">Need onboarding</p>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
-              <Activity className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium">Active</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {subcontractors.filter(s => s.account_status === 'active').length}
-              </div>
-              <p className="text-xs text-muted-foreground">Active accounts</p>
+              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Restricted</CardTitle>
-              <Shield className="h-4 w-4 text-orange-500" />
+              <CardTitle className="text-sm font-medium">Suspended</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {subcontractors.filter(s => s.account_status !== 'active').length}
-              </div>
-              <p className="text-xs text-muted-foreground">Suspended/banned</p>
+              <div className="text-2xl font-bold text-red-600">{stats.suspended}</div>
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {subcontractors.length > 0 
-                  ? (subcontractors.reduce((acc, s) => acc + s.rating, 0) / subcontractors.length).toFixed(1)
-                  : "0.0"
-                }
-              </div>
-              <p className="text-xs text-muted-foreground">Network average</p>
+              <div className="text-2xl font-bold">{stats.avgRating.toFixed(1)}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search and Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Search & Filter</CardTitle>
-            <CardDescription>Find and manage your subcontractor network efficiently</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name, email, or phone..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+        {/* Tier Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {tierStats.map((tier) => (
+            <Card key={tier.tier_level}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{tier.tier_name}</CardTitle>
+                <Crown className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{tier.count}</div>
+                <p className="text-xs text-muted-foreground">
+                  ${tier.hourly_rate}/hr • ${tier.monthly_fee}/month
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-              <Select value={filterTier} onValueChange={setFilterTier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tiers</SelectItem>
-                  {uniqueTiers.map(tier => (
-                    <SelectItem key={tier} value={tier}>Tier {tier}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Filters and Search */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          <Input
+            placeholder="Search subcontractors..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          
+          <Select value={selectedTier} onValueChange={setSelectedTier}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by tier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tiers</SelectItem>
+              {tierConfigs.map((tier) => (
+                <SelectItem key={tier.tier_level} value={tier.tier_level.toString()}>
+                  {tier.tier_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-              <Select value={filterAvailability} onValueChange={setFilterAvailability}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="unavailable">Unavailable</SelectItem>
-                </SelectContent>
-              </Select>
+          <Select value={selectedAccountStatus} onValueChange={setSelectedAccountStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="suspended">Suspended</SelectItem>
+              <SelectItem value="banned">Banned</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
 
-              <Select value={filterAccountStatus} onValueChange={setFilterAccountStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Account status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Accounts</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="banned">Banned</SelectItem>
-                </SelectContent>
-              </Select>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {uniqueLocations.map((location) => (
+                <SelectItem key={location} value={location}>
+                  {location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-              <Select value={filterLocation} onValueChange={setFilterLocation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {uniqueLocations.map(location => (
-                    <SelectItem key={location} value={location}>{location}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilterTier("all");
-                  setFilterAvailability("all");
-                  setFilterLocation("all");
-                  setFilterAccountStatus("all");
-                }}
-              >
-                Clear Filters
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enhanced Bulk Actions */}
+        {/* Bulk Actions */}
         {selectedSubcontractors.length > 0 && (
           <BulkActionsPanel
             selectedCount={selectedSubcontractors.length}
             onClearSelection={() => setSelectedSubcontractors([])}
-            onBulkAvailabilityUpdate={handleBulkAvailabilityUpdate}
-            onBulkSuspend={handleBulkSuspend}
-            onBulkUnsuspend={handleBulkUnsuspend}
-            onBulkBan={handleBulkBan}
-            onBulkEmail={handleBulkEmail}
-            onBulkExport={handleBulkExport}
-            onBulkPasswordReset={handleBulkPasswordReset}
+            onBulkEmail={() => {/* Implement bulk email */}}
+            onBulkExport={() => exportSubcontractorData(selectedSubcontractors)}
+            onBulkSuspend={() => {/* Implement bulk suspend */}}
+            onBulkUnsuspend={() => {/* Implement bulk unsuspend */}}
+            onBulkBan={() => {/* Implement bulk ban */}}
+            onBulkAvailabilityUpdate={() => {/* Implement bulk availability */}}
+            onBulkPasswordReset={() => {/* Implement bulk password reset */}}
           />
         )}
 
-        {/* Enhanced Subcontractor Directory */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Subcontractor Directory</CardTitle>
-                <CardDescription>
-                  {filteredSubcontractors.length} of {subcontractors.length} subcontractors shown
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedSubcontractors.length === filteredSubcontractors.length && filteredSubcontractors.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-                <Label className="text-sm">Select All</Label>
-              </div>
+        {/* Tabbed Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+            <TabsTrigger value="applications">Applications ({stats.applications})</TabsTrigger>
+            <TabsTrigger value="active">Active ({stats.active})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-4">
+            {/* Select All Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="selectAll"
+                checked={selectedSubcontractors.length === filteredSubcontractors.length && filteredSubcontractors.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+              <label htmlFor="selectAll" className="text-sm font-medium">
+                Select all ({filteredSubcontractors.length})
+              </label>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredSubcontractors.map((contractor) => (
-                <SubcontractorCard
-                  key={contractor.id}
-                  contractor={contractor}
-                  isSelected={selectedSubcontractors.includes(contractor.id)}
-                  onSelect={handleSelectSubcontractor}
-                  onUpdateAvailability={(id, available) => {
-                    // Implementation would go here
-                    toast.success(`Updated availability for ${contractor.full_name}`);
-                  }}
-                  onSuspend={handleSuspendSubcontractor}
-                  onUnsuspend={unsuspendAccount}
-                  onBan={handleBanSubcontractor}
-                  onPasswordReset={forcePasswordReset}
-                  onSendEmail={handleEmailSubcontractor}
-                />
+
+            {/* Subcontractors List */}
+            <div className="grid gap-4">
+              {filteredSubcontractors.map((subcontractor) => (
+                <Card key={subcontractor.id}>
+                  <CardContent className="flex items-center justify-between p-6">
+                    <div className="flex items-center space-x-4">
+                      <Checkbox
+                        checked={selectedSubcontractors.includes(subcontractor.id)}
+                        onCheckedChange={(checked) => handleSelectSubcontractor(subcontractor.id, checked as boolean)}
+                      />
+                      
+                      <div>
+                        <h3 className="font-semibold">{subcontractor.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">{subcontractor.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {getStatusBadge(subcontractor)}
+                          {subcontractor.type === 'subcontractor' && (
+                            <Badge variant={getTierBadgeVariant(subcontractor.tier_level || 1)}>
+                              {getTierName(subcontractor.tier_level || 1)}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-6 text-sm">
+                      {subcontractor.type === 'subcontractor' && (
+                        <>
+                          <div className="text-center">
+                            <div className="font-medium">{subcontractor.review_count || 0}</div>
+                            <div className="text-muted-foreground">Reviews</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium">{subcontractor.completed_jobs_count || 0}</div>
+                            <div className="text-muted-foreground">Jobs</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium">${subcontractor.hourly_rate || 0}</div>
+                            <div className="text-muted-foreground">Per Hour</div>
+                          </div>
+                        </>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        {subcontractor.type === 'application' ? (
+                          <Button 
+                            size="sm" 
+                            onClick={() => completeOnboarding(subcontractor.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Complete Onboarding
+                          </Button>
+                        ) : (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedForTierChange(subcontractor);
+                                  setNewTierLevel(subcontractor.tier_level || 1);
+                                }}
+                              >
+                                Adjust Tier
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Adjust Tier for {subcontractor.full_name}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium">Current Tier</label>
+                                  <p className="text-sm text-muted-foreground">
+                                    {getTierName(subcontractor.tier_level || 1)} - ${subcontractor.hourly_rate || 0}/hr
+                                  </p>
+                                </div>
+                                
+                                <div>
+                                  <label className="text-sm font-medium">New Tier</label>
+                                  <Select value={newTierLevel.toString()} onValueChange={(value) => setNewTierLevel(parseInt(value))}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {tierConfigs.map((tier) => (
+                                        <SelectItem key={tier.tier_level} value={tier.tier_level.toString()}>
+                                          {tier.tier_name} - ${tier.hourly_rate}/hr
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <label className="text-sm font-medium">Reason for Change</label>
+                                  <Textarea
+                                    value={tierChangeReason}
+                                    onChange={(e) => setTierChangeReason(e.target.value)}
+                                    placeholder="Enter reason for tier adjustment..."
+                                  />
+                                </div>
+                                
+                                <Button
+                                  onClick={handleTierUpdate}
+                                  disabled={!tierChangeReason.trim()}
+                                  className="w-full"
+                                >
+                                  Update Tier
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
 
-        {filteredSubcontractors.length === 0 && (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No subcontractors found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filter criteria.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Individual Action Dialogs */}
-        
-        {/* Individual Suspend Dialog */}
-        <Dialog open={suspendDialog.open} onOpenChange={(open) => setSuspendDialog({ open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Suspend Account</DialogTitle>
-              <DialogDescription>
-                Suspend this subcontractor's account access
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="suspend-reason">Reason for Suspension</Label>
-                <Textarea
-                  id="suspend-reason"
-                  value={suspendReason}
-                  onChange={(e) => setSuspendReason(e.target.value)}
-                  placeholder="Enter reason for suspension..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSuspendDialog({ open: false })}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  if (suspendDialog.subcontractorId && suspendReason.trim()) {
-                    suspendAccount(suspendDialog.subcontractorId, suspendReason);
-                    setSuspendDialog({ open: false });
-                    setSuspendReason("");
-                  }
-                }}
-                disabled={!suspendReason.trim()}
-              >
-                Suspend Account
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Individual Ban Dialog */}
-        <Dialog open={banDialog.open} onOpenChange={(open) => setBanDialog({ open })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ban Account</DialogTitle>
-              <DialogDescription>
-                Permanently ban this subcontractor's account
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="ban-reason">Reason for Ban</Label>
-                <Textarea
-                  id="ban-reason"
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
-                  placeholder="Enter reason for permanent ban..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBanDialog({ open: false })}>
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => {
-                  if (banDialog.subcontractorId && banReason.trim()) {
-                    banAccount(banDialog.subcontractorId, banReason);
-                    setBanDialog({ open: false });
-                    setBanReason("");
-                  }
-                }}
-                disabled={!banReason.trim()}
-              >
-                Ban Account
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Individual Email Dialog */}
-        <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog({ open })}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Send Email</DialogTitle>
-              <DialogDescription>
-                Send a custom email to this subcontractor
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email-subject">Subject</Label>
-                <Input
-                  id="email-subject"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder="Email subject..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="email-message">Message</Label>
-                <Textarea
-                  id="email-message"
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  placeholder="Email message..."
-                  rows={4}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEmailDialog({ open: false })}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  if (emailDialog.subcontractorId && emailSubject.trim() && emailMessage.trim()) {
-                    sendCustomEmail([emailDialog.subcontractorId], emailSubject, emailMessage);
-                    setEmailDialog({ open: false });
-                    setEmailSubject("");
-                    setEmailMessage("");
-                  }
-                }}
-                disabled={!emailSubject.trim() || !emailMessage.trim()}
-              >
-                Send Email
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            {filteredSubcontractors.length === 0 && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or filter criteria.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );

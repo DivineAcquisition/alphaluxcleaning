@@ -14,11 +14,17 @@ export interface EnhancedSubcontractor {
   subscription_status: string;
   created_at: string;
   last_activity?: string;
-  account_status: 'active' | 'suspended' | 'banned';
+  account_status: 'active' | 'suspended' | 'banned' | 'pending';
   jobsCompleted: number;
   city?: string;
   state?: string;
   split_tier?: string;
+  type: 'application' | 'subcontractor';
+  status?: 'pending' | 'approved' | 'rejected';
+  hourly_rate?: number;
+  monthly_fee?: number;
+  review_count?: number;
+  completed_jobs_count?: number;
 }
 
 export interface UserAction {
@@ -40,20 +46,34 @@ export function useSubcontractorManagement() {
   const fetchSubcontractors = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch active subcontractors
+      const { data: subcontractorData, error: subError } = await supabase
         .from('subcontractors')
         .select(`
           id, user_id, full_name, email, phone, is_available, rating,
           tier_level, subscription_status, created_at, city, state, split_tier,
-          review_count, completed_jobs_count
+          review_count, completed_jobs_count, hourly_rate, monthly_fee
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (subError) throw subError;
 
-      // Enhance with job completion counts and account status
-      const enhancedData = await Promise.all(
-        (data || []).map(async (sub) => {
+      // Fetch approved applications (pending onboarding)
+      const { data: applicationData, error: appError } = await supabase
+        .from('subcontractor_applications')
+        .select(`
+          id, full_name, email, phone, city, state, created_at,
+          status
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+
+      if (appError) throw appError;
+
+      // Enhance subcontractors with job completion counts
+      const enhancedSubcontractors = await Promise.all(
+        (subcontractorData || []).map(async (sub) => {
           const { count: jobsCompleted } = await supabase
             .from('subcontractor_job_assignments')
             .select('*', { count: 'exact', head: true })
@@ -63,12 +83,35 @@ export function useSubcontractorManagement() {
           return {
             ...sub,
             jobsCompleted: jobsCompleted || 0,
-            account_status: 'active' as const, // Default to active, would be determined by restrictions table
+            account_status: sub.is_available ? 'active' as const : 'suspended' as const,
+            type: 'subcontractor' as const
           };
         })
       );
 
-      setSubcontractors(enhancedData);
+      // Transform applications to match interface
+      const enhancedApplications = (applicationData || []).map(app => ({
+        ...app,
+        user_id: undefined,
+        is_available: false,
+        rating: 5.0,
+        tier_level: 2, // Default to Professional tier
+        subscription_status: 'pending',
+        last_activity: undefined,
+        account_status: 'pending' as const,
+        jobsCompleted: 0,
+        split_tier: undefined,
+        type: 'application' as const,
+        hourly_rate: 18.00,
+        monthly_fee: 50.00,
+        review_count: 0,
+        completed_jobs_count: 0,
+        status: app.status as 'pending' | 'approved' | 'rejected'
+      }));
+
+      // Combine both datasets
+      const allData = [...enhancedSubcontractors, ...enhancedApplications];
+      setSubcontractors(allData);
     } catch (error) {
       console.error('Error fetching subcontractors:', error);
       toast({
@@ -277,6 +320,85 @@ export function useSubcontractorManagement() {
     fetchSubcontractors();
   }, []);
 
+  const completeOnboarding = async (applicationId: string) => {
+    try {
+      const response = await supabase.functions.invoke('complete-subcontractor-onboarding', {
+        body: { applicationId }
+      });
+
+      if (response.error) throw response.error;
+
+      toast({
+        title: "Success",
+        description: "Subcontractor onboarding completed successfully",
+      });
+
+      await fetchSubcontractors();
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete onboarding",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateTier = async (subcontractorId: string, newTier: number, reason: string) => {
+    try {
+      // Get tier config
+      const { data: tierConfig } = await supabase
+        .from('tier_system_config')
+        .select('*')
+        .eq('tier_level', newTier)
+        .single();
+
+      if (!tierConfig) throw new Error('Invalid tier level');
+
+      // Get current tier for logging
+      const currentSub = subcontractors.find(s => s.id === subcontractorId);
+
+      // Update subcontractor tier
+      const { error: updateError } = await supabase
+        .from('subcontractors')
+        .update({
+          tier_level: newTier,
+          hourly_rate: tierConfig.hourly_rate,
+          monthly_fee: tierConfig.monthly_fee
+        })
+        .eq('id', subcontractorId);
+
+      if (updateError) throw updateError;
+
+      // Log the tier change
+      const { error: logError } = await supabase
+        .from('tier_change_history')
+        .insert({
+          subcontractor_id: subcontractorId,
+          old_tier: currentSub?.tier_level,
+          new_tier: newTier,
+          change_reason: reason,
+          automatic: false
+        });
+
+      if (logError) throw logError;
+
+      toast({
+        title: "Success",
+        description: "Tier updated successfully",
+      });
+
+      await fetchSubcontractors();
+    } catch (error) {
+      console.error('Error updating tier:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tier",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     subcontractors,
     loading,
@@ -287,6 +409,8 @@ export function useSubcontractorManagement() {
     forcePasswordReset,
     sendCustomEmail,
     exportSubcontractorData,
-    refreshData: fetchSubcontractors
+    completeOnboarding,
+    updateTier,
+    refreshSubcontractors: fetchSubcontractors
   };
 }

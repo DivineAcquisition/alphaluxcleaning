@@ -59,13 +59,7 @@ const coreItems = [
     label: "Subcontractor Management",
     path: "/subcontractor-management",
     icon: Users,
-    description: "Team overview"
-  },
-  {
-    label: "Tier Management",
-    path: "/tier-management",
-    icon: Award,
-    description: "Manage tiers & progression"
+    description: "Team & tier management"
   },
   {
     label: "Applications",
