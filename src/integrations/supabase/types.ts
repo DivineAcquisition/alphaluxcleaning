@@ -2979,6 +2979,7 @@ export type Database = {
       }
       subcontractors: {
         Row: {
+          account_status: string | null
           address: string
           calendar_id: string | null
           city: string
@@ -3006,6 +3007,7 @@ export type Database = {
           zip_code: string
         }
         Insert: {
+          account_status?: string | null
           address: string
           calendar_id?: string | null
           city: string
@@ -3033,6 +3035,7 @@ export type Database = {
           zip_code: string
         }
         Update: {
+          account_status?: string | null
           address?: string
           calendar_id?: string | null
           city?: string
