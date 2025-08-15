@@ -7,82 +7,93 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-PAYMENT-INTENT] ${step}${detailsStr}`);
+// Enhanced logging utility
+const logStep = (step: string, data?: any) => {
+  console.log(`🔄 [create-payment-intent] ${step}`, data ? JSON.stringify(data, null, 2) : '');
 };
 
 serve(async (req) => {
+  logStep("Request received", { method: req.method, url: req.url });
+  
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
-
-    // Initialize Supabase client with service role key for database operations
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+    
+    logStep("Supabase client initialized");
 
-    const { 
+    // Parse request body
+    const body = await req.json();
+    logStep("Request body parsed", { 
+      hasAmount: !!body.amount,
+      hasCustomerEmail: !!body.customerEmail,
+      paymentType: body.paymentType 
+    });
+    
+    const {
       amount,
       customerEmail,
       customerName,
       customerPhone,
+      paymentType,
+      booking_data,
       cleaningType,
       frequency,
-      squareFootage,
-      addOns = [],
-      bedrooms,
-      bathrooms,
       serviceAddress,
       city,
       state,
-      zipCode,
-      paymentType = "full",
-      booking_data
-    } = await req.json();
+      zipCode
+    } = body;
 
-    logStep("Request data received", { 
-      amount, 
-      customerEmail, 
-      customerName,
-      paymentType 
-    });
-
-    // Validate required fields - allow amount to be 0 for "pay after service"
-    if (amount < 0 || !customerEmail || !customerName) {
-      throw new Error("Missing required fields: amount, customerEmail, or customerName");
+    // Validate required fields
+    if (!customerEmail) {
+      logStep("Validation failed - missing email");
+      return new Response(
+        JSON.stringify({ 
+          error: "Customer email is required",
+          details: "A valid email address must be provided for payment processing" 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
-    
-    // For "pay after service", we create a SetupIntent instead of PaymentIntent
-    const isPayAfterService = paymentType === 'pay_after_service' || amount === 0;
+
+    // Check Stripe configuration
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      logStep("Configuration error - missing Stripe key");
+      return new Response(
+        JSON.stringify({ 
+          error: "Payment system not configured",
+          details: "Stripe secret key is missing from server configuration" 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
     // Initialize Stripe
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY not configured");
-    }
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    logStep("Stripe initialized");
-
-    // Always create or find Stripe customer
-    let customer;
-    const existingCustomers = await stripe.customers.list({ 
-      email: customerEmail, 
-      limit: 1 
+    logStep("Initializing Stripe");
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
     });
 
-    if (existingCustomers.data.length > 0) {
-      customer = existingCustomers.data[0];
-      logStep("Found existing customer", { customerId: customer.id });
-      
-      // Update customer with latest information
-      customer = await stripe.customers.update(customer.id, {
+    // Find or create Stripe customer
+    const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+    let customerId: string;
+    
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      logStep("Found existing customer", { customerId });
+    } else {
+      const customer = await stripe.customers.create({
+        email: customerEmail,
         name: customerName,
         phone: customerPhone,
         address: serviceAddress ? {
@@ -93,50 +104,28 @@ serve(async (req) => {
           country: 'US'
         } : undefined
       });
-      logStep("Updated existing customer");
-    } else {
-      // Create new customer
-      customer = await stripe.customers.create({
-        email: customerEmail,
-        name: customerName,
-        phone: customerPhone,
-        address: serviceAddress ? {
-          line1: serviceAddress,
-          city: city,
-          state: state,
-          postal_code: zipCode,
-          country: 'US'
-        } : undefined,
-        metadata: {
-          source: 'bay_area_cleaning',
-          cleaning_type: cleaningType || '',
-          frequency: frequency || ''
-        }
-      });
-      logStep("Created new customer", { customerId: customer.id });
+      customerId = customer.id;
+      logStep("Created new customer", { customerId });
     }
 
-    let paymentIntent;
-    let setupIntent;
-    let clientSecret;
+    // Determine if this is a setup intent (pay after service) or payment intent
+    const isSetupIntent = paymentType === 'pay_after_service' || amount === 0;
+    logStep("Payment type determined", { isSetupIntent, paymentType, amount });
 
-    if (isPayAfterService) {
-      // Create SetupIntent for card authorization without charge
-      setupIntent = await stripe.setupIntents.create({
-        customer: customer.id,
+    if (isSetupIntent) {
+      // Create SetupIntent for $0 authorization (pay after service)
+      logStep("Creating SetupIntent for card authorization");
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
         payment_method_types: ['card'],
         usage: 'off_session',
         metadata: {
-          customer_name: customerName,
           customer_email: customerEmail,
+          customer_name: customerName || '',
           customer_phone: customerPhone || '',
+          payment_type: paymentType || 'pay_after_service',
           cleaning_type: cleaningType || '',
           frequency: frequency || '',
-          square_footage: squareFootage?.toString() || '',
-          bedrooms: bedrooms?.toString() || '',
-          bathrooms: bathrooms?.toString() || '',
-          add_ons: JSON.stringify(addOns),
-          payment_type: paymentType,
           service_address: serviceAddress || '',
           city: city || '',
           state: state || '',
@@ -144,32 +133,73 @@ serve(async (req) => {
           booking_data: JSON.stringify(booking_data || {})
         }
       });
-      clientSecret = setupIntent.client_secret;
       
-      logStep("Setup intent created for authorization", { 
-        setupIntentId: setupIntent.id,
-        paymentType: paymentType 
+      logStep("SetupIntent created successfully", { id: setupIntent.id });
+
+      // Create order record with setup intent
+      const orderData = {
+        amount: 0, // No charge for pay after service
+        customer_email: customerEmail,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        service_details: {
+          cleaningType: cleaningType || '',
+          frequency: frequency || '',
+          paymentType: paymentType,
+          serviceAddress: serviceAddress || '',
+          city: city || '',
+          state: state || '',
+          zipCode: zipCode || '',
+          bookingData: booking_data || {}
+        },
+        stripe_setup_intent_id: setupIntent.id,
+        status: 'authorized'
+      };
+
+      const { data: order, error: orderError } = await supabaseClient
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) {
+        logStep("Order creation error", { error: orderError });
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      logStep("Order created successfully", { orderId: order.id });
+
+      return new Response(JSON.stringify({
+        success: true,
+        client_secret: setupIntent.client_secret,
+        setup_intent_id: setupIntent.id,
+        customer_id: customerId,
+        order_id: order.id,
+        amount: 0,
+        payment_type: paymentType,
+        is_setup_intent: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
+
     } else {
       // Create PaymentIntent for immediate payment
-      paymentIntent = await stripe.paymentIntents.create({
+      logStep("Creating PaymentIntent for immediate payment");
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: 'usd',
-        customer: customer.id,
+        customer: customerId,
         payment_method_types: ['card'],
         capture_method: 'automatic',
         setup_future_usage: frequency !== 'one-time' ? 'off_session' : undefined,
         metadata: {
-          customer_name: customerName,
           customer_email: customerEmail,
+          customer_name: customerName || '',
           customer_phone: customerPhone || '',
+          payment_type: paymentType || 'immediate',
           cleaning_type: cleaningType || '',
           frequency: frequency || '',
-          square_footage: squareFootage?.toString() || '',
-          bedrooms: bedrooms?.toString() || '',
-          bathrooms: bathrooms?.toString() || '',
-          add_ons: JSON.stringify(addOns),
-          payment_type: paymentType,
           service_address: serviceAddress || '',
           city: city || '',
           state: state || '',
@@ -177,75 +207,65 @@ serve(async (req) => {
           booking_data: JSON.stringify(booking_data || {})
         }
       });
-      clientSecret = paymentIntent.client_secret;
       
-      logStep("Payment intent created", { 
-        paymentIntentId: paymentIntent.id,
-        amount: paymentIntent.amount 
+      logStep("PaymentIntent created successfully", { id: paymentIntent.id, amount: paymentIntent.amount });
+
+      // Create order record with payment intent
+      const orderData = {
+        amount: paymentIntent.amount, // Amount in cents
+        customer_email: customerEmail,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        service_details: {
+          cleaningType: cleaningType || '',
+          frequency: frequency || '',
+          paymentType: paymentType,
+          serviceAddress: serviceAddress || '',
+          city: city || '',
+          state: state || '',
+          zipCode: zipCode || '',
+          bookingData: booking_data || {}
+        },
+        stripe_payment_intent_id: paymentIntent.id,
+        status: 'pending_payment'
+      };
+
+      const { data: order, error: orderError } = await supabaseClient
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) {
+        logStep("Order creation error", { error: orderError });
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      logStep("Order created successfully", { orderId: order.id });
+
+      return new Response(JSON.stringify({
+        success: true,
+        client_secret: paymentIntent.client_secret,
+        payment_intent_id: paymentIntent.id,
+        customer_id: customerId,
+        order_id: order.id,
+        amount: paymentIntent.amount,
+        payment_type: paymentType,
+        is_setup_intent: false
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
     }
 
-
-    // Create order record in Supabase
-    const orderData = {
-      amount: Math.round(amount * 100), // Store in cents (0 for pay after service)
-      customer_email: customerEmail,
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      service_details: {
-        cleaningType: cleaningType || '',
-        frequency: frequency || '',
-        squareFootage: squareFootage || 0,
-        bedrooms: bedrooms || 0,
-        bathrooms: bathrooms || 0,
-        addOns: addOns || [],
-        paymentType: paymentType,
-        serviceAddress: serviceAddress || '',
-        city: city || '',
-        state: state || '',
-        zipCode: zipCode || '',
-        bookingData: booking_data || {}
-      },
-      stripe_payment_intent_id: paymentIntent?.id || null,
-      stripe_setup_intent_id: setupIntent?.id || null,
-      status: isPayAfterService ? 'authorized' : 'pending_payment'
-    };
-
-    const { data: order, error: orderError } = await supabaseClient
-      .from('orders')
-      .insert(orderData)
-      .select()
-      .single();
-
-    if (orderError) {
-      logStep("Order creation error", { error: orderError });
-      throw new Error(`Failed to create order: ${orderError.message}`);
-    }
-
-    logStep("Order created successfully", { orderId: order.id });
-
-    return new Response(JSON.stringify({
-      success: true,
-      client_secret: clientSecret,
-      payment_intent_id: paymentIntent?.id || null,
-      setup_intent_id: setupIntent?.id || null,
-      customer_id: customer.id,
-      order_id: order.id,
-      amount: paymentIntent?.amount || 0,
-      payment_type: paymentType,
-      is_setup_intent: isPayAfterService
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep("ERROR", { message: errorMessage, stack: error instanceof Error ? error.stack : undefined });
     
     return new Response(JSON.stringify({ 
       error: errorMessage,
-      success: false 
+      success: false,
+      details: "Payment processing failed. Please try again or contact support if the issue persists."
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

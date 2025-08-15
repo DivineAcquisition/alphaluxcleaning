@@ -6,14 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, Shield, Sparkles, ArrowLeft, ArrowRight, Check, Tag, X } from 'lucide-react';
+import { CreditCard, Shield, Sparkles, ArrowLeft, ArrowRight, Check, Tag, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
+import { stripePromise, checkStripeReady } from '@/lib/stripe';
 import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
+import { PaymentErrorBoundary } from '@/components/payment/PaymentErrorBoundary';
 import { calculatePaymentAmount, toStripeAmount, formatPrice } from '@/lib/pricing-utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -60,6 +61,20 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
+  const [stripeReady, setStripeReady] = useState(false);
+  const [systemError, setSystemError] = useState<string | null>(null);
+
+  // Check if Stripe is ready on component mount
+  useEffect(() => {
+    const checkStripe = async () => {
+      const ready = await checkStripeReady();
+      setStripeReady(ready);
+      if (!ready) {
+        setSystemError('Payment system not available. Please try refreshing the page.');
+      }
+    };
+    checkStripe();
+  }, []);
 
   // Calculate final pricing
   const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
@@ -257,10 +272,34 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      
-      {/* Left Column - Payment Form */}
-      <div className="lg:col-span-2 space-y-6">
+    <PaymentErrorBoundary>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* System Error Display */}
+        {systemError && (
+          <div className="lg:col-span-3">
+            <Card className="border-destructive/20 shadow-clean">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-destructive mb-4">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span className="font-semibold">System Notice</span>
+                </div>
+                <p className="text-muted-foreground mb-4">{systemError}</p>
+                <div className="flex gap-2">
+                  <Button onClick={() => window.location.reload()} variant="outline">
+                    Refresh Page
+                  </Button>
+                  <Button onClick={() => setPaymentMethod('stripe_checkout')}>
+                    Try Alternative Method
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        
+        {/* Left Column - Payment Form */}
+        <div className="lg:col-span-2 space-y-6">
         
         {/* Recurring Service Toggle */}
         <Card className="shadow-clean">
@@ -456,20 +495,49 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   colorDanger: 'hsl(0 84.2% 60.2%)',
                   fontFamily: 'Plus Jakarta Sans, sans-serif',
                   borderRadius: '8px',
-                }
-              }
+                },
+              },
             }}
           >
-            <EnhancedPaymentInterface
-              amount={paymentAmount}
-              onSuccess={handlePaymentSuccess}
-              onCancel={handlePaymentCancel}
-              customerData={{
-                email: user?.email || 'guest@example.com',
-                name: user?.user_metadata?.full_name || 'Guest User'
-              }}
-            />
+            <Card className="shadow-clean border-primary/20">
+              <CardContent className="p-6">
+                <EnhancedPaymentInterface
+                  amount={toStripeAmount(paymentAmount)}
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={handlePaymentCancel}
+                  customerData={{
+                    email: user?.email || 'guest@example.com',
+                    name: user?.user_metadata?.full_name || 'Guest User'
+                  }}
+                />
+              </CardContent>
+            </Card>
           </Elements>
+        )}
+
+        {/* Stripe Loading Error Fallback */}
+        {showPaymentForm && !clientSecret && paymentMethod === 'embedded_payment' && (
+          <Card className="shadow-clean border-destructive/20">
+            <CardContent className="p-6 text-center space-y-4">
+              <div className="text-destructive text-lg font-semibold">Payment System Unavailable</div>
+              <p className="text-muted-foreground">
+                Unable to load the secure payment form. This could be due to:
+              </p>
+              <ul className="text-sm text-muted-foreground text-left space-y-1 max-w-md mx-auto">
+                <li>• Network connectivity issues</li>
+                <li>• Payment system maintenance</li>
+                <li>• Browser security settings</li>
+              </ul>
+              <div className="space-y-2">
+                <Button onClick={createPaymentIntent} variant="outline" className="w-full">
+                  Try Again
+                </Button>
+                <Button onClick={() => setPaymentMethod('stripe_checkout')} className="w-full">
+                  Use Alternative Payment Method
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Security Badge */}
@@ -477,7 +545,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           <Shield className="h-4 w-4" />
           <span>Secure payment powered by Stripe</span>
         </div>
-      </div>
+        </div>
 
       {/* Right Column - Order Summary */}
       <div className="lg:col-span-1">
@@ -604,6 +672,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           Back to Details
         </Button>
       </div>
-    </div>
+      </div>
+    </PaymentErrorBoundary>
   );
 }
