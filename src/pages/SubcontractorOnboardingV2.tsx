@@ -16,33 +16,29 @@ import { applicationToasts } from "@/lib/toast-messages";
 import WelcomePopup from "@/components/WelcomePopup";
 
 const SUBSCRIPTION_TIERS = {
-  "60_40": {
-    name: "Basic",
-    split: "60/40",
-    description: "Company 60%, You 40%",
-    price: 0,
-    features: ["Basic job matching", "Customer support", "Payment processing", "Free to start"]
+  "tier_1": {
+    name: "Standard",
+    hourly_rate: "$16.00/hour",
+    description: "Entry level with basic benefits",
+    monthly_fee: 2500, // $25.00 in cents
+    requirements: "No requirements - Start immediately",
+    features: ["Basic job matching", "Customer support", "Payment processing", "Entry level hourly rate"]
   },
-  "50_50": {
-    name: "Standard", 
-    split: "50/50",
-    description: "Company 50%, You 50%",
-    price: 2000, // $20.00 in cents
-    features: ["Enhanced job matching", "Priority scheduling", "Customer support", "Marketing support"]
-  },
-  "40_60": {
+  "tier_2": {
     name: "Professional",
-    split: "40/60", 
-    description: "Company 40%, You 60%",
-    price: 5000, // $50.00 in cents
-    features: ["High priority jobs", "Advanced scheduling", "Premium marketing", "Dedicated support"]
+    hourly_rate: "$18.00/hour", 
+    description: "Enhanced rate with premium features",
+    monthly_fee: 5000, // $50.00 in cents
+    requirements: "15+ reviews & 20+ completed jobs",
+    features: ["Enhanced job matching", "Priority scheduling", "Higher hourly rate", "Premium support"]
   },
-  "30_70": {
+  "tier_3": {
     name: "Elite",
-    split: "30/70", 
-    description: "Company 30%, You 70%",
-    price: 10000, // $100.00 in cents
-    features: ["Highest priority jobs", "Premium marketing", "VIP support", "Performance bonuses", "Exclusive opportunities"]
+    hourly_rate: "$21.00/hour",
+    description: "Top tier with maximum earning potential", 
+    monthly_fee: 6500, // $65.00 in cents
+    requirements: "25+ reviews & 30+ completed jobs",
+    features: ["Highest priority jobs", "Premium marketing", "Maximum hourly rate", "VIP support", "Performance bonuses"]
   }
 };
 
@@ -299,40 +295,43 @@ export default function SubcontractorOnboardingV2() {
         {currentPhase === 1 && (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Choose Your Revenue Share Plan</h2>
-              <p className="text-muted-foreground">Select the plan that works best for your business goals</p>
+              <h2 className="text-2xl font-bold mb-2">Choose Your Hourly Rate Tier</h2>
+              <p className="text-muted-foreground">Your tier determines your hourly rate and monthly fee. Advance through tiers as you complete jobs and earn reviews.</p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {Object.entries(SUBSCRIPTION_TIERS).map(([tier, info]) => (
                 <Card 
                   key={tier} 
                   className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                    tier === "50_50" ? "border-primary shadow-md" : "hover:border-primary/50"
+                    tier === "tier_2" ? "border-primary shadow-md" : "hover:border-primary/50"
                   }`}
                   onClick={() => handleTierSelection(tier)}
                 >
                   <CardHeader className="text-center">
-                    {tier === "50_50" && (
+                    {tier === "tier_2" && (
                       <Badge className="mb-2 self-center">Most Popular</Badge>
                     )}
                     <CardTitle className="text-lg">{info.name}</CardTitle>
-                    <div className="text-2xl font-bold text-primary">{info.split}</div>
+                    <div className="text-2xl font-bold text-primary">{info.hourly_rate}</div>
                     <CardDescription className="text-xs">{info.description}</CardDescription>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {info.requirements}
+                    </div>
                     <div className="text-xl font-bold">
-                      {info.price === 0 ? "Free" : `$${(info.price / 100).toFixed(0)}/mo`}
+                      ${(info.monthly_fee / 100).toFixed(0)}/month
                     </div>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {info.features.slice(0, 3).map((feature, index) => (
+                      {info.features.slice(0, 4).map((feature, index) => (
                         <li key={index} className="flex items-center gap-2 text-xs">
                           <CheckCircle className="h-3 w-3 text-success" />
                           {feature}
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full mt-3 text-xs" variant={tier === "50_50" ? "default" : "outline"}>
+                    <Button className="w-full mt-3 text-xs" variant={tier === "tier_2" ? "default" : "outline"}>
                       Select {info.name}
                     </Button>
                   </CardContent>

@@ -225,30 +225,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 4. Get tier configuration based on selected tier
     const tierMapping = {
-      "60_40": { level: 1, name: "Basic" },
-      "50_50": { level: 2, name: "Standard" }, 
-      "40_60": { level: 2, name: "Professional" },
-      "30_70": { level: 3, name: "Elite" }
+      "tier_1": 1,
+      "tier_2": 2, 
+      "tier_3": 3
     };
 
-    const tierInfo = tierMapping[selected_tier as keyof typeof tierMapping] || { level: 2, name: "Professional" };
+    const tierLevel = tierMapping[selected_tier as keyof typeof tierMapping] || 2;
     
     const { data: tierConfig, error: tierError } = await supabaseAdmin
       .from('tier_system_config')
       .select('*')
-      .eq('tier_level', tierInfo.level)
+      .eq('tier_level', tierLevel)
       .single();
 
     if (tierError || !tierConfig) {
       console.error('Failed to get tier config:', tierError);
-      // Fallback to default values based on tier
+      // Fallback to default values based on tier level
       const fallbackConfig = {
-        "60_40": { tier_level: 1, tier_name: "Basic", hourly_rate: 16.00, monthly_fee: 0 },
-        "50_50": { tier_level: 2, tier_name: "Standard", hourly_rate: 18.00, monthly_fee: 20.00 },
-        "40_60": { tier_level: 2, tier_name: "Professional", hourly_rate: 18.00, monthly_fee: 50.00 },
-        "30_70": { tier_level: 3, tier_name: "Elite", hourly_rate: 21.00, monthly_fee: 100.00 }
+        1: { tier_level: 1, tier_name: "Standard", hourly_rate: 16.00, monthly_fee: 25.00 },
+        2: { tier_level: 2, tier_name: "Professional", hourly_rate: 18.00, monthly_fee: 50.00 },
+        3: { tier_level: 3, tier_name: "Elite", hourly_rate: 21.00, monthly_fee: 65.00 }
       };
-      tierConfig = fallbackConfig[selected_tier as keyof typeof fallbackConfig] || fallbackConfig["40_60"];
+      tierConfig = fallbackConfig[tierLevel as keyof typeof fallbackConfig] || fallbackConfig[2];
     }
 
     // 5. Create subcontractor record
@@ -367,14 +365,9 @@ const handler = async (req: Request): Promise<Response> => {
       redirect_to_dashboard: selected_tier === "60_40"
     };
 
-    // For free tier, provide dashboard redirect
-    if (selected_tier === "60_40") {
-      response.redirect_to_dashboard = true;
-    } else {
-      // For paid tiers, we'd create Stripe checkout here
-      // For now, just redirect to dashboard
-      response.redirect_to_dashboard = true;
-    }
+    // All tiers redirect to dashboard for now
+    // In the future, paid tiers can redirect to Stripe checkout
+    response.redirect_to_dashboard = true;
 
     return new Response(
       JSON.stringify(response),
