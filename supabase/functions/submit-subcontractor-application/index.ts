@@ -138,6 +138,56 @@ serve(async (req) => {
 
     logStep("Application submitted successfully", { applicationId: application.id });
 
+    // Send data to Zapier webhook
+    const zapierWebhookUrl = "https://hooks.zapier.com/hooks/catch/5011258/u6vy7q9/";
+    
+    try {
+      const zapierPayload = {
+        timestamp: new Date().toISOString(),
+        application_id: application.id,
+        type: 'subcontractor_application_submitted',
+        applicant_data: {
+          full_name,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          zip_code,
+          availability,
+          preferred_work_areas,
+          has_drivers_license,
+          has_own_vehicle,
+          reliable_transportation,
+          can_lift_heavy_items,
+          comfortable_with_chemicals
+        },
+        source: 'bay_area_cleaning_pros'
+      };
+
+      logStep("Sending to Zapier webhook", { url: zapierWebhookUrl });
+
+      const zapierResponse = await fetch(zapierWebhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(zapierPayload),
+      });
+
+      if (zapierResponse.ok) {
+        logStep("Zapier webhook successful");
+      } else {
+        logStep("Zapier webhook failed", { 
+          status: zapierResponse.status, 
+          statusText: zapierResponse.statusText 
+        });
+      }
+    } catch (zapierError) {
+      logStep("Error sending to Zapier", { error: zapierError });
+      // Don't fail the entire request if Zapier fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

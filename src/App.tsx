@@ -24,6 +24,7 @@ import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorMobile from '@/pages/SubcontractorMobile';
 import SubcontractorApplication from '@/pages/SubcontractorApplication';
+import SubcontractorApplicationThankYou from '@/pages/SubcontractorApplicationThankYou';
 import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 
 // Admin pages (unified)
@@ -269,6 +270,7 @@ function App() {
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />
                 <Route path="/subcontractor-auth" element={<SubcontractorPortal />} />
                 <Route path="/subcontractor-application" element={<SubcontractorApplication />} />
+                <Route path="/subcontractor-application-thank-you" element={<SubcontractorApplicationThankYou />} />
                 <Route path="/subcontractor-onboarding" element={<SubcontractorOnboardingV2 />} />
                 <Route path="/subcontractor-mobile" element={
                   <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>

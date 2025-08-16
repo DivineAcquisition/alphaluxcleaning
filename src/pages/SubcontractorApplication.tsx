@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import {
 } from "@/lib/validation-utils";
 
 export default function SubcontractorApplication() {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSection, setCurrentSection] = useState(1);
   const [formData, setFormData] = useState({
@@ -151,33 +153,8 @@ export default function SubcontractorApplication() {
 
       if (error) throw error;
 
-      applicationToasts.submission.success();
-      
-      // Reset form
-      setFormData({
-        full_name: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        state: "",
-        zip_code: "",
-        why_join_us: "",
-        previous_cleaning_experience: "",
-        availability: "",
-        preferred_work_areas: "",
-        emergency_contact_name: "",
-        emergency_contact_phone: "",
-        has_drivers_license: false,
-        has_own_vehicle: false,
-        reliable_transportation: false,
-        can_lift_heavy_items: false,
-        comfortable_with_chemicals: false,
-        drivers_license_image_url: "",
-        background_check_consent: false,
-        brand_shirt_consent: false,
-        subcontractor_agreement_consent: false
-      });
+      // Redirect to thank you page with application ID
+      navigate(`/subcontractor-application-thank-you?applicationId=${data.application_id}`);
 
     } catch (error: any) {
       console.error('Application submission error:', error);
