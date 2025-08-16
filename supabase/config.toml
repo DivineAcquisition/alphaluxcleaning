@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.create-test-subcontractor]
 verify_jwt = false
+
+[functions.send-subcontractor-updates]
+verify_jwt = false
