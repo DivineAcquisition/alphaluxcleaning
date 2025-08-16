@@ -80,22 +80,27 @@ export const OrderStatusLookup = ({ triggerClassName }: OrderStatusLookupProps) 
 
     setLoading(true);
     try {
-      // Try to search by order ID first, then by email
-      let { data: orderData, error } = await supabase
-        .from('orders')
-        .select('*')
-        .or(`id.eq.${searchQuery},stripe_session_id.ilike.%${searchQuery}%,customer_email.ilike.%${searchQuery}%`)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      console.log("OrderStatusLookup searching for:", searchQuery);
+      
+      // Use the get-order-details edge function
+      const { data: result, error } = await supabase.functions.invoke('get-order-details', {
+        body: { 
+          session_id: searchQuery.includes('cs_') ? searchQuery : null,
+          order_id: !searchQuery.includes('cs_') && !searchQuery.includes('@') ? searchQuery : null,
+          email: searchQuery.includes('@') ? searchQuery : null,
+          code: !searchQuery.includes('cs_') && !searchQuery.includes('@') ? searchQuery : null
+        }
+      });
 
-      if (error || !orderData || orderData.length === 0) {
+      if (error || !result?.order) {
+        console.error("Edge function error:", error);
         toast.error("No order found with that information");
         setOrder(null);
         setStatusUpdates([]);
         return;
       }
 
-      const foundOrder = orderData[0];
+      const foundOrder = result.order;
       setOrder(foundOrder);
 
       // Fetch status updates for this order

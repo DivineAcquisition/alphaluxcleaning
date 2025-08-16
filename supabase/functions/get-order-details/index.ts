@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { session_id, order_id, code, email } = await req.json();
+    console.log("Received request:", { session_id, order_id, code, email });
 
     if (!session_id && !order_id && !code && !email) {
       return new Response(JSON.stringify({ error: "Missing session_id, order_id, code, or email" }), {
@@ -34,6 +35,8 @@ serve(async (req) => {
 
     // Priority search: exact UUID -> stripe session -> partial ID -> email
     if (order_id) {
+      console.log("Searching by order_id:", order_id);
+      
       // Try exact UUID match first
       const { data: exactMatch, error: exactError } = await supabase
         .from("orders")
@@ -42,24 +45,27 @@ serve(async (req) => {
         .maybeSingle();
       
       if (exactMatch) {
+        console.log("Found exact UUID match");
         data = exactMatch;
-      } else if (!exactError?.message?.includes('invalid input syntax')) {
-        // Try partial ID match (last 8+ characters)
+      } else {
+        console.log("No exact UUID match, trying partial match for:", order_id);
+        // Always try partial ID match if exact fails (for short order IDs)
         const { data: partialMatch, error: partialError } = await supabase
           .from("orders")
           .select(selectFields)
-          .ilike("id", `%${order_id}`)
+          .ilike("id", `%${order_id}%`)
           .maybeSingle();
         
         if (partialMatch) {
+          console.log("Found partial UUID match");
           data = partialMatch;
         } else {
+          console.log("No partial match found");
           error = partialError || exactError;
         }
-      } else {
-        error = exactError;
       }
     } else if (session_id) {
+      console.log("Searching by session_id:", session_id);
       const { data: sessionMatch, error: sessionError } = await supabase
         .from("orders")
         .select(selectFields)
@@ -69,6 +75,7 @@ serve(async (req) => {
       data = sessionMatch;
       error = sessionError;
     } else if (code) {
+      console.log("Searching by code:", code);
       // Search by partial order ID or session ID
       const { data: codeMatch, error: codeError } = await supabase
         .from("orders")
@@ -79,6 +86,7 @@ serve(async (req) => {
       data = codeMatch;
       error = codeError;
     } else if (email) {
+      console.log("Searching by email:", email);
       // Search by customer email
       const { data: emailMatch, error: emailError } = await supabase
         .from("orders")
@@ -92,17 +100,20 @@ serve(async (req) => {
     }
 
     if (error || !data) {
+      console.log("Order not found:", { error: error?.message, data });
       return new Response(JSON.stringify({ error: error?.message || "Order not found. Please check your Order ID, Session ID, or email address." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       });
     }
 
+    console.log("Order found successfully:", data.id);
     return new Response(JSON.stringify({ order: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (err) {
+    console.error("Error in get-order-details:", err);
     const message = err instanceof Error ? err.message : "Unexpected error";
     return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

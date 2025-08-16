@@ -100,52 +100,27 @@ export default function OrderStatus() {
     try {
       console.log("Searching for term:", term);
       
-      // Try searching by exact stripe_session_id match first
-      let { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("stripe_session_id", term)
-        .maybeSingle();
-
-      console.log("Search result:", { data, error });
-
-      if (!data) {
-        // Check if term looks like a UUID before searching by ID
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
-        
-        if (isUUID) {
-          // Try searching by order ID only if it's a valid UUID
-          const { data: orderData, error: orderError } = await supabase
-            .from("orders")
-            .select("*")
-            .eq("id", term)
-            .maybeSingle();
-
-          if (orderData) {
-            data = orderData;
-          }
+      // Use the get-order-details edge function instead of direct database queries
+      const { data: result, error } = await supabase.functions.invoke('get-order-details', {
+        body: { 
+          session_id: term.includes('cs_') ? term : null,
+          order_id: !term.includes('cs_') && !term.includes('@') ? term : null,
+          email: term.includes('@') ? term : null,
+          code: !term.includes('cs_') && !term.includes('@') ? term : null
         }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to search for order");
       }
 
-      if (!data) {
-        // Try partial match on session ID (last 12 characters)
-        const { data: partialResults, error: partialError } = await supabase
-          .from("orders")
-          .select("*")
-          .ilike("stripe_session_id", `%${term}%`)
-          .limit(5);
-
-        if (partialResults && partialResults.length > 0) {
-          data = partialResults[0]; // Take the first match
-        }
-      }
-
-      if (!data) {
+      if (!result?.order) {
         throw new Error("Order not found");
       }
 
-      setOrder(data);
-      console.log("Order found:", data);
+      setOrder(result.order);
+      console.log("Order found:", result.order);
       toast.success("Order found!");
     } catch (error) {
       console.error("Error searching for order:", error);
@@ -164,23 +139,27 @@ export default function OrderStatus() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("customer_email", searchValue.trim())
-        .order("created_at", { ascending: false });
+      // Use the get-order-details edge function for email search
+      const { data: result, error } = await supabase.functions.invoke('get-order-details', {
+        body: { email: searchValue.trim() }
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to search orders");
+      }
 
-      if (data.length === 0) {
+      if (!result?.order) {
         toast.error("No orders found for this email address");
         setOrders([]);
         return;
       }
 
-      setOrders(data);
+      // For now, we'll just show the single order found
+      // In the future, we might modify the edge function to return multiple orders for email
+      setOrders([result.order]);
       setShowHistory(true);
-      toast.success(`Found ${data.length} order(s)`);
+      toast.success("Found order(s)");
     } catch (error) {
       console.error("Error searching orders by email:", error);
       toast.error("Failed to search orders");
