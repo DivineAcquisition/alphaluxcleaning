@@ -17,6 +17,7 @@ const ScheduleService = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('order_id');
   const { user, userRole } = useAuth();
   const isMobile = useIsMobile();
 
@@ -76,9 +77,14 @@ const ScheduleService = () => {
       return;
     }
 
-    if (!sessionId) {
-      toast.error("No session ID found. Redirecting to home.");
-      navigate('/');
+    if (!sessionId && !orderId) {
+      toast.error("No session or order ID found. Redirecting...");
+      const hostname = window.location.hostname;
+      if (hostname.startsWith('portal.')) {
+        navigate('/customer-portal-dashboard');
+      } else {
+        navigate('/instant-quote');
+      }
       return;
     }
     fetchOrderDetails();
@@ -126,15 +132,38 @@ const ScheduleService = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("stripe_session_id", sessionId)
-        .single();
+      let data, error;
+      
+      // Try to fetch by session_id first (existing flow)
+      if (sessionId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
+      
+      // If no data found and we have orderId, try fetching by order ID (new flow)
+      if ((!data || error) && orderId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", orderId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
-      if (error) {
+      if (error || !data) {
         toast.error("Order not found");
-        navigate('/');
+        const hostname = window.location.hostname;
+        if (hostname.startsWith('portal.')) {
+          navigate('/customer-portal-dashboard');
+        } else {
+          navigate('/instant-quote');
+        }
         return;
       }
 
@@ -144,7 +173,11 @@ const ScheduleService = () => {
       
       if (!hasAddress) {
         toast.error("Please complete service details first");
-        navigate(`/service-details?session_id=${sessionId}`);
+        if (sessionId) {
+          navigate(`/service-details?session_id=${sessionId}`);
+        } else {
+          navigate(`/service-details?order_id=${orderId}`);
+        }
         return;
       }
 
@@ -152,7 +185,12 @@ const ScheduleService = () => {
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
-      navigate('/');
+      const hostname = window.location.hostname;
+      if (hostname.startsWith('portal.')) {
+        navigate('/customer-portal-dashboard');
+      } else {
+        navigate('/instant-quote');
+      }
     } finally {
       setLoading(false);
     }
@@ -165,8 +203,10 @@ const ScheduleService = () => {
     const isAdminPreview = searchParams.get('admin_preview');
     if (isAdminPreview) {
       navigate('/booking-confirmation?admin_preview=true');
-    } else {
+    } else if (sessionId) {
       navigate(`/booking-confirmation?session_id=${sessionId}`);
+    } else {
+      navigate(`/booking-confirmation?order_id=${orderId}`);
     }
   };
 
@@ -342,8 +382,10 @@ const ScheduleService = () => {
                 const isAdminPreview = searchParams.get('admin_preview');
                 if (isAdminPreview) {
                   navigate('/service-details?admin_preview=true');
-                } else {
+                } else if (sessionId) {
                   navigate(`/service-details?session_id=${sessionId}`);
+                } else {
+                  navigate(`/service-details?order_id=${orderId}`);
                 }
               }}
               className="flex items-center gap-2 w-full sm:w-auto"

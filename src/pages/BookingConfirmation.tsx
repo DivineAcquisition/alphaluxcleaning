@@ -12,6 +12,7 @@ const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('order_id');
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,14 @@ const BookingConfirmation = () => {
       return;
     }
 
-    if (!sessionId) {
-      toast.error("No session ID found. Redirecting to home.");
-      navigate('/');
+    if (!sessionId && !orderId) {
+      toast.error("No session or order ID found. Redirecting...");
+      const hostname = window.location.hostname;
+      if (hostname.startsWith('portal.')) {
+        navigate('/customer-portal-dashboard');
+      } else {
+        navigate('/instant-quote');
+      }
       return;
     }
     fetchOrderDetails();
@@ -89,22 +95,49 @@ const BookingConfirmation = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("stripe_session_id", sessionId)
-        .single();
+      let data, error;
+      
+      // Try to fetch by session_id first (existing flow)
+      if (sessionId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
+      
+      // If no data found and we have orderId, try fetching by order ID (new flow)
+      if ((!data || error) && orderId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", orderId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
-      if (error) {
+      if (error || !data) {
         toast.error("Order not found");
-        navigate('/');
+        const hostname = window.location.hostname;
+        if (hostname.startsWith('portal.')) {
+          navigate('/customer-portal-dashboard');
+        } else {
+          navigate('/instant-quote');
+        }
         return;
       }
 
       // Check if scheduling is complete
       if (!data.scheduled_date) {
         toast.error("Please schedule your service first");
-        navigate(`/schedule-service?session_id=${sessionId}`);
+        if (sessionId) {
+          navigate(`/schedule-service?session_id=${sessionId}`);
+        } else {
+          navigate(`/schedule-service?order_id=${orderId}`);
+        }
         return;
       }
 
@@ -112,7 +145,12 @@ const BookingConfirmation = () => {
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
-      navigate('/');
+      const hostname = window.location.hostname;
+      if (hostname.startsWith('portal.')) {
+        navigate('/customer-portal-dashboard');
+      } else {
+        navigate('/instant-quote');
+      }
     } finally {
       setLoading(false);
     }
@@ -120,15 +158,16 @@ const BookingConfirmation = () => {
 
   // Send booking to Zapier exactly once after confirmation
   useEffect(() => {
-    if (!sessionId || !orderDetails) return;
+    const identifier = sessionId || orderId;
+    if (!identifier || !orderDetails) return;
     if (!orderDetails?.scheduled_date) return; // ensure scheduled
-    const key = `zapier_booking_sent_${sessionId}`;
+    const key = `zapier_booking_sent_${identifier}`;
     try {
       if (typeof window !== 'undefined' && !localStorage.getItem(key)) {
         (async () => {
           try {
             await supabase.functions.invoke('send-booking-transaction-to-zapier', {
-              body: { session_id: sessionId, send_sample_data: false },
+              body: { session_id: sessionId, order_id: orderId, send_sample_data: false },
             });
             localStorage.setItem(key, '1');
             console.log('Booking data sent to Zapier');
@@ -140,7 +179,7 @@ const BookingConfirmation = () => {
     } catch (e) {
       // ignore storage errors
     }
-  }, [orderDetails, sessionId]);
+  }, [orderDetails, sessionId, orderId]);
 
   if (loading) {
     return (
@@ -353,7 +392,11 @@ const BookingConfirmation = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate(`/order-status?session_id=${sessionId}`)}
+              onClick={() => {
+                const identifier = sessionId || orderId;
+                const paramName = sessionId ? 'session_id' : 'order_id';
+                navigate(`/order-status?${paramName}=${identifier}`);
+              }}
               size="lg"
               className="flex items-center gap-2"
             >

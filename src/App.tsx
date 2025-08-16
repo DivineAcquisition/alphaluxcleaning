@@ -113,9 +113,15 @@ function DomainRouter() {
     console.log('Domain router processing:', hostname);
   }
   
+  // Check for root domain (no subdomain) - redirect to book subdomain
+  if (hostname === 'bayareacleaningpros.com' || (!isDevelopment && !hostname.includes('localhost') && !hostname.includes('.'))) {
+    window.location.href = 'https://book.bayareacleaningpros.com';
+    return null;
+  }
+
   // Only apply subdomain routing for specific subdomains, not all
   const isSpecificSubdomain = [
-    'booking', 'pay', 'members', 'app', 'office', 'cleaners', 
+    'book', 'booking', 'pay', 'members', 'app', 'office', 'cleaners', 
     'admin', 'reviews', 'referrals', 'jobs', 'api', 'connect',
     'analytics', 'support', 'training', 'portal', 'try', 'reports', 'subcon'
   ].some(subdomain => hostname.startsWith(`${subdomain}.`));
@@ -126,7 +132,7 @@ function DomainRouter() {
   }
   
   // Phase 1: Core Client Experience
-  if (hostname.startsWith('booking.')) {
+  if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
     return <Navigate to="/instant-quote" replace />;
   }
   if (hostname.startsWith('pay.')) {

@@ -89,8 +89,13 @@ const ServiceDetails = () => {
     }
 
     if (!sessionId && !orderId) {
-      toast.error("No session or order ID found. Redirecting to home.");
-      navigate('/');
+      toast.error("No session or order ID found. Redirecting...");
+      const hostname = window.location.hostname;
+      if (hostname.startsWith('portal.')) {
+        navigate('/customer-portal-dashboard');
+      } else {
+        navigate('/instant-quote');
+      }
       return;
     }
     fetchOrderDetails();
@@ -98,6 +103,8 @@ const ServiceDetails = () => {
 
   const fetchOrderDetails = async () => {
     try {
+      const identifier = sessionId || orderId;
+      const identifierType = sessionId ? 'stripe_session_id' : 'id';
       setLoading(true);
       console.log('Fetching order details with:', { sessionId, orderId });
       
