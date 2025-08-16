@@ -184,6 +184,17 @@ export function StripePaymentForm({
     setError(null);
     setErrorType(null);
 
+    // Set a timeout to prevent getting stuck in processing
+    const timeoutId = setTimeout(() => {
+      if (paymentStatus === 'processing' || paymentStatus === 'authenticating') {
+        console.warn('⚠️ Payment timeout - providing fallback option');
+        setPaymentStatus('failed');
+        setError('Payment processing is taking longer than expected. Please try again or contact support if the issue persists.');
+        setErrorType('unknown_error');
+        setIsProcessing(false);
+      }
+    }, 15000); // 15 second timeout
+
     // Submit payment form
     const { error: submitError } = await elements.submit();
     if (submitError) {
@@ -217,6 +228,9 @@ export function StripePaymentForm({
 
       console.log('✅ SetupIntent status:', setupIntent.status);
 
+      // Clear timeout on successful completion
+      clearTimeout(timeoutId);
+
       // Handle different setup statuses
       switch (setupIntent.status) {
         case 'succeeded':
@@ -226,15 +240,19 @@ export function StripePaymentForm({
           break;
         case 'requires_action':
           setPaymentStatus('authenticating');
-          // 3D Secure or other authentication required
+          // 3D Secure or other authentication required - this should resolve automatically
+          console.log('🔄 SetupIntent requires additional authentication');
           break;
         case 'processing':
           setPaymentStatus('finalizing');
-          // Setup is being processed
+          // Setup is being processed - this should resolve automatically
+          console.log('🔄 SetupIntent is processing');
           break;
         case 'requires_payment_method':
+          clearTimeout(timeoutId);
           throw new Error('Card was declined. Please try a different payment method.');
         default:
+          clearTimeout(timeoutId);
           throw new Error(`Setup status: ${setupIntent.status}`);
       }
     } else {
@@ -260,6 +278,9 @@ export function StripePaymentForm({
 
       console.log('✅ PaymentIntent status:', paymentIntent.status);
 
+      // Clear timeout on successful completion
+      clearTimeout(timeoutId);
+
       // Handle different payment statuses
       switch (paymentIntent.status) {
         case 'succeeded':
@@ -269,15 +290,19 @@ export function StripePaymentForm({
           break;
         case 'requires_action':
           setPaymentStatus('authenticating');
-          // 3D Secure or other authentication required
+          // 3D Secure or other authentication required - this should resolve automatically
+          console.log('🔄 PaymentIntent requires additional authentication');
           break;
         case 'processing':
           setPaymentStatus('finalizing');
-          // Payment is being processed
+          // Payment is being processed - this should resolve automatically
+          console.log('🔄 PaymentIntent is processing');
           break;
         case 'requires_payment_method':
+          clearTimeout(timeoutId);
           throw new Error('Payment method was declined. Please try a different payment method.');
         default:
+          clearTimeout(timeoutId);
           throw new Error(`Payment status: ${paymentIntent.status}`);
       }
     }
@@ -311,9 +336,10 @@ export function StripePaymentForm({
       } else if (type === 'authentication_error') {
         toast.error('Authentication failed', { description: message });
       } else {
-        toast.error('Payment failed', { description: message });
+        toast.error(isSetupIntent ? 'Authorization failed' : 'Payment failed', { description: message });
       }
     } finally {
+      // Clear any existing timeouts
       setIsProcessing(false);
     }
   };

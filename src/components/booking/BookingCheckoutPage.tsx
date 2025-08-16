@@ -63,6 +63,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
   const [stripeReady, setStripeReady] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
+  const [isSetupIntent, setIsSetupIntent] = useState(false);
 
   // Check if Stripe is ready on component mount
   useEffect(() => {
@@ -209,6 +210,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
       if (data?.client_secret) {
         setClientSecret(data.client_secret);
+        setIsSetupIntent(data.is_setup_intent || false);
         setShowPaymentForm(true);
         
         // Show different message based on setup intent vs payment intent
