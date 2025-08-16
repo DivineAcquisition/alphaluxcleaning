@@ -220,6 +220,69 @@ serve(async (req) => {
         });
     }
 
+    // Send service completion data to Zapier webhook
+    try {
+      const completionData = {
+        event_type: 'service_completed',
+        order: {
+          id: orderData.id,
+          customer_name: booking?.customer_name,
+          customer_email: booking?.customer_email,
+          customer_phone: booking?.customer_phone,
+          service_address: booking?.service_address,
+          service_date: booking?.service_date,
+          service_time: booking?.service_time,
+          amount: orderAmount,
+          status: 'completed',
+          completion_notes: completionNotes,
+          completed_at: new Date().toISOString()
+        },
+        assignment: {
+          id: assignmentId,
+          subcontractor_name: assignmentData.subcontractors?.full_name,
+          subcontractor_email: assignmentData.subcontractors?.email,
+          subcontractor_phone: assignmentData.subcontractors?.phone,
+          assigned_at: assignmentData.assigned_at,
+          completed_at: new Date().toISOString(),
+          customer_rating: customerRating,
+          status: 'completed'
+        },
+        payment: {
+          total_amount: orderAmount,
+          subcontractor_amount: subcontractorAmount,
+          company_amount: companyAmount,
+          split_percentage: split.subcontractor,
+          split_tier: splitTier
+        },
+        completion_data: {
+          completion_notes: completionNotes,
+          customer_rating: customerRating,
+          completed_at: new Date().toISOString()
+        },
+        metadata: {
+          webhook_version: '1.0',
+          sent_at: new Date().toISOString(),
+          environment: 'production'
+        }
+      };
+
+      const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(completionData),
+      });
+
+      if (webhookResponse.ok) {
+        logStep("Service completion data sent to Zapier successfully");
+      } else {
+        logStep("Failed to send completion data to Zapier", { status: webhookResponse.status });
+      }
+    } catch (webhookError) {
+      logStep("Error sending completion data to Zapier", webhookError);
+    }
+
     logStep("Order completion process finished successfully");
 
     return new Response(JSON.stringify({ 
