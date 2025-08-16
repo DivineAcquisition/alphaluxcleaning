@@ -55,7 +55,7 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center justify-center space-x-3">
-            <img src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" alt="Bay Area Cleaning Professionals" width="64" height="64" className="h-20 w-20 md:h-16 md:w-16 object-contain" />
+            <img src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" alt="Bay Area Cleaning Professionals" width="64" height="64" className="h-32 w-32 md:h-16 md:w-16 object-contain" />
           </Link>
 
           {/* Right Section */}
