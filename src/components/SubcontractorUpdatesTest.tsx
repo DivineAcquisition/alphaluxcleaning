@@ -4,141 +4,229 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Loader2, AlertCircle, MapPin, MessageSquare, UserCheck, Clock } from "lucide-react";
+import { CheckCircle2, Loader2, Play, UserCheck } from "lucide-react";
 
 export function SubcontractorUpdatesTest() {
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-  const [lastTestResults, setLastTestResults] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [correlationId, setCorrelationId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const sendUpdateTest = async (updateType: string, testData: any) => {
-    setIsLoading(updateType);
-    try {
-      console.log(`Sending ${updateType} update test to webhook...`);
-      
-      const { data, error } = await supabase.functions.invoke('send-subcontractor-updates', {
-        body: testData
-      });
+  const runComprehensiveTest = async () => {
+    setIsLoading(true);
+    setTestResults([]);
+    const newCorrelationId = `test_${Date.now()}`;
+    setCorrelationId(newCorrelationId);
 
-      if (error) {
-        throw error;
+    const mockSubcontractor = {
+      id: `test_subcontractor_${newCorrelationId}`,
+      full_name: "Sarah Johnson",
+      email: "sarah.johnson@example.com",
+      phone: "(555) 123-4567"
+    };
+
+    const baseIds = {
+      assignment_id: `test_assignment_${newCorrelationId}`,
+      order_id: `test_order_${newCorrelationId}`,
+    };
+
+    const testSequence = [
+      {
+        step: 1,
+        name: "Assignment Accepted",
+        data: {
+          update_type: 'assignment_change',
+          ...baseIds,
+          subcontractor_id: mockSubcontractor.id,
+          message: 'Assignment accepted by subcontractor',
+          status: 'accepted',
+          notes: 'Subcontractor has accepted the cleaning job and will arrive soon',
+          testMode: true,
+          mockSubcontractor,
+          correlationId: newCorrelationId
+        }
+      },
+      {
+        step: 2,
+        name: "En Route Status",
+        data: {
+          update_type: 'status_message',
+          ...baseIds,
+          subcontractor_id: mockSubcontractor.id,
+          message: 'On my way to the location, ETA 20 minutes',
+          estimated_arrival_minutes: 20,
+          testMode: true,
+          mockSubcontractor,
+          correlationId: newCorrelationId
+        }
+      },
+      {
+        step: 3,
+        name: "Check-In",
+        data: {
+          update_type: 'check_in',
+          ...baseIds,
+          subcontractor_id: mockSubcontractor.id,
+          location: {
+            address: "1234 Main Street, San Francisco, CA 94102",
+            latitude: 37.7749,
+            longitude: -122.4194
+          },
+          message: 'Arrived at customer location, starting service',
+          photos: [
+            { url: 'https://example.com/arrival.jpg', description: 'Arrived at location' }
+          ],
+          notes: 'Customer greeted, supplies ready, beginning cleaning service',
+          testMode: true,
+          mockSubcontractor,
+          correlationId: newCorrelationId
+        }
+      },
+      {
+        step: 4,
+        name: "Service Progress",
+        data: {
+          update_type: 'status_message',
+          ...baseIds,
+          subcontractor_id: mockSubcontractor.id,
+          message: 'Service in progress - kitchen and bathrooms completed',
+          testMode: true,
+          mockSubcontractor,
+          correlationId: newCorrelationId
+        }
+      },
+      {
+        step: 5,
+        name: "Check-Out",
+        data: {
+          update_type: 'check_out',
+          ...baseIds,
+          subcontractor_id: mockSubcontractor.id,
+          location: {
+            address: "1234 Main Street, San Francisco, CA 94102",
+            latitude: 37.7749,
+            longitude: -122.4194
+          },
+          message: 'Service completed successfully, checking out',
+          photos: [
+            { url: 'https://example.com/kitchen_after.jpg', description: 'Kitchen cleaned' },
+            { url: 'https://example.com/bathroom_after.jpg', description: 'Bathroom cleaned' },
+            { url: 'https://example.com/living_room_after.jpg', description: 'Living room cleaned' }
+          ],
+          notes: 'All areas cleaned thoroughly, customer satisfied with results',
+          testMode: true,
+          mockSubcontractor,
+          correlationId: newCorrelationId
+        }
       }
+    ];
 
-      console.log(`${updateType} webhook response:`, data);
-      setLastTestResults(prev => ({ ...prev, [updateType]: data }));
-      
-      toast({
-        title: "Success!",
-        description: `${updateType.replace('_', ' ')} webhook triggered successfully`,
-      });
-    } catch (error) {
-      console.error(`Error sending ${updateType}:`, error);
-      setLastTestResults(prev => ({ ...prev, [updateType]: { error: error.message, success: false } }));
-      
-      toast({
-        title: "Error",
-        description: `Failed to send ${updateType.replace('_', ' ')} webhook`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(null);
+    console.log(`Starting comprehensive subcontractor test sequence (${newCorrelationId}):`, testSequence);
+
+    for (const test of testSequence) {
+      try {
+        console.log(`Step ${test.step}: Sending ${test.name} update...`, test.data);
+        
+        const { data, error } = await supabase.functions.invoke('send-subcontractor-updates', {
+          body: test.data
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        const result = {
+          step: test.step,
+          name: test.name,
+          success: true,
+          data,
+          timestamp: new Date().toISOString()
+        };
+
+        console.log(`Step ${test.step} successful:`, result);
+        setTestResults(prev => [...prev, result]);
+
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+      } catch (error) {
+        console.error(`Step ${test.step} failed:`, error);
+        const result = {
+          step: test.step,
+          name: test.name,
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        };
+        setTestResults(prev => [...prev, result]);
+        break; // Stop on first error
+      }
     }
+
+    setIsLoading(false);
+    
+    const successCount = testResults.filter(r => r.success).length + 1; // +1 for the final result
+    
+    toast({
+      title: successCount === testSequence.length ? "Complete Success!" : "Partial Success",
+      description: `${successCount}/${testSequence.length} webhook updates sent successfully`,
+      variant: successCount === testSequence.length ? "default" : "destructive",
+    });
   };
 
-  const testCheckIn = () => {
-    const testData = {
-      update_type: 'check_in',
-      subcontractor_id: `test_subcontractor_${Date.now()}`,
-      assignment_id: `test_assignment_${Date.now()}`,
-      order_id: `test_order_${Date.now()}`,
-      location: {
-        address: "456 Pine Street, San Francisco, CA 94102",
-        latitude: 37.7749,
-        longitude: -122.4194
-      },
-      message: 'Subcontractor checked in at customer location',
-      photos: [
-        { url: 'https://example.com/photo1.jpg', description: 'Arrival photo' }
-      ],
-      notes: 'Arrived on time, customer greeted at door'
-    };
-    sendUpdateTest('check_in', testData);
-  };
-
-  const testCheckOut = () => {
-    const testData = {
-      update_type: 'check_out',
-      subcontractor_id: `test_subcontractor_${Date.now()}`,
-      assignment_id: `test_assignment_${Date.now()}`,
-      order_id: `test_order_${Date.now()}`,
-      location: {
-        address: "456 Pine Street, San Francisco, CA 94102",
-        latitude: 37.7749,
-        longitude: -122.4194
-      },
-      message: 'Service completed, checking out',
-      photos: [
-        { url: 'https://example.com/after1.jpg', description: 'Kitchen after cleaning' },
-        { url: 'https://example.com/after2.jpg', description: 'Bathroom after cleaning' }
-      ],
-      notes: 'Service completed successfully, customer satisfied'
-    };
-    sendUpdateTest('check_out', testData);
-  };
-
-  const testStatusMessage = () => {
-    const testData = {
-      update_type: 'status_message',
-      subcontractor_id: `test_subcontractor_${Date.now()}`,
-      order_id: `test_order_${Date.now()}`,
-      message: 'Running 15 minutes late due to traffic',
-      estimated_arrival_minutes: 15
-    };
-    sendUpdateTest('status_message', testData);
-  };
-
-  const testAssignmentChange = () => {
-    const testData = {
-      update_type: 'assignment_change',
-      subcontractor_id: `test_subcontractor_${Date.now()}`,
-      assignment_id: `test_assignment_${Date.now()}`,
-      order_id: `test_order_${Date.now()}`,
-      message: 'Assignment status changed to: in_progress',
-      status: 'in_progress',
-      notes: 'Subcontractor accepted the job and is en route'
-    };
-    sendUpdateTest('assignment_change', testData);
-  };
-
-  const renderTestResult = (updateType: string) => {
-    const result = lastTestResults[updateType];
-    if (!result) return null;
+  const renderTestResults = () => {
+    if (testResults.length === 0) return null;
 
     return (
-      <div className="space-y-2 p-3 bg-muted/50 rounded-md">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{updateType.replace('_', ' ')}</span>
-          {result.success !== false ? (
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-              Success
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">Test Sequence Results:</h4>
+          {correlationId && (
+            <Badge variant="outline" className="text-xs">
+              ID: {correlationId.split('_')[1]}
             </Badge>
-          ) : (
-            <Badge variant="destructive">Failed</Badge>
           )}
         </div>
         
-        {result.error && (
-          <p className="text-xs text-red-600">{result.error}</p>
-        )}
-        
-        <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-            View Response
-          </summary>
-          <pre className="mt-1 p-2 bg-background rounded text-xs overflow-auto max-h-24">
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </details>
+        <div className="space-y-2">
+          {testResults.map((result, index) => (
+            <div key={index} className="p-3 bg-muted/50 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono bg-background px-2 py-1 rounded">
+                  Step {result.step}
+                </span>
+                <span className="text-sm font-medium">{result.name}</span>
+                {result.success ? (
+                  <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Success
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">
+                    Failed
+                  </Badge>
+                )}
+              </div>
+              
+              {result.error && (
+                <p className="text-xs text-red-600 mb-2">{result.error}</p>
+              )}
+              
+              <p className="text-xs text-muted-foreground">
+                {new Date(result.timestamp).toLocaleTimeString()}
+              </p>
+              
+              <details className="text-xs mt-2">
+                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  View Response
+                </summary>
+                <pre className="mt-1 p-2 bg-background rounded text-xs overflow-auto max-h-32">
+                  {JSON.stringify(result.data || result.error, null, 2)}
+                </pre>
+              </details>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -190,87 +278,92 @@ export function SubcontractorUpdatesTest() {
           Subcontractor Updates Webhook Test
         </CardTitle>
         <CardDescription>
-          Test real-time subcontractor update webhooks (u6v07y3)
+          Test complete subcontractor workflow with realistic data including names and emails (u6v07y3)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
           <Button
-            onClick={testCheckIn}
-            disabled={isLoading === 'check_in'}
-            variant="outline"
+            onClick={runComprehensiveTest}
+            disabled={isLoading}
+            size="lg"
             className="flex items-center gap-2"
           >
-            {isLoading === 'check_in' && <Loader2 className="h-4 w-4 animate-spin" />}
-            <MapPin className="h-4 w-4" />
-            Test Check-In
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+            {isLoading ? "Running Complete Test Sequence..." : "Run Complete Workflow Test"}
           </Button>
           
-          <Button
-            onClick={testCheckOut}
-            disabled={isLoading === 'check_out'}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {isLoading === 'check_out' && <Loader2 className="h-4 w-4 animate-spin" />}
-            <CheckCircle2 className="h-4 w-4" />
-            Test Check-Out
-          </Button>
-          
-          <Button
-            onClick={testStatusMessage}
-            disabled={isLoading === 'status_message'}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {isLoading === 'status_message' && <Loader2 className="h-4 w-4 animate-spin" />}
-            <MessageSquare className="h-4 w-4" />
-            Test Status Message
-          </Button>
-          
-          <Button
-            onClick={testAssignmentChange}
-            disabled={isLoading === 'assignment_change'}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {isLoading === 'assignment_change' && <Loader2 className="h-4 w-4 animate-spin" />}
-            <Clock className="h-4 w-4" />
-            Test Assignment Change
-          </Button>
+          <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md">
+            <p className="font-medium mb-1">This test simulates a complete subcontractor workflow:</p>
+            <ol className="list-decimal list-inside ml-2 space-y-1">
+              <li>Assignment accepted by subcontractor</li>
+              <li>En route status with ETA</li>
+              <li>Check-in at customer location with photos</li>
+              <li>Service progress update</li>
+              <li>Check-out with completion photos</li>
+            </ol>
+            <p className="mt-2">
+              <strong>Mock Subcontractor:</strong> Sarah Johnson (sarah.johnson@example.com)
+            </p>
+          </div>
         </div>
         
-        {Object.keys(lastTestResults).length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Test Results:</h4>
-            {Object.keys(lastTestResults).map(updateType => renderTestResult(updateType))}
-          </div>
-        )}
+        {renderTestResults()}
 
         <div className="text-xs text-muted-foreground space-y-2">
           <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u6v07y3/</p>
-          <p>This webhook receives real-time updates for:</p>
+          <p>Each webhook payload includes:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
-            <li><strong>Check-in/Check-out:</strong> Location tracking with photos</li>
-            <li><strong>Status Messages:</strong> ETA updates and communication</li>
-            <li><strong>Assignment Changes:</strong> Job status transitions</li>
-            <li><strong>Job Tracking:</strong> Real-time progress updates</li>
+            <li><strong>Subcontractor Details:</strong> Full name, email, phone number</li>
+            <li><strong>Location Data:</strong> GPS coordinates and addresses</li>
+            <li><strong>Photos & Notes:</strong> Visual documentation and messages</li>
+            <li><strong>Timestamps:</strong> Real-time event tracking</li>
+            <li><strong>Order Context:</strong> Customer and service details</li>
           </ul>
         </div>
 
         <details className="text-xs">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-            View Sample Data Structures
+            View Sample Webhook Payload Structure
           </summary>
-          <div className="mt-2 space-y-3">
-            {Object.entries(sampleDataStructures).map(([type, structure]) => (
-              <div key={type}>
-                <p className="font-medium mb-1">{type.replace('_', ' ')}:</p>
-                <pre className="p-2 bg-muted rounded text-xs overflow-auto">
-                  {JSON.stringify(structure, null, 2)}
-                </pre>
-              </div>
-            ))}
+          <div className="mt-2">
+            <pre className="p-2 bg-muted rounded text-xs overflow-auto max-h-48">
+{`{
+  "event_type": "subcontractor_update",
+  "update_type": "check_in",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "subcontractor": {
+    "id": "uuid",
+    "name": "Sarah Johnson",
+    "email": "sarah.johnson@example.com",
+    "phone": "(555) 123-4567"
+  },
+  "order": {
+    "id": "uuid",
+    "customer_name": "John Doe",
+    "service_address": "1234 Main St",
+    "service_date": "2024-01-15",
+    "status": "in_progress"
+  },
+  "location": {
+    "address": "1234 Main Street, SF, CA",
+    "latitude": 37.7749,
+    "longitude": -122.4194
+  },
+  "photos": [
+    {"url": "...", "description": "Arrival photo"}
+  ],
+  "notes": "Customer greeted, starting service",
+  "metadata": {
+    "webhook_version": "1.0",
+    "environment": "production"
+  }
+}`}
+            </pre>
           </div>
         </details>
       </CardContent>
