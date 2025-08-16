@@ -352,7 +352,7 @@ serve(async (req) => {
 
     // Send to Zapier webhook
     try {
-      const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v07y3/', {
+      const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
