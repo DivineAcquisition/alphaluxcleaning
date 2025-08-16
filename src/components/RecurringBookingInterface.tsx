@@ -242,6 +242,7 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetu
         confirmParams: {
           return_url: returnUrl,
         },
+        redirect: 'always',
       });
     } else {
       console.log('Processing PaymentIntent for Pay Now');
@@ -250,6 +251,7 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetu
         confirmParams: {
           return_url: returnUrl,
         },
+        redirect: 'always',
       });
     }
 
@@ -262,8 +264,8 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetu
       });
       setIsLoading(false);
     } else {
-      console.log('Payment confirmed successfully, calling onSuccess');
-      onSuccess();
+      console.log('Payment confirmation initiated. Redirecting via Stripe to:', returnUrl);
+      // Stripe will redirect to return_url; do not navigate programmatically here
     }
   };
 
