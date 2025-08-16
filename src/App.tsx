@@ -13,6 +13,7 @@ import ServiceDetails from '@/pages/ServiceDetails';
 import ScheduleService from '@/pages/ScheduleService';
 import BookingConfirmation from '@/pages/BookingConfirmation';
 import AdminBookingPreview from '@/pages/AdminBookingPreview';
+import GuestBooking from '@/pages/GuestBooking';
 import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
 import OrderStatus from '@/pages/OrderStatus';
@@ -233,6 +234,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/test-booking" element={<TestBooking />} />
+                <Route path="/guest-booking" element={<GuestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
                 

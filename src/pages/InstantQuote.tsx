@@ -88,7 +88,7 @@ const InstantQuote = () => {
   const proceedToBooking = () => {
     if (!quote) return;
     
-    // Store quote data and redirect to booking
+    // Store quote data and redirect to guest booking
     const quoteData = {
       ...formData,
       quote,
@@ -96,7 +96,7 @@ const InstantQuote = () => {
     };
     
     localStorage.setItem('instant_quote', JSON.stringify(quoteData));
-    window.location.href = '/schedule-service?quote_id=' + Date.now();
+    window.location.href = '/guest-booking';
   };
 
   return (
