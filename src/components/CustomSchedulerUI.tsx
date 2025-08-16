@@ -8,6 +8,43 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+interface ComprehensiveBookingData {
+  bookingStep: string;
+  serviceDate: string;
+  serviceTime: string;
+  timestamp: string;
+  source: string;
+  orderId: string;
+  nextDayUpsell?: boolean;
+  nextDayFee?: number;
+  homeSize?: string;
+  frequency?: string;
+  serviceType?: string;
+  totalPrice?: number;
+  basePrice?: number;
+  addOns?: string[];
+  customerInfo?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+  serviceAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  propertyDetails?: {
+    dwellingType?: string;
+    flooringTypes?: string[];
+    primaryFlooringType?: string;
+  };
+  instructions?: any;
+  orderStatus?: string;
+  paymentStatus?: string;
+  createdAt?: string;
+}
+
 interface CustomSchedulerUIProps {
   orderId?: string;
   sessionId?: string;
@@ -193,40 +230,98 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
         // Continue with booking even if GHL fails
       }
 
-      // Send completed booking data to Zapier webhook
+      // Send comprehensive booking data to Zapier webhook
       try {
         const zapierKey = `zapier-sent-${orderId || sessionId}`;
         const alreadySent = localStorage.getItem(zapierKey);
         
         if (!alreadySent) {
-          console.log('Sending completed booking data to Zapier webhook...');
+          console.log('Fetching comprehensive order details for Zapier webhook...');
           
-          const { error: webhookError } = await supabase.functions.invoke('send-booking-webhook', {
-            body: {
-              bookingStep: 'confirmation',
-              serviceType: data.service_details?.service_type || 'General Cleaning',
-              serviceDate: selectedDate,
-              serviceTime: selectedTime,
-              customerInfo: {
-                name: data.customer_name,
-                email: data.customer_email,
-                phone: data.customer_phone,
-                address: data.service_details?.serviceAddress || data.service_details?.address || 'Address not provided'
-              },
-              totalPrice: (data.amount || 0) / 100,
-              timestamp: new Date().toISOString(),
-              source: 'bay_area_cleaning_pros_scheduling',
-              webhookUrl: 'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/'
-            }
-          });
+          // Fetch comprehensive order details
+          let comprehensiveBookingData: ComprehensiveBookingData = {
+            bookingStep: 'confirmation',
+            serviceDate: selectedDate,
+            serviceTime: selectedTime,
+            timestamp: new Date().toISOString(),
+            source: 'bay_area_cleaning_pros_scheduling',
+            orderId: orderId || sessionId || 'guest_booking'
+          };
 
-          if (webhookError) {
-            console.error('Zapier webhook error:', webhookError);
-            toast.error('Scheduling completed but external notification failed');
-          } else {
+          // Get complete order data if available
+          if (orderId || sessionId) {
+            try {
+              const { data: orderResponse } = await supabase.functions.invoke('get-order-details', {
+                body: { session_id: sessionId, order_id: orderId }
+              });
+              
+              if (orderResponse?.order) {
+                const order = orderResponse.order;
+                comprehensiveBookingData = {
+                  ...comprehensiveBookingData,
+                  // Initial service selection data from home page
+                  homeSize: order.service_details?.homeSize || order.home_size,
+                  frequency: order.service_details?.frequency || order.frequency,
+                  serviceType: order.service_details?.serviceType || 'General Cleaning',
+                  totalPrice: (order.amount || 0) / 100,
+                  basePrice: order.service_details?.basePrice,
+                  addOns: order.service_details?.addOns || [],
+                  
+                  // Customer information
+                  customerInfo: {
+                    name: order.customer_name,
+                    email: order.customer_email,
+                    phone: order.customer_phone
+                  },
+                  
+                  // Service address from service details page
+                  serviceAddress: order.service_details?.serviceAddress || {
+                    street: order.service_details?.address?.street,
+                    city: order.service_details?.address?.city,
+                    state: order.service_details?.address?.state,
+                    zipCode: order.service_details?.address?.zipCode
+                  },
+                  
+                  // Property details from service details page
+                  propertyDetails: order.service_details?.property || {
+                    dwellingType: order.service_details?.dwellingType,
+                    flooringTypes: order.service_details?.flooringTypes,
+                    primaryFlooringType: order.service_details?.primaryFlooringType
+                  },
+                  
+                  // Special instructions
+                  instructions: order.service_details?.instructions,
+                  
+                  // Order metadata
+                  orderStatus: order.status,
+                  paymentStatus: order.payment_status,
+                  createdAt: order.created_at,
+                  nextDayUpsell,
+                  nextDayFee: nextDayUpsell ? 50 : 0
+                };
+              }
+            } catch (fetchError) {
+              console.error('Error fetching order details for webhook:', fetchError);
+            }
+          }
+
+          console.log('Sending comprehensive booking data to Zapier:', comprehensiveBookingData);
+          
+          try {
+            const response = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              mode: 'no-cors',
+              body: JSON.stringify(comprehensiveBookingData),
+            });
             console.log('Zapier webhook sent successfully');
             localStorage.setItem(zapierKey, 'sent');
             toast.success('Booking completed and notifications sent!');
+          } catch (webhookError) {
+            console.error('Direct Zapier webhook failed:', webhookError);
+            toast.success('Your scheduling request has been submitted!');
           }
         } else {
           toast.success('Your scheduling request has been submitted!');
