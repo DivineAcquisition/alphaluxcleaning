@@ -122,7 +122,22 @@ const SubcontractorWelcomeEmail = ({
 );
 
 interface CompleteOnboardingRequest {
-  applicationId: string;
+  token?: string;
+  selected_tier: string;
+  profile_data: {
+    profile_image_url: string;
+    biography: string;
+  };
+  banking_data: {
+    legal_name: string;
+    date_of_birth: string;
+    ssn: string;
+    account_number: string;
+    routing_number: string;
+    background_check_consent: boolean;
+    background_check_copy_consent: boolean;
+  };
+  application_data: any;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -140,13 +155,29 @@ const handler = async (req: Request): Promise<Response> => {
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    const { applicationId }: CompleteOnboardingRequest = await req.json();
+    const { token, selected_tier, profile_data, banking_data, application_data }: CompleteOnboardingRequest = await req.json();
 
-    if (!applicationId) {
+    if (!selected_tier || !application_data) {
       return new Response(
-        JSON.stringify({ error: "Application ID is required" }),
+        JSON.stringify({ error: "Missing required onboarding data" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    let applicationId = application_data.id;
+
+    // If token provided, validate it
+    if (token) {
+      const { data: tokenValidation, error: tokenError } = await supabaseAdmin
+        .rpc('validate_onboarding_token', { p_token: token });
+
+      if (tokenError || !tokenValidation?.valid) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired onboarding token" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      applicationId = tokenValidation.application_data.id;
     }
 
     console.log(`Starting onboarding completion for application: ${applicationId}`);
@@ -192,22 +223,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Created auth user: ${authUser.user.id}`);
 
-    // 4. Get Tier 2 (Professional) configuration
+    // 4. Get tier configuration based on selected tier
+    const tierMapping = {
+      "60_40": { level: 1, name: "Basic" },
+      "50_50": { level: 2, name: "Standard" }, 
+      "40_60": { level: 2, name: "Professional" },
+      "30_70": { level: 3, name: "Elite" }
+    };
+
+    const tierInfo = tierMapping[selected_tier as keyof typeof tierMapping] || { level: 2, name: "Professional" };
+    
     const { data: tierConfig, error: tierError } = await supabaseAdmin
       .from('tier_system_config')
       .select('*')
-      .eq('tier_level', 2)
+      .eq('tier_level', tierInfo.level)
       .single();
 
     if (tierError || !tierConfig) {
       console.error('Failed to get tier config:', tierError);
-      // Fallback to default values
-      tierConfig = {
-        tier_level: 2,
-        tier_name: 'Professional',
-        hourly_rate: 18.00,
-        monthly_fee: 50.00
+      // Fallback to default values based on tier
+      const fallbackConfig = {
+        "60_40": { tier_level: 1, tier_name: "Basic", hourly_rate: 16.00, monthly_fee: 0 },
+        "50_50": { tier_level: 2, tier_name: "Standard", hourly_rate: 18.00, monthly_fee: 20.00 },
+        "40_60": { tier_level: 2, tier_name: "Professional", hourly_rate: 18.00, monthly_fee: 50.00 },
+        "30_70": { tier_level: 3, tier_name: "Elite", hourly_rate: 21.00, monthly_fee: 100.00 }
       };
+      tierConfig = fallbackConfig[selected_tier as keyof typeof fallbackConfig] || fallbackConfig["40_60"];
     }
 
     // 5. Create subcontractor record
@@ -311,18 +352,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Onboarding completed successfully for: ${application.full_name}`);
 
+    // Create response based on tier selection
+    const response = {
+      success: true,
+      message: "Subcontractor onboarding completed successfully",
+      subcontractor: {
+        id: subcontractor.id,
+        full_name: subcontractor.full_name,
+        email: subcontractor.email,
+        tier_level: subcontractor.tier_level,
+        hourly_rate: subcontractor.hourly_rate
+      },
+      show_welcome_popup: true,
+      redirect_to_dashboard: selected_tier === "60_40"
+    };
+
+    // For free tier, provide dashboard redirect
+    if (selected_tier === "60_40") {
+      response.redirect_to_dashboard = true;
+    } else {
+      // For paid tiers, we'd create Stripe checkout here
+      // For now, just redirect to dashboard
+      response.redirect_to_dashboard = true;
+    }
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Subcontractor onboarding completed successfully",
-        subcontractor: {
-          id: subcontractor.id,
-          full_name: subcontractor.full_name,
-          email: subcontractor.email,
-          tier_level: subcontractor.tier_level,
-          hourly_rate: subcontractor.hourly_rate
-        }
-      }),
+      JSON.stringify(response),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

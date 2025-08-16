@@ -13,6 +13,7 @@ import ContractorAgreement from "@/components/ContractorAgreement";
 import FileUpload from "@/components/FileUpload";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { applicationToasts } from "@/lib/toast-messages";
+import WelcomePopup from "@/components/WelcomePopup";
 
 const SUBSCRIPTION_TIERS = {
   "60_40": {
@@ -53,6 +54,8 @@ export default function SubcontractorOnboardingV2() {
   const [agreedToContract, setAgreedToContract] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [applicantData, setApplicantData] = useState<any>(null);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [completedSubcontractor, setCompletedSubcontractor] = useState<any>(null);
 
   // Phase 2 - Profile Setup
   const [profileData, setProfileData] = useState({
@@ -218,26 +221,17 @@ export default function SubcontractorOnboardingV2() {
 
       if (error) throw error;
 
-      if (selectedTier === "60_40") {
-        // Free tier - auto-login user and redirect to dashboard
+      // Show welcome popup with training and supplies info
+      if (data.show_welcome_popup) {
+        setCompletedSubcontractor(data.subcontractor);
+        setShowWelcomePopup(true);
         applicationToasts.onboarding.welcomeSuccess();
-        
-        if (data.auto_login_url) {
-          // Use the magic link to auto-login
-          window.location.href = data.auto_login_url;
-        } else if (data.redirect_to_login) {
-          // Fallback to login page
-          navigate("/auth");
-        } else {
-          // Direct redirect to dashboard
-          navigate("/subcontractor-dashboard");
-        }
-      } else {
-        // Paid tier - redirect to Stripe checkout
-        applicationToasts.onboarding.paymentProcessing();
-        if (data.url) {
-          window.location.href = data.url;
-        }
+      } else if (data.redirect_to_dashboard) {
+        // Direct redirect without popup
+        navigate("/subcontractor-dashboard");
+      } else if (data.url) {
+        // Redirect to Stripe checkout for paid tiers
+        window.location.href = data.url;
       }
     } catch (error: any) {
       console.error("Onboarding completion error:", error);
@@ -558,6 +552,17 @@ export default function SubcontractorOnboardingV2() {
             </Card>
           </div>
         )}
+
+        {/* Welcome Popup */}
+        <WelcomePopup
+          isOpen={showWelcomePopup}
+          onClose={() => setShowWelcomePopup(false)}
+          subcontractorName={completedSubcontractor?.full_name || applicantData?.full_name || ""}
+          onProceedToDashboard={() => {
+            setShowWelcomePopup(false);
+            navigate("/subcontractor-dashboard");
+          }}
+        />
       </div>
     </div>
   );

@@ -39,12 +39,23 @@ export const SubcontractorWelcomeEmail = ({
       <Text style={text}><strong>Job Opportunity:</strong> {jobs}</Text>
     </Section>
 
+    <Section style={trainingSection}>
+      <Heading style={subHeading}>📚 Training & Supplies Information</Heading>
+      <Text style={text}>
+        <strong>Training Access:</strong> Check your email for training materials and video access. Complete all required training modules before your first job assignment.
+      </Text>
+      <Text style={text}>
+        <strong>Uniform & Supplies:</strong> Your branded shirts and cleaning supplies will be shipped to you within 2-7 business days. You'll receive tracking information via email.
+      </Text>
+    </Section>
+
     <Text style={text}>
       <strong>What's Next?</strong><br />
-      1. Browse Available Jobs - Check your dashboard for cleaning opportunities in your area<br />
-      2. Accept & Complete Jobs - Start earning by completing high-quality cleaning services<br />
-      3. Maintain Excellence - Keep service quality high to maintain your position in our network<br />
-      4. Track Performance - Monitor your earnings and performance metrics through the dashboard
+      1. Check Your Email - Look for training materials and complete all required modules<br />
+      2. Wait for Supplies - Your uniform and cleaning supplies are on the way (2-7 business days)<br />
+      3. Browse Available Jobs - Check your dashboard for cleaning opportunities in your area<br />
+      4. Accept & Complete Jobs - Start earning by completing high-quality cleaning services<br />
+      5. Track Performance - Monitor your earnings and performance metrics through the dashboard
     </Text>
 
     <Section style={noticeSection}>
@@ -95,6 +106,13 @@ const text = {
 
 const planSection = {
   backgroundColor: '#f0fdf4',
+  padding: '20px',
+  borderRadius: '6px',
+  margin: '20px 0',
+}
+
+const trainingSection = {
+  backgroundColor: '#eff6ff',
   padding: '20px',
   borderRadius: '6px',
   margin: '20px 0',
