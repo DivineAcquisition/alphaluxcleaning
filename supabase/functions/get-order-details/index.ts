@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id, order_id } = await req.json();
+    const { session_id, order_id, code, email } = await req.json();
 
-    if (!session_id && !order_id) {
-      return new Response(JSON.stringify({ error: "Missing session_id or order_id" }), {
+    if (!session_id && !order_id && !code && !email) {
+      return new Response(JSON.stringify({ error: "Missing session_id, order_id, code, or email" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
@@ -27,20 +27,72 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    let query = supabase.from("orders").select(
-      "id, stripe_session_id, amount, currency, status, created_at, scheduled_date, scheduled_time, cleaning_type, frequency, square_footage, customer_name, customer_email, customer_phone, service_details"
-    ).single();
+    const selectFields = "id, stripe_session_id, amount, currency, status, created_at, scheduled_date, scheduled_time, cleaning_type, frequency, square_footage, customer_name, customer_email, customer_phone, service_details";
 
-    if (session_id) {
-      query = query.eq("stripe_session_id", session_id);
-    } else if (order_id) {
-      query = query.eq("id", order_id);
+    let data = null;
+    let error = null;
+
+    // Priority search: exact UUID -> stripe session -> partial ID -> email
+    if (order_id) {
+      // Try exact UUID match first
+      const { data: exactMatch, error: exactError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .eq("id", order_id)
+        .maybeSingle();
+      
+      if (exactMatch) {
+        data = exactMatch;
+      } else if (!exactError?.message?.includes('invalid input syntax')) {
+        // Try partial ID match (last 8+ characters)
+        const { data: partialMatch, error: partialError } = await supabase
+          .from("orders")
+          .select(selectFields)
+          .ilike("id", `%${order_id}`)
+          .maybeSingle();
+        
+        if (partialMatch) {
+          data = partialMatch;
+        } else {
+          error = partialError || exactError;
+        }
+      } else {
+        error = exactError;
+      }
+    } else if (session_id) {
+      const { data: sessionMatch, error: sessionError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .eq("stripe_session_id", session_id)
+        .maybeSingle();
+      
+      data = sessionMatch;
+      error = sessionError;
+    } else if (code) {
+      // Search by partial order ID or session ID
+      const { data: codeMatch, error: codeError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .or(`id.ilike.%${code}%,stripe_session_id.ilike.%${code}%`)
+        .maybeSingle();
+      
+      data = codeMatch;
+      error = codeError;
+    } else if (email) {
+      // Search by customer email
+      const { data: emailMatch, error: emailError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .ilike("customer_email", `%${email}%`)
+        .order("created_at", { ascending: false })
+        .maybeSingle();
+      
+      data = emailMatch;
+      error = emailError;
     }
 
-    const { data, error } = await query;
-
     if (error || !data) {
-      return new Response(JSON.stringify({ error: error?.message || "Order not found" }), {
+      return new Response(JSON.stringify({ error: error?.message || "Order not found. Please check your Order ID, Session ID, or email address." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       });

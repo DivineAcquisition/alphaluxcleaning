@@ -238,11 +238,11 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
 
       toast.success('Time slot selected successfully!');
       
-      // Navigate to service details page
+      // Navigate to order status page
       if (sessionId) {
-        navigate(`/service-details?session_id=${sessionId}`);
+        navigate(`/order-status?session_id=${sessionId}`);
       } else {
-        navigate('/');
+        navigate('/order-status');
       }
 
     } catch (error) {

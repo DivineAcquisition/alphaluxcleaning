@@ -378,16 +378,16 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       // Create Google Calendar event
       await createGoogleCalendarEvent(selectedDate, selectedTime);
       
-      // Call completion callback instead of navigating
+      // Call completion callback or navigate to order status
       if (onComplete) {
         onComplete({
           scheduled_date: selectedDate,
           scheduled_time: selectedTime
         });
       } else if (sessionId) {
-        navigate(`/service-details?session_id=${sessionId}`);
+        navigate(`/order-status?session_id=${sessionId}`);
       } else {
-        navigate('/');
+        navigate('/order-status');
       }
     } catch (error) {
       console.error('Scheduling error:', error);

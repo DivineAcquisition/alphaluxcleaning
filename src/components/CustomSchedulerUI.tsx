@@ -265,9 +265,50 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
         // Continue with booking even if GHL fails
       }
 
-      toast.success('Your scheduling request has been submitted!');
-      
-      // Navigate to order status page instead of calling onComplete
+      // Send completed booking data to Zapier webhook
+      try {
+        const zapierKey = `zapier-sent-${orderId || sessionId}`;
+        const alreadySent = localStorage.getItem(zapierKey);
+        
+        if (!alreadySent) {
+          console.log('Sending completed booking data to Zapier webhook...');
+          
+          const { error: webhookError } = await supabase.functions.invoke('send-booking-webhook', {
+            body: {
+              bookingStep: 'confirmation',
+              serviceType: data.service_details?.service_type || 'General Cleaning',
+              serviceDate: selectedDate,
+              serviceTime: selectedTime,
+              customerInfo: {
+                name: data.customer_name,
+                email: data.customer_email,
+                phone: data.customer_phone,
+                address: data.service_details?.serviceAddress || data.service_details?.address || 'Address not provided'
+              },
+              totalPrice: (data.amount || 0) / 100,
+              timestamp: new Date().toISOString(),
+              source: 'bay_area_cleaning_pros_scheduling',
+              webhookUrl: 'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/'
+            }
+          });
+
+          if (webhookError) {
+            console.error('Zapier webhook error:', webhookError);
+            toast.error('Scheduling completed but external notification failed');
+          } else {
+            console.log('Zapier webhook sent successfully');
+            localStorage.setItem(zapierKey, 'sent');
+            toast.success('Booking completed and notifications sent!');
+          }
+        } else {
+          toast.success('Your scheduling request has been submitted!');
+        }
+      } catch (webhookError) {
+        console.error('Zapier webhook failed:', webhookError);
+        toast.success('Your scheduling request has been submitted!');
+      }
+
+      // Navigate to order status page
       const currentOrderId = orderId || localStorage.getItem('current_order_id');
       if (currentOrderId) {
         window.location.href = `/order-status?order_id=${currentOrderId}`;

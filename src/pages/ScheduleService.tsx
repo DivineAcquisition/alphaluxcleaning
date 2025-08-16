@@ -130,50 +130,26 @@ const ScheduleService = () => {
   };
 
   const fetchOrderDetails = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
       const { data, error } = await supabase.functions.invoke('get-order-details', {
         body: { session_id: sessionId, order_id: orderId }
       });
 
-      if (error || !data?.order) {
-        toast.error("Order not found");
-        const hostname = window.location.hostname;
-        if (hostname.startsWith('portal.')) {
-          navigate('/customer-portal-dashboard');
-        } else {
-          navigate('/instant-quote');
-        }
-        return;
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch order details');
       }
 
-      const fetched = data.order;
-
-      // Check if service details are complete
-      const serviceDetails = fetched.service_details as any;
-      const hasAddress = serviceDetails?.serviceAddress?.street || serviceDetails?.address?.street;
-      
-      if (!hasAddress) {
-        toast.error("Please complete service details first");
-        if (sessionId) {
-          navigate(`/service-details?session_id=${sessionId}`);
-        } else {
-          navigate(`/service-details?order_id=${orderId}`);
-        }
-        return;
+      if (!data?.order) {
+        throw new Error('Order not found. Please check your Session ID or Order ID.');
       }
 
-      setOrderDetails(fetched);
+      const order = data.order;
+      setOrderDetails(order);
     } catch (error) {
-      console.error("Error fetching order details:", error);
-      toast.error("Failed to load order details");
-      const hostname = window.location.hostname;
-      if (hostname.startsWith('portal.')) {
-        navigate('/customer-portal-dashboard');
-      } else {
-        navigate('/instant-quote');
-      }
+      console.error('Error fetching order details:', error);
+      toast.error(error.message || 'Failed to load order details');
+      // Don't auto-redirect, show error and let user try lookup
     } finally {
       setLoading(false);
     }
@@ -243,9 +219,9 @@ const ScheduleService = () => {
                   <div>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Package className="h-5 w-5" />
-                      Current Order Status
+                      Order Summary
                     </CardTitle>
-                    <CardDescription>Order #{orderDetails.id?.slice(-8) || 'Preview'}</CardDescription>
+                    <CardDescription>Order #{orderDetails.id?.slice(-8) || 'N/A'}</CardDescription>
                   </div>
                   <Badge className={getStatusColor(orderDetails.status || 'pending')}>
                     {getStatusIcon(orderDetails.status || 'pending')}
@@ -256,15 +232,33 @@ const ScheduleService = () => {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-1">
-                    <p><strong>Service Type:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}</p>
-                    <p><strong>Frequency:</strong> {orderDetails.frequency}</p>
-                    <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
+                    <p><strong>Service Type:</strong> {orderDetails.service_details?.service_type || orderDetails.cleaning_type?.replace(/_/g, ' ') || 'General Cleaning'}</p>
+                    <p><strong>Frequency:</strong> {orderDetails.frequency || 'One-time'}</p>
+                    {orderDetails.square_footage && (
+                      <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
+                    )}
+                    {orderDetails.amount && (
+                      <p><strong>Amount:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
+                    )}
                   </div>
                   <div className="space-y-1">
-                    <p><strong>Customer:</strong> {orderDetails.customer_name}</p>
-                    <p><strong>Email:</strong> {orderDetails.customer_email}</p>
-                    {orderDetails.service_details?.serviceAddress && (
-                      <p><strong>Address:</strong> {orderDetails.service_details.serviceAddress.street}, {orderDetails.service_details.serviceAddress.city}</p>
+                    <p><strong>Customer:</strong> {orderDetails.customer_name || 'N/A'}</p>
+                    <p><strong>Email:</strong> {orderDetails.customer_email || 'N/A'}</p>
+                    {orderDetails.customer_phone && (
+                      <p><strong>Phone:</strong> {orderDetails.customer_phone}</p>
+                    )}
+                    <p><strong>Address:</strong> {
+                      orderDetails.service_details?.serviceAddress ? 
+                        `${orderDetails.service_details.serviceAddress.street || ''}, ${orderDetails.service_details.serviceAddress.city || ''}`.trim().replace(/^,|,$/, '') :
+                      orderDetails.service_details?.address || 
+                      'Address not provided'
+                    }</p>
+                    {(orderDetails.scheduled_date || orderDetails.scheduled_time) && (
+                      <p><strong>Scheduled:</strong> {
+                        orderDetails.scheduled_date ? 
+                          new Date(orderDetails.scheduled_date).toLocaleDateString() : 
+                          'Not scheduled'
+                      } {orderDetails.scheduled_time ? `at ${orderDetails.scheduled_time}` : ''}</p>
                     )}
                   </div>
                 </div>
