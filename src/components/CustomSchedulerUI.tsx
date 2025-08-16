@@ -42,12 +42,12 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false }
   ];
 
-  // Generate next 14 days (excluding Sundays)
+  // Generate next 14 days starting 5 days out (excluding Sundays)
   const generateDates = () => {
     const dates = [];
     const today = new Date();
     
-    for (let i = 1; i <= 21; i++) {
+    for (let i = 5; i <= 26; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       
@@ -58,7 +58,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
           month: date.toLocaleDateString('en-US', { month: 'short' }),
           weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
           isToday: false,
-          isTomorrow: i === 1
+          isTomorrow: false
         });
       }
       
@@ -68,90 +68,20 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     return dates;
   };
 
+  // Temporarily disabled Google Calendar integration for faster loading
   const checkDateAvailability = async (date: string, isPollingUpdate = false) => {
-    if (!date || (availabilityData[date] && !isPollingUpdate)) return;
+    if (!date) return;
     
-    if (!isPollingUpdate) setIsCheckingAvailability(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('get-live-availability', {
-        body: { 
-          date,
-          slot_duration: 120, // 2 hours
-          working_hours: {
-            start: '08:00',
-            end: '18:00'
-          }
-        }
-      });
-      
-      if (error) {
-        console.error('Error checking availability:', error);
-        setConnectionStatus('error');
-        // Default to all available on error
-        const timeSlotValues = timeSlots.map(slot => slot.value);
-        const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
-          acc[timeValue] = true;
-          return acc;
-        }, {} as {[key: string]: boolean});
-        
-        setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
-        
-        if (!isPollingUpdate) {
-          toast.error('Failed to check calendar availability. Showing all slots as available.');
-        }
-      } else {
-        const availableSlots = data?.available_slots || [];
-        
-        // Update connection status
-        if (data?.status === 'google_calendar') {
-          setConnectionStatus('connected');
-        } else if (data?.status === 'mock_data') {
-          setConnectionStatus('disconnected');
-        } else {
-          setConnectionStatus('error');
-        }
-        
-        // Convert 24-hour API format to 12-hour display format
-        const availabilityMap = timeSlots.reduce((acc: {[key: string]: boolean}, slot) => {
-          // Extract hour from display format (e.g., "9:00 AM" -> "09:00")
-          const displayTime = slot.value;
-          const [time, period] = displayTime.split(' ');
-          const [hour, minute] = time.split(':');
-          let hour24 = parseInt(hour);
-          if (period === 'PM' && hour24 !== 12) hour24 += 12;
-          if (period === 'AM' && hour24 === 12) hour24 = 0;
-          const time24 = `${hour24.toString().padStart(2, '0')}:${minute}`;
-          
-          // Check if this time slot is available
-          const isAvailable = availableSlots.some((apiSlot: any) => {
-            return apiSlot.start === time24 && apiSlot.available;
-          });
-          
-          acc[slot.value] = isAvailable;
-          return acc;
-        }, {});
-        
-        setAvailabilityData(prev => ({ ...prev, [date]: availabilityMap }));
-        setLastUpdated(new Date());
-      }
-    } catch (error) {
-      console.error('Error checking date availability:', error);
-      setConnectionStatus('error');
-      // Default to all available on error
-      const timeSlotValues = timeSlots.map(slot => slot.value);
-      const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
-        acc[timeValue] = true;
-        return acc;
-      }, {} as {[key: string]: boolean});
-      
-      setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
-      
-      if (!isPollingUpdate) {
-        toast.error('Failed to connect to calendar. Showing all slots as available.');
-      }
-    } finally {
-      if (!isPollingUpdate) setIsCheckingAvailability(false);
-    }
+    // Set all time slots as available by default
+    const timeSlotValues = timeSlots.map(slot => slot.value);
+    const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
+      acc[timeValue] = true;
+      return acc;
+    }, {} as {[key: string]: boolean});
+    
+    setAvailabilityData(prev => ({ ...prev, [date]: defaultAvailability }));
+    setConnectionStatus('disconnected');
+    setLastUpdated(new Date());
   };
 
   useEffect(() => {
@@ -160,13 +90,11 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     }
   }, [selectedDate, nextDayUpsell]);
 
+  // Disable next day upsell since we start 5 days out
   useEffect(() => {
     if (nextDayUpsell) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowISO = tomorrow.toISOString().split('T')[0];
-      setSelectedDate(tomorrowISO);
-      checkDateAvailability(tomorrowISO);
+      setNextDayUpsell(false);
+      toast.info('Priority booking is available within 5 days from your selected date');
     }
   }, [nextDayUpsell]);
 
@@ -373,46 +301,28 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
         )}
       </div>
 
-      {/* Next Day Upsell */}
-      <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+      {/* Priority Booking Notice */}
+      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <Zap className="h-8 w-8 text-orange-500 mt-1" />
+            <Calendar className="h-8 w-8 text-blue-500 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-bold text-gray-800 mb-2">
-                Need Service Tomorrow?
-                <Badge variant="secondary" className="ml-2 bg-orange-100 text-orange-700">
-                  +$50 Rush Fee
-                </Badge>
+                Booking Window: 5+ Days in Advance
               </h3>
-              <p className="text-gray-600 mb-4">
-                Priority scheduling available for tomorrow with an additional rush fee.
+              <p className="text-gray-600 mb-2">
+                We require a minimum of 5 days advance notice to ensure the best service quality and cleaner availability.
               </p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="nextDayUpsell"
-                  checked={nextDayUpsell}
-                  onChange={(e) => {
-                    setNextDayUpsell(e.target.checked);
-                    if (!e.target.checked) {
-                      setSelectedTime('');
-                      setSelectedDate('');
-                    }
-                  }}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <label htmlFor="nextDayUpsell" className="text-sm font-semibold text-gray-800 cursor-pointer">
-                  Yes, I want next day service (+$50)
-                </label>
-              </div>
+              <p className="text-sm text-gray-500">
+                For urgent cleaning needs, please contact us directly at (510) 390-7673
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Date Selection */}
-      {!nextDayUpsell && (
+      {(
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -435,12 +345,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
                 >
                   <span className="text-xs font-medium">{date.weekday}</span>
                   <span className="text-lg font-bold">{date.day}</span>
-                  <span className="text-xs">{date.month}</span>
-                  {date.isTomorrow && (
-                    <Badge variant="secondary" className="text-xs mt-1">
-                      Tomorrow
-                    </Badge>
-                  )}
+                   <span className="text-xs">{date.month}</span>
                 </Button>
               ))}
             </div>
@@ -449,7 +354,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
       )}
 
       {/* Time Selection */}
-      {(selectedDate || nextDayUpsell) && (
+      {selectedDate && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -51,12 +51,12 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
   );
   const [nextDayBooking, setNextDayBooking] = useState(false);
 
-  // Generate available dates (next 21 days, excluding Sundays)
+  // Generate available dates starting 5 days out (next 21 days, excluding Sundays)
   const generateAvailableDates = () => {
     const dates = [];
     const today = new Date();
     
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 5; i <= 35; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       

@@ -53,60 +53,23 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
     { value: '4:00 PM', label: '4:00 PM - 6:00 PM', popular: false }
   ];
 
-  // Check availability for selected date
+  // Temporarily disabled Google Calendar integration for faster loading
   const checkDateAvailability = async (date: string) => {
-    if (!date || availabilityData[date]) return; // Don't check if already have data
+    if (!date) return;
     
-    setIsCheckingAvailability(true);
-    try {
-      const timeSlotValues = timeSlots.map(slot => slot.value);
-      const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
-        body: { date, timeSlots: timeSlotValues }
-      });
-      
-      if (error) {
-        console.error('Error checking availability:', error);
-        // Default all slots to available if check fails
-        const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
-          acc[timeValue] = true;
-          return acc;
-        }, {} as {[key: string]: boolean});
-        
-        setAvailabilityData(prev => ({
-          ...prev,
-          [date]: defaultAvailability
-        }));
-      } else {
-        const availability = data?.availability || [];
-        const availabilityMap = availability.reduce((acc: {[key: string]: boolean}, slot: any) => {
-          acc[slot.time] = slot.available;
-          return acc;
-        }, {});
-        
-        setAvailabilityData(prev => ({
-          ...prev,
-          [date]: availabilityMap
-        }));
-        
-        // Set calendar source
-        setCalendarSource(data?.source || 'unknown');
-      }
-    } catch (error) {
-      console.error('Error checking date availability:', error);
-      // Default all slots to available if check fails
-      const timeSlotValues = timeSlots.map(slot => slot.value);
-      const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
-        acc[timeValue] = true;
-        return acc;
-      }, {} as {[key: string]: boolean});
-      
-      setAvailabilityData(prev => ({
-        ...prev,
-        [date]: defaultAvailability
-      }));
-    } finally {
-      setIsCheckingAvailability(false);
-    }
+    // Set all time slots as available by default
+    const timeSlotValues = timeSlots.map(slot => slot.value);
+    const defaultAvailability = timeSlotValues.reduce((acc, timeValue) => {
+      acc[timeValue] = true;
+      return acc;
+    }, {} as {[key: string]: boolean});
+    
+    setAvailabilityData(prev => ({
+      ...prev,
+      [date]: defaultAvailability
+    }));
+    
+    setCalendarSource('mock');
   };
 
   // Check next day availability
@@ -253,12 +216,12 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
     }
   };
 
-  // Generate date options (next 30 days, excluding Sundays)
+  // Generate date options starting 5 days out (excluding Sundays)
   const generateDateOptions = () => {
     const dates = [];
     const today = new Date();
     
-    for (let i = 2; i <= 30; i++) { // Start from day 2 since next day is handled separately
+    for (let i = 5; i <= 35; i++) { // Start from day 5
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       
