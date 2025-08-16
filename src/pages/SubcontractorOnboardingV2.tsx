@@ -46,7 +46,7 @@ export default function SubcontractorOnboardingV2() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [currentPhase, setCurrentPhase] = useState(1);
-  const [selectedTier, setSelectedTier] = useState<string>("");
+  const [selectedTier, setSelectedTier] = useState<string>("tier_1"); // All new hires start at Standard
   const [agreedToContract, setAgreedToContract] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [applicantData, setApplicantData] = useState<any>(null);
@@ -140,8 +140,8 @@ export default function SubcontractorOnboardingV2() {
     }
   };
 
-  const handleTierSelection = (tier: string) => {
-    setSelectedTier(tier);
+  const handleTierSelection = () => {
+    // All new hires start at Standard tier, proceed to profile setup
     setCurrentPhase(2);
   };
 
@@ -270,8 +270,8 @@ export default function SubcontractorOnboardingV2() {
           steps={[
             { 
               id: 1, 
-              title: "Plan & Account", 
-              description: "Choose your revenue share", 
+              title: "Tier Overview", 
+              description: "Your starting position", 
               status: currentPhase > 1 ? 'completed' : currentPhase === 1 ? 'current' : 'upcoming' 
             },
             { 
@@ -291,52 +291,106 @@ export default function SubcontractorOnboardingV2() {
           className="my-8"
         />
 
-        {/* Phase 1: Plan Selection */}
+        {/* Phase 1: Tier Overview */}
         {currentPhase === 1 && (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Choose Your Hourly Rate Tier</h2>
-              <p className="text-muted-foreground">Your tier determines your hourly rate and monthly fee. Advance through tiers as you complete jobs and earn reviews.</p>
+              <h2 className="text-2xl font-bold mb-2">Your Performance-Based Tier System</h2>
+              <p className="text-muted-foreground">All new hires start at Standard tier. Advance through tiers as you complete jobs and earn excellent reviews.</p>
             </div>
             
-            <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {Object.entries(SUBSCRIPTION_TIERS).map(([tier, info]) => (
-                <Card 
-                  key={tier} 
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                    tier === "tier_2" ? "border-primary shadow-md" : "hover:border-primary/50"
-                  }`}
-                  onClick={() => handleTierSelection(tier)}
-                >
+            {/* Current Starting Tier */}
+            <div className="max-w-2xl mx-auto">
+              <div className="text-center mb-4">
+                <Badge className="mb-2">Your Starting Tier</Badge>
+                <h3 className="text-lg font-semibold text-primary">You'll begin at Standard Tier</h3>
+              </div>
+              
+              <Card className="border-primary shadow-md">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-xl">Standard</CardTitle>
+                  <div className="text-3xl font-bold text-primary">$16.00/hour</div>
+                  <CardDescription>Entry level with basic benefits</CardDescription>
+                  <div className="text-lg font-semibold">$25/month</div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {SUBSCRIPTION_TIERS.tier_1.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Future Tiers */}
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold">Advance to Higher Tiers</h3>
+                <p className="text-sm text-muted-foreground">Earn better rates as you grow with us</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="opacity-75">
                   <CardHeader className="text-center">
-                    {tier === "tier_2" && (
-                      <Badge className="mb-2 self-center">Most Popular</Badge>
-                    )}
-                    <CardTitle className="text-lg">{info.name}</CardTitle>
-                    <div className="text-2xl font-bold text-primary">{info.hourly_rate}</div>
-                    <CardDescription className="text-xs">{info.description}</CardDescription>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Badge variant="outline">Unlock Next</Badge>
+                    </div>
+                    <CardTitle className="text-lg">Professional</CardTitle>
+                    <div className="text-2xl font-bold text-primary">$18.00/hour</div>
+                    <CardDescription>Enhanced rate with premium features</CardDescription>
                     <div className="text-sm text-muted-foreground mb-2">
-                      {info.requirements}
+                      Requires: 15+ reviews & 20+ completed jobs
                     </div>
-                    <div className="text-xl font-bold">
-                      ${(info.monthly_fee / 100).toFixed(0)}/month
-                    </div>
+                    <div className="text-lg font-semibold">$50/month</div>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {info.features.slice(0, 4).map((feature, index) => (
+                      {SUBSCRIPTION_TIERS.tier_2.features.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2 text-xs">
-                          <CheckCircle className="h-3 w-3 text-success" />
+                          <CheckCircle className="h-3 w-3 text-primary" />
                           {feature}
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full mt-3 text-xs" variant={tier === "tier_2" ? "default" : "outline"}>
-                      Select {info.name}
-                    </Button>
                   </CardContent>
                 </Card>
-              ))}
+
+                <Card className="opacity-75">
+                  <CardHeader className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Badge variant="outline">Future Goal</Badge>
+                    </div>
+                    <CardTitle className="text-lg">Elite</CardTitle>
+                    <div className="text-2xl font-bold text-primary">$21.00/hour</div>
+                    <CardDescription>Top tier with maximum earning potential</CardDescription>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Requires: 25+ reviews & 30+ completed jobs
+                    </div>
+                    <div className="text-lg font-semibold">$65/month</div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1">
+                      {SUBSCRIPTION_TIERS.tier_3.features.map((feature, index) => (
+                        <li key={index} className="flex items-center gap-2 text-xs">
+                          <CheckCircle className="h-3 w-3 text-primary" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <Button onClick={handleTierSelection} size="lg" className="px-8">
+                <ArrowRight className="h-5 w-5 mr-2" />
+                Continue with Standard Tier
+              </Button>
             </div>
           </div>
         )}
