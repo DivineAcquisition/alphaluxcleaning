@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, Loader2, CheckCircle, AlertCircle, Home } from "lucide-react";
@@ -13,6 +14,7 @@ export default function ZapierTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTestResult, setLastTestResult] = useState<any>(null);
   const [webhookUrl, setWebhookUrl] = useState("https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/");
+  const [customerOnly, setCustomerOnly] = useState(true);
   const { toast } = useToast();
 
   const sendSampleBookingTransaction = async () => {
@@ -66,7 +68,8 @@ export default function ZapierTest() {
         body: { 
           send_sample_data: true,
           sample_data: sampleData,
-          webhook_url: webhookUrl
+          webhook_url: webhookUrl,
+          customer_only: customerOnly
         }
       });
 
@@ -131,6 +134,11 @@ export default function ZapierTest() {
               <p className="text-sm text-muted-foreground">
                 This is the webhook URL where your test data will be sent.
               </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="customer-only">Send only customer inputs</Label>
+              <Switch id="customer-only" checked={customerOnly} onCheckedChange={setCustomerOnly} />
             </div>
             
             <div className="flex justify-center">

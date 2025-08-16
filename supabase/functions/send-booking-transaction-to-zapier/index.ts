@@ -231,7 +231,7 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id, send_sample_data = false, webhook_url } = await req.json();
+    const { session_id, send_sample_data = false, webhook_url, customer_only = true } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -892,21 +892,43 @@ serve(async (req) => {
 
     console.log('Sending to Zapier webhook:', targetWebhookUrl);
 
+    // Build customer-only payload from customer-entered fields
+    const customerInput = {
+      customer_name: transactionData.order?.customer_name,
+      customer_email: transactionData.order?.customer_email,
+      customer_phone: transactionData.order?.customer_phone,
+      address: (transactionData as any).address ?? transactionData.booking?.service_address,
+      cleaning_type: transactionData.order?.cleaning_type,
+      frequency: transactionData.order?.frequency,
+      square_footage: transactionData.order?.square_footage,
+      bedrooms: transactionData.order?.service_details?.bedrooms,
+      bathrooms: transactionData.order?.service_details?.bathrooms,
+      add_ons: transactionData.order?.add_ons,
+      preferred_date: transactionData.order?.scheduled_date,
+      preferred_time: transactionData.order?.scheduled_time,
+      special_instructions: transactionData.order?.service_details?.special_instructions,
+      referral_code: transactionData.booking_process?.referral_application?.code_entered
+    };
+
+    const bodyPayload = customer_only
+      ? { event_type: 'customer_booking_input', customer_input: customerInput }
+      : {
+          event_type: 'customer_data_collection',
+          'BACP Data': transactionData,
+          metadata: {
+            webhook_version: '1.0',
+            sent_at: new Date().toISOString(),
+            environment: 'production',
+          },
+        };
+
     // Send to Zapier webhook
     const zapierResponse = await fetch(targetWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        event_type: 'customer_data_collection',
-        'BACP Data': transactionData,
-        metadata: {
-          webhook_version: '1.0',
-          sent_at: new Date().toISOString(),
-          environment: 'production'
-        }
-      }),
+      body: JSON.stringify(bodyPayload),
     });
 
     const zapierText = await zapierResponse.text();
