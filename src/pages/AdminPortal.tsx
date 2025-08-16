@@ -193,6 +193,12 @@ const AdminPortal = () => {
       description: "Manage API keys, authentication tokens, and integrations",
       action: "API Management",
       path: "/api-keys"
+    },
+    {
+      title: "Testing Portal",
+      description: "Test webhook integrations, Zapier connections, and system functionality",
+      action: "Run Tests",
+      path: "/testing-portal"
     }
   ];
 
