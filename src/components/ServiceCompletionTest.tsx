@@ -13,16 +13,22 @@ export function ServiceCompletionTest() {
 
   const sendServiceCompletionTest = async () => {
     setIsLoading(true);
+    const correlationId = crypto.randomUUID();
+    
     try {
       console.log("Sending service completion test to webhook...");
       
       // Create comprehensive test data for service completion
       const testData = {
+        mode: 'test',
         orderId: `test_order_${Date.now()}`,
         assignmentId: `test_assignment_${Date.now()}`,
         completionNotes: "Service completed successfully. All areas cleaned thoroughly. Customer was very satisfied with the results.",
-        customerRating: 5
+        customerRating: 5,
+        correlationId
       };
+      
+      console.log("Sending test data:", testData);
       
       const { data, error } = await supabase.functions.invoke('complete-order-notification', {
         body: testData
@@ -37,15 +43,21 @@ export function ServiceCompletionTest() {
       
       toast({
         title: "Success!",
-        description: "Service completion webhook triggered successfully",
+        description: data?.message || "Service completion webhook triggered successfully",
       });
     } catch (error) {
       console.error("Error sending service completion:", error);
-      setLastTestResult({ error: error.message, success: false });
+      const errorResult = { 
+        error: error.message, 
+        success: false,
+        correlationId,
+        timestamp: new Date().toISOString()
+      };
+      setLastTestResult(errorResult);
       
       toast({
         title: "Error",
-        description: "Failed to send service completion webhook",
+        description: `Failed to send service completion webhook: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -133,12 +145,27 @@ export function ServiceCompletionTest() {
                 {lastTestResult.message && (
                   <p><strong>Message:</strong> {lastTestResult.message}</p>
                 )}
+                {lastTestResult.correlationId && (
+                  <p><strong>Correlation ID:</strong> {lastTestResult.correlationId}</p>
+                )}
+                {lastTestResult.test_mode && (
+                  <p><strong>Test Mode:</strong> Yes</p>
+                )}
               </div>
             )}
             
             {lastTestResult.error && (
-              <div className="text-sm text-red-600">
+              <div className="text-sm text-red-600 space-y-2">
                 <p><strong>Error:</strong> {lastTestResult.error}</p>
+                {lastTestResult.correlationId && (
+                  <p><strong>Correlation ID:</strong> {lastTestResult.correlationId}</p>
+                )}
+                {lastTestResult.timestamp && (
+                  <p><strong>Timestamp:</strong> {new Date(lastTestResult.timestamp).toLocaleString()}</p>
+                )}
+                {lastTestResult.details && (
+                  <p><strong>Details:</strong> {lastTestResult.details}</p>
+                )}
               </div>
             )}
             

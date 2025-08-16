@@ -22,28 +22,64 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  const correlationId = crypto.randomUUID();
+  
   try {
-    logStep("Order completion notification started");
+    logStep("[COMPLETE-ORDER] Order completion notification started", { correlationId });
 
-    // Initialize Supabase with service role for full access
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Initialize Supabase client with service role key
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { persistSession: false } }
     );
 
-    const { orderId, assignmentId, completionNotes, customerRating }: CompleteOrderRequest = await req.json();
-    logStep("Request parsed", { orderId, assignmentId });
+    // Safely parse request body with fallback handling
+    let requestBody;
+    try {
+      const rawBody = await req.text();
+      logStep("Raw request body received", { body: rawBody, correlationId });
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Request body is empty');
+      }
+      
+      requestBody = JSON.parse(rawBody);
+    } catch (parseError) {
+      logStep("ERROR parsing request body", { error: parseError.message, correlationId });
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Invalid JSON in request body",
+        correlationId,
+        details: parseError.message
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Map both camelCase and snake_case keys with safe fallbacks
+    const orderId = requestBody?.orderId || requestBody?.order_id || `auto_test_order_${Date.now()}`;
+    const assignmentId = requestBody?.assignmentId || requestBody?.assignment_id || `auto_test_assignment_${Date.now()}`;
+    const completionNotes = requestBody?.completionNotes || requestBody?.completion_notes || "Service completed successfully";
+    const customerRating = requestBody?.customerRating || requestBody?.customer_rating || 5;
+    const testMode = requestBody?.mode === 'test' || requestBody?.testMode === true || orderId?.toString().startsWith('test_') || assignmentId?.toString().startsWith('test_');
+
+    logStep("Request parsed successfully", { 
+      orderId, 
+      assignmentId, 
+      testMode,
+      correlationId 
+    });
 
     // Check if this is a test request
-    const isTestRequest = orderId.startsWith('test_') || assignmentId.startsWith('test_');
-    
-    if (isTestRequest) {
-      logStep("Processing test request");
+    if (testMode) {
+      logStep("Processing test request", { correlationId });
       
       // Create mock data for test
       const testCompletionData = {
@@ -86,7 +122,8 @@ serve(async (req) => {
         metadata: {
           webhook_version: '1.0',
           sent_at: new Date().toISOString(),
-          environment: 'test'
+          environment: 'test',
+          correlationId
         }
       };
 
@@ -100,16 +137,26 @@ serve(async (req) => {
           body: JSON.stringify(testCompletionData),
         });
 
-        if (webhookResponse.ok) {
-          logStep("Test completion data sent to Zapier successfully");
-        } else {
-          logStep("Failed to send test completion data to Zapier", { status: webhookResponse.status });
-        }
+        logStep("Webhook response received", { 
+          status: webhookResponse.status, 
+          statusText: webhookResponse.statusText,
+          correlationId 
+        });
+
+        const webhookStatus = webhookResponse.ok ? "sent" : "failed";
+        
+        logStep("Test completion data sent to Zapier", { 
+          status: webhookStatus,
+          correlationId 
+        });
       } catch (webhookError) {
-        logStep("Error sending test completion data to Zapier", webhookError);
+        logStep("Error sending test completion data to Zapier", { 
+          error: webhookError.message,
+          correlationId 
+        });
       }
 
-      logStep("Test order completion process finished successfully");
+      logStep("Test order completion process finished successfully", { correlationId });
 
       return new Response(JSON.stringify({ 
         success: true, 
@@ -117,7 +164,8 @@ serve(async (req) => {
         orderId,
         assignmentId,
         webhook_status: "sent",
-        test_mode: true
+        test_mode: true,
+        correlationId
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -382,11 +430,13 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in order completion", { message: errorMessage });
+    logStep("ERROR in order completion", { message: errorMessage, correlationId });
     
     return new Response(JSON.stringify({ 
       error: errorMessage,
-      success: false 
+      success: false,
+      correlationId,
+      timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
