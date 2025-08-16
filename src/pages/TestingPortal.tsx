@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
-import { Calendar, TestTube } from "lucide-react";
+import { Calendar, TestTube, CheckCircle2, UserCheck } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 import { ZapierTestButton } from "@/components/ZapierTestButton";
+import { ServiceCompletionTest } from "@/components/ServiceCompletionTest";
+import { SubcontractorUpdatesTest } from "@/components/SubcontractorUpdatesTest";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -47,6 +49,38 @@ const TestingPortal = () => {
             </CardHeader>
             <CardContent>
               <ZapierTestButton />
+            </CardContent>
+          </Card>
+
+          {/* Service Completion Webhook Test */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5" />
+                Service Completion Webhook Test
+              </CardTitle>
+              <CardDescription>
+                Test service completion notification webhook integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ServiceCompletionTest />
+            </CardContent>
+          </Card>
+
+          {/* Subcontractor Updates Webhook Test */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Subcontractor Updates Webhook Test
+              </CardTitle>
+              <CardDescription>
+                Test real-time subcontractor update webhook integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SubcontractorUpdatesTest />
             </CardContent>
           </Card>
 
