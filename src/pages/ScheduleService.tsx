@@ -132,31 +132,12 @@ const ScheduleService = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      let data, error;
-      
-      // Try to fetch by session_id first (existing flow)
-      if (sessionId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-        data = result.data;
-        error = result.error;
-      }
-      
-      // If no data found and we have orderId, try fetching by order ID (new flow)
-      if ((!data || error) && orderId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .single();
-        data = result.data;
-        error = result.error;
-      }
 
-      if (error || !data) {
+      const { data, error } = await supabase.functions.invoke('get-order-details', {
+        body: { session_id: sessionId, order_id: orderId }
+      });
+
+      if (error || !data?.order) {
         toast.error("Order not found");
         const hostname = window.location.hostname;
         if (hostname.startsWith('portal.')) {
@@ -167,8 +148,10 @@ const ScheduleService = () => {
         return;
       }
 
+      const fetched = data.order;
+
       // Check if service details are complete
-      const serviceDetails = data.service_details as any;
+      const serviceDetails = fetched.service_details as any;
       const hasAddress = serviceDetails?.serviceAddress?.street || serviceDetails?.address?.street;
       
       if (!hasAddress) {
@@ -181,7 +164,7 @@ const ScheduleService = () => {
         return;
       }
 
-      setOrderDetails(data);
+      setOrderDetails(fetched);
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");

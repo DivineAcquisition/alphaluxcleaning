@@ -12,11 +12,11 @@ export default function PaymentSuccess() {
 
     console.log('PaymentSuccess redirect:', { orderId, sessionId });
 
-    // Redirect to payment confirmation with proper params
+    // Redirect to service details with proper params
     if (sessionId) {
-      navigate(`/payment-confirmation?session_id=${sessionId}`, { replace: true });
+      navigate(`/service-details?session_id=${sessionId}`, { replace: true });
     } else if (orderId) {
-      navigate(`/payment-confirmation?order_id=${orderId}`, { replace: true });
+      navigate(`/service-details?order_id=${orderId}`, { replace: true });
     } else {
       // Fallback to instant quote for guest users
       navigate('/instant-quote', { replace: true });

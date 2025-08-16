@@ -36,40 +36,25 @@ const PaymentConfirmation = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      let data, error;
 
-      // Try to fetch by session_id first, then by order_id
-      if (sessionId) {
-        const result = await supabase
-          .from('orders')
-          .select('*')
-          .eq('stripe_session_id', sessionId)
-          .single();
-        data = result.data;
-        error = result.error;
-      } else if (orderId) {
-        const result = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', orderId)
-          .single();
-        data = result.data;
-        error = result.error;
-      }
+      const { data, error } = await supabase.functions.invoke('get-order-details', {
+        body: { session_id: sessionId, order_id: orderId }
+      });
 
-      if (error || !data) {
-        console.error('Error fetching order:', error);
+      if (error || !data?.order) {
+        console.error('Error fetching order (fn):', error);
         setError('Order not found');
         return;
       }
 
-      setOrderDetails(data);
+      const dataOrder = data.order;
+      setOrderDetails(dataOrder);
       
       // Check if service details are complete
-      const serviceDetails = data.service_details as any;
+      const serviceDetails = dataOrder.service_details as any;
       const hasAddress = serviceDetails?.serviceAddress?.street || serviceDetails?.address?.street;
       setDetailsCompleted(!!hasAddress);
-      setIsScheduled(!!data.scheduled_date);
+      setIsScheduled(!!dataOrder.scheduled_date);
     } catch (error) {
       console.error('Error fetching order details:', error);
       setError('Failed to load order details');

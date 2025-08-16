@@ -107,51 +107,31 @@ const ServiceDetails = () => {
       const identifierType = sessionId ? 'stripe_session_id' : 'id';
       setLoading(true);
       console.log('Fetching order details with:', { sessionId, orderId });
-      
-      let data, error;
-      
-      // Try to fetch by session_id first (existing flow)
-      if (sessionId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-        data = result.data;
-        error = result.error;
-      }
-      
-      // If no data found and we have orderId, try fetching by order ID (new flow)
-      if ((!data || error) && orderId) {
-        console.log('Trying to fetch by order_id:', orderId);
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .single();
-        data = result.data;
-        error = result.error;
-      }
 
-      if (error || !data) {
+      const { data, error } = await supabase.functions.invoke('get-order-details', {
+        body: { session_id: sessionId, order_id: orderId }
+      });
+
+      if (error || !data?.order) {
         toast.error("Order not found");
-        navigate('/');
+        navigate('/instant-quote');
         return;
       }
-      
-      console.log('Order data found:', data);
+
+      const fetched = data.order;
+      console.log('Order data found:', fetched);
 
       // Autofill customer info
       setFormData(prev => ({
         ...prev,
-        customerName: data.customer_name || "",
-        customerEmail: data.customer_email || "",
-        customerPhone: data.customer_phone || "",
+        customerName: fetched.customer_name || "",
+        customerEmail: fetched.customer_email || "",
+        customerPhone: fetched.customer_phone || "",
       }));
 
       // Autofill service address if available
-      if (data.service_details && typeof data.service_details === 'object') {
-        const serviceDetails = data.service_details as any;
+      if (fetched.service_details && typeof fetched.service_details === 'object') {
+        const serviceDetails = fetched.service_details as any;
         const addr = serviceDetails.serviceAddress || serviceDetails.address;
         
         if (addr) {
@@ -182,7 +162,7 @@ const ServiceDetails = () => {
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
-      navigate('/');
+      navigate('/instant-quote');
     } finally {
       setLoading(false);
     }
@@ -255,35 +235,7 @@ const ServiceDetails = () => {
         }
       }
 
-      // Get the complete order data using the same logic as fetchOrderDetails
-      let orderData, fetchError;
-      
-      if (sessionId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-        orderData = result.data;
-        fetchError = result.error;
-      }
-      
-      if ((!orderData || fetchError) && orderId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .single();
-        orderData = result.data;
-        fetchError = result.error;
-      }
-
-      if (fetchError || !orderData) throw fetchError || new Error('Order not found');
-
-      // Merge new service details with existing ones
-      const existingServiceDetails = (orderData.service_details && typeof orderData.service_details === 'object') ? orderData.service_details : {};
       const updatedServiceDetails = {
-        ...existingServiceDetails,
         serviceAddress: {
           street: formData.streetAddress,
           apartment: formData.apartmentUnit,
@@ -310,31 +262,19 @@ const ServiceDetails = () => {
         }
       };
 
-      // Update the order using the same logic - prefer sessionId, fallback to orderId
-      let updateQuery = supabase
-        .from("orders")
-        .update({
+      const { data, error } = await supabase.functions.invoke('update-order-details', {
+        body: {
+          session_id: sessionId,
+          order_id: orderId,
           service_details: updatedServiceDetails,
           customer_email: formData.customerEmail,
           customer_name: formData.customerName,
-          customer_phone: formData.customerPhone
-        });
-        
-      if (sessionId) {
-        updateQuery = updateQuery.eq("stripe_session_id", sessionId);
-      } else if (orderId) {
-        updateQuery = updateQuery.eq("id", orderId);
-      } else {
-        throw new Error('No valid identifier for order update');
-      }
-      
-      const { error } = await updateQuery;
+          customer_phone: formData.customerPhone,
+        }
+      });
 
       if (error) throw error;
-
       toast.success("Service details saved successfully!");
-      
-      // Navigate to scheduling page with appropriate parameter
       const scheduleParam = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
       navigate(`/schedule-service?${scheduleParam}`);
     } catch (error) {

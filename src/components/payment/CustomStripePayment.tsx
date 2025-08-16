@@ -108,8 +108,9 @@ function PaymentForm({
 
     const orderId = localStorage.getItem('current_order_id');
     const returnUrl = orderId 
-      ? `${window.location.origin}/payment-confirmation?order_id=${orderId}`
-      : `${window.location.origin}/payment-confirmation`;
+      ? `${window.location.origin}/service-details?order_id=${orderId}`
+      : `${window.location.origin}/service-details`;
+
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
