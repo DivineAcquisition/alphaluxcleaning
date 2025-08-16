@@ -103,6 +103,7 @@ import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
 import TrialLandingPage from '@/pages/TrialLandingPage';
 import ClientReportsPortal from '@/pages/ClientReportsPortal';
 import SubcontractorDesktopPortal from '@/pages/SubcontractorDesktopPortal';
+import ZapierTest from '@/pages/ZapierTest';
 
 const queryClient = new QueryClient();
 
@@ -240,6 +241,7 @@ function App() {
                 <Route path="/guest-booking" element={<GuestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
+                <Route path="/zapier-test" element={<ZapierTest />} />
                 
                 {/* New multi-subdomain pages */}
                 <Route path="/customer-portal-dashboard" element={
