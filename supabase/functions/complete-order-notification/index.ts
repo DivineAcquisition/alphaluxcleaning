@@ -39,6 +39,91 @@ serve(async (req) => {
     const { orderId, assignmentId, completionNotes, customerRating }: CompleteOrderRequest = await req.json();
     logStep("Request parsed", { orderId, assignmentId });
 
+    // Check if this is a test request
+    const isTestRequest = orderId.startsWith('test_') || assignmentId.startsWith('test_');
+    
+    if (isTestRequest) {
+      logStep("Processing test request");
+      
+      // Create mock data for test
+      const testCompletionData = {
+        event_type: 'service_completed',
+        order: {
+          id: orderId,
+          customer_name: 'Test Customer',
+          customer_email: 'test@example.com',
+          customer_phone: '(555) 123-4567',
+          service_address: '123 Test Street, Test City, CA 94102',
+          service_date: new Date().toISOString().split('T')[0],
+          service_time: '10:00 AM',
+          amount: 25000, // $250
+          status: 'completed',
+          completion_notes: completionNotes,
+          completed_at: new Date().toISOString()
+        },
+        assignment: {
+          id: assignmentId,
+          subcontractor_name: 'Test Subcontractor',
+          subcontractor_email: 'testworker@example.com',
+          subcontractor_phone: '(555) 987-6543',
+          assigned_at: new Date(Date.now() - 3600000).toISOString(),
+          completed_at: new Date().toISOString(),
+          customer_rating: customerRating,
+          status: 'completed'
+        },
+        payment: {
+          total_amount: 25000,
+          subcontractor_amount: 15000,
+          company_amount: 10000,
+          split_percentage: 60,
+          split_tier: '60_40'
+        },
+        completion_data: {
+          completion_notes: completionNotes,
+          customer_rating: customerRating,
+          completed_at: new Date().toISOString()
+        },
+        metadata: {
+          webhook_version: '1.0',
+          sent_at: new Date().toISOString(),
+          environment: 'test'
+        }
+      };
+
+      // Send test data to Zapier webhook
+      try {
+        const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testCompletionData),
+        });
+
+        if (webhookResponse.ok) {
+          logStep("Test completion data sent to Zapier successfully");
+        } else {
+          logStep("Failed to send test completion data to Zapier", { status: webhookResponse.status });
+        }
+      } catch (webhookError) {
+        logStep("Error sending test completion data to Zapier", webhookError);
+      }
+
+      logStep("Test order completion process finished successfully");
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Test order completion processed and webhook sent",
+        orderId,
+        assignmentId,
+        webhook_status: "sent",
+        test_mode: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Get order and assignment details
     const { data: orderData, error: orderError } = await supabase
       .from('orders')

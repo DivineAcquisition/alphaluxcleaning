@@ -18,10 +18,10 @@ export function ServiceCompletionTest() {
       
       // Create comprehensive test data for service completion
       const testData = {
-        order_id: `test_order_${Date.now()}`,
-        assignment_id: `test_assignment_${Date.now()}`,
-        completion_notes: "Service completed successfully. All areas cleaned thoroughly. Customer was very satisfied with the results.",
-        customer_rating: 5
+        orderId: `test_order_${Date.now()}`,
+        assignmentId: `test_assignment_${Date.now()}`,
+        completionNotes: "Service completed successfully. All areas cleaned thoroughly. Customer was very satisfied with the results.",
+        customerRating: 5
       };
       
       const { data, error } = await supabase.functions.invoke('complete-order-notification', {
