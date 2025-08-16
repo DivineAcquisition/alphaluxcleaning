@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { JobManagementDashboard } from "@/components/admin/JobManagementDashboard";
 import { SubcontractorJobTracker } from "@/components/admin/SubcontractorJobTracker";
+import { GHLContactsDisplay } from "@/components/admin/GHLContactsDisplay";
 
 const AdminPortal = () => {
   const navigate = useNavigate();
@@ -201,7 +202,7 @@ const AdminPortal = () => {
       description="Comprehensive management hub for Bay Area Cleaning Pros"
     >
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Business Overview
@@ -217,6 +218,10 @@ const AdminPortal = () => {
           <TabsTrigger value="subcontractors" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Subcontractors
+          </TabsTrigger>
+          <TabsTrigger value="ghl" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            GHL Contacts
           </TabsTrigger>
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -402,6 +407,10 @@ const AdminPortal = () => {
           >
             <SubcontractorJobTracker />
           </AdminSection>
+        </TabsContent>
+
+        <TabsContent value="ghl" className="space-y-4">
+          <GHLContactsDisplay />
         </TabsContent>
 
         <TabsContent value="tools" className="space-y-4">

@@ -237,6 +237,34 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
         // Don't fail scheduling if email fails
       }
 
+      // Create GHL contact and sync to admin portal
+      try {
+        const { data: ghlResult, error: ghlError } = await supabase.functions.invoke('sync-ghl-contacts', {
+          body: {
+            action: 'create_booking_contact',
+            customerName: data.customer_name || 'Customer',
+            customerEmail: data.customer_email || '',
+            customerPhone: data.customer_phone || '',
+            serviceType: data.service_details?.service_type || 'General Cleaning',
+            scheduledDate: selectedDate,
+            scheduledTime: selectedTime,
+            address: data.address,
+            orderId: orderId,
+            estimatedValue: (data.amount || 0) / 100
+          }
+        });
+
+        if (ghlError) {
+          console.error('GHL integration error:', ghlError);
+          // Don't fail the booking if GHL fails
+        } else if (ghlResult.success) {
+          console.log('GHL contact created:', ghlResult.result);
+        }
+      } catch (ghlError) {
+        console.error('GHL integration failed:', ghlError);
+        // Continue with booking even if GHL fails
+      }
+
       toast.success('Your scheduling request has been submitted!');
       
       // Navigate to order status page instead of calling onComplete

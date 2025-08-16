@@ -942,6 +942,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ghl_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          customer_email: string
+          customer_name: string | null
+          customer_phone: string | null
+          ghl_data: Json | null
+          id: string
+          last_synced_at: string | null
+          lead_score: number | null
+          order_id: string | null
+          pipeline_id: string | null
+          stage_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          customer_email: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          ghl_data?: Json | null
+          id?: string
+          last_synced_at?: string | null
+          lead_score?: number | null
+          order_id?: string | null
+          pipeline_id?: string | null
+          stage_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          ghl_data?: Json | null
+          id?: string
+          last_synced_at?: string | null
+          lead_score?: number | null
+          order_id?: string | null
+          pipeline_id?: string | null
+          stage_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ghl_contacts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           booking_id: string | null
