@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase, FileImage, AlertCircle, Sparkles } from "lucide-react";
+import { UserPlus, CheckCircle, MapPin, Clock, User, Phone, Mail, Briefcase, FileImage, AlertCircle, Sparkles, Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "@/components/FileUpload";
@@ -23,12 +23,19 @@ import {
   sanitizeTextInput,
   sanitizeAddress 
 } from "@/lib/validation-utils";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
+import { ErrorRecovery } from "@/components/ErrorRecovery";
+import { FormFieldError } from "@/components/FormFieldError";
 
 export default function SubcontractorApplication() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSection, setCurrentSection] = useState(1);
-  const [formData, setFormData] = useState({
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  
+  // Initialize form with persistence
+  const initialFormData = {
     full_name: "",
     email: "",
     phone: "",
@@ -51,92 +58,71 @@ export default function SubcontractorApplication() {
     background_check_consent: false,
     brand_shirt_consent: false,
     subcontractor_agreement_consent: false
-  });
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const validateForm = () => {
-    // Enhanced validation with proper formatting
-    const nameValidation = validateName(formData.full_name);
-    if (!nameValidation.isValid) {
-      toast.error(nameValidation.message);
-      return false;
+  const { 
+    data: formData, 
+    updateField, 
+    clearData, 
+    lastSaved,
+    isLoading: isLoadingForm 
+  } = useFormPersistence(initialFormData, {
+    storageKey: 'subcontractor-application-draft'
+  });
+
+  const { 
+    validateField, 
+    validateForm, 
+    hasError, 
+    getError, 
+    clearErrors 
+  } = useFormValidation();
+
+  // Show save confirmation when form is loaded from storage
+  useEffect(() => {
+    if (!isLoadingForm && lastSaved) {
+      toast.info("Draft Restored", {
+        description: `Your previous work from ${lastSaved.toLocaleString()} has been restored.`,
+        action: {
+          label: "Clear Draft",
+          onClick: () => {
+            clearData();
+            clearErrors();
+            toast.success("Draft cleared");
+          }
+        }
+      });
     }
+  }, [isLoadingForm, lastSaved, clearData, clearErrors]);
 
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.isValid) {
-      toast.error(emailValidation.message);
-      return false;
+  const handleInputChange = (field: string, value: any) => {
+    updateField(field as keyof typeof formData, value);
+    
+    // Real-time validation for immediate feedback
+    if (value !== formData[field as keyof typeof formData]) {
+      validateField(field, value, { ...formData, [field]: value });
     }
-
-    const phoneValidation = validatePhoneNumber(formData.phone);
-    if (!phoneValidation.isValid) {
-      toast.error(phoneValidation.message);
-      return false;
-    }
-
-    const emergencyPhoneValidation = validatePhoneNumber(formData.emergency_contact_phone);
-    if (!emergencyPhoneValidation.isValid) {
-      toast.error(`Emergency contact: ${emergencyPhoneValidation.message}`);
-      return false;
-    }
-
-    // Validate ZIP code if provided
-    if (formData.zip_code) {
-      const zipValidation = validateZipCode(formData.zip_code);
-      if (!zipValidation.isValid) {
-        toast.error(zipValidation.message);
-        return false;
-      }
-    }
-
-    // Check other required fields
-    const requiredFields = ['why_join_us', 'availability', 'emergency_contact_name'];
-    for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData]) {
-        toast.error(`Please fill in ${field.replace('_', ' ')}`);
-        return false;
-      }
-    }
-
-    // MANDATORY filter: Must have valid driver's license AND own vehicle
-    if (!formData.has_drivers_license) {
-      applicationToasts.validation.licenseRequired();
-      return false;
-    }
-
-    if (!formData.has_own_vehicle) {
-      applicationToasts.validation.vehicleRequired();
-      return false;
-    }
-
-    // Require driver's license image
-    if (!formData.drivers_license_image_url) {
-      applicationToasts.validation.licenseImageRequired();
-      return false;
-    }
-
-    const requiredConsents = [
-      'background_check_consent', 'brand_shirt_consent', 'subcontractor_agreement_consent'
-    ];
-
-    for (const consent of requiredConsents) {
-      if (!formData[consent as keyof typeof formData]) {
-        applicationToasts.validation.consentRequired();
-        return false;
-      }
-    }
-
-    return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    // Clear any previous submission errors
+    setSubmissionError(null);
+    
+    // Validate the entire form using the hook
+    if (!validateForm(formData)) {
+      toast.error("Please fix the errors below before submitting");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
+      console.log("Submitting application with data:", {
+        ...formData,
+        // Don't log sensitive info in production
+        email: formData.email ? '***@***.***' : 'empty',
+        phone: formData.phone ? '(***) ***-****' : 'empty'
+      });
+
       const { data, error } = await supabase.functions.invoke('submit-subcontractor-application', {
         body: {
           ...formData,
@@ -151,22 +137,91 @@ export default function SubcontractorApplication() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw new Error(error.message || "Submission failed");
+      }
 
+      if (!data?.success) {
+        console.error("Submission failed, response:", data);
+        throw new Error(data?.error || "Submission failed");
+      }
+
+      // Clear the draft on successful submission
+      clearData();
+      
       // Redirect to thank you page with application ID
       navigate(`/subcontractor-application-thank-you?applicationId=${data.application_id}`);
 
     } catch (error: any) {
       console.error('Application submission error:', error);
-      applicationToasts.submission.error(error.message);
+      
+      // Set submission error for error recovery component
+      setSubmissionError(error.message || "Application submission failed. Please try again.");
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleRetrySubmission = () => {
+    setSubmissionError(null);
+    handleSubmit();
+  };
+
+  const handleSaveDraft = () => {
+    toast.success("Draft Saved", {
+      description: "Your application has been saved and you can continue later."
+    });
+  };
+
+  if (isLoadingForm) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your application...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <div className="container mx-auto p-6 space-y-8 max-w-4xl">
+        {/* Show error recovery if there's a submission error */}
+        {submissionError && (
+          <ErrorRecovery
+            error={submissionError}
+            onRetry={handleRetrySubmission}
+            onSaveDraft={handleSaveDraft}
+            lastSaved={lastSaved}
+            isRetrying={isSubmitting}
+          />
+        )}
+
+        {/* Auto-save indicator */}
+        {lastSaved && !submissionError && (
+          <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Save className="h-4 w-4" />
+              <span>Auto-saved {lastSaved.toLocaleString()}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearData();
+                clearErrors();
+                toast.success("Draft cleared");
+              }}
+            >
+              Clear Draft
+            </Button>
+          </div>
+        )}
         {/* Header with Enhanced Styling */}
         <div className="text-center space-y-6 animate-fade-in">
           <div className="flex items-center justify-center gap-3">
@@ -226,7 +281,9 @@ export default function SubcontractorApplication() {
                     value={formData.full_name}
                     onChange={(e) => handleInputChange('full_name', e.target.value)}
                     placeholder="Enter your full name"
+                    className={hasError('full_name') ? 'border-destructive' : ''}
                   />
+                  <FormFieldError error={getError('full_name')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address *</Label>
@@ -236,7 +293,9 @@ export default function SubcontractorApplication() {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="your.email@example.com"
+                    className={hasError('email') ? 'border-destructive' : ''}
                   />
+                  <FormFieldError error={getError('email')} />
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
@@ -250,7 +309,9 @@ export default function SubcontractorApplication() {
                       handleInputChange('phone', formatted);
                     }}
                     placeholder="(555) 123-4567"
+                    className={hasError('phone') ? 'border-destructive' : ''}
                   />
+                  <FormFieldError error={getError('phone')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Street Address</Label>
@@ -313,16 +374,18 @@ export default function SubcontractorApplication() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="why_join_us">Why do you want to join our team? *</Label>
-                <Textarea
-                  id="why_join_us"
-                  value={formData.why_join_us}
-                  onChange={(e) => handleInputChange('why_join_us', e.target.value)}
-                  placeholder="Tell us what motivates you to work with us..."
-                  rows={3}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="why_join_us">Why do you want to join our team? *</Label>
+                  <Textarea
+                    id="why_join_us"
+                    value={formData.why_join_us}
+                    onChange={(e) => handleInputChange('why_join_us', e.target.value)}
+                    placeholder="Tell us what motivates you to work with us..."
+                    rows={3}
+                    className={hasError('why_join_us') ? 'border-destructive' : ''}
+                  />
+                  <FormFieldError error={getError('why_join_us')} />
+                </div>
               <div className="space-y-2">
                 <Label htmlFor="previous_cleaning_experience">Previous Cleaning Experience</Label>
                 <Textarea
@@ -351,7 +414,7 @@ export default function SubcontractorApplication() {
               <div className="space-y-2">
                 <Label htmlFor="availability">Availability *</Label>
                 <Select value={formData.availability} onValueChange={(value) => handleInputChange('availability', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className={hasError('availability') ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Select your availability" />
                   </SelectTrigger>
                   <SelectContent>
@@ -361,6 +424,7 @@ export default function SubcontractorApplication() {
                     <SelectItem value="flexible">Flexible schedule</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormFieldError error={getError('availability')} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="preferred_work_areas">Preferred Work Areas</Label>
@@ -395,7 +459,9 @@ export default function SubcontractorApplication() {
                     value={formData.emergency_contact_name}
                     onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
                     placeholder="Full name"
+                    className={hasError('emergency_contact_name') ? 'border-destructive' : ''}
                   />
+                  <FormFieldError error={getError('emergency_contact_name')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="emergency_contact_phone">Emergency Contact Phone *</Label>
@@ -407,7 +473,9 @@ export default function SubcontractorApplication() {
                       handleInputChange('emergency_contact_phone', formatted);
                     }}
                     placeholder="(555) 123-4567"
+                    className={hasError('emergency_contact_phone') ? 'border-destructive' : ''}
                   />
+                  <FormFieldError error={getError('emergency_contact_phone')} />
                 </div>
               </div>
             </CardContent>

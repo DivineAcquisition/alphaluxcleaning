@@ -11,6 +11,15 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SUBMIT-APPLICATION] ${step}${detailsStr}`);
 };
 
+const logError = (step: string, error: any, context?: any) => {
+  console.error(`[SUBMIT-APPLICATION-ERROR] ${step}`, {
+    error: error.message || error,
+    stack: error.stack,
+    context,
+    timestamp: new Date().toISOString()
+  });
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -52,7 +61,7 @@ serve(async (req) => {
       subcontractor_agreement_consent
     } = requestBody;
 
-    // Validate required fields
+    // Enhanced validation with detailed error reporting
     const requiredFields = {
       full_name,
       email,
@@ -63,18 +72,53 @@ serve(async (req) => {
       emergency_contact_phone
     };
 
+    logStep("Validating required fields", { fields: Object.keys(requiredFields) });
+
     for (const [field, value] of Object.entries(requiredFields)) {
-      if (!value) {
-        throw new Error(`Missing required field: ${field}`);
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        const errorMsg = `Missing or empty required field: ${field}`;
+        logError("Field validation failed", new Error(errorMsg), { field, value });
+        throw new Error(errorMsg);
       }
     }
 
+    // Validate mandatory requirements
+    if (!has_drivers_license) {
+      const errorMsg = "Driver's license is required for this position";
+      logError("License requirement not met", new Error(errorMsg));
+      throw new Error(errorMsg);
+    }
+
+    if (!has_own_vehicle) {
+      const errorMsg = "Own vehicle is required for this position";
+      logError("Vehicle requirement not met", new Error(errorMsg));
+      throw new Error(errorMsg);
+    }
+
+    if (!background_check_consent || !brand_shirt_consent || !subcontractor_agreement_consent) {
+      const errorMsg = "All consent agreements must be accepted";
+      logError("Consent requirements not met", new Error(errorMsg), {
+        background_check_consent,
+        brand_shirt_consent,
+        subcontractor_agreement_consent
+      });
+      throw new Error(errorMsg);
+    }
+
+    logStep("All validations passed");
+
     // Check if application already exists for this email
-    const { data: existingApplication } = await supabaseClient
+    logStep("Checking for existing applications", { email });
+    const { data: existingApplication, error: existingError } = await supabaseClient
       .from("subcontractor_applications")
       .select("id, status")
       .eq("email", email)
-      .single();
+      .maybeSingle();
+
+    if (existingError) {
+      logError("Database error checking existing applications", existingError, { email });
+      throw new Error("Database error occurred while checking existing applications");
+    }
 
     if (existingApplication) {
       if (existingApplication.status === "pending") {
@@ -132,8 +176,14 @@ serve(async (req) => {
       .single();
 
     if (insertError) {
-      logStep("Error inserting application", insertError);
-      throw insertError;
+      logError("Database insertion failed", insertError, {
+        email,
+        full_name,
+        phone,
+        has_drivers_license,
+        has_own_vehicle
+      });
+      throw new Error(`Failed to save application: ${insertError.message}`);
     }
 
     logStep("Application submitted successfully", { applicationId: application.id });
@@ -202,12 +252,36 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in submit-application", { message: errorMessage });
+    logError("Application submission failed", error, {
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return user-friendly error messages
+    const userFriendlyMessage = errorMessage.includes('Missing required field') ? 
+      'Please fill in all required fields' :
+      errorMessage.includes('already have a pending application') ? 
+      'You already have a pending application' :
+      errorMessage.includes('already have an approved application') ? 
+      'You already have an approved application' :
+      errorMessage.includes('Driver\'s license is required') ? 
+      'A valid driver\'s license is required for this position' :
+      errorMessage.includes('Own vehicle is required') ? 
+      'Having your own vehicle is required for this position' :
+      errorMessage.includes('consent agreements must be accepted') ? 
+      'Please accept all required agreements' :
+      'Application submission failed. Please try again.';
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: userFriendlyMessage,
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: 400,
       }
     );
   }
