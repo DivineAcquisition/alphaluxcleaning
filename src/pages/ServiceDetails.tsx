@@ -16,6 +16,7 @@ const ServiceDetails = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('order_id');
 
   const [formData, setFormData] = useState({
     // Service Address
@@ -54,7 +55,7 @@ const ServiceDetails = () => {
   useEffect(() => {
     // Check if user is admin first
     checkAdminAccess();
-  }, [sessionId, navigate]);
+  }, [sessionId, orderId, navigate]);
 
   const checkAdminAccess = async () => {
     try {
@@ -87,8 +88,8 @@ const ServiceDetails = () => {
       console.log("Not admin, checking session ID");
     }
 
-    if (!sessionId) {
-      toast.error("No session ID found. Redirecting to home.");
+    if (!sessionId && !orderId) {
+      toast.error("No session or order ID found. Redirecting to home.");
       navigate('/');
       return;
     }
@@ -98,17 +99,40 @@ const ServiceDetails = () => {
   const fetchOrderDetails = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("stripe_session_id", sessionId)
-        .single();
+      console.log('Fetching order details with:', { sessionId, orderId });
+      
+      let data, error;
+      
+      // Try to fetch by session_id first (existing flow)
+      if (sessionId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
+      
+      // If no data found and we have orderId, try fetching by order ID (new flow)
+      if ((!data || error) && orderId) {
+        console.log('Trying to fetch by order_id:', orderId);
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", orderId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
-      if (error) {
+      if (error || !data) {
         toast.error("Order not found");
         navigate('/');
         return;
       }
+      
+      console.log('Order data found:', data);
 
       // Autofill customer info
       setFormData(prev => ({
@@ -224,14 +248,30 @@ const ServiceDetails = () => {
         }
       }
 
-      // Get the complete order data
-      const { data: orderData, error: fetchError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("stripe_session_id", sessionId)
-        .single();
+      // Get the complete order data using the same logic as fetchOrderDetails
+      let orderData, fetchError;
+      
+      if (sessionId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+        orderData = result.data;
+        fetchError = result.error;
+      }
+      
+      if ((!orderData || fetchError) && orderId) {
+        const result = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", orderId)
+          .single();
+        orderData = result.data;
+        fetchError = result.error;
+      }
 
-      if (fetchError) throw fetchError;
+      if (fetchError || !orderData) throw fetchError || new Error('Order not found');
 
       // Merge new service details with existing ones
       const existingServiceDetails = (orderData.service_details && typeof orderData.service_details === 'object') ? orderData.service_details : {};
@@ -263,23 +303,33 @@ const ServiceDetails = () => {
         }
       };
 
-      // Update the order
-      const { error } = await supabase
+      // Update the order using the same logic - prefer sessionId, fallback to orderId
+      let updateQuery = supabase
         .from("orders")
         .update({
           service_details: updatedServiceDetails,
           customer_email: formData.customerEmail,
           customer_name: formData.customerName,
           customer_phone: formData.customerPhone
-        })
-        .eq("stripe_session_id", sessionId);
+        });
+        
+      if (sessionId) {
+        updateQuery = updateQuery.eq("stripe_session_id", sessionId);
+      } else if (orderId) {
+        updateQuery = updateQuery.eq("id", orderId);
+      } else {
+        throw new Error('No valid identifier for order update');
+      }
+      
+      const { error } = await updateQuery;
 
       if (error) throw error;
 
       toast.success("Service details saved successfully!");
       
-      // Navigate to scheduling page
-      navigate(`/schedule-service?session_id=${sessionId}`);
+      // Navigate to scheduling page with appropriate parameter
+      const scheduleParam = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
+      navigate(`/schedule-service?${scheduleParam}`);
     } catch (error) {
       console.error("Error saving details:", error);
       toast.error("Failed to save details. Please try again.");

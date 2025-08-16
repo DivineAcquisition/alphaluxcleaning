@@ -204,9 +204,12 @@ interface EmbeddedPaymentFormProps {
   amount: number;
   onSuccess: () => void;
   onCancel: () => void;
+  clientSecret: string;
+  isSetupIntent: boolean;
+  orderId: string | null;
 }
 
-function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFormProps) {
+function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetupIntent, orderId }: EmbeddedPaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -215,6 +218,7 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFor
   const [paymentError, setPaymentError] = useState<string | null>(null);
   
   console.log('PaymentElement Status:', { stripe: !!stripe, elements: !!elements, isElementReady });
+  console.log('Payment Configuration:', { isSetupIntent, orderId, clientSecret: !!clientSecret });
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -225,25 +229,42 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel }: EmbeddedPaymentFor
 
     setIsLoading(true);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payment-success`,
-      },
-    });
+    const returnUrl = orderId 
+      ? `${window.location.origin}/service-details?order_id=${orderId}`
+      : `${window.location.origin}/service-details`;
 
-    if (error) {
-      console.error('Payment confirmation error:', error);
-      toast({
-        title: "Payment Failed",
-        description: error.message || "An error occurred during payment processing.",
-        variant: "destructive"
+    let result;
+    
+    if (isSetupIntent) {
+      console.log('Processing SetupIntent for Pay After Service');
+      result = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+        },
       });
     } else {
-      onSuccess();
+      console.log('Processing PaymentIntent for Pay Now');
+      result = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+        },
+      });
     }
 
-    setIsLoading(false);
+    if (result.error) {
+      console.error('Payment confirmation error:', result.error);
+      toast({
+        title: "Payment Failed",
+        description: result.error.message || "An error occurred during payment processing.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    } else {
+      console.log('Payment confirmed successfully, calling onSuccess');
+      onSuccess();
+    }
   };
 
   return (
@@ -392,6 +413,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [isSetupIntent, setIsSetupIntent] = useState(false);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -704,10 +726,18 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
       if (error) throw error;
 
+      console.log('💳 Payment intent response:', data);
+
       if (data?.client_secret) {
         setClientSecret(data.client_secret);
         setOrderId(data.order_id || null);
+        setIsSetupIntent(data.is_setup_intent || false);
         setShowPaymentForm(true);
+        console.log('Payment data captured:', { 
+          clientSecret: !!data.client_secret, 
+          orderId: data.order_id, 
+          isSetupIntent: data.is_setup_intent 
+        });
       } else {
         throw new Error('No client secret received');
       }
@@ -1541,14 +1571,18 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                             >
                               <EmbeddedPaymentForm 
                                 amount={calculatePaymentAmount(pricing.total, selectedPaymentOption as any)}
+                                clientSecret={clientSecret}
+                                isSetupIntent={isSetupIntent}
+                                orderId={orderId}
                                 onSuccess={() => {
                                   toast({
                                     title: "Payment Successful!",
                                     description: "Redirecting to service details..."
                                   });
+                                  console.log('Navigation triggered with orderId:', orderId);
                                   // Navigate to service details page
                                   if (orderId) {
-                                    navigate(`/service-details?session_id=${orderId}`);
+                                    navigate(`/service-details?order_id=${orderId}`);
                                   } else {
                                     navigate('/service-details');
                                   }
@@ -1556,10 +1590,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                   setShowPaymentForm(false);
                                   setClientSecret(null);
                                   setOrderId(null);
+                                  setIsSetupIntent(false);
                                 }}
                                 onCancel={() => {
                                   setShowPaymentForm(false);
                                   setClientSecret(null);
+                                  setOrderId(null);
+                                  setIsSetupIntent(false);
                                 }}
                               />
                             </Elements>
