@@ -16,6 +16,7 @@ interface CompleteOrderRequest {
   customerRating?: number;
   checkInTime?: string;
   checkOutTime?: string;
+  discountScenario?: string;
 }
 
 const logStep = (step: string, details?: any) => {
@@ -72,6 +73,7 @@ serve(async (req) => {
     const customerRating = requestBody?.customerRating || requestBody?.customer_rating || 5;
     const checkInTime = requestBody?.checkInTime || requestBody?.check_in_time;
     const checkOutTime = requestBody?.checkOutTime || requestBody?.check_out_time;
+    const discountScenario = requestBody?.discountScenario || requestBody?.discount_scenario || 'new_customer';
     const testMode = requestBody?.mode === 'test' || requestBody?.testMode === true || orderId?.toString().startsWith('test_') || assignmentId?.toString().startsWith('test_');
 
     logStep("Request parsed successfully", { 
@@ -97,7 +99,7 @@ serve(async (req) => {
       const travelPayment = Math.round(travelTimeHours * hourlyRate * 100) / 100;
       const totalSubcontractorPayment = workPayment + travelPayment;
       
-      // Realistic service pricing
+      // Realistic service pricing with discount calculations
       const baseRate = 85.00;
       const addOns = [
         { name: "Inside Oven", price: 25.00 },
@@ -106,9 +108,38 @@ serve(async (req) => {
       ];
       const subtotal = baseRate + addOns.reduce((sum, addon) => sum + addon.price, 0);
       const taxRate = 0.0875;
-      const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
-      const totalAmount = subtotal + taxAmount;
-      const administrativeFee = totalAmount - totalSubcontractorPayment;
+      
+      // Calculate discount based on scenario
+      const discountScenarios = {
+        new_customer: { type: "percentage", name: "New Customer Discount", percentage: 10.0, fixed_amount: null },
+        membership: { type: "percentage", name: "CleanCovered Membership", percentage: 15.0, fixed_amount: null },
+        seasonal: { type: "percentage", name: "Spring Cleaning Special", percentage: 5.0, fixed_amount: null },
+        referral: { type: "fixed", name: "Referral Bonus", percentage: null, fixed_amount: 25.00 },
+        loyalty: { type: "percentage", name: "Loyal Customer Reward", percentage: 12.0, fixed_amount: null },
+        none: { type: "none", name: "No Discount", percentage: 0, fixed_amount: null }
+      };
+
+      const discount = discountScenarios[discountScenario] || discountScenarios.new_customer;
+      let discountAmount = 0;
+      
+      if (discount.type === "percentage" && discount.percentage) {
+        discountAmount = Math.round(subtotal * (discount.percentage / 100) * 100) / 100;
+      } else if (discount.type === "fixed" && discount.fixed_amount) {
+        discountAmount = discount.fixed_amount;
+      }
+
+      // Original pricing
+      const originalTaxAmount = Math.round(subtotal * taxRate * 100) / 100;
+      const originalTotalAmount = subtotal + originalTaxAmount;
+
+      // Discounted pricing
+      const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+      const discountedTaxAmount = Math.round(discountedSubtotal * taxRate * 100) / 100;
+      const discountedTotalAmount = discountedSubtotal + discountedTaxAmount;
+      const totalSavings = Math.round((originalTotalAmount - discountedTotalAmount) * 100) / 100;
+      
+      // Use discounted total for administrative fee calculation
+      const administrativeFee = discountedTotalAmount - totalSubcontractorPayment;
       
       // Create mock data for test with realistic pricing and split addresses
       const testCompletionData = {
@@ -129,12 +160,27 @@ serve(async (req) => {
           service_time: '10:00 AM',
           service_type: 'deep_clean',
           pricing: {
-            base_rate: baseRate,
+            base_service_cost: subtotal,
             add_ons: addOns,
-            subtotal: subtotal,
-            tax_rate: taxRate,
-            tax_amount: taxAmount,
-            total_amount: totalAmount
+            original: {
+              subtotal: subtotal,
+              tax_rate: taxRate,
+              tax_amount: originalTaxAmount,
+              total_amount: originalTotalAmount
+            },
+            discount_applied: discount.type !== "none" ? {
+              type: discount.type,
+              name: discount.name,
+              percentage: discount.percentage,
+              fixed_amount: discount.fixed_amount,
+              discount_amount_cash: discountAmount
+            } : null,
+            discounted: {
+              discounted_price: discountedSubtotal,
+              tax_amount: discountedTaxAmount,
+              final_cost: discountedTotalAmount,
+              total_savings: totalSavings
+            }
           },
           status: 'completed',
           completion_notes: completionNotes,
@@ -163,7 +209,8 @@ serve(async (req) => {
           travel_compensation: travelPayment,
           total_subcontractor_payment: totalSubcontractorPayment,
           company_administrative_fee: Math.round(administrativeFee * 100) / 100,
-          customer_total: totalAmount
+          customer_total_original: originalTotalAmount,
+          customer_total_final: discountedTotalAmount
         },
         completion_data: {
           completion_notes: completionNotes,

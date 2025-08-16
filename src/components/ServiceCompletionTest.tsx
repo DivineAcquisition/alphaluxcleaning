@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Loader2, AlertCircle, Truck } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, Truck, Percent } from "lucide-react";
 
 export function ServiceCompletionTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTestResult, setLastTestResult] = useState<any>(null);
+  const [discountScenario, setDiscountScenario] = useState("new_customer");
   const { toast } = useToast();
 
   const sendServiceCompletionTest = async () => {
@@ -30,6 +32,7 @@ export function ServiceCompletionTest() {
         customerRating: 5,
         checkInTime: checkInTime.toISOString(),
         checkOutTime: checkOutTime.toISOString(),
+        discountScenario: discountScenario,
         correlationId
       };
       
@@ -70,6 +73,66 @@ export function ServiceCompletionTest() {
     }
   };
 
+  const getDiscountScenarioData = (scenario: string) => {
+    const baseData = {
+      base_rate: 85.00,
+      add_ons: [
+        { name: "Inside Oven", price: 25.00 },
+        { name: "Inside Refrigerator", price: 20.00 },
+        { name: "Cabinet Interiors", price: 30.00 }
+      ],
+      subtotal: 160.00,
+      tax_rate: 0.0875
+    };
+
+    const scenarios = {
+      new_customer: { type: "percentage", name: "New Customer Discount", percentage: 10.0, fixed_amount: null },
+      membership: { type: "percentage", name: "CleanCovered Membership", percentage: 15.0, fixed_amount: null },
+      seasonal: { type: "percentage", name: "Spring Cleaning Special", percentage: 5.0, fixed_amount: null },
+      referral: { type: "fixed", name: "Referral Bonus", percentage: null, fixed_amount: 25.00 },
+      loyalty: { type: "percentage", name: "Loyal Customer Reward", percentage: 12.0, fixed_amount: null },
+      none: { type: "none", name: "No Discount", percentage: 0, fixed_amount: null }
+    };
+
+    const discount = scenarios[scenario] || scenarios.none;
+    let discountAmount = 0;
+    
+    if (discount.type === "percentage" && discount.percentage) {
+      discountAmount = Math.round(baseData.subtotal * (discount.percentage / 100) * 100) / 100;
+    } else if (discount.type === "fixed" && discount.fixed_amount) {
+      discountAmount = discount.fixed_amount;
+    }
+
+    const discountedSubtotal = Math.max(0, baseData.subtotal - discountAmount);
+    const discountedTax = Math.round(discountedSubtotal * baseData.tax_rate * 100) / 100;
+    const discountedTotal = discountedSubtotal + discountedTax;
+    const originalTax = Math.round(baseData.subtotal * baseData.tax_rate * 100) / 100;
+    const originalTotal = baseData.subtotal + originalTax;
+
+    return {
+      original: {
+        subtotal: baseData.subtotal,
+        tax_amount: originalTax,
+        total_amount: originalTotal
+      },
+      discount_applied: discount.type !== "none" ? {
+        type: discount.type,
+        name: discount.name,
+        percentage: discount.percentage,
+        fixed_amount: discount.fixed_amount,
+        discount_amount: discountAmount
+      } : null,
+      discounted: {
+        subtotal: discountedSubtotal,
+        tax_amount: discountedTax,
+        total_amount: discountedTotal,
+        total_savings: Math.round((originalTotal - discountedTotal) * 100) / 100
+      }
+    };
+  };
+
+  const pricingData = getDiscountScenarioData(discountScenario);
+
   const sampleData = {
     order_details: {
       id: "test_order_123",
@@ -90,10 +153,7 @@ export function ServiceCompletionTest() {
         { name: "Inside Refrigerator", price: 20.00 },
         { name: "Cabinet Interiors", price: 30.00 }
       ],
-      subtotal: 160.00,
-      tax_rate: 0.0875,
-      tax_amount: 14.00,
-      total_amount: 174.00
+      pricing: pricingData
     },
     subcontractor_details: {
       name: "Maria Garcia",
@@ -138,6 +198,23 @@ export function ServiceCompletionTest() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Discount Scenario</label>
+          <Select value={discountScenario} onValueChange={setDiscountScenario}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select discount scenario" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new_customer">New Customer (10% off)</SelectItem>
+              <SelectItem value="membership">CleanCovered Membership (15% off)</SelectItem>
+              <SelectItem value="seasonal">Spring Cleaning Special (5% off)</SelectItem>
+              <SelectItem value="referral">Referral Bonus ($25 off)</SelectItem>
+              <SelectItem value="loyalty">Loyal Customer (12% off)</SelectItem>
+              <SelectItem value="none">No Discount</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <Button
           onClick={sendServiceCompletionTest}
           disabled={isLoading}
@@ -217,13 +294,30 @@ export function ServiceCompletionTest() {
           <p>This webhook sends comprehensive service completion data including:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Order and customer details with split addresses</li>
-            <li>Realistic pricing breakdown with add-ons and taxes</li>
+            <li>Comprehensive discount pricing (original, discounted, savings)</li>
+            <li>Multiple discount scenarios (percentage & fixed amounts)</li>
             <li>Hourly rate payment calculations based on check-in/out times</li>
             <li>Tier-based subcontractor compensation</li>
             <li>Completion notes, ratings, and performance data</li>
             <li>Travel time compensation and work hour tracking</li>
           </ul>
         </div>
+
+        {pricingData.discount_applied && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Percent className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">Current Discount Preview</span>
+            </div>
+            <div className="text-xs space-y-1 text-green-700">
+              <p><strong>Discount:</strong> {pricingData.discount_applied.name}</p>
+              <p><strong>Original Total:</strong> ${pricingData.original.total_amount.toFixed(2)}</p>
+              <p><strong>Discount Amount:</strong> -${pricingData.discount_applied.discount_amount.toFixed(2)}</p>
+              <p><strong>Final Total:</strong> ${pricingData.discounted.total_amount.toFixed(2)}</p>
+              <p><strong>Total Savings:</strong> ${pricingData.discounted.total_savings.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
 
         <details className="text-xs">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
