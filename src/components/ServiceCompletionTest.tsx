@@ -18,13 +18,18 @@ export function ServiceCompletionTest() {
     try {
       console.log("Sending service completion test to webhook...");
       
-      // Create comprehensive test data for service completion
+      // Create comprehensive test data for service completion with realistic pricing
+      const checkInTime = new Date(Date.now() - 4.5 * 60 * 60 * 1000); // 4.5 hours ago
+      const checkOutTime = new Date(); // Now
+      
       const testData = {
         mode: 'test',
         orderId: `test_order_${Date.now()}`,
         assignmentId: `test_assignment_${Date.now()}`,
-        completionNotes: "Service completed successfully. All areas cleaned thoroughly. Customer was very satisfied with the results.",
+        completionNotes: "Deep clean service completed successfully. All areas thoroughly cleaned including inside oven, refrigerator, and cabinet interiors. Customer extremely satisfied with attention to detail and quality of work.",
         customerRating: 5,
+        checkInTime: checkInTime.toISOString(),
+        checkOutTime: checkOutTime.toISOString(),
         correlationId
       };
       
@@ -70,27 +75,54 @@ export function ServiceCompletionTest() {
       id: "test_order_123",
       customer_name: "Sarah Johnson",
       customer_email: "sarah.johnson@example.com",
-      service_address: "123 Oak Street, San Francisco, CA 94102",
-      service_type: "complete_clean",
-      total_amount: 299.00
+      customer_phone: "(415) 555-0123",
+      street_address: "123 Oak Street",
+      city: "San Francisco",
+      state: "CA",
+      zip_code: "94102",
+      country: "USA",
+      service_type: "deep_clean",
+      service_date: "2024-01-16",
+      scheduled_duration_hours: 4,
+      base_rate: 85.00,
+      add_ons: [
+        { name: "Inside Oven", price: 25.00 },
+        { name: "Inside Refrigerator", price: 20.00 },
+        { name: "Cabinet Interiors", price: 30.00 }
+      ],
+      subtotal: 160.00,
+      tax_rate: 0.0875,
+      tax_amount: 14.00,
+      total_amount: 174.00
     },
     subcontractor_details: {
       name: "Maria Garcia",
       email: "maria@cleaningpro.com",
+      phone: "(415) 555-0156",
       tier_level: 2,
-      rating: 4.8
+      tier_name: "Professional",
+      hourly_rate: 18.00,
+      rating: 4.8,
+      check_in_time: "2024-01-16T10:00:00Z",
+      check_out_time: "2024-01-16T14:30:00Z",
+      actual_work_hours: 4.5,
+      travel_time_minutes: 30
     },
     completion_data: {
-      completed_at: new Date().toISOString(),
-      duration_hours: 3.5,
+      completed_at: "2024-01-16T14:30:00Z",
       customer_rating: 5,
-      completion_notes: "Excellent service, customer very happy",
-      photos_count: 6
+      completion_notes: "Excellent deep clean service. All areas thoroughly cleaned including inside oven and refrigerator. Customer very satisfied with attention to detail.",
+      photos_count: 8,
+      areas_cleaned: ["Kitchen", "Living Room", "2 Bedrooms", "2 Bathrooms", "Dining Room"]
     },
-    payment_info: {
-      subcontractor_payment: 179.40,
-      company_fee: 119.60,
-      split_percentage: 60
+    payment_calculation: {
+      work_hours: 4.5,
+      hourly_rate: 18.00,
+      work_payment: 81.00,
+      travel_compensation: 9.00, // 30 min * $18/hour
+      total_subcontractor_payment: 90.00,
+      company_administrative_fee: 84.00,
+      payment_model: "hourly_rate"
     }
   };
 
@@ -184,11 +216,12 @@ export function ServiceCompletionTest() {
           <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/</p>
           <p>This webhook sends comprehensive service completion data including:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
-            <li>Order and customer details</li>
-            <li>Subcontractor performance data</li>
-            <li>Completion notes and ratings</li>
-            <li>Payment breakdown and processing</li>
-            <li>Completion timestamps and photos</li>
+            <li>Order and customer details with split addresses</li>
+            <li>Realistic pricing breakdown with add-ons and taxes</li>
+            <li>Hourly rate payment calculations based on check-in/out times</li>
+            <li>Tier-based subcontractor compensation</li>
+            <li>Completion notes, ratings, and performance data</li>
+            <li>Travel time compensation and work hour tracking</li>
           </ul>
         </div>
 

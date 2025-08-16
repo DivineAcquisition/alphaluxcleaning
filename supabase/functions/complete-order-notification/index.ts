@@ -14,6 +14,8 @@ interface CompleteOrderRequest {
   assignmentId: string;
   completionNotes?: string;
   customerRating?: number;
+  checkInTime?: string;
+  checkOutTime?: string;
 }
 
 const logStep = (step: string, details?: any) => {
@@ -68,6 +70,8 @@ serve(async (req) => {
     const assignmentId = requestBody?.assignmentId || requestBody?.assignment_id || `auto_test_assignment_${Date.now()}`;
     const completionNotes = requestBody?.completionNotes || requestBody?.completion_notes || "Service completed successfully";
     const customerRating = requestBody?.customerRating || requestBody?.customer_rating || 5;
+    const checkInTime = requestBody?.checkInTime || requestBody?.check_in_time;
+    const checkOutTime = requestBody?.checkOutTime || requestBody?.check_out_time;
     const testMode = requestBody?.mode === 'test' || requestBody?.testMode === true || orderId?.toString().startsWith('test_') || assignmentId?.toString().startsWith('test_');
 
     logStep("Request parsed successfully", { 
@@ -81,46 +85,95 @@ serve(async (req) => {
     if (testMode) {
       logStep("Processing test request", { correlationId });
       
-      // Create mock data for test
+      // Calculate realistic work hours and payment
+      const testCheckIn = checkInTime ? new Date(checkInTime) : new Date(Date.now() - 4.5 * 60 * 60 * 1000);
+      const testCheckOut = checkOutTime ? new Date(checkOutTime) : new Date();
+      const workHours = (testCheckOut.getTime() - testCheckIn.getTime()) / (1000 * 60 * 60);
+      const tierLevel = 2; // Professional tier
+      const hourlyRate = 18.00; // Tier 2 rate
+      const travelTimeHours = 0.5; // 30 minutes
+      
+      const workPayment = Math.round(workHours * hourlyRate * 100) / 100;
+      const travelPayment = Math.round(travelTimeHours * hourlyRate * 100) / 100;
+      const totalSubcontractorPayment = workPayment + travelPayment;
+      
+      // Realistic service pricing
+      const baseRate = 85.00;
+      const addOns = [
+        { name: "Inside Oven", price: 25.00 },
+        { name: "Inside Refrigerator", price: 20.00 },
+        { name: "Cabinet Interiors", price: 30.00 }
+      ];
+      const subtotal = baseRate + addOns.reduce((sum, addon) => sum + addon.price, 0);
+      const taxRate = 0.0875;
+      const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
+      const totalAmount = subtotal + taxAmount;
+      const administrativeFee = totalAmount - totalSubcontractorPayment;
+      
+      // Create mock data for test with realistic pricing and split addresses
       const testCompletionData = {
         event_type: 'service_completed',
         order: {
           id: orderId,
-          customer_name: 'Test Customer',
-          customer_email: 'test@example.com',
-          customer_phone: '(555) 123-4567',
-          service_address: '123 Test Street, Test City, CA 94102',
+          customer_name: 'Sarah Johnson',
+          customer_email: 'sarah.johnson@example.com',
+          customer_phone: '(415) 555-0123',
+          address: {
+            street_address: '123 Oak Street',
+            city: 'San Francisco',
+            state: 'CA',
+            zip_code: '94102',
+            country: 'USA'
+          },
           service_date: new Date().toISOString().split('T')[0],
           service_time: '10:00 AM',
-          amount: 25000, // $250
+          service_type: 'deep_clean',
+          pricing: {
+            base_rate: baseRate,
+            add_ons: addOns,
+            subtotal: subtotal,
+            tax_rate: taxRate,
+            tax_amount: taxAmount,
+            total_amount: totalAmount
+          },
           status: 'completed',
           completion_notes: completionNotes,
-          completed_at: new Date().toISOString()
+          completed_at: testCheckOut.toISOString()
         },
         assignment: {
           id: assignmentId,
-          subcontractor_name: 'Test Subcontractor',
-          subcontractor_email: 'testworker@example.com',
-          subcontractor_phone: '(555) 987-6543',
-          assigned_at: new Date(Date.now() - 3600000).toISOString(),
-          completed_at: new Date().toISOString(),
+          subcontractor_name: 'Maria Garcia',
+          subcontractor_email: 'maria@cleaningpro.com',
+          subcontractor_phone: '(415) 555-0156',
+          tier_level: tierLevel,
+          tier_name: 'Professional',
+          assigned_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+          check_in_time: testCheckIn.toISOString(),
+          check_out_time: testCheckOut.toISOString(),
+          work_duration_hours: Math.round(workHours * 100) / 100,
+          travel_time_hours: travelTimeHours,
           customer_rating: customerRating,
           status: 'completed'
         },
         payment: {
-          total_amount: 25000,
-          subcontractor_amount: 15000,
-          company_amount: 10000,
-          split_percentage: 60,
-          split_tier: '60_40'
+          payment_model: 'hourly_rate',
+          hourly_rate: hourlyRate,
+          work_hours: Math.round(workHours * 100) / 100,
+          work_payment: workPayment,
+          travel_compensation: travelPayment,
+          total_subcontractor_payment: totalSubcontractorPayment,
+          company_administrative_fee: Math.round(administrativeFee * 100) / 100,
+          customer_total: totalAmount
         },
         completion_data: {
           completion_notes: completionNotes,
           customer_rating: customerRating,
-          completed_at: new Date().toISOString()
+          completed_at: testCheckOut.toISOString(),
+          areas_cleaned: ['Kitchen', 'Living Room', '2 Bedrooms', '2 Bathrooms', 'Dining Room'],
+          photos_count: 8
         },
         metadata: {
-          webhook_version: '1.0',
+          webhook_version: '2.0',
           sent_at: new Date().toISOString(),
           environment: 'test',
           correlationId
@@ -248,18 +301,33 @@ serve(async (req) => {
 
     logStep("Order and assignment updated to completed");
 
-    // Create payment record for subcontractor
+    // Calculate hourly payment based on check-in/check-out times and tier
     const orderAmount = orderData.amount || 10000; // Default $100 if not set
-    const splitTier = assignmentData.subcontractors?.split_tier || '60_40';
-    const splits = {
-      '60_40': { subcontractor: 60, company: 40 },
-      '70_30': { subcontractor: 70, company: 30 },
-      '80_20': { subcontractor: 80, company: 20 }
-    };
-    const split = splits[splitTier as keyof typeof splits] || splits['60_40'];
     
-    const subcontractorAmount = Math.round((orderAmount * split.subcontractor) / 100);
-    const companyAmount = Math.round((orderAmount * split.company) / 100);
+    // Get tier-based hourly rate
+    const { data: tierConfig } = await supabase
+      .from('tier_system_config')
+      .select('hourly_rate')
+      .eq('tier_level', assignmentData.subcontractors?.tier_level || 1)
+      .eq('is_active', true)
+      .single();
+    
+    const hourlyRate = tierConfig?.hourly_rate || 16.00; // Default to tier 1 rate
+    
+    // Calculate work hours from check-in/check-out (if available)
+    let workHours = 3.0; // Default work hours
+    let travelHours = 0.5; // Default travel compensation
+    
+    if (checkInTime && checkOutTime) {
+      const checkIn = new Date(checkInTime);
+      const checkOut = new Date(checkOutTime);
+      workHours = Math.max(0, (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60));
+    }
+    
+    const workPayment = Math.round(workHours * hourlyRate * 100) / 100;
+    const travelPayment = Math.round(travelHours * hourlyRate * 100) / 100;
+    const subcontractorAmount = Math.round((workPayment + travelPayment) * 100);
+    const companyAmount = Math.max(0, orderAmount - subcontractorAmount);
 
     const { error: paymentError } = await supabase
       .from('subcontractor_payments')
@@ -270,14 +338,21 @@ serve(async (req) => {
         total_amount: orderAmount,
         subcontractor_amount: subcontractorAmount,
         company_amount: companyAmount,
-        split_percentage: split.subcontractor,
+        hourly_rate: hourlyRate,
+        tier_level: assignmentData.subcontractors?.tier_level || 1,
         payment_status: 'pending'
       });
 
     if (paymentError) {
       logStep("Payment record creation failed", paymentError);
     } else {
-      logStep("Payment record created", { subcontractorAmount, companyAmount });
+      logStep("Payment record created", { 
+        subcontractorAmount: subcontractorAmount / 100, 
+        companyAmount: companyAmount / 100,
+        hourlyRate,
+        workHours,
+        paymentModel: 'hourly_rate'
+      });
     }
 
     // Send completion email to customer
@@ -353,8 +428,18 @@ serve(async (req) => {
         });
     }
 
-    // Send service completion data to Zapier webhook
+    // Send service completion data to Zapier webhook with split address
     try {
+      // Parse address into components
+      const addressParts = booking?.service_address?.split(', ') || [];
+      const addressData = {
+        street_address: addressParts[0] || '',
+        city: addressParts[1] || '',
+        state: addressParts[2]?.split(' ')[0] || '',
+        zip_code: addressParts[2]?.split(' ')[1] || '',
+        country: 'USA'
+      };
+
       const completionData = {
         event_type: 'service_completed',
         order: {
@@ -362,7 +447,7 @@ serve(async (req) => {
           customer_name: booking?.customer_name,
           customer_email: booking?.customer_email,
           customer_phone: booking?.customer_phone,
-          service_address: booking?.service_address,
+          address: addressData,
           service_date: booking?.service_date,
           service_time: booking?.service_time,
           amount: orderAmount,
@@ -375,17 +460,25 @@ serve(async (req) => {
           subcontractor_name: assignmentData.subcontractors?.full_name,
           subcontractor_email: assignmentData.subcontractors?.email,
           subcontractor_phone: assignmentData.subcontractors?.phone,
+          tier_level: assignmentData.subcontractors?.tier_level || 1,
           assigned_at: assignmentData.assigned_at,
+          check_in_time: checkInTime,
+          check_out_time: checkOutTime,
+          work_duration_hours: Math.round(workHours * 100) / 100,
+          travel_time_hours: travelHours,
           completed_at: new Date().toISOString(),
           customer_rating: customerRating,
           status: 'completed'
         },
         payment: {
-          total_amount: orderAmount,
-          subcontractor_amount: subcontractorAmount,
-          company_amount: companyAmount,
-          split_percentage: split.subcontractor,
-          split_tier: splitTier
+          payment_model: 'hourly_rate',
+          hourly_rate: hourlyRate,
+          work_hours: Math.round(workHours * 100) / 100,
+          work_payment: workPayment,
+          travel_compensation: travelPayment,
+          total_subcontractor_payment: subcontractorAmount / 100,
+          company_administrative_fee: companyAmount / 100,
+          customer_total: orderAmount / 100
         },
         completion_data: {
           completion_notes: completionNotes,
@@ -393,7 +486,7 @@ serve(async (req) => {
           completed_at: new Date().toISOString()
         },
         metadata: {
-          webhook_version: '1.0',
+          webhook_version: '2.0',
           sent_at: new Date().toISOString(),
           environment: 'production'
         }
