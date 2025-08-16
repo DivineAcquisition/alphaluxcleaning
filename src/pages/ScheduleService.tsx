@@ -7,11 +7,11 @@ import { Navigation } from "@/components/Navigation";
 import { Calendar, ArrowLeft, ArrowRight, Clock, MessageSquare, CheckCircle, XCircle, AlertCircle, Package, Plus, DollarSign, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import ModernScheduler from "@/components/ModernScheduler";
 import { useAuth } from "@/contexts/AuthContext";
 import { OrderStatusLookup } from "@/components/OrderStatusLookup";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NextDayBookingDialog from "@/components/NextDayBookingDialog";
+import CustomSchedulerUI from "@/components/CustomSchedulerUI";
 
 const ScheduleService = () => {
   const [searchParams] = useSearchParams();
@@ -314,7 +314,7 @@ const ScheduleService = () => {
           </Card>
 
 
-          {/* Embedded Calendar Scheduler */}
+          {/* Custom Scheduler UI */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -322,27 +322,15 @@ const ScheduleService = () => {
                 Schedule Your Service
               </CardTitle>
               <CardDescription>
-                Select your preferred date and time using our booking calendar
+                Select your preferred date and time for your cleaning service
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="w-full min-h-[500px] h-auto relative">
-                <iframe 
-                  src="https://app.bayareacleaningpros.com/widget/booking/39tuCeWMXzsnqMcYpkCD" 
-                  style={{ 
-                    width: '100%', 
-                    minHeight: '500px',
-                    height: isMobile ? '500px' : '800px',
-                    border: 'none'
-                  }}
-                  className="w-full"
-                  id="39tuCeWMXzsnqMcYpkCD_1754330109315"
-                  title="Bay Area Cleaning Pros Booking Calendar"
-                />
-              </div>
-              <script 
-                src="https://app.bayareacleaningpros.com/js/form_embed.js" 
-                type="text/javascript"
+            <CardContent className="p-6">
+              <CustomSchedulerUI
+                orderId={orderId}
+                sessionId={sessionId}
+                serviceType={orderDetails?.cleaning_type?.replace(/_/g, ' ') || 'general'}
+                onComplete={handleSchedulingComplete}
               />
             </CardContent>
           </Card>
