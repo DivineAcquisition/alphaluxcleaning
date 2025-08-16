@@ -84,6 +84,7 @@ serve(async (req) => {
         bookings: {
           customer_name: "John Smith",
           customer_email: "john.smith@example.com",
+          customer_phone: "(555) 123-4567",
           service_address: "1234 Main Street, San Francisco, CA 94102",
           service_date: new Date().toISOString().split('T')[0],
           service_time: "10:00 AM"
@@ -108,6 +109,7 @@ serve(async (req) => {
             bookings (
               customer_name,
               customer_email,
+              customer_phone,
               service_address,
               service_date,
               service_time
@@ -147,6 +149,8 @@ serve(async (req) => {
       order: orderData ? {
         id: orderData.id,
         customer_name: orderData.bookings?.customer_name,
+        customer_email: orderData.bookings?.customer_email,
+        customer_phone: orderData.bookings?.customer_phone,
         service_address: orderData.bookings?.service_address,
         service_date: orderData.bookings?.service_date,
         service_time: orderData.bookings?.service_time,
