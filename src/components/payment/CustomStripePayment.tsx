@@ -106,10 +106,15 @@ function PaymentForm({
       return;
     }
 
+    const orderId = localStorage.getItem('current_order_id');
+    const returnUrl = orderId 
+      ? `${window.location.origin}/payment-confirmation?order_id=${orderId}`
+      : `${window.location.origin}/payment-confirmation`;
+
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: window.location.origin + '/payment-success',
+        return_url: returnUrl,
         receipt_email: paymentData.customerEmail,
       },
       redirect: 'if_required'
@@ -319,11 +324,13 @@ export function CustomStripePayment({
         throw error;
       }
 
-      if (data?.client_secret) {
-        console.log('Received client secret');
+      if (data?.client_secret && data?.order_id) {
+        console.log('Received client secret and order_id');
         setClientSecret(data.client_secret);
+        // Store order_id for the return URL
+        localStorage.setItem('current_order_id', data.order_id);
       } else {
-        throw new Error('No client secret received');
+        throw new Error('No client secret or order_id received');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to initialize payment';

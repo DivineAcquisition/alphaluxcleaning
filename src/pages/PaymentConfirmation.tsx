@@ -22,29 +22,42 @@ const PaymentConfirmation = () => {
   const navigate = useNavigate();
 
   const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('order_id') || localStorage.getItem('current_order_id');
 
   useEffect(() => {
-    if (sessionId) {
+    if (sessionId || orderId) {
       fetchOrderDetails();
+    } else {
+      setError('No session or order ID found');
+      setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, orderId]);
 
   const fetchOrderDetails = async () => {
-    if (!sessionId) {
-      setError('No session ID provided');
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('stripe_session_id', sessionId)
-        .single();
+      let data, error;
 
-      if (error) {
+      // Try to fetch by session_id first, then by order_id
+      if (sessionId) {
+        const result = await supabase
+          .from('orders')
+          .select('*')
+          .eq('stripe_session_id', sessionId)
+          .single();
+        data = result.data;
+        error = result.error;
+      } else if (orderId) {
+        const result = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
+
+      if (error || !data) {
         console.error('Error fetching order:', error);
         setError('Order not found');
         return;
@@ -104,7 +117,7 @@ const PaymentConfirmation = () => {
     );
   }
 
-  if (error || !sessionId) {
+  if (error || (!sessionId && !orderId)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
         <Navigation />
@@ -112,8 +125,8 @@ const PaymentConfirmation = () => {
           <Card className="max-w-md mx-auto">
             <CardContent className="text-center p-8">
               <h2 className="text-xl font-bold mb-4">Error</h2>
-              <p className="text-muted-foreground mb-6">{error || 'No session ID provided. Please return to the homepage and try again.'}</p>
-              <Button onClick={() => navigate('/')}>
+              <p className="text-muted-foreground mb-6">{error || 'No session or order ID found. Please return to the homepage and try again.'}</p>
+              <Button onClick={() => navigate('/instant-quote')}>
                 <Home className="h-4 w-4 mr-2" />
                 Return Home
               </Button>
@@ -236,7 +249,10 @@ const PaymentConfirmation = () => {
                     Please provide your service address and any special instructions for our team.
                   </p>
                   <Button 
-                    onClick={() => navigate(`/service-details?session_id=${sessionId}`)}
+                    onClick={() => {
+                      const params = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
+                      navigate(`/service-details?${params}`);
+                    }}
                     size="lg"
                     className="px-8"
                   >
@@ -267,7 +283,10 @@ const PaymentConfirmation = () => {
                     Now that your payment is confirmed and details are complete, let's schedule your cleaning service.
                   </p>
                   <Button 
-                    onClick={() => navigate(`/schedule-service?session_id=${sessionId}`)}
+                    onClick={() => {
+                      const params = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
+                      navigate(`/schedule-service?${params}`);
+                    }}
                     size="lg"
                     className="px-8"
                   >
@@ -310,7 +329,10 @@ const PaymentConfirmation = () => {
                     You'll receive a confirmation email with all the details.
                   </p>
                   <Button 
-                    onClick={() => navigate(`/booking-confirmation?session_id=${sessionId}`)}
+                    onClick={() => {
+                      const params = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
+                      navigate(`/booking-confirmation?${params}`);
+                    }}
                     className="mt-4"
                   >
                     View Full Confirmation

@@ -17,6 +17,7 @@ import GuestBooking from '@/pages/GuestBooking';
 import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
 import OrderStatus from '@/pages/OrderStatus';
+import PaymentSuccess from '@/pages/PaymentSuccess';
 
 // Subcontractor pages
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
@@ -225,6 +226,7 @@ function App() {
                 <Route path="/oauth/callback" element={<OAuthCallback />} />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/service-details" element={<ServiceDetails />} />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
