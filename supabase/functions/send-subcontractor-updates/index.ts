@@ -81,7 +81,7 @@ serve(async (req) => {
       orderData = {
         id: updateData.order_id,
         status: 'in_progress',
-        amount: 184.00, // Final cost after tax
+        amount: 156.60, // Final cost after tax
         service_details: {
           service_type: 'house_cleaning',
           cleaning_type: 'deep_clean'
@@ -95,7 +95,7 @@ serve(async (req) => {
           service_time: "10:00 AM"
         },
         financial_data: {
-          // Base pricing structure
+          // Essential Financial Data
           base_service_cost: 85.00,
           add_ons: [
             { name: "Deep Clean Kitchen", cost: 35.00 },
@@ -105,42 +105,64 @@ serve(async (req) => {
           add_ons_total: 75.00,
           subtotal_before_discount: 160.00,
           
-          // Discount breakdown
+          // Discount & Membership Effects
           discount_applied: true,
-          discount_type: "new_customer",
-          discount_description: "New Customer - 10% Off",
+          discount_type: "membership_discount",
+          discount_description: "CleanCovered Membership - 10% Off",
           discount_percentage: 10,
           discount_amount_cash: 16.00,
           discounted_subtotal: 144.00,
+          membership_pricing_effect: {
+            is_member: true,
+            membership_type: "premium",
+            non_member_price: 174.00,
+            member_price: 156.60,
+            membership_savings: 17.40
+          },
           
           // Tax calculation
           tax_rate: 0.0875,
-          tax_on_original: 14.00, // Tax on $160
-          tax_on_discounted: 12.60, // Tax on $144
           tax_amount: 12.60,
+          final_cost: 156.60, // Final amount customer paid
+          total_savings: 17.40,
           
-          // Final totals
-          original_total_with_tax: 174.00, // $160 + $14 tax
-          final_cost: 156.60, // $144 + $12.60 tax
-          total_savings: 17.40, // $174 - $156.60
+          // Subcontractor Payment Breakdown (Hour-based)
+          subcontractor_payment: {
+            tier_level: 2,
+            hourly_rate: 18.00,
+            job_duration_hours: 4.25, // Actual check-in to check-out time
+            check_in_time: "2024-01-15T10:00:00Z",
+            check_out_time: "2024-01-15T14:15:00Z",
+            base_hourly_pay: 76.50, // $18 × 4.25 hours
+            efficiency_bonus: 12.00, // Bonus for completing faster than estimated
+            total_subcontractor_payment: 88.50,
+            payment_method: "hourly_plus_bonus"
+          },
           
-          // Business metrics
-          company_fee_percentage: 30,
-          company_fee_amount: 43.32, // 30% of $144
-          subcontractor_gross_pay: 100.68, // 70% of $144
-          subcontractor_hourly_rate: 18.00,
-          estimated_hours: 4.5,
-          estimated_subcontractor_earnings: 81.00, // $18 * 4.5 hours
-          subcontractor_efficiency_bonus: 19.68, // Difference between gross pay and hourly
+          // Stripe Payment Data
+          stripe_data: {
+            customer_id: "cus_P1a2B3c4D5e6F7g8",
+            payment_intent_id: "pi_3OQk1vL2P3r4S5t6U7v8W9x0",
+            payment_method: {
+              type: "card",
+              card_brand: "visa",
+              last_four: "4242"
+            },
+            payment_status: "succeeded",
+            processing_fee: 4.85, // Stripe fees (3.1% + $0.30)
+            payment_date: new Date().toISOString()
+          },
           
-          // Payment processing
-          stripe_fee: 4.85, // ~3.1% of final cost
-          net_company_revenue: 38.47, // Company fee minus Stripe fee
-          
-          // Profit margins
-          gross_margin: 35.32, // Revenue after subcontractor pay
-          net_margin: 30.47, // After all fees
-          margin_percentage: 19.46 // Net margin / final cost
+          // Profit Margins (After Subcontractor Payment)
+          profit_analysis: {
+            gross_revenue: 156.60,
+            subcontractor_cost: 88.50,
+            stripe_fees: 4.85,
+            operating_costs: 8.00, // Overhead, supplies, etc.
+            total_costs: 101.35, // Subcontractor + Stripe + Operating
+            net_profit: 55.25, // Revenue - Total Costs
+            profit_margin_percentage: 35.27 // Net profit / Gross revenue
+          }
         }
       };
       
@@ -180,6 +202,61 @@ serve(async (req) => {
           .eq('id', updateData.assignment_id)
           .single();
         assignmentData = data;
+        
+        // Get subcontractor tier info for payment calculations
+        if (assignmentData && updateData.subcontractor_id) {
+          const { data: subcontractorTier } = await supabase
+            .from('subcontractors')
+            .select('tier_level, hourly_rate, monthly_fee')
+            .eq('id', updateData.subcontractor_id)
+            .single();
+          
+          if (subcontractorTier && orderData) {
+            // Calculate job duration if check-in/out times are available
+            const checkInTime = assignmentData.accepted_at;
+            const checkOutTime = assignmentData.completed_at;
+            let jobDurationHours = 4.0; // Default estimate
+            
+            if (checkInTime && checkOutTime) {
+              const duration = (new Date(checkOutTime).getTime() - new Date(checkInTime).getTime()) / (1000 * 60 * 60);
+              jobDurationHours = Math.round(duration * 4) / 4; // Round to nearest 15 minutes
+            }
+            
+            // Calculate subcontractor payment
+            const baseHourlyPay = (subcontractorTier.hourly_rate || 16.00) * jobDurationHours;
+            const totalSubcontractorPayment = baseHourlyPay;
+            const processingFee = orderData.amount * 0.031 + 0.30; // Stripe fee estimate
+            const operatingCosts = orderData.amount * 0.05; // 5% overhead estimate
+            
+            // Add calculated financial data to order
+            orderData.financial_data = {
+              final_cost: orderData.amount,
+              subcontractor_payment: {
+                tier_level: subcontractorTier.tier_level,
+                hourly_rate: subcontractorTier.hourly_rate || 16.00,
+                job_duration_hours: jobDurationHours,
+                check_in_time: checkInTime,
+                check_out_time: checkOutTime,
+                base_hourly_pay: baseHourlyPay,
+                total_subcontractor_payment: totalSubcontractorPayment,
+                payment_method: "hourly"
+              },
+              stripe_data: {
+                processing_fee: processingFee,
+                payment_status: "succeeded"
+              },
+              profit_analysis: {
+                gross_revenue: orderData.amount,
+                subcontractor_cost: totalSubcontractorPayment,
+                stripe_fees: processingFee,
+                operating_costs: operatingCosts,
+                total_costs: totalSubcontractorPayment + processingFee + operatingCosts,
+                net_profit: orderData.amount - (totalSubcontractorPayment + processingFee + operatingCosts),
+                profit_margin_percentage: ((orderData.amount - (totalSubcontractorPayment + processingFee + operatingCosts)) / orderData.amount) * 100
+              }
+            };
+          }
+        }
       }
     }
 
@@ -212,50 +289,37 @@ serve(async (req) => {
         service_type: orderData.service_details?.service_type,
         cleaning_type: orderData.service_details?.cleaning_type,
         
-        // Comprehensive financial breakdown
+        // Essential financial breakdown
         financial_data: orderData.financial_data ? {
-          // Pricing structure
+          // Service Pricing
           base_service_cost: orderData.financial_data.base_service_cost,
           add_ons: orderData.financial_data.add_ons,
           add_ons_total: orderData.financial_data.add_ons_total,
           subtotal_before_discount: orderData.financial_data.subtotal_before_discount,
           
-          // Discount information
+          // Discount & Membership Effects
           discount_applied: orderData.financial_data.discount_applied,
           discount_type: orderData.financial_data.discount_type,
           discount_description: orderData.financial_data.discount_description,
           discount_percentage: orderData.financial_data.discount_percentage,
           discount_amount_cash: orderData.financial_data.discount_amount_cash,
           discounted_subtotal: orderData.financial_data.discounted_subtotal,
+          membership_pricing_effect: orderData.financial_data.membership_pricing_effect,
           
-          // Tax calculations
+          // Tax & Final Cost
           tax_rate: orderData.financial_data.tax_rate,
-          tax_on_original: orderData.financial_data.tax_on_original,
-          tax_on_discounted: orderData.financial_data.tax_on_discounted,
           tax_amount: orderData.financial_data.tax_amount,
-          
-          // Final pricing
-          original_total_with_tax: orderData.financial_data.original_total_with_tax,
           final_cost: orderData.financial_data.final_cost,
           total_savings: orderData.financial_data.total_savings,
           
-          // Business & subcontractor metrics
-          company_fee_percentage: orderData.financial_data.company_fee_percentage,
-          company_fee_amount: orderData.financial_data.company_fee_amount,
-          subcontractor_gross_pay: orderData.financial_data.subcontractor_gross_pay,
-          subcontractor_hourly_rate: orderData.financial_data.subcontractor_hourly_rate,
-          estimated_hours: orderData.financial_data.estimated_hours,
-          estimated_subcontractor_earnings: orderData.financial_data.estimated_subcontractor_earnings,
-          subcontractor_efficiency_bonus: orderData.financial_data.subcontractor_efficiency_bonus,
+          // Subcontractor Payment Breakdown (Hour-based)
+          subcontractor_payment: orderData.financial_data.subcontractor_payment,
           
-          // Payment processing
-          stripe_fee: orderData.financial_data.stripe_fee,
-          net_company_revenue: orderData.financial_data.net_company_revenue,
+          // Stripe Payment Data
+          stripe_data: orderData.financial_data.stripe_data,
           
-          // Profit analysis
-          gross_margin: orderData.financial_data.gross_margin,
-          net_margin: orderData.financial_data.net_margin,
-          margin_percentage: orderData.financial_data.margin_percentage
+          // Profit Analysis (After Subcontractor Payment)
+          profit_analysis: orderData.financial_data.profit_analysis
         } : null
       } : null,
       assignment: assignmentData ? {
