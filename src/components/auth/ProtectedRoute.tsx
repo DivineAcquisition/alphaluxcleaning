@@ -27,12 +27,6 @@ export function ProtectedRoute({
 
   const isDevelopment = import.meta.env.DEV;
 
-  // Development bypass - allow access to all pages without auth for preview
-  if (isDevelopment && !user) {
-    console.warn('DEVELOPMENT MODE: Allowing access without authentication for preview purposes');
-    return <>{children}</>;
-  }
-
   useEffect(() => {
     // Reset access denied state when location changes
     setAccessDenied(false);
@@ -153,6 +147,11 @@ export function ProtectedRoute({
 
   // If user is not authenticated, don't render children
   if (!user) {
+    // Development bypass - allow access to all pages without auth for preview
+    if (isDevelopment) {
+      console.warn('DEVELOPMENT MODE: Allowing access without authentication for preview purposes');
+      return <>{children}</>;
+    }
     return null;
   }
 
