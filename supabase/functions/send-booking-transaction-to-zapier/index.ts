@@ -231,7 +231,7 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id, send_sample_data = false } = await req.json();
+    const { session_id, send_sample_data = false, webhook_url } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -885,8 +885,15 @@ serve(async (req) => {
       console.log('Built comprehensive transaction data for order:', order.id);
     }
 
+    // Determine which webhook URL to use
+    const targetWebhookUrl = webhook_url || 
+      Deno.env.get('ZAPIER_BOOKING_WEBHOOK_URL') || 
+      'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/';
+
+    console.log('Sending to Zapier webhook:', targetWebhookUrl);
+
     // Send to Zapier webhook
-    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/', {
+    const zapierResponse = await fetch(targetWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

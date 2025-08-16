@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, Loader2, CheckCircle, AlertCircle, Home } from "lucide-react";
@@ -10,6 +12,7 @@ import { Link } from "react-router-dom";
 export default function ZapierTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTestResult, setLastTestResult] = useState<any>(null);
+  const [webhookUrl, setWebhookUrl] = useState("https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/");
   const { toast } = useToast();
 
   const sendSampleBookingTransaction = async () => {
@@ -62,7 +65,8 @@ export default function ZapierTest() {
       const { data, error } = await supabase.functions.invoke('send-booking-transaction-to-zapier', {
         body: { 
           send_sample_data: true,
-          sample_data: sampleData
+          sample_data: sampleData,
+          webhook_url: webhookUrl
         }
       });
 
@@ -114,10 +118,25 @@ export default function ZapierTest() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="webhook-url">Zapier Webhook URL</Label>
+              <Input
+                id="webhook-url"
+                type="url"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://hooks.zapier.com/hooks/catch/..."
+                className="font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground">
+                This is the webhook URL where your test data will be sent.
+              </p>
+            </div>
+            
             <div className="flex justify-center">
               <Button
                 onClick={sendSampleBookingTransaction}
-                disabled={isLoading}
+                disabled={isLoading || !webhookUrl}
                 className="flex items-center gap-2 px-8 py-3"
                 size="lg"
               >
@@ -172,7 +191,7 @@ export default function ZapierTest() {
             )}
             
             <div className="text-xs text-muted-foreground bg-muted/50 p-4 rounded-md">
-              <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/</p>
+              <p><strong>Target Webhook URL:</strong> {webhookUrl}</p>
               <p className="mt-2">This sends comprehensive booking data including:</p>
               <ul className="list-disc list-inside mt-1 space-y-1">
                 <li>Customer information and contact details</li>
