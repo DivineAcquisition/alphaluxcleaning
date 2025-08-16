@@ -131,8 +131,11 @@ function DomainRouter() {
     return <Index />;
   }
   
-  // Phase 1: Core Client Experience
-  if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
+  // Phase 1: Core Client Experience  
+  if (hostname.startsWith('book.')) {
+    return <Index />;
+  }
+  if (hostname.startsWith('booking.')) {
     return <Navigate to="/instant-quote" replace />;
   }
   if (hostname.startsWith('pay.')) {
