@@ -234,8 +234,8 @@ const Index = () => {
                           variant="secondary"
                           className="bg-white text-primary hover:bg-white/90 font-semibold"
                         >
-                          <a href="/auth?redirect=/modern-booking">
-                            Book Now - Secure Payment Required
+                          <a href="/instant-quote">
+                            Book Now - Get Instant Quote
                           </a>
                         </Button>
                         <p className="text-xs text-white/70">

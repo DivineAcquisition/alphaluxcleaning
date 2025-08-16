@@ -17,10 +17,6 @@ export function Navigation() {
       label: "Home",
       icon: Home
     }, {
-      path: "/modern-booking",
-      label: "Enhanced Booking",
-      icon: Calendar
-    }, {
       path: "/order-status",
       label: "Order Status",
       icon: FileText
@@ -84,16 +80,6 @@ export function Navigation() {
                         </Link>
                       </DropdownMenuItem>;
                 })}
-                  
-                  <DropdownMenuSeparator />
-                  
-                  {/* Subcontractor Portal Link */}
-                  {(!user || userRole !== 'subcontractor') && <DropdownMenuItem asChild>
-                      <Link to="/subcontractor" className="flex items-center gap-3 w-full py-2">
-                        <Users className="h-4 w-4" />
-                        Subcontractor Portal
-                      </Link>
-                    </DropdownMenuItem>}
                   
                   <DropdownMenuSeparator />
                   
