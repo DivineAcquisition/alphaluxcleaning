@@ -224,7 +224,14 @@ serve(async (req) => {
           sent_at: new Date().toISOString(),
           environment: 'test',
           correlationId
-        }
+        },
+        // Root-level discount pricing fields for easier access
+        base_service_cost: subtotal,
+        discount_percentage: discount.percentage || 0,
+        discount_amount_cash: discountAmount,
+        discounted_price: discountedSubtotal,
+        final_cost: discountedTotalAmount,
+        total_savings: totalSavings
       };
 
       // Send test data to Zapier webhook
