@@ -3872,6 +3872,21 @@ export type Database = {
         }
         Returns: string
       }
+      send_subcontractor_update_webhook: {
+        Args: {
+          p_assignment_id?: string
+          p_estimated_arrival_minutes?: number
+          p_location?: Json
+          p_message?: string
+          p_notes?: string
+          p_order_id?: string
+          p_photos?: Json
+          p_status?: string
+          p_subcontractor_id?: string
+          p_update_type: string
+        }
+        Returns: undefined
+      }
       track_feature_usage: {
         Args: {
           p_device_type?: string
