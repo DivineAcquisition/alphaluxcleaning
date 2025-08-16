@@ -391,6 +391,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -705,6 +706,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
       if (data?.client_secret) {
         setClientSecret(data.client_secret);
+        setOrderId(data.order_id || null);
         setShowPaymentForm(true);
       } else {
         throw new Error('No client secret received');
@@ -1542,11 +1544,18 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                 onSuccess={() => {
                                   toast({
                                     title: "Payment Successful!",
-                                    description: "Your booking has been confirmed. You'll receive an email confirmation shortly."
+                                    description: "Redirecting to service details..."
                                   });
-                                  // Reset form or redirect
+                                  // Navigate to service details page
+                                  if (orderId) {
+                                    navigate(`/service-details?session_id=${orderId}`);
+                                  } else {
+                                    navigate('/service-details');
+                                  }
+                                  // Reset form state
                                   setShowPaymentForm(false);
                                   setClientSecret(null);
+                                  setOrderId(null);
                                 }}
                                 onCancel={() => {
                                   setShowPaymentForm(false);
