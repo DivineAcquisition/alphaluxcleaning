@@ -75,11 +75,34 @@ export default function SubcontractorOnboardingV2() {
   const applicationId = searchParams.get('application_id');
 
   useEffect(() => {
-    if (!token) {
+    const isDevelopment = import.meta.env.DEV;
+    
+    if (!token && !isDevelopment) {
       toast.error("Invalid onboarding link - missing token");
       navigate("/");
       return;
     }
+    
+    if (isDevelopment && !token) {
+      // Development mode - create mock applicant data
+      setApplicantData({
+        id: 'dev-test-001',
+        full_name: 'Test Subcontractor User',
+        email: 'test-subcontractor@example.com',
+        phone: '555-0123',
+        address: '123 Test Street',
+        city: 'San Francisco',
+        state: 'CA',
+        zip_code: '94102',
+        status: 'approved'
+      });
+      setBankingData(prev => ({ 
+        ...prev, 
+        legal_name: 'Test Subcontractor User' 
+      }));
+      return;
+    }
+    
     validateTokenAndFetchData();
   }, [token]);
 

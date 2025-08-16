@@ -9,6 +9,7 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import VisualScheduler from "@/components/VisualScheduler";
 
 import { Navigation } from "@/components/Navigation";
+import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
 import { ReferralSection } from "@/components/ReferralSection";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
@@ -292,6 +293,29 @@ const Index = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Development Tools - Only shown in development mode */}
+        {import.meta.env.DEV && (
+          <div className="w-full max-w-6xl mx-auto mt-12 px-2 sm:px-4">
+            <Card className="border-dashed border-2 border-muted-foreground/20">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <h3 className="text-xl font-bold text-muted-foreground">Development Tools</h3>
+                  <p className="text-sm text-muted-foreground">
+                    These tools are only visible in development mode
+                  </p>
+                  <div className="flex flex-col items-center gap-4">
+                    <TestSubcontractorButton />
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>• Creates a test subcontractor user for development</p>
+                      <p>• You can also access onboarding directly at <a href="/subcontractor-onboarding" className="text-primary hover:underline">/subcontractor-onboarding</a></p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>;
 };
