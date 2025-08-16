@@ -26,6 +26,7 @@ interface EnhancedPaymentInterfaceProps {
   amount: number;
   onSuccess: (paymentIntentId: string) => void;
   onCancel: () => void;
+  isSetupIntent?: boolean;
   customerData?: {
     email?: string;
     name?: string;
@@ -37,6 +38,7 @@ export function EnhancedPaymentInterface({
   amount,
   onSuccess,
   onCancel,
+  isSetupIntent = false,
   customerData,
   className
 }: EnhancedPaymentInterfaceProps) {
@@ -207,6 +209,7 @@ export function EnhancedPaymentInterface({
                 onCancel={onCancel}
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}
+                isSetupIntent={isSetupIntent}
                 customerData={customerData}
               />
             </TabsContent>

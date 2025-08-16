@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
-
+import { toast } from 'sonner';
 
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
@@ -113,8 +113,15 @@ export function ModernBookingFlow() {
   };
 
   const handlePaymentSuccess = async (sessionId: string) => {
+    console.log('🎉 Payment/Authorization successful:', sessionId);
     updateBookingData({ stripeSessionId: sessionId });
     
+    // Add success message based on payment type
+    if (bookingData.paymentType === 'pay_after_service') {
+      toast.success('Card authorized successfully! You will be charged after service completion.');
+    } else {
+      toast.success('Payment processed successfully!');
+    }
     
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });

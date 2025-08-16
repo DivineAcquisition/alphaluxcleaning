@@ -505,6 +505,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   amount={toStripeAmount(paymentAmount)}
                   onSuccess={handlePaymentSuccess}
                   onCancel={handlePaymentCancel}
+                  isSetupIntent={paymentType === 'pay_after_service'}
                   customerData={{
                     email: user?.email || 'guest@example.com',
                     name: user?.user_metadata?.full_name || 'Guest User'

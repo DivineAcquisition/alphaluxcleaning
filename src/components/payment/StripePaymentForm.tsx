@@ -28,10 +28,11 @@ type ErrorType =
 
 interface StripePaymentFormProps {
   amount: number;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (intentId: string) => void;
   onCancel: () => void;
   isProcessing: boolean;
   setIsProcessing: (processing: boolean) => void;
+  isSetupIntent?: boolean; // Flag to indicate if this is a setup intent
   customerData?: {
     email?: string;
     name?: string;
@@ -44,6 +45,7 @@ export function StripePaymentForm({
   onCancel, 
   isProcessing, 
   setIsProcessing,
+  isSetupIntent = false,
   customerData 
 }: StripePaymentFormProps) {
   const stripe = useStripe();
@@ -83,16 +85,24 @@ export function StripePaymentForm({
       setStatusMessage(deviceType === 'mobile' ? 'Checking payment...' : 'Validating payment information...');
     } else if (paymentStatus === 'processing') {
       setProgress(50);
-      setStatusMessage(deviceType === 'mobile' ? 'Processing...' : 'Processing payment...');
+      if (isSetupIntent) {
+        setStatusMessage(deviceType === 'mobile' ? 'Authorizing...' : 'Authorizing your card...');
+      } else {
+        setStatusMessage(deviceType === 'mobile' ? 'Processing...' : 'Processing payment...');
+      }
     } else if (paymentStatus === 'authenticating') {
       setProgress(75);
       setStatusMessage(deviceType === 'mobile' ? 'Authenticating...' : 'Authenticating with your bank...');
     } else if (paymentStatus === 'finalizing') {
       setProgress(90);
-      setStatusMessage(deviceType === 'mobile' ? 'Finalizing...' : 'Finalizing payment...');
+      if (isSetupIntent) {
+        setStatusMessage(deviceType === 'mobile' ? 'Finalizing...' : 'Finalizing authorization...');
+      } else {
+        setStatusMessage(deviceType === 'mobile' ? 'Finalizing...' : 'Finalizing payment...');
+      }
     } else if (paymentStatus === 'succeeded') {
       setProgress(100);
-      setStatusMessage('Payment successful!');
+      setStatusMessage(isSetupIntent ? 'Card authorized successfully!' : 'Payment successful!');
     }
   }, [paymentStatus, deviceType]);
 
@@ -169,6 +179,7 @@ export function StripePaymentForm({
       throw new Error('Stripe is not loaded');
     }
 
+    console.log('🔄 Processing payment:', { isSetupIntent, amount });
     setPaymentStatus('validating');
     setError(null);
     setErrorType(null);
@@ -183,45 +194,92 @@ export function StripePaymentForm({
 
     setPaymentStatus('processing');
 
-    // Confirm payment
-    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.origin + '/booking-confirmation',
-      },
-      redirect: 'if_required',
-    });
+    if (isSetupIntent) {
+      // Handle SetupIntent (for pay after service)
+      console.log('🔄 Confirming SetupIntent...');
+      const { error: confirmError, setupIntent } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin + '/booking-confirmation',
+        },
+        redirect: 'if_required',
+      });
 
-    if (confirmError) {
-      const type = categorizeError(confirmError);
-      setErrorType(type);
-      throw new Error(confirmError.message || 'Payment confirmation failed');
-    }
+      if (confirmError) {
+        const type = categorizeError(confirmError);
+        setErrorType(type);
+        throw new Error(confirmError.message || 'Card authorization failed');
+      }
 
-    if (!paymentIntent) {
-      throw new Error('Payment intent not found');
-    }
+      if (!setupIntent) {
+        throw new Error('Setup intent not found');
+      }
 
-    // Handle different payment statuses
-    switch (paymentIntent.status) {
-      case 'succeeded':
-        setPaymentStatus('succeeded');
-        toast.success('Payment successful!');
-        onSuccess(paymentIntent.id);
-        break;
-      case 'requires_action':
-        setPaymentStatus('authenticating');
-        // 3D Secure or other authentication required
-        // Stripe handles this automatically with confirmPayment
-        break;
-      case 'processing':
-        setPaymentStatus('finalizing');
-        // Payment is being processed
-        break;
-      case 'requires_payment_method':
-        throw new Error('Payment method was declined. Please try a different payment method.');
-      default:
-        throw new Error(`Payment status: ${paymentIntent.status}`);
+      console.log('✅ SetupIntent status:', setupIntent.status);
+
+      // Handle different setup statuses
+      switch (setupIntent.status) {
+        case 'succeeded':
+          setPaymentStatus('succeeded');
+          toast.success('Card authorized successfully!');
+          onSuccess(setupIntent.id);
+          break;
+        case 'requires_action':
+          setPaymentStatus('authenticating');
+          // 3D Secure or other authentication required
+          break;
+        case 'processing':
+          setPaymentStatus('finalizing');
+          // Setup is being processed
+          break;
+        case 'requires_payment_method':
+          throw new Error('Card was declined. Please try a different payment method.');
+        default:
+          throw new Error(`Setup status: ${setupIntent.status}`);
+      }
+    } else {
+      // Handle PaymentIntent (for immediate payment)
+      console.log('🔄 Confirming PaymentIntent...');
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin + '/booking-confirmation',
+        },
+        redirect: 'if_required',
+      });
+
+      if (confirmError) {
+        const type = categorizeError(confirmError);
+        setErrorType(type);
+        throw new Error(confirmError.message || 'Payment confirmation failed');
+      }
+
+      if (!paymentIntent) {
+        throw new Error('Payment intent not found');
+      }
+
+      console.log('✅ PaymentIntent status:', paymentIntent.status);
+
+      // Handle different payment statuses
+      switch (paymentIntent.status) {
+        case 'succeeded':
+          setPaymentStatus('succeeded');
+          toast.success('Payment successful!');
+          onSuccess(paymentIntent.id);
+          break;
+        case 'requires_action':
+          setPaymentStatus('authenticating');
+          // 3D Secure or other authentication required
+          break;
+        case 'processing':
+          setPaymentStatus('finalizing');
+          // Payment is being processed
+          break;
+        case 'requires_payment_method':
+          throw new Error('Payment method was declined. Please try a different payment method.');
+        default:
+          throw new Error(`Payment status: ${paymentIntent.status}`);
+      }
     }
   };
 
@@ -433,7 +491,7 @@ export function StripePaymentForm({
                 </div>
               ) : (
                 <>
-                  Pay {formatPrice(amount)}
+                  {isSetupIntent ? 'Authorize Card' : `Pay ${formatPrice(amount)}`}
                   <Lock className="h-4 w-4 ml-2" />
                 </>
               )}
