@@ -16,6 +16,9 @@ export interface OrderConfirmationEmailProps {
   addOns: string;
   amount: string;
   serviceDetailsUrl: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  isSchedulingConfirmation?: boolean;
 }
 
 export function OrderConfirmationEmail({
@@ -27,16 +30,25 @@ export function OrderConfirmationEmail({
   addOns = "None",
   amount = "0.00",
   serviceDetailsUrl = "#",
+  scheduledDate,
+  scheduledTime,
+  isSchedulingConfirmation = false,
 }: OrderConfirmationEmailProps) {
   const previewText = `Order confirmation for your ${cleaningType} service - ${orderId}`;
 
   return (
     <BaseEmailTemplate previewText={previewText}>
       
-      <Heading style={heading}>Order Confirmed!</Heading>
+      <Heading style={heading}>
+        {isSchedulingConfirmation ? 'Scheduling Request Confirmed!' : 'Order Confirmed!'}
+      </Heading>
       
       <Text style={text}>
-        Hello {customerName}, thank you for choosing Bay Area Cleaning Pros! Your cleaning service has been successfully booked.
+        Hello {customerName}, thank you for choosing Bay Area Cleaning Pros! 
+        {isSchedulingConfirmation 
+          ? 'Your scheduling request has been received and our team will contact you to confirm availability.'
+          : 'Your cleaning service has been successfully booked.'
+        }
       </Text>
 
       <Section style={detailsSection}>
@@ -49,19 +61,35 @@ export function OrderConfirmationEmail({
           <Text style={detailText}><strong>Square Footage:</strong> {squareFootage} sq ft</Text>
         )}
         <Text style={detailText}><strong>Add-ons:</strong> {addOns}</Text>
+        {scheduledDate && scheduledTime && (
+          <>
+            <Text style={detailText}><strong>Requested Date:</strong> {new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+            <Text style={detailText}><strong>Requested Time:</strong> {scheduledTime}</Text>
+          </>
+        )}
         <Text style={totalText}><strong>Total Amount:</strong> ${amount}</Text>
       </Section>
 
       <Text style={text}>
         <strong>What's Next?</strong><br />
-        1. Complete your service details (address, special instructions, etc.)<br />
-        2. Schedule your preferred date and time<br />
-        3. Our professional team will arrive ready to clean
+        {isSchedulingConfirmation ? (
+          <>
+            1. A team member will contact you within 24 hours to confirm your requested time slot<br />
+            2. We'll finalize any remaining service details<br />
+            3. Our professional team will arrive ready to clean
+          </>
+        ) : (
+          <>
+            1. Complete your service details (address, special instructions, etc.)<br />
+            2. Schedule your preferred date and time<br />
+            3. Our professional team will arrive ready to clean
+          </>
+        )}
       </Text>
 
       <Section style={buttonSection}>
         <Button style={button} href={serviceDetailsUrl}>
-          Complete Service Details
+          View Order Status
         </Button>
       </Section>
 

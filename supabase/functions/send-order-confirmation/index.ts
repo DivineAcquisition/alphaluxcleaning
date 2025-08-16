@@ -17,6 +17,7 @@ interface OrderConfirmationRequest {
   sessionId?: string;
   customerEmail?: string;
   customerName?: string;
+  isSchedulingConfirmation?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -28,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { orderId, sessionId, customerEmail, customerName }: OrderConfirmationRequest = await req.json();
+    const { orderId, sessionId, customerEmail, customerName, isSchedulingConfirmation }: OrderConfirmationRequest = await req.json();
     console.log("Request data:", { orderId, sessionId, customerEmail, customerName });
 
     // Initialize Supabase client
@@ -73,8 +74,15 @@ const handler = async (req: Request): Promise<Response> => {
     const amount = (order.amount / 100).toFixed(2); // Convert from cents
     const addOns = order.add_ons?.join(", ") || "None";
 
-    // Generate service details URL
-    const serviceDetailsUrl = `${req.headers.get("origin")}/service-details?session_id=${order.stripe_session_id}`;
+    // Generate order status URL
+    const orderStatusUrl = orderId 
+      ? `${req.headers.get("origin")}/order-status?order_id=${orderId}`
+      : `${req.headers.get("origin")}/order-status?session_id=${order.stripe_session_id}`;
+
+    // Extract scheduling information if available
+    const schedulingInfo = serviceDetails.scheduling || {};
+    const scheduledDate = order.scheduled_date || schedulingInfo.scheduledDate;
+    const scheduledTime = order.scheduled_time || schedulingInfo.scheduledTime;
 
     // Render the React email template
     const emailContent = await renderAsync(
@@ -86,7 +94,10 @@ const handler = async (req: Request): Promise<Response> => {
         squareFootage: order.square_footage?.toString(),
         addOns,
         amount,
-        serviceDetailsUrl,
+        serviceDetailsUrl: orderStatusUrl,
+        scheduledDate,
+        scheduledTime,
+        isSchedulingConfirmation: isSchedulingConfirmation || false,
       })
     );
 
@@ -94,7 +105,9 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Bay Area Cleaning Pros <hello@bayareacleaningpros.com>",
       to: [email],
-      subject: `Order Confirmation - ${cleaningType} Service`,
+      subject: isSchedulingConfirmation 
+        ? `Scheduling Request Received - ${cleaningType} Service`
+        : `Order Confirmation - ${cleaningType} Service`,
       html: emailContent,
     });
 

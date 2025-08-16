@@ -218,14 +218,41 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
         throw new Error(error.message || 'Failed to update order');
       }
 
+      // Send confirmation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-order-confirmation', {
+          body: { 
+            orderId: orderId,
+            sessionId: sessionId,
+            isSchedulingConfirmation: true
+          }
+        });
+        
+        if (emailError) {
+          console.error('Email sending error:', emailError);
+          // Don't fail scheduling if email fails
+        }
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail scheduling if email fails
+      }
+
       toast.success('Your scheduling request has been submitted!');
       
-      // Call completion callback
-      if (onComplete) {
-        onComplete({
-          scheduled_date: selectedDate,
-          scheduled_time: selectedTime
-        });
+      // Navigate to order status page instead of calling onComplete
+      const currentOrderId = orderId || localStorage.getItem('current_order_id');
+      if (currentOrderId) {
+        window.location.href = `/order-status?order_id=${currentOrderId}`;
+      } else if (sessionId) {
+        window.location.href = `/order-status?session_id=${sessionId}`;
+      } else {
+        // Fallback - call completion callback if available
+        if (onComplete) {
+          onComplete({
+            scheduled_date: selectedDate,
+            scheduled_time: selectedTime
+          });
+        }
       }
     } catch (error) {
       console.error('Scheduling error:', error);

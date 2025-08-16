@@ -180,16 +180,22 @@ const ScheduleService = () => {
   };
 
   const handleSchedulingComplete = (data: { scheduled_date: string; scheduled_time: string }) => {
-    toast.success('Your service has been scheduled successfully!');
-    
+    console.log('Scheduling completed:', data);
     // Check if admin preview mode
     const isAdminPreview = searchParams.get('admin_preview');
     if (isAdminPreview) {
-      navigate('/booking-confirmation?admin_preview=true');
-    } else if (sessionId) {
-      navigate(`/booking-confirmation?session_id=${sessionId}`);
+      navigate('/order-status?admin_preview=true');
     } else {
-      navigate(`/booking-confirmation?order_id=${orderId}`);
+      // Navigate to order status page instead of booking confirmation
+      const currentOrderId = orderId || orderDetails?.id;
+      if (currentOrderId) {
+        navigate(`/order-status?order_id=${currentOrderId}`);
+      } else if (sessionId) {
+        navigate(`/order-status?session_id=${sessionId}`);
+      } else {
+        // Fallback to booking confirmation if no ID available
+        navigate('/booking-confirmation');
+      }
     }
   };
 
