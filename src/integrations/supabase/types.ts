@@ -3565,6 +3565,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_can_manage_payments: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       bulk_onboard_existing_cleaners: {
         Args: { p_cleaners: Json }
         Returns: Json
