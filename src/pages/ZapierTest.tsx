@@ -169,7 +169,11 @@ export default function ZapierTest() {
                   <div className="text-sm space-y-2 bg-green-50 p-4 rounded-md">
                     <p><strong>Transaction ID:</strong> {lastTestResult.transaction_id}</p>
                     <p><strong>Webhook Status:</strong> {lastTestResult.webhook_status}</p>
+                    <p><strong>Zapier URL:</strong> {lastTestResult.zapier_url}</p>
                     <p><strong>Message:</strong> {lastTestResult.message}</p>
+                    {lastTestResult.zapier_response && (
+                      <p className="truncate"><strong>Zapier Response:</strong> {lastTestResult.zapier_response.slice(0, 180)}...</p>
+                    )}
                   </div>
                 )}
                 

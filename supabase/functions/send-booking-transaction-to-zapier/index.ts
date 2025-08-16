@@ -909,11 +909,13 @@ serve(async (req) => {
       }),
     });
 
+    const zapierText = await zapierResponse.text();
     console.log('Zapier webhook response status:', zapierResponse.status);
+    console.log('Zapier response text:', zapierText);
     console.log('Transaction data sent:', JSON.stringify(transactionData, null, 2));
 
     if (!zapierResponse.ok) {
-      throw new Error(`Zapier webhook failed with status: ${zapierResponse.status}`);
+      throw new Error(`Zapier webhook failed with status: ${zapierResponse.status} - ${zapierText}`);
     }
 
     return new Response(JSON.stringify({
@@ -921,6 +923,8 @@ serve(async (req) => {
       message: 'Booking transaction sent to Zapier successfully',
       transaction_id: transactionData.order.id,
       webhook_status: zapierResponse.status,
+      zapier_response: zapierText,
+      zapier_url: targetWebhookUrl,
       data_sent: transactionData
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
