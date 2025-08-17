@@ -9,7 +9,7 @@ import { CheckCircle2, Loader2, AlertCircle, ClipboardList } from "lucide-react"
 export function OrderEntryTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTestResult, setLastTestResult] = useState<any>(null);
-  const [orderScenario, setOrderScenario] = useState("standard_clean");
+  const [orderScenario, setOrderScenario] = useState("general_clean");
   const { toast } = useToast();
 
   const sendOrderEntryTest = async () => {
@@ -89,21 +89,21 @@ export function OrderEntryTest() {
     };
 
     const scenarios = {
-      standard_clean: {
-        service_type: "Standard Cleaning",
-        cleaning_type: "standard_clean",
+      general_clean: {
+        service_type: "General Cleaning",
+        cleaning_type: "general_clean",
         frequency: "one_time",
-        base_service_cost: 99.99,
+        base_service_cost: 187.00, // $220 with 15% off for one-time
         square_footage: 1800,
         bedrooms: 3,
         bathrooms: 2,
         dwelling_type: "house",
         flooring_types: ["hardwood", "tile"],
-        estimated_duration: "2-3 hours",
-        actual_duration: "2.5 hours",
+        estimated_duration: "2 hours",
+        actual_duration: "2.0 hours",
         check_in_time: "10:00 AM",
-        check_out_time: "12:30 PM",
-        duration_minutes: 150,
+        check_out_time: "12:00 PM",
+        duration_minutes: 120,
         number_of_cleaners: 2,
         add_ons: [
           { name: "Window Cleaning", price: 25.00 }
@@ -115,33 +115,32 @@ export function OrderEntryTest() {
           tier_name: "Professional",
           hourly_rate: 18.00
         },
-        discount_applied: false,
-        discount_type: null,
-        discount_description: null,
-        discount_percentage: 0,
-        discount_amount_cash: 0.00,
+        discount_applied: true,
+        discount_type: "one_time_service",
+        discount_description: "One-time service - 15% off",
+        discount_percentage: 15,
+        discount_amount_cash: 33.00,
         efficiency_bonus: true
       },
       deep_clean: {
-        service_type: "Deep Cleaning",
+        service_type: "Deep Clean",
         cleaning_type: "deep_clean", 
         frequency: "one_time",
-        base_service_cost: 199.99,
+        base_service_cost: 349.00, // New client special pricing
         square_footage: 2200,
         bedrooms: 4,
         bathrooms: 3,
         dwelling_type: "house",
         flooring_types: ["hardwood", "tile", "carpet"],
-        estimated_duration: "4-5 hours",
-        actual_duration: "4.5 hours",
+        estimated_duration: "4 hours",
+        actual_duration: "4.0 hours",
         check_in_time: "9:00 AM",
-        check_out_time: "1:30 PM",
-        duration_minutes: 270,
-        number_of_cleaners: 3,
+        check_out_time: "1:00 PM",
+        duration_minutes: 240,
+        number_of_cleaners: 2,
         add_ons: [
-          { name: "Inside Oven", price: 25.00 },
-          { name: "Inside Refrigerator", price: 20.00 },
-          { name: "Window Cleaning", price: 30.00 }
+          { name: "Inside Oven", price: 35.00 },
+          { name: "Inside Refrigerator", price: 35.00 }
         ],
         subcontractor: {
           id: "sub_002",
@@ -151,64 +150,32 @@ export function OrderEntryTest() {
           hourly_rate: 21.00
         },
         discount_applied: true,
-        discount_type: "first_time",
-        discount_description: "First-time customer - 15% off",
-        discount_percentage: 15,
-        discount_amount_cash: 41.25,
-        efficiency_bonus: false
-      },
-      recurring_weekly: {
-        service_type: "Standard Cleaning",
-        cleaning_type: "standard_clean",
-        frequency: "weekly",
-        base_service_cost: 89.99,
-        square_footage: 1500,
-        bedrooms: 2,
-        bathrooms: 2,
-        dwelling_type: "apartment",
-        flooring_types: ["laminate", "tile"],
-        estimated_duration: "2 hours",
-        actual_duration: "2.0 hours",
-        check_in_time: "10:00 AM",
-        check_out_time: "12:00 PM",
-        duration_minutes: 120,
-        number_of_cleaners: 1,
-        add_ons: [],
-        subcontractor: {
-          id: "sub_003",
-          name: "David Rodriguez",
-          tier_level: 2,
-          tier_name: "Professional",
-          hourly_rate: 18.00
-        },
-        discount_applied: true,
-        discount_type: "membership",
-        discount_description: "CleanCovered Membership - 10% off",
-        discount_percentage: 10,
-        discount_amount_cash: 8.99,
+        discount_type: "new_client_special",
+        discount_description: "New client special - $71 off",
+        discount_percentage: 0,
+        discount_amount_cash: 71.00,
         efficiency_bonus: true
       },
-      move_in_out: {
-        service_type: "Move In/Out Cleaning",
-        cleaning_type: "move_in_out",
-        frequency: "one_time", 
-        base_service_cost: 299.99,
+      premium_deep_clean: {
+        service_type: "Premium Deep Clean",
+        cleaning_type: "premium_deep_clean",
+        frequency: "one_time",
+        base_service_cost: 400.00, // $500 with 20% off for one-time
         square_footage: 2500,
-        bedrooms: 5,
-        bathrooms: 4,
+        bedrooms: 4,
+        bathrooms: 3,
         dwelling_type: "house",
-        flooring_types: ["hardwood", "tile", "carpet", "laminate"],
-        estimated_duration: "6-7 hours",
+        flooring_types: ["hardwood", "tile", "carpet"],
+        estimated_duration: "6 hours",
         actual_duration: "6.0 hours",
         check_in_time: "8:00 AM",
         check_out_time: "2:00 PM",
         duration_minutes: 360,
         number_of_cleaners: 3,
         add_ons: [
-          { name: "Inside Oven", price: 25.00 },
-          { name: "Inside Refrigerator", price: 20.00 },
-          { name: "Cabinet Interiors", price: 30.00 },
-          { name: "Window Cleaning", price: 40.00 }
+          { name: "Inside Oven", price: 35.00 },
+          { name: "Inside Refrigerator", price: 35.00 },
+          { name: "Cabinet Front Cleaning", price: 50.00 }
         ],
         subcontractor: {
           id: "sub_004",
@@ -218,15 +185,15 @@ export function OrderEntryTest() {
           hourly_rate: 21.00
         },
         discount_applied: true,
-        discount_type: "referral",
-        discount_description: "Referral reward - $25 off",
-        discount_percentage: 0,
-        discount_amount_cash: 25.00,
+        discount_type: "one_time_service",
+        discount_description: "One-time service - 20% off",
+        discount_percentage: 20,
+        discount_amount_cash: 100.00,
         efficiency_bonus: true
       }
     };
 
-    const scenarioData = scenarios[scenario] || scenarios.standard_clean;
+    const scenarioData = scenarios[scenario] || scenarios.general_clean;
     
     // Calculate financial breakdown
     const add_ons_total = scenarioData.add_ons.reduce((sum, addon) => sum + addon.price, 0);
@@ -250,38 +217,116 @@ export function OrderEntryTest() {
     const hours_per_cleaner = hours_worked / scenarioData.number_of_cleaners;
     const total_labor_cost = scenarioData.number_of_cleaners * scenarioData.subcontractor.hourly_rate * hours_per_cleaner;
     
-    // Generate cleaner assignments with expanded pool and tier information
+    // Enhanced cleaner assignments with contact info and total pay calculations
     const cleaners = [
-      { id: "sub_001", name: "Maria Garcia", hourly_rate: 18.00, tier_level: 2, tier_name: "Professional" },
-      { id: "sub_005", name: "Ana Rodriguez", hourly_rate: 16.00, tier_level: 1, tier_name: "Standard" },
-      { id: "sub_006", name: "Carlos Martinez", hourly_rate: 17.00, tier_level: 2, tier_name: "Professional" },
-      { id: "sub_007", name: "Jennifer Chen", hourly_rate: 21.00, tier_level: 3, tier_name: "Elite" },
-      { id: "sub_008", name: "David Rodriguez", hourly_rate: 19.00, tier_level: 2, tier_name: "Professional" }
+      { 
+        id: "sub_001", 
+        name: "Maria Garcia", 
+        email: "maria.garcia@bayareacleaningpros.com",
+        phone: "(415) 555-0001",
+        hourly_rate: 18.00, 
+        tier_level: 2, 
+        tier_name: "Professional" 
+      },
+      { 
+        id: "sub_005", 
+        name: "Ana Rodriguez", 
+        hourly_rate: 16.00, 
+        tier_level: 1, 
+        tier_name: "Standard" 
+      },
+      { 
+        id: "sub_006", 
+        name: "Carlos Martinez", 
+        hourly_rate: 17.00, 
+        tier_level: 2, 
+        tier_name: "Professional" 
+      },
+      { 
+        id: "sub_007", 
+        name: "Jennifer Chen", 
+        email: "jennifer.chen@bayareacleaningpros.com",
+        phone: "(415) 555-0007",
+        hourly_rate: 21.00, 
+        tier_level: 3, 
+        tier_name: "Elite" 
+      },
+      { 
+        id: "sub_008", 
+        name: "David Rodriguez", 
+        hourly_rate: 19.00, 
+        tier_level: 2, 
+        tier_name: "Professional" 
+      }
     ];
     
     const cleaner_assignments = Array.from({ length: scenarioData.number_of_cleaners }, (_, index) => {
       const cleaner = cleaners[index] || cleaners[0];
-      const individual_pay = cleaner.hourly_rate * hours_per_cleaner;
       const cleaner_number = index + 1;
       const is_lead = index === 0;
+      const hours_for_this_cleaner = hours_per_cleaner;
       
-      return {
+      // Calculate pay breakdown
+      const base_pay = cleaner.hourly_rate * hours_for_this_cleaner;
+      const efficiency_bonus = scenarioData.efficiency_bonus ? base_pay * 0.15 : 0;
+      const total_job_pay = base_pay + efficiency_bonus;
+      
+      const cleanerData: any = {
         cleaner_number: cleaner_number,
         cleaner_id: cleaner.id,
         name: cleaner.name,
         role: is_lead ? "team_lead" : "cleaner",
         is_lead: is_lead,
         hourly_rate: cleaner.hourly_rate,
-        hours_assigned: parseFloat(hours_per_cleaner.toFixed(2)),
-        individual_pay: parseFloat(individual_pay.toFixed(2)),
+        hours_assigned: parseFloat(hours_for_this_cleaner.toFixed(2)),
+        base_pay: parseFloat(base_pay.toFixed(2)),
+        efficiency_bonus: parseFloat(efficiency_bonus.toFixed(2)),
+        total_job_pay: parseFloat(total_job_pay.toFixed(2)),
         tier_level: cleaner.tier_level,
         tier_name: cleaner.tier_name
       };
+      
+      // Add contact info only for lead cleaner
+      if (is_lead && cleaner.email && cleaner.phone) {
+        cleanerData.email = cleaner.email;
+        cleanerData.phone = cleaner.phone;
+      }
+      
+      return cleanerData;
     });
 
-    // Separate lead cleaner and supporting cleaners
-    const lead_cleaner = cleaner_assignments[0];
-    const supporting_cleaners = cleaner_assignments.slice(1);
+    // Separate lead cleaner and supporting cleaners (clean objects without circular references)
+    const lead_cleaner = {
+      cleaner_number: 1,
+      cleaner_id: cleaner_assignments[0].cleaner_id,
+      name: cleaner_assignments[0].name,
+      email: cleaner_assignments[0].email || undefined,
+      phone: cleaner_assignments[0].phone || undefined,
+      role: "team_lead",
+      is_lead: true,
+      hourly_rate: cleaner_assignments[0].hourly_rate,
+      hours_assigned: cleaner_assignments[0].hours_assigned,
+      base_pay: cleaner_assignments[0].base_pay,
+      efficiency_bonus: cleaner_assignments[0].efficiency_bonus,
+      total_job_pay: cleaner_assignments[0].total_job_pay,
+      tier_level: cleaner_assignments[0].tier_level,
+      tier_name: cleaner_assignments[0].tier_name
+    };
+    
+    const supporting_cleaners = cleaner_assignments.slice(1).map(cleaner => ({
+      cleaner_number: cleaner.cleaner_number,
+      cleaner_id: cleaner.cleaner_id,
+      name: cleaner.name,
+      role: cleaner.role,
+      is_lead: false,
+      hourly_rate: cleaner.hourly_rate,
+      hours_assigned: cleaner.hours_assigned,
+      base_pay: cleaner.base_pay,
+      efficiency_bonus: cleaner.efficiency_bonus,
+      total_job_pay: cleaner.total_job_pay,
+      tier_level: cleaner.tier_level,
+      tier_name: cleaner.tier_name
+    }));
 
     return {
       order: {
@@ -453,10 +498,9 @@ export function OrderEntryTest() {
               <SelectValue placeholder="Select order scenario" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="standard_clean">Standard Clean ($135.83 - with add-on)</SelectItem>
-              <SelectItem value="deep_clean">Deep Clean ($244.24 - with 15% discount)</SelectItem>
-              <SelectItem value="recurring_weekly">Weekly Recurring ($88.18 - membership discount)</SelectItem>
-              <SelectItem value="move_in_out">Move In/Out ($390.48 - with $25 referral credit)</SelectItem>
+              <SelectItem value="general_clean">General Cleaning ($212 - 2hrs, 2 cleaners)</SelectItem>
+              <SelectItem value="deep_clean">Deep Clean ($419 - 4hrs, 2 cleaners) [Most Popular]</SelectItem>
+              <SelectItem value="premium_deep_clean">Premium Deep Clean ($520 - 6hrs, 3 cleaners)</SelectItem>
             </SelectContent>
           </Select>
         </div>
