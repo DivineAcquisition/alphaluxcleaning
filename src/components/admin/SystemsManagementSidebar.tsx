@@ -32,52 +32,46 @@ import { Button } from "@/components/ui/button";
 
 const systemItems = [
   {
-    label: "Admin Dashboard",
-    path: "/admin",
-    icon: LayoutDashboard,
-    description: "Main overview"
-  },
-  {
-    label: "Control Panel",
-    path: "/admin-dashboard",
+    label: "System Settings",
+    path: "/system-settings",
     icon: Settings,
-    description: "System settings"
-  },
-  {
-    label: "Analytics",
-    path: "/metrics-dashboard",
-    icon: BarChart3,
-    description: "Data insights"
-  },
-  {
-    label: "API Management",
-    path: "/api-portal",
-    icon: Globe,
-    description: "API tools"
-  },
-  {
-    label: "API Keys",
-    path: "/api-keys",
-    icon: Key,
-    description: "Manage keys"
+    description: "Core configuration"
   },
   {
     label: "Database Tools",
     path: "/database-tools",
     icon: Database,
-    description: "DB management"
+    description: "Data management"
   },
   {
-    label: "System Settings",
-    path: "/system-settings",
-    icon: Settings,
-    description: "Configuration"
+    label: "API Keys",
+    path: "/api-keys",
+    icon: Key,
+    description: "Integration tokens"
   },
   {
-    label: "Security Settings",
-    path: "/security-settings",
+    label: "API Portal",
+    path: "/api-portal",
+    icon: Globe,
+    description: "API management"
+  },
+  {
+    label: "Email Settings",
+    path: "/email-settings",
+    icon: Mail,
+    description: "SMTP & templates"
+  },
+  {
+    label: "Automation Controls",
+    path: "/automation-controls",
+    icon: Zap,
+    description: "Workflow automation"
+  },
+  {
+    label: "Security Center",
+    path: "/security-center",
     icon: Shield,
-    description: "Security config"
+    description: "Security monitoring"
   },
   {
     label: "User Management",
@@ -86,22 +80,16 @@ const systemItems = [
     description: "System users"
   },
   {
-    label: "Email Settings",
-    path: "/email-settings",
-    icon: Mail,
-    description: "Email config"
-  },
-  {
-    label: "Automation",
-    path: "/automation-controls",
-    icon: Zap,
-    description: "Workflows"
+    label: "Testing Portal",
+    path: "/testing-portal",
+    icon: Terminal,
+    description: "Development tools"
   },
   {
     label: "System Logs",
     path: "/system-logs",
     icon: Terminal,
-    description: "Debug logs"
+    description: "Activity monitoring"
   }
 ];
 

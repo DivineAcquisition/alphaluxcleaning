@@ -30,32 +30,38 @@ import { Button } from "@/components/ui/button";
 
 const customerItems = [
   {
-    label: "Customer Dashboard",
+    label: "Customer Database",
     path: "/customer-dashboard",
     icon: Users,
-    description: "Customer overview"
-  },
-  {
-    label: "Bookings Management",
-    path: "/office-bookings",
-    icon: Calendar,
-    description: "All bookings"
+    description: "Customer profiles"
   },
   {
     label: "Orders & Services",
-    path: "/orders-management",
+    path: "/admin-booking-preview",
     icon: ShoppingCart,
     description: "Service orders"
   },
   {
-    label: "Customer Feedback",
-    path: "/office-quality",
-    icon: MessageSquare,
-    description: "Reviews & feedback"
+    label: "Payment Center",
+    path: "/payment-portal",
+    icon: CreditCard,
+    description: "Billing & payments"
   },
   {
-    label: "Support Requests",
-    path: "/support-portal",
+    label: "Tips Management", 
+    path: "/tips-management",
+    icon: Star,
+    description: "Customer tips"
+  },
+  {
+    label: "Feedback Center",
+    path: "/feedback-center",
+    icon: MessageSquare,
+    description: "Reviews & ratings"
+  },
+  {
+    label: "Support Center",
+    path: "/communication-hub",
     icon: HeadphonesIcon,
     description: "Customer support"
   },
@@ -64,24 +70,6 @@ const customerItems = [
     path: "/commercial-estimates",
     icon: Building2,
     description: "Business quotes"
-  },
-  {
-    label: "Payment Management",
-    path: "/payment-portal",
-    icon: CreditCard,
-    description: "Billing & payments"
-  },
-  {
-    label: "Customer Onboarding",
-    path: "/customer-onboarding",
-    icon: UserPlus,
-    description: "New customers"
-  },
-  {
-    label: "Booking Preview",
-    path: "/admin-booking-preview",
-    icon: Eye,
-    description: "Test booking flow"
   }
 ];
 

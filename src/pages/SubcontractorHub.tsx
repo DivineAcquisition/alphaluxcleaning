@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   TrendingUp
 } from 'lucide-react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
+import { SubcontractorManagementLayout } from '@/components/admin/SubcontractorManagementLayout';
 import { SubcontractorDirectory } from '@/components/subcontractor-hub/SubcontractorDirectory';
 import { ApplicationsOnboarding } from '@/components/subcontractor-hub/ApplicationsOnboarding';
 import { JobAssignmentCenter } from '@/components/subcontractor-hub/JobAssignmentCenter';
@@ -30,14 +30,14 @@ export default function SubcontractorHub() {
 
   if (loading) {
     return (
-      <AdminLayout title="Subcontractor Management Hub" description="Loading...">
+      <SubcontractorManagementLayout title="Subcontractor Management Hub" description="Loading...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
             <p>Loading subcontractor management hub...</p>
           </div>
         </div>
-      </AdminLayout>
+      </SubcontractorManagementLayout>
     );
   }
 
@@ -51,7 +51,7 @@ export default function SubcontractorHub() {
   };
 
   return (
-    <AdminLayout 
+    <SubcontractorManagementLayout 
       title="Subcontractor Management Hub" 
       description="Comprehensive subcontractor operations management center"
     >
@@ -185,6 +185,6 @@ export default function SubcontractorHub() {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
+    </SubcontractorManagementLayout>
   );
 }

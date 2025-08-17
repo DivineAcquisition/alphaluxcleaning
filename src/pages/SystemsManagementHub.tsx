@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { SystemsManagementLayout } from "@/components/admin/SystemsManagementLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
@@ -117,9 +117,9 @@ const SystemsManagementHub = () => {
   };
 
   return (
-    <AdminLayout 
+    <SystemsManagementLayout 
       title="Systems Management Hub" 
-      description="Technical administration and system configuration"
+      description="Technical administration and system monitoring center"
     >
       <div className="space-y-6">
         {/* Header Navigation */}
@@ -216,7 +216,7 @@ const SystemsManagementHub = () => {
           </AdminGrid>
         </AdminSection>
       </div>
-    </AdminLayout>
+    </SystemsManagementLayout>
   );
 };
 
