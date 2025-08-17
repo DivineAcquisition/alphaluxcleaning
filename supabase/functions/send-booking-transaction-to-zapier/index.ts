@@ -231,14 +231,7 @@ serve(async (req) => {
   }
 
   try {
-    const { 
-      session_id, 
-      send_sample_data = false, 
-      webhook_url, 
-      customer_only = true, 
-      transactionData: directTransactionData, 
-      type 
-    } = await req.json();
+    const { session_id, send_sample_data = false, webhook_url, customer_only = true } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -246,77 +239,7 @@ serve(async (req) => {
 
     let transactionData: ComprehensiveBookingData;
 
-    if (directTransactionData) {
-      // Use directly provided transaction data from OrderEntryTest
-      console.log('Using direct transaction data provided by client');
-      
-      // Convert the simple transaction data to the expected format
-      const now = new Date();
-      transactionData = {
-        order: {
-          id: directTransactionData.orderDetails?.orderId || `test-order-${Date.now()}`,
-          stripe_session_id: `test-session-${Date.now()}`,
-          amount: (directTransactionData.amount || 15999),
-          currency: 'usd',
-          status: 'completed',
-          customer_name: directTransactionData.customerName || 'Test Customer',
-          customer_email: directTransactionData.customerEmail || 'test@example.com',
-          customer_phone: directTransactionData.phone || '(555) 123-4567',
-          cleaning_type: directTransactionData.serviceType || 'standard_clean',
-          frequency: 'one_time',
-          square_footage: 2000,
-          service_details: directTransactionData.serviceDetails || {},
-          scheduled_date: directTransactionData.preferredDate || now.toISOString().split('T')[0],
-          scheduled_time: directTransactionData.preferredTime || '10:00 AM',
-          created_at: now.toISOString(),
-          is_recurring: false,
-          add_ons: directTransactionData.addOns || []
-        },
-        status_updates: [{
-          id: 'status-test-1',
-          status_message: 'Test order entry webhook triggered',
-          created_at: now.toISOString(),
-          subcontractor_name: 'Test Subcontractor'
-        }],
-        payment: {
-          amount_paid: directTransactionData.amount || 15999,
-          payment_method: 'test',
-          transaction_id: `test-transaction-${Date.now()}`,
-          payment_status: 'succeeded'
-        },
-        service: {
-          service_type: directTransactionData.serviceType || 'Standard Cleaning',
-          frequency: 'One-time',
-          estimated_duration: '2-3 hours',
-          special_requirements: directTransactionData.notes ? [directTransactionData.notes] : [],
-          access_instructions: '',
-          pets_present: false,
-          parking_instructions: ''
-        },
-        address: {
-          street: directTransactionData.address || '123 Test Street',
-          city: 'Test City',
-          state: 'CA',
-          zip_code: '12345',
-          dwelling_type: 'house',
-          flooring_types: ['hardwood']
-        },
-        analytics: {
-          booking_source: 'test_portal',
-          marketing_channel: 'test',
-          customer_ltv_estimate: (directTransactionData.amount || 15999) / 100,
-          booking_completion_time: '00:01:00',
-          device_type: 'desktop',
-          total_customer_orders: 1
-        },
-        timestamps: {
-          order_created: now.toISOString(),
-          payment_completed: now.toISOString(),
-          booking_scheduled: now.toISOString(),
-          webhook_sent: now.toISOString()
-        }
-      };
-    } else if (send_sample_data) {
+    if (send_sample_data) {
       // Send comprehensive sample data with full booking lifecycle
       const now = new Date();
       const serviceDate = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000); // 4 days ago
