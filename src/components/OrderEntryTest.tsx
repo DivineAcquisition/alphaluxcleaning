@@ -213,10 +213,6 @@ export function OrderEntryTest() {
     const efficiency_bonus_amount = scenarioData.efficiency_bonus ? base_hourly_pay * 0.15 : 0;
     const total_subcontractor_pay = base_hourly_pay + efficiency_bonus_amount;
     
-    // Calculate team assignment and total labor cost
-    const hours_per_cleaner = hours_worked / scenarioData.number_of_cleaners;
-    const total_labor_cost = scenarioData.number_of_cleaners * scenarioData.subcontractor.hourly_rate * hours_per_cleaner;
-    
     // Enhanced cleaner assignments with contact info and total pay calculations
     const cleaners = [
       { 
@@ -259,6 +255,11 @@ export function OrderEntryTest() {
         tier_name: "Professional" 
       }
     ];
+
+    // Calculate team assignment and total labor cost
+    const hours_per_cleaner = hours_worked; // Each cleaner works the full duration
+    const total_labor_cost = cleaners.slice(0, scenarioData.number_of_cleaners).reduce((sum, cleaner) => 
+      sum + (cleaner.hourly_rate * hours_worked), 0);
     
     const cleaner_assignments = Array.from({ length: scenarioData.number_of_cleaners }, (_, index) => {
       const cleaner = cleaners[index] || cleaners[0];
