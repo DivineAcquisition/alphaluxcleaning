@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { CleanAdminLayout } from "@/components/admin/CleanAdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
@@ -76,7 +76,7 @@ const AdminPortal = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout 
+      <CleanAdminLayout 
         title="Admin Hub" 
         description="Centralized management dashboard"
       >
@@ -86,12 +86,12 @@ const AdminPortal = () => {
             <p className="text-muted-foreground">Loading admin hub...</p>
           </div>
         </div>
-      </AdminLayout>
+      </CleanAdminLayout>
     );
   }
 
   return (
-    <AdminLayout 
+    <CleanAdminLayout 
       title="Admin Hub" 
       description="Centralized management dashboard for Bay Area Cleaning Pros"
     >
@@ -234,7 +234,7 @@ const AdminPortal = () => {
           </AdminGrid>
         </AdminSection>
       </div>
-    </AdminLayout>
+    </CleanAdminLayout>
   );
 };
 
