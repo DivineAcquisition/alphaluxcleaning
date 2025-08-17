@@ -214,7 +214,7 @@ export function ZapierTestButton() {
         )}
         
         <div className="text-xs text-muted-foreground">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/</p>
+          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/</p>
           <p>This sends comprehensive booking data including membership benefits, addon discounts, new client specials, pricing breakdowns, and complete transaction analytics.</p>
         </div>
       </CardContent>

@@ -231,22 +231,26 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id, send_sample_data = false, webhook_url, customer_only = true } = await req.json();
+    const { session_id, send_sample_data = false, webhook_url, customer_only = true, transactionData } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let transactionData: ComprehensiveBookingData;
+    let comprehensiveData: ComprehensiveBookingData;
 
-    if (send_sample_data) {
+    if (transactionData) {
+      // Use direct transaction data provided by client
+      console.log("Using direct transaction data provided by client");
+      comprehensiveData = transactionData;
+    } else if (send_sample_data) {
       // Send comprehensive sample data with full booking lifecycle
       const now = new Date();
       const serviceDate = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000); // 4 days ago
       const bookingDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
       const firstVisit = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days ago
       
-      transactionData = {
+      comprehensiveData = {
         // Pre-booking journey data
         customer_journey: {
           first_website_visit: firstVisit.toISOString(),
@@ -892,35 +896,35 @@ serve(async (req) => {
 
     console.log('Sending to Zapier webhook:', targetWebhookUrl);
 
-    // Build customer-only payload from customer-entered fields
-    const customerInput = {
-      customer_name: transactionData.order?.customer_name,
-      customer_email: transactionData.order?.customer_email,
-      customer_phone: transactionData.order?.customer_phone,
-      address: (transactionData as any).address ?? transactionData.booking?.service_address,
-      cleaning_type: transactionData.order?.cleaning_type,
-      frequency: transactionData.order?.frequency,
-      square_footage: transactionData.order?.square_footage,
-      bedrooms: transactionData.order?.service_details?.bedrooms,
-      bathrooms: transactionData.order?.service_details?.bathrooms,
-      add_ons: transactionData.order?.add_ons,
-      preferred_date: transactionData.order?.scheduled_date,
-      preferred_time: transactionData.order?.scheduled_time,
-      special_instructions: transactionData.order?.service_details?.special_instructions,
-      referral_code: transactionData.booking_process?.referral_application?.code_entered
-    };
+      // Build customer-only payload from customer-entered fields
+      const customerInput = {
+        customer_name: comprehensiveData.order?.customer_name,
+        customer_email: comprehensiveData.order?.customer_email,
+        customer_phone: comprehensiveData.order?.customer_phone,
+        address: (comprehensiveData as any).address ?? comprehensiveData.booking?.service_address,
+        cleaning_type: comprehensiveData.order?.cleaning_type,
+        frequency: comprehensiveData.order?.frequency,
+        square_footage: comprehensiveData.order?.square_footage,
+        bedrooms: comprehensiveData.order?.service_details?.bedrooms,
+        bathrooms: comprehensiveData.order?.service_details?.bathrooms,
+        add_ons: comprehensiveData.order?.add_ons,
+        preferred_date: comprehensiveData.order?.scheduled_date,
+        preferred_time: comprehensiveData.order?.scheduled_time,
+        special_instructions: comprehensiveData.order?.service_details?.special_instructions,
+        referral_code: comprehensiveData.booking_process?.referral_application?.code_entered
+      };
 
-    const bodyPayload = customer_only
-      ? { event_type: 'customer_booking_input', customer_input: customerInput }
-      : {
-          event_type: 'customer_data_collection',
-          'BACP Data': transactionData,
-          metadata: {
-            webhook_version: '1.0',
-            sent_at: new Date().toISOString(),
-            environment: 'production',
-          },
-        };
+      const bodyPayload = customer_only
+        ? { event_type: 'customer_booking_input', customer_input: customerInput }
+        : {
+            event_type: 'customer_data_collection',
+            'BACP Data': comprehensiveData,
+            metadata: {
+              webhook_version: '1.0',
+              sent_at: new Date().toISOString(),
+              environment: 'production',
+            },
+          };
 
     // Send to Zapier webhook
     const zapierResponse = await fetch(targetWebhookUrl, {
@@ -934,21 +938,21 @@ serve(async (req) => {
     const zapierText = await zapierResponse.text();
     console.log('Zapier webhook response status:', zapierResponse.status);
     console.log('Zapier response text:', zapierText);
-    console.log('Transaction data sent:', JSON.stringify(transactionData, null, 2));
+      console.log('Transaction data sent:', JSON.stringify(comprehensiveData, null, 2));
 
-    if (!zapierResponse.ok) {
-      throw new Error(`Zapier webhook failed with status: ${zapierResponse.status} - ${zapierText}`);
-    }
+      if (!zapierResponse.ok) {
+        throw new Error(`Zapier webhook failed with status: ${zapierResponse.status} - ${zapierText}`);
+      }
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: 'Booking transaction sent to Zapier successfully',
-      transaction_id: transactionData.order.id,
-      webhook_status: zapierResponse.status,
-      zapier_response: zapierText,
-      zapier_url: targetWebhookUrl,
-      data_sent: transactionData
-    }), {
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Booking transaction sent to Zapier successfully',
+        transaction_id: comprehensiveData.order.id,
+        webhook_status: zapierResponse.status,
+        zapier_response: zapierText,
+        zapier_url: targetWebhookUrl,
+        data_sent: comprehensiveData
+      }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
