@@ -93,54 +93,144 @@ export function OrderEntryTest() {
         service_type: "Standard Cleaning",
         cleaning_type: "standard_clean",
         frequency: "one_time",
-        amount: 129.99,
+        base_service_cost: 99.99,
         square_footage: 1800,
         estimated_duration: "2-3 hours",
-        add_ons: []
+        actual_duration: "2.5 hours",
+        check_in_time: "10:00 AM",
+        check_out_time: "12:30 PM",
+        duration_minutes: 150,
+        add_ons: [
+          { name: "Window Cleaning", price: 25.00 }
+        ],
+        subcontractor: {
+          id: "sub_001",
+          name: "Maria Garcia",
+          tier_level: 2,
+          tier_name: "Professional",
+          hourly_rate: 18.00
+        },
+        discount_applied: false,
+        discount_type: null,
+        discount_description: null,
+        discount_percentage: 0,
+        discount_amount_cash: 0.00,
+        efficiency_bonus: true
       },
       deep_clean: {
         service_type: "Deep Cleaning",
         cleaning_type: "deep_clean", 
         frequency: "one_time",
-        amount: 249.99,
+        base_service_cost: 199.99,
         square_footage: 2200,
         estimated_duration: "4-5 hours",
+        actual_duration: "4.5 hours",
+        check_in_time: "9:00 AM",
+        check_out_time: "1:30 PM",
+        duration_minutes: 270,
         add_ons: [
           { name: "Inside Oven", price: 25.00 },
-          { name: "Inside Refrigerator", price: 20.00 }
-        ]
+          { name: "Inside Refrigerator", price: 20.00 },
+          { name: "Window Cleaning", price: 30.00 }
+        ],
+        subcontractor: {
+          id: "sub_002",
+          name: "Jennifer Chen",
+          tier_level: 3,
+          tier_name: "Elite",
+          hourly_rate: 21.00
+        },
+        discount_applied: true,
+        discount_type: "first_time",
+        discount_description: "First-time customer - 15% off",
+        discount_percentage: 15,
+        discount_amount_cash: 41.25,
+        efficiency_bonus: false
       },
       recurring_weekly: {
         service_type: "Standard Cleaning",
         cleaning_type: "standard_clean",
         frequency: "weekly",
-        amount: 99.99,
+        base_service_cost: 89.99,
         square_footage: 1500,
         estimated_duration: "2 hours",
-        add_ons: []
+        actual_duration: "2.0 hours",
+        check_in_time: "10:00 AM",
+        check_out_time: "12:00 PM",
+        duration_minutes: 120,
+        add_ons: [],
+        subcontractor: {
+          id: "sub_003",
+          name: "David Rodriguez",
+          tier_level: 2,
+          tier_name: "Professional",
+          hourly_rate: 18.00
+        },
+        discount_applied: true,
+        discount_type: "membership",
+        discount_description: "CleanCovered Membership - 10% off",
+        discount_percentage: 10,
+        discount_amount_cash: 8.99,
+        efficiency_bonus: true
       },
       move_in_out: {
         service_type: "Move In/Out Cleaning",
         cleaning_type: "move_in_out",
         frequency: "one_time", 
-        amount: 349.99,
+        base_service_cost: 299.99,
         square_footage: 2500,
         estimated_duration: "6-7 hours",
+        actual_duration: "6.0 hours",
+        check_in_time: "8:00 AM",
+        check_out_time: "2:00 PM",
+        duration_minutes: 360,
         add_ons: [
           { name: "Inside Oven", price: 25.00 },
           { name: "Inside Refrigerator", price: 20.00 },
-          { name: "Cabinet Interiors", price: 30.00 }
-        ]
+          { name: "Cabinet Interiors", price: 30.00 },
+          { name: "Window Cleaning", price: 40.00 }
+        ],
+        subcontractor: {
+          id: "sub_004",
+          name: "Sarah Williams",
+          tier_level: 3,
+          tier_name: "Elite",
+          hourly_rate: 21.00
+        },
+        discount_applied: true,
+        discount_type: "referral",
+        discount_description: "Referral reward - $25 off",
+        discount_percentage: 0,
+        discount_amount_cash: 25.00,
+        efficiency_bonus: true
       }
     };
 
     const scenarioData = scenarios[scenario] || scenarios.standard_clean;
+    
+    // Calculate financial breakdown
+    const add_ons_total = scenarioData.add_ons.reduce((sum, addon) => sum + addon.price, 0);
+    const subtotal_before_discount = scenarioData.base_service_cost + add_ons_total;
+    const discount_amount_cash = scenarioData.discount_percentage > 0 
+      ? (subtotal_before_discount * scenarioData.discount_percentage / 100)
+      : scenarioData.discount_amount_cash;
+    const discounted_subtotal = subtotal_before_discount - discount_amount_cash;
+    const tax_rate = 8.75; // California tax rate
+    const tax_amount = discounted_subtotal * (tax_rate / 100);
+    const final_cost = discounted_subtotal + tax_amount;
+    const total_savings = discount_amount_cash;
+    
+    // Calculate subcontractor payment
+    const hours_worked = scenarioData.duration_minutes / 60;
+    const base_hourly_pay = hours_worked * scenarioData.subcontractor.hourly_rate;
+    const efficiency_bonus_amount = scenarioData.efficiency_bonus ? base_hourly_pay * 0.15 : 0;
+    const total_subcontractor_pay = base_hourly_pay + efficiency_bonus_amount;
 
     return {
       order: {
         id: `test-order-${Date.now()}`,
         stripe_session_id: `test-session-${Date.now()}`,
-        amount: scenarioData.amount,
+        amount: final_cost,
         currency: "usd",
         status: "completed",
         customer_name: baseCustomer.name,
@@ -159,8 +249,50 @@ export function OrderEntryTest() {
         is_recurring: scenarioData.frequency !== "one_time",
         add_ons: scenarioData.add_ons
       },
+      subcontractor_payment: {
+        assigned_subcontractor: {
+          id: scenarioData.subcontractor.id,
+          name: scenarioData.subcontractor.name,
+          tier_level: scenarioData.subcontractor.tier_level,
+          tier_name: scenarioData.subcontractor.tier_name
+        },
+        hourly_rate_structure: {
+          base_hourly_rate: scenarioData.subcontractor.hourly_rate,
+          tier_level: scenarioData.subcontractor.tier_level,
+          tier_name: scenarioData.subcontractor.tier_name
+        },
+        job_duration: {
+          estimated_duration: scenarioData.estimated_duration,
+          actual_duration: scenarioData.actual_duration,
+          check_in_time: scenarioData.check_in_time,
+          check_out_time: scenarioData.check_out_time,
+          duration_minutes: scenarioData.duration_minutes
+        },
+        payment_calculation: {
+          base_hourly_pay: parseFloat(base_hourly_pay.toFixed(2)),
+          efficiency_bonus: parseFloat(efficiency_bonus_amount.toFixed(2)),
+          total_subcontractor_pay: parseFloat(total_subcontractor_pay.toFixed(2)),
+          payment_method: "hourly"
+        }
+      },
+      financial_breakdown: {
+        base_service_cost: scenarioData.base_service_cost,
+        add_ons: scenarioData.add_ons,
+        add_ons_total: parseFloat(add_ons_total.toFixed(2)),
+        subtotal_before_discount: parseFloat(subtotal_before_discount.toFixed(2)),
+        discount_applied: scenarioData.discount_applied,
+        discount_type: scenarioData.discount_type,
+        discount_description: scenarioData.discount_description,
+        discount_percentage: scenarioData.discount_percentage,
+        discount_amount_cash: parseFloat(discount_amount_cash.toFixed(2)),
+        discounted_subtotal: parseFloat(discounted_subtotal.toFixed(2)),
+        tax_rate: tax_rate,
+        tax_amount: parseFloat(tax_amount.toFixed(2)),
+        final_cost: parseFloat(final_cost.toFixed(2)),
+        total_savings: parseFloat(total_savings.toFixed(2))
+      },
       payment: {
-        amount_paid: scenarioData.amount,
+        amount_paid: parseFloat(final_cost.toFixed(2)),
         payment_method: "card",
         transaction_id: `test-transaction-${Date.now()}`,
         payment_status: "succeeded"
@@ -178,7 +310,7 @@ export function OrderEntryTest() {
       analytics: {
         booking_source: "website",
         marketing_channel: "organic_search",
-        customer_ltv_estimate: scenarioData.amount * 12,
+        customer_ltv_estimate: final_cost * 12,
         booking_completion_time: "00:02:15",
         device_type: "desktop",
         total_customer_orders: 1
@@ -204,18 +336,20 @@ export function OrderEntryTest() {
       zip_code: "94102",
       country: "USA",
       service_type: orderScenario.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      amount: getOrderScenarioData(orderScenario).order.amount,
+      amount: getOrderScenarioData(orderScenario).financial_breakdown.final_cost,
       square_footage: getOrderScenarioData(orderScenario).order.square_footage,
       scheduled_date: "2024-01-16",
       scheduled_time: "10:00 AM",
       frequency: getOrderScenarioData(orderScenario).order.frequency,
       add_ons: getOrderScenarioData(orderScenario).order.add_ons
     },
+    subcontractor_payment: getOrderScenarioData(orderScenario).subcontractor_payment,
+    financial_breakdown: getOrderScenarioData(orderScenario).financial_breakdown,
     payment_data: {
       payment_method: "card",
       transaction_id: "test_transaction_123",
       payment_status: "succeeded",
-      amount_paid: getOrderScenarioData(orderScenario).order.amount
+      amount_paid: getOrderScenarioData(orderScenario).financial_breakdown.final_cost
     },
     analytics: {
       booking_source: "website",
@@ -244,10 +378,10 @@ export function OrderEntryTest() {
               <SelectValue placeholder="Select order scenario" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="standard_clean">Standard Clean ($129.99)</SelectItem>
-              <SelectItem value="deep_clean">Deep Clean ($249.99)</SelectItem>
-              <SelectItem value="recurring_weekly">Weekly Recurring ($99.99)</SelectItem>
-              <SelectItem value="move_in_out">Move In/Out ($349.99)</SelectItem>
+              <SelectItem value="standard_clean">Standard Clean ($135.83 - with add-on)</SelectItem>
+              <SelectItem value="deep_clean">Deep Clean ($244.24 - with 15% discount)</SelectItem>
+              <SelectItem value="recurring_weekly">Weekly Recurring ($88.18 - membership discount)</SelectItem>
+              <SelectItem value="move_in_out">Move In/Out ($390.48 - with $25 referral credit)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -328,11 +462,13 @@ export function OrderEntryTest() {
           <p>This webhook sends comprehensive order entry data including:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Complete customer and order details</li>
+            <li>Subcontractor payment breakdown with hourly rates and bonuses</li>
+            <li>Detailed financial breakdown (discounts, taxes, final costs)</li>
             <li>Service type, frequency, and scheduling information</li>
             <li>Payment processing details and transaction data</li>
             <li>Address information and service requirements</li>
             <li>Analytics data for tracking and insights</li>
-            <li>Multiple order scenarios for testing different workflows</li>
+            <li>Multiple order scenarios with realistic pricing</li>
           </ul>
         </div>
 
