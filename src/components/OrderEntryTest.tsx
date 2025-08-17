@@ -95,11 +95,16 @@ export function OrderEntryTest() {
         frequency: "one_time",
         base_service_cost: 99.99,
         square_footage: 1800,
+        bedrooms: 3,
+        bathrooms: 2,
+        dwelling_type: "house",
+        flooring_types: ["hardwood", "tile"],
         estimated_duration: "2-3 hours",
         actual_duration: "2.5 hours",
         check_in_time: "10:00 AM",
         check_out_time: "12:30 PM",
         duration_minutes: 150,
+        number_of_cleaners: 2,
         add_ons: [
           { name: "Window Cleaning", price: 25.00 }
         ],
@@ -123,11 +128,16 @@ export function OrderEntryTest() {
         frequency: "one_time",
         base_service_cost: 199.99,
         square_footage: 2200,
+        bedrooms: 4,
+        bathrooms: 3,
+        dwelling_type: "house",
+        flooring_types: ["hardwood", "tile", "carpet"],
         estimated_duration: "4-5 hours",
         actual_duration: "4.5 hours",
         check_in_time: "9:00 AM",
         check_out_time: "1:30 PM",
         duration_minutes: 270,
+        number_of_cleaners: 3,
         add_ons: [
           { name: "Inside Oven", price: 25.00 },
           { name: "Inside Refrigerator", price: 20.00 },
@@ -153,11 +163,16 @@ export function OrderEntryTest() {
         frequency: "weekly",
         base_service_cost: 89.99,
         square_footage: 1500,
+        bedrooms: 2,
+        bathrooms: 2,
+        dwelling_type: "apartment",
+        flooring_types: ["laminate", "tile"],
         estimated_duration: "2 hours",
         actual_duration: "2.0 hours",
         check_in_time: "10:00 AM",
         check_out_time: "12:00 PM",
         duration_minutes: 120,
+        number_of_cleaners: 1,
         add_ons: [],
         subcontractor: {
           id: "sub_003",
@@ -179,11 +194,16 @@ export function OrderEntryTest() {
         frequency: "one_time", 
         base_service_cost: 299.99,
         square_footage: 2500,
+        bedrooms: 5,
+        bathrooms: 4,
+        dwelling_type: "house",
+        flooring_types: ["hardwood", "tile", "carpet", "laminate"],
         estimated_duration: "6-7 hours",
         actual_duration: "6.0 hours",
         check_in_time: "8:00 AM",
         check_out_time: "2:00 PM",
         duration_minutes: 360,
+        number_of_cleaners: 3,
         add_ons: [
           { name: "Inside Oven", price: 25.00 },
           { name: "Inside Refrigerator", price: 20.00 },
@@ -225,6 +245,30 @@ export function OrderEntryTest() {
     const base_hourly_pay = hours_worked * scenarioData.subcontractor.hourly_rate;
     const efficiency_bonus_amount = scenarioData.efficiency_bonus ? base_hourly_pay * 0.15 : 0;
     const total_subcontractor_pay = base_hourly_pay + efficiency_bonus_amount;
+    
+    // Calculate team assignment and total labor cost
+    const hours_per_cleaner = hours_worked / scenarioData.number_of_cleaners;
+    const total_labor_cost = scenarioData.number_of_cleaners * scenarioData.subcontractor.hourly_rate * hours_per_cleaner;
+    
+    // Generate cleaner assignments
+    const cleaners = [
+      { id: "sub_001", name: "Maria Garcia", hourly_rate: 18.00 },
+      { id: "sub_005", name: "Ana Rodriguez", hourly_rate: 16.00 },
+      { id: "sub_006", name: "Carlos Martinez", hourly_rate: 17.00 }
+    ];
+    
+    const cleaner_assignments = Array.from({ length: scenarioData.number_of_cleaners }, (_, index) => {
+      const cleaner = cleaners[index] || cleaners[0];
+      const individual_pay = cleaner.hourly_rate * hours_per_cleaner;
+      return {
+        cleaner_id: cleaner.id,
+        name: cleaner.name,
+        role: index === 0 ? "team_lead" : "cleaner",
+        hourly_rate: cleaner.hourly_rate,
+        hours_assigned: parseFloat(hours_per_cleaner.toFixed(2)),
+        individual_pay: parseFloat(individual_pay.toFixed(2))
+      };
+    });
 
     return {
       order: {
@@ -239,6 +283,16 @@ export function OrderEntryTest() {
         cleaning_type: scenarioData.cleaning_type,
         frequency: scenarioData.frequency,
         square_footage: scenarioData.square_footage,
+        property_details: {
+          bedrooms: scenarioData.bedrooms,
+          bathrooms: scenarioData.bathrooms,
+          dwelling_type: scenarioData.dwelling_type,
+          flooring_types: scenarioData.flooring_types,
+          square_footage: scenarioData.square_footage,
+          levels: 1,
+          has_basement: false,
+          has_garage: scenarioData.dwelling_type === "house"
+        },
         service_details: {
           service_type: scenarioData.service_type,
           estimated_duration: scenarioData.estimated_duration
@@ -248,6 +302,13 @@ export function OrderEntryTest() {
         created_at: new Date().toISOString(),
         is_recurring: scenarioData.frequency !== "one_time",
         add_ons: scenarioData.add_ons
+      },
+      team_assignment: {
+        number_of_cleaners: scenarioData.number_of_cleaners,
+        team_lead: cleaner_assignments[0]?.name || scenarioData.subcontractor.name,
+        cleaner_assignments: cleaner_assignments,
+        total_labor_cost: parseFloat(total_labor_cost.toFixed(2)),
+        labor_distribution: scenarioData.number_of_cleaners === 1 ? "single_cleaner" : "split_evenly"
       },
       subcontractor_payment: {
         assigned_subcontractor: {
