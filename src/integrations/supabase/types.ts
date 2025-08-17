@@ -3750,6 +3750,10 @@ export type Database = {
         Args: { p_days?: number }
         Returns: Json
       }
+      get_subcontractor_hub_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_subcontractor_summary_safe: {
         Args: { p_subcontractor_id: string }
         Returns: Json

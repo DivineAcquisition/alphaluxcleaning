@@ -175,9 +175,9 @@ function DomainRouter() {
   }
   
   // Phase 4: Admin & System Oversight
-  if (hostname.startsWith('admin.')) {
-    return <Navigate to="/admin" replace />;
-  }
+          if (hostname.startsWith('admin.')) {
+            return <Navigate to="/subcon-management" replace />;
+          }
   
   // Phase 5: Marketing, Referrals, Hiring
   if (hostname.startsWith('reviews.')) {

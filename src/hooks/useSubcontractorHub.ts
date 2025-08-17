@@ -27,14 +27,12 @@ export function useSubcontractorHub() {
     try {
       setLoading(true);
       
-      // Call the edge function to get comprehensive hub data
-      const { data, error } = await supabase.functions.invoke('subcontractor-hub-analytics', {
-        body: { includeAll: true }
-      });
+      // Call the database function to get comprehensive hub data
+      const { data, error } = await supabase.rpc('get_subcontractor_hub_data');
 
       if (error) throw error;
 
-      setHubData(data);
+      setHubData(data as unknown as HubData);
     } catch (error) {
       console.error('Error fetching hub data:', error);
       toast({
