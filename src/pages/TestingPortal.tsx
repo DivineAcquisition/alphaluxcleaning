@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
-import { Calendar, TestTube, CheckCircle2, UserCheck } from "lucide-react";
+import { Calendar, TestTube, CheckCircle2, UserCheck, ShoppingCart } from "lucide-react";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 import { ZapierTestButton } from "@/components/ZapierTestButton";
 import { ServiceCompletionTest } from "@/components/ServiceCompletionTest";
 import { SubcontractorUpdatesTest } from "@/components/SubcontractorUpdatesTest";
+import OrderEntryTest from "@/components/OrderEntryTest";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -34,6 +35,22 @@ const TestingPortal = () => {
                 Test integrations and API connections
               </CardDescription>
             </CardHeader>
+          </Card>
+
+          {/* Order Entry Test */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Order Entry Test
+              </CardTitle>
+              <CardDescription>
+                Test sending order entry data to Zapier webhooks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OrderEntryTest />
+            </CardContent>
           </Card>
 
           {/* Zapier Integration Test */}
