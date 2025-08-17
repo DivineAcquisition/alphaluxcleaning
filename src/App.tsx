@@ -30,7 +30,7 @@ import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
 // Admin pages (unified)
 import AdminPortal from '@/pages/AdminPortal';
 import SubcontractorDetail from '@/pages/SubcontractorDetail';
-import SubcontractorManagement from '@/pages/SubcontractorManagement';
+import SubcontractorHub from '@/pages/SubcontractorHub';
 import TipsManagement from '@/pages/TipsManagement';
 import FeedbackCenter from '@/pages/FeedbackCenter';
 import CommunicationHub from '@/pages/CommunicationHub';
@@ -316,9 +316,9 @@ function App() {
                     <BusinessAnalytics />
                   </ProtectedRoute>
                 } />
-                <Route path="/subcontractor-management" element={
+                <Route path="/subcon-management" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <SubcontractorManagement />
+                    <SubcontractorHub />
                   </ProtectedRoute>
                 } />
                 <Route path="/application-manager" element={
@@ -558,7 +558,7 @@ function App() {
                       <Route path="/" element={<TestDashboard />} />
                       <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
                       <Route path="/subcontractor-mobile" element={<SubcontractorMobile />} />
-                      <Route path="/subcontractor-management" element={<SubcontractorManagement />} />
+                      <Route path="/subcontractor-management" element={<SubcontractorHub />} />
                       <Route path="/tier-management" element={<SubcontractorTierManagement />} />
                       <Route path="/tier-config" element={<TierSystemConfig />} />
                       <Route path="/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
