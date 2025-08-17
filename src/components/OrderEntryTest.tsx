@@ -250,25 +250,38 @@ export function OrderEntryTest() {
     const hours_per_cleaner = hours_worked / scenarioData.number_of_cleaners;
     const total_labor_cost = scenarioData.number_of_cleaners * scenarioData.subcontractor.hourly_rate * hours_per_cleaner;
     
-    // Generate cleaner assignments
+    // Generate cleaner assignments with expanded pool and tier information
     const cleaners = [
-      { id: "sub_001", name: "Maria Garcia", hourly_rate: 18.00 },
-      { id: "sub_005", name: "Ana Rodriguez", hourly_rate: 16.00 },
-      { id: "sub_006", name: "Carlos Martinez", hourly_rate: 17.00 }
+      { id: "sub_001", name: "Maria Garcia", hourly_rate: 18.00, tier_level: 2, tier_name: "Professional" },
+      { id: "sub_005", name: "Ana Rodriguez", hourly_rate: 16.00, tier_level: 1, tier_name: "Standard" },
+      { id: "sub_006", name: "Carlos Martinez", hourly_rate: 17.00, tier_level: 2, tier_name: "Professional" },
+      { id: "sub_007", name: "Jennifer Chen", hourly_rate: 21.00, tier_level: 3, tier_name: "Elite" },
+      { id: "sub_008", name: "David Rodriguez", hourly_rate: 19.00, tier_level: 2, tier_name: "Professional" }
     ];
     
     const cleaner_assignments = Array.from({ length: scenarioData.number_of_cleaners }, (_, index) => {
       const cleaner = cleaners[index] || cleaners[0];
       const individual_pay = cleaner.hourly_rate * hours_per_cleaner;
+      const cleaner_number = index + 1;
+      const is_lead = index === 0;
+      
       return {
+        cleaner_number: cleaner_number,
         cleaner_id: cleaner.id,
         name: cleaner.name,
-        role: index === 0 ? "team_lead" : "cleaner",
+        role: is_lead ? "team_lead" : "cleaner",
+        is_lead: is_lead,
         hourly_rate: cleaner.hourly_rate,
         hours_assigned: parseFloat(hours_per_cleaner.toFixed(2)),
-        individual_pay: parseFloat(individual_pay.toFixed(2))
+        individual_pay: parseFloat(individual_pay.toFixed(2)),
+        tier_level: cleaner.tier_level,
+        tier_name: cleaner.tier_name
       };
     });
+
+    // Separate lead cleaner and supporting cleaners
+    const lead_cleaner = cleaner_assignments[0];
+    const supporting_cleaners = cleaner_assignments.slice(1);
 
     return {
       order: {
@@ -305,7 +318,8 @@ export function OrderEntryTest() {
       },
       team_assignment: {
         number_of_cleaners: scenarioData.number_of_cleaners,
-        team_lead: cleaner_assignments[0]?.name || scenarioData.subcontractor.name,
+        lead_cleaner: lead_cleaner,
+        supporting_cleaners: supporting_cleaners,
         cleaner_assignments: cleaner_assignments,
         total_labor_cost: parseFloat(total_labor_cost.toFixed(2)),
         labor_distribution: scenarioData.number_of_cleaners === 1 ? "single_cleaner" : "split_evenly"
