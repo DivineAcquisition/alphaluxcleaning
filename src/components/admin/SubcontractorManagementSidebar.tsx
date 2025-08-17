@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 const subcontractorItems = [
   {
     label: "Subcontractor Dashboard",
-    path: "/subcontractor-management",
+    path: "/subcon-management",
     icon: Users,
     description: "Team overview"
   },

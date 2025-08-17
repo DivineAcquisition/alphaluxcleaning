@@ -316,11 +316,13 @@ function App() {
                     <BusinessAnalytics />
                   </ProtectedRoute>
                 } />
-                <Route path="/subcon-management" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <SubcontractorHub />
-                  </ProtectedRoute>
-                } />
+                 <Route path="/subcon-management" element={
+                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                     <SubcontractorHub />
+                   </ProtectedRoute>
+                 } />
+                 {/* Redirect old path to new path */}
+                 <Route path="/subcontractor-management" element={<Navigate to="/subcon-management" replace />} />
                 <Route path="/application-manager" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <ApplicationManager />

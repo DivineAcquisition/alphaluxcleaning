@@ -138,7 +138,7 @@ const AdminPortal = () => {
       title: "Subcontractor Management",
       description: "Manage your team of subcontractors, performance, and assignments",
       action: "Manage Team",
-      path: "/subcontractor-management"
+      path: "/subcon-management"
     },
     {
       title: "Tips Management",

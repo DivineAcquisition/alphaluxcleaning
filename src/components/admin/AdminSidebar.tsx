@@ -50,7 +50,7 @@ const navigationItems = [
   },
   {
     label: "Subcontractors",
-    path: "/subcontractor-management",
+    path: "/subcon-management",
     icon: Users,
     description: "Manage team"
   },

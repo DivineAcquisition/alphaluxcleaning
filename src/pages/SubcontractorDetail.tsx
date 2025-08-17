@@ -230,7 +230,7 @@ export default function SubcontractorDetail() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-muted-foreground mb-4">Subcontractor not found</p>
-              <Button onClick={() => navigate('/subcontractor-management')}>
+              <Button onClick={() => navigate('/subcon-management')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Subcontractors
               </Button>
@@ -251,7 +251,7 @@ export default function SubcontractorDetail() {
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => navigate('/subcontractor-management')}>
+          <Button variant="outline" onClick={() => navigate('/subcon-management')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Subcontractors
           </Button>
