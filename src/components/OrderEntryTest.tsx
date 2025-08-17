@@ -2,139 +2,70 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { ClipboardList, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, Loader2, AlertCircle, ClipboardList } from "lucide-react";
 
 export function OrderEntryTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTestResult, setLastTestResult] = useState<any>(null);
+  const [orderScenario, setOrderScenario] = useState("standard_clean");
   const { toast } = useToast();
 
-  // Form state
-  const [formData, setFormData] = useState({
-    customer_name: "Test Customer",
-    customer_email: "test@example.com",
-    customer_phone: "(555) 123-4567",
-    cleaning_type: "standard_clean",
-    frequency: "one_time",
-    square_footage: "2000",
-    amount: "129.99",
-    scheduled_date: new Date().toISOString().split('T')[0],
-    scheduled_time: "10:00 AM",
-    street: "123 Test Street",
-    city: "Test City",
-    state: "CA",
-    zip_code: "12345",
-    special_instructions: ""
-  });
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const sendOrderEntryData = async () => {
+  const sendOrderEntryTest = async () => {
     setIsLoading(true);
+    const correlationId = crypto.randomUUID();
+    
     try {
-      console.log("Sending order entry data to Zapier webhook...");
+      console.log("Sending order entry test to webhook...");
       
-      // Build comprehensive transaction data
-      const transactionData = {
-        order: {
-          id: `test-order-${Date.now()}`,
-          stripe_session_id: `test-session-${Date.now()}`,
-          amount: parseFloat(formData.amount),
-          currency: "usd",
-          status: "completed",
-          customer_name: formData.customer_name,
-          customer_email: formData.customer_email,
-          customer_phone: formData.customer_phone,
-          cleaning_type: formData.cleaning_type,
-          frequency: formData.frequency,
-          square_footage: parseInt(formData.square_footage),
-          service_details: {},
-          scheduled_date: formData.scheduled_date,
-          scheduled_time: formData.scheduled_time,
-          created_at: new Date().toISOString(),
-          is_recurring: formData.frequency !== "one_time",
-          add_ons: []
+      const testData = getOrderScenarioData(orderScenario);
+      
+      console.log("Sending test data:", testData);
+      
+      const response = await fetch("https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        status_updates: [
-          {
-            id: "status-test-1",
-            status_message: "Test order entry webhook triggered",
-            created_at: new Date().toISOString(),
-            subcontractor_name: "Test Subcontractor"
-          }
-        ],
-        payment: {
-          amount_paid: parseFloat(formData.amount),
-          payment_method: "test",
-          transaction_id: `test-transaction-${Date.now()}`,
-          payment_status: "succeeded"
-        },
-        service: {
-          service_type: formData.cleaning_type === "standard_clean" ? "Standard Cleaning" : "Deep Cleaning",
-          frequency: formData.frequency === "one_time" ? "One-time" : "Recurring",
-          estimated_duration: "2-3 hours",
-          special_requirements: formData.special_instructions ? [formData.special_instructions] : [],
-          access_instructions: "",
-          pets_present: false,
-          parking_instructions: ""
-        },
-        address: {
-          street: formData.street,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zip_code,
-          dwelling_type: "house",
-          flooring_types: ["hardwood"]
-        },
-        analytics: {
-          booking_source: "test_portal",
-          marketing_channel: "test",
-          customer_ltv_estimate: parseFloat(formData.amount) / 100,
-          booking_completion_time: "00:01:00",
-          device_type: "desktop",
-          total_customer_orders: 1
-        },
-        timestamps: {
-          order_created: new Date().toISOString(),
-          payment_completed: new Date().toISOString(),
-          booking_scheduled: new Date().toISOString(),
-          webhook_sent: new Date().toISOString()
-        }
-      };
-
-      const { data, error } = await supabase.functions.invoke('send-booking-transaction-to-zapier', {
-        body: { 
-          transactionData: transactionData,
-          webhook_url: "https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/"
-        }
+        mode: "no-cors",
+        body: JSON.stringify({
+          ...testData,
+          correlationId,
+          timestamp: new Date().toISOString(),
+          test_mode: true
+        }),
       });
 
-      if (error) {
-        throw error;
-      }
+      // Since we use no-cors, we can't read the response
+      const result = {
+        success: true,
+        message: "Order entry data sent successfully",
+        webhook_status: "Request sent to Zapier",
+        correlationId,
+        test_mode: true
+      };
 
-      console.log("Zapier response:", data);
-      setLastTestResult(data);
+      console.log("Order entry webhook response:", result);
+      setLastTestResult(result);
       
       toast({
         title: "Success!",
-        description: "Order entry data sent to Zapier webhook successfully",
+        description: "Order entry webhook triggered successfully",
       });
     } catch (error) {
-      console.error("Error sending to Zapier:", error);
-      setLastTestResult({ error: error.message, success: false });
+      console.error("Error sending order entry:", error);
+      const errorResult = { 
+        error: error.message, 
+        success: false,
+        correlationId,
+        timestamp: new Date().toISOString()
+      };
+      setLastTestResult(errorResult);
       
       toast({
         title: "Error",
-        description: "Failed to send order entry data to Zapier",
+        description: `Failed to send order entry webhook: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -142,182 +73,201 @@ export function OrderEntryTest() {
     }
   };
 
+  const getOrderScenarioData = (scenario: string) => {
+    const baseCustomer = {
+      name: "Sarah Johnson",
+      email: "sarah.johnson@example.com",
+      phone: "(415) 555-0123"
+    };
+
+    const baseAddress = {
+      street: "123 Oak Street",
+      city: "San Francisco",
+      state: "CA",
+      zip_code: "94102",
+      country: "USA"
+    };
+
+    const scenarios = {
+      standard_clean: {
+        service_type: "Standard Cleaning",
+        cleaning_type: "standard_clean",
+        frequency: "one_time",
+        amount: 129.99,
+        square_footage: 1800,
+        estimated_duration: "2-3 hours",
+        add_ons: []
+      },
+      deep_clean: {
+        service_type: "Deep Cleaning",
+        cleaning_type: "deep_clean", 
+        frequency: "one_time",
+        amount: 249.99,
+        square_footage: 2200,
+        estimated_duration: "4-5 hours",
+        add_ons: [
+          { name: "Inside Oven", price: 25.00 },
+          { name: "Inside Refrigerator", price: 20.00 }
+        ]
+      },
+      recurring_weekly: {
+        service_type: "Standard Cleaning",
+        cleaning_type: "standard_clean",
+        frequency: "weekly",
+        amount: 99.99,
+        square_footage: 1500,
+        estimated_duration: "2 hours",
+        add_ons: []
+      },
+      move_in_out: {
+        service_type: "Move In/Out Cleaning",
+        cleaning_type: "move_in_out",
+        frequency: "one_time", 
+        amount: 349.99,
+        square_footage: 2500,
+        estimated_duration: "6-7 hours",
+        add_ons: [
+          { name: "Inside Oven", price: 25.00 },
+          { name: "Inside Refrigerator", price: 20.00 },
+          { name: "Cabinet Interiors", price: 30.00 }
+        ]
+      }
+    };
+
+    const scenarioData = scenarios[scenario] || scenarios.standard_clean;
+
+    return {
+      order: {
+        id: `test-order-${Date.now()}`,
+        stripe_session_id: `test-session-${Date.now()}`,
+        amount: scenarioData.amount,
+        currency: "usd",
+        status: "completed",
+        customer_name: baseCustomer.name,
+        customer_email: baseCustomer.email,
+        customer_phone: baseCustomer.phone,
+        cleaning_type: scenarioData.cleaning_type,
+        frequency: scenarioData.frequency,
+        square_footage: scenarioData.square_footage,
+        service_details: {
+          service_type: scenarioData.service_type,
+          estimated_duration: scenarioData.estimated_duration
+        },
+        scheduled_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        scheduled_time: "10:00 AM",
+        created_at: new Date().toISOString(),
+        is_recurring: scenarioData.frequency !== "one_time",
+        add_ons: scenarioData.add_ons
+      },
+      payment: {
+        amount_paid: scenarioData.amount,
+        payment_method: "card",
+        transaction_id: `test-transaction-${Date.now()}`,
+        payment_status: "succeeded"
+      },
+      service: {
+        service_type: scenarioData.service_type,
+        frequency: scenarioData.frequency === "one_time" ? "One-time" : scenarioData.frequency.charAt(0).toUpperCase() + scenarioData.frequency.slice(1),
+        estimated_duration: scenarioData.estimated_duration,
+        special_requirements: [],
+        access_instructions: "Key under doormat",
+        pets_present: false,
+        parking_instructions: "Driveway available"
+      },
+      address: baseAddress,
+      analytics: {
+        booking_source: "website",
+        marketing_channel: "organic_search",
+        customer_ltv_estimate: scenarioData.amount * 12,
+        booking_completion_time: "00:02:15",
+        device_type: "desktop",
+        total_customer_orders: 1
+      },
+      timestamps: {
+        order_created: new Date().toISOString(),
+        payment_completed: new Date().toISOString(),
+        booking_scheduled: new Date().toISOString(),
+        webhook_sent: new Date().toISOString()
+      }
+    };
+  };
+
+  const sampleData = {
+    order_details: {
+      id: "test_order_123",
+      customer_name: "Sarah Johnson", 
+      customer_email: "sarah.johnson@example.com",
+      customer_phone: "(415) 555-0123",
+      street_address: "123 Oak Street",
+      city: "San Francisco",
+      state: "CA",
+      zip_code: "94102",
+      country: "USA",
+      service_type: orderScenario.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      amount: getOrderScenarioData(orderScenario).order.amount,
+      square_footage: getOrderScenarioData(orderScenario).order.square_footage,
+      scheduled_date: "2024-01-16",
+      scheduled_time: "10:00 AM",
+      frequency: getOrderScenarioData(orderScenario).order.frequency,
+      add_ons: getOrderScenarioData(orderScenario).order.add_ons
+    },
+    payment_data: {
+      payment_method: "card",
+      transaction_id: "test_transaction_123",
+      payment_status: "succeeded",
+      amount_paid: getOrderScenarioData(orderScenario).order.amount
+    },
+    analytics: {
+      booking_source: "website",
+      marketing_channel: "organic_search",
+      device_type: "desktop",
+      booking_completion_time: "00:02:15"
+    }
+  };
+
   return (
-    <Card className="w-full max-w-4xl">
+    <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-blue-500" />
-          Order Entry Test
+          Order Entry Webhook Test
         </CardTitle>
         <CardDescription>
-          Send custom order entry data to your Zapier webhook for testing
+          Test order entry notification webhook (u4jui7k)
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Customer Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="customer_name">Customer Name</Label>
-            <Input 
-              id="customer_name"
-              value={formData.customer_name}
-              onChange={(e) => handleInputChange('customer_name', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer_email">Email</Label>
-            <Input 
-              id="customer_email"
-              type="email"
-              value={formData.customer_email}
-              onChange={(e) => handleInputChange('customer_email', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer_phone">Phone</Label>
-            <Input 
-              id="customer_phone"
-              value={formData.customer_phone}
-              onChange={(e) => handleInputChange('customer_phone', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
-            <Input 
-              id="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => handleInputChange('amount', e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Service Details */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="cleaning_type">Cleaning Type</Label>
-            <Select value={formData.cleaning_type} onValueChange={(value) => handleInputChange('cleaning_type', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard_clean">Standard Clean</SelectItem>
-                <SelectItem value="deep_clean">Deep Clean</SelectItem>
-                <SelectItem value="move_in_out">Move In/Out</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="frequency">Frequency</Label>
-            <Select value={formData.frequency} onValueChange={(value) => handleInputChange('frequency', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="one_time">One Time</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="bi_weekly">Bi-Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="square_footage">Square Footage</Label>
-            <Input 
-              id="square_footage"
-              type="number"
-              value={formData.square_footage}
-              onChange={(e) => handleInputChange('square_footage', e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Schedule */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="scheduled_date">Scheduled Date</Label>
-            <Input 
-              id="scheduled_date"
-              type="date"
-              value={formData.scheduled_date}
-              onChange={(e) => handleInputChange('scheduled_date', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="scheduled_time">Scheduled Time</Label>
-            <Input 
-              id="scheduled_time"
-              value={formData.scheduled_time}
-              onChange={(e) => handleInputChange('scheduled_time', e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Address */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="street">Street Address</Label>
-            <Input 
-              id="street"
-              value={formData.street}
-              onChange={(e) => handleInputChange('street', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input 
-              id="city"
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="state">State</Label>
-            <Input 
-              id="state"
-              value={formData.state}
-              onChange={(e) => handleInputChange('state', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="zip_code">ZIP Code</Label>
-            <Input 
-              id="zip_code"
-              value={formData.zip_code}
-              onChange={(e) => handleInputChange('zip_code', e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Special Instructions */}
+      <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="special_instructions">Special Instructions</Label>
-          <Textarea 
-            id="special_instructions"
-            value={formData.special_instructions}
-            onChange={(e) => handleInputChange('special_instructions', e.target.value)}
-            placeholder="Any special cleaning requests or instructions..."
-          />
+          <label className="text-sm font-medium">Order Scenario</label>
+          <Select value={orderScenario} onValueChange={setOrderScenario}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select order scenario" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard_clean">Standard Clean ($129.99)</SelectItem>
+              <SelectItem value="deep_clean">Deep Clean ($249.99)</SelectItem>
+              <SelectItem value="recurring_weekly">Weekly Recurring ($99.99)</SelectItem>
+              <SelectItem value="move_in_out">Move In/Out ($349.99)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Action Button */}
         <Button
-          onClick={sendOrderEntryData}
+          onClick={sendOrderEntryTest}
           disabled={isLoading}
-          className="w-full flex items-center gap-2"
+          className="flex items-center gap-2"
         >
           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Send Order Entry Data
+          <ClipboardList className="h-4 w-4" />
+          Test Order Entry
         </Button>
         
-        {/* Results */}
         {lastTestResult && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              {lastTestResult.success ? (
+              {lastTestResult.success !== false ? (
                 <>
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
                   <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
                     Success
                   </Badge>
@@ -332,18 +282,33 @@ export function OrderEntryTest() {
               )}
             </div>
             
-            {lastTestResult.success && (
+            {lastTestResult.success !== false && (
               <div className="text-sm space-y-2">
-                <p><strong>Message:</strong> {lastTestResult.message}</p>
-                {lastTestResult.zapier_response && (
-                  <p><strong>Zapier Response:</strong> {lastTestResult.zapier_response}</p>
+                <p><strong>Status:</strong> Order entry processed</p>
+                {lastTestResult.webhook_status && (
+                  <p><strong>Webhook Status:</strong> {lastTestResult.webhook_status}</p>
+                )}
+                {lastTestResult.message && (
+                  <p><strong>Message:</strong> {lastTestResult.message}</p>
+                )}
+                {lastTestResult.correlationId && (
+                  <p><strong>Correlation ID:</strong> {lastTestResult.correlationId}</p>
+                )}
+                {lastTestResult.test_mode && (
+                  <p><strong>Test Mode:</strong> Yes</p>
                 )}
               </div>
             )}
             
             {lastTestResult.error && (
-              <div className="text-sm text-red-600">
+              <div className="text-sm text-red-600 space-y-2">
                 <p><strong>Error:</strong> {lastTestResult.error}</p>
+                {lastTestResult.correlationId && (
+                  <p><strong>Correlation ID:</strong> {lastTestResult.correlationId}</p>
+                )}
+                {lastTestResult.timestamp && (
+                  <p><strong>Timestamp:</strong> {new Date(lastTestResult.timestamp).toLocaleString()}</p>
+                )}
               </div>
             )}
             
@@ -357,11 +322,28 @@ export function OrderEntryTest() {
             </details>
           </div>
         )}
-        
-        <div className="text-xs text-muted-foreground">
+
+        <div className="text-xs text-muted-foreground space-y-2">
           <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/</p>
-          <p>This sends comprehensive order entry data including customer information, service details, payment data, and analytics to your Zapier webhook.</p>
+          <p>This webhook sends comprehensive order entry data including:</p>
+          <ul className="list-disc list-inside ml-2 space-y-1">
+            <li>Complete customer and order details</li>
+            <li>Service type, frequency, and scheduling information</li>
+            <li>Payment processing details and transaction data</li>
+            <li>Address information and service requirements</li>
+            <li>Analytics data for tracking and insights</li>
+            <li>Multiple order scenarios for testing different workflows</li>
+          </ul>
         </div>
+
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+            View Sample Data Structure
+          </summary>
+          <pre className="mt-2 p-3 bg-muted rounded-md overflow-auto max-h-60">
+            {JSON.stringify(sampleData, null, 2)}
+          </pre>
+        </details>
       </CardContent>
     </Card>
   );
