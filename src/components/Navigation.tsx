@@ -186,12 +186,33 @@ export function Navigation() {
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu> : <Button variant="outline" size="sm" asChild>
-                <Link to="/auth" className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Sign In
-                </Link>
-              </Button>}
+              </DropdownMenu> : (
+              (() => {
+                const hostname = window.location.hostname;
+                const isBookingDomain = hostname.startsWith('book.');
+                const signInUrl = isBookingDomain 
+                  ? 'https://portal.bayareacleaningpros.com/auth' 
+                  : '/auth';
+                
+                return (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      if (isBookingDomain) {
+                        window.location.href = signInUrl;
+                      } else {
+                        window.location.href = signInUrl;
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Button>
+                );
+              })()
+            )}
 
             {/* Mobile Menu */}
             <div className="md:hidden">

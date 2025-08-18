@@ -5,28 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, LogIn, UserPlus, Home, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
-  const { user, userRole, signIn, signUp, loading } = useAuth();
+  const { user, userRole, signIn, loading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
-  // Form states
+  // Form state
   const [signInData, setSignInData] = useState({ email: '', password: '' });
-  const [signUpData, setSignUpData] = useState({ 
-    email: '', 
-    password: '', 
-    confirmPassword: '', 
-    fullName: '' 
-  });
 
   // Redirect authenticated users
   useEffect(() => {
@@ -36,7 +30,7 @@ export default function Auth() {
       } else if (userRole === 'subcontractor') {
         navigate('/subcontractor-dashboard');
       } else if (userRole === 'customer') {
-        navigate('/billing'); // Redirect customers to billing portal
+        navigate('/customer-portal-dashboard');
       }
     }
   }, [user, userRole, navigate]);
@@ -73,85 +67,6 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    if (!signUpData.email || !signUpData.password || !signUpData.confirmPassword) {
-      setError('Please fill in all fields');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (signUpData.password !== signUpData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Enhanced password validation to meet Supabase requirements
-    if (signUpData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!/\d/.test(signUpData.password)) {
-      setError('Password must contain at least 1 number');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password)) {
-      setError('Password must contain at least 1 special character');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!/[A-Z]/.test(signUpData.password)) {
-      setError('Password must contain at least 1 uppercase letter');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!/[a-z]/.test(signUpData.password)) {
-      setError('Password must contain at least 1 lowercase letter');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Check for common weak patterns
-    const commonWeakPatterns = ['123', 'abc', 'password', 'admin', 'user', 'test'];
-    if (commonWeakPatterns.some(pattern => signUpData.password.toLowerCase().includes(pattern))) {
-      setError('Password contains common patterns. Please use a more unique password.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const { error } = await signUp(
-        signUpData.email, 
-        signUpData.password, 
-        signUpData.fullName
-      );
-      
-      if (error) {
-        if (error.message.includes('already registered')) {
-          setError('An account with this email already exists');
-        } else {
-          setError(error.message);
-        }
-      } else {
-        toast.success('Account created! Please check your email to confirm your account.');
-        setSignUpData({ email: '', password: '', confirmPassword: '', fullName: '' });
-      }
-    } catch (error) {
-      setError('An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
@@ -231,9 +146,9 @@ export default function Auth() {
 
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl md:text-2xl text-center">Customer Portal</CardTitle>
+            <CardTitle className="text-xl md:text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center text-sm md:text-base">
-              Access your cleaning service dashboard and billing
+              Welcome back! Access your cleaning dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -285,161 +200,80 @@ export default function Auth() {
               </div>
             </div>
 
-            <Tabs defaultValue="signup" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-12">
-                <TabsTrigger value="signup" className="text-sm">Get Started</TabsTrigger>
-                <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
-              </TabsList>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email" className="text-sm font-medium">Email Address</Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={signInData.email}
+                  onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
+                  className="h-12 text-base"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
+                <Input
+                  id="signin-password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={signInData.password}
+                  onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
+                  className="h-12 text-base"
+                  required
+                />
+              </div>
+              
+              <div className="text-right">
+                <Button 
+                  type="button" 
+                  variant="link" 
+                  className="h-auto p-0 text-sm"
+                  onClick={() => setShowPasswordReset(true)}
+                >
+                  Forgot password?
+                </Button>
+              </div>
 
-              <TabsContent value="signin" className="space-y-4 mt-4">
-                <div className="text-center mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back! Access your cleaning dashboard
-                  </p>
-                </div>
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-sm font-medium">Email Address</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={signInData.email}
-                      onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
-                      className="h-12 text-base"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={signInData.password}
-                      onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 text-base"
-                       required
-                     />
-                   </div>
-                   
-                   <div className="text-right">
-                     <Button 
-                       type="button" 
-                       variant="link" 
-                       className="h-auto p-0 text-sm"
-                       onClick={() => setShowPasswordReset(true)}
-                     >
-                       Forgot password?
-                     </Button>
-                   </div>
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium" 
+                disabled={isSubmitting}
+              >
+               {isSubmitting ? (
+                 <>
+                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                   Signing you in...
+                 </>
+               ) : (
+                 <>
+                   <LogIn className="mr-2 h-5 w-5" />
+                   Access Dashboard
+                 </>
+               )}
+              </Button>
+            </form>
 
-                   <Button 
-                     type="submit" 
-                     className="w-full h-12 text-base font-medium" 
-                     disabled={isSubmitting}
-                   >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Signing you in...
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="mr-2 h-5 w-5" />
-                        Access Dashboard
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="signup" className="space-y-4 mt-4">
-                <div className="text-center mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    🏠 Join thousands of Bay Area homeowners who trust us with their cleaning needs
-                  </p>
-                </div>
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={signUpData.fullName}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
-                      className="h-12 text-base"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-sm font-medium">Email Address</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={signUpData.email}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                      className="h-12 text-base"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-sm font-medium">Create Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="Create a secure password"
-                      value={signUpData.password}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 text-base"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      8+ characters with uppercase, lowercase, number, and special character
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={signUpData.confirmPassword}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="h-12 text-base"
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 text-base font-medium" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Setting up your account...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="mr-2 h-5 w-5" />
-                        Start Your Clean Journey
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    ✨ Get instant access to booking, billing management, and customer support
-                  </p>
-                </form>
-              </TabsContent>
-            </Tabs>
+            {/* Create Account Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                New to Bay Area Cleaning Pros?
+              </p>
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/signup" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Create Account
+                </Link>
+              </Button>
+            </div>
 
             {/* Password Reset Modal */}
             {showPasswordReset && (

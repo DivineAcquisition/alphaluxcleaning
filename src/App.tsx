@@ -56,6 +56,7 @@ import OfficeManagerPerformance from '@/pages/OfficeManagerPerformance';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
+import SignUp from '@/pages/SignUp';
 import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
 import NotFound from '@/pages/NotFound';
@@ -145,7 +146,7 @@ function DomainRouter() {
     return <Navigate to="/my-services" replace />;
   }
   if (hostname.startsWith('portal.')) {
-    return <Navigate to="/customer-portal-dashboard" replace />;
+    return <Navigate to="/auth" replace />;
   }
   if (hostname.startsWith('try.')) {
     return <Navigate to="/trial-landing" replace />;
@@ -220,6 +221,7 @@ function App() {
                 {/* Public routes with domain-based routing */}
                 <Route path="/" element={<DomainRouter />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/signup" element={<SignUp />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/oauth/callback" element={<OAuthCallback />} />
                 <Route path="/order-status" element={<OrderStatus />} />
