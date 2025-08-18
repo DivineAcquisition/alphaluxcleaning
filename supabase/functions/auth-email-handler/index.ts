@@ -37,39 +37,26 @@ Deno.serve(async (req) => {
       supabaseUrl: supabaseUrl ? 'Present' : 'Missing'
     })
 
+    // AUTH_HOOK_SECRET is optional for Supabase built-in auth webhooks
     if (!hookSecret) {
-      console.error('AUTH_HOOK_SECRET is not configured')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Server misconfiguration - AUTH_HOOK_SECRET missing' 
-        }), 
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      console.log('AUTH_HOOK_SECRET not configured - proceeding with Supabase auth webhook processing')
     }
 
-    // Get payload safely and verify via simple header secret
+    // Get payload safely - Supabase auth webhooks send JSON directly
     const payloadText = await req.text()
     let webhookData: any = {}
     try {
       webhookData = JSON.parse(payloadText)
-    } catch (_e) {
-      console.warn('Payload was not valid JSON; continuing with empty object')
-    }
-
-    console.log('Webhook verification (header secret) starting...')
-    const providedSecret = req.headers.get('x-hook-secret') || req.headers.get('x-auth-hook-secret') || ''
-    if (providedSecret !== hookSecret) {
-      console.warn('Hook secret missing or invalid - acknowledging without processing')
+      console.log('Successfully parsed webhook payload')
+    } catch (parseError) {
+      console.error('Failed to parse webhook payload as JSON:', parseError)
       return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Hook acknowledged (unverified) to avoid blocking auth flow'
-        }),
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid JSON payload' 
+        }), 
         {
-          status: 200,
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
@@ -222,7 +209,7 @@ Deno.serve(async (req) => {
         console.log('Sending customer welcome email via Resend...')
         const resend = new Resend(resendApiKey)
         const emailResponse = await resend.emails.send({
-          from: 'Bay Area Cleaning Professionals <welcome@bayareacleaningpros.com>',
+          from: 'Bay Area Cleaning Professionals <welcome@notify.bayareacleaningpros.com>',
           to: [user.email],
           subject: 'Welcome to Bay Area Cleaning Professionals! 🏠✨',
           html: emailHtml,
