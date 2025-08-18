@@ -30,8 +30,7 @@ serve(async (req) => {
 
   // Verify hook secret to allow public access safely
   const hookSecret = Deno.env.get('AUTH_HOOK_SECRET');
-  const providedSecret = req.headers.get('x-hook-secret');
-
+  
   if (!hookSecret) {
     console.warn('AUTH_HOOK_SECRET is not set');
     return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
@@ -40,8 +39,17 @@ serve(async (req) => {
     });
   }
 
+  // Check for secret in either x-hook-secret header or Authorization Bearer format
+  const providedSecretHeader = req.headers.get('x-hook-secret');
+  const authHeader = req.headers.get('authorization');
+  let providedSecret = providedSecretHeader;
+  
+  if (!providedSecret && authHeader?.startsWith('Bearer ')) {
+    providedSecret = authHeader.substring(7); // Remove 'Bearer ' prefix
+  }
+
   if (!providedSecret || providedSecret !== hookSecret) {
-    console.warn('Invalid or missing x-hook-secret header');
+    console.warn('Invalid or missing authentication. Tried x-hook-secret:', !!providedSecretHeader, 'and Authorization Bearer:', !!authHeader);
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { "Content-Type": "application/json", ...corsHeaders },
