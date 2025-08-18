@@ -106,10 +106,10 @@ export function ProtectedRoute({
             if (currentPath !== '/subcontractor-dashboard' && currentPath !== '/subcontractor-mobile') {
               navigate('/subcontractor-dashboard');
             }
-          } else if (userRole === 'client' || userRole === 'customer') {
-            if (currentPath !== '/my-services') {
-              navigate('/my-services');
-            }
+           } else if (userRole === 'client' || userRole === 'customer') {
+             if (currentPath !== '/customer-portal-dashboard') {
+               navigate('/customer-portal-dashboard');
+             }
           } else if (!userRole) {
             // User has no role, show error but don't redirect endlessly
             console.log('User has no role assigned');

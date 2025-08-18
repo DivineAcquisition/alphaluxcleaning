@@ -3,6 +3,7 @@ import React from 'npm:react@18.3.1'
 import { Resend } from 'npm:resend@4.0.0'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { PasswordResetEmail } from './_templates/password-reset.tsx'
+import { CustomerWelcomeEmail } from '../_shared/email-templates/customer-welcome.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -187,7 +188,86 @@ Deno.serve(async (req) => {
       }
     }
 
-    // For other email types (signup, magiclink, etc.), just return success
+    // Handle customer signup emails
+    if (email_action_type === 'signup' || email_action_type === 'user_confirmation_requested') {
+      if (!resendApiKey) {
+        console.error('RESEND_API_KEY is not configured - cannot send welcome email')
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            message: 'Welcome email skipped - RESEND_API_KEY missing' 
+          }), 
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+
+      try {
+        // Get user display name
+        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Valued Customer'
+        const portalUrl = 'https://portal.bayareacleaningpros.com/customer-portal-dashboard'
+        
+        console.log('Rendering customer welcome email template...')
+        const emailHtml = await renderAsync(
+          React.createElement(CustomerWelcomeEmail, {
+            fullName: userName,
+            portalUrl,
+          })
+        )
+        console.log('Customer welcome email template rendered successfully')
+
+        // Send email via Resend
+        console.log('Sending customer welcome email via Resend...')
+        const resend = new Resend(resendApiKey)
+        const emailResponse = await resend.emails.send({
+          from: 'Bay Area Cleaning Professionals <welcome@bayareacleaningpros.com>',
+          to: [user.email],
+          subject: 'Welcome to Bay Area Cleaning Professionals! 🏠✨',
+          html: emailHtml,
+        })
+
+        if (emailResponse.error) {
+          console.error('Resend API error:', emailResponse.error)
+          throw emailResponse.error
+        }
+
+        console.log('Customer welcome email sent successfully:', {
+          email: user.email,
+          emailId: emailResponse.data?.id,
+          success: !!emailResponse.data
+        })
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Customer welcome email sent successfully',
+            emailId: emailResponse.data?.id 
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+
+      } catch (emailError: any) {
+        console.error('Error sending customer welcome email:', emailError)
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            message: 'Welcome email failed but auth flow continued',
+            details: emailError.message
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+    }
+
+    // For other email types (magiclink, etc.), just return success
     // Avoid blocking auth flow for unhandled types
     console.log('Email type not handled:', email_action_type, '- returning success to prevent hook failures')
     return new Response(
