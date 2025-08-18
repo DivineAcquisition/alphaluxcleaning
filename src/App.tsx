@@ -146,7 +146,7 @@ function DomainRouter() {
     return <Navigate to="/my-services" replace />;
   }
   if (hostname.startsWith('portal.')) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/customer-portal-dashboard" replace />;
   }
   if (hostname.startsWith('try.')) {
     return <Navigate to="/trial-landing" replace />;
@@ -247,6 +247,9 @@ function App() {
                     <CustomerPortalDashboard />
                   </ProtectedRoute>
                 } />
+                
+                {/* Redirect for legacy customer-portal path */}
+                <Route path="/customer-portal" element={<Navigate to="/customer-portal-dashboard" replace />} />
                 <Route path="/trial-landing" element={<TrialLandingPage />} />
                 <Route path="/client-reports-portal" element={
                   <ProtectedRoute requiredRole="customer">

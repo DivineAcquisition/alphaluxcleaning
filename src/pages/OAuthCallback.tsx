@@ -62,7 +62,7 @@ export default function OAuthCallback() {
 
         // Redirect to customer portal after a short delay
         setTimeout(() => {
-          navigate('/customer-portal');
+          navigate('/customer-portal-dashboard');
         }, 1500);
       } else {
         setStatus('error');
