@@ -3675,7 +3675,7 @@ export type Database = {
         Returns: boolean
       }
       check_auth_rate_limit: {
-        Args: { p_email: string; p_ip_address: unknown }
+        Args: { p_email: string; p_ip_address?: unknown }
         Returns: Json
       }
       check_job_drop_restrictions: {
