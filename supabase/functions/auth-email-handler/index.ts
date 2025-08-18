@@ -25,7 +25,27 @@ serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+  }
+
+  // Verify hook secret to allow public access safely
+  const hookSecret = Deno.env.get('AUTH_HOOK_SECRET');
+  const providedSecret = req.headers.get('x-hook-secret');
+
+  if (!hookSecret) {
+    console.warn('AUTH_HOOK_SECRET is not set');
+    return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  if (!providedSecret || providedSecret !== hookSecret) {
+    console.warn('Invalid or missing x-hook-secret header');
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 
   try {
@@ -37,7 +57,7 @@ serve(async (req) => {
       webhookData = JSON.parse(payload);
     } catch (e) {
       console.error('Failed to parse webhook payload:', e);
-      return new Response('Invalid JSON', { status: 400 });
+      return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
     console.log('Webhook data:', JSON.stringify(webhookData, null, 2));
