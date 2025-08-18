@@ -24,15 +24,37 @@ export default function SignUp() {
     fullName: '' 
   });
 
-  // Redirect authenticated users
+  // Redirect authenticated users based on subdomain and role
   useEffect(() => {
     if (user && userRole) {
-      if (userRole === 'super_admin' || userRole === 'enterprise_client') {
-        navigate('/admin-dashboard');
+      const hostname = window.location.hostname;
+      
+      // Determine redirect based on subdomain and role
+      if (userRole === 'admin' || userRole === 'super_admin') {
+        if (hostname.startsWith('admin.')) {
+          navigate('/admin');
+        } else {
+          window.location.href = 'https://admin.bayareacleaningpros.com/admin';
+        }
+      } else if (userRole === 'office_manager') {
+        if (hostname.startsWith('office.')) {
+          navigate('/office-manager-dashboard');
+        } else {
+          window.location.href = 'https://office.bayareacleaningpros.com/office-manager-dashboard';
+        }
       } else if (userRole === 'subcontractor') {
-        navigate('/subcontractor-dashboard');
-      } else if (userRole === 'customer') {
-        navigate('/customer-portal-dashboard');
+        if (hostname.startsWith('cleaners.')) {
+          navigate('/subcontractor-dashboard');
+        } else {
+          window.location.href = 'https://cleaners.bayareacleaningpros.com/subcontractor-dashboard';
+        }
+      } else {
+        // Default to customer portal
+        if (hostname.startsWith('portal.')) {
+          navigate('/customer-portal-dashboard');
+        } else {
+          window.location.href = 'https://portal.bayareacleaningpros.com/customer-portal-dashboard';
+        }
       }
     }
   }, [user, userRole, navigate]);
@@ -122,10 +144,22 @@ export default function SignUp() {
     setError(null);
     
     try {
+      // Determine the correct callback URL based on current domain
+      const hostname = window.location.hostname;
+      let callbackUrl;
+      
+      if (hostname.includes('bayareacleaningpros.com')) {
+        // Production domains - preserve subdomain
+        callbackUrl = `${window.location.protocol}//${hostname}/oauth/callback`;
+      } else {
+        // Development - use current origin
+        callbackUrl = `${window.location.origin}/oauth/callback`;
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://portal.bayareacleaningpros.com/oauth/callback',
+          redirectTo: callbackUrl,
         },
       });
       

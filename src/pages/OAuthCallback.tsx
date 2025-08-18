@@ -68,34 +68,52 @@ export default function OAuthCallback() {
             const userRole = await getUserRole();
             const hostname = window.location.hostname;
             
-            // Check if on subdomain
-            if (hostname.startsWith('portal.')) {
-              return '/customer-portal-dashboard';
-            }
-            
-            // Redirect based on user role
-            switch (userRole) {
-              case 'admin':
-              case 'super_admin':
-                return '/admin-portal';
-              case 'office_manager':
+            // Handle cross-subdomain redirects based on user role
+            if (userRole === 'admin' || userRole === 'super_admin') {
+              if (hostname.startsWith('admin.')) {
+                return '/admin';
+              } else {
+                window.location.href = 'https://admin.bayareacleaningpros.com/admin';
+                return null; // Indicates external redirect
+              }
+            } else if (userRole === 'office_manager') {
+              if (hostname.startsWith('office.')) {
                 return '/office-manager-dashboard';
-              case 'subcontractor':
+              } else {
+                window.location.href = 'https://office.bayareacleaningpros.com/office-manager-dashboard';
+                return null;
+              }
+            } else if (userRole === 'subcontractor') {
+              if (hostname.startsWith('cleaners.')) {
                 return '/subcontractor-dashboard';
-              case 'customer':
-              default:
+              } else {
+                window.location.href = 'https://cleaners.bayareacleaningpros.com/subcontractor-dashboard';
+                return null;
+              }
+            } else {
+              // Default to customer portal
+              if (hostname.startsWith('portal.')) {
                 return '/customer-portal-dashboard';
+              } else {
+                window.location.href = 'https://portal.bayareacleaningpros.com/customer-portal-dashboard';
+                return null;
+              }
             }
           } catch (error) {
             console.error('Error determining redirect URL:', error);
-            return '/customer-portal-dashboard'; // Fallback
+            // Fallback to appropriate subdomain for customer
+            window.location.href = 'https://portal.bayareacleaningpros.com/customer-portal-dashboard';
+            return null;
           }
         };
 
         // Redirect after determining the correct URL
         setTimeout(async () => {
           const redirectUrl = await determineRedirectUrl();
-          navigate(redirectUrl);
+          if (redirectUrl) {
+            navigate(redirectUrl);
+          }
+          // If redirectUrl is null, it means we're doing an external redirect via window.location.href
         }, 1500);
       } else {
         setStatus('error');
