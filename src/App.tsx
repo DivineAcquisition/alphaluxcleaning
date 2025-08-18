@@ -161,7 +161,7 @@ function DomainRouter() {
     return <Navigate to="/auth" replace />;
   }
   if (hostname.startsWith('office.')) {
-    return <Navigate to="/office-dashboard" replace />;
+    return <Navigate to="/admin/office/schedule" replace />;
   }
   
   // Phase 3: Cleaner Portal (Mobile First)
@@ -375,69 +375,45 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                {/* Office Manager routes */}
-                <Route path="/admin-dashboard/schedule" element={
+                {/* Office Manager routes - now under admin */}
+                <Route path="/admin/office/schedule" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard/jobs" element={
+                <Route path="/admin/office/jobs" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerJobs />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard/team" element={
+                <Route path="/admin/office/team" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerTeam />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard/bookings" element={
+                <Route path="/admin/office/bookings" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerBookings />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard/quality" element={
+                <Route path="/admin/office/quality" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerQuality />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-dashboard/performance" element={
+                <Route path="/admin/office/performance" element={
                   <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
                     <OfficeManagerPerformance />
                   </ProtectedRoute>
                 } />
                 
-                {/* Phase 2: Office Manager Portal Routes */}
-                <Route path="/office-dashboard" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/office-jobs" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerJobs />
-                  </ProtectedRoute>
-                } />
-                <Route path="/office-bookings" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerBookings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/office-team" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerTeam />
-                  </ProtectedRoute>
-                } />
-                <Route path="/office-performance" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerPerformance />
-                  </ProtectedRoute>
-                } />
-                <Route path="/office-quality" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerQuality />
-                  </ProtectedRoute>
-                } />
+                {/* Legacy office manager routes - redirect to admin */}
+                <Route path="/office-dashboard" element={<Navigate to="/admin/office/schedule" replace />} />
+                <Route path="/office-jobs" element={<Navigate to="/admin/office/jobs" replace />} />
+                <Route path="/office-bookings" element={<Navigate to="/admin/office/bookings" replace />} />
+                <Route path="/office-team" element={<Navigate to="/admin/office/team" replace />} />
+                <Route path="/office-performance" element={<Navigate to="/admin/office/performance" replace />} />
+                <Route path="/office-quality" element={<Navigate to="/admin/office/quality" replace />} />
                 
                 {/* Review Portal Route */}
                 <Route path="/reviews" element={<ReviewsPortal />} />

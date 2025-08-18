@@ -1,6 +1,8 @@
 
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import { UnifiedAdminSidebar } from "./UnifiedAdminSidebar";
 
 interface AdminLayoutProps {
@@ -8,6 +10,10 @@ interface AdminLayoutProps {
   title: string;
   description?: string;
 }
+
+const handlePreviewCustomerPortal = () => {
+  window.open('https://portal.bayareacleaningpros.com/customer-portal-dashboard', '_blank');
+};
 
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {
   return (
@@ -26,6 +32,15 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
                   <p className="text-sm text-muted-foreground/80 font-medium">{description}</p>
                 )}
               </div>
+              <Button
+                onClick={handlePreviewCustomerPortal}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Preview Customer Portal
+              </Button>
             </div>
           </header>
 

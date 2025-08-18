@@ -57,7 +57,7 @@ const coreItems = [
   },
   {
     label: "Subcontractor Management",
-    path: "/subcon-management",
+    path: "/admin/subcontractors",
     icon: Users,
     description: "Team & tier management"
   },
@@ -77,8 +77,14 @@ const coreItems = [
 
 const businessItems = [
   {
+    label: "Customer Management",
+    path: "/admin/customers",
+    icon: Users2,
+    description: "Customer portal"
+  },
+  {
     label: "Payment Portal",
-    path: "/payment-portal",
+    path: "/admin-payment-center",
     icon: CreditCard,
     description: "Billing & payments"
   },
@@ -105,21 +111,48 @@ const businessItems = [
     path: "/communication-hub",
     icon: MessageSquare,
     description: "Message center"
+  }
+];
+
+const officeItems = [
+  {
+    label: "Office Dashboard",
+    path: "/admin/office/schedule",
+    icon: Calendar,
+    description: "Daily operations"
   },
   {
-    label: "Business Analytics",
-    path: "/business-analytics",
-    icon: BarChart3,
-    description: "Performance insights"
+    label: "Job Management",
+    path: "/admin/office/jobs",
+    icon: ClipboardList,
+    description: "Track & assign jobs"
+  },
+  {
+    label: "Team Management",
+    path: "/admin/office/team",
+    icon: UserCog,
+    description: "Staff oversight"
+  },
+  {
+    label: "Quality Control",
+    path: "/admin/office/quality",
+    icon: CheckCircle,
+    description: "Service quality"
+  },
+  {
+    label: "Performance",
+    path: "/admin/office/performance",
+    icon: TrendingUp,
+    description: "Analytics & metrics"
   }
 ];
 
 const systemItems = [
   {
-    label: "System Settings",
-    path: "/system-settings",
+    label: "Systems Management",
+    path: "/admin/systems",
     icon: Settings,
-    description: "App configuration"
+    description: "System hub"
   },
   {
     label: "API Keys",
@@ -134,6 +167,12 @@ const systemItems = [
     description: "DB management"
   },
   {
+    label: "Security Center",
+    path: "/security-center",
+    icon: Shield,
+    description: "Security monitoring"
+  },
+  {
     label: "Automation",
     path: "/automation-controls",
     icon: Zap,
@@ -144,6 +183,7 @@ const systemItems = [
 const sectionGroups = [
   { title: "Core", items: coreItems, color: "primary" },
   { title: "Business", items: businessItems, color: "blue" },
+  { title: "Office", items: officeItems, color: "green" },
   { title: "System", items: systemItems, color: "purple" }
 ];
 

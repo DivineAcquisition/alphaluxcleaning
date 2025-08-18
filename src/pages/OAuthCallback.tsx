@@ -78,9 +78,9 @@ export default function OAuthCallback() {
               }
             } else if (userRole === 'office_manager') {
               if (hostname.startsWith('office.')) {
-                return '/office-manager-dashboard';
+                return '/admin/office/schedule';
               } else {
-                window.location.href = 'https://office.bayareacleaningpros.com/office-manager-dashboard';
+                window.location.href = 'https://office.bayareacleaningpros.com/admin/office/schedule';
                 return null;
               }
             } else if (userRole === 'subcontractor') {
