@@ -18,6 +18,22 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Handle GET requests (auth hooks) - return success with claims
+  if (req.method === 'GET') {
+    console.log('Handling auth hook GET request')
+    return new Response(
+      JSON.stringify({ 
+        claims: {},
+        success: true, 
+        message: 'Auth hook processed successfully' 
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
+  }
+
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { 
       status: 405, 
@@ -68,6 +84,7 @@ Deno.serve(async (req) => {
       console.log('No email_data found, webhook type:', webhookData.metadata?.name || 'unknown')
       return new Response(
         JSON.stringify({ 
+          claims: {},
           success: true, 
           message: 'No email data to process' 
         }),
@@ -149,6 +166,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ 
+            claims: {},
             success: true, 
             message: 'Password reset email sent successfully',
             emailId: emailResponse.data?.id 
@@ -163,6 +181,7 @@ Deno.serve(async (req) => {
         console.error('Error sending password reset email:', emailError)
         return new Response(
           JSON.stringify({ 
+            claims: {},
             success: false,
             message: 'Failed to send password reset email',
             details: emailError.message
@@ -181,6 +200,7 @@ Deno.serve(async (req) => {
         console.error('RESEND_API_KEY is not configured - cannot send welcome email')
         return new Response(
           JSON.stringify({ 
+            claims: {},
             success: true,
             message: 'Welcome email skipped - RESEND_API_KEY missing' 
           }), 
@@ -228,6 +248,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ 
+            claims: {},
             success: true, 
             message: 'Customer welcome email sent successfully',
             emailId: emailResponse.data?.id 
@@ -242,6 +263,7 @@ Deno.serve(async (req) => {
         console.error('Error sending customer welcome email:', emailError)
         return new Response(
           JSON.stringify({ 
+            claims: {},
             success: true,
             message: 'Welcome email failed but auth flow continued',
             details: emailError.message
@@ -259,6 +281,7 @@ Deno.serve(async (req) => {
     console.log('Email type not handled:', email_action_type, '- returning success to prevent hook failures')
     return new Response(
       JSON.stringify({ 
+        claims: {},
         success: true, 
         message: `Email type '${email_action_type}' acknowledged - using default Supabase templates` 
       }),
