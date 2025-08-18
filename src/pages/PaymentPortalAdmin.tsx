@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CustomerManagementLayout } from "@/components/admin/CustomerManagementLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
@@ -136,7 +136,7 @@ export default function PaymentPortalAdmin() {
   };
 
   return (
-    <CustomerManagementLayout 
+    <AdminLayout 
       title="Payment Portal" 
       description="Manage payments, refunds, and billing operations"
     >
@@ -316,6 +316,6 @@ export default function PaymentPortalAdmin() {
           </div>
         </AdminSection>
       </div>
-    </CustomerManagementLayout>
+    </AdminLayout>
   );
 }

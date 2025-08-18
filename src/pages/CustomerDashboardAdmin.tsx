@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CustomerManagementLayout } from "@/components/admin/CustomerManagementLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
@@ -116,7 +116,7 @@ export default function CustomerDashboardAdmin() {
   const avgOrderValue = totalRevenue / customers.reduce((sum, customer) => sum + customer.total_orders, 0) || 0;
 
   return (
-    <CustomerManagementLayout 
+    <AdminLayout 
       title="Customer Database" 
       description="Manage customer profiles and service history"
     >
@@ -301,6 +301,6 @@ export default function CustomerDashboardAdmin() {
           </div>
         </AdminSection>
       </div>
-    </CustomerManagementLayout>
+    </AdminLayout>
   );
 }

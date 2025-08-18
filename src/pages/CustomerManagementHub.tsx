@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { CustomerManagementLayout } from "@/components/admin/CustomerManagementLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
@@ -119,19 +119,19 @@ const CustomerManagementHub = () => {
 
   if (isLoading) {
     return (
-      <CustomerManagementLayout title="Customer Management" description="Loading customer data...">
+      <AdminLayout title="Customer Management" description="Loading customer data...">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <Users className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
             <p className="text-muted-foreground">Loading customer management...</p>
           </div>
         </div>
-      </CustomerManagementLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <CustomerManagementLayout 
+    <AdminLayout 
       title="Customer Management Hub" 
       description="Complete customer lifecycle management center"
     >
@@ -221,7 +221,7 @@ const CustomerManagementHub = () => {
           </AdminGrid>
         </AdminSection>
       </div>
-    </CustomerManagementLayout>
+    </AdminLayout>
   );
 };
 
