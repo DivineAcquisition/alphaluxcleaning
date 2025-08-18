@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
@@ -10,6 +11,7 @@ export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { getUserRole } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [message, setMessage] = useState('Processing OAuth callback...');
 
@@ -60,9 +62,40 @@ export default function OAuthCallback() {
           description: "Welcome! You're now signed in."
         });
 
-        // Redirect to customer portal after a short delay
-        setTimeout(() => {
-          navigate('/customer-portal-dashboard');
+        // Determine redirect URL based on current domain and user role
+        const determineRedirectUrl = async () => {
+          try {
+            const userRole = await getUserRole();
+            const hostname = window.location.hostname;
+            
+            // Check if on subdomain
+            if (hostname.startsWith('portal.')) {
+              return '/customer-portal-dashboard';
+            }
+            
+            // Redirect based on user role
+            switch (userRole) {
+              case 'admin':
+              case 'super_admin':
+                return '/admin-portal';
+              case 'office_manager':
+                return '/office-manager-dashboard';
+              case 'subcontractor':
+                return '/subcontractor-dashboard';
+              case 'customer':
+              default:
+                return '/customer-portal-dashboard';
+            }
+          } catch (error) {
+            console.error('Error determining redirect URL:', error);
+            return '/customer-portal-dashboard'; // Fallback
+          }
+        };
+
+        // Redirect after determining the correct URL
+        setTimeout(async () => {
+          const redirectUrl = await determineRedirectUrl();
+          navigate(redirectUrl);
         }, 1500);
       } else {
         setStatus('error');

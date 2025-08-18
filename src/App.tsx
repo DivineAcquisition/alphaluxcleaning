@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Footer } from '@/components/Footer';
+import AuthErrorBoundary from '@/components/auth/AuthErrorBoundary';
 
 // Core customer pages
 import Index from '@/pages/Index';
@@ -214,10 +215,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <div className="min-h-screen flex flex-col">
-            <div className="flex-1">
-              <Routes>
+        <AuthErrorBoundary>
+          <Router>
+            <div className="min-h-screen flex flex-col">
+              <div className="flex-1">
+                <Routes>
                 {/* Public routes with domain-based routing */}
                 <Route path="/" element={<DomainRouter />} />
                 <Route path="/auth" element={<Auth />} />
@@ -593,9 +595,10 @@ function App() {
           </div>
           <Toaster />
         </Router>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
+      </AuthErrorBoundary>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 }
 
 export default App;
