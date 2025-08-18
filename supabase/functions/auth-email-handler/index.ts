@@ -4,12 +4,116 @@ import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0';
 import { Resend } from "npm:resend@4.0.0";
 import React from 'npm:react@18.3.1';
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
-import { PasswordResetEmail } from '../_shared/email-templates/password-reset.tsx';
+import { Button, Section, Text, Heading } from 'npm:@react-email/components@0.0.22';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(resendApiKey || "");
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Local email template to avoid cross-folder imports in Edge Functions
+interface PasswordResetEmailProps {
+  userName?: string;
+  resetUrl: string;
+  userType: 'admin' | 'subcontractor' | 'customer';
+}
+
+const PasswordResetEmail = ({
+  userName,
+  resetUrl,
+  userType,
+}: PasswordResetEmailProps) => {
+  const typeLabels = {
+    admin: 'Administrator',
+    subcontractor: 'Subcontractor',
+    customer: 'Customer',
+  } as const;
+
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(Heading, { style: heading }, 'Reset Your Password'),
+    React.createElement(
+      Text,
+      { style: text },
+      `Hello ${userName ? userName : 'there'}, we received a request to reset your ${typeLabels[userType]} account password.`
+    ),
+    React.createElement(
+      Text,
+      { style: text },
+      'Click the button below to create a new password:'
+    ),
+    React.createElement(
+      Section,
+      { style: buttonSection },
+      React.createElement(
+        Button,
+        { href: resetUrl, style: button },
+        'Reset Password'
+      )
+    ),
+    React.createElement(
+      Text,
+      { style: smallText },
+      'Or copy this link: ',
+      React.createElement('a', { href: resetUrl, style: link as any }, resetUrl)
+    ),
+    React.createElement(
+      Text,
+      { style: smallText },
+      "This link will expire in 24 hours. If you didn't request this reset, please ignore this email."
+    ),
+    React.createElement(
+      Text,
+      { style: smallText },
+      'Need help? Contact us at support@bayareacleaningpros.com'
+    )
+  );
+};
+
+// Simple styles
+const heading = {
+  color: '#1f2937',
+  fontSize: '24px',
+  fontWeight: '600',
+  margin: '0 0 20px 0',
+};
+
+const text = {
+  color: '#374151',
+  fontSize: '16px',
+  lineHeight: '1.5',
+  margin: '0 0 15px 0',
+};
+
+const buttonSection = {
+  textAlign: 'center' as const,
+  margin: '30px 0',
+};
+
+const button = {
+  backgroundColor: '#3b82f6',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  padding: '12px 24px',
+  borderRadius: '6px',
+  display: 'inline-block',
+};
+
+const smallText = {
+  color: '#6b7280',
+  fontSize: '14px',
+  lineHeight: '1.4',
+  margin: '0 0 10px 0',
+};
+
+const link = {
+  color: '#3b82f6',
+  textDecoration: 'underline',
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,6 +227,15 @@ serve(async (req) => {
           userType: userType as 'admin' | 'subcontractor' | 'customer',
         })
       );
+
+      // Ensure email service is configured
+      if (!resendApiKey) {
+        console.error('RESEND_API_KEY is not set');
+        return new Response(JSON.stringify({ error: 'Email service not configured' }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
 
       // Send the email using Resend
       const emailResponse = await resend.emails.send({
