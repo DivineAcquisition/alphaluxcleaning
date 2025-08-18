@@ -92,6 +92,39 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_rate_limits: {
+        Row: {
+          attempt_count: number
+          blocked_until: string | null
+          bucket_start: string
+          created_at: string
+          email: string
+          id: string
+          ip_address: unknown
+          last_attempt: string
+        }
+        Insert: {
+          attempt_count?: number
+          blocked_until?: string | null
+          bucket_start?: string
+          created_at?: string
+          email: string
+          id?: string
+          ip_address: unknown
+          last_attempt?: string
+        }
+        Update: {
+          attempt_count?: number
+          blocked_until?: string | null
+          bucket_start?: string
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: unknown
+          last_attempt?: string
+        }
+        Relationships: []
+      }
       auth_redirects: {
         Row: {
           created_at: string | null
@@ -3641,6 +3674,10 @@ export type Database = {
         Args: { p_subcontractor_user_id: string }
         Returns: boolean
       }
+      check_auth_rate_limit: {
+        Args: { p_email: string; p_ip_address: unknown }
+        Returns: Json
+      }
       check_job_drop_restrictions: {
         Args: { p_service_date: string; p_subcontractor_id: string }
         Returns: Json
@@ -3678,6 +3715,10 @@ export type Database = {
       disconnect_calendar_token: {
         Args: { p_token_id: string }
         Returns: Json
+      }
+      enhanced_admin_verification: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       execute_workflow: {
         Args: {
