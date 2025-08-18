@@ -19,71 +19,57 @@ export default function OAuthCallback() {
 
   const handleOAuthCallback = async () => {
     try {
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
+      // Check if there's an error from OAuth provider
       const error = searchParams.get('error');
+      const errorDescription = searchParams.get('error_description');
 
       if (error) {
         setStatus('error');
-        setMessage(`OAuth error: ${error}`);
+        setMessage(`Authentication failed: ${errorDescription || error}`);
         toast({
           title: "Authentication Error",
-          description: "Failed to connect Google Calendar. Please try again.",
+          description: "Failed to sign in with Google. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
-      if (!code) {
+      // Wait for Supabase to process the OAuth session
+      setMessage('Completing sign in...');
+      
+      // Get the current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
         setStatus('error');
-        setMessage('No authorization code received');
+        setMessage('Failed to retrieve authentication session');
         toast({
           title: "Error",
-          description: "Invalid OAuth response. Please try again.",
+          description: "Authentication failed. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
-      // Call our edge function to handle the OAuth callback
-      const { data, error: callbackError } = await supabase.functions.invoke('google-oauth-callback', {
-        body: {
-          code,
-          state,
-          redirect_uri: `${window.location.origin}/oauth/callback`
-        }
-      });
-
-      if (callbackError) {
-        console.error('Callback error:', callbackError);
-        setStatus('error');
-        setMessage('Failed to process OAuth callback');
-        toast({
-          title: "Error",
-          description: "Failed to connect Google Calendar. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data?.success) {
+      if (session?.user) {
         setStatus('success');
-        setMessage('Google Calendar connected successfully!');
+        setMessage('Successfully signed in with Google!');
         toast({
           title: "Success",
-          description: "Google Calendar connected successfully!"
+          description: "Welcome! You're now signed in."
         });
 
-        // Redirect to a relevant page after a short delay
+        // Redirect to customer portal after a short delay
         setTimeout(() => {
-          navigate('/schedule-service'); // or wherever makes sense in your app
-        }, 2000);
+          navigate('/customer-portal');
+        }, 1500);
       } else {
         setStatus('error');
-        setMessage(data?.error || 'Unknown error occurred');
+        setMessage('No valid session found');
         toast({
           title: "Error",
-          description: data?.error || "Failed to connect Google Calendar",
+          description: "Authentication failed. Please try again.",
           variant: "destructive"
         });
       }
@@ -100,7 +86,7 @@ export default function OAuthCallback() {
   };
 
   const handleRetry = () => {
-    navigate('/schedule-service'); // or back to where they started
+    navigate('/auth');
   };
 
   return (
@@ -111,12 +97,12 @@ export default function OAuthCallback() {
             {status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
             {status === 'success' && <CheckCircle className="h-5 w-5 text-green-500" />}
             {status === 'error' && <AlertCircle className="h-5 w-5 text-red-500" />}
-            Google Calendar Connection
+            Google Authentication
           </CardTitle>
           <CardDescription>
-            {status === 'processing' && 'Setting up your calendar connection...'}
-            {status === 'success' && 'Your calendar has been connected successfully'}
-            {status === 'error' && 'There was an issue connecting your calendar'}
+            {status === 'processing' && 'Completing your sign in...'}
+            {status === 'success' && 'You have been signed in successfully'}
+            {status === 'error' && 'There was an issue signing you in'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
