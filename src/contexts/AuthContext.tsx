@@ -131,18 +131,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName || '',
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName || '',
+            role: 'customer' // Set default role as customer
+          }
+        }
+      });
+      
+      if (error) {
+        return { error };
+      }
+
+      // If user is created immediately (no email confirmation), assign customer role
+      if (data.user && data.session) {
+        try {
+          // Insert customer role into user_roles table
+          await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: 'customer'
+            });
+        } catch (roleError) {
+          console.log('Role assignment will be handled by trigger or on first login');
         }
       }
-    });
-    
-    return { error };
+      
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
