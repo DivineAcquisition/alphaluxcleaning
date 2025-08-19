@@ -1,5 +1,8 @@
 project_id = "kqoezqzogleaaupjzxch"
 
+[functions.send-booking-webhook]
+verify_jwt = false
+
 [functions.send-booking-transaction-to-zapier]
 verify_jwt = false
 
