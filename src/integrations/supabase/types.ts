@@ -146,6 +146,62 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_notification_triggers: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          delay_minutes: number | null
+          delivery_methods: string[]
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: number | null
+          template_id: string | null
+          trigger_conditions: Json | null
+          trigger_event: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          delay_minutes?: number | null
+          delivery_methods?: string[]
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: number | null
+          template_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_event: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          delay_minutes?: number | null
+          delivery_methods?: string[]
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: number | null
+          template_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_event?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_notification_triggers_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_executions: {
         Row: {
           automation_rule_id: string
@@ -1686,6 +1742,7 @@ export type Database = {
       notification_queue: {
         Row: {
           attempts: number
+          automation_rule_id: string | null
           booking_id: string | null
           clicked_at: string | null
           created_at: string
@@ -1706,10 +1763,12 @@ export type Database = {
           status: string
           subject: string | null
           template_data: Json | null
+          trigger_source: string | null
           updated_at: string
         }
         Insert: {
           attempts?: number
+          automation_rule_id?: string | null
           booking_id?: string | null
           clicked_at?: string | null
           created_at?: string
@@ -1730,10 +1789,12 @@ export type Database = {
           status?: string
           subject?: string | null
           template_data?: Json | null
+          trigger_source?: string | null
           updated_at?: string
         }
         Update: {
           attempts?: number
+          automation_rule_id?: string | null
           booking_id?: string | null
           clicked_at?: string | null
           created_at?: string
@@ -1754,6 +1815,7 @@ export type Database = {
           status?: string
           subject?: string | null
           template_data?: Json | null
+          trigger_source?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -3584,6 +3646,47 @@ export type Database = {
         }
         Relationships: []
       }
+      trigger_execution_log: {
+        Row: {
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          executed_at: string | null
+          execution_data: Json | null
+          execution_status: string | null
+          id: string
+          trigger_id: string | null
+        }
+        Insert: {
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          executed_at?: string | null
+          execution_data?: Json | null
+          execution_status?: string | null
+          id?: string
+          trigger_id?: string | null
+        }
+        Update: {
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          executed_at?: string | null
+          execution_data?: Json | null
+          execution_status?: string | null
+          id?: string
+          trigger_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trigger_execution_log_trigger_id_fkey"
+            columns: ["trigger_id"]
+            isOneToOne: false
+            referencedRelation: "automated_notification_triggers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_calendar_tokens: {
         Row: {
           access_token: string
@@ -4202,6 +4305,15 @@ export type Database = {
       mask_sensitive_field: {
         Args: { field_value: string }
         Returns: string
+      }
+      process_automated_triggers: {
+        Args: {
+          p_entity_data?: Json
+          p_entity_id: string
+          p_entity_type: string
+          p_event_type: string
+        }
+        Returns: Json
       }
       queue_notification: {
         Args: {
