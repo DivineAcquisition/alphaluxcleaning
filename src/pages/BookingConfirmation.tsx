@@ -7,6 +7,7 @@ import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useBookingWebhook } from "@/hooks/useBookingWebhook";
 
 const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,7 @@ const BookingConfirmation = () => {
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { sendBookingWebhook } = useBookingWebhook();
 
   useEffect(() => {
     // Check if admin preview mode
@@ -156,30 +158,88 @@ const BookingConfirmation = () => {
     }
   };
 
-  // Send booking to Zapier exactly once after confirmation
+  // Send booking data and admin notifications exactly once after confirmation
   useEffect(() => {
     const identifier = sessionId || orderId;
     if (!identifier || !orderDetails) return;
     if (!orderDetails?.scheduled_date) return; // ensure scheduled
-    const key = `zapier_booking_sent_${identifier}`;
+    
+    const zapierKey = `zapier_booking_sent_${identifier}`;
+    const webhookKey = `webhook_booking_sent_${identifier}`;
+    const adminKey = `admin_notified_${identifier}`;
+    
     try {
-      if (typeof window !== 'undefined' && !localStorage.getItem(key)) {
-        (async () => {
-          try {
-            await supabase.functions.invoke('send-booking-transaction-to-zapier', {
-              body: { session_id: sessionId, order_id: orderId, send_sample_data: false },
-            });
-            localStorage.setItem(key, '1');
-            console.log('Booking data sent to Zapier');
-          } catch (err) {
-            console.error('Failed to send booking to Zapier', err);
-          }
-        })();
+      if (typeof window !== 'undefined') {
+        // Send to Zapier (existing functionality)
+        if (!localStorage.getItem(zapierKey)) {
+          (async () => {
+            try {
+              await supabase.functions.invoke('send-booking-transaction-to-zapier', {
+                body: { session_id: sessionId, order_id: orderId, send_sample_data: false },
+              });
+              localStorage.setItem(zapierKey, '1');
+              console.log('Booking data sent to Zapier');
+            } catch (err) {
+              console.error('Failed to send booking to Zapier', err);
+            }
+          })();
+        }
+
+        // Send booking webhook (new functionality)
+        if (!localStorage.getItem(webhookKey)) {
+          (async () => {
+            try {
+              await sendBookingWebhook({
+                bookingStep: 'confirmation',
+                serviceType: orderDetails.cleaning_type || 'cleaning',
+                frequency: orderDetails.frequency || 'one_time',
+                addOns: orderDetails.add_ons || [],
+                serviceDate: orderDetails.scheduled_date,
+                serviceTime: orderDetails.scheduled_time,
+                customerInfo: {
+                  name: orderDetails.customer_name || '',
+                  email: orderDetails.customer_email || '',
+                  phone: orderDetails.customer_phone || '',
+                  address: orderDetails.service_details?.serviceAddress?.street || '',
+                  city: orderDetails.service_details?.serviceAddress?.city || '',
+                  state: orderDetails.service_details?.serviceAddress?.state || '',
+                  zipCode: orderDetails.service_details?.serviceAddress?.zipCode || ''
+                },
+                totalPrice: orderDetails.amount || 0,
+                paymentAmount: orderDetails.amount || 0,
+                paymentType: 'full' as const,
+                webhookUrl: 'https://hooks.zapier.com/hooks/catch/default/' // Will be overridden by user config
+              });
+              localStorage.setItem(webhookKey, '1');
+              console.log('Booking webhook sent');
+            } catch (err) {
+              console.error('Failed to send booking webhook', err);
+            }
+          })();
+        }
+
+        // Send admin notification (new functionality)
+        if (!localStorage.getItem(adminKey)) {
+          (async () => {
+            try {
+              await supabase.functions.invoke('send-admin-job-notification', {
+                body: { 
+                  booking_id: identifier, 
+                  order_id: orderId 
+                }
+              });
+              localStorage.setItem(adminKey, '1');
+              console.log('Admin job notification sent');
+            } catch (err) {
+              console.error('Failed to send admin notification', err);
+            }
+          })();
+        }
       }
     } catch (e) {
       // ignore storage errors
     }
-  }, [orderDetails, sessionId, orderId]);
+  }, [orderDetails, sessionId, orderId, sendBookingWebhook]);
 
   if (loading) {
     return (

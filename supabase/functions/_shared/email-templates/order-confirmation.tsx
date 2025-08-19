@@ -93,6 +93,12 @@ export function OrderConfirmationEmail({
         </Button>
       </Section>
 
+      <Section style={buttonSection}>
+        <Button style={smsButton} href="sms:2818099901?body=Hi, I need live support for my cleaning service booking.">
+          Text Us for Live Support
+        </Button>
+      </Section>
+
       <Text style={smallText}>
         Need help? Contact us at support@bayareacleaningpros.com or (281) 201-6112
       </Text>
@@ -157,6 +163,18 @@ const button = {
   padding: '12px 24px',
   borderRadius: '6px',
   display: 'inline-block',
+}
+
+const smsButton = {
+  backgroundColor: '#3b82f6',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  padding: '12px 24px',
+  borderRadius: '6px',
+  display: 'inline-block',
+  marginTop: '10px',
 }
 
 const smallText = {

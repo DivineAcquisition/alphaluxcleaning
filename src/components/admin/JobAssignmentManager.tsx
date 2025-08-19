@@ -64,7 +64,7 @@ export function JobAssignmentManager() {
   const [activeAssignments, setActiveAssignments] = useState<JobAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigningBookingId, setAssigningBookingId] = useState<string | null>(null);
-  const [selectedSubcontractor, setSelectedSubcontractor] = useState<string>("");
+  const [selectedSubcontractors, setSelectedSubcontractors] = useState<string[]>([]);
   const [assignmentNotes, setAssignmentNotes] = useState("");
 
   useEffect(() => {
@@ -118,62 +118,102 @@ export function JobAssignmentManager() {
   };
 
   const handleAssignJob = async (bookingId: string) => {
-    if (!selectedSubcontractor) {
-      toast.error('Please select a subcontractor');
+    if (selectedSubcontractors.length === 0) {
+      toast.error('Please select at least one subcontractor');
+      return;
+    }
+
+    if (selectedSubcontractors.length > 3) {
+      toast.error('Maximum 3 subcontractors allowed per job');
       return;
     }
 
     try {
-      // Create job assignment
-      const { data: assignment, error: assignmentError } = await supabase
-        .from('subcontractor_job_assignments')
-        .insert({
-          booking_id: bookingId,
-          subcontractor_id: selectedSubcontractor,
-          status: 'assigned',
-          assigned_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      const assignmentPromises = selectedSubcontractors.map(subcontractorId =>
+        supabase
+          .from('subcontractor_job_assignments')
+          .insert({
+            booking_id: bookingId,
+            subcontractor_id: subcontractorId,
+            status: 'assigned',
+            assigned_at: new Date().toISOString(),
+            subcontractor_notes: assignmentNotes
+          })
+          .select()
+          .single()
+      );
 
-      if (assignmentError) throw assignmentError;
+      const assignmentResults = await Promise.all(assignmentPromises);
+      
+      // Check for errors
+      const errors = assignmentResults.filter(result => result.error);
+      if (errors.length > 0) {
+        throw new Error(`Failed to create ${errors.length} assignments`);
+      }
 
-      // Update booking with assigned employee
+      const assignments = assignmentResults.map(result => result.data);
+
+      // Update booking with primary assigned employee (first subcontractor)
       const { error: bookingError } = await supabase
         .from('bookings')
-        .update({ assigned_employee_id: selectedSubcontractor })
+        .update({ assigned_employee_id: selectedSubcontractors[0] })
         .eq('id', bookingId);
 
       if (bookingError) throw bookingError;
 
-      // Send job assignment email notification
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-job-assignment-notification', {
+      // Send job assignment email notifications to each subcontractor
+      const emailPromises = assignments.map(assignment =>
+        supabase.functions.invoke('send-job-assignment-notification', {
           body: {
-            subcontractorId: selectedSubcontractor,
+            subcontractorId: assignment.subcontractor_id,
             bookingId: bookingId,
             assignmentId: assignment.id
           }
-        });
+        })
+      );
 
-        if (emailError) {
-          console.error('Error sending job assignment email:', emailError);
-          // Don't fail the whole assignment process for email errors
-          toast.error('Job assigned but email notification failed to send');
-        }
+      try {
+        await Promise.allSettled(emailPromises);
       } catch (emailError) {
-        console.error('Error sending job assignment email:', emailError);
+        console.error('Error sending job assignment emails:', emailError);
+        toast.error('Jobs assigned but some email notifications failed to send');
       }
 
-      toast.success('Job assigned successfully!');
+      // Send order entry webhook for the completed assignment
+      try {
+        await supabase.functions.invoke('send-order-entry-webhook', {
+          body: {
+            booking_id: bookingId,
+            assignment_id: assignments[0].id // Use first assignment as primary
+          }
+        });
+      } catch (webhookError) {
+        console.error('Error sending order entry webhook:', webhookError);
+        // Don't fail the assignment for webhook errors
+      }
+
+      toast.success(`Job assigned to ${selectedSubcontractors.length} subcontractor(s) successfully!`);
       setAssigningBookingId(null);
-      setSelectedSubcontractor("");
+      setSelectedSubcontractors([]);
       setAssignmentNotes("");
       fetchData();
     } catch (error) {
       console.error('Error assigning job:', error);
       toast.error('Failed to assign job');
     }
+  };
+
+  const toggleSubcontractorSelection = (subcontractorId: string) => {
+    setSelectedSubcontractors(prev => {
+      if (prev.includes(subcontractorId)) {
+        return prev.filter(id => id !== subcontractorId);
+      } else if (prev.length < 3) {
+        return [...prev, subcontractorId];
+      } else {
+        toast.error('Maximum 3 subcontractors allowed per job');
+        return prev;
+      }
+    });
   };
 
   const getSubcontractorForLocation = (bookingCity: string, bookingState: string) => {
@@ -262,27 +302,38 @@ export function JobAssignmentManager() {
                     {assigningBookingId === booking.id && (
                       <div className="space-y-3 bg-background border rounded-lg p-4 mb-4">
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Assign to Subcontractor</label>
-                          <Select value={selectedSubcontractor} onValueChange={setSelectedSubcontractor}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select subcontractor..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getSubcontractorForLocation(
-                                booking.service_address.split(',')[1]?.trim() || '',
-                                booking.service_address.split(',')[2]?.trim() || ''
-                              ).map((sub) => (
-                                <SelectItem key={sub.id} value={sub.id}>
-                                  <div className="flex justify-between items-center w-full">
-                                    <span>{sub.full_name}</span>
-                                    <span className="text-sm text-muted-foreground ml-2">
-                                      ⭐ {sub.rating} • {sub.split_tier.replace('_', '/')} split
-                                    </span>
+                          <label className="text-sm font-medium mb-2 block">
+                            Assign to Subcontractors (Max 3) - {selectedSubcontractors.length}/3 selected
+                          </label>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {getSubcontractorForLocation(
+                              booking.service_address.split(',')[1]?.trim() || '',
+                              booking.service_address.split(',')[2]?.trim() || ''
+                            ).map((sub) => (
+                              <div 
+                                key={sub.id} 
+                                className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-colors ${
+                                  selectedSubcontractors.includes(sub.id) 
+                                    ? 'bg-primary/10 border-primary' 
+                                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                }`}
+                                onClick={() => toggleSubcontractorSelection(sub.id)}
+                              >
+                                <input 
+                                  type="checkbox" 
+                                  checked={selectedSubcontractors.includes(sub.id)}
+                                  onChange={() => toggleSubcontractorSelection(sub.id)}
+                                  className="rounded"
+                                />
+                                <div className="flex-1">
+                                  <div className="font-medium">{sub.full_name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    ⭐ {sub.rating} • {sub.split_tier.replace('_', '/')} split • {sub.city}, {sub.state}
                                   </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                         
                         <div>
@@ -304,7 +355,7 @@ export function JobAssignmentManager() {
                             size="sm"
                             onClick={() => {
                               setAssigningBookingId(null);
-                              setSelectedSubcontractor("");
+                              setSelectedSubcontractors([]);
                               setAssignmentNotes("");
                             }}
                           >
