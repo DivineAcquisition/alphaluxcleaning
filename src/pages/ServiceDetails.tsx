@@ -11,6 +11,7 @@ import { Navigation } from "@/components/Navigation";
 import { MapPin, Home, User, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { US_STATES } from "@/lib/states";
 
 const ServiceDetails = () => {
   const [searchParams] = useSearchParams();
@@ -446,10 +447,11 @@ const ServiceDetails = () => {
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CA">California</SelectItem>
-                        <SelectItem value="NY">New York</SelectItem>
-                        <SelectItem value="TX">Texas</SelectItem>
-                        <SelectItem value="FL">Florida</SelectItem>
+                        {US_STATES.map(state => (
+                          <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                            {state.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

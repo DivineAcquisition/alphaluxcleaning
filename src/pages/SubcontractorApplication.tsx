@@ -27,6 +27,7 @@ import { useFormValidation } from "@/hooks/useFormValidation";
 import { useFormPersistence } from "@/hooks/useFormPersistence";
 import { ErrorRecovery } from "@/components/ErrorRecovery";
 import { FormFieldError } from "@/components/FormFieldError";
+import { US_STATES } from "@/lib/states";
 
 export default function SubcontractorApplication() {
   const navigate = useNavigate();
@@ -340,10 +341,11 @@ export default function SubcontractorApplication() {
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CA">California</SelectItem>
-                      <SelectItem value="NV">Nevada</SelectItem>
-                      <SelectItem value="OR">Oregon</SelectItem>
-                      <SelectItem value="WA">Washington</SelectItem>
+                      {US_STATES.map(state => (
+                        <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

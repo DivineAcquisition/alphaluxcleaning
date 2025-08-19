@@ -11,6 +11,7 @@ import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRigh
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { US_STATES } from '@/lib/states';
 
 interface BookingData {
   serviceDate: string;
@@ -328,10 +329,11 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                       <SelectValue placeholder="CA" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CA">California</SelectItem>
-                      <SelectItem value="NY">New York</SelectItem>
-                      <SelectItem value="TX">Texas</SelectItem>
-                      <SelectItem value="FL">Florida</SelectItem>
+                      {US_STATES.map(state => (
+                        <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

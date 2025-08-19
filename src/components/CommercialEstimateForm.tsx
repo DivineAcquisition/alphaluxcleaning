@@ -19,6 +19,7 @@ import {
   sanitizeTextInput,
   sanitizeAddress 
 } from "@/lib/validation-utils";
+import { STATE_NAMES } from "@/lib/states";
 
 interface CommercialEstimateData {
   // Business Information
@@ -106,18 +107,8 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
     "Other"
   ];
 
-  const states = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
-    "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
-    "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
-    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
-    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", 
-    "New Hampshire", "New Jersey", "New Mexico", "New York", 
-    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", 
-    "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", 
-    "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", 
-    "West Virginia", "Wisconsin", "Wyoming"
-  ];
+  // Use centralized states list
+  const states = STATE_NAMES;
 
   const squareFootageRanges = [
     "500-1,000 sq ft",
