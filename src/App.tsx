@@ -243,6 +243,13 @@ function App() {
                 <Route path="/modern-booking" element={<ModernBooking />} />
                 <Route path="/zapier-test" element={<ZapierTest />} />
                 
+{/* Add customer mobile portal route */}
+                <Route path="/customer-mobile-portal" element={
+                  <ProtectedRoute requiredRole="customer">
+                    <CustomerMobilePortal />
+                  </ProtectedRoute>
+                } />
+                
                 {/* New multi-subdomain pages */}
                 <Route path="/customer-portal-dashboard" element={
                   <ProtectedRoute requiredRole="customer">

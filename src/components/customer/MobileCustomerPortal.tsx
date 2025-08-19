@@ -27,6 +27,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useAuth } from '@/contexts/AuthContext';
+import { EnhancedServiceManagement } from '@/components/customer/EnhancedServiceManagement';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
 export function MobileCustomerPortal() {
@@ -41,7 +42,10 @@ export function MobileCustomerPortal() {
   ).slice(0, 3);
 
   const recentServices = [...orders, ...bookings]
-    .filter(item => isPast(new Date(item.scheduled_date || item.service_date)))
+    .filter(item => {
+      const date = 'scheduled_date' in item ? item.scheduled_date : item.service_date;
+      return date && isPast(new Date(date));
+    })
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 5);
 
@@ -241,92 +245,7 @@ export function MobileCustomerPortal() {
   // Services Tab Content
   const ServicesContent = () => (
     <div className="space-y-6">
-      {/* Upcoming Services */}
-      {upcomingServices.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Upcoming Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingServices.map((service) => (
-                <div key={service.id} className="p-4 border border-border rounded-lg bg-card">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h4 className="font-medium text-foreground">House Cleaning</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formatServiceDate(service.service_date)} at {service.service_time}
-                      </p>
-                    </div>
-                    <Badge className={getStatusColor(service.status)}>
-                      {service.status}
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground mb-3">
-                    <MapPin className="h-4 w-4 inline mr-1" />
-                    {service.service_address}
-                  </div>
-                  {service.special_instructions && (
-                    <div className="text-sm text-muted-foreground mb-3">
-                      <strong>Instructions:</strong> {service.special_instructions}
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Reschedule
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Services */}
-      {recentServices.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              Recent Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentServices.map((service, index) => (
-                <div key={`${service.id}-${index}`} className="p-4 border border-border rounded-lg bg-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h4 className="font-medium text-foreground">House Cleaning</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(service.scheduled_date || service.service_date), 'MMM d, yyyy')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {service.amount && <p className="font-semibold text-foreground">${(service.amount / 100).toFixed(2)}</p>}
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    View Details
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <EnhancedServiceManagement />
     </div>
   );
 

@@ -2304,9 +2304,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
+          city: string | null
           company_id: string | null
           created_at: string
+          customer_since: string | null
           department: string | null
           employee_id: string | null
           full_name: string | null
@@ -2314,12 +2317,17 @@ export type Database = {
           is_active: boolean | null
           phone: string | null
           role_display_name: string | null
+          state: string | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
+          city?: string | null
           company_id?: string | null
           created_at?: string
+          customer_since?: string | null
           department?: string | null
           employee_id?: string | null
           full_name?: string | null
@@ -2327,12 +2335,17 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           role_display_name?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
+          city?: string | null
           company_id?: string | null
           created_at?: string
+          customer_since?: string | null
           department?: string | null
           employee_id?: string | null
           full_name?: string | null
@@ -2340,7 +2353,9 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           role_display_name?: string | null
+          state?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Relationships: [
           {
