@@ -178,6 +178,26 @@ export function OrderEntryWebhookTest() {
       addResult("Test Webhook", 'success', "Webhook triggered successfully!", webhookResponse);
       setLastWebhookPayload(webhookPayload);
 
+      // Step 6: Verify webhook logs
+      addResult("Verify Logs", 'pending', "Checking webhook logs...");
+      
+      const { data: webhookLogs, error: logError } = await supabase
+        .from('webhook_logs')
+        .select('*')
+        .eq('webhook_url', webhookUrl)
+        .eq('event_type', 'order_entry')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (logError) {
+        addResult("Verify Logs", 'error', `Failed to check logs: ${logError.message}`);
+      } else if (webhookLogs && webhookLogs.length > 0) {
+        const log = webhookLogs[0];
+        addResult("Verify Logs", 'success', `Webhook logged with status: ${log.response_status}`, log);
+      } else {
+        addResult("Verify Logs", 'error', "No webhook log found");
+      }
+
       // Test complete
       addResult("Test Complete", 'success', "✅ Order entry webhook test completed successfully!");
       toast.success("Order entry webhook test completed successfully!");
