@@ -1,8 +1,12 @@
 import React from 'react';
-import NotificationPreferences from '@/components/notifications/NotificationPreferences';
+import { NotificationSystemAdmin } from '@/components/notifications/NotificationSystemAdmin';
 
 const NotificationSettings: React.FC = () => {
-  return <NotificationPreferences />;
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <NotificationSystemAdmin />
+    </div>
+  );
 };
 
 export default NotificationSettings;

@@ -20,6 +20,7 @@ interface NotificationTemplate {
   body_template?: string;
   message_template?: string;
   subject_template?: string;
+  trigger_event?: string;
   trigger_events: string[];
   variables: Record<string, string>;
   is_active: boolean;
@@ -86,7 +87,7 @@ export const NotificationTemplateManager: React.FC = () => {
           .insert({
             name: templateData.name || '',
             type: templateData.type || 'sms',
-            trigger_event: templateData.trigger_event || '',
+            trigger_event: (templateData as any).trigger_event || '',
             content_template: {},
             recipient_rules: {},
             message_template: templateData.message_template || '',
@@ -143,7 +144,7 @@ export const NotificationTemplateManager: React.FC = () => {
       type: template?.type || template?.template_type || 'sms',
       message_template: template?.message_template || template?.body_template || '',
       subject_template: template?.subject_template || '',
-      trigger_event: template?.trigger_events?.[0] || '',
+      trigger_event: (template as any)?.trigger_event || '',
       variables: JSON.stringify(template?.variables || {}, null, 2),
       is_active: template?.is_active ?? true
     });
@@ -317,7 +318,7 @@ export const NotificationTemplateManager: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="text-xs">
-                    {template.trigger_events?.[0] || 'No trigger'}
+                    {(template as any)?.trigger_event || 'No trigger'}
                   </Badge>
                 </TableCell>
                 <TableCell>

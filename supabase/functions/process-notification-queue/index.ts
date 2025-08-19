@@ -164,34 +164,37 @@ async function sendEmailNotification(notification: any): Promise<boolean> {
 
 async function sendSMSNotification(notification: any): Promise<boolean> {
   try {
-    // Get customer phone from preferences
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     
-    const { data: preferences } = await supabase
-      .from('customer_notification_preferences')
-      .select('phone_number')
-      .eq('customer_id', notification.customer_id)
+    // Get customer phone from profiles table
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('phone')
+      .eq('id', notification.customer_id)
       .single();
 
-    if (!preferences?.phone_number) {
+    if (!profile?.phone) {
       console.error('No phone number found for customer');
       return false;
     }
 
-    const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-sms-notification`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: preferences.phone_number,
+    // Use the enhanced SMS notification function
+    const { data, error } = await supabase.functions.invoke('enhanced-sms-notification', {
+      body: {
+        to: profile.phone,
         message: notification.message,
         notificationId: notification.id,
         customerId: notification.customer_id,
-      }),
+        templateData: notification.template_data || {}
+      }
     });
-    return response.ok;
+
+    if (error) {
+      console.error('SMS sending error:', error);
+      return false;
+    }
+
+    return data?.success || false;
   } catch (error) {
     console.error('SMS sending error:', error);
     return false;
