@@ -17,6 +17,7 @@ import AdminBookingPreview from '@/pages/AdminBookingPreview';
 import GuestBooking from '@/pages/GuestBooking';
 import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
+import CustomerMobilePortal from '@/pages/CustomerMobilePortal';
 import OrderStatus from '@/pages/OrderStatus';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 
