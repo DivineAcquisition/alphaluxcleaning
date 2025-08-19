@@ -1825,9 +1825,11 @@ export type Database = {
           content_template: Json
           created_at: string
           created_by: string | null
+          delivery_method: string | null
           delivery_settings: Json | null
           id: string
           is_active: boolean | null
+          message_template: string | null
           name: string
           priority: string | null
           recipient_rules: Json
@@ -1839,9 +1841,11 @@ export type Database = {
           content_template: Json
           created_at?: string
           created_by?: string | null
+          delivery_method?: string | null
           delivery_settings?: Json | null
           id?: string
           is_active?: boolean | null
+          message_template?: string | null
           name: string
           priority?: string | null
           recipient_rules: Json
@@ -1853,9 +1857,11 @@ export type Database = {
           content_template?: Json
           created_at?: string
           created_by?: string | null
+          delivery_method?: string | null
           delivery_settings?: Json | null
           id?: string
           is_active?: boolean | null
+          message_template?: string | null
           name?: string
           priority?: string | null
           recipient_rules?: Json

@@ -95,7 +95,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
       if (error) throw error;
 
-      setNotifications(data || []);
+      const typedNotifications = (data || []).map(notification => ({
+        ...notification,
+        importance: (notification.importance as 'high' | 'low' | 'normal' | 'urgent') || 'normal'
+      }));
+      setNotifications(typedNotifications);
       
       // Update unread count
       const unreadCount = (data || []).filter(n => !n.is_read).length;
