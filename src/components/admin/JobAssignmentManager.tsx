@@ -185,9 +185,11 @@ export function JobAssignmentManager() {
         await supabase.functions.invoke('send-order-entry-webhook', {
           body: {
             booking_id: bookingId,
-            assignment_id: assignments[0].id // Use first assignment as primary
+            assignment_id: assignments[0].id, // Use first assignment as primary
+            webhook_url: undefined // Will use default or env webhook URL
           }
         });
+        console.log('Order entry webhook sent successfully');
       } catch (webhookError) {
         console.error('Error sending order entry webhook:', webhookError);
         // Don't fail the assignment for webhook errors
