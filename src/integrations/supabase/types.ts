@@ -725,6 +725,126 @@ export type Database = {
           },
         ]
       }
+      customer_notification_preferences: {
+        Row: {
+          booking_confirmations: boolean
+          created_at: string
+          customer_id: string
+          email_enabled: boolean
+          id: string
+          payment_notifications: boolean
+          phone_number: string | null
+          preferred_language: string | null
+          promotional_notifications: boolean
+          push_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          reminder_hours_before: number
+          service_reminders: boolean
+          service_updates: boolean
+          sms_enabled: boolean
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_confirmations?: boolean
+          created_at?: string
+          customer_id: string
+          email_enabled?: boolean
+          id?: string
+          payment_notifications?: boolean
+          phone_number?: string | null
+          preferred_language?: string | null
+          promotional_notifications?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          reminder_hours_before?: number
+          service_reminders?: boolean
+          service_updates?: boolean
+          sms_enabled?: boolean
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_confirmations?: boolean
+          created_at?: string
+          customer_id?: string
+          email_enabled?: boolean
+          id?: string
+          payment_notifications?: boolean
+          phone_number?: string | null
+          preferred_language?: string | null
+          promotional_notifications?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          reminder_hours_before?: number
+          service_reminders?: boolean
+          service_updates?: boolean
+          sms_enabled?: boolean
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      customer_notifications: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          booking_id: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          image_url: string | null
+          importance: string | null
+          is_read: boolean
+          message: string
+          notification_type: string
+          order_id: string | null
+          read_at: string | null
+          rich_content: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          booking_id?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          image_url?: string | null
+          importance?: string | null
+          is_read?: boolean
+          message: string
+          notification_type: string
+          order_id?: string | null
+          read_at?: string | null
+          rich_content?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          booking_id?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          image_url?: string | null
+          importance?: string | null
+          is_read?: boolean
+          message?: string
+          notification_type?: string
+          order_id?: string | null
+          read_at?: string | null
+          rich_content?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_service_requests: {
         Row: {
           admin_notes: string | null
@@ -1462,6 +1582,54 @@ export type Database = {
           },
         ]
       }
+      notification_analytics: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          customer_id: string
+          delivery_duration_ms: number | null
+          delivery_method: string
+          device_type: string | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          notification_id: string | null
+          send_duration_ms: number | null
+          user_agent: string | null
+          variant: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          customer_id: string
+          delivery_duration_ms?: number | null
+          delivery_method: string
+          device_type?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          notification_id?: string | null
+          send_duration_ms?: number | null
+          user_agent?: string | null
+          variant?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          customer_id?: string
+          delivery_duration_ms?: number | null
+          delivery_method?: string
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          notification_id?: string | null
+          send_duration_ms?: number | null
+          user_agent?: string | null
+          variant?: string | null
+        }
+        Relationships: []
+      }
       notification_deliveries: {
         Row: {
           content: Json | null
@@ -1514,6 +1682,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_queue: {
+        Row: {
+          attempts: number
+          booking_id: string | null
+          clicked_at: string | null
+          created_at: string
+          customer_id: string
+          delivered_at: string | null
+          delivery_method: string
+          error_message: string | null
+          expires_at: string | null
+          id: string
+          max_attempts: number
+          message: string
+          notification_type: string
+          order_id: string | null
+          priority: number | null
+          read_at: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_data: Json | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          booking_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          customer_id: string
+          delivered_at?: string | null
+          delivery_method: string
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          max_attempts?: number
+          message: string
+          notification_type: string
+          order_id?: string | null
+          priority?: number | null
+          read_at?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_data?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          booking_id?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          customer_id?: string
+          delivered_at?: string | null
+          delivery_method?: string
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          max_attempts?: number
+          message?: string
+          notification_type?: string
+          order_id?: string | null
+          priority?: number | null
+          read_at?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_data?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       notification_templates: {
         Row: {
