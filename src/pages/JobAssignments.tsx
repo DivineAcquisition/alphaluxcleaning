@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { JobAssignmentManager } from '@/components/admin/JobAssignmentManager';
+import { MultiCleanerAssignmentTest } from '@/components/admin/MultiCleanerAssignmentTest';
 
 export default function JobAssignments() {
   return (
@@ -8,7 +9,10 @@ export default function JobAssignments() {
       title="Job Assignments" 
       description="Manage job assignments between subcontractors and bookings"
     >
-      <JobAssignmentManager />
+      <div className="space-y-6">
+        <MultiCleanerAssignmentTest />
+        <JobAssignmentManager />
+      </div>
     </AdminLayout>
   );
 }

@@ -54,6 +54,7 @@ interface JobAssignment {
   assigned_at: string;
   accepted_at: string;
   completed_at: string;
+  subcontractor_notes?: string;
   bookings: Booking;
   subcontractors: Subcontractor;
 }
@@ -392,38 +393,71 @@ export function JobAssignmentManager() {
           </AdminCard>
         ) : (
           <AdminGrid columns={1} gap="md">
-            {activeAssignments.map((assignment) => (
-              <AdminCard key={assignment.id} title={`Assignment - ${assignment.bookings?.customer_name}`} variant="stat">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <User className="h-5 w-5 text-primary" />
-                      <h4 className="font-semibold">{assignment.bookings?.customer_name}</h4>
-                      <Badge variant={assignment.status === 'accepted' ? 'default' : 'secondary'}>
-                        {assignment.status}
-                      </Badge>
-                    </div>
+            {/* Group assignments by booking_id to show multiple cleaners per job */}
+            {Object.entries(
+              activeAssignments.reduce((groups: { [key: string]: JobAssignment[] }, assignment) => {
+                const bookingId = assignment.booking_id;
+                if (!groups[bookingId]) groups[bookingId] = [];
+                groups[bookingId].push(assignment);
+                return groups;
+              }, {})
+            ).map(([bookingId, assignments]) => {
+              const primaryAssignment = assignments[0]; // Use first assignment for booking details
+              return (
+                <AdminCard key={bookingId} title={`Job Assignment - ${primaryAssignment.bookings?.customer_name}`} variant="stat">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <User className="h-5 w-5 text-primary" />
+                        <h4 className="font-semibold">{primaryAssignment.bookings?.customer_name}</h4>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {assignments.length} Cleaner{assignments.length > 1 ? 's' : ''} Assigned
+                        </Badge>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium mb-1">Customer Details</p>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <div>{assignment.bookings?.service_address}</div>
-                          <div>{new Date(assignment.bookings?.service_date).toLocaleDateString()} at {assignment.bookings?.service_time}</div>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm font-medium mb-1">Customer Details</p>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <div>{primaryAssignment.bookings?.service_address}</div>
+                            <div>{new Date(primaryAssignment.bookings?.service_date).toLocaleDateString()} at {primaryAssignment.bookings?.service_time}</div>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium mb-1">Assigned Team ({assignments.length})</p>
+                          <div className="space-y-2">
+                            {assignments.map((assignment, index) => (
+                              <div key={assignment.id} className="flex items-center gap-2 text-sm">
+                                <Badge variant={assignment.status === 'accepted' ? 'default' : 'secondary'} className="text-xs">
+                                  {assignment.status}
+                                </Badge>
+                                <span className="font-medium">{assignment.subcontractors?.full_name}</span>
+                                <span className="text-muted-foreground">
+                                  ⭐ {assignment.subcontractors?.rating}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium mb-1">Assigned Subcontractor</p>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <div>{assignment.subcontractors?.full_name}</div>
-                          <div>⭐ {assignment.subcontractors?.rating} • {assignment.subcontractors?.split_tier?.replace('_', '/')} split</div>
+
+                      {assignments.some(a => a.subcontractor_notes) && (
+                        <div className="bg-muted/50 rounded-lg p-3">
+                          <p className="text-sm font-medium mb-1">Assignment Notes:</p>
+                          {assignments.map((assignment) => 
+                            assignment.subcontractor_notes && (
+                              <div key={assignment.id} className="text-sm text-muted-foreground">
+                                <strong>{assignment.subcontractors?.full_name}:</strong> {assignment.subcontractor_notes}
+                              </div>
+                            )
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </AdminCard>
-            ))}
+                </AdminCard>
+              );
+            })}
           </AdminGrid>
         )}
       </div>
