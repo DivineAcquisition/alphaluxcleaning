@@ -3970,14 +3970,26 @@ export type Database = {
         Returns: Json
       }
       create_notification_safe: {
-        Args: {
-          p_message: string
-          p_subcontractor_id: string
-          p_title: string
-          p_type?: string
-          p_user_id: string
-        }
-        Returns: Json
+        Args:
+          | {
+              p_action_label?: string
+              p_action_url?: string
+              p_booking_id?: string
+              p_customer_id: string
+              p_importance?: string
+              p_message: string
+              p_notification_type: string
+              p_order_id?: string
+              p_title: string
+            }
+          | {
+              p_message: string
+              p_subcontractor_id: string
+              p_title: string
+              p_type?: string
+              p_user_id: string
+            }
+        Returns: string
       }
       create_referral_code: {
         Args: {
@@ -4179,6 +4191,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_notification_read: {
+        Args: { p_customer_id: string; p_notification_id: string }
+        Returns: boolean
+      }
       mark_onboarding_token_used: {
         Args: { p_token: string }
         Returns: Json
@@ -4186,6 +4202,20 @@ export type Database = {
       mask_sensitive_field: {
         Args: { field_value: string }
         Returns: string
+      }
+      queue_notification: {
+        Args: {
+          p_booking_id?: string
+          p_customer_id: string
+          p_message: string
+          p_notification_type: string
+          p_order_id?: string
+          p_priority?: number
+          p_scheduled_for?: string
+          p_subject: string
+          p_template_data?: Json
+        }
+        Returns: Json
       }
       send_intelligent_notification: {
         Args: {
