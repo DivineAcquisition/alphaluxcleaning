@@ -51,7 +51,9 @@ interface BookingWebhookData {
   
   // Required fields
   bookingStep: 'service_selection' | 'service_details' | 'payment' | 'confirmation';
-  webhookUrl: string;
+  webhookUrl?: string; // Now optional since we use configured URLs
+  orderId?: string;
+  bookingId?: string;
 }
 
 export const useBookingWebhook = () => {
@@ -59,11 +61,6 @@ export const useBookingWebhook = () => {
   const { toast } = useToast();
 
   const sendBookingWebhook = async (data: BookingWebhookData) => {
-    if (!data.webhookUrl) {
-      console.warn('No webhook URL provided, skipping webhook');
-      return;
-    }
-
     setIsLoading(true);
     
     try {
@@ -79,7 +76,8 @@ export const useBookingWebhook = () => {
         totalPrice: data.totalPrice
       });
 
-      const { data: response, error } = await supabase.functions.invoke('send-booking-webhook', {
+      // Use the new enhanced webhook function that handles configured URLs
+      const { data: response, error } = await supabase.functions.invoke('enhanced-booking-webhook', {
         body: webhookData
       });
 
@@ -93,7 +91,7 @@ export const useBookingWebhook = () => {
       if (data.bookingStep === 'confirmation') {
         toast({
           title: "Booking Data Sent",
-          description: "Your booking information has been sent to the configured webhook.",
+          description: "Your booking information has been sent to configured webhooks.",
         });
       }
 

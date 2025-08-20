@@ -39,6 +39,7 @@ import TipsManagement from '@/pages/TipsManagement';
 import FeedbackCenter from '@/pages/FeedbackCenter';
 import CommunicationHub from '@/pages/CommunicationHub';
 import ApplicationManager from '@/pages/ApplicationManager';
+import WebhookManagement from '@/pages/WebhookManagement';
 
 // Admin tool pages
 import EmailSettings from '@/pages/EmailSettings';
@@ -326,6 +327,11 @@ function App() {
                 <Route path="/subcontractor-detail/:id" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/webhook-management" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <WebhookManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/tips-management" element={

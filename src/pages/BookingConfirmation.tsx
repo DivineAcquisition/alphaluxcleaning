@@ -208,7 +208,8 @@ const BookingConfirmation = () => {
                 totalPrice: orderDetails.amount || 0,
                 paymentAmount: orderDetails.amount || 0,
                 paymentType: 'full' as const,
-                webhookUrl: 'https://hooks.zapier.com/hooks/catch/default/' // Will be overridden by user config
+                orderId: orderDetails.id,
+                bookingId: identifier
               });
               localStorage.setItem(webhookKey, '1');
               console.log('Booking webhook sent');
