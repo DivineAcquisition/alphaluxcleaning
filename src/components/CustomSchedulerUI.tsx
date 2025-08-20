@@ -357,103 +357,65 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
   const dates = generateDates();
 
   return (
-    <div className="space-y-6">
-      {/* Disclaimers */}
-      <div className="space-y-4">
-        <Alert className="border-amber-200 bg-amber-50">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            <strong>Scheduling Request:</strong> The date and time you select is a scheduling request. A team member will contact you to confirm availability and finalize your appointment details.
-          </AlertDescription>
-        </Alert>
+    <div className="space-y-4">
+      {/* Compact Disclaimers */}
+      <Alert className="border-amber-200 bg-amber-50 py-3">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800 text-sm">
+          <strong>Scheduling Request:</strong> Date/time selection is a request - we'll contact you to confirm availability.
+        </AlertDescription>
+      </Alert>
 
-        <Alert className="border-blue-200 bg-blue-50">
-          <Mail className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>No Email Confirmation:</strong> Please note that no email confirmation is automatically sent upon payment submission. Our team will contact you directly to confirm your service details and scheduling.
-          </AlertDescription>
-        </Alert>
+      {/* Compact Info Section */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Calendar className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-blue-900 mb-1">
+              5+ Days Advance Booking Required
+            </p>
+            <p className="text-sm text-blue-700">
+              For urgent needs, call <strong>(510) 390-7673</strong>
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Connection Status */}
-      <div className="flex items-center justify-center gap-2 p-3 rounded-lg border bg-muted/50">
-        <div className={`w-2 h-2 rounded-full ${
-          connectionStatus === 'connected' ? 'bg-green-400' :
-          connectionStatus === 'checking' || isCheckingAvailability ? 'bg-yellow-400 animate-pulse' :
-          connectionStatus === 'disconnected' ? 'bg-orange-400' :
-          'bg-red-400'
-        }`} />
-        <span className="text-sm font-medium">
-          {connectionStatus === 'connected' ? 'Google Calendar Connected' :
-           connectionStatus === 'checking' || isCheckingAvailability ? 'Checking availability...' :
-           connectionStatus === 'disconnected' ? 'Using mock data' :
-           'Calendar error - showing all available'}
-        </span>
-        {lastUpdated && connectionStatus === 'connected' && (
-          <span className="text-xs text-muted-foreground">
-            • Last updated: {lastUpdated.toLocaleTimeString()}
-          </span>
-        )}
-      </div>
-
-      {/* Priority Booking Notice */}
-      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <Calendar className="h-8 w-8 text-blue-500 mt-1" />
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
-                Booking Window: 5+ Days in Advance
-              </h3>
-              <p className="text-gray-600 mb-2">
-                We require a minimum of 5 days advance notice to ensure the best service quality and cleaner availability.
-              </p>
-              <p className="text-sm text-gray-500">
-                For urgent cleaning needs, please contact us directly at (510) 390-7673
-              </p>
-            </div>
+      {/* Date Selection - Compact */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Calendar className="h-4 w-4" />
+            Select Date
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
+            {dates.map((date) => (
+              <Button
+                key={date.value}
+                variant={selectedDate === date.value ? "default" : "outline"}
+                onClick={() => setSelectedDate(date.value)}
+                className={cn(
+                  "h-auto p-2 flex flex-col items-center gap-0.5 text-xs",
+                  selectedDate === date.value && "bg-primary text-primary-foreground"
+                )}
+              >
+                <span className="font-medium">{date.weekday}</span>
+                <span className="text-sm font-bold">{date.day}</span>
+                <span className="text-xs opacity-75">{date.month}</span>
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Date Selection */}
-      {(
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Select Date
-            </CardTitle>
-            <CardDescription>Choose your preferred service date</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              {dates.map((date) => (
-                <Button
-                  key={date.value}
-                  variant={selectedDate === date.value ? "default" : "outline"}
-                  onClick={() => setSelectedDate(date.value)}
-                  className={cn(
-                    "h-auto p-3 flex flex-col items-center gap-1",
-                    selectedDate === date.value && "bg-primary text-primary-foreground"
-                  )}
-                >
-                  <span className="text-xs font-medium">{date.weekday}</span>
-                  <span className="text-lg font-bold">{date.day}</span>
-                   <span className="text-xs">{date.month}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Time Selection */}
+      {/* Time Selection - Compact */}
       {selectedDate && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-4 w-4" />
               Select Time
               {nextDayUpsell && (
                 <Badge variant="secondary" className="bg-orange-100 text-orange-700">

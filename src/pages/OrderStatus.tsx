@@ -355,31 +355,57 @@ export default function OrderStatus() {
                     </Badge>
                   </div>
 
-                  {/* Service Details */}
+                  {/* Service Details - Enhanced Display */}
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm sm:text-base">Service Information</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Type:</span>
+                      <div className="bg-muted/30 p-3 rounded-lg">
+                        <span className="text-muted-foreground text-xs">Service Type</span>
                         <div className="font-medium">
                           {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
                         </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Frequency:</span>
+                      <div className="bg-muted/30 p-3 rounded-lg">
+                        <span className="text-muted-foreground text-xs">Frequency</span>
                         <div className="font-medium">
                           {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Square Footage:</span>
-                        <div className="font-medium">{order.square_footage} sq ft</div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Total Amount:</span>
-                        <div className="font-medium text-primary">${(order.amount / 100).toFixed(2)}</div>
+                      {order.square_footage && (
+                        <div className="bg-muted/30 p-3 rounded-lg">
+                          <span className="text-muted-foreground text-xs">Property Size</span>
+                          <div className="font-medium">{order.square_footage} sq ft</div>
+                        </div>
+                      )}
+                      <div className="bg-muted/30 p-3 rounded-lg">
+                        <span className="text-muted-foreground text-xs">Total Amount</span>
+                        <div className="font-medium text-primary text-lg">${(order.amount / 100).toFixed(2)}</div>
                       </div>
                     </div>
+                    
+                    {/* Additional service details if available */}
+                    {(order.service_details?.homeSize || order.service_details?.dwellingType || order.service_details?.primaryFlooringType) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm mt-3">
+                        {order.service_details?.homeSize && (
+                          <div className="bg-blue-50 p-2 rounded">
+                            <span className="text-muted-foreground text-xs">Home Size</span>
+                            <div className="font-medium text-xs">{order.service_details.homeSize}</div>
+                          </div>
+                        )}
+                        {order.service_details?.dwellingType && (
+                          <div className="bg-blue-50 p-2 rounded">
+                            <span className="text-muted-foreground text-xs">Dwelling Type</span>
+                            <div className="font-medium text-xs">{order.service_details.dwellingType}</div>
+                          </div>
+                        )}
+                        {order.service_details?.primaryFlooringType && (
+                          <div className="bg-blue-50 p-2 rounded">
+                            <span className="text-muted-foreground text-xs">Primary Flooring</span>
+                            <div className="font-medium text-xs">{order.service_details.primaryFlooringType}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                    {/* Add-ons */}

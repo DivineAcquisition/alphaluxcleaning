@@ -195,137 +195,106 @@ const ScheduleService = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-8">
-        <div className="max-w-full mx-auto space-y-8">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-6">
+        <div className="max-w-full mx-auto space-y-4">
           
-          {/* Header */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Schedule Your Service
-              </CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Choose your preferred date and time for your cleaning service
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          {/* Order Status Display */}
+          {/* Header & Order Summary Combined */}
           {orderDetails && (
             <Card className="border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Order Summary
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Schedule Service - Order #{orderDetails.id?.slice(-8) || 'N/A'}
                     </CardTitle>
-                    <CardDescription>Order #{orderDetails.id?.slice(-8) || 'N/A'}</CardDescription>
+                    <CardDescription className="text-primary-foreground/80">
+                      Choose your preferred date and time
+                    </CardDescription>
                   </div>
-                  <Badge className={getStatusColor(orderDetails.status || 'pending')}>
+                  <Badge className="bg-white/20 text-white border-white/30">
                     {getStatusIcon(orderDetails.status || 'pending')}
                     <span className="ml-1 capitalize">{(orderDetails.status || 'pending').replace('_', ' ')}</span>
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <p><strong>Service Type:</strong> {orderDetails.service_details?.service_type || orderDetails.cleaning_type?.replace(/_/g, ' ') || 'General Cleaning'}</p>
-                    <p><strong>Frequency:</strong> {orderDetails.frequency || 'One-time'}</p>
-                    {orderDetails.square_footage && (
-                      <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
-                    )}
-                    {orderDetails.amount && (
-                      <p><strong>Amount:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
-                    )}
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-muted-foreground text-xs">Service</span>
+                    <span className="font-medium">{orderDetails.service_details?.service_type || orderDetails.cleaning_type?.replace(/_/g, ' ') || 'General Cleaning'}</span>
                   </div>
-                  <div className="space-y-1">
-                    <p><strong>Customer:</strong> {orderDetails.customer_name || 'N/A'}</p>
-                    <p><strong>Email:</strong> {orderDetails.customer_email || 'N/A'}</p>
-                    {orderDetails.customer_phone && (
-                      <p><strong>Phone:</strong> {orderDetails.customer_phone}</p>
-                    )}
-                    <p><strong>Address:</strong> {
-                      orderDetails.service_details?.serviceAddress ? 
-                        `${orderDetails.service_details.serviceAddress.street || ''}, ${orderDetails.service_details.serviceAddress.city || ''}`.trim().replace(/^,|,$/, '') :
-                      orderDetails.service_details?.address || 
-                      'Address not provided'
-                    }</p>
-                    {(orderDetails.scheduled_date || orderDetails.scheduled_time) && (
-                      <p><strong>Scheduled:</strong> {
-                        orderDetails.scheduled_date ? 
-                          new Date(orderDetails.scheduled_date).toLocaleDateString() : 
-                          'Not scheduled'
-                      } {orderDetails.scheduled_time ? `at ${orderDetails.scheduled_time}` : ''}</p>
-                    )}
+                  <div className="flex flex-col">
+                    <span className="text-muted-foreground text-xs">Frequency</span>
+                    <span className="font-medium">{orderDetails.frequency || 'One-time'}</span>
                   </div>
+                  {orderDetails.square_footage && (
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs">Size</span>
+                      <span className="font-medium">{orderDetails.square_footage} sq ft</span>
+                    </div>
+                  )}
+                  {orderDetails.amount && (
+                    <div className="flex flex-col">
+                      <span className="text-muted-foreground text-xs">Amount</span>
+                      <span className="font-medium text-primary">${(orderDetails.amount / 100).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Quick Booking Options */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Booking Options</CardTitle>
-              <CardDescription>Need immediate service or different scheduling?</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <NextDayBookingDialog>
-                  <Button 
-                    className="h-auto p-4 flex flex-col items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Plus className="h-5 w-5" />
-                      <span className="font-semibold">Book for Next Day</span>
-                    </div>
-                    <div className="text-sm opacity-90 text-center">
-                      Priority scheduling available
-                    </div>
-                    <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
-                      <DollarSign className="h-3 w-3" />
-                      <span>+$50 rush fee</span>
-                    </div>
-                  </Button>
-                </NextDayBookingDialog>
+          {!orderDetails && (
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary to-accent text-white py-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Schedule Your Service
+                </CardTitle>
+                <CardDescription className="text-primary-foreground/80">
+                  Choose your preferred date and time for your cleaning service
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
 
-                <Button 
-                  variant="outline"
-                  onClick={handleTextSupport}
-                  className="h-auto p-4 flex flex-col items-center gap-2 border-2 hover:bg-accent/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="font-semibold">Text for Better Time</span>
-                  </div>
-                  <div className="text-sm text-muted-foreground text-center">
-                    Get personalized scheduling help
-                  </div>
-                  <div className="text-sm font-medium text-primary">
-                    +1 (281) 809-9901
-                  </div>
-                </Button>
+          {/* Quick Actions - Compact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <NextDayBookingDialog>
+              <Button 
+                className="h-auto p-3 flex items-center justify-between bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full"
+              >
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  <span className="font-medium">Next Day Service</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm bg-white/20 px-2 py-1 rounded-full">
+                  <DollarSign className="h-3 w-3" />
+                  <span>+$50</span>
+                </div>
+              </Button>
+            </NextDayBookingDialog>
+
+            <Button 
+              variant="outline"
+              onClick={handleTextSupport}
+              className="h-auto p-3 flex items-center justify-between border-2 hover:bg-accent/10"
+            >
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                <span className="font-medium">Text for Better Time</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="text-sm font-medium text-primary">
+                (281) 809-9901
+              </div>
+            </Button>
+          </div>
 
 
-          {/* Custom Scheduler UI */}
+          {/* Scheduler UI - Compact */}
           <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Schedule Your Service
-              </CardTitle>
-              <CardDescription>
-                Select your preferred date and time for your cleaning service
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <CustomSchedulerUI
                 orderId={orderId}
                 sessionId={sessionId}
@@ -335,15 +304,13 @@ const ScheduleService = () => {
             </CardContent>
           </Card>
 
-          {/* Order Status Check */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="text-center py-6">
-              <p className="text-muted-foreground mb-4">
-                Need to check on an existing order?
-              </p>
-              <OrderStatusLookup triggerClassName="mx-auto" />
-            </CardContent>
-          </Card>
+          {/* Order Status Check - Compact */}
+          <div className="text-center py-4 border-t">
+            <p className="text-muted-foreground text-sm mb-3">
+              Need to check on an existing order?
+            </p>
+            <OrderStatusLookup triggerClassName="mx-auto" />
+          </div>
 
           {/* Navigation */}
           <div className="flex flex-col sm:flex-row gap-4 justify-between px-4 sm:px-0">
