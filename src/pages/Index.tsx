@@ -198,29 +198,27 @@ const Index = () => {
 
 
               {/* Service Configuration Section */}
-              <div id="booking-interface">
-                <RecurringBookingInterface 
-                  newClient={true} 
-                  onBookingUpdate={data => {
-                    setPricingData({
-                      hours: data.tier.hours,
-                      cleaningType: 'standard',
-                      serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                      membership: data.membership,
-                      addOns: data.addOns,
-                      recurring: data.recurring
-                    });
-                    setCalculatedPrice(data.pricing.total);
-                    setPriceBreakdown({
-                      basePrice: data.tier.basePrice,
-                      addOns: data.addOns,
-                      membership: data.membership,
-                      recurring: data.recurring,
-                      savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                    });
-                  }}
-                />
-              </div>
+              <RecurringBookingInterface 
+                newClient={true} 
+                onBookingUpdate={data => {
+                  setPricingData({
+                    hours: data.tier.hours,
+                    cleaningType: 'standard',
+                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
+                    membership: data.membership,
+                    addOns: data.addOns,
+                    recurring: data.recurring
+                  });
+                  setCalculatedPrice(data.pricing.total);
+                  setPriceBreakdown({
+                    basePrice: data.tier.basePrice,
+                    addOns: data.addOns,
+                    membership: data.membership,
+                    recurring: data.recurring,
+                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
+                  });
+                }}
+              />
 
               {/* Secure Booking Button */}
               {pricingData && calculatedPrice > 0 && (
@@ -233,18 +231,14 @@ const Index = () => {
                           Secure your booking with our protected payment system
                         </p>
                         <Button 
-                          onClick={() => {
-                            // Scroll to the booking interface instead of redirecting
-                            document.getElementById('booking-interface')?.scrollIntoView({ 
-                              behavior: 'smooth',
-                              block: 'start'
-                            });
-                          }}
+                          asChild
                           size="lg"
                           variant="secondary"
                           className="bg-white text-primary hover:bg-white/90 font-semibold"
                         >
-                          Book Now - Secure Payment
+                          <a href="/instant-quote">
+                            Book Now - Get Instant Quote
+                          </a>
                         </Button>
                         <p className="text-xs text-white/70">
                           🔒 Sign in required to protect your payment information

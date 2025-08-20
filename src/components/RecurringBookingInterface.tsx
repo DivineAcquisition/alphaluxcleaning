@@ -375,14 +375,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Debug customer info (only on mount to prevent infinite logs)
-  useEffect(() => {
-    console.log('🔍 RecurringBookingInterface Debug:', {
-      onPaymentRequest: !!onPaymentRequest,
-      existingMember,
-      newClient
-    });
-  }, []); // Only run once on mount
+  // Debug customer info
+  console.log('🔍 RecurringBookingInterface Debug:', {
+    onPaymentRequest: !!onPaymentRequest,
+    existingMember,
+    newClient
+  });
   const [selectedTier, setSelectedTier] = useState<string>(''); // No default selection
   const [selectedRecurring, setSelectedRecurring] = useState<string>('one-time'); // Default to one-time for discounts
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -499,18 +497,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
   const pricing = calculatePricing;
   
-  // Update parent component when pricing changes
+  // Force calculation on component mount and selection changes
   useEffect(() => {
-    if (onBookingUpdate && selectedTierData && selectedRecurringData) {
-      onBookingUpdate({
-        tier: selectedTierData,
-        recurring: selectedRecurringData,
-        addOns: selectedAddOns.map(id => addOnServices.find(service => service.id === id)).filter(Boolean),
-        membership: addMembership,
-        pricing: pricing
-      });
-    }
-  }, [pricing, selectedTierData, selectedRecurringData, selectedAddOns, addMembership, onBookingUpdate]);
+    console.log('Selection changed - triggering calculation');
+    calculatePricing;
+  }, [selectedTier, selectedRecurring, selectedAddOns, addMembership]);
 
   const handleAddOnToggle = (addOnId: string) => {
     setSelectedAddOns(prev => 
