@@ -285,87 +285,21 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Fetch comprehensive order details for Zapier webhook
-      let comprehensiveBookingData: ComprehensiveBookingData = {
-        bookingStep: 'confirmation',
-        serviceDate: selectedDate,
-        serviceTime: selectedTime,
-        timestamp: new Date().toISOString(),
-        source: 'bay_area_cleaning_pros_modern_scheduler',
-        orderId: sessionId || 'guest_booking',
-        nextDayUpsell,
-        nextDayFee: nextDayUpsell ? 50 : 0
-      };
-
-      // Get complete order data if available
-      if (sessionId) {
-        try {
-          const { data: orderResponse } = await supabase.functions.invoke('get-order-details', {
-            body: { session_id: sessionId }
+      // Send order entry webhook
+      try {
+        if (sessionId) {
+          console.log('Sending order entry webhook...');
+          
+          await supabase.functions.invoke('send-order-entry-webhook', {
+            body: { 
+              booking_id: sessionId
+            }
           });
           
-          if (orderResponse?.order) {
-            const order = orderResponse.order;
-            comprehensiveBookingData = {
-              ...comprehensiveBookingData,
-              // Initial service selection data from home page
-              homeSize: order.service_details?.homeSize || order.home_size,
-              frequency: order.service_details?.frequency || order.frequency,
-              serviceType: order.service_details?.serviceType || serviceType || 'General Cleaning',
-              totalPrice: (order.amount || 0) / 100,
-              basePrice: order.service_details?.basePrice,
-              addOns: order.service_details?.addOns || [],
-              
-              // Customer information
-              customerInfo: {
-                name: order.customer_name,
-                email: order.customer_email,
-                phone: order.customer_phone
-              },
-              
-              // Service address from service details page
-              serviceAddress: order.service_details?.serviceAddress || {
-                street: order.service_details?.address?.street,
-                city: order.service_details?.address?.city,
-                state: order.service_details?.address?.state,
-                zipCode: order.service_details?.address?.zipCode
-              },
-              
-              // Property details from service details page
-              propertyDetails: order.service_details?.property || {
-                dwellingType: order.service_details?.dwellingType,
-                flooringTypes: order.service_details?.flooringTypes,
-                primaryFlooringType: order.service_details?.primaryFlooringType
-              },
-              
-              // Special instructions
-              instructions: order.service_details?.instructions,
-              
-              // Order metadata
-              orderStatus: order.status,
-              paymentStatus: order.payment_status,
-              createdAt: order.created_at
-            };
-          }
-        } catch (fetchError) {
-          console.error('Error fetching order details for webhook:', fetchError);
+          console.log('Order entry webhook sent successfully');
         }
-      }
-
-      console.log('Sending comprehensive booking data to Zapier:', comprehensiveBookingData);
-      
-      try {
-        const response = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          mode: 'no-cors',
-          body: JSON.stringify(comprehensiveBookingData),
-        });
-        console.log('Zapier webhook sent successfully');
       } catch (webhookError) {
-        console.error('Direct Zapier webhook failed:', webhookError);
+        console.error('Order entry webhook failed:', webhookError);
         // Don't block the booking flow if webhook fails
       }
 
