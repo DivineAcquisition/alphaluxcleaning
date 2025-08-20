@@ -20,7 +20,6 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
   homeSize: string;
-  serviceType: string;
   frequency: string;
   addOns: string[];
   serviceDate: string;
@@ -170,7 +169,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
             customerPhone: bookingData.contactNumber,
             paymentType: paymentType,
             booking_data: bookingData,
-            cleaningType: bookingData.serviceType,
+            cleaningType: bookingData.homeSize, // Use homeSize as cleaning type
             frequency: bookingData.frequency,
             serviceAddress: `${bookingData.address.street}`,
             city: bookingData.address.city,
@@ -491,7 +490,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
             <div className="space-y-2">
               <h4 className="font-semibold">Service Details</h4>
               <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Service:</span> {bookingData.serviceType.replace('_', ' ')} ({bookingData.homeSize})</p>
+                <p><span className="text-muted-foreground">Service:</span> {bookingData.homeSize.replace('_', ' ')}</p>
                 <p><span className="text-muted-foreground">Date:</span> {new Date(bookingData.serviceDate).toLocaleDateString()}</p>
                 <p><span className="text-muted-foreground">Time:</span> {bookingData.serviceTime}</p>
                 <p><span className="text-muted-foreground">Address:</span> {bookingData.address.street}</p>

@@ -9,7 +9,6 @@ import { useSearchParams } from 'react-router-dom';
 
 interface BookingData {
   homeSize: string;
-  serviceType: string;
   frequency: string;
   addOns: string[];
   serviceDate: string;
@@ -97,7 +96,7 @@ export function GuestBookingWrapper() {
   const determineStepFromData = (data: Partial<BookingData>): number => {
     if (data.stripeSessionId) return 4;
     if (data.serviceDate && data.serviceTime && data.address?.street) return 3;
-    if (data.homeSize && data.serviceType && data.frequency) return 2;
+    if (data.homeSize && data.frequency) return 2;
     return 1;
   };
 
@@ -114,10 +113,8 @@ export function GuestBookingWrapper() {
   const handleStepChange = (step: number) => {
     setBookingStep(step);
     
-    // Show auth choice when reaching payment step (step 3) if not authenticated
-    if (step === 3 && !user && !loading) {
-      setShowAuthChoice(true);
-    }
+    // For guest bookings, we don't require authentication until after successful booking
+    // The guest flow will handle account creation automatically
   };
 
   const handleAuthSuccess = () => {

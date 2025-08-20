@@ -23,7 +23,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface BookingData {
   homeSize: string;
-  serviceType: string;
   frequency: string;
   serviceDate: string;
   serviceTime: string;
@@ -178,7 +177,7 @@ END:VCALENDAR`;
                 <div>
                   <p className="font-semibold">Service Type</p>
                   <p className="text-muted-foreground capitalize">
-                    {bookingData.serviceType.replace('_', ' ')} - {bookingData.homeSize}
+                    {bookingData.homeSize.replace('_', ' ')} - {bookingData.frequency}
                   </p>
                 </div>
               </div>

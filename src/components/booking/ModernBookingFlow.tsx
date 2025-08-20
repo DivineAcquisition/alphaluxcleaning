@@ -17,7 +17,6 @@ import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react';
 interface BookingData {
   // Service Selection
   homeSize: string;
-  serviceType: string;
   frequency: string;
   addOns: string[];
   
@@ -88,7 +87,6 @@ export function ModernBookingFlow({
     isLoading: isPersistenceLoading
   } = useFormPersistence<BookingData>({
     homeSize: '',
-    serviceType: '',
     frequency: '',
     addOns: [],
     serviceDate: '',
@@ -136,7 +134,7 @@ export function ModernBookingFlow({
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
-        return bookingData.homeSize && bookingData.serviceType && bookingData.frequency;
+        return bookingData.homeSize && bookingData.frequency;
       case 2:
         return bookingData.serviceDate && bookingData.serviceTime && 
                bookingData.address.street && bookingData.contactNumber;
