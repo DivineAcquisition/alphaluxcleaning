@@ -48,6 +48,12 @@ All colors MUST be HSL.
     --shadow-clean: 0 4px 20px -4px hsl(273 100% 50% / 0.15);
     --shadow-soft: 0 2px 10px -2px hsl(210 40% 8% / 0.1);
     --shadow-glow: 0 0 30px hsl(273 100% 50% / 0.2);
+    
+    /* Mobile optimizations */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-right: env(safe-area-inset-right);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
 
     --radius: 0.5rem;
     
@@ -124,5 +130,51 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Mobile-specific utilities */
+  .safe-area-pb {
+    padding-bottom: max(1rem, var(--safe-area-inset-bottom));
+  }
+  
+  .safe-area-pt {
+    padding-top: max(1rem, var(--safe-area-inset-top));
+  }
+  
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Enhanced animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  /* Loading shimmer effect */
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }

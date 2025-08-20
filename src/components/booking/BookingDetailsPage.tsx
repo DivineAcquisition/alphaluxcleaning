@@ -12,6 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { US_STATES } from '@/lib/states';
+import { MobileTimeSlotPicker, MobileFormField } from './MobileBookingOptimizations';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
 
 interface BookingData {
   serviceDate: string;
@@ -47,10 +50,22 @@ const timeSlots = [
 ];
 
 export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onBack }: Props) {
+  const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined
   );
   const [nextDayBooking, setNextDayBooking] = useState(false);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+  
+  // Retry hook for availability checks
+  const { executeWithRetry, isRetrying } = useBookingRetry({
+    ...bookingRetryStrategies.availability,
+    onError: (error) => {
+      toast.error('Failed to check availability', {
+        description: error.message
+      });
+    }
+  });
 
   // Generate available dates starting 5 days out (next 21 days, excluding Sundays)
   const generateAvailableDates = () => {
@@ -88,14 +103,25 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
     }
   }, [bookingData.serviceTime]);
 
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = async (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
-      updateBookingData({ 
-        serviceDate: date.toISOString().split('T')[0],
-        nextDayFee
-      });
+      setIsLoadingAvailability(true);
+      
+      try {
+        await executeWithRetry(async () => {
+          // Simulate availability check
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
+          updateBookingData({ 
+            serviceDate: date.toISOString().split('T')[0],
+            nextDayFee
+          });
+        }, 'availability check');
+      } finally {
+        setIsLoadingAvailability(false);
+      }
     }
   };
 
@@ -251,36 +277,17 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
               Select Your Time
+              {isLoadingAvailability && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary ml-2" />
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {timeSlots.map((slot) => {
-                const isSelected = bookingData.serviceTime === slot.value;
-                
-                return (
-                  <button
-                    key={slot.value}
-                    onClick={() => handleTimeSelect(slot.value)}
-                    className={cn(
-                      "relative p-4 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
-                      isSelected 
-                        ? "border-primary bg-primary/5 shadow-clean"
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    {slot.popular && (
-                      <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs">
-                        <Star className="h-3 w-3 mr-1" />
-                        Popular
-                      </Badge>
-                    )}
-                    <div className="font-medium">{slot.label}</div>
-                    <div className="text-sm text-muted-foreground">{slot.range}</div>
-                  </button>
-                );
-              })}
-            </div>
+            <MobileTimeSlotPicker
+              timeSlots={timeSlots}
+              selectedTime={bookingData.serviceTime}
+              onTimeSelect={handleTimeSelect}
+            />
           </CardContent>
         </Card>
       )}
@@ -295,21 +302,23 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="street">Street Address *</Label>
+            <div className="space-y-4">
+              <MobileFormField 
+                label="Street Address" 
+                required
+                help="Include apartment/unit number if applicable"
+              >
                 <Input
                   id="street"
-                  placeholder="123 Main Street"
+                  placeholder="123 Main Street, Apt 4B"
                   value={bookingData.address.street}
                   onChange={(e) => handleAddressChange('street', e.target.value)}
                   className="border-border focus:border-primary"
                 />
-              </div>
+              </MobileFormField>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
+                <MobileFormField label="City" required>
                   <Input
                     id="city"
                     placeholder="San Francisco"
@@ -317,15 +326,14 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                     onChange={(e) => handleAddressChange('city', e.target.value)}
                     className="border-border focus:border-primary"
                   />
-                </div>
+                </MobileFormField>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
+                <MobileFormField label="State">
                   <Select 
                     value={bookingData.address.state} 
                     onValueChange={(value) => handleAddressChange('state', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="min-h-[48px]">
                       <SelectValue placeholder="CA" />
                     </SelectTrigger>
                     <SelectContent>
@@ -336,10 +344,9 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </MobileFormField>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code</Label>
+                <MobileFormField label="ZIP Code">
                   <Input
                     id="zipCode"
                     placeholder="94102"
@@ -347,7 +354,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                     onChange={(e) => handleAddressChange('zipCode', e.target.value)}
                     className="border-border focus:border-primary"
                   />
-                </div>
+                </MobileFormField>
               </div>
             </div>
           </CardContent>
@@ -364,8 +371,11 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number *</Label>
+            <MobileFormField 
+              label="Phone Number" 
+              required
+              help="We'll send booking confirmations and updates to this number"
+            >
               <Input
                 id="phone"
                 type="tel"
@@ -374,44 +384,58 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                 onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
                 className="border-border focus:border-primary"
               />
-            </div>
+            </MobileFormField>
             
-            <div className="space-y-2">
-              <Label htmlFor="instructions">Special Instructions</Label>
+            <MobileFormField 
+              label="Special Instructions"
+              help="Optional - Let us know about any specific areas of focus or access instructions"
+            >
               <Textarea
                 id="instructions"
                 placeholder="Any special requests or areas that need extra attention..."
                 value={bookingData.specialInstructions}
                 onChange={(e) => updateBookingData({ specialInstructions: e.target.value })}
-                className="border-border focus:border-primary min-h-[100px]"
+                className="border-border focus:border-primary min-h-[100px] resize-none"
+                rows={4}
               />
-            </div>
+            </MobileFormField>
           </CardContent>
         </Card>
       )}
 
-      {/* Navigation */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <Button 
-          variant="outline"
-          onClick={onBack}
-          className="flex items-center gap-2"
-          size="lg"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Service Selection
-        </Button>
-        
-        <Button 
-          onClick={onNext}
-          disabled={!canProceed()}
-          className="flex items-center gap-2"
-          size="lg"
-        >
-          Continue to Payment
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Navigation - Hidden on mobile (handled by MobileBottomNav) */}
+      {!isMobile && (
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <Button 
+            variant="outline"
+            onClick={onBack}
+            className="flex items-center gap-2"
+            size="lg"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Service Selection
+          </Button>
+          
+          <Button 
+            onClick={onNext}
+            disabled={!canProceed() || isRetrying}
+            className="flex items-center gap-2"
+            size="lg"
+          >
+            {isRetrying ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                Checking Availability...
+              </>
+            ) : (
+              <>
+                Continue to Payment
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

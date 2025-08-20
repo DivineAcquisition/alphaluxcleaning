@@ -5,14 +5,18 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
 
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { BookingConfirmationPage } from './BookingConfirmationPage';
+import { BookingErrorBoundary } from './BookingErrorBoundary';
+import { BookingLoadingState } from './BookingLoadingState';
+import { MobileBottomNav } from './MobileBookingOptimizations';
 import { ChatFallback } from '@/components/customer/ChatFallback';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, HelpCircle, Wifi, WifiOff } from 'lucide-react';
 
 interface BookingData {
   // Service Selection
@@ -71,6 +75,20 @@ export function ModernBookingFlow({
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showMobileHelp, setShowMobileHelp] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [hasError, setHasError] = useState(false);
+  
+  // Retry functionality for booking operations
+  const retryHook = useBookingRetry({
+    ...bookingRetryStrategies.submission,
+    onError: (error, attempt) => {
+      console.error(`Booking operation failed (attempt ${attempt}):`, error);
+      setHasError(true);
+    },
+    onSuccess: () => {
+      setHasError(false);
+    }
+  });
   
   // Get initial step from URL or default to 1
   const urlStep = parseInt(searchParams.get('step') || '1', 10);
@@ -112,6 +130,26 @@ export function ModernBookingFlow({
     debounceMs: 500
   });
 
+  // Online/offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success('Connection restored');
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.error('Connection lost - your progress is saved locally');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // Update URL when step changes
   useEffect(() => {
     const newParams = new URLSearchParams(searchParams);
@@ -128,8 +166,11 @@ export function ModernBookingFlow({
   const progress = (currentStep / steps.length) * 100;
 
   const handleDataUpdate = useCallback((updates: Partial<BookingData>) => {
+    if (!isOnline) {
+      toast.info('Changes saved locally - will sync when connection is restored');
+    }
     updateBookingData(updates);
-  }, [updateBookingData]);
+  }, [updateBookingData, isOnline]);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -220,24 +261,27 @@ export function ModernBookingFlow({
 
   // Show loading state while persistence is loading
   if (isPersistenceLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your booking...</p>
-        </div>
-      </div>
-    );
+    return <BookingLoadingState step={currentStep} totalSteps={steps.length} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      {/* Auto-save indicator */}
-      {lastSaved && (
-        <div className="fixed top-4 right-4 z-50 bg-muted/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-muted-foreground">
-          Auto-saved {new Date(lastSaved).toLocaleTimeString()}
-        </div>
-      )}
+    <BookingErrorBoundary onError={(error) => setHasError(true)}>
+      <div className={`min-h-screen bg-gradient-to-br from-background to-muted/20 ${isMobile ? 'pb-20' : ''}`}>
+        {/* Connection status indicator */}
+        {!isOnline && (
+          <div className="fixed top-4 left-4 z-50 bg-warning/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-warning-foreground flex items-center gap-2">
+            <WifiOff className="h-3 w-3" />
+            Offline - Changes saved locally
+          </div>
+        )}
+
+        {/* Auto-save indicator */}
+        {lastSaved && (
+          <div className="fixed top-4 right-4 z-50 bg-muted/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-muted-foreground">
+            <Wifi className="h-3 w-3 mr-1 inline" />
+            Auto-saved {new Date(lastSaved).toLocaleTimeString()}
+          </div>
+        )}
       
       {/* Header with Progress */}
       <div className="bg-card border-b sticky top-0 z-40 shadow-sm">
@@ -343,12 +387,24 @@ export function ModernBookingFlow({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {renderCurrentStep()}
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            {renderCurrentStep()}
+          </div>
         </div>
+
+        {/* Mobile Bottom Navigation */}
+        {isMobile && (
+          <MobileBottomNav
+            onBack={currentStep > 1 ? handleBack : undefined}
+            onNext={canProceedToNext() && currentStep < 4 ? handleNext : undefined}
+            nextLabel={currentStep === 3 ? "Complete Payment" : "Continue"}
+            nextDisabled={!canProceedToNext()}
+            showBack={currentStep > 1}
+          />
+        )}
       </div>
-    </div>
+    </BookingErrorBoundary>
   );
 }
