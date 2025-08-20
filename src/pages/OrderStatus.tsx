@@ -29,6 +29,7 @@ import { RescheduleRequestDialog } from "@/components/RescheduleRequestDialog";
 import { UpdateAddressDialog } from "@/components/UpdateAddressDialog";
 import { UpdateContactDialog } from "@/components/UpdateContactDialog";
 import { ServiceRequestsDisplay } from "@/components/ServiceRequestsDisplay";
+import { PaymentBreakdown } from "@/components/PaymentBreakdown";
 
 interface Order {
   id: string;
@@ -380,6 +381,11 @@ export default function OrderStatus() {
                       <div className="bg-muted/30 p-3 rounded-lg">
                         <span className="text-muted-foreground text-xs">Total Amount</span>
                         <div className="font-medium text-primary text-lg">${(order.amount / 100).toFixed(2)}</div>
+                        {order.frequency && order.frequency !== 'one_time' && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Per {order.frequency.replace('_', ' ')} service
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -570,6 +576,11 @@ export default function OrderStatus() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Payment Details */}
+            <div className="mt-6">
+              <PaymentBreakdown order={order} />
             </div>
 
             {/* Service Requests Display */}

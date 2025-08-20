@@ -34,6 +34,13 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
   const discountedAmount = Math.round(service.amount * 0.75); // 25% discount
   const savingsAmount = service.amount - discountedAmount;
 
+  // Calculate hours until service
+  const hoursUntilService = service.next_service_date 
+    ? Math.ceil((new Date(service.next_service_date).getTime() - new Date().getTime()) / (1000 * 60 * 60))
+    : null;
+  
+  const isWithin24Hours = hoursUntilService !== null && hoursUntilService <= 24;
+
   const handleInitialCancel = () => {
     setStep('discount');
   };
@@ -207,9 +214,27 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
             </DialogHeader>
 
             <div className="space-y-4">
+              {/* 24-Hour Cancellation Policy Warning */}
+              {isWithin24Hours && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <AlertDescription className="text-amber-800">
+                    <div className="font-semibold">⚠️ 24-Hour Cancellation Policy</div>
+                    <div className="mt-1">
+                      Your cleaning is scheduled within the next {hoursUntilService} hours. 
+                      Cancelling now may result in a cancellation fee.
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Alert>
                 <AlertDescription>
                   Once cancelled, your recurring service will stop and no future cleanings will be scheduled.
+                  {isWithin24Hours && (
+                    <div className="mt-2 text-amber-700 font-medium">
+                      Note: A cancellation fee may apply for cancellations within 24 hours of service.
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
 

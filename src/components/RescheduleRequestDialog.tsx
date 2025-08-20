@@ -1,14 +1,7 @@
-import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
-import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Phone, Clock } from "lucide-react";
 
 interface RescheduleRequestDialogProps {
   open: boolean;
@@ -29,56 +22,10 @@ export const RescheduleRequestDialog = ({
   order, 
   onSuccess 
 }: RescheduleRequestDialogProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [customerNotes, setCustomerNotes] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const phoneNumber = "(281) 809-9901";
 
-  const timeSlots = [
-    "08:00", "09:00", "10:00", "11:00", "12:00",
-    "13:00", "14:00", "15:00", "16:00", "17:00"
-  ];
-
-  const handleSubmit = async () => {
-    if (!selectedDate || !selectedTime) {
-      toast.error("Please select both date and time");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('customer_service_requests')
-        .insert({
-          order_id: order.id,
-          request_type: 'reschedule',
-          requested_by_email: order.customer_email,
-          requested_by_name: order.customer_name,
-          request_data: {
-            new_date: format(selectedDate, 'yyyy-MM-dd'),
-            new_time: selectedTime,
-            current_date: order.scheduled_date,
-            current_time: order.scheduled_time
-          },
-          customer_notes: customerNotes
-        });
-
-      if (error) throw error;
-
-      toast.success("Reschedule request submitted! We'll contact you within 24 hours to confirm.");
-      onOpenChange(false);
-      onSuccess?.();
-      
-      // Reset form
-      setSelectedDate(undefined);
-      setSelectedTime("");
-      setCustomerNotes("");
-    } catch (error) {
-      console.error('Error submitting reschedule request:', error);
-      toast.error("Failed to submit request. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleCallNow = () => {
+    window.open(`tel:${phoneNumber.replace(/[^\d]/g, '')}`, '_self');
   };
 
   return (
@@ -86,11 +33,11 @@ export const RescheduleRequestDialog = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
+            <Phone className="h-5 w-5 text-primary" />
             Request Reschedule
           </DialogTitle>
           <DialogDescription>
-            Select your preferred new date and time. We'll review and confirm availability.
+            To reschedule your cleaning service, please call our customer service team
           </DialogDescription>
         </DialogHeader>
 
@@ -105,47 +52,35 @@ export const RescheduleRequestDialog = ({
             </div>
           )}
 
-          {/* Date Selection */}
-          <div className="space-y-2">
-            <Label>Select New Date</Label>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              disabled={(date) => date < new Date()}
-              className="rounded-md border"
-            />
-          </div>
+          {/* Phone Contact Information */}
+          <Alert className="border-primary/20 bg-primary/5">
+            <Phone className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <div className="font-medium text-lg">Call us to reschedule:</div>
+                <div className="text-2xl font-bold text-primary">
+                  {phoneNumber}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  Business Hours: Monday - Friday, 8:00 AM - 6:00 PM
+                </div>
+                <div className="text-sm">
+                  Our team will help you find the perfect new time that works for your schedule.
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
 
-          {/* Time Selection */}
-          <div className="space-y-2">
-            <Label>Select New Time</Label>
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose time slot" />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlots.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      {time}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Customer Notes */}
-          <div className="space-y-2">
-            <Label>Additional Notes (Optional)</Label>
-            <Textarea
-              value={customerNotes}
-              onChange={(e) => setCustomerNotes(e.target.value)}
-              placeholder="Any special requirements or preferences..."
-              rows={3}
-            />
+          {/* Why Call */}
+          <div className="text-sm text-muted-foreground space-y-2">
+            <div className="font-medium">Why call instead of booking online?</div>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Real-time availability checking</li>
+              <li>Coordinate with your assigned cleaner</li>
+              <li>Discuss any special requirements</li>
+              <li>Immediate confirmation</li>
+            </ul>
           </div>
 
           {/* Actions */}
@@ -155,14 +90,14 @@ export const RescheduleRequestDialog = ({
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
-              Cancel
+              Close
             </Button>
             <Button
-              onClick={handleSubmit}
-              disabled={isLoading || !selectedDate || !selectedTime}
+              onClick={handleCallNow}
               className="flex-1"
             >
-              {isLoading ? "Submitting..." : "Submit Request"}
+              <Phone className="h-4 w-4 mr-2" />
+              Call Now
             </Button>
           </div>
         </div>
