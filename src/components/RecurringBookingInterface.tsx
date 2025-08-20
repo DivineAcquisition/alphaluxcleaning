@@ -495,30 +495,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     };
   }, [selectedTierData, selectedRecurringData, selectedTier, newClient, selectedAddOns, existingMember, addMembership, appliedReferral]);
 
-  const pricingData = calculatePricing;
-      total: Math.max(0, finalTotal)
-    });
-    
-    return {
-      basePrice,
-      addOnsTotal,
-      subtotal,
-      recurringDiscount,
-      membershipDiscount,
-      addonMemberDiscount,
-      referralDiscount,
-      codeDiscount,
-      total: Math.max(0, finalTotal),
-      membershipFee
-    };
-  };
-
-  const pricing = calculatePricing();
+  const pricing = calculatePricing;
   
   // Force calculation on component mount and selection changes
   useEffect(() => {
     console.log('Selection changed - triggering calculation');
-    calculatePricing();
+    calculatePricing;
   }, [selectedTier, selectedRecurring, selectedAddOns, addMembership]);
 
   const handleAddOnToggle = (addOnId: string) => {
@@ -1604,7 +1586,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             recurringDiscount={pricing.recurringDiscount}
             membershipDiscount={pricing.membershipDiscount}
             referralDiscount={pricing.referralDiscount}
-            codeDiscount={pricing.codeDiscount}
+            codeDiscount={0}
             total={pricing.total}
             membershipFee={pricing.membershipFee}
             selectedTier={selectedTierData}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ModernBookingFlow } from './ModernBookingFlow';
-import { Auth } from '@/pages/Auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -194,13 +193,43 @@ export function GuestBookingWrapper() {
   // Show auth form if requested
   if (showAuth) {
     return (
-      <div className="min-h-screen">
-        <Auth 
-          mode={authMode}
-          onSuccess={handleAuthSuccess}
-          onBack={() => setShowAuth(false)}
-          redirectAfterAuth={false}
-        />
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-clean">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">
+              {authMode === 'signup' ? 'Create Account' : 'Sign In'}
+            </CardTitle>
+            <p className="text-muted-foreground">
+              {authMode === 'signup' 
+                ? 'Create an account to continue with your booking' 
+                : 'Sign in to your existing account'
+              }
+            </p>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground mb-4">
+              Please use the main auth page to {authMode === 'signup' ? 'create an account' : 'sign in'}, 
+              then return to continue your booking.
+            </p>
+            <div className="space-y-2">
+              <Button
+                onClick={() => window.location.href = '/auth'}
+                className="w-full"
+                size="lg"
+              >
+                Go to {authMode === 'signup' ? 'Sign Up' : 'Sign In'} Page
+              </Button>
+              <Button
+                onClick={() => setShowAuth(false)}
+                variant="ghost"
+                size="sm"
+                className="w-full"
+              >
+                Back to Booking Options
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
