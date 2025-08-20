@@ -165,9 +165,34 @@ const BookingConfirmation = () => {
     const zapierKey = `zapier_booking_sent_${identifier}`;
     const webhookKey = `webhook_booking_sent_${identifier}`;
     const adminKey = `admin_notified_${identifier}`;
+    const accountKey = `customer_account_created_${identifier}`;
     
     try {
       if (typeof window !== 'undefined') {
+        // Create customer account automatically (new functionality)
+        if (!localStorage.getItem(accountKey) && orderDetails.customer_email) {
+          (async () => {
+            try {
+              const { data: accountResult } = await supabase.functions.invoke('create-customer-account', {
+                body: { 
+                  customerEmail: orderDetails.customer_email,
+                  customerName: orderDetails.customer_name,
+                  customerPhone: orderDetails.customer_phone,
+                  orderId: orderDetails.id
+                }
+              });
+              localStorage.setItem(accountKey, '1');
+              console.log('Customer account creation processed:', accountResult);
+              
+              if (accountResult?.accountCreated) {
+                toast.success('Welcome! Your customer account has been created. Check your email for login details.');
+              }
+            } catch (err) {
+              console.error('Failed to create customer account', err);
+            }
+          })();
+        }
+
         // Send to Zapier (existing functionality)
         if (!localStorage.getItem(zapierKey)) {
           (async () => {
@@ -413,8 +438,9 @@ const BookingConfirmation = () => {
             </CardHeader>
             <CardContent className="space-y-3 text-blue-700">
               <p>• You'll receive a confirmation email with all the details</p>
+              <p>• A customer account has been created for you (check your email for login details)</p>
               <p>• Our team will arrive at your scheduled time</p>
-              <p>• You can manage your booking in the customer portal</p>
+              <p>• You can manage your booking in the customer portal at <strong>portal.bayareacleaningpros.com</strong></p>
               <p>• We'll send you reminders before your appointment</p>
             </CardContent>
           </Card>
