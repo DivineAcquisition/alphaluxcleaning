@@ -2,24 +2,22 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Calendar } from "lucide-react";
 
-export default function OAuthCallback() {
+export default function CalendarOAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getUserRole } = useAuth();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
-  const [message, setMessage] = useState('Processing authentication...');
+  const [message, setMessage] = useState('Connecting your Google Calendar...');
 
   useEffect(() => {
-    handleOAuthCallback();
+    handleCalendarOAuthCallback();
   }, []);
 
-  const handleOAuthCallback = async () => {
+  const handleCalendarOAuthCallback = async () => {
     try {
       // Check if there's an error from OAuth provider
       const error = searchParams.get('error');
@@ -27,73 +25,69 @@ export default function OAuthCallback() {
 
       if (error) {
         setStatus('error');
-        setMessage(`Authentication failed: ${errorDescription || error}`);
+        setMessage(`Calendar connection failed: ${errorDescription || error}`);
         toast({
-          title: "Authentication Error",
-          description: "Failed to sign in with Google. Please try again.",
+          title: "Calendar Connection Error",
+          description: "Failed to connect Google Calendar. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
-      // Wait for Supabase to process the OAuth session
-      setMessage('Completing sign in...');
-      
-      // Add a small delay to allow session to be established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
+      // Get the authorization code
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
+
+      if (!code) {
         setStatus('error');
-        setMessage('Failed to retrieve authentication session');
+        setMessage('No authorization code received');
         toast({
           title: "Error",
-          description: "Authentication failed. Please try again.",
+          description: "Calendar connection failed. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
-      if (session?.user) {
-        setStatus('success');
-        setMessage('Successfully signed in with Google!');
-        toast({
-          title: "Success",
-          description: "Welcome! You're now signed in."
-        });
+      setMessage('Processing calendar connection...');
 
-        // Simple redirect logic - let the auth context handle role-based redirects
-        setTimeout(() => {
-          // Try to determine the best redirect based on role
-          getUserRole().then((userRole) => {
-            if (userRole === 'admin' || userRole === 'super_admin') {
-              navigate('/admin');
-            } else if (userRole === 'office_manager') {
-              navigate('/admin/office/schedule');
-            } else if (userRole === 'subcontractor') {
-              navigate('/subcontractor-dashboard');
-            } else {
-              navigate('/customer-portal-dashboard');
-            }
-          }).catch(() => {
-            // Fallback to customer portal if role determination fails
-            navigate('/customer-portal-dashboard');
-          });
-        }, 1500);
-      } else {
+      // Call our edge function to complete the OAuth flow
+      const { data, error: callbackError } = await supabase.functions.invoke('google-oauth-callback', {
+        body: {
+          code: code,
+          state: state,
+          redirect_uri: `${window.location.origin}/calendar/oauth/callback`
+        }
+      });
+
+      if (callbackError || !data?.success) {
+        console.error('Calendar OAuth callback error:', callbackError);
         setStatus('error');
-        setMessage('Authentication session not established');
+        setMessage('Failed to complete calendar connection');
         toast({
           title: "Error",
-          description: "Authentication failed. Please try signing in again.",
+          description: "Failed to connect calendar. Please try again.",
           variant: "destructive"
         });
+        return;
       }
+
+      setStatus('success');
+      setMessage('Google Calendar connected successfully!');
+      toast({
+        title: "Success",
+        description: "Your Google Calendar is now connected."
+      });
+
+      // Redirect back to where the user came from after a short delay
+      setTimeout(() => {
+        const returnUrl = sessionStorage.getItem('calendar_oauth_return_url') || '/subcontractor-dashboard';
+        sessionStorage.removeItem('calendar_oauth_return_url');
+        navigate(returnUrl);
+      }, 2000);
+
     } catch (error) {
-      console.error('OAuth callback error:', error);
+      console.error('Calendar OAuth callback error:', error);
       setStatus('error');
       setMessage('Unexpected error occurred');
       toast({
@@ -105,7 +99,9 @@ export default function OAuthCallback() {
   };
 
   const handleRetry = () => {
-    navigate('/auth');
+    const returnUrl = sessionStorage.getItem('calendar_oauth_return_url') || '/subcontractor-dashboard';
+    sessionStorage.removeItem('calendar_oauth_return_url');
+    navigate(returnUrl);
   };
 
   return (
@@ -116,12 +112,13 @@ export default function OAuthCallback() {
             {status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
             {status === 'success' && <CheckCircle className="h-5 w-5 text-green-500" />}
             {status === 'error' && <AlertCircle className="h-5 w-5 text-red-500" />}
-            Google Authentication
+            <Calendar className="h-5 w-5" />
+            Google Calendar
           </CardTitle>
           <CardDescription>
-            {status === 'processing' && 'Completing your sign in...'}
-            {status === 'success' && 'You have been signed in successfully'}
-            {status === 'error' && 'There was an issue signing you in'}
+            {status === 'processing' && 'Connecting your calendar...'}
+            {status === 'success' && 'Calendar connected successfully'}
+            {status === 'error' && 'Calendar connection failed'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -55,8 +55,11 @@ export function GoogleCalendarConnect() {
   const initiateOAuthFlow = async () => {
     setIsLoading(true);
     try {
+      // Store the current URL so we can return here after OAuth
+      sessionStorage.setItem('calendar_oauth_return_url', window.location.pathname);
+      
       const { data, error } = await supabase.functions.invoke('google-oauth-initiate', {
-        body: { redirect_uri: `${window.location.origin}/oauth/callback` }
+        body: { redirect_uri: `${window.location.origin}/calendar/oauth/callback` }
       });
 
       if (error) {

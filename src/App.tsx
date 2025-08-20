@@ -61,6 +61,7 @@ import Auth from '@/pages/Auth';
 import SignUp from '@/pages/SignUp';
 import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
+import CalendarOAuthCallback from '@/pages/CalendarOAuthCallback';
 import NotFound from '@/pages/NotFound';
 import ModernBooking from '@/pages/ModernBooking';
 import ReviewsPortal from '@/pages/ReviewsPortal';
@@ -227,6 +228,11 @@ function App() {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/oauth/callback" element={<OAuthCallback />} />
+                <Route path="/calendar/oauth/callback" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin']}>
+                    <CalendarOAuthCallback />
+                  </ProtectedRoute>
+                } />
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
