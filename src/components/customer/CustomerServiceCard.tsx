@@ -10,7 +10,8 @@ import {
   Star,
   MoreVertical,
   MessageSquare,
-  Camera
+  Camera,
+  Phone
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -28,6 +29,11 @@ interface CustomerServiceCardProps {
     special_instructions?: string | null;
     amount?: number;
     estimated_duration?: number | null;
+    // Additional service details
+    cleaning_type?: string;
+    square_footage?: number;
+    add_ons?: string[];
+    frequency?: string;
   };
   type: 'upcoming' | 'completed';
   onReschedule?: (serviceId: string) => void;
@@ -85,7 +91,9 @@ export function CustomerServiceCard({
               {getServiceTypeIcon()}
             </div>
             <div>
-              <h4 className="font-semibold text-foreground">House Cleaning Service</h4>
+              <h4 className="font-semibold text-foreground">
+                {service.cleaning_type || 'House Cleaning Service'}
+              </h4>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 {serviceDate && formatServiceDate(serviceDate)}
@@ -94,6 +102,12 @@ export function CustomerServiceCard({
                     <span>•</span>
                     <Clock className="h-3 w-3" />
                     {serviceTime}
+                  </>
+                )}
+                {service.square_footage && (
+                  <>
+                    <span>•</span>
+                    <span>{service.square_footage} sq ft</span>
                   </>
                 )}
               </div>
@@ -155,6 +169,21 @@ export function CustomerServiceCard({
           {service.amount && type === 'completed' && (
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <span>${(service.amount / 100).toFixed(2)}</span>
+              {service.frequency && (
+                <Badge variant="outline" className="text-xs">
+                  {service.frequency}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {service.add_ons && service.add_ons.length > 0 && (
+            <div className="flex flex-wrap gap-1 text-sm">
+              {service.add_ons.map((addon, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {addon}
+                </Badge>
+              ))}
             </div>
           )}
 
@@ -182,6 +211,12 @@ export function CustomerServiceCard({
                 className="flex-1"
               >
                 View Details
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" asChild>
+                <a href="tel:(281) 809-9901">
+                  <Phone className="h-3 w-3 mr-1" />
+                  Call
+                </a>
               </Button>
             </>
           )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { usePaymentData } from "@/hooks/usePaymentData";
@@ -63,39 +64,42 @@ const Billing: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <section aria-label="Billing navigation">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="invoices">Invoices & Receipts</TabsTrigger>
-              <TabsTrigger value="methods">Payment Methods</TabsTrigger>
-              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+            <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="invoices" className="text-xs sm:text-sm">Invoices</TabsTrigger>
+              <TabsTrigger value="methods" className="text-xs sm:text-sm">Payment</TabsTrigger>
+              <TabsTrigger value="subscriptions" className="text-xs sm:text-sm">Plans</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Total Payment Methods</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm sm:text-base">Total Payment Methods</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{stats.methods}</div>
-                    <p className="text-sm text-muted-foreground">Saved cards you can use at checkout</p>
+                    <div className="text-2xl sm:text-3xl font-bold">{stats.methods}</div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Saved cards you can use at checkout</p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Active Subscriptions</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm sm:text-base">Active Subscriptions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{stats.subs}</div>
-                    <p className="text-sm text-muted-foreground">Your current memberships</p>
+                    <div className="text-2xl sm:text-3xl font-bold">{stats.subs}</div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Your current memberships</p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Need to update billing?</CardTitle>
+                <Card className="sm:col-span-2 lg:col-span-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm sm:text-base">Need to update billing?</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">Use the tabs above to update cards or manage your plan.</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-3">Use the tabs above to update cards or manage your plan.</p>
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <a href="tel:(281) 809-9901">Call Support: (281) 809-9901</a>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

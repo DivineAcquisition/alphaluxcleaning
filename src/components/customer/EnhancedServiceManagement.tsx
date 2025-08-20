@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CustomerServiceCard } from '@/components/customer/CustomerServiceCard';
+import { ChatFallback } from '@/components/customer/ChatFallback';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -158,7 +159,8 @@ export function EnhancedServiceManagement() {
                     status: service.status,
                     service_address: service.service_address,
                     special_instructions: service.special_instructions,
-                    estimated_duration: service.estimated_duration
+                    estimated_duration: service.estimated_duration,
+                    square_footage: (service as any).service_details?.square_footage || (service as any).service_details?.squareFootage
                   }}
                   type="upcoming"
                   onReschedule={handleReschedule}
@@ -193,7 +195,14 @@ export function EnhancedServiceManagement() {
                       service_time: 'service_time' in service ? service.service_time : undefined,
                       status: service.status,
                       service_address: 'service_address' in service ? service.service_address : undefined,
-                      amount: 'amount' in service ? service.amount : undefined
+                      amount: 'amount' in service ? service.amount : undefined,
+                      // Parse service details for orders (with safe access)
+                      cleaning_type: 'cleaning_type' in service ? service.cleaning_type : 
+                        ((service as any).service_details?.cleaning_type || (service as any).service_details?.serviceType),
+                      square_footage: (service as any).service_details?.square_footage || (service as any).service_details?.squareFootage,
+                      add_ons: 'add_ons' in service ? service.add_ons : 
+                        ((service as any).service_details?.add_ons || (service as any).service_details?.addOns),
+                      frequency: 'frequency' in service ? service.frequency : (service as any).service_details?.frequency
                     }}
                     type="completed"
                     onRate={handleRate}
@@ -220,14 +229,13 @@ export function EnhancedServiceManagement() {
               Ready to experience professional cleaning? Book your first service today!
             </p>
             <div className="space-y-3">
-              <Button className="w-full bg-gradient-to-r from-primary to-accent">
-                <Calendar className="h-4 w-4 mr-2" />
-                Schedule Your First Service
+              <Button className="w-full bg-gradient-to-r from-primary to-accent" asChild>
+                <a href="/schedule-service">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Your First Service
+                </a>
               </Button>
-              <Button variant="outline" className="w-full">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Chat with Our Team
-              </Button>
+              <ChatFallback className="w-full" />
             </div>
           </CardContent>
         </Card>
