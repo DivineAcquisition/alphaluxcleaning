@@ -352,7 +352,7 @@ END:VCALENDAR`;
           
           <div className="pt-2 border-t">
             <p className="text-muted-foreground">
-              Questions? Contact us at (555) 123-4567 or support@bayareacleaningpros.com
+              Questions? Contact us at (281) 809-9901 or admin@divineacquisition.io
             </p>
           </div>
         </CardContent>

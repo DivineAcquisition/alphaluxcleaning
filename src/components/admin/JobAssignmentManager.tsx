@@ -168,7 +168,8 @@ export function JobAssignmentManager() {
           body: {
             subcontractorId: assignment.subcontractor_id,
             bookingId: bookingId,
-            assignmentId: assignment.id
+            assignmentId: assignment.id,
+            adminEmail: 'admin@divineacquisition.io'
           }
         })
       );

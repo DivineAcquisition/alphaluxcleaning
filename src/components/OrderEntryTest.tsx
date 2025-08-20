@@ -77,7 +77,7 @@ export function OrderEntryTest() {
     const baseCustomer = {
       name: "Sarah Johnson",
       email: "sarah.johnson@example.com",
-      phone: "(415) 555-0123"
+      phone: "(281) 809-9901"
     };
 
     const baseAddress = {
@@ -219,7 +219,7 @@ export function OrderEntryTest() {
         id: "sub_001", 
         name: "Maria Garcia", 
         email: "maria.garcia@bayareacleaningpros.com",
-        phone: "(415) 555-0001",
+        phone: "(281) 809-9901",
         hourly_rate: 18.00, 
         tier_level: 2, 
         tier_name: "Professional" 
@@ -242,7 +242,7 @@ export function OrderEntryTest() {
         id: "sub_007", 
         name: "Jennifer Chen", 
         email: "jennifer.chen@bayareacleaningpros.com",
-        phone: "(415) 555-0007",
+        phone: "(281) 809-9901",
         hourly_rate: 21.00, 
         tier_level: 3, 
         tier_name: "Elite" 
@@ -450,7 +450,7 @@ export function OrderEntryTest() {
       id: "test_order_123",
       customer_name: "Sarah Johnson", 
       customer_email: "sarah.johnson@example.com",
-      customer_phone: "(415) 555-0123",
+      customer_phone: "(281) 809-9901",
       street_address: "123 Oak Street",
       city: "San Francisco",
       state: "CA",

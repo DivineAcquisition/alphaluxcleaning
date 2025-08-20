@@ -138,7 +138,7 @@ export function ServiceCompletionTest() {
       id: "test_order_123",
       customer_name: "Sarah Johnson",
       customer_email: "sarah.johnson@example.com",
-      customer_phone: "(415) 555-0123",
+      customer_phone: "(281) 809-9901",
       street_address: "123 Oak Street",
       city: "San Francisco",
       state: "CA",

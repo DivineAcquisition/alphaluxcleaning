@@ -111,7 +111,7 @@ export function Navigation() {
                   (281) 809-9901
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}>
+                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:admin@divineacquisition.io', '_self')}>
                   <Mail className="h-4 w-4" />
                   Email Support
                 </DropdownMenuItem>
@@ -246,7 +246,7 @@ export function Navigation() {
                     (281) 809-9901
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}>
+                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:admin@divineacquisition.io', '_self')}>
                     <Mail className="h-4 w-4" />
                     Email Support
                   </DropdownMenuItem>

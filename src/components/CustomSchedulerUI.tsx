@@ -375,7 +375,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
               5+ Days Advance Booking Required
             </p>
             <p className="text-sm text-blue-700">
-              For urgent needs, call <strong>(510) 390-7673</strong>
+              For urgent needs, call <strong>(281) 809-9901</strong>
             </p>
           </div>
         </div>
