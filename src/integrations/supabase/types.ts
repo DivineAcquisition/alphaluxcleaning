@@ -4040,6 +4040,42 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_queue: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          max_retries: number | null
+          payload: Json
+          processed_at: string | null
+          retry_count: number | null
+          status: string | null
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          max_retries?: number | null
+          payload: Json
+          processed_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          max_retries?: number | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       workflow_executions: {
         Row: {
           completed_at: string | null
