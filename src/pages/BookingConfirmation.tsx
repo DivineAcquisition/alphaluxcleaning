@@ -208,20 +208,22 @@ const BookingConfirmation = () => {
           })();
         }
 
-        // Send order entry webhook (streamlined)
+        // Send enhanced webhook with exact format (streamlined)
         if (!localStorage.getItem(webhookKey)) {
           (async () => {
             try {
-              await supabase.functions.invoke('send-order-entry-webhook', {
+              await supabase.functions.invoke('enhanced-booking-webhook-v2', {
                 body: { 
                   order_id: orderDetails.id,
-                  booking_id: identifier 
+                  booking_id: identifier,
+                  session_id: sessionId,
+                  trigger_event: 'booking_confirmation'
                 }
               });
               localStorage.setItem(webhookKey, '1');
-              console.log('Order entry webhook sent');
+              console.log('Enhanced webhook v2 sent with exact data format');
             } catch (err) {
-              console.error('Failed to send order entry webhook', err);
+              console.error('Failed to send enhanced webhook v2', err);
             }
           })();
         }

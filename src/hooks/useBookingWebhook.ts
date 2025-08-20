@@ -76,9 +76,14 @@ export const useBookingWebhook = () => {
         totalPrice: data.totalPrice
       });
 
-      // Use the new enhanced webhook function that handles configured URLs
-      const { data: response, error } = await supabase.functions.invoke('enhanced-booking-webhook', {
-        body: webhookData
+      // Use the new enhanced webhook v2 function with exact data format
+      const { data: response, error } = await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+        body: {
+          ...webhookData,
+          trigger_event: data.bookingStep,
+          order_id: data.orderId,
+          booking_id: data.bookingId
+        }
       });
 
       if (error) {
