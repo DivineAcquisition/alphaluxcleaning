@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
@@ -69,9 +70,23 @@ export function ModernBookingFlow({
 }: Props = {}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showMobileHelp, setShowMobileHelp] = useState(false);
-  const [bookingData, setBookingData] = useState<BookingData>({
+  
+  // Get initial step from URL or default to 1
+  const urlStep = parseInt(searchParams.get('step') || '1', 10);
+  const initialStep = urlStep >= 1 && urlStep <= 4 ? urlStep : 1;
+  const [currentStep, setCurrentStep] = useState(initialStep);
+
+  // Use form persistence for auto-save
+  const storageKey = guestMode ? 'guestBookingData' : 'authenticatedBookingData';
+  const {
+    data: bookingData,
+    updateData: updateBookingData,
+    clearData,
+    lastSaved,
+    isLoading: isPersistenceLoading
+  } = useFormPersistence<BookingData>({
     homeSize: '',
     serviceType: '',
     frequency: '',
@@ -94,20 +109,29 @@ export function ModernBookingFlow({
     totalPrice: 0,
     paymentType: 'pay_after_service',
     ...initialData
+  }, {
+    storageKey,
+    debounceMs: 500
   });
 
-  // Notify parent of step changes
+  // Update URL when step changes
   useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('step', currentStep.toString());
+    setSearchParams(newParams, { replace: true });
     onStepChange?.(currentStep);
-  }, [currentStep, onStepChange]);
+  }, [currentStep, searchParams, setSearchParams, onStepChange]);
+
+  // Notify parent when data changes
+  useEffect(() => {
+    onDataUpdate?.(bookingData);
+  }, [bookingData, onDataUpdate]);
 
   const progress = (currentStep / steps.length) * 100;
 
-  const updateBookingData = React.useCallback((updates: Partial<BookingData>) => {
-    const newData = { ...bookingData, ...updates };
-    setBookingData(newData);
-    onDataUpdate?.(newData);
-  }, [bookingData, onDataUpdate]);
+  const handleDataUpdate = useCallback((updates: Partial<BookingData>) => {
+    updateBookingData(updates);
+  }, [updateBookingData]);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -126,7 +150,6 @@ export function ModernBookingFlow({
   const handleNext = () => {
     if (canProceedToNext() && currentStep < 4) {
       setCurrentStep(prev => prev + 1);
-      // Smooth scroll to top with animation
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -138,9 +161,9 @@ export function ModernBookingFlow({
     }
   };
 
-  const handlePaymentSuccess = React.useCallback(async (sessionId: string) => {
+  const handlePaymentSuccess = useCallback(async (sessionId: string) => {
     console.log('🎉 Payment/Authorization successful:', sessionId);
-    updateBookingData({ stripeSessionId: sessionId });
+    handleDataUpdate({ stripeSessionId: sessionId });
     
     // Add success message based on payment type
     if (bookingData.paymentType === 'pay_after_service') {
@@ -152,11 +175,10 @@ export function ModernBookingFlow({
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Notify completion
-    if (currentStep === 3) {
-      onComplete?.();
-    }
-  }, [bookingData.paymentType, currentStep, onComplete, updateBookingData]);
+    // Clear saved data on successful completion
+    clearData();
+    onComplete?.();
+  }, [bookingData.paymentType, handleDataUpdate, clearData, onComplete]);
 
 
   const renderCurrentStep = () => {
@@ -165,7 +187,7 @@ export function ModernBookingFlow({
         return (
           <BookingSelectionPage 
             bookingData={bookingData}
-            updateBookingData={updateBookingData}
+            updateBookingData={handleDataUpdate}
             onNext={handleNext}
           />
         );
@@ -173,7 +195,7 @@ export function ModernBookingFlow({
         return (
           <BookingDetailsPage 
             bookingData={bookingData}
-            updateBookingData={updateBookingData}
+            updateBookingData={handleDataUpdate}
             onNext={handleNext}
             onBack={handleBack}
           />
@@ -182,7 +204,7 @@ export function ModernBookingFlow({
         return (
           <BookingCheckoutPage 
             bookingData={bookingData}
-            updateBookingData={updateBookingData}
+            updateBookingData={handleDataUpdate}
             onPaymentSuccess={handlePaymentSuccess}
             onBack={handleBack}
           />
@@ -198,8 +220,27 @@ export function ModernBookingFlow({
     }
   };
 
+  // Show loading state while persistence is loading
+  if (isPersistenceLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your booking...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      {/* Auto-save indicator */}
+      {lastSaved && (
+        <div className="fixed top-4 right-4 z-50 bg-muted/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-muted-foreground">
+          Auto-saved {new Date(lastSaved).toLocaleTimeString()}
+        </div>
+      )}
+      
       {/* Header with Progress */}
       <div className="bg-card border-b sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 py-4">
