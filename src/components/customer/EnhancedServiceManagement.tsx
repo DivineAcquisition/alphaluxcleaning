@@ -40,9 +40,13 @@ export function EnhancedServiceManagement() {
     .filter(item => {
       const status = item.status || ('service_status' in item ? item.service_status : null);
       const date = 'scheduled_date' in item ? item.scheduled_date : item.service_date;
-      return status === 'completed' || (date && isPast(new Date(date)));
+      return status === 'completed' || status === 'paid' || (date && isPast(new Date(date)));
     })
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    .sort((a, b) => {
+      const aDate = new Date(a.updated_at || a.created_at);
+      const bDate = new Date(b.updated_at || b.created_at);
+      return bDate.getTime() - aDate.getTime();
+    });
 
   const handleReschedule = (serviceId: string) => {
     const service = [...orders, ...bookings].find(s => s.id === serviceId);
@@ -179,22 +183,22 @@ export function EnhancedServiceManagement() {
           <CardContent>
             <div className="space-y-4">
               {completedServices.slice(0, 5).map((service, index) => (
-                <CustomerServiceCard
-                  key={`${service.id}-${index}`}
-                  service={{
-                    id: service.id,
-                    scheduled_date: 'scheduled_date' in service ? service.scheduled_date : undefined,
-                    service_date: 'service_date' in service ? service.service_date : undefined,
-                    scheduled_time: 'scheduled_time' in service ? service.scheduled_time : undefined,
-                    service_time: 'service_time' in service ? service.service_time : undefined,
-                    status: service.status,
-                    service_address: 'service_address' in service ? service.service_address : undefined,
-                    amount: 'amount' in service ? service.amount : undefined
-                  }}
-                  type="completed"
-                  onRate={handleRate}
-                  onViewDetails={handleViewDetails}
-                />
+                  <CustomerServiceCard
+                    key={`${service.id}-${index}`}
+                    service={{
+                      id: service.id,
+                      scheduled_date: 'scheduled_date' in service ? service.scheduled_date : undefined,
+                      service_date: 'service_date' in service ? service.service_date : undefined,
+                      scheduled_time: 'scheduled_time' in service ? service.scheduled_time : undefined,
+                      service_time: 'service_time' in service ? service.service_time : undefined,
+                      status: service.status,
+                      service_address: 'service_address' in service ? service.service_address : undefined,
+                      amount: 'amount' in service ? service.amount : undefined
+                    }}
+                    type="completed"
+                    onRate={handleRate}
+                    onViewDetails={handleViewDetails}
+                  />
               ))}
               {completedServices.length > 5 && (
                 <Button variant="outline" className="w-full">

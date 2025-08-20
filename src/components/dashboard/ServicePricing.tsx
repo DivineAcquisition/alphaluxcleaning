@@ -445,7 +445,7 @@ export function ServicePricing() {
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <Badge variant="outline" className="text-lg px-4 py-2">
-              📞 (281) 201-6112
+              📞 (281) 809-9901
             </Badge>
             <Badge variant="outline" className="text-lg px-4 py-2">
               📞 (281) 932-0616

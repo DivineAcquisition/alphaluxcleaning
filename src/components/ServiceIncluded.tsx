@@ -86,8 +86,8 @@ export const ServiceIncluded = ({
           </div>}
 
         <div className="pt-4 border-t text-center">
-          <p className="text-sm text-muted-foreground">BayAreaCleaningPros | (281) 201-6112</p>
-          <p className="text-sm text-muted-foreground">Baytown, TX | support@bayareacleaningpros.com</p>
+          <p className="text-sm text-muted-foreground">BayAreaCleaningPros | (281) 809-9901</p>
+          <p className="text-sm text-muted-foreground">Baytown, TX | admin@divineacquisition.io</p>
         </div>
       </CardContent>
     </Card>;

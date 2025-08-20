@@ -557,11 +557,11 @@ export default function OrderStatus() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                        <span>(281) 201-6112</span>
+                        <span>(281) 809-9901</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                        <span>support@bayareacleaningpros.com</span>
+                        <span>admin@divineacquisition.io</span>
                       </div>
                     </div>
                     <p className="text-xs sm:text-sm text-muted-foreground">

@@ -135,244 +135,254 @@ const PaymentPortal = () => {
             </CardHeader>
           </Card>
 
-          <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="methods">Payment Methods</TabsTrigger>
-              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-              <TabsTrigger value="lookup">Invoice Lookup</TabsTrigger>
-            </TabsList>
+          {/* Mobile-Optimized Layout */}
+          <div className="space-y-6">
+            
+            {/* Dashboard Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <History className="h-5 w-5" />
+                  Payment Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Quick Stats - Compact Mobile Layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Receipt className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total Orders</p>
+                      <p className="text-lg font-semibold">{orders.length}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-accent/5 rounded-lg">
+                    <div className="p-2 bg-accent/10 rounded-lg">
+                      <CreditCard className="h-4 w-4 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Payment Methods</p>
+                      <p className="text-lg font-semibold">{paymentMethods.length}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-secondary/5 rounded-lg">
+                    <div className="p-2 bg-secondary/10 rounded-lg">
+                      <Settings className="h-4 w-4 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Subscriptions</p>
+                      <p className="text-lg font-semibold">{subscriptions.length}</p>
+                    </div>
+                  </div>
+                </div>
 
-            <TabsContent value="dashboard" className="space-y-6">
-              {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Receipt className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Orders</p>
-                        <p className="text-2xl font-semibold">{orders.length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-accent/10 rounded-lg">
-                        <CreditCard className="h-6 w-6 text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Payment Methods</p>
-                        <p className="text-2xl font-semibold">{paymentMethods.length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-secondary/10 rounded-lg">
-                        <Settings className="h-6 w-6 text-secondary" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Active Subscriptions</p>
-                        <p className="text-2xl font-semibold">{subscriptions.length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                {/* Recent Activity - Compact */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Recent Activity</h4>
                   {orders.slice(0, 3).map((order) => (
-                    <div key={order.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div key={order.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div>
-                        <p className="font-medium">{order.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service'}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-sm">{order.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service'}</p>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">${(order.amount / 100).toFixed(2)}</span>
-                        <Badge variant={order.status === 'paid' ? 'default' : 'secondary'}>
+                        <span className="font-semibold text-sm">${(order.amount / 100).toFixed(2)}</span>
+                        <Badge variant={order.status === 'paid' ? 'default' : 'secondary'} className="text-xs">
                           {order.status}
                         </Badge>
                       </div>
                     </div>
                   ))}
                   {orders.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">No recent activity</p>
+                    <p className="text-center text-muted-foreground py-4 text-sm">No recent activity</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment History Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <History className="h-5 w-5" />
+                  Payment History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PaymentHistory orders={orders} loading={loading} />
+              </CardContent>
+            </Card>
+
+            {/* Payment Methods Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CreditCard className="h-5 w-5" />
+                  Payment Methods
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PaymentMethods paymentMethods={paymentMethods} onRefresh={refreshAll} />
+              </CardContent>
+            </Card>
+
+            {/* Subscriptions Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Settings className="h-5 w-5" />
+                  Subscriptions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SubscriptionManagement subscriptions={subscriptions} onRefresh={refreshAll} />
+              </CardContent>
+            </Card>
+
+            {/* Invoice Lookup Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Search className="h-5 w-5" />
+                  Invoice Lookup
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invoiceId">Invoice or Order ID</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="invoiceId"
+                      placeholder="Enter your invoice ID or session ID"
+                      value={invoiceId}
+                      onChange={(e) => setInvoiceId(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && lookupInvoice()}
+                    />
+                    <Button onClick={lookupInvoice} disabled={lookupLoading}>
+                      {lookupLoading ? "Searching..." : "Search"}
+                    </Button>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  You can find your invoice ID in your email confirmation or booking details.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Order Details */}
+            {orderDetails && (
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Receipt className="h-5 w-5" />
+                    Invoice Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong>Order ID:</strong> {orderDetails.id}
+                    </div>
+                    <div>
+                      <strong>Amount:</strong> ${(orderDetails.amount / 100).toFixed(2)}
+                    </div>
+                    <div>
+                      <strong>Customer:</strong> {orderDetails.customer_name}
+                    </div>
+                    <div>
+                      <strong>Status:</strong> 
+                      <Badge variant={orderDetails.status === 'paid' ? 'default' : 'secondary'} className="ml-2">
+                        {orderDetails.status}
+                      </Badge>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2">
+                      <strong>Service:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+
+                  {orderDetails.status !== 'paid' && (
+                    <Button onClick={() => handlePayment('invoice')} className="w-full" size="lg">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Pay ${(orderDetails.amount / 100).toFixed(2)}
+                    </Button>
+                  )}
+
+                  {orderDetails.status === 'paid' && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="text-green-800 font-semibold">✓ Invoice Paid</div>
+                      <div className="text-green-600 text-sm">This invoice has been paid in full.</div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
 
-            <TabsContent value="history" className="space-y-6">
-              <PaymentHistory orders={orders} loading={loading} />
-            </TabsContent>
+            {/* Tip Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  Show Your Appreciation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground text-sm">
+                  Love the service? Add a tip to show your appreciation for our cleaning team.
+                </p>
 
-            <TabsContent value="methods" className="space-y-6">
-              <PaymentMethods paymentMethods={paymentMethods} onRefresh={refreshAll} />
-            </TabsContent>
+                {/* Quick Tip Amounts */}
+                <div className="grid grid-cols-4 gap-2">
+                  {['10', '15', '20', '25'].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTipAmount(amount)}
+                      className={tipAmount === amount ? 'bg-primary text-white' : ''}
+                    >
+                      ${amount}
+                    </Button>
+                  ))}
+                </div>
 
-            <TabsContent value="subscriptions" className="space-y-6">
-              <SubscriptionManagement subscriptions={subscriptions} onRefresh={refreshAll} />
-            </TabsContent>
-
-            <TabsContent value="lookup" className="space-y-6">
-              {/* Invoice Lookup */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Search className="h-5 w-5" />
-                    Find Your Invoice
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="invoiceId">Invoice or Order ID</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="invoiceId"
-                        placeholder="Enter your invoice ID or session ID"
-                        value={invoiceId}
-                        onChange={(e) => setInvoiceId(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && lookupInvoice()}
-                      />
-                      <Button onClick={lookupInvoice} disabled={lookupLoading}>
-                        {lookupLoading ? "Searching..." : "Search"}
-                      </Button>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customTip" className="text-sm">Custom Amount</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="customTip"
+                      type="number"
+                      placeholder="0.00"
+                      value={tipAmount}
+                      onChange={(e) => setTipAmount(e.target.value)}
+                      className="pl-10"
+                      min="1"
+                      step="0.01"
+                    />
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground">
-                    You can find your invoice ID in your email confirmation or booking details.
-                  </p>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Order Details */}
-              {orderDetails && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Receipt className="h-5 w-5" />
-                      Invoice Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <strong>Order ID:</strong> {orderDetails.id}
-                      </div>
-                      <div>
-                        <strong>Amount:</strong> ${(orderDetails.amount / 100).toFixed(2)}
-                      </div>
-                      <div>
-                        <strong>Customer:</strong> {orderDetails.customer_name}
-                      </div>
-                      <div>
-                        <strong>Status:</strong> 
-                        <Badge variant={orderDetails.status === 'paid' ? 'default' : 'secondary'} className="ml-2">
-                          {orderDetails.status}
-                        </Badge>
-                      </div>
-                      <div className="col-span-2">
-                        <strong>Service:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}
-                      </div>
-                    </div>
+                <Button 
+                  onClick={() => handlePayment('tip')} 
+                  disabled={!tipAmount || parseFloat(tipAmount) < 1}
+                  className="w-full" 
+                  size="lg"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Send Tip ${tipAmount || '0.00'}
+                </Button>
 
-                    {orderDetails.status !== 'paid' && (
-                      <Button onClick={() => handlePayment('invoice')} className="w-full" size="lg">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Pay ${(orderDetails.amount / 100).toFixed(2)}
-                      </Button>
-                    )}
-
-                    {orderDetails.status === 'paid' && (
-                      <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                        <div className="text-green-800 font-semibold">✓ Invoice Paid</div>
-                        <div className="text-green-600 text-sm">This invoice has been paid in full.</div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Tip Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5 text-red-500" />
-                    Show Your Appreciation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Love the service? Add a tip to show your appreciation for our cleaning team.
-                  </p>
-
-                  {/* Quick Tip Amounts */}
-                  <div className="grid grid-cols-4 gap-2">
-                    {['10', '15', '20', '25'].map((amount) => (
-                      <Button
-                        key={amount}
-                        variant="outline"
-                        onClick={() => setTipAmount(amount)}
-                        className={tipAmount === amount ? 'bg-primary text-white' : ''}
-                      >
-                        ${amount}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="customTip">Custom Amount</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="customTip"
-                        type="number"
-                        placeholder="0.00"
-                        value={tipAmount}
-                        onChange={(e) => setTipAmount(e.target.value)}
-                        className="pl-10"
-                        min="1"
-                        step="0.01"
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    onClick={() => handlePayment('tip')} 
-                    disabled={!tipAmount || parseFloat(tipAmount) < 1}
-                    className="w-full" 
-                    size="lg"
-                  >
-                    <Heart className="h-4 w-4 mr-2" />
-                    Send Tip ${tipAmount || '0.00'}
-                  </Button>
-
-                  <p className="text-xs text-muted-foreground text-center">
-                    Tips go directly to your cleaning team. Thank you for your generosity!
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                <p className="text-xs text-muted-foreground text-center">
+                  Tips go directly to your cleaning team. Thank you for your generosity!
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

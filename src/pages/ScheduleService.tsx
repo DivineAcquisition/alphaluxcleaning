@@ -292,9 +292,9 @@ const ScheduleService = () => {
           </div>
 
 
-          {/* Scheduler UI - Compact */}
+          {/* Ultra-Compact Scheduler UI */}
           <Card className="border-0 shadow-lg">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <CustomSchedulerUI
                 orderId={orderId}
                 sessionId={sessionId}

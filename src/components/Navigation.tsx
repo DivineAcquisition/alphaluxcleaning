@@ -106,9 +106,9 @@ export function Navigation() {
                   Get in touch with us:
                 </div>
                 
-                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12812016112', '_self')}>
+                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12818099901', '_self')}>
                   <Phone className="h-4 w-4" />
-                  (281) 201-6112
+                  (281) 809-9901
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}>
@@ -241,9 +241,9 @@ export function Navigation() {
                     Contact Us:
                   </div>
                   
-                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12812016112', '_self')}>
+                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12818099901', '_self')}>
                     <Phone className="h-4 w-4" />
-                    (281) 201-6112
+                    (281) 809-9901
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@bayareacleaningpros.com', '_self')}>
