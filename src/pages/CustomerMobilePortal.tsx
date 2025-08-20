@@ -6,6 +6,8 @@ import { CustomerNotificationCenter } from '@/components/customer/CustomerNotifi
 import { CustomerProfileCard } from '@/components/customer/CustomerProfileCard';
 import { QuickServiceActions } from '@/components/customer/QuickServiceActions';
 import { MobileHelpButton } from '@/components/customer/MobileHelpButton';
+import CustomerErrorBoundary from '@/components/customer/CustomerErrorBoundary';
+import { PWAInstallPrompt } from '@/components/customer/PWAInstallPrompt';
 import PaymentPortal from '@/pages/PaymentPortal';
 import { useCustomerData } from '@/hooks/useCustomerData';
 
@@ -69,21 +71,26 @@ export default function CustomerMobilePortal() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Main Content */}
-      <div className="pb-20">
-        {renderTabContent()}
+    <CustomerErrorBoundary>
+      <div className="min-h-screen bg-background">
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
+        
+        {/* Main Content */}
+        <div className="pb-20">
+          {renderTabContent()}
+        </div>
+        
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          notificationCount={unreadNotifications.length}
+        />
+        
+        {/* Floating Help Button */}
+        <MobileHelpButton />
       </div>
-      
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav 
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        notificationCount={unreadNotifications.length}
-      />
-      
-      {/* Floating Help Button */}
-      <MobileHelpButton />
-    </div>
+    </CustomerErrorBoundary>
   );
 }

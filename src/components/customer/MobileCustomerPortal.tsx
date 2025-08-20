@@ -29,6 +29,7 @@ import { useCustomerData } from '@/hooks/useCustomerData';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnhancedServiceManagement } from '@/components/customer/EnhancedServiceManagement';
 import { ChatFallback } from '@/components/customer/ChatFallback';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
 export function MobileCustomerPortal() {
@@ -76,10 +77,19 @@ export function MobileCustomerPortal() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
+      <div className="min-h-screen bg-background p-4">
+        <div className="space-y-6">
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+          </div>
+          <Skeleton className="h-48 w-full rounded-lg" />
+          <div className="space-y-3">
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+          </div>
         </div>
       </div>
     );
