@@ -1985,6 +1985,7 @@ export type Database = {
           next_service_date: string | null
           paused_until: string | null
           payment_metadata: Json | null
+          payment_status: string | null
           preferred_time: string | null
           recurring_frequency: string | null
           retention_discount_accepted: boolean | null
@@ -2021,6 +2022,7 @@ export type Database = {
           next_service_date?: string | null
           paused_until?: string | null
           payment_metadata?: Json | null
+          payment_status?: string | null
           preferred_time?: string | null
           recurring_frequency?: string | null
           retention_discount_accepted?: boolean | null
@@ -2057,6 +2059,7 @@ export type Database = {
           next_service_date?: string | null
           paused_until?: string | null
           payment_metadata?: Json | null
+          payment_status?: string | null
           preferred_time?: string | null
           recurring_frequency?: string | null
           retention_discount_accepted?: boolean | null

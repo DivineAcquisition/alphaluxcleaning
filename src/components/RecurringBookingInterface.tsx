@@ -419,6 +419,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [isSetupIntent, setIsSetupIntent] = useState(false);
 
@@ -661,6 +662,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   // Create payment intent when ready to book
   const initializePayment = async () => {
     setPaymentLoading(true);
+    setPaymentError(null);
     try {
       // Calculate the correct payment amount based on selected payment option
       const actualPaymentAmount = calculatePaymentAmount(pricing.total, selectedPaymentOption as any);
@@ -706,9 +708,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       }
     } catch (error) {
       console.error('Error creating payment intent:', error);
+      const errorMessage = error?.message || 'Failed to initialize payment. Please try again.';
+      setPaymentError(errorMessage);
       toast({
-        title: "Payment Error",
-        description: "Failed to initialize payment. Please try again.",
+        title: "Payment System Error",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -1481,32 +1485,60 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                      </div>
                    )}
 
-                      {!showPaymentForm ? (
-                        <Button 
-                          onClick={initializePayment}
-                          disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || paymentLoading}
-                          size="lg"
-                          className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          {paymentLoading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Preparing Payment...
-                            </>
-                          ) : (!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
-                            <>
-                              <Clock className="h-4 w-4" />
-                              Complete Information to Continue
-                            </>
-                          ) : (
-                            <>
-                              <CreditCard className="h-4 w-4" />
-                              Continue to Secure Payment
-                              <ArrowRight className="h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      ) : (
+                       {!showPaymentForm ? (
+                        <>
+                         <Button 
+                           onClick={initializePayment}
+                           disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || paymentLoading}
+                           size="lg"
+                           className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                         >
+                           {paymentLoading ? (
+                             <>
+                               <Loader2 className="h-4 w-4 animate-spin" />
+                               Preparing Payment...
+                             </>
+                           ) : (!customerInfo.name || !customerInfo.email || !customerInfo.phone) ? (
+                             <>
+                               <Clock className="h-4 w-4" />
+                               Complete Information to Continue
+                             </>
+                           ) : (
+                             <>
+                               <CreditCard className="h-4 w-4" />
+                               Continue to Secure Payment
+                               <ArrowRight className="h-4 w-4" />
+                             </>
+                           )}
+                         </Button>
+                         
+                         {/* Payment Error Display */}
+                         {paymentError && (
+                           <div className="p-3 bg-red-50 border border-red-200 rounded-md mt-4">
+                             <div className="flex items-center gap-2 text-red-700 mb-2">
+                               <AlertCircle className="h-4 w-4" />
+                               <span className="font-medium">Payment Setup Failed</span>
+                             </div>
+                             <p className="text-sm text-red-600 mb-3">{paymentError}</p>
+                             <Button 
+                               variant="outline" 
+                               size="sm" 
+                               onClick={initializePayment}
+                               disabled={paymentLoading}
+                             >
+                               {paymentLoading ? (
+                                 <>
+                                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                   Retrying...
+                                 </>
+                               ) : (
+                                 'Try Again'
+                               )}
+                             </Button>
+                           </div>
+                         )}
+                        </>
+                       ) : (
                         // Stripe Payment Form
                         <div className="bg-white rounded-lg p-4 border border-green-200">
                           <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
