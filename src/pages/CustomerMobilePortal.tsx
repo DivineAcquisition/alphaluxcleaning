@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CustomerPortalWrapper } from '@/components/customer/CustomerPortalWrapper';
+import { CustomerPortalNavigation } from '@/components/customer/CustomerPortalNavigation';
 import { MobileBottomNav } from '@/components/customer/MobileBottomNav';
 import { MobileCustomerPortal } from '@/components/customer/MobileCustomerPortal';
 import { CustomerNotificationCenter } from '@/components/customer/CustomerNotificationCenter';
@@ -71,26 +73,32 @@ export default function CustomerMobilePortal() {
   }
 
   return (
-    <CustomerErrorBoundary>
-      <div className="min-h-screen bg-background">
-        {/* PWA Install Prompt */}
-        <PWAInstallPrompt />
-        
-        {/* Main Content */}
-        <div className="pb-20">
-          {renderTabContent()}
+    <CustomerPortalWrapper 
+      title="Mobile Customer Portal" 
+      description="Manage your services on the go"
+      requiresAuth={true}
+    >
+      <CustomerErrorBoundary>
+        <div className="min-h-screen bg-background">
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
+          
+          {/* Main Content */}
+          <div className="pb-20">
+            {renderTabContent()}
+          </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            notificationCount={unreadNotifications.length}
+          />
+          
+          {/* Floating Help Button */}
+          <MobileHelpButton />
         </div>
-        
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          notificationCount={unreadNotifications.length}
-        />
-        
-        {/* Floating Help Button */}
-        <MobileHelpButton />
-      </div>
-    </CustomerErrorBoundary>
+      </CustomerErrorBoundary>
+    </CustomerPortalWrapper>
   );
 }
