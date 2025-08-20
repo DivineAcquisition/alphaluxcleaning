@@ -57,10 +57,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe_checkout' | 'embedded_payment'>('embedded_payment');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [isUpdatingPaymentIntent, setIsUpdatingPaymentIntent] = useState(false);
   const [stripeReady, setStripeReady] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
   const [isSetupIntent, setIsSetupIntent] = useState(false);
@@ -103,36 +101,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
   // Debounced payment amount update to prevent infinite re-renders
   const debouncedPaymentAmount = React.useMemo(() => paymentAmount, [paymentAmount]);
-  
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const updatePaymentIntent = async () => {
-      if (paymentMethod === 'embedded_payment' && showPaymentForm && clientSecret && debouncedPaymentAmount !== paymentAmount) {
-        setIsUpdatingPaymentIntent(true);
-        try {
-          setShowPaymentForm(false);
-          setClientSecret(null);
-          
-          // Debounce the update
-          timeoutId = setTimeout(async () => {
-            await createPaymentIntent();
-            setIsUpdatingPaymentIntent(false);
-          }, 500);
-        } catch (error) {
-          console.error('Failed to update payment intent:', error);
-          toast.error('Failed to update payment amount');
-          setIsUpdatingPaymentIntent(false);
-        }
-      }
-    };
-
-    updatePaymentIntent();
-    
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [debouncedPaymentAmount]); // Only react to debounced amount changes
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {
@@ -180,11 +148,11 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
   const processPayment = async () => {
-    if (paymentMethod === 'embedded_payment') {
-      await createPaymentIntent();
-    } else {
-      await processStripeCheckout();
-    }
+    await processEmbeddedPayment();
+  };
+
+  const processEmbeddedPayment = async () => {
+    await createPaymentIntent();
   };
 
   const createPaymentIntent = async () => {
@@ -233,41 +201,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     }
   };
 
-  const processStripeCheckout = async () => {
-    setIsProcessingPayment(true);
-    try {
-      // For Stripe Checkout, we'll use the create-payment edge function
-      // This is for the legacy checkout flow if needed
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-          body: {
-            amount: paymentAmount, // Already in dollars
-            currency: 'usd',
-            booking_data: bookingData,
-            payment_type: paymentType,
-            promo_code: promoCode || null,
-            payment_method: 'checkout',
-            customerEmail: 'guest@example.com',
-            customerName: 'Guest User'
-          }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-        setTimeout(() => {
-          onPaymentSuccess(data.session_id || 'demo_session_' + Date.now());
-        }, 3000);
-      } else {
-        throw new Error('No payment URL received');
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Failed to process payment. Please try again.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
 
   const handlePaymentSuccess = (paymentIntentId: string) => {
     onPaymentSuccess(paymentIntentId);
@@ -296,8 +229,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                   <Button onClick={() => window.location.reload()} variant="outline">
                     Refresh Page
                   </Button>
-                  <Button onClick={() => setPaymentMethod('stripe_checkout')}>
-                    Try Alternative Method
+                 <Button onClick={() => window.location.reload()}>
+                    Try Again
                   </Button>
                 </div>
               </CardContent>
@@ -468,27 +401,27 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           </CardContent>
         </Card>
 
-        {/* Payment Method Selection */}
-        <PaymentMethodSelector
-          selectedMethod={paymentMethod}
-          onMethodChange={setPaymentMethod}
-          amount={paymentAmount}
-        />
-
-        {/* Payment Intent Update Loading */}
-        {isUpdatingPaymentIntent && (
+        {/* Simplified Payment Notice */}
+        {!showPaymentForm && !systemError && (
           <Card className="shadow-clean">
-            <CardContent className="flex items-center justify-center p-8">
-              <div className="text-center space-y-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="text-sm text-muted-foreground">Updating payment amount...</p>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="h-5 w-5 text-success" />
+                <h3 className="text-lg font-semibold">Secure Payment Processing</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Your payment will be processed securely. We use industry-standard encryption to protect your information.
+              </p>
+              <div className="flex items-center gap-2 text-sm text-success">
+                <Check className="h-4 w-4" />
+                <span>256-bit SSL encryption</span>
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Enhanced Payment Form */}
-        {showPaymentForm && clientSecret && paymentMethod === 'embedded_payment' && !isUpdatingPaymentIntent && (
+        {showPaymentForm && clientSecret && (
           <Elements 
             stripe={stripePromise} 
             options={{
@@ -525,26 +458,16 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         )}
 
         {/* Stripe Loading Error Fallback */}
-        {showPaymentForm && !clientSecret && paymentMethod === 'embedded_payment' && (
+        {showPaymentForm && !clientSecret && (
           <Card className="shadow-clean border-destructive/20">
             <CardContent className="p-6 text-center space-y-4">
               <div className="text-destructive text-lg font-semibold">Payment System Unavailable</div>
               <p className="text-muted-foreground">
-                Unable to load the secure payment form. This could be due to:
+                Unable to load the secure payment form. Please try refreshing the page.
               </p>
-              <ul className="text-sm text-muted-foreground text-left space-y-1 max-w-md mx-auto">
-                <li>• Network connectivity issues</li>
-                <li>• Payment system maintenance</li>
-                <li>• Browser security settings</li>
-              </ul>
-              <div className="space-y-2">
-                <Button onClick={createPaymentIntent} variant="outline" className="w-full">
-                  Try Again
-                </Button>
-                <Button onClick={() => setPaymentMethod('stripe_checkout')} className="w-full">
-                  Use Alternative Payment Method
-                </Button>
-              </div>
+              <Button onClick={createPaymentIntent} variant="outline" className="w-full">
+                Try Again
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -657,12 +580,12 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               >
                 {isProcessingPayment ? (
                   'Processing...'
-                ) : (
-                  <>
-                    {paymentMethod === 'embedded_payment' ? 'Continue to Payment' : `Complete Booking - ${formatPrice(paymentAmount)}`}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
+                 ) : (
+                   <>
+                     Continue to Payment
+                     <ArrowRight className="h-4 w-4 ml-2" />
+                   </>
+                 )}
               </Button>
             )}
           </CardContent>

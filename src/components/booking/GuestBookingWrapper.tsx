@@ -97,7 +97,7 @@ export function GuestBookingWrapper() {
 
   const handleContinueAsGuest = () => {
     setShowAuthChoice(false);
-    toast.success('Continuing as guest - an account will be created for you after payment.');
+    toast.success('Continuing as guest - we\'ll create your account automatically after payment.');
   };
 
   const handleBookingComplete = () => {

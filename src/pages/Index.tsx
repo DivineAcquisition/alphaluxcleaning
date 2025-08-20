@@ -196,6 +196,26 @@ const Index = () => {
                 </p>
               </div>
 
+              {/* Guest Booking CTA */}
+              <Card className="shadow-clean border-primary/20">
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <span className="font-semibold text-lg">Quick Booking</span>
+                  </div>
+                  <p className="text-muted-foreground mb-4">
+                    Try our streamlined booking process - no account required to get started!
+                  </p>
+                  <Button 
+                    onClick={() => window.location.href = '/guest-booking'}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    Start Quick Booking
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Service Configuration Section */}
               <RecurringBookingInterface 
                 newClient={true} 
