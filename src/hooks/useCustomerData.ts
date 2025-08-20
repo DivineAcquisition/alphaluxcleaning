@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 
 interface CustomerProfile {
   id: string;
@@ -80,12 +81,18 @@ interface CustomerStats {
 export const useCustomerData = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { trackFeatureUsage, trackInteraction } = usePerformanceMonitoring();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [notifications, setNotifications] = useState<CustomerNotification[]>([]);
   const [stats, setStats] = useState<CustomerStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const cache = useRef<Map<string, { data: any; timestamp: number }>>(new Map());
+  const maxRetries = 3;
+  const cacheTimeout = 5 * 60 * 1000; // 5 minutes
 
   const fetchProfile = async () => {
     if (!user) return;
@@ -129,25 +136,72 @@ export const useCustomerData = () => {
     }
   };
 
+  // Simple caching without complex recursion
+  const cacheData = useCallback((key: string, data: any) => {
+    const cacheEntry = { data, timestamp: Date.now() };
+    cache.current.set(key, cacheEntry);
+    
+    try {
+      localStorage.setItem(`customer_data_${key}`, JSON.stringify(cacheEntry));
+    } catch (e) {
+      console.warn('Failed to cache to localStorage:', e);
+    }
+  }, []);
+
+  const getCachedData = useCallback((key: string) => {
+    const cached = cache.current.get(key);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < cacheTimeout) {
+      return cached.data;
+    }
+
+    // Try localStorage
+    try {
+      const stored = localStorage.getItem(`customer_data_${key}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.data && (now - parsed.timestamp) < cacheTimeout) {
+          return parsed.data;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load from localStorage:', e);
+    }
+
+    return null;
+  }, [cacheTimeout]);
+
   const fetchBookings = async () => {
     if (!user) return;
 
     try {
-      // Since bookings don't have user_id, fetch by customer_email
-      if (user.email) {
-        const { data, error } = await supabase
+      // Fix: Use consistent lookup - try both user_id and email
+      let data = null;
+      
+      // First try user_id if available
+      const { data: userIdData, error: userIdError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (!userIdError && userIdData?.length > 0) {
+        data = userIdData;
+      } else if (user.email) {
+        // Fallback to email lookup
+        const { data: emailData, error: emailError } = await supabase
           .from('bookings')
           .select('*')
           .eq('customer_email', user.email)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching bookings:', error);
-          return;
+        if (!emailError) {
+          data = emailData;
         }
-
-        setBookings(data || []);
       }
+
+      setBookings(data || []);
     } catch (error) {
       console.error('Error in fetchBookings:', error);
     }
@@ -289,39 +343,91 @@ export const useCustomerData = () => {
     calculateStats();
   }, [orders, bookings, profile]);
 
-  // Set up real-time subscriptions
+  // Enhanced real-time subscriptions with error handling
   useEffect(() => {
     if (!user) return;
 
-    const notificationsSubscription = supabase
-      .channel('customer-notifications')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'customer_notifications',
-        filter: `customer_id=eq.${user.id}`
-      }, () => {
-        fetchNotifications();
-      })
-      .subscribe();
+    const setupRealtimeSubscriptions = () => {
+      const notificationsSubscription = supabase
+        .channel('customer-notifications')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'customer_notifications',
+          filter: `customer_id=eq.${user.id}`
+        }, (payload) => {
+          console.log('Notification change:', payload);
+          fetchNotifications();
+          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+            trackInteraction('notification_received', (payload.new as any).id);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Notifications subscription active');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Notifications subscription error');
+            setTimeout(setupRealtimeSubscriptions, 5000); // Retry after 5s
+          }
+        });
 
-    const ordersSubscription = supabase
-      .channel('customer-orders')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'orders',
-        filter: `user_id=eq.${user.id}`
-      }, () => {
-        fetchOrders();
-      })
-      .subscribe();
+      const ordersSubscription = supabase
+        .channel('customer-orders')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+          console.log('Order change:', payload);
+          fetchOrders();
+          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+            trackInteraction('order_updated', (payload.new as any).id);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Orders subscription active');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Orders subscription error');
+            setTimeout(setupRealtimeSubscriptions, 5000);
+          }
+        });
 
-    return () => {
-      supabase.removeChannel(notificationsSubscription);
-      supabase.removeChannel(ordersSubscription);
+      // Add bookings subscription
+      const bookingsSubscription = supabase
+        .channel('customer-bookings')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: user.email ? `customer_email=eq.${user.email}` : `user_id=eq.${user.id}`
+        }, (payload) => {
+          console.log('Booking change:', payload);
+          fetchBookings();
+          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+            trackInteraction('booking_updated', (payload.new as any).id);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Bookings subscription active');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Bookings subscription error');
+            setTimeout(setupRealtimeSubscriptions, 5000);
+          }
+        });
+
+      return () => {
+        supabase.removeChannel(notificationsSubscription);
+        supabase.removeChannel(ordersSubscription);
+        supabase.removeChannel(bookingsSubscription);
+      };
     };
-  }, [user]);
+
+    const cleanup = setupRealtimeSubscriptions();
+    return cleanup;
+  }, [user, trackInteraction]);
 
   return {
     loading,
@@ -330,8 +436,10 @@ export const useCustomerData = () => {
     bookings,
     notifications,
     stats,
+    error,
     markNotificationAsRead,
     updateProfile,
-    refreshAll
+    refreshAll,
+    retryCount
   };
 };

@@ -1,128 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { X, Download, Smartphone, Star } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Smartphone, X, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export function PWAInstallPrompt() {
+export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check if iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    setIsIOS(isIOSDevice);
+    const checkInstalled = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                          (window.navigator as any).standalone ||
+                          document.referrer.includes('android-app://');
+      setIsInstalled(isStandalone);
+    };
 
-    // Check if already installed (standalone mode)
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || 
-                              (window.navigator as any).standalone === true;
-    setIsStandalone(isInStandaloneMode);
+    checkInstalled();
 
-    // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show prompt after a delay if not dismissed before
-      setTimeout(() => {
-        if (!localStorage.getItem('pwa-install-dismissed')) {
-          setShowPrompt(true);
-        }
-      }, 10000); // Show after 10 seconds
+      const lastDismissed = localStorage.getItem('pwa-prompt-dismissed');
+      const daysSinceDismissed = lastDismissed 
+        ? (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24)
+        : Infinity;
+      
+      if (daysSinceDismissed > 7) {
+        setTimeout(() => setShowPrompt(true), 3000);
+      }
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setShowPrompt(false);
+      setDeferredPrompt(null);
+      toast({
+        title: "App Installed!",
+        description: "Bay Area Cleaning is now installed on your device.",
+      });
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // For iOS, show prompt if not standalone and not dismissed
-    if (isIOSDevice && !isInStandaloneMode && !localStorage.getItem('pwa-install-dismissed-ios')) {
-      setTimeout(() => setShowPrompt(true), 5000);
-    }
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [toast]);
 
-  const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the PWA install prompt');
-      }
-      
-      setDeferredPrompt(null);
-      setShowPrompt(false);
-    }
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    setDeferredPrompt(null);
+    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    if (isIOS) {
-      localStorage.setItem('pwa-install-dismissed-ios', 'true');
-    } else {
-      localStorage.setItem('pwa-install-dismissed', 'true');
-    }
+    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
-  // Don't show if already installed or dismissed
-  if (isStandalone || !showPrompt) {
-    return null;
-  }
+  if (isInstalled || !showPrompt || !deferredPrompt) return null;
 
   return (
-    <Card className="fixed bottom-20 left-4 right-4 z-50 border-primary/50 bg-gradient-to-r from-primary/5 to-accent/5 shadow-lg">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Smartphone className="h-6 w-6 text-primary" />
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
+      <Card className="shadow-lg border-primary/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Install Our App</CardTitle>
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-foreground mb-1">
-                Install Bay Area Cleaning
-              </h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Get faster access, push notifications, and an app-like experience!
-              </p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                <span>4.9 rating • 1000+ installs</span>
-              </div>
-              <div className="flex gap-2">
-                {isIOS ? (
-                  <div className="text-xs text-muted-foreground">
-                    Tap <strong>Share</strong> → <strong>Add to Home Screen</strong>
-                  </div>
-                ) : (
-                  <Button size="sm" onClick={handleInstallClick} className="bg-primary hover:bg-primary/90">
-                    <Download className="h-3 w-3 mr-1" />
-                    Install App
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={handleDismiss}>
-                  Maybe Later
-                </Button>
-              </div>
-            </div>
+            <Button variant="ghost" size="sm" onClick={handleDismiss} className="h-6 w-6 p-0">
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={handleDismiss}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex gap-2">
+            <Button onClick={handleInstall} size="sm" className="flex-1">
+              <Download className="h-4 w-4 mr-2" />
+              Install Now
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleDismiss}>
+              Not Now
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};

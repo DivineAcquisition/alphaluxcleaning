@@ -1,116 +1,59 @@
-import { useState, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Geolocation } from '@capacitor/geolocation';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from 'react';
 
-export function useMobileCapabilities() {
-  const [isNative, setIsNative] = useState(false);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const { toast } = useToast();
+interface DeviceCapabilities {
+  isMobile: boolean;
+  isTablet: boolean;
+  isDesktop: boolean;
+  hasTouch: boolean;
+  orientation: 'portrait' | 'landscape';
+  isOnline: boolean;
+}
 
-  useEffect(() => {
-    setIsNative(Capacitor.isNativePlatform());
+export const useMobileCapabilities = () => {
+  const [capabilities, setCapabilities] = useState<DeviceCapabilities>({
+    isMobile: false,
+    isTablet: false,
+    isDesktop: true,
+    hasTouch: false,
+    orientation: 'landscape',
+    isOnline: true
+  });
+
+  const checkCapabilities = useCallback(() => {
+    const userAgent = navigator.userAgent;
+    const width = window.innerWidth;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) || width < 768;
+    const isTablet = /iPad|Android/i.test(userAgent) && width >= 768 && width < 1024;
+    const isDesktop = !isMobile && !isTablet;
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+    const isOnline = navigator.onLine;
+
+    setCapabilities({
+      isMobile,
+      isTablet,
+      isDesktop,
+      hasTouch,
+      orientation,
+      isOnline
+    });
   }, []);
 
-  const takePhoto = async () => {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-      });
+  useEffect(() => {
+    checkCapabilities();
+    window.addEventListener('resize', checkCapabilities);
+    window.addEventListener('orientationchange', checkCapabilities);
+    window.addEventListener('online', checkCapabilities);
+    window.addEventListener('offline', checkCapabilities);
 
-      return image.dataUrl;
-    } catch (error) {
-      console.error('Error taking photo:', error);
-      toast({
-        title: "Camera Error",
-        description: "Failed to take photo. Please try again.",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
+    return () => {
+      window.removeEventListener('resize', checkCapabilities);
+      window.removeEventListener('orientationchange', checkCapabilities);
+      window.removeEventListener('online', checkCapabilities);
+      window.removeEventListener('offline', checkCapabilities);
+    };
+  }, [checkCapabilities]);
 
-  const selectPhoto = async () => {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Photos,
-      });
-
-      return image.dataUrl;
-    } catch (error) {
-      console.error('Error selecting photo:', error);
-      toast({
-        title: "Photo Selection Error",
-        description: "Failed to select photo. Please try again.",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-
-  const getCurrentLocation = async () => {
-    try {
-      const coordinates = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      });
-
-      const location = {
-        lat: coordinates.coords.latitude,
-        lng: coordinates.coords.longitude
-      };
-
-      setLocation(location);
-      return location;
-    } catch (error) {
-      console.error('Error getting location:', error);
-      toast({
-        title: "Location Error",
-        description: "Failed to get your location. Please enable location services.",
-        variant: "destructive"
-      });
-      return null;
-    }
-  };
-
-  const requestPermissions = async () => {
-    try {
-      if (isNative) {
-        // Request camera permissions
-        await Camera.requestPermissions();
-        
-        // Request location permissions
-        await Geolocation.requestPermissions();
-        
-        toast({
-          title: "Permissions Granted",
-          description: "Camera and location permissions have been granted."
-        });
-      }
-    } catch (error) {
-      console.error('Error requesting permissions:', error);
-      toast({
-        title: "Permission Error",
-        description: "Some permissions were denied. App functionality may be limited.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  return {
-    isNative,
-    location,
-    takePhoto,
-    selectPhoto,
-    getCurrentLocation,
-    requestPermissions
-  };
-}
+  return { capabilities };
+};
