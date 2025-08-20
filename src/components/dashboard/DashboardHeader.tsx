@@ -24,7 +24,7 @@ export function DashboardHeader() {
           </Badge>
           
         </div>
-        <p className="text-sm text-muted-foreground">bayareacleaningpros.com • admin@divineacquisition.io</p>
+        <p className="text-sm text-muted-foreground">bayareacleaningpros.com • support@bayareacleaningpros.com</p>
       </div>
 
       {/* Service Highlights */}

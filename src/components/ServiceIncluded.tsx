@@ -87,7 +87,7 @@ export const ServiceIncluded = ({
 
         <div className="pt-4 border-t text-center">
           <p className="text-sm text-muted-foreground">BayAreaCleaningPros | (281) 809-9901</p>
-          <p className="text-sm text-muted-foreground">Baytown, TX | admin@divineacquisition.io</p>
+          <p className="text-sm text-muted-foreground">Baytown, TX | support@bayareacleaningpros.com</p>
         </div>
       </CardContent>
     </Card>;

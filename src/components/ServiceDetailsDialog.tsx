@@ -98,7 +98,7 @@ export const ServiceDetailsDialog = ({
 
           <div className="pt-4 border-t text-center">
             <p className="text-sm font-inter font-semibold text-muted-foreground">BayAreaCleaningPros | (281) 809-9901</p>
-            <p className="text-sm font-inter font-semibold text-muted-foreground">Baytown, TX | admin@divineacquisition.io</p>
+            <p className="text-sm font-inter font-semibold text-muted-foreground">Baytown, TX | support@bayareacleaningpros.com</p>
           </div>
         </div>
       </DialogContent>

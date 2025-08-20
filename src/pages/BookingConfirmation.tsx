@@ -7,7 +7,6 @@ import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useBookingWebhook } from "@/hooks/useBookingWebhook";
 
 const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +16,6 @@ const BookingConfirmation = () => {
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { sendBookingWebhook } = useBookingWebhook();
 
   useEffect(() => {
     // Check if admin preview mode
@@ -185,36 +183,20 @@ const BookingConfirmation = () => {
           })();
         }
 
-        // Send booking webhook (new functionality)
+        // Send order entry webhook (streamlined)
         if (!localStorage.getItem(webhookKey)) {
           (async () => {
             try {
-              await sendBookingWebhook({
-                bookingStep: 'confirmation',
-                serviceType: orderDetails.cleaning_type || 'cleaning',
-                frequency: orderDetails.frequency || 'one_time',
-                addOns: orderDetails.add_ons || [],
-                serviceDate: orderDetails.scheduled_date,
-                serviceTime: orderDetails.scheduled_time,
-                customerInfo: {
-                  name: orderDetails.customer_name || '',
-                  email: orderDetails.customer_email || '',
-                  phone: orderDetails.customer_phone || '',
-                  address: orderDetails.service_details?.serviceAddress?.street || '',
-                  city: orderDetails.service_details?.serviceAddress?.city || '',
-                  state: orderDetails.service_details?.serviceAddress?.state || '',
-                  zipCode: orderDetails.service_details?.serviceAddress?.zipCode || ''
-                },
-                totalPrice: orderDetails.amount || 0,
-                paymentAmount: orderDetails.amount || 0,
-                paymentType: 'full' as const,
-                orderId: orderDetails.id,
-                bookingId: identifier
+              await supabase.functions.invoke('send-order-entry-webhook', {
+                body: { 
+                  order_id: orderDetails.id,
+                  booking_id: identifier 
+                }
               });
               localStorage.setItem(webhookKey, '1');
-              console.log('Booking webhook sent');
+              console.log('Order entry webhook sent');
             } catch (err) {
-              console.error('Failed to send booking webhook', err);
+              console.error('Failed to send order entry webhook', err);
             }
           })();
         }
@@ -240,7 +222,7 @@ const BookingConfirmation = () => {
     } catch (e) {
       // ignore storage errors
     }
-  }, [orderDetails, sessionId, orderId, sendBookingWebhook]);
+  }, [orderDetails, sessionId, orderId]);
 
   if (loading) {
     return (
