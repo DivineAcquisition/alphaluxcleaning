@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnhancedServiceManagement } from '@/components/customer/EnhancedServiceManagement';
+import { ChatFallback } from '@/components/customer/ChatFallback';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
 export function MobileCustomerPortal() {
@@ -239,6 +240,19 @@ export function MobileCustomerPortal() {
           </CardContent>
         </Card>
       )}
+      
+      {/* Chat Support */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5 text-primary" />
+            Contact Support
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChatFallback />
+        </CardContent>
+      </Card>
     </div>
   );
 

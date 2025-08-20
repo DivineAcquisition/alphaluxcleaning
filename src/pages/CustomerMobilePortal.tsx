@@ -5,6 +5,7 @@ import { MobileCustomerPortal } from '@/components/customer/MobileCustomerPortal
 import { CustomerNotificationCenter } from '@/components/customer/CustomerNotificationCenter';
 import { CustomerProfileCard } from '@/components/customer/CustomerProfileCard';
 import { QuickServiceActions } from '@/components/customer/QuickServiceActions';
+import { MobileHelpButton } from '@/components/customer/MobileHelpButton';
 import PaymentPortal from '@/pages/PaymentPortal';
 import { useCustomerData } from '@/hooks/useCustomerData';
 
@@ -80,6 +81,9 @@ export default function CustomerMobilePortal() {
         onTabChange={setActiveTab}
         notificationCount={unreadNotifications.length}
       />
+      
+      {/* Floating Help Button */}
+      <MobileHelpButton />
     </div>
   );
 }

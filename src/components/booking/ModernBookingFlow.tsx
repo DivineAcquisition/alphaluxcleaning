@@ -9,7 +9,9 @@ import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { BookingConfirmationPage } from './BookingConfirmationPage';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChatFallback } from '@/components/customer/ChatFallback';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ArrowLeft, ArrowRight, HelpCircle } from 'lucide-react';
 
 interface BookingData {
   // Service Selection
@@ -52,7 +54,9 @@ const steps = [
 
 export function ModernBookingFlow() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showMobileHelp, setShowMobileHelp] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData>({
     homeSize: '',
     serviceType: '',
@@ -173,50 +177,102 @@ export function ModernBookingFlow() {
       <div className="bg-card border-b sticky top-0 z-40 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="max-w-4xl mx-auto">
+            {/* Mobile Header */}
+            {isMobile && (
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  {currentStep > 1 && (
+                    <Button variant="ghost" size="sm" onClick={handleBack}>
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <div>
+                    <h1 className="text-lg font-semibold">Book Your Service</h1>
+                    <p className="text-sm text-muted-foreground">
+                      Step {currentStep} of {steps.length}: {steps[currentStep - 1]?.title}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowMobileHelp(!showMobileHelp)}
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </div>
+            )}
+            
+            {/* Mobile Help Section */}
+            {isMobile && showMobileHelp && (
+              <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                <ChatFallback className="mb-2" />
+                <p className="text-xs text-muted-foreground text-center">
+                  Need assistance with your booking? Our team is here to help!
+                </p>
+              </div>
+            )}
+            
             {/* Progress Bar */}
             <div className="mb-4">
               <Progress value={progress} className="h-2" />
             </div>
             
-            {/* Step Indicators */}
-            <div className="flex items-center justify-between">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <div className={`flex items-center space-x-3 ${
-                    index < steps.length - 1 ? 'flex-1' : ''
-                  }`}>
-                    <div className="flex flex-col items-center">
-                      <div className={`
-                        w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all duration-300
-                        ${step.id <= currentStep 
-                          ? 'border-primary bg-primary text-primary-foreground' 
-                          : 'border-muted text-muted-foreground'
-                        }
-                      `}>
-                        {step.id}
-                      </div>
-                      <div className="text-center mt-2 hidden sm:block">
-                        <div className={`text-sm font-medium ${
-                          step.id <= currentStep ? 'text-foreground' : 'text-muted-foreground'
-                        }`}>
-                          {step.title}
+            {/* Step Indicators - Hidden on mobile */}
+            {!isMobile && (
+              <div className="flex items-center justify-between">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div className={`flex items-center space-x-3 ${
+                      index < steps.length - 1 ? 'flex-1' : ''
+                    }`}>
+                      <div className="flex flex-col items-center">
+                        <div className={`
+                          w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all duration-300
+                          ${step.id <= currentStep 
+                            ? 'border-primary bg-primary text-primary-foreground' 
+                            : 'border-muted text-muted-foreground'
+                          }
+                        `}>
+                          {step.id}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {step.description}
+                        <div className="text-center mt-2">
+                          <div className={`text-sm font-medium ${
+                            step.id <= currentStep ? 'text-foreground' : 'text-muted-foreground'
+                          }`}>
+                            {step.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {step.description}
+                          </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Connector Line */}
+                    {index < steps.length - 1 && (
+                      <div className={`flex-1 h-0.5 mx-4 ${
+                        step.id < currentStep ? 'bg-primary' : 'bg-muted'
+                      }`} />
+                    )}
                   </div>
-                  
-                  {/* Connector Line */}
-                  {index < steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-4 ${
-                      step.id < currentStep ? 'bg-primary' : 'bg-muted'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Mobile Step Dots */}
+            {isMobile && (
+              <div className="flex items-center justify-center gap-2">
+                {steps.map((step) => (
+                  <div
+                    key={step.id}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      step.id <= currentStep ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
