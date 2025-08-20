@@ -101,33 +101,38 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     });
   }, [paymentType, promoDiscount, finalTotal]);
 
-  // Monitor payment amount changes for embedded payments
+  // Debounced payment amount update to prevent infinite re-renders
+  const debouncedPaymentAmount = React.useMemo(() => paymentAmount, [paymentAmount]);
+  
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const updatePaymentIntent = async () => {
-      // Only update if embedded payment is active and showing payment form
-      if (paymentMethod === 'embedded_payment' && showPaymentForm && clientSecret) {
+      if (paymentMethod === 'embedded_payment' && showPaymentForm && clientSecret && debouncedPaymentAmount !== paymentAmount) {
         setIsUpdatingPaymentIntent(true);
         try {
-          // Clear current payment form and recreate with new amount
           setShowPaymentForm(false);
           setClientSecret(null);
           
-          // Small delay to ensure UI updates
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Create new payment intent with updated amount
-          await createPaymentIntent();
+          // Debounce the update
+          timeoutId = setTimeout(async () => {
+            await createPaymentIntent();
+            setIsUpdatingPaymentIntent(false);
+          }, 500);
         } catch (error) {
           console.error('Failed to update payment intent:', error);
           toast.error('Failed to update payment amount');
-        } finally {
           setIsUpdatingPaymentIntent(false);
         }
       }
     };
 
     updatePaymentIntent();
-  }, [paymentAmount, paymentMethod, showPaymentForm]); // Only react to amount changes
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [debouncedPaymentAmount]); // Only react to debounced amount changes
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {

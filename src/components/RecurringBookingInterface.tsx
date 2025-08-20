@@ -425,14 +425,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
 
-  const calculatePricing = () => {
-    console.log('Calculating pricing with:', {
-      selectedTier,
-      selectedRecurring,
-      selectedTierData,
-      selectedRecurringData
-    });
-    
+  const calculatePricing = React.useMemo(() => {
     if (!selectedTierData) {
       return {
         basePrice: 0,
@@ -447,19 +440,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }
 
     let basePrice = selectedTierData.basePrice;
-    console.log('Original base price:', basePrice);
     
     // Apply one-time service discounts
     if (selectedRecurringData && selectedRecurringData.frequency === 'once') {
-      console.log('Applying one-time discount for:', selectedTier);
       if (selectedTier === 'general' || selectedTier === 'complete') {
-        // General and Deep Clean get 15% discount for one-time service
         basePrice = Math.round(basePrice * 0.85);
-        console.log('Applied 15% discount, new price:', basePrice);
       } else if (selectedTier === 'premium') {
-        // Premium Deep Clean gets 20% discount for one-time service
         basePrice = Math.round(basePrice * 0.80);
-        console.log('Applied 20% discount, new price:', basePrice);
       }
     }
     
@@ -472,7 +459,6 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     const addOnsTotal = selectedAddOns.reduce((total, addOnId) => {
       const addOn = addOnServices.find(service => service.id === addOnId);
       const addOnPrice = addOn?.price || 0;
-      // Apply 10% discount for existing members or new membership signups
       const discountedPrice = (existingMember || addMembership) ? addOnPrice * 0.9 : addOnPrice;
       return total + discountedPrice;
     }, 0);
@@ -491,19 +477,10 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     const total = subtotal - recurringDiscount - membershipDiscount;
     const membershipFee = addMembership ? 39 : 0;
 
-    // Apply referral discount (10% off)
     let referralDiscount = 0;
     if (appliedReferral) {
       referralDiscount = (subtotal - recurringDiscount - membershipDiscount) * 0.10;
     }
-
-    // Apply discount code (50% off for FRIEND50 codes)
-    let codeDiscount = 0;
-    if (appliedDiscount && appliedDiscount.type === 'deep_clean_50_percent') {
-      codeDiscount = (subtotal - recurringDiscount - membershipDiscount - referralDiscount) * 0.50;
-    }
-
-    const finalTotal = subtotal - recurringDiscount - membershipDiscount - referralDiscount - codeDiscount;
 
     return {
       basePrice,
@@ -512,16 +489,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       recurringDiscount,
       membershipDiscount,
       addonMemberDiscount,
-      referralDiscount,
-      codeDiscount,
-      total: Math.max(0, finalTotal),
-      membershipFee
+      total: total - referralDiscount,
+      membershipFee,
+      referralDiscount
     };
-    
-    console.log('Final pricing result:', {
-      basePrice,
-      addOnsTotal,
-      subtotal,
+  }, [selectedTierData, selectedRecurringData, selectedTier, newClient, selectedAddOns, existingMember, addMembership, appliedReferral]);
+
+  const pricingData = calculatePricing;
       total: Math.max(0, finalTotal)
     });
     

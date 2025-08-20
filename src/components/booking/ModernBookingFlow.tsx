@@ -45,6 +45,14 @@ interface BookingData {
   stripeSessionId?: string;
 }
 
+interface Props {
+  initialData?: Partial<BookingData>;
+  onDataUpdate?: (data: Partial<BookingData>) => void;
+  onStepChange?: (step: number) => void;
+  onComplete?: () => void;
+  guestMode?: boolean;
+}
+
 const steps = [
   { id: 1, title: 'Service', description: 'Choose your service' },
   { id: 2, title: 'Details', description: 'Date & address' },
@@ -52,7 +60,13 @@ const steps = [
   { id: 4, title: 'Confirmation', description: 'Complete' }
 ];
 
-export function ModernBookingFlow() {
+export function ModernBookingFlow({ 
+  initialData = {}, 
+  onDataUpdate, 
+  onStepChange, 
+  onComplete,
+  guestMode = false 
+}: Props = {}) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [currentStep, setCurrentStep] = useState(1);
@@ -78,14 +92,22 @@ export function ModernBookingFlow() {
     nextDayFee: 0,
     promoDiscount: 0,
     totalPrice: 0,
-    paymentType: 'pay_after_service'
+    paymentType: 'pay_after_service',
+    ...initialData
   });
+
+  // Notify parent of step changes
+  useEffect(() => {
+    onStepChange?.(currentStep);
+  }, [currentStep, onStepChange]);
 
   const progress = (currentStep / steps.length) * 100;
 
-  const updateBookingData = (updates: Partial<BookingData>) => {
-    setBookingData(prev => ({ ...prev, ...updates }));
-  };
+  const updateBookingData = React.useCallback((updates: Partial<BookingData>) => {
+    const newData = { ...bookingData, ...updates };
+    setBookingData(newData);
+    onDataUpdate?.(newData);
+  }, [bookingData, onDataUpdate]);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -116,7 +138,7 @@ export function ModernBookingFlow() {
     }
   };
 
-  const handlePaymentSuccess = async (sessionId: string) => {
+  const handlePaymentSuccess = React.useCallback(async (sessionId: string) => {
     console.log('🎉 Payment/Authorization successful:', sessionId);
     updateBookingData({ stripeSessionId: sessionId });
     
@@ -129,7 +151,12 @@ export function ModernBookingFlow() {
     
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    
+    // Notify completion
+    if (currentStep === 3) {
+      onComplete?.();
+    }
+  }, [bookingData.paymentType, currentStep, onComplete, updateBookingData]);
 
 
   const renderCurrentStep = () => {
