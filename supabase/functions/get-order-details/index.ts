@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id, order_id, code, email } = await req.json();
-    console.log("Received request:", { session_id, order_id, code, email });
+    const { session_id, order_id, code, email, payment_intent, setup_intent } = await req.json();
+    console.log("Received request:", { session_id, order_id, code, email, payment_intent, setup_intent });
 
-    if (!session_id && !order_id && !code && !email) {
-      return new Response(JSON.stringify({ error: "Missing session_id, order_id, code, or email" }), {
+    if (!session_id && !order_id && !code && !email && !payment_intent && !setup_intent) {
+      return new Response(JSON.stringify({ error: "Missing session_id, order_id, code, email, payment_intent, or setup_intent" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
@@ -29,18 +29,17 @@ serve(async (req) => {
     );
 
     const selectFields = `
-      id, stripe_session_id, stripe_payment_intent_id, amount, currency, status, 
+      id, stripe_session_id, stripe_payment_intent_id, stripe_setup_intent_id, amount, currency, status, 
       created_at, updated_at, scheduled_date, scheduled_time, 
       cleaning_type, frequency, square_footage, 
       customer_name, customer_email, customer_phone,
-      service_details, order_details, payment_details,
-      add_ons, recurring_details, user_id
+      service_details, add_ons, recurring_details, user_id
     `;
 
     let data = null;
     let error = null;
 
-    // Priority search: exact UUID -> stripe session -> partial ID -> email
+    // Priority search: exact UUID -> stripe session -> payment intent -> setup intent -> partial ID -> email
     if (order_id) {
       console.log("Searching by order_id:", order_id);
       
@@ -73,14 +72,52 @@ serve(async (req) => {
       }
     } else if (session_id) {
       console.log("Searching by session_id:", session_id);
+      // Try session_id, then payment_intent_id, then setup_intent_id
       const { data: sessionMatch, error: sessionError } = await supabase
         .from("orders")
         .select(selectFields)
-        .eq("stripe_session_id", session_id)
+        .or(`stripe_session_id.eq.${session_id},stripe_payment_intent_id.eq.${session_id},stripe_setup_intent_id.eq.${session_id}`)
         .maybeSingle();
       
-      data = sessionMatch;
-      error = sessionError;
+      if (sessionMatch) {
+        console.log("Found order by session_id/intent_id:", sessionMatch.id);
+        data = sessionMatch;
+        error = sessionError;
+      } else {
+        console.log("No match found for session_id:", session_id);
+        data = sessionMatch;
+        error = sessionError;
+      }
+    } else if (payment_intent) {
+      console.log("Searching by payment_intent:", payment_intent);
+      const { data: intentMatch, error: intentError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .eq("stripe_payment_intent_id", payment_intent)
+        .maybeSingle();
+      
+      if (intentMatch) {
+        console.log("Found order by payment_intent:", intentMatch.id);
+      } else {
+        console.log("No match found for payment_intent:", payment_intent);
+      }
+      data = intentMatch;
+      error = intentError;
+    } else if (setup_intent) {
+      console.log("Searching by setup_intent:", setup_intent);
+      const { data: setupMatch, error: setupError } = await supabase
+        .from("orders")
+        .select(selectFields)
+        .eq("stripe_setup_intent_id", setup_intent)
+        .maybeSingle();
+      
+      if (setupMatch) {
+        console.log("Found order by setup_intent:", setupMatch.id);
+      } else {
+        console.log("No match found for setup_intent:", setup_intent);
+      }
+      data = setupMatch;
+      error = setupError;
     } else if (code) {
       console.log("Searching by code:", code);
       // Search by partial order ID or session ID

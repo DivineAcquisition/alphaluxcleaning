@@ -273,30 +273,29 @@ export function ModernBookingFlow({
     console.log('🎉 Payment/Authorization successful:', sessionId);
     handleDataUpdate({ stripeSessionId: sessionId });
     
-    // Store order information for potential redirects
-    localStorage.setItem('current_order_id', sessionId);
-    
-    // Get order details to send to webhooks
+    // Get order details to send to webhooks and store proper order_id
     try {
-      // Try to get order details using session_id (which is actually payment_intent_id or setup_intent_id)
-      const { data: orderData, error } = await supabase.functions.invoke('get-order-details', {
+      // Try to get order details using session_id (which could be payment_intent_id or setup_intent_id)
+      const { data: orderResponse, error } = await supabase.functions.invoke('get-order-details', {
         body: { session_id: sessionId }
       });
       
-      if (orderData && !error) {
+      if (orderResponse?.order && !error) {
+        const orderData = orderResponse.order;
         console.log('Retrieved order data for webhook:', orderData);
         
-        // Store the actual order_id if we got it
-        if (orderData.order_id) {
-          localStorage.setItem('current_order_id', orderData.order_id);
+        // Store the actual order_id for PaymentSuccess redirect
+        if (orderData.id) {
+          localStorage.setItem('current_order_id', orderData.id);
+          console.log('Stored actual order_id in localStorage:', orderData.id);
         }
         
         // Send to enhanced webhook system if we have order_id
-        if (orderData.order_id) {
+        if (orderData.id) {
           await supabase.functions.invoke('enhanced-booking-webhook-v2', {
             body: {
               ...bookingData,
-              order_id: orderData.order_id,
+              order_id: orderData.id,
               session_id: sessionId,
               trigger_event: 'confirmation',
               timestamp: new Date().toISOString(),
@@ -310,7 +309,7 @@ export function ModernBookingFlow({
           body: {
             transactionData: {
               ...bookingData,
-              order_id: orderData.order_id,
+              order_id: orderData.id,
               session_id: sessionId,
               timestamp: new Date().toISOString(),
               source: 'bay_area_cleaning_pros_website',
@@ -323,11 +322,15 @@ export function ModernBookingFlow({
         console.log('All confirmation webhooks sent successfully');
       } else {
         console.warn('Could not retrieve order data for webhooks:', error);
+        // Store session_id as fallback for PaymentSuccess redirect
+        localStorage.setItem('current_order_id', sessionId);
         // Send basic webhook data
         await sendWebhookForStep(4);
       }
     } catch (webhookError) {
       console.error('Failed to send confirmation webhooks:', webhookError);
+      // Store session_id as fallback for PaymentSuccess redirect
+      localStorage.setItem('current_order_id', sessionId);
       // Still try basic webhook
       await sendWebhookForStep(4);
     }

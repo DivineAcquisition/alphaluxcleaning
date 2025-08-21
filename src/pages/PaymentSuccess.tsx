@@ -34,56 +34,97 @@ export default function PaymentSuccess() {
 
       // Try to find order data using any available identifier
       let orderData = null;
+      let foundIdentifier = null;
       
+      // Try session_id first
       if (sessionId) {
         console.log('Attempting to get order details with session_id:', sessionId);
         try {
           const { data, error } = await supabase.functions.invoke('get-order-details', {
             body: { session_id: sessionId }
           });
-          if (data && !error) {
-            orderData = data;
+          if (data?.order && !error) {
+            orderData = data.order;
+            foundIdentifier = 'session_id';
             console.log('Found order data via session_id:', orderData);
+          } else {
+            console.log('No order found via session_id, error:', error);
           }
         } catch (error) {
           console.error('Error fetching order by session_id:', error);
         }
       }
       
+      // Try order_id if session_id failed
       if (!orderData && orderId) {
         console.log('Attempting to get order details with order_id:', orderId);
         try {
           const { data, error } = await supabase.functions.invoke('get-order-details', {
             body: { order_id: orderId }
           });
-          if (data && !error) {
-            orderData = data;
+          if (data?.order && !error) {
+            orderData = data.order;
+            foundIdentifier = 'order_id';
             console.log('Found order data via order_id:', orderData);
+          } else {
+            console.log('No order found via order_id, error:', error);
           }
         } catch (error) {
           console.error('Error fetching order by order_id:', error);
         }
       }
 
-      // Clean up localStorage
-      localStorage.removeItem('current_order_id');
+      // Try payment_intent if both failed
+      if (!orderData && paymentIntentId) {
+        console.log('Attempting to get order details with payment_intent:', paymentIntentId);
+        try {
+          const { data, error } = await supabase.functions.invoke('get-order-details', {
+            body: { payment_intent: paymentIntentId }
+          });
+          if (data?.order && !error) {
+            orderData = data.order;
+            foundIdentifier = 'payment_intent';
+            console.log('Found order data via payment_intent:', orderData);
+          } else {
+            console.log('No order found via payment_intent, error:', error);
+          }
+        } catch (error) {
+          console.error('Error fetching order by payment_intent:', error);
+        }
+      }
+
+      // Try setup_intent if all others failed
+      if (!orderData && setupIntentId) {
+        console.log('Attempting to get order details with setup_intent:', setupIntentId);
+        try {
+          const { data, error } = await supabase.functions.invoke('get-order-details', {
+            body: { setup_intent: setupIntentId }
+          });
+          if (data?.order && !error) {
+            orderData = data.order;
+            foundIdentifier = 'setup_intent';
+            console.log('Found order data via setup_intent:', orderData);
+          } else {
+            console.log('No order found via setup_intent, error:', error);
+          }
+        } catch (error) {
+          console.error('Error fetching order by setup_intent:', error);
+        }
+      }
       
       // Navigate based on what data we found
-      if (orderData && orderData.order_id) {
-        console.log('Navigating to service-details with order_id:', orderData.order_id);
-        navigate(`/service-details?order_id=${orderData.order_id}`, { replace: true });
-      } else if (sessionId) {
-        console.log('Navigating to service-details with session_id:', sessionId);
-        navigate(`/service-details?session_id=${sessionId}`, { replace: true });
-      } else if (orderId) {
-        console.log('Navigating to service-details with stored order_id:', orderId);
-        navigate(`/service-details?order_id=${orderId}`, { replace: true });
+      if (orderData && orderData.id) {
+        console.log('✅ Navigating to service-details with order_id:', orderData.id, 'found via:', foundIdentifier);
+        // Clean up localStorage only on success
+        localStorage.removeItem('current_order_id');
+        navigate(`/service-details?order_id=${orderData.id}`, { replace: true });
       } else {
-        console.log('No valid identifiers found, redirecting to instant-quote');
+        console.log('❌ No valid order data found, redirecting to instant-quote after delay');
+        console.log('Available identifiers were:', { sessionId, orderId, paymentIntentId, setupIntentId });
         // Wait a bit to show debug info if needed
         setTimeout(() => {
           navigate('/instant-quote', { replace: true });
-        }, 2000);
+        }, 3000);
         return; // Don't navigate immediately
       }
     };
