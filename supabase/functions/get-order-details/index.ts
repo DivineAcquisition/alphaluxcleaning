@@ -28,7 +28,14 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const selectFields = "id, stripe_session_id, amount, currency, status, created_at, scheduled_date, scheduled_time, cleaning_type, frequency, square_footage, customer_name, customer_email, customer_phone, service_details";
+    const selectFields = `
+      id, stripe_session_id, stripe_payment_intent_id, amount, currency, status, 
+      created_at, updated_at, scheduled_date, scheduled_time, 
+      cleaning_type, frequency, square_footage, 
+      customer_name, customer_email, customer_phone,
+      service_details, order_details, payment_details,
+      add_ons, recurring_details, user_id
+    `;
 
     let data = null;
     let error = null;

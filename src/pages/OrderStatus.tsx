@@ -43,6 +43,8 @@ interface Order {
   frequency: string;
   add_ons: string[];
   service_details: any;
+  scheduled_date?: string;
+  scheduled_time?: string;
   created_at: string;
   updated_at: string;
 }
@@ -356,63 +358,118 @@ export default function OrderStatus() {
                     </Badge>
                   </div>
 
-                  {/* Service Details - Enhanced Display */}
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm sm:text-base">Service Information</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      <div className="bg-muted/30 p-3 rounded-lg">
-                        <span className="text-muted-foreground text-xs">Service Type</span>
-                        <div className="font-medium">
-                          {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
-                        </div>
-                      </div>
-                      <div className="bg-muted/30 p-3 rounded-lg">
-                        <span className="text-muted-foreground text-xs">Frequency</span>
-                        <div className="font-medium">
-                          {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </div>
-                      </div>
-                      {order.square_footage && (
-                        <div className="bg-muted/30 p-3 rounded-lg">
-                          <span className="text-muted-foreground text-xs">Property Size</span>
-                          <div className="font-medium">{order.square_footage} sq ft</div>
-                        </div>
-                      )}
-                      <div className="bg-muted/30 p-3 rounded-lg">
-                        <span className="text-muted-foreground text-xs">Total Amount</span>
-                        <div className="font-medium text-primary text-lg">${(order.amount / 100).toFixed(2)}</div>
-                        {order.frequency && order.frequency !== 'one_time' && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Per {order.frequency.replace('_', ' ')} service
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Additional service details if available */}
-                    {(order.service_details?.homeSize || order.service_details?.dwellingType || order.service_details?.primaryFlooringType) && (
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm mt-3">
-                        {order.service_details?.homeSize && (
-                          <div className="bg-blue-50 p-2 rounded">
-                            <span className="text-muted-foreground text-xs">Home Size</span>
-                            <div className="font-medium text-xs">{order.service_details.homeSize}</div>
-                          </div>
-                        )}
-                        {order.service_details?.dwellingType && (
-                          <div className="bg-blue-50 p-2 rounded">
-                            <span className="text-muted-foreground text-xs">Dwelling Type</span>
-                            <div className="font-medium text-xs">{order.service_details.dwellingType}</div>
-                          </div>
-                        )}
-                        {order.service_details?.primaryFlooringType && (
-                          <div className="bg-blue-50 p-2 rounded">
-                            <span className="text-muted-foreground text-xs">Primary Flooring</span>
-                            <div className="font-medium text-xs">{order.service_details.primaryFlooringType}</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                   {/* Service Details - Enhanced Display */}
+                   <div className="space-y-3">
+                     <h4 className="font-semibold text-sm sm:text-base">Service Information</h4>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                       <div className="bg-muted/30 p-3 rounded-lg">
+                         <span className="text-muted-foreground text-xs">Service Type</span>
+                         <div className="font-medium">
+                           {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                         </div>
+                       </div>
+                       <div className="bg-muted/30 p-3 rounded-lg">
+                         <span className="text-muted-foreground text-xs">Frequency</span>
+                         <div className="font-medium">
+                           {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                         </div>
+                       </div>
+                       {order.square_footage && (
+                         <div className="bg-muted/30 p-3 rounded-lg">
+                           <span className="text-muted-foreground text-xs">Property Size</span>
+                           <div className="font-medium">{order.square_footage} sq ft</div>
+                         </div>
+                       )}
+                       <div className="bg-muted/30 p-3 rounded-lg">
+                         <span className="text-muted-foreground text-xs">Total Amount</span>
+                         <div className="font-medium text-primary text-lg">${(order.amount / 100).toFixed(2)}</div>
+                         {order.frequency && order.frequency !== 'one_time' && (
+                           <div className="text-xs text-muted-foreground mt-1">
+                             Per {order.frequency.replace('_', ' ')} service
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                     
+                     {/* Service Address */}
+                     {order.service_details?.serviceAddress && (
+                       <div className="bg-blue-50/50 p-4 rounded-lg">
+                         <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
+                           <MapPin className="h-4 w-4" />
+                           Service Address
+                         </h5>
+                         <div className="text-sm text-muted-foreground">
+                           {order.service_details.serviceAddress.street && (
+                             <div>{order.service_details.serviceAddress.street}</div>
+                           )}
+                           {order.service_details.serviceAddress.apartment && (
+                             <div>Apt/Unit: {order.service_details.serviceAddress.apartment}</div>
+                           )}
+                           <div>
+                             {order.service_details.serviceAddress.city}, {order.service_details.serviceAddress.state} {order.service_details.serviceAddress.zipCode}
+                           </div>
+                         </div>
+                       </div>
+                     )}
+                     
+                     {/* Property Details */}
+                     {(order.service_details?.property || order.service_details?.homeSize || order.service_details?.dwellingType || order.service_details?.primaryFlooringType) && (
+                       <div className="space-y-2">
+                         <h5 className="font-medium text-sm">Property Details</h5>
+                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                           {(order.service_details?.property?.dwellingType || order.service_details?.dwellingType) && (
+                             <div className="bg-muted/20 p-2 rounded">
+                               <span className="text-muted-foreground">Type</span>
+                               <div className="font-medium">{order.service_details?.property?.dwellingType || order.service_details?.dwellingType}</div>
+                             </div>
+                           )}
+                           {(order.service_details?.property?.primaryFlooringType || order.service_details?.primaryFlooringType) && (
+                             <div className="bg-muted/20 p-2 rounded">
+                               <span className="text-muted-foreground">Flooring</span>
+                               <div className="font-medium">{order.service_details?.property?.primaryFlooringType || order.service_details?.primaryFlooringType}</div>
+                             </div>
+                           )}
+                           {(order.service_details?.homeSize || order.service_details?.property?.homeSize) && (
+                             <div className="bg-muted/20 p-2 rounded">
+                               <span className="text-muted-foreground">Size</span>
+                               <div className="font-medium">{order.service_details?.homeSize || order.service_details?.property?.homeSize}</div>
+                             </div>
+                           )}
+                           {order.service_details?.property?.flooringTypes && (
+                             <div className="bg-muted/20 p-2 rounded col-span-2 sm:col-span-3">
+                               <span className="text-muted-foreground">Flooring Types</span>
+                               <div className="font-medium">{order.service_details.property.flooringTypes.join(', ')}</div>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     )}
+
+                     {/* Scheduling Details */}
+                     {(order.scheduled_date || order.scheduled_time) && (
+                       <div className="bg-green-50/50 p-4 rounded-lg">
+                         <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
+                           <Calendar className="h-4 w-4" />
+                           Scheduled Service
+                         </h5>
+                         <div className="text-sm">
+                           {order.scheduled_date && (
+                             <div className="font-medium">
+                               {new Date(order.scheduled_date).toLocaleDateString('en-US', {
+                                 weekday: 'long',
+                                 year: 'numeric',
+                                 month: 'long',
+                                 day: 'numeric'
+                               })}
+                             </div>
+                           )}
+                           {order.scheduled_time && (
+                             <div className="text-muted-foreground">at {order.scheduled_time}</div>
+                           )}
+                         </div>
+                       </div>
+                     )}
+                   </div>
 
                    {/* Add-ons */}
                    {order.add_ons && order.add_ons.length > 0 && (

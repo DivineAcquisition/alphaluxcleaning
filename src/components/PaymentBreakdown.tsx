@@ -12,6 +12,9 @@ interface PaymentBreakdownProps {
     frequency?: string;
     status: string;
     service_details?: any;
+    payment_details?: any;
+    add_ons?: string[];
+    scheduled_date?: string;
     stripe_payment_intent_id?: string;
     created_at: string;
   };
@@ -28,6 +31,7 @@ interface PaymentDetails {
     addOns: number;
     taxes: number;
     total: number;
+    addOnsList?: Array<{name: string, price: number}>;
   };
   nextPayment?: {
     amount: number;
@@ -45,40 +49,82 @@ export const PaymentBreakdown = ({ order }: PaymentBreakdownProps) => {
 
   const fetchPaymentDetails = async () => {
     try {
-      // For now, we'll create a mock breakdown since we don't have direct Stripe integration
-      // In a real implementation, you'd fetch from Stripe API or your payment records
+      // Extract real pricing data from service_details
+      const serviceDetails = order.service_details || {};
+      const paymentDetails = order.payment_details || {};
       
-      const basePrice = Math.round(order.amount * 0.85); // Assume 85% is base price
-      const addOns = Math.round(order.amount * 0.10); // 10% add-ons
-      const taxes = order.amount - basePrice - addOns; // Remainder is taxes
+      // Get base service price and add-ons from service_details
+      let basePrice = order.amount;
+      let addOnsTotal = 0;
+      let addOnsList: Array<{name: string, price: number}> = [];
+      
+      // Try to extract pricing from service_details structure
+      if (serviceDetails.pricing) {
+        basePrice = Math.round((serviceDetails.pricing.basePrice || serviceDetails.pricing.subtotal || order.amount) * 100);
+        addOnsTotal = Math.round((serviceDetails.pricing.addOnsTotal || 0) * 100);
+        
+        // Extract individual add-ons with prices
+        if (serviceDetails.pricing.addOns && Array.isArray(serviceDetails.pricing.addOns)) {
+          addOnsList = serviceDetails.pricing.addOns.map((addon: any) => ({
+            name: addon.name || addon.title || addon.service || 'Additional Service',
+            price: Math.round((addon.price || addon.cost || 0) * 100)
+          }));
+        }
+      } else if (serviceDetails.addOns || order.add_ons) {
+        // Fallback: estimate add-ons cost if no detailed pricing
+        const addOns = serviceDetails.addOns || order.add_ons || [];
+        if (addOns.length > 0) {
+          addOnsTotal = Math.round(order.amount * 0.15); // Estimate 15% for add-ons
+          basePrice = order.amount - addOnsTotal;
+          
+          addOnsList = addOns.map((addon: string) => ({
+            name: addon.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+            price: Math.round(addOnsTotal / addOns.length) // Distribute evenly
+          }));
+        }
+      }
+
+      // Calculate taxes (typically remainder after base + addons)
+      const taxes = order.amount - basePrice - addOnsTotal;
 
       const breakdown = {
         basePrice,
-        addOns,
-        taxes,
-        total: order.amount
+        addOns: addOnsTotal,
+        taxes: Math.max(0, taxes), // Ensure non-negative
+        total: order.amount,
+        addOnsList
       };
 
-      // Mock payment method (in real app, fetch from Stripe)
-      const paymentMethod = {
-        type: 'card',
-        last4: '4242',
-        brand: 'visa'
-      };
+      // Extract payment method from payment_details if available
+      let paymentMethod = null;
+      if (paymentDetails.payment_method || serviceDetails.paymentMethod) {
+        const pmData = paymentDetails.payment_method || serviceDetails.paymentMethod;
+        paymentMethod = {
+          type: pmData.type || 'card',
+          last4: pmData.last4 || '****',
+          brand: pmData.brand || 'card'
+        };
+      }
 
       // Calculate next payment for recurring services
       let nextPayment = null;
       if (order.frequency && order.frequency !== 'one_time') {
         const nextDate = new Date();
+        const scheduledDate = order.scheduled_date ? new Date(order.scheduled_date) : new Date();
+        
         switch (order.frequency.toLowerCase()) {
           case 'weekly':
-            nextDate.setDate(nextDate.getDate() + 7);
+            nextDate.setDate(scheduledDate.getDate() + 7);
             break;
           case 'bi_weekly':
-            nextDate.setDate(nextDate.getDate() + 14);
+          case 'biweekly':
+            nextDate.setDate(scheduledDate.getDate() + 14);
             break;
           case 'monthly':
-            nextDate.setMonth(nextDate.getMonth() + 1);
+            nextDate.setMonth(scheduledDate.getMonth() + 1);
+            break;
+          case 'quarterly':
+            nextDate.setMonth(scheduledDate.getMonth() + 3);
             break;
         }
         
@@ -94,7 +140,17 @@ export const PaymentBreakdown = ({ order }: PaymentBreakdownProps) => {
         nextPayment
       });
     } catch (error) {
-      console.error('Error fetching payment details:', error);
+      console.error('Error processing payment details:', error);
+      // Fallback to basic display
+      setPaymentDetails({
+        breakdown: {
+          basePrice: order.amount,
+          addOns: 0,
+          taxes: 0,
+          total: order.amount,
+          addOnsList: []
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -155,14 +211,28 @@ export const PaymentBreakdown = ({ order }: PaymentBreakdownProps) => {
                 <span>Base Service</span>
                 <span>${(paymentDetails.breakdown.basePrice / 100).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Additional Services</span>
-                <span>${(paymentDetails.breakdown.addOns / 100).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Taxes & Fees</span>
-                <span>${(paymentDetails.breakdown.taxes / 100).toFixed(2)}</span>
-              </div>
+              
+              {/* Individual Add-ons */}
+              {paymentDetails.breakdown.addOnsList && paymentDetails.breakdown.addOnsList.length > 0 ? (
+                paymentDetails.breakdown.addOnsList.map((addon, index) => (
+                  <div key={index} className="flex justify-between text-muted-foreground">
+                    <span className="pl-2">+ {addon.name}</span>
+                    <span>${(addon.price / 100).toFixed(2)}</span>
+                  </div>
+                ))
+              ) : paymentDetails.breakdown.addOns > 0 ? (
+                <div className="flex justify-between">
+                  <span>Additional Services</span>
+                  <span>${(paymentDetails.breakdown.addOns / 100).toFixed(2)}</span>
+                </div>
+              ) : null}
+              
+              {paymentDetails.breakdown.taxes > 0 && (
+                <div className="flex justify-between">
+                  <span>Taxes & Fees</span>
+                  <span>${(paymentDetails.breakdown.taxes / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="border-t pt-2 flex justify-between font-medium">
                 <span>Total Paid</span>
                 <span>${(paymentDetails.breakdown.total / 100).toFixed(2)}</span>
