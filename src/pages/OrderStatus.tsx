@@ -365,24 +365,32 @@ export default function OrderStatus() {
                        <div className="bg-muted/30 p-3 rounded-lg">
                          <span className="text-muted-foreground text-xs">Service Type</span>
                          <div className="font-medium">
-                           {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning
+                           {order.cleaning_type 
+                             ? order.cleaning_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Cleaning'
+                             : 'General Cleaning'
+                           }
                          </div>
                        </div>
                        <div className="bg-muted/30 p-3 rounded-lg">
                          <span className="text-muted-foreground text-xs">Frequency</span>
                          <div className="font-medium">
-                           {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                           {order.frequency 
+                             ? order.frequency.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                             : 'One-time'
+                           }
                          </div>
                        </div>
-                       {order.square_footage && (
-                         <div className="bg-muted/30 p-3 rounded-lg">
-                           <span className="text-muted-foreground text-xs">Property Size</span>
-                           <div className="font-medium">{order.square_footage} sq ft</div>
+                       <div className="bg-muted/30 p-3 rounded-lg">
+                         <span className="text-muted-foreground text-xs">Property Size</span>
+                         <div className="font-medium">
+                           {order.square_footage ? `${order.square_footage} sq ft` : 'Standard home'}
                          </div>
-                       )}
+                       </div>
                        <div className="bg-muted/30 p-3 rounded-lg">
                          <span className="text-muted-foreground text-xs">Total Amount</span>
-                         <div className="font-medium text-primary text-lg">${(order.amount / 100).toFixed(2)}</div>
+                         <div className="font-medium text-primary text-lg">
+                           ${order.amount ? (order.amount / 100).toFixed(2) : '0.00'}
+                         </div>
                          {order.frequency && order.frequency !== 'one_time' && (
                            <div className="text-xs text-muted-foreground mt-1">
                              Per {order.frequency.replace('_', ' ')} service
@@ -391,26 +399,29 @@ export default function OrderStatus() {
                        </div>
                      </div>
                      
-                     {/* Service Address */}
-                     {order.service_details?.serviceAddress && (
-                       <div className="bg-blue-50/50 p-4 rounded-lg">
-                         <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
-                           <MapPin className="h-4 w-4" />
-                           Service Address
-                         </h5>
-                         <div className="text-sm text-muted-foreground">
-                           {order.service_details.serviceAddress.street && (
-                             <div>{order.service_details.serviceAddress.street}</div>
-                           )}
-                           {order.service_details.serviceAddress.apartment && (
-                             <div>Apt/Unit: {order.service_details.serviceAddress.apartment}</div>
-                           )}
-                           <div>
-                             {order.service_details.serviceAddress.city}, {order.service_details.serviceAddress.state} {order.service_details.serviceAddress.zipCode}
+                       {/* Service Address */}
+                       {(order.service_details?.serviceAddress || order.service_details?.address) && (
+                         <div className="bg-blue-50/50 p-4 rounded-lg">
+                           <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
+                             <MapPin className="h-4 w-4" />
+                             Service Address
+                           </h5>
+                           <div className="text-sm text-muted-foreground">
+                             {(() => {
+                               const address = order.service_details.serviceAddress || order.service_details.address;
+                               return (
+                                 <>
+                                   {address.street && <div>{address.street}</div>}
+                                   {address.apartment && <div>Apt/Unit: {address.apartment}</div>}
+                                   <div>
+                                     {address.city || 'N/A'}, {address.state || 'CA'} {address.zipCode || address.zip_code || 'N/A'}
+                                   </div>
+                                 </>
+                               );
+                             })()}
                            </div>
                          </div>
-                       </div>
-                     )}
+                       )}
                      
                      {/* Property Details */}
                      {(order.service_details?.property || order.service_details?.homeSize || order.service_details?.dwellingType || order.service_details?.primaryFlooringType) && (

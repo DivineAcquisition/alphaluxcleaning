@@ -60,6 +60,12 @@ export const useBookingWebhook = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // UUID validation helper
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   const sendBookingWebhook = async (data: BookingWebhookData) => {
     setIsLoading(true);
     
@@ -73,11 +79,16 @@ export const useBookingWebhook = () => {
       console.log('Sending booking webhook for step:', data.bookingStep, {
         serviceType: data.serviceType,
         customerEmail: data.customerInfo?.email,
-        totalPrice: data.totalPrice
+        totalPrice: data.totalPrice,
+        orderId: data.orderId,
+        hasValidOrderId: data.orderId ? isValidUUID(data.orderId) : false
       });
 
-      // If we have order_id, use enhanced-booking-webhook-v2, otherwise use legacy
-      const functionName = data.orderId ? 'enhanced-booking-webhook-v2' : 'send-booking-transaction-to-zapier';
+      // Only use enhanced-booking-webhook-v2 if we have a valid UUID order_id
+      const hasValidOrderId = data.orderId && isValidUUID(data.orderId);
+      const functionName = hasValidOrderId ? 'enhanced-booking-webhook-v2' : 'send-booking-transaction-to-zapier';
+      
+      console.log(`Using ${functionName} for webhook delivery (valid order_id: ${hasValidOrderId})`)
       
       const { data: response, error } = await supabase.functions.invoke(functionName, {
         body: data.orderId ? {

@@ -26,29 +26,87 @@ serve(async (req) => {
     const input: WebhookInput = await req.json();
     console.log('Enhanced webhook v2 triggered:', input);
 
-    // Get order data
-    let orderData;
+    // Get order data with multiple lookup strategies
+    let orderData = null;
+    let lookupMethod = '';
+    
+    // Strategy 1: Try order_id (exact match)
     if (input.order_id) {
+      console.log(`Trying order_id lookup: ${input.order_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('id', input.order_id)
-        .single();
+        .maybeSingle();
       
-      if (error) throw new Error(`Order not found: ${error.message}`);
-      orderData = data;
-    } else if (input.session_id) {
+      if (data && !error) {
+        orderData = data;
+        lookupMethod = 'order_id';
+        console.log(`Found order by order_id: ${orderData.id}`);
+      } else {
+        console.log(`Order_id lookup failed: ${error?.message}`);
+      }
+    }
+    
+    // Strategy 2: Try session_id (stripe_session_id)
+    if (!orderData && input.session_id) {
+      console.log(`Trying session_id lookup: ${input.session_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('stripe_session_id', input.session_id)
-        .single();
+        .maybeSingle();
       
-      if (error) throw new Error(`Order not found by session: ${error.message}`);
-      orderData = data;
-    } else {
-      throw new Error('No order_id or session_id provided');
+      if (data && !error) {
+        orderData = data;
+        lookupMethod = 'stripe_session_id';
+        console.log(`Found order by session_id: ${orderData.id}`);
+      } else {
+        console.log(`Session_id lookup failed: ${error?.message}`);
+      }
     }
+    
+    // Strategy 3: Try payment_intent_id
+    if (!orderData && input.session_id) {
+      console.log(`Trying payment_intent_id lookup: ${input.session_id}`);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('stripe_payment_intent_id', input.session_id)
+        .maybeSingle();
+      
+      if (data && !error) {
+        orderData = data;
+        lookupMethod = 'stripe_payment_intent_id';
+        console.log(`Found order by payment_intent_id: ${orderData.id}`);
+      } else {
+        console.log(`Payment_intent_id lookup failed: ${error?.message}`);
+      }
+    }
+    
+    // Strategy 4: Try setup_intent_id
+    if (!orderData && input.session_id) {
+      console.log(`Trying setup_intent_id lookup: ${input.session_id}`);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('stripe_setup_intent_id', input.session_id)
+        .maybeSingle();
+      
+      if (data && !error) {
+        orderData = data;
+        lookupMethod = 'stripe_setup_intent_id';
+        console.log(`Found order by setup_intent_id: ${orderData.id}`);
+      } else {
+        console.log(`Setup_intent_id lookup failed: ${error?.message}`);
+      }
+    }
+    
+    if (!orderData) {
+      throw new Error(`Order not found with provided identifiers. Tried: ${input.order_id ? 'order_id, ' : ''}${input.session_id ? 'session_id, payment_intent_id, setup_intent_id' : ''}`);
+    }
+    
+    console.log(`Order lookup successful via ${lookupMethod}: ${orderData.id}`);
 
     // Get assigned subcontractor data
     let assignedSubcontractor = null;

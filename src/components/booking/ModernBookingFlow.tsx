@@ -238,11 +238,10 @@ export function ModernBookingFlow({
         bookingStep: step === 1 ? 'service_selection' as const 
                    : step === 2 ? 'service_details' as const
                    : step === 3 ? 'payment' as const
-                   : 'confirmation' as const,
+                   : 'confirmation' as const
         
-        // Session info
-        orderId: `booking_${Date.now()}`,
-        bookingId: `session_${Date.now()}`
+        // Don't send fake order_id/booking_id for step webhooks
+        // Only use real IDs after payment completion
       };
 
       await sendBookingWebhook(webhookData);
