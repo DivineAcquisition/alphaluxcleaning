@@ -17,6 +17,7 @@ import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelecto
 import { PaymentErrorBoundary } from '@/components/payment/PaymentErrorBoundary';
 import { calculatePaymentAmount, toStripeAmount, formatPrice } from '@/lib/pricing-utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBookingWebhook } from '@/hooks/useBookingWebhook';
 
 interface BookingData {
   homeSize: string;
@@ -50,6 +51,7 @@ interface Props {
 
 export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentSuccess, onBack }: Props) {
   const { user } = useAuth(); // Get authenticated user info
+  const { sendBookingWebhook } = useBookingWebhook();
   const [isRecurring, setIsRecurring] = useState(bookingData.frequency !== 'one-time');
   const [paymentType, setPaymentType] = useState<'pay_after_service' | '25_percent_with_discount'>('pay_after_service');
   const [promoCode, setPromoCode] = useState('');
@@ -201,7 +203,62 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
 
-  const handlePaymentSuccess = (paymentIntentId: string) => {
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    try {
+      // Send webhook on payment success
+      const customerInfo = {
+        name: user?.user_metadata?.full_name || 'Guest User',
+        email: user?.email || 'guest@example.com',
+        phone: bookingData.contactNumber || '',
+        address: bookingData.address.street || '',
+        city: bookingData.address.city || '',
+        state: bookingData.address.state || 'CA',
+        zipCode: bookingData.address.zipCode || ''
+      };
+
+      const webhookData = {
+        // Service Selection Data
+        homeSize: bookingData.homeSize,
+        serviceType: 'residential_cleaning',
+        frequency: bookingData.frequency,
+        addOns: bookingData.addOns,
+        
+        // Service Details
+        serviceDate: bookingData.serviceDate,
+        serviceTime: bookingData.serviceTime,
+        address: bookingData.address,
+        contactNumber: bookingData.contactNumber,
+        specialInstructions: bookingData.specialInstructions,
+        
+        // Customer Information
+        customerInfo,
+        
+        // Pricing Information
+        basePrice: bookingData.basePrice,
+        addOnPrices: bookingData.addOnPrices,
+        frequencyDiscount: bookingData.frequencyDiscount,
+        totalPrice: bookingData.totalPrice,
+        
+        // Payment Information
+        paymentType: bookingData.paymentType === 'pay_after_service' ? 'prepayment' as const 
+                   : bookingData.paymentType === '25_percent_with_discount' ? 'half' as const
+                   : 'full' as const,
+        paymentAmount: paymentAmount,
+        
+        // Step information
+        bookingStep: 'payment' as const,
+        
+        // Payment session info
+        orderId: paymentIntentId,
+        bookingId: paymentIntentId
+      };
+
+      await sendBookingWebhook(webhookData);
+    } catch (error) {
+      console.error('Error sending payment webhook:', error);
+      // Don't block payment success for webhook errors
+    }
+    
     onPaymentSuccess(paymentIntentId);
   };
 

@@ -6,6 +6,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
+import { useBookingWebhook } from '@/hooks/useBookingWebhook';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
@@ -71,12 +73,14 @@ export function ModernBookingFlow({
   onComplete,
   guestMode = false 
 }: Props = {}) {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showMobileHelp, setShowMobileHelp] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [hasError, setHasError] = useState(false);
+  const { sendBookingWebhook } = useBookingWebhook();
   
   // Retry functionality for booking operations
   const retryHook = useBookingRetry({
@@ -186,8 +190,72 @@ export function ModernBookingFlow({
     }
   };
 
-  const handleNext = () => {
+  const sendWebhookForStep = useCallback(async (step: number) => {
+    try {
+      const customerInfo = {
+        name: user?.user_metadata?.full_name || 'Guest User',
+        email: user?.email || 'guest@example.com',
+        phone: bookingData.contactNumber || '',
+        address: bookingData.address.street || '',
+        city: bookingData.address.city || '',
+        state: bookingData.address.state || 'CA',
+        zipCode: bookingData.address.zipCode || ''
+      };
+
+      const webhookData = {
+        // Service Selection Data
+        homeSize: bookingData.homeSize,
+        serviceType: 'residential_cleaning',
+        frequency: bookingData.frequency,
+        addOns: bookingData.addOns,
+        
+        // Service Details
+        serviceDate: bookingData.serviceDate,
+        serviceTime: bookingData.serviceTime,
+        address: bookingData.address,
+        contactNumber: bookingData.contactNumber,
+        specialInstructions: bookingData.specialInstructions,
+        
+        // Customer Information
+        customerInfo,
+        
+        // Pricing Information
+        basePrice: bookingData.basePrice,
+        addOnPrices: bookingData.addOnPrices,
+        frequencyDiscount: bookingData.frequencyDiscount,
+        totalPrice: bookingData.totalPrice,
+        
+        // Payment Information
+        paymentType: bookingData.paymentType === 'pay_after_service' ? 'prepayment' as const 
+                   : bookingData.paymentType === '25_percent_with_discount' ? 'half' as const
+                   : 'full' as const,
+        paymentAmount: bookingData.paymentType === '25_percent_with_discount' 
+          ? bookingData.totalPrice * 0.25 
+          : 0,
+        
+        // Step information
+        bookingStep: step === 1 ? 'service_selection' as const 
+                   : step === 2 ? 'service_details' as const
+                   : step === 3 ? 'payment' as const
+                   : 'confirmation' as const,
+        
+        // Session info
+        orderId: `booking_${Date.now()}`,
+        bookingId: `session_${Date.now()}`
+      };
+
+      await sendBookingWebhook(webhookData);
+    } catch (error) {
+      console.error('Webhook error at step', step, ':', error);
+      // Don't block the user flow for webhook errors
+    }
+  }, [bookingData, user, sendBookingWebhook]);
+
+  const handleNext = async () => {
     if (canProceedToNext() && currentStep < 4) {
+      // Send webhook for current step before moving to next
+      await sendWebhookForStep(currentStep);
+      
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -204,6 +272,9 @@ export function ModernBookingFlow({
     console.log('🎉 Payment/Authorization successful:', sessionId);
     handleDataUpdate({ stripeSessionId: sessionId });
     
+    // Send final webhook with payment completion
+    await sendWebhookForStep(4);
+    
     // Add success message based on payment type
     if (bookingData.paymentType === 'pay_after_service') {
       toast.success('Card authorized successfully! You will be charged after service completion.');
@@ -217,7 +288,7 @@ export function ModernBookingFlow({
     // Clear saved data on successful completion
     clearData();
     onComplete?.();
-  }, [bookingData.paymentType, handleDataUpdate, clearData, onComplete]);
+  }, [bookingData.paymentType, handleDataUpdate, clearData, onComplete, sendWebhookForStep]);
 
 
   const renderCurrentStep = () => {
