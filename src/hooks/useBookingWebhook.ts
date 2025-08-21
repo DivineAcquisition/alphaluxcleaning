@@ -76,13 +76,18 @@ export const useBookingWebhook = () => {
         totalPrice: data.totalPrice
       });
 
-      // Use the new enhanced webhook v2 function with exact data format
-      const { data: response, error } = await supabase.functions.invoke('enhanced-booking-webhook-v2', {
-        body: {
+      // If we have order_id, use enhanced-booking-webhook-v2, otherwise use legacy
+      const functionName = data.orderId ? 'enhanced-booking-webhook-v2' : 'send-booking-transaction-to-zapier';
+      
+      const { data: response, error } = await supabase.functions.invoke(functionName, {
+        body: data.orderId ? {
           ...webhookData,
           trigger_event: data.bookingStep,
           order_id: data.orderId,
           booking_id: data.bookingId
+        } : {
+          transactionData: webhookData,
+          type: 'booking_step'
         }
       });
 

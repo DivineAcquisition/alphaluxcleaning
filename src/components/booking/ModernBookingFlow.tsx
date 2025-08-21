@@ -8,6 +8,7 @@ import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
 import { useBookingWebhook } from '@/hooks/useBookingWebhook';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
@@ -272,8 +273,56 @@ export function ModernBookingFlow({
     console.log('🎉 Payment/Authorization successful:', sessionId);
     handleDataUpdate({ stripeSessionId: sessionId });
     
-    // Send final webhook with payment completion
-    await sendWebhookForStep(4);
+    // Get order details to send to webhooks
+    try {
+      // Try to get order details using session_id
+      const { data: orderData, error } = await supabase.functions.invoke('get-order-details', {
+        body: { session_id: sessionId }
+      });
+      
+      if (orderData && !error) {
+        console.log('Retrieved order data for webhook:', orderData);
+        
+        // Send to enhanced webhook system if we have order_id
+        if (orderData.order_id) {
+          await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+            body: {
+              ...bookingData,
+              order_id: orderData.order_id,
+              session_id: sessionId,
+              trigger_event: 'confirmation',
+              timestamp: new Date().toISOString(),
+              source: 'bay_area_cleaning_pros_website'
+            }
+          });
+        }
+        
+        // Also send to Zapier as backup
+        await supabase.functions.invoke('send-booking-transaction-to-zapier', {
+          body: {
+            transactionData: {
+              ...bookingData,
+              order_id: orderData.order_id,
+              session_id: sessionId,
+              timestamp: new Date().toISOString(),
+              source: 'bay_area_cleaning_pros_website',
+              trigger_event: 'booking_confirmation'
+            },
+            type: 'booking_confirmation'
+          }
+        });
+        
+        console.log('All confirmation webhooks sent successfully');
+      } else {
+        console.warn('Could not retrieve order data for webhooks:', error);
+        // Send basic webhook data
+        await sendWebhookForStep(4);
+      }
+    } catch (webhookError) {
+      console.error('Failed to send confirmation webhooks:', webhookError);
+      // Still try basic webhook
+      await sendWebhookForStep(4);
+    }
     
     // Add success message based on payment type
     if (bookingData.paymentType === 'pay_after_service') {
@@ -288,7 +337,7 @@ export function ModernBookingFlow({
     // Clear saved data on successful completion
     clearData();
     onComplete?.();
-  }, [bookingData.paymentType, handleDataUpdate, clearData, onComplete, sendWebhookForStep]);
+  }, [bookingData, handleDataUpdate, clearData, onComplete, sendWebhookForStep]);
 
 
   const renderCurrentStep = () => {
