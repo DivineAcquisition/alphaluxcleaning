@@ -28,11 +28,23 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    console.log('🔄 [update-order-details] Processing request:', JSON.stringify({
+      session_id: !!session_id,
+      order_id: !!order_id,
+      hasServiceDetails: !!service_details,
+      hasScheduledDate: !!body.scheduled_date,
+      hasScheduledTime: !!body.scheduled_time
+    }));
+
     const updates: Record<string, unknown> = {};
     if (service_details) updates.service_details = service_details;
     if (customer_email) updates.customer_email = customer_email;
     if (customer_name) updates.customer_name = customer_name;
     if (customer_phone) updates.customer_phone = customer_phone;
+    
+    // Handle scheduling fields
+    if (body.scheduled_date) updates.scheduled_date = body.scheduled_date;
+    if (body.scheduled_time) updates.scheduled_time = body.scheduled_time;
 
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: "No update fields provided" }), {
@@ -49,15 +61,20 @@ serve(async (req) => {
       query = query.eq("id", order_id);
     }
 
+    console.log('🔄 [update-order-details] Executing query with updates:', JSON.stringify(updates));
+    
     const { data, error } = await query;
 
     if (error) {
+      console.error('❌ [update-order-details] Database error:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       });
     }
 
+    console.log('✅ [update-order-details] Successfully updated order:', data?.id);
+    
     return new Response(JSON.stringify({ success: true, order: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

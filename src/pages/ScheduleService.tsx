@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { OrderStatusLookup } from "@/components/OrderStatusLookup";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NextDayBookingDialog from "@/components/NextDayBookingDialog";
-import CustomSchedulerUI from "@/components/CustomSchedulerUI";
+import ModernSchedulerInterface from "@/components/ModernSchedulerInterface";
 
 const ScheduleService = () => {
   const [searchParams] = useSearchParams();
@@ -292,17 +292,13 @@ const ScheduleService = () => {
           </div>
 
 
-          {/* Ultra-Compact Scheduler UI */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-3">
-              <CustomSchedulerUI
-                orderId={orderId}
-                sessionId={sessionId}
-                serviceType={orderDetails?.cleaning_type?.replace(/_/g, ' ') || 'general'}
-                onComplete={handleSchedulingComplete}
-              />
-            </CardContent>
-          </Card>
+          {/* Modern Scheduler Interface */}
+          <ModernSchedulerInterface
+            orderId={orderId}
+            sessionId={sessionId}
+            serviceType={orderDetails?.cleaning_type?.replace(/_/g, ' ') || 'general'}
+            onComplete={handleSchedulingComplete}
+          />
 
           {/* Order Status Check - Compact */}
           <div className="text-center py-4 border-t">
