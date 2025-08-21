@@ -289,7 +289,7 @@ export function StripePaymentForm({
       const { error: confirmError, setupIntent } = await stripe.confirmSetup({
         elements,
         confirmParams: {
-          return_url: window.location.origin + '/booking-confirmation',
+          return_url: window.location.origin + '/payment-success',
         },
         redirect: 'if_required',
       });
@@ -341,7 +341,7 @@ export function StripePaymentForm({
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: window.location.origin + '/booking-confirmation',
+          return_url: window.location.origin + '/payment-success',
         },
         redirect: 'if_required',
       });

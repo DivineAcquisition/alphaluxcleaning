@@ -273,15 +273,23 @@ export function ModernBookingFlow({
     console.log('🎉 Payment/Authorization successful:', sessionId);
     handleDataUpdate({ stripeSessionId: sessionId });
     
+    // Store order information for potential redirects
+    localStorage.setItem('current_order_id', sessionId);
+    
     // Get order details to send to webhooks
     try {
-      // Try to get order details using session_id
+      // Try to get order details using session_id (which is actually payment_intent_id or setup_intent_id)
       const { data: orderData, error } = await supabase.functions.invoke('get-order-details', {
         body: { session_id: sessionId }
       });
       
       if (orderData && !error) {
         console.log('Retrieved order data for webhook:', orderData);
+        
+        // Store the actual order_id if we got it
+        if (orderData.order_id) {
+          localStorage.setItem('current_order_id', orderData.order_id);
+        }
         
         // Send to enhanced webhook system if we have order_id
         if (orderData.order_id) {
