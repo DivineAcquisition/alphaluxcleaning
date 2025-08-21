@@ -14,11 +14,13 @@ import {
   Phone,
   Sparkles,
   CalendarDays,
-  Timer
+  Timer,
+  RefreshCw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import SchedulingSuccessFlow from './SchedulingSuccessFlow';
 
 interface ModernSchedulerProps {
   orderId?: string;
@@ -54,8 +56,14 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
   const [selectedTime, setSelectedTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState<'date' | 'time' | 'confirm'>('date');
+  const [submitError, setSubmitError] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<'checking' | 'available' | 'limited' | 'unavailable'>('available');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successData, setSuccessData] = useState<{ scheduled_date: string; scheduled_time: string } | null>(null);
 
-  const timeSlots: TimeSlot[] = [
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false, available: true },
     { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM', popular: true, available: true },
     { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM', popular: true, available: true },
@@ -65,7 +73,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM', popular: true, available: true },
     { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM', popular: false, available: true },
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false, available: true }
-  ];
+  ]);
 
   const generateDates = (): DateOption[] => {
     const dates = [];
@@ -97,6 +105,66 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     return dates;
   };
 
+  // Enhanced availability checking with real-time feedback
+  const checkAvailability = async (date: string) => {
+    setIsCheckingAvailability(true);
+    setAvailabilityStatus('checking');
+    
+    try {
+      // Simulate availability check (replace with real API call)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Simulate different availability scenarios
+      const dayOfWeek = new Date(date).getDay();
+      const isWeekend = dayOfWeek === 6 || dayOfWeek === 0;
+      const random = Math.random();
+      
+      let availabilityResult: 'available' | 'limited' | 'unavailable' = 'available';
+      
+      if (isWeekend) {
+        availabilityResult = random > 0.7 ? 'limited' : 'unavailable';
+      } else if (random > 0.8) {
+        availabilityResult = 'limited';
+      }
+      
+      setAvailabilityStatus(availabilityResult);
+      
+      // Update time slots based on availability
+      setTimeSlots(prevSlots => 
+        prevSlots.map(slot => ({
+          ...slot,
+          available: availabilityResult === 'unavailable' ? false : 
+                    availabilityResult === 'limited' ? slot.popular : true
+        }))
+      );
+      
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      setAvailabilityStatus('available'); // Default to available on error
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  // Effect to check availability when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      checkAvailability(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // Enhanced retry mechanism
+  const handleRetry = async () => {
+    setSubmitError('');
+    setRetryCount(prev => prev + 1);
+    
+    if (retryCount < 3) {
+      await handleSubmit();
+    } else {
+      toast.error('Maximum retry attempts reached. Please try again later or contact support.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error('Please select both a date and time');
@@ -104,6 +172,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     }
 
     setIsSubmitting(true);
+    setSubmitError('');
     try {
       console.log('🔄 Submitting scheduling request:', { 
         selectedDate, 
@@ -172,21 +241,22 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
 
       toast.success('Your scheduling request has been submitted successfully!');
 
-      // Navigate to order status page
-      const currentOrderId = orderId || localStorage.getItem('current_order_id');
-      if (currentOrderId) {
-        window.location.href = `/order-status?order_id=${currentOrderId}`;
-      } else if (sessionId) {
-        window.location.href = `/order-status?session_id=${sessionId}`;
-      } else if (onComplete) {
-        onComplete({
-          scheduled_date: selectedDate,
-          scheduled_time: selectedTime
-        });
-      }
+      // Show success flow instead of immediate redirect
+      setSuccessData({
+        scheduled_date: selectedDate,
+        scheduled_time: selectedTime
+      });
+      setIsSuccess(true);
     } catch (error) {
       console.error('❌ Scheduling error:', error);
-      toast.error('Failed to submit scheduling request. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit scheduling request';
+      setSubmitError(errorMessage);
+      
+      if (retryCount < 2) {
+        toast.error(`${errorMessage}. Retry attempt ${retryCount + 1}/3`);
+      } else {
+        toast.error('Failed to submit after multiple attempts. Please contact support.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -195,6 +265,61 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
   const dates = generateDates();
   const selectedDateObj = dates.find(d => d.value === selectedDate);
   const selectedTimeObj = timeSlots.find(t => t.value === selectedTime);
+
+  // Handle success flow navigation
+  const handleSuccessContinue = () => {
+    const currentOrderId = orderId || localStorage.getItem('current_order_id');
+    if (currentOrderId) {
+      window.location.href = `/order-status?order_id=${currentOrderId}`;
+    } else if (sessionId) {
+      window.location.href = `/order-status?session_id=${sessionId}`;
+    } else if (onComplete && successData) {
+      onComplete(successData);
+    }
+  };
+
+  // Pull-to-refresh functionality for mobile
+  useEffect(() => {
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.changedTouches[0].screenY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndY = e.changedTouches[0].screenY;
+      
+      // Check if it's a pull down gesture at the top of the page
+      if (window.scrollY === 0 && touchEndY > touchStartY + 100) {
+        if (selectedDate) {
+          toast.info('Refreshing availability...');
+          checkAvailability(selectedDate);
+        }
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [selectedDate]);
+
+  // Show success flow if completed
+  if (isSuccess && successData) {
+    return (
+      <SchedulingSuccessFlow
+        scheduledDate={successData.scheduled_date}
+        scheduledTime={successData.scheduled_time}
+        orderId={orderId}
+        sessionId={sessionId}
+        onContinue={handleSuccessContinue}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
@@ -225,7 +350,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
         </div>
       </div>
 
-      {/* Important Notice */}
+      {/* Important Notice & Availability Status */}
       <Alert className="border-amber-200 bg-amber-50 mb-6">
         <AlertCircle className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
@@ -233,6 +358,37 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
           We'll contact you within 2 hours to confirm availability.
         </AlertDescription>
       </Alert>
+
+      {/* Availability Status Indicator */}
+      {selectedDate && (
+        <Card className={cn(
+          "mb-6 transition-all duration-300",
+          availabilityStatus === 'available' && "border-green-200 bg-green-50",
+          availabilityStatus === 'limited' && "border-yellow-200 bg-yellow-50",
+          availabilityStatus === 'unavailable' && "border-red-200 bg-red-50",
+          availabilityStatus === 'checking' && "border-blue-200 bg-blue-50"
+        )}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              {isCheckingAvailability ? (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              ) : (
+                <>
+                  {availabilityStatus === 'available' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+                  {availabilityStatus === 'limited' && <AlertCircle className="h-5 w-5 text-yellow-600" />}
+                  {availabilityStatus === 'unavailable' && <AlertCircle className="h-5 w-5 text-red-600" />}
+                </>
+              )}
+              <div>
+                {isCheckingAvailability && <span className="font-medium text-blue-800">Checking availability...</span>}
+                {availabilityStatus === 'available' && <span className="font-medium text-green-800">Good availability for this date</span>}
+                {availabilityStatus === 'limited' && <span className="font-medium text-yellow-800">Limited availability - popular slots may be taken</span>}
+                {availabilityStatus === 'unavailable' && <span className="font-medium text-red-800">Very limited availability - consider another date</span>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Date Selection */}
       {(!selectedDate || currentStep === 'date') && (
@@ -288,10 +444,23 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
         <Card className="border-0 shadow-lg bg-gradient-to-br from-background to-muted/20">
           <CardContent className="p-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
-                <Clock className="h-6 w-6 text-primary" />
-                Choose Your Time
-              </h2>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Clock className="h-6 w-6 text-primary" />
+                  Choose Your Time
+                </h2>
+                {selectedDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => checkAvailability(selectedDate)}
+                    disabled={isCheckingAvailability}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <RefreshCw className={cn("h-4 w-4", isCheckingAvailability && "animate-spin")} />
+                  </Button>
+                )}
+              </div>
               <p className="text-muted-foreground">
                 Select your preferred 2-hour service window for <span className="font-medium">{selectedDateObj?.fullDate}</span>
               </p>
@@ -382,15 +551,46 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
             </div>
 
             <div className="space-y-4">
+              {/* Error Message with Retry */}
+              {submitError && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    <div className="flex items-center justify-between">
+                      <span>{submitError}</span>
+                      {retryCount < 3 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRetry}
+                          className="ml-2 border-red-300 text-red-700 hover:bg-red-100"
+                        >
+                          Retry ({3 - retryCount} left)
+                        </Button>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg"
+                disabled={isSubmitting || (availabilityStatus === 'unavailable')}
+                className={cn(
+                  "w-full h-14 text-lg font-semibold shadow-lg transition-all duration-300",
+                  availabilityStatus === 'unavailable' 
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                )}
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Submitting Request...
+                  </>
+                ) : availabilityStatus === 'unavailable' ? (
+                  <>
+                    No Availability - Choose Different Date
                   </>
                 ) : (
                   <>
