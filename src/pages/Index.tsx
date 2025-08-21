@@ -236,7 +236,7 @@ const Index = () => {
                           variant="secondary"
                           className="bg-white text-primary hover:bg-white/90 font-semibold"
                         >
-                          <a href="/instant-quote">
+                          <a href="/guest-booking">
                             Book Now - Get Instant Quote
                           </a>
                         </Button>

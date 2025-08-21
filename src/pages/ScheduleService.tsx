@@ -83,7 +83,7 @@ const ScheduleService = () => {
       if (hostname.startsWith('portal.')) {
         navigate('/customer-portal-dashboard');
       } else {
-        navigate('/instant-quote');
+        navigate('/guest-booking');
       }
       return;
     }

@@ -111,7 +111,7 @@ const PaymentConfirmation = () => {
             <CardContent className="text-center p-8">
               <h2 className="text-xl font-bold mb-4">Error</h2>
               <p className="text-muted-foreground mb-6">{error || 'No session or order ID found. Please return to the homepage and try again.'}</p>
-              <Button onClick={() => navigate('/instant-quote')}>
+              <Button onClick={() => navigate('/guest-booking')}>
                 <Home className="h-4 w-4 mr-2" />
                 Return Home
               </Button>

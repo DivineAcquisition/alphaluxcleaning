@@ -95,7 +95,7 @@ const ServiceDetails = () => {
       if (hostname.startsWith('portal.')) {
         navigate('/customer-portal-dashboard');
       } else {
-        navigate('/instant-quote');
+        navigate('/guest-booking');
       }
       return;
     }
@@ -115,7 +115,7 @@ const ServiceDetails = () => {
 
       if (error || !data?.order) {
         toast.error("Order not found");
-        navigate('/instant-quote');
+        navigate('/guest-booking');
         return;
       }
 
@@ -163,7 +163,7 @@ const ServiceDetails = () => {
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
-      navigate('/instant-quote');
+      navigate('/guest-booking');
     } finally {
       setLoading(false);
     }

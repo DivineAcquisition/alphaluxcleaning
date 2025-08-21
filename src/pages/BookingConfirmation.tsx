@@ -31,7 +31,7 @@ const BookingConfirmation = () => {
       if (hostname.startsWith('portal.')) {
         navigate('/customer-portal-dashboard');
       } else {
-        navigate('/instant-quote');
+        navigate('/guest-booking');
       }
       return;
     }
@@ -125,7 +125,7 @@ const BookingConfirmation = () => {
         if (hostname.startsWith('portal.')) {
           navigate('/customer-portal-dashboard');
         } else {
-          navigate('/instant-quote');
+          navigate('/guest-booking');
         }
         return;
       }
@@ -149,7 +149,7 @@ const BookingConfirmation = () => {
       if (hostname.startsWith('portal.')) {
         navigate('/customer-portal-dashboard');
       } else {
-        navigate('/instant-quote');
+        navigate('/guest-booking');
       }
     } finally {
       setLoading(false);

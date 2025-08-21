@@ -33,7 +33,7 @@ serve(async (req) => {
       created_at, updated_at, scheduled_date, scheduled_time, 
       cleaning_type, frequency, square_footage, 
       customer_name, customer_email, customer_phone,
-      service_details, add_ons, recurring_details, user_id
+      service_details, add_ons, user_id
     `;
 
     let data = null;

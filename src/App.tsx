@@ -77,7 +77,6 @@ import TrainingPortal from '@/pages/TrainingPortal';
 import ApiPortal from '@/pages/ApiPortal';
 
 // Phase 6: System Integration & New Pages
-import InstantQuote from '@/pages/InstantQuote';
 import PaymentPortal from '@/pages/PaymentPortal';
 import ConnectPortal from '@/pages/ConnectPortal';
 import TestingPortal from '@/pages/TestingPortal';
@@ -141,7 +140,7 @@ function DomainRouter() {
     return <Index />;
   }
   if (hostname.startsWith('booking.')) {
-    return <Navigate to="/instant-quote" replace />;
+    return <Navigate to="/guest-booking" replace />;
   }
   if (hostname.startsWith('pay.')) {
     return <Navigate to="/payment-portal" replace />;
@@ -526,7 +525,7 @@ function App() {
                 } />
                 
                 {/* Phase 6: System Integration & New Pages */}
-                <Route path="/instant-quote" element={<InstantQuote />} />
+                <Route path="/instant-quote" element={<Navigate to="/guest-booking" replace />} />
                 <Route path="/payment-portal" element={<PaymentPortal />} />
                 <Route path="/billing" element={
                   <ProtectedRoute requiredRole="customer">

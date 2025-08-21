@@ -119,11 +119,11 @@ export default function PaymentSuccess() {
         localStorage.removeItem('current_order_id');
         navigate(`/service-details?order_id=${orderData.id}`, { replace: true });
       } else {
-        console.log('❌ No valid order data found, redirecting to instant-quote after delay');
+        console.log('❌ No valid order data found, redirecting to guest-booking after delay');
         console.log('Available identifiers were:', { sessionId, orderId, paymentIntentId, setupIntentId });
         // Wait a bit to show debug info if needed
         setTimeout(() => {
-          navigate('/instant-quote', { replace: true });
+          navigate('/guest-booking', { replace: true });
         }, 3000);
         return; // Don't navigate immediately
       }
