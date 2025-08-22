@@ -3,14 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Circle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin, Clock, Phone } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle, Circle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin, Clock, Phone, Sparkles, Star, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { toast } from 'sonner';
 
 // Import existing booking components for reuse
-import { BookingDetailsPage } from '@/components/booking/BookingDetailsPage';
 import { BookingCheckoutPage } from '@/components/booking/BookingCheckoutPage';
+import { EnhancedSchedulingStep } from '@/components/EnhancedSchedulingStep';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Service tiers from RecurringBookingInterface
@@ -121,8 +126,9 @@ interface BookingData {
   homeSize: string;
   frequency: string;
   addOns: string[];
+  addMembership: boolean;
   
-  // Step 2: Service Details
+  // Step 2: Service Details & Scheduling
   serviceDate: string;
   serviceTime: string;
   address: {
@@ -135,10 +141,23 @@ interface BookingData {
   specialInstructions: string;
   nextDayFee?: number;
   
+  // Property Details
+  squareFootage: number;
+  bedrooms: string;
+  bathrooms: string;
+  dwellingType: string;
+  flooringType: string;
+  
+  // Customer Information
+  customerName: string;
+  customerEmail: string;
+  
   // Pricing calculations
   basePrice: number;
   addOnPrices: { [key: string]: number };
   frequencyDiscount: number;
+  membershipDiscount: number;
+  membershipFee: number;
   totalPrice: number;
   paymentType: 'pay_after_service' | '25_percent_with_discount';
   promoDiscount: number;
@@ -148,6 +167,7 @@ const initialBookingData: BookingData = {
   homeSize: '',
   frequency: 'one-time',
   addOns: [],
+  addMembership: false,
   serviceDate: '',
   serviceTime: '',
   address: {
@@ -158,9 +178,18 @@ const initialBookingData: BookingData = {
   },
   contactNumber: '',
   specialInstructions: '',
+  squareFootage: 1000,
+  bedrooms: '',
+  bathrooms: '',
+  dwellingType: '',
+  flooringType: '',
+  customerName: '',
+  customerEmail: '',
   basePrice: 0,
   addOnPrices: {},
   frequencyDiscount: 0,
+  membershipDiscount: 0,
+  membershipFee: 0,
   totalPrice: 0,
   paymentType: 'pay_after_service',
   promoDiscount: 0
@@ -210,27 +239,34 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
       }
     }
 
-    // Calculate add-on prices
+    // Calculate add-on prices with membership discount
     const addOnPrices: { [key: string]: number } = {};
     bookingData.addOns.forEach(addOnId => {
       const addOn = addOnServices.find(service => service.id === addOnId);
       if (addOn) {
-        addOnPrices[addOnId] = addOn.price;
+        const addOnPrice = addOn.price;
+        // Apply 10% membership discount to add-ons if membership is selected
+        const discountedPrice = bookingData.addMembership ? addOnPrice * 0.9 : addOnPrice;
+        addOnPrices[addOnId] = discountedPrice;
       }
     });
 
     const addOnsTotal = Object.values(addOnPrices).reduce((sum, price) => sum + price, 0);
     const subtotal = basePrice + addOnsTotal;
     const frequencyDiscount = selectedRecurring ? Math.round(subtotal * (selectedRecurring.discount / 100)) : 0;
-    const totalPrice = subtotal - frequencyDiscount;
+    const membershipDiscount = bookingData.addMembership ? 20 : 0;
+    const membershipFee = bookingData.addMembership ? 39 : 0;
+    const totalPrice = subtotal - frequencyDiscount - membershipDiscount;
 
     updateData({
       basePrice,
       addOnPrices,
       frequencyDiscount,
+      membershipDiscount,
+      membershipFee,
       totalPrice
     });
-  }, [bookingData.homeSize, bookingData.frequency, bookingData.addOns]);
+  }, [bookingData.homeSize, bookingData.frequency, bookingData.addOns, bookingData.addMembership]);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -240,7 +276,12 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
         return bookingData.serviceDate && 
                bookingData.serviceTime && 
                bookingData.address.street && 
-               bookingData.contactNumber;
+               bookingData.contactNumber &&
+               bookingData.customerName &&
+               bookingData.customerEmail &&
+               bookingData.bedrooms &&
+               bookingData.bathrooms &&
+               bookingData.dwellingType;
       case 3:
         return true;
       default:
@@ -287,6 +328,58 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
       case 1:
         return (
           <div className="space-y-8">
+            {/* BACP Club™ Membership */}
+            <Card className="shadow-clean border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  BACP Club™ Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-background">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-primary">Join BACP Club™ for $39/month</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      $20 off every clean + exclusive member benefits
+                    </p>
+                    
+                    {bookingData.addMembership && (
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-primary" />
+                          <span className="text-sm">$20 off every clean</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-primary" />
+                          <span className="text-sm">10% off all add-ons</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                          <span className="text-sm">Priority scheduling</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ArrowRight className="h-4 w-4 text-primary" />
+                          <span className="text-sm">Loyalty rewards</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Switch
+                      checked={bookingData.addMembership}
+                      onCheckedChange={(checked) => updateField('addMembership', checked)}
+                    />
+                    {bookingData.addMembership && (
+                      <Badge className="bg-success text-success-foreground">
+                        Save $20 Today!
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Service Tier Selection */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Choose Your Service Level</h3>
@@ -310,6 +403,11 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                     <div className="flex items-center justify-between">
                       <div className="text-2xl font-bold text-primary">
                         ${tier.basePrice}
+                        {bookingData.addMembership && (
+                          <span className="block text-sm text-success font-normal">
+                            ${tier.basePrice - 20} with membership
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {tier.hours}h • {tier.cleaners} cleaners
@@ -368,7 +466,12 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold">{addOn.name}</h4>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">+${addOn.price}</span>
+                          <span className="font-bold text-primary">
+                            +${bookingData.addMembership ? Math.round(addOn.price * 0.9) : addOn.price}
+                            {bookingData.addMembership && (
+                              <span className="text-xs text-success ml-1">(10% off)</span>
+                            )}
+                          </span>
                           {bookingData.addOns.includes(addOn.id) && (
                             <CheckCircle className="h-5 w-5 text-primary" />
                           )}
@@ -385,7 +488,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
 
       case 2:
         return (
-          <BookingDetailsPage
+          <EnhancedSchedulingStep
             bookingData={bookingData}
             updateBookingData={updateData}
             onNext={handleNext}
