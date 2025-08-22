@@ -88,20 +88,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
 
   const availableDates = generateAvailableDates();
 
-  // Auto-scroll effect when form sections are completed
-  useEffect(() => {
-    if (selectedDate) {
-      const timeSlotSection = document.getElementById('time-slot-section');
-      timeSlotSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [selectedDate]);
-
-  useEffect(() => {
-    if (bookingData.serviceTime) {
-      const addressSection = document.getElementById('address-section');
-      addressSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [bookingData.serviceTime]);
+  // Removed auto-scroll effects to prevent unwanted page jumping
 
   const handleDateSelect = async (date: Date | undefined) => {
     if (date) {
