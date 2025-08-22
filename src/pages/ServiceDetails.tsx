@@ -89,14 +89,10 @@ const ServiceDetails = () => {
       console.log("Not admin, checking session ID");
     }
 
+    // If not admin and no session/order ID, show error but don't redirect
     if (!sessionId && !orderId) {
-      toast.error("No session or order ID found. Redirecting...");
-      const hostname = window.location.hostname;
-      if (hostname.startsWith('portal.')) {
-        navigate('/customer-portal-dashboard');
-      } else {
-        navigate('/guest-booking');
-      }
+      toast.error("No session or order ID found.");
+      setLoading(false);
       return;
     }
     fetchOrderDetails();

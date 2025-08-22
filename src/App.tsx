@@ -236,7 +236,11 @@ function App() {
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/service-details" element={<ServiceDetails />} />
+                <Route path="/service-details" element={
+                  <ProtectedRoute allowedRoles={['customer', 'super_admin']}>
+                    <ServiceDetails />
+                  </ProtectedRoute>
+                } />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 <Route path="/admin-booking-preview" element={
