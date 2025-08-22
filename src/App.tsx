@@ -93,7 +93,7 @@ function DomainRouter() {
   }
   
   // Guest-accessible paths that should bypass domain redirects
-  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking', '/service-details'];
+  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking', '/service-details', '/schedule-service', '/booking-confirmation', '/membership'];
   
   // Core domain routing (simplified)
   if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {

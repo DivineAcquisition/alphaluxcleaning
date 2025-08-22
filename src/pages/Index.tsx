@@ -228,7 +228,7 @@ const Index = () => {
                       <div className="text-center text-white space-y-4">
                         <h3 className="text-xl font-bold">Ready to Book Your Service?</h3>
                         <p className="text-white/90">
-                          Secure your booking with our protected payment system
+                          Book instantly as a guest or create an account for faster future bookings
                         </p>
                         <Button 
                           asChild
@@ -237,11 +237,11 @@ const Index = () => {
                           className="bg-white text-primary hover:bg-white/90 font-semibold"
                         >
                           <a href="/guest-booking">
-                            Book Now - Get Instant Quote
+                            Book Now - No Account Required
                           </a>
                         </Button>
                         <p className="text-xs text-white/70">
-                          🔒 Sign in required to protect your payment information
+                          ✨ Account creation is optional and happens after booking
                         </p>
                       </div>
                     </CardContent>
