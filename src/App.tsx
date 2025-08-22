@@ -28,34 +28,38 @@ import SubcontractorMobile from '@/pages/SubcontractorMobile';
 import SubcontractorApplication from '@/pages/SubcontractorApplication';
 import SubcontractorApplicationThankYou from '@/pages/SubcontractorApplicationThankYou';
 import SubcontractorOnboardingV2 from '@/pages/SubcontractorOnboardingV2';
+import SubcontractorDesktopPortal from '@/pages/SubcontractorDesktopPortal';
 
-// Admin pages (unified)
+// Admin pages (simplified)
 import AdminPortal from '@/pages/AdminPortal';
 import CustomerManagementHub from '@/pages/CustomerManagementHub';
-import SystemsManagementHub from '@/pages/SystemsManagementHub';
 import SubcontractorDetail from '@/pages/SubcontractorDetail';
 import SubcontractorHub from '@/pages/SubcontractorHub';
 import TipsManagement from '@/pages/TipsManagement';
 import FeedbackCenter from '@/pages/FeedbackCenter';
 import CommunicationHub from '@/pages/CommunicationHub';
 import ApplicationManager from '@/pages/ApplicationManager';
-import WebhookManagement from '@/pages/WebhookManagement';
+import JobAssignments from '@/pages/JobAssignments';
+import AdminPaymentCenter from '@/pages/AdminPaymentCenter';
+import SecurityCenter from '@/pages/SecurityCenter';
 
-// Admin tool pages
+// Commercial estimates (kept as requested)
+import CommercialEstimates from '@/pages/CommercialEstimates';
+
+// Tier management system (kept as requested)
+import TierSystemConfig from '@/pages/TierSystemConfig';
+import TierPerformanceAnalytics from '@/pages/TierPerformanceAnalytics';
+import SubcontractorPaymentDashboard from '@/pages/SubcontractorPaymentDashboard';
+import { TierProgressionDashboard } from '@/components/admin/TierProgressionDashboard';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+
+// Review systems (kept as requested)
+import ReviewsPortal from '@/pages/ReviewsPortal';
+
+// Admin tool pages (simplified)
 import EmailSettings from '@/pages/EmailSettings';
 import UserManagement from '@/pages/UserManagement';
-import DatabaseTools from '@/pages/DatabaseTools';
-import ApiKeys from '@/pages/ApiKeys';
 import SecuritySettings from '@/pages/SecuritySettings';
-import SystemSettings from '@/pages/SystemSettings';
-
-// Office Manager pages
-import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
-import OfficeManagerJobs from '@/pages/OfficeManagerJobs';
-import OfficeManagerTeam from '@/pages/OfficeManagerTeam';
-import OfficeManagerBookings from '@/pages/OfficeManagerBookings';
-import OfficeManagerQuality from '@/pages/OfficeManagerQuality';
-import OfficeManagerPerformance from '@/pages/OfficeManagerPerformance';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
@@ -65,49 +69,15 @@ import OAuthCallback from '@/pages/OAuthCallback';
 import CalendarOAuthCallback from '@/pages/CalendarOAuthCallback';
 import NotFound from '@/pages/NotFound';
 import ModernBooking from '@/pages/ModernBooking';
-import ReviewsPortal from '@/pages/ReviewsPortal';
-import ClientOverview from '@/pages/ClientOverview';
 import SubcontractorPayments from '@/pages/SubcontractorPayments';
-import AutomationControls from '@/pages/AutomationControls';
-import SystemLogs from '@/pages/SystemLogs';
-
-// Phase 5: Advanced Features & Business Intelligence
-import SupportPortal from '@/pages/SupportPortal';
-import TrainingPortal from '@/pages/TrainingPortal';
-import ApiPortal from '@/pages/ApiPortal';
-
-// Phase 6: System Integration & New Pages
-import PaymentPortal from '@/pages/PaymentPortal';
-import ConnectPortal from '@/pages/ConnectPortal';
-import TestingPortal from '@/pages/TestingPortal';
 import Billing from '@/pages/Billing';
 
-// Phase 4B: Advanced Tier Management System
-import TierSystemConfig from '@/pages/TierSystemConfig';
-import TierPerformanceAnalytics from '@/pages/TierPerformanceAnalytics';
-import SubcontractorPaymentDashboard from '@/pages/SubcontractorPaymentDashboard';
-import { TierProgressionDashboard } from '@/components/admin/TierProgressionDashboard';
-import { AdminLayout } from '@/components/admin/AdminLayout';
-import TestDashboard from '@/pages/TestDashboard';
-
-// New unified admin pages
-import JobAssignments from '@/pages/JobAssignments';
-import CommercialEstimates from '@/pages/CommercialEstimates';
-import AdminPaymentCenter from '@/pages/AdminPaymentCenter';
-import BulkOnboardExistingCleaners from '@/pages/BulkOnboardExistingCleaners';
-import AddSpreadsheetCleaners from '@/pages/AddSpreadsheetCleaners';
-import SecurityCenter from '@/pages/SecurityCenter';
-
-// New multi-subdomain pages
+// Customer portal
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
-import TrialLandingPage from '@/pages/TrialLandingPage';
-import ClientReportsPortal from '@/pages/ClientReportsPortal';
-import SubcontractorDesktopPortal from '@/pages/SubcontractorDesktopPortal';
-import ZapierTest from '@/pages/ZapierTest';
 
 const queryClient = new QueryClient();
 
-// Enhanced Domain Router for Multi-Subdomain Architecture
+// Simplified Domain Router
 function DomainRouter() {
   const hostname = window.location.hostname;
   const isDevelopment = import.meta.env.DEV;
@@ -117,96 +87,24 @@ function DomainRouter() {
     console.log('Domain router processing:', hostname);
   }
   
-  // Check for root domain (no subdomain) - redirect to book subdomain
-  if (hostname === 'bayareacleaningpros.com' || (!isDevelopment && !hostname.includes('localhost') && !hostname.includes('.'))) {
-    window.location.href = 'https://book.bayareacleaningpros.com';
-    return null;
-  }
-
-  // Only apply subdomain routing for specific subdomains, not all
-  const isSpecificSubdomain = [
-    'book', 'booking', 'pay', 'members', 'app', 'office', 'cleaners', 
-    'admin', 'reviews', 'referrals', 'jobs', 'api', 'connect',
-    'analytics', 'support', 'training', 'portal', 'try', 'reports', 'subcon'
-  ].some(subdomain => hostname.startsWith(`${subdomain}.`));
-  
-  // If not a specific subdomain, return to normal routing
-  if (!isSpecificSubdomain) {
+  // Core domain routing (simplified)
+  if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
     return <Index />;
   }
-  
-  // Phase 1: Core Client Experience  
-  if (hostname.startsWith('book.')) {
-    return <Index />;
-  }
-  if (hostname.startsWith('booking.')) {
-    return <Navigate to="/guest-booking" replace />;
-  }
-  if (hostname.startsWith('pay.')) {
-    return <Navigate to="/payment-portal" replace />;
-  }
-  if (hostname.startsWith('members.')) {
+  if (hostname.startsWith('members.') || hostname.startsWith('portal.')) {
     return <Navigate to="/my-services" replace />;
   }
-  if (hostname.startsWith('portal.')) {
-    return <Navigate to="/customer-portal-dashboard" replace />;
-  }
-  if (hostname.startsWith('try.')) {
-    return <Navigate to="/trial-landing" replace />;
-  }
-  if (hostname.startsWith('reports.')) {
-    return <Navigate to="/client-reports-portal" replace />;
-  }
-  
-  // Phase 2: Internal Ops & Office Manager Tools  
-  if (hostname.startsWith('app.')) {
-    return <Navigate to="/auth" replace />;
-  }
-  if (hostname.startsWith('office.')) {
-    return <Navigate to="/admin/office/schedule" replace />;
-  }
-  
-  // Phase 3: Cleaner Portal (Mobile First)
-  if (hostname.startsWith('cleaners.')) {
+  if (hostname.startsWith('cleaners.') || hostname.startsWith('subcon.')) {
     return <Navigate to="/subcontractor-mobile" replace />;
   }
-  if (hostname.startsWith('subcon.')) {
-    return <Navigate to="/subcontractor-desktop-portal" replace />;
+  if (hostname.startsWith('admin.')) {
+    return <Navigate to="/admin" replace />;
   }
-  
-  // Phase 4: Admin & System Oversight
-          if (hostname.startsWith('admin.')) {
-            return <Navigate to="/admin" replace />;
-          }
-  
-  // Phase 5: Marketing, Referrals, Hiring
   if (hostname.startsWith('reviews.')) {
     return <Navigate to="/reviews" replace />;
   }
-  if (hostname.startsWith('referrals.')) {
-    return <Navigate to="/?section=referrals" replace />;
-  }
   if (hostname.startsWith('jobs.')) {
     return <Navigate to="/subcontractor-application" replace />;
-  }
-  
-  // Phase 6: System Integration & APIs
-  if (hostname.startsWith('api.')) {
-    return <Navigate to="/api-portal" replace />;
-  }
-  if (hostname.startsWith('connect.')) {
-    return <Navigate to="/connect" replace />;
-  }
-  
-  // Phase 5: Advanced Features & Business Intelligence
-  if (hostname.startsWith('analytics.')) {
-    return <Navigate to="/analytics-dashboard" replace />;
-  }
-  if (hostname.startsWith('support.')) {
-    return <Navigate to="/support-portal" replace />;
-  }
-  if (hostname.startsWith('training.')) {
-    return <Navigate to="/training-portal" replace />;
   }
   
   // Default to main landing page
@@ -252,37 +150,19 @@ function App() {
                 <Route path="/guest-booking" element={<GuestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
-                <Route path="/zapier-test" element={<ZapierTest />} />
                 
-{/* Add customer mobile portal route */}
+                {/* Customer portal routes */}
                 <Route path="/customer-mobile-portal" element={
                   <ProtectedRoute requiredRole="customer">
                     <CustomerMobilePortal />
                   </ProtectedRoute>
                 } />
-                
-                {/* New multi-subdomain pages */}
                 <Route path="/customer-portal-dashboard" element={
                   <ProtectedRoute requiredRole="customer">
                     <CustomerPortalDashboard />
                   </ProtectedRoute>
                 } />
-                
-                {/* Redirect for legacy customer-portal path */}
                 <Route path="/customer-portal" element={<Navigate to="/customer-portal-dashboard" replace />} />
-                <Route path="/trial-landing" element={<TrialLandingPage />} />
-                <Route path="/client-reports-portal" element={
-                  <ProtectedRoute requiredRole="customer">
-                    <ClientReportsPortal />
-                  </ProtectedRoute>
-                } />
-                <Route path="/subcontractor-desktop-portal" element={
-                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
-                    <SubcontractorDesktopPortal />
-                  </ProtectedRoute>
-                } />
-
-                {/* Customer protected routes */}
                 <Route path="/my-services" element={
                   <ProtectedRoute requiredRole="customer">
                     <CustomerDashboard />
@@ -305,7 +185,12 @@ function App() {
                     <SubcontractorDashboard />
                   </ProtectedRoute>
                 } />
-                
+                <Route path="/subcontractor-desktop-portal" element={
+                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client']}>
+                    <SubcontractorDesktopPortal />
+                  </ProtectedRoute>
+                } />
+
                 {/* Admin routes */}
                 <Route path="/admin" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
@@ -313,7 +198,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/customers" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client', 'office_manager']}>
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <CustomerManagementHub />
                   </ProtectedRoute>
                 } />
@@ -322,19 +207,9 @@ function App() {
                     <SubcontractorHub />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/systems" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <SystemsManagementHub />
-                  </ProtectedRoute>
-                } />
                 <Route path="/subcontractor-detail/:id" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDetail />
-                  </ProtectedRoute>
-                } />
-                <Route path="/webhook-management" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <WebhookManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/tips-management" element={
@@ -352,44 +227,25 @@ function App() {
                     <CommunicationHub />
                   </ProtectedRoute>
                 } />
-                
-                 <Route path="/subcon-management" element={
-                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                     <SubcontractorHub />
-                   </ProtectedRoute>
-                 } />
-                 {/* Redirect old path to new path */}
-                 <Route path="/subcontractor-management" element={<Navigate to="/subcon-management" replace />} />
+                <Route path="/subcon-management" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <SubcontractorHub />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subcontractor-management" element={<Navigate to="/subcon-management" replace />} />
                 <Route path="/application-manager" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <ApplicationManager />
                   </ProtectedRoute>
                 } />
-                
-                {/* New unified admin routes */}
                 <Route path="/job-assignments" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <JobAssignments />
                   </ProtectedRoute>
                 } />
-                <Route path="/commercial-estimates" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <CommercialEstimates />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin-payment-center" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <AdminPaymentCenter />
-                  </ProtectedRoute>
-                } />
-                <Route path="/bulk-onboard-cleaners" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <BulkOnboardExistingCleaners />
-                  </ProtectedRoute>
-                } />
-                <Route path="/add-spreadsheet-cleaners" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <AddSpreadsheetCleaners />
                   </ProtectedRoute>
                 } />
                 <Route path="/security-center" element={
@@ -398,100 +254,27 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                {/* Office Manager routes - now under admin */}
-                <Route path="/admin/office/schedule" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/office/jobs" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerJobs />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/office/team" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerTeam />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/office/bookings" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerBookings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/office/quality" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerQuality />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/office/performance" element={
-                  <ProtectedRoute allowedRoles={['office_manager', 'owner', 'super_admin', 'enterprise_client']}>
-                    <OfficeManagerPerformance />
+                {/* Commercial estimates (kept as requested) */}
+                <Route path="/commercial-estimates" element={
+                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
+                    <CommercialEstimates />
                   </ProtectedRoute>
                 } />
                 
-                {/* Legacy office manager routes - redirect to admin */}
-                <Route path="/office-dashboard" element={<Navigate to="/admin/office/schedule" replace />} />
-                <Route path="/office-jobs" element={<Navigate to="/admin/office/jobs" replace />} />
-                <Route path="/office-bookings" element={<Navigate to="/admin/office/bookings" replace />} />
-                <Route path="/office-team" element={<Navigate to="/admin/office/team" replace />} />
-                <Route path="/office-performance" element={<Navigate to="/admin/office/performance" replace />} />
-                <Route path="/office-quality" element={<Navigate to="/admin/office/quality" replace />} />
-                
-                {/* Review Portal Route */}
+                {/* Review Portal (kept as requested) */}
                 <Route path="/reviews" element={<ReviewsPortal />} />
                 
-                {/* Phase 4: Admin & System Oversight Routes */}
-                <Route path="/client-overview" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <ClientOverview />
-                  </ProtectedRoute>
-                } />
+                {/* Subcontractor payments */}
                 <Route path="/subcontractor-payments" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
                     <SubcontractorPayments />
                   </ProtectedRoute>
                 } />
-                <Route path="/automation-controls" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <AutomationControls />
-                  </ProtectedRoute>
-                } />
-                <Route path="/system-logs" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
-                    <SystemLogs />
-                  </ProtectedRoute>
-                } />
                 
-                {/* Admin tool routes - both prefixed and direct paths */}
-                <Route path="/admin-dashboard/email-settings" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
-                    <EmailSettings />
-                  </ProtectedRoute>
-                } />
+                {/* Admin tool routes */}
                 <Route path="/email-settings" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <EmailSettings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin-dashboard/database-tools" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <DatabaseTools />
-                  </ProtectedRoute>
-                } />
-                <Route path="/database-tools" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <DatabaseTools />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin-dashboard/api-keys" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <ApiKeys />
-                  </ProtectedRoute>
-                } />
-                <Route path="/api-keys" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <ApiKeys />
                   </ProtectedRoute>
                 } />
                 <Route path="/user-management" element={
@@ -504,65 +287,15 @@ function App() {
                     <SecuritySettings />
                   </ProtectedRoute>
                 } />
-                <Route path="/system-settings" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <SystemSettings />
-                  </ProtectedRoute>
-                } />
                 
-                
-                {/* Phase 5: Advanced Features & Business Intelligence Routes - Open Access for Testing */}
-                <Route path="/support-portal" element={<SupportPortal />} />
-                <Route path="/training-portal" element={<TrainingPortal />} />
-                <Route path="/api-portal" element={<ApiPortal />} />
-                
-                {/* Protected versions for production */}
-                <Route path="/protected/training-portal" element={
-                  <ProtectedRoute allowedRoles={['subcontractor', 'super_admin', 'enterprise_client', 'owner']}>
-                    <TrainingPortal />
-                  </ProtectedRoute>
-                } />
-                <Route path="/protected/api-portal" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <ApiPortal />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Phase 6: System Integration & New Pages */}
-                <Route path="/instant-quote" element={<Navigate to="/guest-booking" replace />} />
-                <Route path="/payment-portal" element={<PaymentPortal />} />
+                {/* Billing */}
                 <Route path="/billing" element={
                   <ProtectedRoute requiredRole="customer">
                     <Billing />
                   </ProtectedRoute>
                 } />
-                <Route path="/connect" element={<ConnectPortal />} />
                 
-                {/* Testing Portal - Admin Only */}
-                <Route path="/testing-portal" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
-                    <TestingPortal />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Testing Routes - Development Only */}
-                <Route path="/test/*" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'admin']} redirectTo="/auth">
-                    <Routes>
-                      <Route path="/" element={<TestDashboard />} />
-                      <Route path="/subcontractor-dashboard" element={<SubcontractorDashboard />} />
-                      <Route path="/subcontractor-mobile" element={<SubcontractorMobile />} />
-                      <Route path="/subcontractor-management" element={<SubcontractorHub />} />
-                      <Route path="/tier-config" element={<TierSystemConfig />} />
-                      <Route path="/subcontractor-payments" element={<SubcontractorPaymentDashboard />} />
-                      <Route path="/office-dashboard" element={<OfficeManagerDashboard />} />
-                      <Route path="/admin-portal" element={<AdminPortal />} />
-                      <Route path="/security-center" element={<SecurityCenter />} />
-                    </Routes>
-                  </ProtectedRoute>
-                } />
-
-                {/* Phase 4B: Advanced Tier Management System Routes */}
+                {/* Tier Management System (kept as requested) */}
                 <Route path="/tier-config" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <TierSystemConfig />

@@ -10,7 +10,6 @@ import { QuickServiceActions } from '@/components/customer/QuickServiceActions';
 import { MobileHelpButton } from '@/components/customer/MobileHelpButton';
 import CustomerErrorBoundary from '@/components/customer/CustomerErrorBoundary';
 import { PWAInstallPrompt } from '@/components/customer/PWAInstallPrompt';
-import PaymentPortal from '@/pages/PaymentPortal';
 import { useCustomerData } from '@/hooks/useCustomerData';
 
 export default function CustomerMobilePortal() {
@@ -50,8 +49,19 @@ export default function CustomerMobilePortal() {
         );
       case 'billing':
         return (
-          <div className="pb-24">
-            <PaymentPortal />
+          <div className="p-4 space-y-6 pb-24">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-bold text-foreground">Billing</h1>
+            </div>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">Manage your billing and payment methods</p>
+              <button 
+                onClick={() => window.location.href = '/billing'}
+                className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Go to Billing
+              </button>
+            </div>
           </div>
         );
       case 'profile':
