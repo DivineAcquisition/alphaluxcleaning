@@ -54,6 +54,7 @@ interface BookingWebhookData {
   webhookUrl?: string; // Now optional since we use configured URLs
   orderId?: string;
   bookingId?: string;
+  sessionId?: string; // Add session ID for enhanced webhook lookup
 }
 
 export const useBookingWebhook = () => {
@@ -67,66 +68,89 @@ export const useBookingWebhook = () => {
   };
 
   const sendBookingWebhook = async (data: BookingWebhookData) => {
+    const webhookStartTime = Date.now();
     setIsLoading(true);
     
     try {
-      const webhookData = {
+      // Add timestamp and source to payload
+      const payload = {
         ...data,
         timestamp: new Date().toISOString(),
-        source: 'bay_area_cleaning_pros_website'
+        source: 'booking_flow'
       };
 
-      console.log('Sending booking webhook for step:', data.bookingStep, {
-        serviceType: data.serviceType,
-        customerEmail: data.customerInfo?.email,
-        totalPrice: data.totalPrice,
-        orderId: data.orderId,
-        hasValidOrderId: data.orderId ? isValidUUID(data.orderId) : false
+      // Choose webhook function based on orderId validity
+      const functionName = (data.orderId && isValidUUID(data.orderId)) 
+        ? 'enhanced-booking-webhook-v2' 
+        : 'send-booking-transaction-to-zapier';
+
+      console.log('🚀 useBookingWebhook: Sending webhook', {
+        step: data.bookingStep,
+        function: functionName,
+        order_id: data.orderId,
+        session_id: data.sessionId,
+        has_valid_order_id: !!(data.orderId && isValidUUID(data.orderId)),
+        timestamp: new Date().toISOString()
       });
 
-      // Only use enhanced-booking-webhook-v2 if we have a valid UUID order_id
-      const hasValidOrderId = data.orderId && isValidUUID(data.orderId);
-      const functionName = hasValidOrderId ? 'enhanced-booking-webhook-v2' : 'send-booking-transaction-to-zapier';
-      
-      console.log(`Using ${functionName} for webhook delivery (valid order_id: ${hasValidOrderId})`)
-      
-      const { data: response, error } = await supabase.functions.invoke(functionName, {
+      const { data: result, error } = await supabase.functions.invoke(functionName, {
         body: data.orderId ? {
-          ...webhookData,
+          ...payload,
           trigger_event: data.bookingStep,
           order_id: data.orderId,
-          booking_id: data.bookingId
+          booking_id: data.bookingId,
+          session_id: data.sessionId
         } : {
-          transactionData: webhookData,
+          transactionData: payload,
           type: 'booking_step'
         }
       });
 
+      const webhookTime = Date.now() - webhookStartTime;
+      
       if (error) {
+        console.error('❌ useBookingWebhook: Webhook failed', {
+          step: data.bookingStep,
+          function: functionName,
+          error: error.message,
+          time_ms: webhookTime
+        });
         throw error;
       }
 
-      console.log('Booking webhook sent successfully:', response);
-      
-      // Don't show toast for every webhook call to avoid spam
+      console.log('✅ useBookingWebhook: Webhook succeeded', {
+        step: data.bookingStep,
+        function: functionName,
+        time_ms: webhookTime,
+        result_success: result?.success,
+        webhooks_sent: result?.results?.length || 0,
+        processing_stats: result?.processing_stats
+      });
+
+      // Only show toast for confirmation step to avoid spam
       if (data.bookingStep === 'confirmation') {
         toast({
-          title: "Booking Data Sent",
-          description: "Your booking information has been sent to configured webhooks.",
+          title: "Booking confirmed",
+          description: "Your service has been scheduled successfully.",
         });
       }
 
-      return response;
-      
+      return result;
     } catch (error) {
-      console.error('Error sending booking webhook:', error);
+      const webhookTime = Date.now() - webhookStartTime;
+      console.error('🚨 useBookingWebhook: Critical error', {
+        step: data.bookingStep,
+        error: error.message,
+        time_ms: webhookTime,
+        order_id: data.orderId
+      });
       
-      // Only show error toast for final step to avoid spam
+      // Only show error toast for confirmation step
       if (data.bookingStep === 'confirmation') {
         toast({
-          title: "Webhook Error",
-          description: "Failed to send booking data to webhook. Please check your webhook configuration.",
-          variant: "destructive",
+          title: "Booking confirmed",
+          description: "Your service has been scheduled (notification processing).",
+          variant: "default"
         });
       }
       

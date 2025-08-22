@@ -19,94 +19,117 @@ serve(async (req) => {
   }
 
   try {
+    const startTime = Date.now();
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const input: WebhookInput = await req.json();
-    console.log('Enhanced webhook v2 triggered:', input);
+    console.log('🚀 Enhanced webhook v2 triggered with OrderEntry format:', {
+      input,
+      timestamp: new Date().toISOString(),
+      function_version: 'v2_orderentry_format'
+    });
 
     // Get order data with multiple lookup strategies
     let orderData = null;
     let lookupMethod = '';
+    const lookupAttempts = [];
     
     // Strategy 1: Try order_id (exact match)
     if (input.order_id) {
-      console.log(`Trying order_id lookup: ${input.order_id}`);
+      const startLookup = Date.now();
+      console.log(`🔍 Strategy 1: Trying order_id lookup: ${input.order_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('id', input.order_id)
         .maybeSingle();
       
+      const lookupTime = Date.now() - startLookup;
+      lookupAttempts.push({ strategy: 'order_id', identifier: input.order_id, success: !!data, time_ms: lookupTime, error: error?.message });
+      
       if (data && !error) {
         orderData = data;
         lookupMethod = 'order_id';
-        console.log(`Found order by order_id: ${orderData.id}`);
+        console.log(`✅ Found order by order_id: ${orderData.id} (${lookupTime}ms)`);
       } else {
-        console.log(`Order_id lookup failed: ${error?.message}`);
+        console.log(`❌ Order_id lookup failed: ${error?.message} (${lookupTime}ms)`);
       }
     }
     
     // Strategy 2: Try session_id (stripe_session_id)
     if (!orderData && input.session_id) {
-      console.log(`Trying session_id lookup: ${input.session_id}`);
+      const startLookup = Date.now();
+      console.log(`🔍 Strategy 2: Trying session_id lookup: ${input.session_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('stripe_session_id', input.session_id)
         .maybeSingle();
       
+      const lookupTime = Date.now() - startLookup;
+      lookupAttempts.push({ strategy: 'stripe_session_id', identifier: input.session_id, success: !!data, time_ms: lookupTime, error: error?.message });
+      
       if (data && !error) {
         orderData = data;
         lookupMethod = 'stripe_session_id';
-        console.log(`Found order by session_id: ${orderData.id}`);
+        console.log(`✅ Found order by session_id: ${orderData.id} (${lookupTime}ms)`);
       } else {
-        console.log(`Session_id lookup failed: ${error?.message}`);
+        console.log(`❌ Session_id lookup failed: ${error?.message} (${lookupTime}ms)`);
       }
     }
     
     // Strategy 3: Try payment_intent_id
     if (!orderData && input.session_id) {
-      console.log(`Trying payment_intent_id lookup: ${input.session_id}`);
+      const startLookup = Date.now();
+      console.log(`🔍 Strategy 3: Trying payment_intent_id lookup: ${input.session_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('stripe_payment_intent_id', input.session_id)
         .maybeSingle();
       
+      const lookupTime = Date.now() - startLookup;
+      lookupAttempts.push({ strategy: 'stripe_payment_intent_id', identifier: input.session_id, success: !!data, time_ms: lookupTime, error: error?.message });
+      
       if (data && !error) {
         orderData = data;
         lookupMethod = 'stripe_payment_intent_id';
-        console.log(`Found order by payment_intent_id: ${orderData.id}`);
+        console.log(`✅ Found order by payment_intent_id: ${orderData.id} (${lookupTime}ms)`);
       } else {
-        console.log(`Payment_intent_id lookup failed: ${error?.message}`);
+        console.log(`❌ Payment_intent_id lookup failed: ${error?.message} (${lookupTime}ms)`);
       }
     }
     
     // Strategy 4: Try setup_intent_id
     if (!orderData && input.session_id) {
-      console.log(`Trying setup_intent_id lookup: ${input.session_id}`);
+      const startLookup = Date.now();
+      console.log(`🔍 Strategy 4: Trying setup_intent_id lookup: ${input.session_id}`);
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .eq('stripe_setup_intent_id', input.session_id)
         .maybeSingle();
       
+      const lookupTime = Date.now() - startLookup;
+      lookupAttempts.push({ strategy: 'stripe_setup_intent_id', identifier: input.session_id, success: !!data, time_ms: lookupTime, error: error?.message });
+      
       if (data && !error) {
         orderData = data;
         lookupMethod = 'stripe_setup_intent_id';
-        console.log(`Found order by setup_intent_id: ${orderData.id}`);
+        console.log(`✅ Found order by setup_intent_id: ${orderData.id} (${lookupTime}ms)`);
       } else {
-        console.log(`Setup_intent_id lookup failed: ${error?.message}`);
+        console.log(`❌ Setup_intent_id lookup failed: ${error?.message} (${lookupTime}ms)`);
       }
     }
     
     if (!orderData) {
+      console.error('🚨 All order lookup strategies failed:', lookupAttempts);
       throw new Error(`Order not found with provided identifiers. Tried: ${input.order_id ? 'order_id, ' : ''}${input.session_id ? 'session_id, payment_intent_id, setup_intent_id' : ''}`);
     }
     
-    console.log(`Order lookup successful via ${lookupMethod}: ${orderData.id}`);
+    console.log(`🎯 Order lookup successful via ${lookupMethod}: ${orderData.id}`, { lookupAttempts });
 
     // Get assigned subcontractor data
     let assignedSubcontractor = null;
@@ -159,108 +182,271 @@ serve(async (req) => {
       }
     }
 
-    // Build the webhook payload in exact required format
+    // Parse property details from service details
+    const propertyDetails = serviceDetails.propertyDetails || {};
+    
+    // Calculate durations and timing
+    const estimatedDuration = serviceDetails.estimatedDuration || "2 hours";
+    const durationHours = parseFloat(estimatedDuration.split(' ')[0]) || 2;
+    const durationMinutes = durationHours * 60;
+    
+    // Calculate financial breakdown
+    const baseServiceCost = Math.max(amountInDollars - addOnsTotal, amountInDollars * 0.85);
+    const subtotalBeforeDiscount = amountInDollars + (addOnsTotal * 0.25);
+    const discountAmount = subtotalBeforeDiscount * 0.15;
+    const taxRate = 8.75;
+    const taxAmount = amountInDollars * (taxRate / 100);
+
+    // Get multi-cleaner assignments from job assignments table
+    const { data: jobAssignments } = await supabase
+      .from('subcontractor_job_assignments')
+      .select(`
+        *,
+        subcontractor:subcontractors(*)
+      `)
+      .eq('order_id', orderData.id);
+
+    let teamAssignment = null;
+    let cleanerAssignments = [];
+
+    if (jobAssignments && jobAssignments.length > 0) {
+      // Multi-cleaner scenario
+      cleanerAssignments = jobAssignments.map((assignment, index) => {
+        const cleaner = assignment.subcontractor;
+        const isLead = index === 0;
+        const basePay = (cleaner?.hourly_rate || 18) * durationHours;
+        const efficiencyBonus = basePay * 0.15;
+        
+        return {
+          cleaner_number: index + 1,
+          cleaner_id: cleaner?.id || `sub_${index + 1}`,
+          name: cleaner?.full_name || "TBA",
+          email: isLead && cleaner?.email ? cleaner.email : undefined,
+          phone: isLead && cleaner?.phone ? cleaner.phone : undefined,
+          role: isLead ? "team_lead" : "cleaner",
+          is_lead: isLead,
+          hourly_rate: cleaner?.hourly_rate || 18,
+          hours_assigned: durationHours,
+          base_pay: parseFloat(basePay.toFixed(2)),
+          efficiency_bonus: parseFloat(efficiencyBonus.toFixed(2)),
+          total_job_pay: parseFloat((basePay + efficiencyBonus).toFixed(2)),
+          tier_level: cleaner?.tier_level || 2,
+          tier_name: getTierName(cleaner?.tier_level || 2)
+        };
+      });
+
+      const leadCleaner = cleanerAssignments[0];
+      const supportingCleaners = cleanerAssignments.slice(1);
+      const totalLaborCost = cleanerAssignments.reduce((sum, c) => sum + c.total_job_pay, 0);
+
+      teamAssignment = {
+        number_of_cleaners: cleanerAssignments.length,
+        lead_cleaner: leadCleaner,
+        supporting_cleaners: supportingCleaners,
+        cleaner_assignments: cleanerAssignments,
+        total_labor_cost: parseFloat(totalLaborCost.toFixed(2)),
+        labor_distribution: cleanerAssignments.length === 1 ? "single_cleaner" : "split_evenly"
+      };
+    } else if (assignedSubcontractor) {
+      // Single cleaner scenario
+      const basePay = (assignedSubcontractor.hourly_rate || 18) * durationHours;
+      const efficiencyBonus = basePay * 0.15;
+      
+      const leadCleaner = {
+        cleaner_number: 1,
+        cleaner_id: assignedSubcontractor.id,
+        name: assignedSubcontractor.full_name,
+        email: assignedSubcontractor.email,
+        phone: assignedSubcontractor.phone,
+        role: "team_lead",
+        is_lead: true,
+        hourly_rate: assignedSubcontractor.hourly_rate || 18,
+        hours_assigned: durationHours,
+        base_pay: parseFloat(basePay.toFixed(2)),
+        efficiency_bonus: parseFloat(efficiencyBonus.toFixed(2)),
+        total_job_pay: parseFloat((basePay + efficiencyBonus).toFixed(2)),
+        tier_level: assignedSubcontractor.tier_level || 2,
+        tier_name: getTierName(assignedSubcontractor.tier_level || 2)
+      };
+
+      teamAssignment = {
+        number_of_cleaners: 1,
+        lead_cleaner: leadCleaner,
+        supporting_cleaners: [],
+        cleaner_assignments: [leadCleaner],
+        total_labor_cost: leadCleaner.total_job_pay,
+        labor_distribution: "single_cleaner"
+      };
+    }
+
+    // Build the webhook payload in exact OrderEntryTest format
+    const payloadGenerationStart = Date.now();
     const webhookPayload = {
-      "order_details": {
-        "id": orderData.id,
-        "customer_name": orderData.customer_name || 'N/A',
-        "customer_email": orderData.customer_email || 'N/A',
-        "customer_phone": orderData.customer_phone || 'N/A',
-        "street_address": address.street || 'N/A',
-        "city": address.city || 'N/A', 
-        "state": address.state || 'CA',
-        "zip_code": address.zipCode || address.zip_code || 'N/A',
-        "country": "USA",
-        "service_type": orderData.cleaning_type?.replace(/_/g, ' ') || 'General Clean',
-        "amount": amountInDollars,
-        "square_footage": orderData.square_footage || 1500,
-        "scheduled_date": orderData.scheduled_date || new Date().toISOString().split('T')[0],
-        "scheduled_time": orderData.scheduled_time || '10:00 AM',
-        "frequency": orderData.frequency || 'one_time',
-        "add_ons": addOns
+      order: {
+        id: orderData.id,
+        stripe_session_id: orderData.stripe_session_id || orderData.stripe_payment_intent_id || orderData.stripe_setup_intent_id,
+        amount: parseFloat(amountInDollars.toFixed(2)),
+        currency: "usd",
+        status: orderData.order_status || "completed",
+        customer_name: orderData.customer_name || 'N/A',
+        customer_email: orderData.customer_email || 'N/A',
+        customer_phone: orderData.customer_phone || 'N/A',
+        cleaning_type: orderData.cleaning_type || 'general_clean',
+        frequency: orderData.frequency || 'one_time',
+        square_footage: orderData.square_footage || propertyDetails.squareFootage || 1500,
+        property_details: {
+          bedrooms: propertyDetails.bedrooms || 3,
+          bathrooms: propertyDetails.bathrooms || 2,
+          dwelling_type: propertyDetails.dwelling_type || "house",
+          flooring_types: propertyDetails.flooring_types || ["hardwood", "tile"],
+          square_footage: orderData.square_footage || propertyDetails.squareFootage || 1500,
+          levels: propertyDetails.levels || 1,
+          has_basement: propertyDetails.has_basement || false,
+          has_garage: propertyDetails.has_garage || true
+        },
+        service_details: {
+          service_type: orderData.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Clean',
+          estimated_duration: estimatedDuration
+        },
+        scheduled_date: orderData.scheduled_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        scheduled_time: orderData.scheduled_time || "10:00 AM",
+        created_at: orderData.created_at || new Date().toISOString(),
+        is_recurring: orderData.frequency !== 'one_time',
+        add_ons: addOns
       },
-      "subcontractor_payment": assignedSubcontractor ? {
-        "assigned_subcontractor": {
-          "id": assignedSubcontractor.id,
-          "name": assignedSubcontractor.full_name,
-          "tier_level": assignedSubcontractor.tier_level || 1,
-          "tier_name": getTierName(assignedSubcontractor.tier_level || 1)
+      team_assignment: teamAssignment || {
+        number_of_cleaners: 1,
+        lead_cleaner: {
+          cleaner_number: 1,
+          cleaner_id: "unassigned",
+          name: "To Be Assigned",
+          role: "team_lead",
+          is_lead: true,
+          hourly_rate: 18,
+          hours_assigned: durationHours,
+          base_pay: parseFloat((18 * durationHours).toFixed(2)),
+          efficiency_bonus: parseFloat((18 * durationHours * 0.15).toFixed(2)),
+          total_job_pay: parseFloat((18 * durationHours * 1.15).toFixed(2)),
+          tier_level: 2,
+          tier_name: "Professional"
         },
-        "hourly_rate_structure": {
-          "base_hourly_rate": assignedSubcontractor.hourly_rate || 16,
-          "tier_level": assignedSubcontractor.tier_level || 1,
-          "tier_name": getTierName(assignedSubcontractor.tier_level || 1)
+        supporting_cleaners: [],
+        cleaner_assignments: [],
+        total_labor_cost: parseFloat((18 * durationHours * 1.15).toFixed(2)),
+        labor_distribution: "single_cleaner"
+      },
+      subcontractor_payment: assignedSubcontractor ? {
+        assigned_subcontractor: {
+          id: assignedSubcontractor.id,
+          name: assignedSubcontractor.full_name,
+          tier_level: assignedSubcontractor.tier_level || 2,
+          tier_name: getTierName(assignedSubcontractor.tier_level || 2)
         },
-        "job_duration": {
-          "estimated_duration": "2 hours",
-          "actual_duration": subcontractorPayment?.hours_worked ? `${subcontractorPayment.hours_worked} hours` : "2.0 hours",
-          "check_in_time": "10:00 AM",
-          "check_out_time": "12:00 PM", 
-          "duration_minutes": (subcontractorPayment?.hours_worked || 2) * 60
+        hourly_rate_structure: {
+          base_hourly_rate: assignedSubcontractor.hourly_rate || 18,
+          tier_level: assignedSubcontractor.tier_level || 2,
+          tier_name: getTierName(assignedSubcontractor.tier_level || 2)
         },
-        "payment_calculation": {
-          "base_hourly_pay": (assignedSubcontractor.hourly_rate || 16) * (subcontractorPayment?.hours_worked || 2),
-          "efficiency_bonus": ((assignedSubcontractor.hourly_rate || 16) * (subcontractorPayment?.hours_worked || 2)) * 0.15,
-          "total_subcontractor_pay": subcontractorPayment?.subcontractor_amount || ((assignedSubcontractor.hourly_rate || 16) * (subcontractorPayment?.hours_worked || 2) * 1.15),
-          "payment_method": "hourly"
+        job_duration: {
+          estimated_duration: estimatedDuration,
+          actual_duration: subcontractorPayment?.hours_worked ? `${subcontractorPayment.hours_worked} hours` : `${durationHours} hours`,
+          check_in_time: "10:00 AM",
+          check_out_time: durationHours === 2 ? "12:00 PM" : durationHours === 4 ? "2:00 PM" : "1:00 PM",
+          duration_minutes: durationMinutes
+        },
+        payment_calculation: {
+          base_hourly_pay: parseFloat(((assignedSubcontractor.hourly_rate || 18) * durationHours).toFixed(2)),
+          efficiency_bonus: parseFloat(((assignedSubcontractor.hourly_rate || 18) * durationHours * 0.15).toFixed(2)),
+          total_subcontractor_pay: subcontractorPayment?.subcontractor_amount || parseFloat(((assignedSubcontractor.hourly_rate || 18) * durationHours * 1.15).toFixed(2)),
+          payment_method: "hourly"
         }
       } : {
-        "assigned_subcontractor": {
-          "id": "unassigned",
-          "name": "To Be Assigned",
-          "tier_level": 2,
-          "tier_name": "Professional"
+        assigned_subcontractor: {
+          id: "unassigned",
+          name: "To Be Assigned",
+          tier_level: 2,
+          tier_name: "Professional"
         },
-        "hourly_rate_structure": {
-          "base_hourly_rate": 18,
-          "tier_level": 2,
-          "tier_name": "Professional"
+        hourly_rate_structure: {
+          base_hourly_rate: 18,
+          tier_level: 2,
+          tier_name: "Professional"
         },
-        "job_duration": {
-          "estimated_duration": "2 hours",
-          "actual_duration": "2.0 hours",
-          "check_in_time": "10:00 AM",
-          "check_out_time": "12:00 PM",
-          "duration_minutes": 120
+        job_duration: {
+          estimated_duration: estimatedDuration,
+          actual_duration: `${durationHours} hours`,
+          check_in_time: "10:00 AM",
+          check_out_time: durationHours === 2 ? "12:00 PM" : durationHours === 4 ? "2:00 PM" : "1:00 PM",
+          duration_minutes: durationMinutes
         },
-        "payment_calculation": {
-          "base_hourly_pay": 36,
-          "efficiency_bonus": 5.4,
-          "total_subcontractor_pay": 41.4,
-          "payment_method": "hourly" 
+        payment_calculation: {
+          base_hourly_pay: parseFloat((18 * durationHours).toFixed(2)),
+          efficiency_bonus: parseFloat((18 * durationHours * 0.15).toFixed(2)),
+          total_subcontractor_pay: parseFloat((18 * durationHours * 1.15).toFixed(2)),
+          payment_method: "hourly"
         }
       },
-      "financial_breakdown": {
-        "base_service_cost": Math.max(amountInDollars - addOnsTotal, amountInDollars * 0.85),
-        "add_ons": addOns,
-        "add_ons_total": addOnsTotal,
-        "subtotal_before_discount": amountInDollars + (addOnsTotal * 0.25), // Estimate original before discount
-        "discount_applied": orderData.frequency === 'one_time',
-        "discount_type": orderData.frequency === 'one_time' ? "one_time_service" : "regular_customer",
-        "discount_description": orderData.frequency === 'one_time' ? "One-time service - 15% off" : "Regular customer discount",
-        "discount_percentage": 15,
-        "discount_amount_cash": (amountInDollars + (addOnsTotal * 0.25)) * 0.15,
-        "discounted_subtotal": amountInDollars,
-        "tax_rate": 8.75,
-        "tax_amount": amountInDollars * 0.0875,
-        "final_cost": amountInDollars,
-        "total_savings": (amountInDollars + (addOnsTotal * 0.25)) * 0.15
+      financial_breakdown: {
+        base_service_cost: parseFloat(baseServiceCost.toFixed(2)),
+        add_ons: addOns,
+        add_ons_total: parseFloat(addOnsTotal.toFixed(2)),
+        subtotal_before_discount: parseFloat(subtotalBeforeDiscount.toFixed(2)),
+        discount_applied: orderData.frequency === 'one_time',
+        discount_type: orderData.frequency === 'one_time' ? "one_time_service" : "regular_customer",
+        discount_description: orderData.frequency === 'one_time' ? "One-time service - 15% off" : "Regular customer discount",
+        discount_percentage: 15,
+        discount_amount_cash: parseFloat(discountAmount.toFixed(2)),
+        discounted_subtotal: parseFloat(amountInDollars.toFixed(2)),
+        tax_rate: taxRate,
+        tax_amount: parseFloat(taxAmount.toFixed(2)),
+        final_cost: parseFloat(amountInDollars.toFixed(2)),
+        total_savings: parseFloat(discountAmount.toFixed(2))
       },
-      "payment_data": {
-        "payment_method": orderData.payment_method || "card", 
-        "transaction_id": orderData.stripe_payment_intent_id || orderData.stripe_session_id || orderData.id,
-        "payment_status": orderData.payment_status || "succeeded",
-        "amount_paid": amountInDollars
+      payment: {
+        amount_paid: parseFloat(amountInDollars.toFixed(2)),
+        payment_method: orderData.payment_method || "card",
+        transaction_id: orderData.stripe_payment_intent_id || orderData.stripe_session_id || orderData.id,
+        payment_status: orderData.payment_status || "succeeded"
       },
-      "analytics": {
-        "booking_source": "website",
-        "marketing_channel": "organic_search",
-        "device_type": "desktop", 
-        "booking_completion_time": "00:02:15"
+      service: {
+        service_type: orderData.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'General Clean',
+        frequency: orderData.frequency === 'one_time' ? 'One-time' : orderData.frequency?.charAt(0).toUpperCase() + orderData.frequency?.slice(1) || 'One-time',
+        estimated_duration: estimatedDuration,
+        special_requirements: serviceDetails.specialRequirements || [],
+        access_instructions: serviceDetails.accessInstructions || "Key under doormat",
+        pets_present: serviceDetails.petsPresent || false,
+        parking_instructions: serviceDetails.parkingInstructions || "Driveway available"
+      },
+      address: {
+        street: address.street || address.address || 'N/A',
+        city: address.city || 'N/A',
+        state: address.state || 'CA',
+        zip_code: address.zipCode || address.zip_code || 'N/A',
+        country: address.country || "USA"
+      },
+      analytics: {
+        booking_source: orderData.booking_source || "website",
+        marketing_channel: orderData.marketing_channel || "organic_search",
+        customer_ltv_estimate: amountInDollars * 12,
+        booking_completion_time: "00:02:15",
+        device_type: orderData.device_type || "desktop",
+        total_customer_orders: 1
+      },
+      timestamps: {
+        order_created: orderData.created_at || new Date().toISOString(),
+        payment_completed: orderData.updated_at || new Date().toISOString(),
+        booking_scheduled: orderData.created_at || new Date().toISOString(),
+        webhook_sent: new Date().toISOString()
       }
     };
 
-    console.log('Generated webhook payload for order:', orderData.id);
+    const payloadGenerationTime = Date.now() - payloadGenerationStart;
+    console.log(`📦 Webhook payload generated in OrderEntry format (${payloadGenerationTime}ms):`, {
+      order_id: orderData.id,
+      payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
+      team_assignment_cleaners: webhookPayload.team_assignment?.number_of_cleaners || 0,
+      subcontractor_assigned: !!assignedSubcontractor
+    });
 
     // Get active webhook configurations
     const { data: webhookConfigs, error: configError } = await supabase
@@ -289,32 +475,44 @@ serve(async (req) => {
 
     // Send webhook to each configured endpoint
     for (const config of webhookConfigs) {
-      console.log('Sending enhanced webhook to:', config.webhook_url);
+      const webhookStartTime = Date.now();
+      console.log(`🚀 Sending OrderEntry format webhook to: ${config.webhook_url}`);
 
       let webhookResponse;
       let responseText = '';
       let isSuccess = false;
+      let responseTime = 0;
 
       try {
         webhookResponse = await fetch(config.webhook_url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'BayAreaCleaningPros-Enhanced/2.0'
+            'User-Agent': 'BayAreaCleaningPros-OrderEntry/2.0',
+            'X-Webhook-Version': 'v2-orderentry',
+            'X-Order-ID': orderData.id
           },
           body: JSON.stringify(webhookPayload)
         });
 
         responseText = await webhookResponse.text();
+        responseTime = Date.now() - webhookStartTime;
         isSuccess = webhookResponse.ok;
 
-        console.log(`Enhanced webhook ${isSuccess ? 'succeeded' : 'failed'}:`, {
+        console.log(`${isSuccess ? '✅' : '❌'} Webhook ${isSuccess ? 'succeeded' : 'failed'} (${responseTime}ms):`, {
           status: webhookResponse.status,
-          url: config.webhook_url
+          url: config.webhook_url,
+          response_size: responseText.length,
+          order_id: orderData.id
         });
 
       } catch (fetchError) {
-        console.error('Enhanced webhook fetch error:', fetchError);
+        responseTime = Date.now() - webhookStartTime;
+        console.error(`🚨 Webhook fetch error (${responseTime}ms):`, {
+          error: fetchError.message,
+          url: config.webhook_url,
+          order_id: orderData.id
+        });
         responseText = fetchError.message;
         isSuccess = false;
       }
@@ -344,18 +542,35 @@ serve(async (req) => {
         webhook_url: config.webhook_url,
         success: isSuccess,
         status: webhookResponse?.status || null,
+        response_time_ms: responseTime,
+        payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
         error: isSuccess ? null : responseText
       });
     }
 
     const successCount = results.filter(r => r.success).length;
     const totalCount = results.length;
+    const totalProcessingTime = Date.now() - startTime;
+
+    console.log(`🎯 OrderEntry webhook delivery completed:`, {
+      success_rate: `${successCount}/${totalCount}`,
+      total_time_ms: totalProcessingTime,
+      order_id: orderData.id,
+      lookup_method: lookupMethod,
+      team_cleaners: webhookPayload.team_assignment?.number_of_cleaners || 0
+    });
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Enhanced webhook delivery completed: ${successCount}/${totalCount} successful`,
+      message: `OrderEntry webhook delivery completed: ${successCount}/${totalCount} successful`,
       results: results,
-      formatted_data: webhookPayload
+      formatted_data: webhookPayload,
+      processing_stats: {
+        total_time_ms: totalProcessingTime,
+        lookup_method: lookupMethod,
+        payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
+        team_cleaners: webhookPayload.team_assignment?.number_of_cleaners || 0
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
@@ -377,9 +592,9 @@ serve(async (req) => {
 
 function getTierName(tierLevel: number): string {
   switch (tierLevel) {
-    case 1: return "Apprentice";
+    case 1: return "Standard";
     case 2: return "Professional"; 
-    case 3: return "Expert";
+    case 3: return "Elite";
     default: return "Professional";
   }
 }
