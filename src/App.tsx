@@ -4,6 +4,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Footer } from '@/components/Footer';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { UnifiedAdminSidebar } from '@/components/admin/UnifiedAdminSidebar';
+import { Outlet } from 'react-router-dom';
 import AuthErrorBoundary from '@/components/auth/AuthErrorBoundary';
 
 // Core customer pages
@@ -13,7 +16,6 @@ import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import ServiceDetails from '@/pages/ServiceDetails';
 import ScheduleService from '@/pages/ScheduleService';
 import BookingConfirmation from '@/pages/BookingConfirmation';
-import AdminBookingPreview from '@/pages/AdminBookingPreview';
 import GuestBooking from '@/pages/GuestBooking';
 import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
@@ -32,15 +34,16 @@ import SubcontractorDesktopPortal from '@/pages/SubcontractorDesktopPortal';
 
 // Admin pages (simplified)
 import AdminPortal from '@/pages/AdminPortal';
+import SimpleCustomerList from '@/pages/SimpleCustomerList';
 import CustomerManagementHub from '@/pages/CustomerManagementHub';
 import SubcontractorDetail from '@/pages/SubcontractorDetail';
 import SubcontractorHub from '@/pages/SubcontractorHub';
+import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import TipsManagement from '@/pages/TipsManagement';
 import FeedbackCenter from '@/pages/FeedbackCenter';
 import CommunicationHub from '@/pages/CommunicationHub';
 import ApplicationManager from '@/pages/ApplicationManager';
 import JobAssignments from '@/pages/JobAssignments';
-import AdminPaymentCenter from '@/pages/AdminPaymentCenter';
 import SecurityCenter from '@/pages/SecurityCenter';
 
 // Commercial estimates (kept as requested)
@@ -141,11 +144,6 @@ function App() {
                 } />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-                <Route path="/admin-booking-preview" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'owner', 'admin', 'enterprise_client']}>
-                    <AdminBookingPreview />
-                  </ProtectedRoute>
-                } />
                 <Route path="/test-booking" element={<TestBooking />} />
                 <Route path="/guest-booking" element={<GuestBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
@@ -191,22 +189,23 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* Admin routes */}
+                {/* Admin Routes */}
                 <Route path="/admin" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
-                    <AdminPortal />
+                  <ProtectedRoute requiredRole="super_admin">
+                    <SidebarProvider>
+                      <div className="flex min-h-screen w-full">
+                        <UnifiedAdminSidebar />
+                        <main className="flex-1">
+                          <Outlet />
+                        </main>
+                      </div>
+                    </SidebarProvider>
                   </ProtectedRoute>
-                } />
-                <Route path="/admin/customers" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <CustomerManagementHub />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/subcontractors" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <SubcontractorHub />
-                  </ProtectedRoute>
-                } />
+                }>
+                  <Route index element={<AdminPortal />} />
+                  <Route path="customers" element={<SimpleCustomerList />} />
+                  <Route path="subcontractors" element={<SubcontractorManagement />} />
+                </Route>
                 <Route path="/subcontractor-detail/:id" element={
                   <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
                     <SubcontractorDetail />
@@ -243,11 +242,6 @@ function App() {
                     <JobAssignments />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin-payment-center" element={
-                  <ProtectedRoute allowedRoles={['owner', 'super_admin', 'enterprise_client']}>
-                    <AdminPaymentCenter />
-                  </ProtectedRoute>
-                } />
                 <Route path="/security-center" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <SecurityCenter />
@@ -262,60 +256,12 @@ function App() {
                 } />
                 
                 {/* Review Portal (kept as requested) */}
-                <Route path="/reviews" element={<ReviewsPortal />} />
-                
-                {/* Subcontractor payments */}
-                <Route path="/subcontractor-payments" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <SubcontractorPayments />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Admin tool routes */}
-                <Route path="/email-settings" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
-                    <EmailSettings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/user-management" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } />
-                <Route path="/security-settings" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <SecuritySettings />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Billing */}
-                <Route path="/billing" element={
-                  <ProtectedRoute requiredRole="customer">
-                    <Billing />
-                  </ProtectedRoute>
-                } />
+                <Route path="/reviews-portal" element={<ReviewsPortal />} />
                 
                 {/* Tier Management System (kept as requested) */}
-                <Route path="/tier-config" element={
+                <Route path="/tier-management" element={
                   <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client']}>
                     <TierSystemConfig />
-                  </ProtectedRoute>
-                } />
-                <Route path="/tier-analytics" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <TierPerformanceAnalytics />
-                  </ProtectedRoute>
-                } />
-                <Route path="/payment-dashboard" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <SubcontractorPaymentDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/tier-progression-dashboard" element={
-                  <ProtectedRoute allowedRoles={['super_admin', 'enterprise_client', 'owner']}>
-                    <AdminLayout title="Tier Progression Dashboard" description="Monitor and manage automated tier progressions">
-                      <TierProgressionDashboard />
-                    </AdminLayout>
                   </ProtectedRoute>
                 } />
                 

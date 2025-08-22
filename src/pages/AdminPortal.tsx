@@ -152,48 +152,46 @@ const AdminPortal = () => {
           </AdminGrid>
         </AdminSection>
 
-        {/* Management Hubs */}
+        {/* Quick Actions */}
         <AdminSection 
-          title="Management Hubs"
-          description="Access centralized management areas for different aspects of your business"
+          title="Quick Actions"
+          description="Access core management functions"
         >
-          <AdminGrid columns={3} gap="lg">
+          <AdminGrid columns={2} gap="lg">
             <AdminCard
               title="Customer Management"
-              description="Manage customers, orders, payments, billing, feedback, and support tickets. Complete customer lifecycle management."
+              description="View and manage customer accounts, orders, and service history."
               variant="action"
               className="border-primary/20 hover:border-primary/40 transition-colors"
             >
               <div className="space-y-4 mt-4">
                 <div className="text-sm text-muted-foreground">
-                  • Customer profiles & history<br />
-                  • Order tracking & management<br />
-                  • Payment processing & billing<br />
-                  • Feedback & support center
+                  • Customer profiles & orders<br />
+                  • Service history tracking<br />
+                  • Account management
                 </div>
                 <Button 
                   onClick={() => navigate('/admin/customers')}
                   className="w-full justify-between group"
                   size="lg"
                 >
-                  <span>Manage Customers</span>
+                  <span>View Customers</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
             </AdminCard>
 
             <AdminCard
-              title="Subcontractor Management"
-              description="Complete team management including applications, assignments, performance tracking, and tier progression."
+              title="Team Management"
+              description="Manage subcontractors, applications, and tier progression."
               variant="action"
               className="border-accent/20 hover:border-accent/40 transition-colors"
             >
               <div className="space-y-4 mt-4">
                 <div className="text-sm text-muted-foreground">
-                  • Team directory & profiles<br />
+                  • Subcontractor profiles<br />
                   • Application processing<br />
-                  • Job assignments & tracking<br />
-                  • Performance & tier management
+                  • Tier management
                 </div>
                 <Button 
                   onClick={() => navigate('/admin/subcontractors')}
@@ -202,31 +200,6 @@ const AdminPortal = () => {
                   variant="secondary"
                 >
                   <span>Manage Team</span>
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
-            </AdminCard>
-
-            <AdminCard
-              title="Systems Management"
-              description="Technical administration including database tools, API keys, integrations, email settings, and system monitoring."
-              variant="action"
-              className="border-warning/20 hover:border-warning/40 transition-colors"
-            >
-              <div className="space-y-4 mt-4">
-                <div className="text-sm text-muted-foreground">
-                  • Database administration<br />
-                  • API keys & integrations<br />
-                  • Email & automation settings<br />
-                  • Security & monitoring
-                </div>
-                <Button 
-                  onClick={() => navigate('/admin/systems')}
-                  className="w-full justify-between group"
-                  size="lg"
-                  variant="outline"
-                >
-                  <span>System Settings</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>

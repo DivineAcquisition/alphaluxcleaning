@@ -48,7 +48,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-const coreItems = [
+const adminItems = [
   {
     label: "Dashboard",
     path: "/admin",
@@ -56,10 +56,16 @@ const coreItems = [
     description: "Overview & metrics"
   },
   {
-    label: "Subcontractor Management",
-    path: "/admin/subcontractors",
+    label: "Customers",
+    path: "/admin/customers",
     icon: Users,
-    description: "Team & tier management"
+    description: "Customer management"
+  },
+  {
+    label: "Subcontractors",
+    path: "/admin/subcontractors",
+    icon: UserCheck,
+    description: "Team management"
   },
   {
     label: "Applications",
@@ -68,123 +74,27 @@ const coreItems = [
     description: "Review applications"
   },
   {
-    label: "Job Assignments",
-    path: "/job-assignments",
-    icon: ClipboardList,
-    description: "Assign jobs"
-  }
-];
-
-const businessItems = [
-  {
-    label: "Customer Management",
-    path: "/admin/customers",
-    icon: Users2,
-    description: "Customer portal"
+    label: "Commercial Estimates",
+    path: "/commercial-estimates",
+    icon: Building2,
+    description: "Business quotes"
   },
   {
-    label: "Payment Portal",
-    path: "/admin-payment-center",
-    icon: CreditCard,
-    description: "Billing & payments"
+    label: "Tier Management",
+    path: "/tier-management",
+    icon: Crown,
+    description: "Performance tiers"
   },
   {
-    label: "Support Requests",
-    path: "/support-portal",
-    icon: HeadphonesIcon,
-    description: "Customer support"
-  },
-  {
-    label: "Tips Management",
-    path: "/tips-management",
-    icon: DollarSign,
-    description: "Customer tips tracking"
-  },
-  {
-    label: "Feedback Center",
-    path: "/feedback-center",
+    label: "Reviews",
+    path: "/reviews-portal",
     icon: MessageSquare,
-    description: "Reviews & responses"
-  },
-  {
-    label: "Communication Hub",
-    path: "/communication-hub",
-    icon: MessageSquare,
-    description: "Message center"
-  }
-];
-
-const officeItems = [
-  {
-    label: "Office Dashboard",
-    path: "/admin/office/schedule",
-    icon: Calendar,
-    description: "Daily operations"
-  },
-  {
-    label: "Job Management",
-    path: "/admin/office/jobs",
-    icon: ClipboardList,
-    description: "Track & assign jobs"
-  },
-  {
-    label: "Team Management",
-    path: "/admin/office/team",
-    icon: UserCog,
-    description: "Staff oversight"
-  },
-  {
-    label: "Quality Control",
-    path: "/admin/office/quality",
-    icon: CheckCircle,
-    description: "Service quality"
-  },
-  {
-    label: "Performance",
-    path: "/admin/office/performance",
-    icon: TrendingUp,
-    description: "Analytics & metrics"
-  }
-];
-
-const systemItems = [
-  {
-    label: "Systems Management",
-    path: "/admin/systems",
-    icon: Settings,
-    description: "System hub"
-  },
-  {
-    label: "API Keys",
-    path: "/api-keys",
-    icon: Key,
-    description: "Manage integrations"
-  },
-  {
-    label: "Database Tools",
-    path: "/database-tools",
-    icon: Database,
-    description: "DB management"
-  },
-  {
-    label: "Security Center",
-    path: "/security-center",
-    icon: Shield,
-    description: "Security monitoring"
-  },
-  {
-    label: "Automation",
-    path: "/automation-controls",
-    icon: Zap,
-    description: "Workflows"
+    description: "Customer feedback"
   }
 ];
 
 const sectionGroups = [
-  { title: "Core", items: coreItems, color: "primary" },
-  { title: "Business", items: businessItems, color: "blue" },
-  { title: "Office", items: officeItems, color: "green" },
-  { title: "System", items: systemItems, color: "purple" }
+  { title: "Administration", items: adminItems, color: "primary" }
 ];
 
 export function UnifiedAdminSidebar() {
