@@ -4,8 +4,7 @@ import { ModernBookingFlow } from './ModernBookingFlow';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, UserPlus, LogIn, RotateCcw, Trash2 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { ArrowRight, UserPlus, LogIn } from 'lucide-react';
 
 interface BookingData {
   homeSize: string;
@@ -31,79 +30,23 @@ interface BookingData {
   stripeSessionId?: string;
 }
 
-const BOOKING_STORAGE_KEY = 'guestBookingData';
-
 export function GuestBookingWrapper() {
   const { user, loading } = useAuth();
-  const [searchParams] = useSearchParams();
   const [showAuthChoice, setShowAuthChoice] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
   const [bookingStep, setBookingStep] = useState(1);
-  const [hasRestoredData, setHasRestoredData] = useState(false);
-  const [resumePromptShown, setResumePromptShown] = useState(false);
 
-  // Check for saved booking data and show resume prompt
+  // Clear any lingering localStorage keys from previous versions
   useEffect(() => {
-    const savedBooking = localStorage.getItem(BOOKING_STORAGE_KEY);
-    if (savedBooking && !resumePromptShown) {
-      try {
-        const parsed = JSON.parse(savedBooking);
-        const savedTimestamp = parsed._timestamp || 0;
-        const hoursSinceLastSave = (Date.now() - savedTimestamp) / (1000 * 60 * 60);
-        
-        // Only show resume prompt if data was saved within last 24 hours
-        if (hoursSinceLastSave < 24 && Object.keys(parsed).length > 2) {
-          setHasRestoredData(true);
-          setResumePromptShown(true);
-        }
-      } catch (error) {
-        console.error('Failed to parse saved booking:', error);
-        localStorage.removeItem(BOOKING_STORAGE_KEY);
+    const keysToClean = ['guestBookingData', 'authenticatedBookingData', 'instant_quote'];
+    keysToClean.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
       }
-    }
-  }, [resumePromptShown]);
-
-  const handleResumeBooking = () => {
-    const savedBooking = localStorage.getItem(BOOKING_STORAGE_KEY);
-    if (savedBooking) {
-      try {
-        const parsed = JSON.parse(savedBooking);
-        setBookingData(parsed);
-        // Get step from URL or determine from data completeness
-        const urlStep = parseInt(searchParams.get('step') || '1', 10);
-        const dataStep = determineStepFromData(parsed);
-        setBookingStep(Math.max(urlStep, dataStep));
-        setHasRestoredData(false);
-        toast.success('Welcome back! Your booking progress has been restored.');
-      } catch (error) {
-        console.error('Failed to restore booking:', error);
-        localStorage.removeItem(BOOKING_STORAGE_KEY);
-        setHasRestoredData(false);
-      }
-    }
-  };
-
-  const handleStartFresh = () => {
-    localStorage.removeItem(BOOKING_STORAGE_KEY);
-    setBookingData({});
-    setBookingStep(1);
-    setHasRestoredData(false);
-    toast.success('Starting with a fresh booking form.');
-  };
-
-  const determineStepFromData = (data: Partial<BookingData>): number => {
-    if (data.stripeSessionId) return 4;
-    if (data.serviceDate && data.serviceTime && data.address?.street) return 3;
-    if (data.homeSize && data.frequency) return 2;
-    return 1;
-  };
-
-  // Clear saved booking data
-  const clearBookingData = () => {
-    localStorage.removeItem(BOOKING_STORAGE_KEY);
-  };
+    });
+  }, []);
 
   const handleBookingUpdate = (updates: Partial<BookingData>) => {
     const newData = { ...bookingData, ...updates };
@@ -129,54 +72,8 @@ export function GuestBookingWrapper() {
   };
 
   const handleBookingComplete = () => {
-    clearBookingData();
+    // No localStorage cleanup needed since we don't save data
   };
-
-  // Show resume prompt if we have saved data
-  if (hasRestoredData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-clean">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-            <p className="text-muted-foreground">
-              We found a saved booking in progress
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Your previous booking session was automatically saved.
-              </p>
-            </div>
-            
-            <Button
-              onClick={handleResumeBooking}
-              className="w-full"
-              size="lg"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Resume Previous Booking
-            </Button>
-            
-            <Button
-              onClick={handleStartFresh}
-              variant="outline"
-              className="w-full"
-              size="lg"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Start Fresh Booking
-            </Button>
-            
-            <p className="text-xs text-muted-foreground text-center">
-              Your data is saved locally and will be automatically cleared after 24 hours.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   // Show loading state
   if (loading) {

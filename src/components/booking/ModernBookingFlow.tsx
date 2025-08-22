@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
 import { useBookingWebhook } from '@/hooks/useBookingWebhook';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,15 +99,8 @@ export function ModernBookingFlow({
   const initialStep = urlStep >= 1 && urlStep <= 4 ? urlStep : 1;
   const [currentStep, setCurrentStep] = useState(initialStep);
 
-  // Use form persistence for auto-save
-  const storageKey = guestMode ? 'guestBookingData' : 'authenticatedBookingData';
-  const {
-    data: bookingData,
-    updateData: updateBookingData,
-    clearData,
-    lastSaved,
-    isLoading: isPersistenceLoading
-  } = useFormPersistence<BookingData>({
+  // Simple state management without localStorage
+  const [bookingData, setBookingData] = useState<BookingData>({
     homeSize: '',
     frequency: '',
     addOns: [],
@@ -130,10 +122,21 @@ export function ModernBookingFlow({
     totalPrice: 0,
     paymentType: 'pay_after_service',
     ...initialData
-  }, {
-    storageKey,
-    debounceMs: 500
   });
+  
+  const updateBookingData = (updates: Partial<BookingData>) => {
+    setBookingData(prev => ({ ...prev, ...updates }));
+  };
+
+  // Clear any lingering localStorage keys from previous versions
+  useEffect(() => {
+    const keysToClean = ['guestBookingData', 'authenticatedBookingData', 'instant_quote'];
+    keysToClean.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
 
   // Online/offline detection
   useEffect(() => {
@@ -143,7 +146,7 @@ export function ModernBookingFlow({
     };
     const handleOffline = () => {
       setIsOnline(false);
-      toast.error('Connection lost - your progress is saved locally');
+      toast.error('Connection lost');
     };
 
     window.addEventListener('online', handleOnline);
@@ -171,11 +174,8 @@ export function ModernBookingFlow({
   const progress = (currentStep / steps.length) * 100;
 
   const handleDataUpdate = useCallback((updates: Partial<BookingData>) => {
-    if (!isOnline) {
-      toast.info('Changes saved locally - will sync when connection is restored');
-    }
     updateBookingData(updates);
-  }, [updateBookingData, isOnline]);
+  }, []);
 
   const canProceedToNext = () => {
     switch (currentStep) {
@@ -344,10 +344,8 @@ export function ModernBookingFlow({
     setCurrentStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Clear saved data on successful completion
-    clearData();
     onComplete?.();
-  }, [bookingData, handleDataUpdate, clearData, onComplete, sendWebhookForStep]);
+  }, [bookingData, handleDataUpdate, onComplete, sendWebhookForStep]);
 
 
   const renderCurrentStep = () => {
@@ -389,10 +387,6 @@ export function ModernBookingFlow({
     }
   };
 
-  // Show loading state while persistence is loading
-  if (isPersistenceLoading) {
-    return <BookingLoadingState step={currentStep} totalSteps={steps.length} />;
-  }
 
   return (
     <BookingErrorBoundary onError={(error) => setHasError(true)}>
@@ -405,13 +399,6 @@ export function ModernBookingFlow({
           </div>
         )}
 
-        {/* Auto-save indicator */}
-        {lastSaved && (
-          <div className="fixed top-4 right-4 z-50 bg-muted/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-muted-foreground">
-            <Wifi className="h-3 w-3 mr-1 inline" />
-            Auto-saved {new Date(lastSaved).toLocaleTimeString()}
-          </div>
-        )}
       
       {/* Header with Progress */}
       <div className="bg-card border-b sticky top-0 z-40 shadow-sm">
