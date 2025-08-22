@@ -52,6 +52,7 @@ interface Props {
 export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentSuccess, onBack }: Props) {
   const { user } = useAuth(); // Get authenticated user info
   const { sendBookingWebhook } = useBookingWebhook();
+  const checkoutRef = React.useRef<HTMLDivElement>(null);
   const [isRecurring, setIsRecurring] = useState(bookingData.frequency !== 'one-time');
   const [paymentType, setPaymentType] = useState<'pay_after_service' | '25_percent_with_discount'>('pay_after_service');
   const [promoCode, setPromoCode] = useState('');
@@ -187,6 +188,14 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         setIsSetupIntent(data.is_setup_intent || false);
         setShowPaymentForm(true);
         
+        // Scroll to top of checkout to prevent auto-scrolling to bottom
+        setTimeout(() => {
+          checkoutRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
+        
         // Show different message based on setup intent vs payment intent
         if (data.is_setup_intent) {
           toast.success('Card authorization ready - no charge will occur now');
@@ -269,7 +278,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
   return (
     <PaymentErrorBoundary>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div ref={checkoutRef} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* System Error Display */}
         {systemError && (
@@ -482,17 +491,18 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
             stripe={stripePromise} 
             options={{
               clientSecret,
-              appearance: {
-                theme: 'stripe',
-                variables: {
-                  colorPrimary: 'hsl(273 100% 50%)',
-                  colorBackground: 'hsl(0 0% 100%)',
-                  colorText: 'hsl(210 40% 8%)',
-                  colorDanger: 'hsl(0 84.2% 60.2%)',
-                  fontFamily: 'Plus Jakarta Sans, sans-serif',
-                  borderRadius: '8px',
-                },
-              },
+      appearance: {
+        theme: 'stripe',
+        variables: {
+          colorPrimary: 'hsl(273 100% 50%)',
+          colorBackground: 'hsl(0 0% 100%)',
+          colorText: 'hsl(210 40% 8%)',
+          colorDanger: 'hsl(0 84.2% 60.2%)',
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
+          borderRadius: '8px',
+        },
+      },
+      loader: 'never' // Prevent auto-focus issues
             }}
           >
             <Card className="shadow-clean border-primary/20">

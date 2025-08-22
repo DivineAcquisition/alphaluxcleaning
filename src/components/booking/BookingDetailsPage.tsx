@@ -12,7 +12,6 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { US_STATES } from '@/lib/states';
-import { MobileTimeSlotPicker, MobileFormField } from './MobileBookingOptimizations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
 
@@ -38,15 +37,15 @@ interface Props {
 }
 
 const timeSlots = [
-  { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false },
-  { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM', popular: true },
-  { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM', popular: true },
-  { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM', popular: false },
-  { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM', popular: false },
-  { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM', popular: true },
-  { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM', popular: true },
-  { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM', popular: false },
-  { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false }
+  { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM' },
+  { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM' },
+  { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM' },
+  { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM' },
+  { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM' },
+  { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM' },
+  { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM' },
+  { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM' },
+  { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM' }
 ];
 
 export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onBack }: Props) {
@@ -270,11 +269,32 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <MobileTimeSlotPicker
-              timeSlots={timeSlots}
-              selectedTime={bookingData.serviceTime}
-              onTimeSelect={handleTimeSelect}
-            />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.value}
+                  onClick={() => handleTimeSelect(slot.value)}
+                  className={cn(
+                    "p-3 rounded-lg border-2 text-left transition-all duration-200",
+                    bookingData.serviceTime === slot.value
+                      ? "border-primary bg-primary/5 shadow-clean"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{slot.label}</div>
+                      <div className="text-xs text-muted-foreground">{slot.range}</div>
+                    </div>
+                    {bookingData.serviceTime === slot.value && (
+                      <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -289,60 +309,65 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-4">
-              <MobileFormField 
-                label="Street Address" 
-                required
-                help="Include apartment/unit number if applicable"
-              >
-                <Input
-                  id="street"
-                  placeholder="123 Main Street, Apt 4B"
-                  value={bookingData.address.street}
-                  onChange={(e) => handleAddressChange('street', e.target.value)}
-                  className="border-border focus:border-primary"
-                />
-              </MobileFormField>
+              <div className="space-y-4">
+                <div className="space-y-4">
+                  <Label htmlFor="street" className="text-base font-medium">
+                    Street Address <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="street"
+                    placeholder="123 Main Street, Apt 4B"
+                    value={bookingData.address.street}
+                    onChange={(e) => handleAddressChange('street', e.target.value)}
+                    className="border-border focus:border-primary"
+                  />
+                  <p className="text-sm text-muted-foreground">Include apartment/unit number if applicable</p>
+                </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <MobileFormField label="City" required>
-                  <Input
-                    id="city"
-                    placeholder="San Francisco"
-                    value={bookingData.address.city}
-                    onChange={(e) => handleAddressChange('city', e.target.value)}
-                    className="border-border focus:border-primary"
-                  />
-                </MobileFormField>
-                
-                <MobileFormField label="State">
-                  <Select 
-                    value={bookingData.address.state} 
-                    onValueChange={(value) => handleAddressChange('state', value)}
-                  >
-                    <SelectTrigger className="min-h-[48px]">
-                      <SelectValue placeholder="CA" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {US_STATES.map(state => (
-                        <SelectItem key={state.abbreviation} value={state.abbreviation}>
-                          {state.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </MobileFormField>
-                
-                <MobileFormField label="ZIP Code">
-                  <Input
-                    id="zipCode"
-                    placeholder="94102"
-                    value={bookingData.address.zipCode}
-                    onChange={(e) => handleAddressChange('zipCode', e.target.value)}
-                    className="border-border focus:border-primary"
-                  />
-                </MobileFormField>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-base font-medium">
+                      City <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="city"
+                      placeholder="San Francisco"
+                      value={bookingData.address.city}
+                      onChange={(e) => handleAddressChange('city', e.target.value)}
+                      className="border-border focus:border-primary"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="state" className="text-base font-medium">State</Label>
+                    <Select 
+                      value={bookingData.address.state} 
+                      onValueChange={(value) => handleAddressChange('state', value)}
+                    >
+                      <SelectTrigger className="min-h-[48px]">
+                        <SelectValue placeholder="CA" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {US_STATES.map(state => (
+                          <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode" className="text-base font-medium">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      placeholder="94102"
+                      value={bookingData.address.zipCode}
+                      onChange={(e) => handleAddressChange('zipCode', e.target.value)}
+                      className="border-border focus:border-primary"
+                    />
+                  </div>
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -358,11 +383,10 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <MobileFormField 
-              label="Phone Number" 
-              required
-              help="We'll send booking confirmations and updates to this number"
-            >
+            <div className="space-y-4">
+              <Label htmlFor="phone" className="text-base font-medium">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="phone"
                 type="tel"
@@ -371,12 +395,11 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                 onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
                 className="border-border focus:border-primary"
               />
-            </MobileFormField>
+              <p className="text-sm text-muted-foreground">We'll send booking confirmations and updates to this number</p>
+            </div>
             
-            <MobileFormField 
-              label="Special Instructions"
-              help="Optional - Let us know about any specific areas of focus or access instructions"
-            >
+            <div className="space-y-2">
+              <Label htmlFor="instructions" className="text-base font-medium">Special Instructions</Label>
               <Textarea
                 id="instructions"
                 placeholder="Any special requests or areas that need extra attention..."
@@ -385,7 +408,8 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                 className="border-border focus:border-primary min-h-[100px] resize-none"
                 rows={4}
               />
-            </MobileFormField>
+              <p className="text-sm text-muted-foreground">Optional - Let us know about any specific areas of focus or access instructions</p>
+            </div>
           </CardContent>
         </Card>
       )}

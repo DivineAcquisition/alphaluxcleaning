@@ -1982,6 +1982,7 @@ export type Database = {
           frequency: string | null
           id: string
           is_recurring: boolean | null
+          metadata: Json | null
           next_service_date: string | null
           paused_until: string | null
           payment_metadata: Json | null
@@ -2019,6 +2020,7 @@ export type Database = {
           frequency?: string | null
           id?: string
           is_recurring?: boolean | null
+          metadata?: Json | null
           next_service_date?: string | null
           paused_until?: string | null
           payment_metadata?: Json | null
@@ -2056,6 +2058,7 @@ export type Database = {
           frequency?: string | null
           id?: string
           is_recurring?: boolean | null
+          metadata?: Json | null
           next_service_date?: string | null
           paused_until?: string | null
           payment_metadata?: Json | null

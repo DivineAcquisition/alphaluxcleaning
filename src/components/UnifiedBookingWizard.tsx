@@ -208,6 +208,7 @@ const steps = [
 export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizardProps) {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const wizardRef = React.useRef<HTMLDivElement>(null);
   
   // Use form persistence to save data across sessions
   const {
@@ -293,6 +294,12 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
     if (canProceedToNext() && currentStep < 3) {
       setCurrentStep(currentStep + 1);
       
+      // Scroll to top of wizard to prevent auto-scrolling issues
+      wizardRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+      
       // Auto-save progress notification
       if (lastSaved) {
         toast.success('Progress saved automatically');
@@ -303,6 +310,12 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      
+      // Scroll to top of wizard to prevent auto-scrolling issues
+      wizardRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
     }
   };
 
@@ -623,7 +636,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div ref={wizardRef} className="max-w-6xl mx-auto p-6 space-y-8">
       {/* Progress Header */}
       <Card className="shadow-clean">
         <CardHeader>
