@@ -22,6 +22,7 @@ import CustomerDashboard from '@/pages/CustomerDashboard';
 import CustomerMobilePortal from '@/pages/CustomerMobilePortal';
 import OrderStatus from '@/pages/OrderStatus';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import OrderConfirmation from '@/pages/OrderConfirmation';
 
 // Subcontractor pages
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
@@ -137,6 +138,7 @@ function App() {
                 <Route path="/order-status" element={<OrderStatus />} />
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
                 <Route path="/service-details" element={
                   <ProtectedRoute allowedRoles={['customer', 'super_admin']}>
                     <ServiceDetails />
