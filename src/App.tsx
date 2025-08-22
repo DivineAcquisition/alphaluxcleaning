@@ -93,7 +93,7 @@ function DomainRouter() {
   }
   
   // Guest-accessible paths that should bypass domain redirects
-  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking'];
+  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking', '/service-details'];
   
   // Core domain routing (simplified)
   if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
@@ -147,11 +147,7 @@ function App() {
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                <Route path="/service-details" element={
-                  <ProtectedRoute allowedRoles={['customer', 'super_admin']}>
-                    <ServiceDetails />
-                  </ProtectedRoute>
-                } />
+                <Route path="/service-details" element={<ServiceDetails />} />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 <Route path="/test-booking" element={<TestBooking />} />
