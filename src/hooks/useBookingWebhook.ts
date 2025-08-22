@@ -52,9 +52,16 @@ interface BookingWebhookData {
   // Required fields
   bookingStep: 'service_selection' | 'service_details' | 'payment' | 'confirmation';
   webhookUrl?: string; // Now optional since we use configured URLs
-  orderId?: string;
-  bookingId?: string;
-  sessionId?: string; // Add session ID for enhanced webhook lookup
+  
+  // Additional fields for enhanced webhook system
+  order_id?: string; // Renamed from orderId for consistency
+  booking_id?: string; // Renamed from bookingId for consistency
+  session_id?: string; // Renamed from sessionId for consistency
+  
+  // Backwards compatibility - deprecated but supported
+  orderId?: string; // Use order_id instead
+  bookingId?: string; // Use booking_id instead
+  sessionId?: string; // Use session_id instead
 }
 
 export const useBookingWebhook = () => {
@@ -71,64 +78,153 @@ export const useBookingWebhook = () => {
     const webhookStartTime = Date.now();
     setIsLoading(true);
     
+    // Enhanced pre-send validation and logging
+    const dataValidation = {
+      customer_info_complete: !!(data.customerInfo?.name && data.customerInfo?.email),
+      address_complete: !!(data.address?.street && data.address?.city),
+      pricing_complete: !!(data.totalPrice && data.totalPrice > 0),
+      service_details_complete: !!(data.homeSize && data.frequency),
+      has_order_id: !!(data.order_id || data.orderId),
+      has_session_id: !!(data.session_id || data.sessionId)
+    };
+    
+    console.log('📤 useBookingWebhook: Enhanced pre-send analysis:', {
+      step: data.bookingStep,
+      timestamp: new Date().toISOString(),
+      payload_size_bytes: JSON.stringify(data).length,
+      payload_size_kb: Math.round(JSON.stringify(data).length / 1024 * 100) / 100,
+      data_validation: dataValidation,
+      key_identifiers: {
+        order_id: data.order_id || data.orderId || 'none',
+        booking_id: data.booking_id || data.bookingId || 'none', 
+        session_id: data.session_id || data.sessionId || 'none'
+      }
+    });
+    
     try {
-      // Add timestamp and source to payload
-      const payload = {
+      // Normalize ID fields for consistency
+      const normalizedData = {
         ...data,
+        order_id: data.order_id || data.orderId,
+        booking_id: data.booking_id || data.bookingId,
+        session_id: data.session_id || data.sessionId,
         timestamp: new Date().toISOString(),
         source: 'booking_flow'
       };
 
-      // Choose webhook function based on orderId validity
-      const functionName = (data.orderId && isValidUUID(data.orderId)) 
+      // Choose webhook function based on order_id validity
+      const hasValidOrderId = normalizedData.order_id && isValidUUID(normalizedData.order_id);
+      const functionName = hasValidOrderId 
         ? 'enhanced-booking-webhook-v2' 
         : 'send-booking-transaction-to-zapier';
 
-      console.log('🚀 useBookingWebhook: Sending webhook', {
+      console.log('🔄 useBookingWebhook: Function selection logic:', {
         step: data.bookingStep,
+        function_selected: functionName,
+        decision_factors: {
+          has_order_id: !!normalizedData.order_id,
+          is_valid_uuid: hasValidOrderId,
+          order_id_value: normalizedData.order_id || 'none'
+        }
+      });
+
+      // Enhanced payload preparation
+      const payload = hasValidOrderId ? {
+        ...normalizedData,
+        trigger_event: data.bookingStep,
+        debug_info: {
+          source: 'useBookingWebhook',
+          validation_results: dataValidation,
+          selected_function: functionName
+        }
+      } : {
+        transactionData: normalizedData,
+        type: 'booking_step',
+        debug_info: {
+          source: 'useBookingWebhook',
+          validation_results: dataValidation,
+          selected_function: functionName
+        }
+      };
+
+      console.log('📋 useBookingWebhook: Prepared payload info:', {
         function: functionName,
-        order_id: data.orderId,
-        session_id: data.sessionId,
-        has_valid_order_id: !!(data.orderId && isValidUUID(data.orderId)),
-        timestamp: new Date().toISOString()
+        payload_structure: Object.keys(payload),
+        payload_size_kb: Math.round(JSON.stringify(payload).length / 1024 * 100) / 100,
+        contains_debug_info: !!payload.debug_info
       });
 
       const { data: result, error } = await supabase.functions.invoke(functionName, {
-        body: data.orderId ? {
-          ...payload,
-          trigger_event: data.bookingStep,
-          order_id: data.orderId,
-          booking_id: data.bookingId,
-          session_id: data.sessionId
-        } : {
-          transactionData: payload,
-          type: 'booking_step'
-        }
+        body: payload
       });
 
       const webhookTime = Date.now() - webhookStartTime;
       
       if (error) {
-        console.error('❌ useBookingWebhook: Webhook failed', {
+        console.error('❌ useBookingWebhook: Webhook invocation failed:', {
           step: data.bookingStep,
           function: functionName,
-          error: error.message,
-          time_ms: webhookTime
+          error_message: error.message,
+          error_details: error.details,
+          time_ms: webhookTime,
+          payload_info: {
+            size_kb: Math.round(JSON.stringify(payload).length / 1024 * 100) / 100,
+            has_order_id: hasValidOrderId
+          }
         });
         throw error;
       }
 
-      console.log('✅ useBookingWebhook: Webhook succeeded', {
+      // Enhanced success logging with detailed metrics
+      const successMetrics = {
         step: data.bookingStep,
-        function: functionName,
-        time_ms: webhookTime,
-        result_success: result?.success,
-        webhooks_sent: result?.results?.length || 0,
-        processing_stats: result?.processing_stats
-      });
+        function_used: functionName,
+        response_time_ms: webhookTime,
+        result_analysis: {
+          success: result?.success,
+          message: result?.message,
+          webhooks_attempted: result?.results?.length || 0,
+          webhooks_successful: result?.results?.filter(r => r.success).length || 0,
+          processing_stats: result?.processing_stats
+        },
+        performance_indicators: {
+          fast_response: webhookTime < 2000,
+          large_payload: JSON.stringify(payload).length > 50000,
+          efficiency_score: Math.round(1000 / webhookTime * 100) / 100
+        }
+      };
 
-      // Only show toast for confirmation step to avoid spam
+      console.log('✅ useBookingWebhook: Webhook execution completed:', successMetrics);
+      
+      // Performance warnings
+      if (webhookTime > 5000) {
+        console.warn('⚠️ useBookingWebhook: Slow webhook detected:', {
+          function: functionName,
+          step: data.bookingStep,
+          time_ms: webhookTime,
+          recommendation: 'Consider investigating webhook endpoint performance'
+        });
+      }
+      
+      if (result?.results && result.results.some(r => !r.success)) {
+        console.warn('⚠️ useBookingWebhook: Partial webhook failures detected:', {
+          failed_endpoints: result.results.filter(r => !r.success).map(r => ({
+            url: r.webhook_url,
+            error: r.error
+          }))
+        });
+      }
+
+      // Step-specific completion logging
       if (data.bookingStep === 'confirmation') {
+        console.log('🎉 useBookingWebhook: BOOKING CONFIRMATION completed:', {
+          order_id: normalizedData.order_id,
+          total_processing_time_ms: webhookTime,
+          webhooks_sent: result?.results?.length || 0,
+          all_webhooks_successful: result?.results?.every(r => r.success) || false,
+          customer_email: data.customerInfo?.email || 'unknown'
+        });
+        
         toast({
           title: "Booking confirmed",
           description: "Your service has been scheduled successfully.",
@@ -138,24 +234,52 @@ export const useBookingWebhook = () => {
       return result;
     } catch (error) {
       const webhookTime = Date.now() - webhookStartTime;
-      console.error('🚨 useBookingWebhook: Critical error', {
-        step: data.bookingStep,
-        error: error.message,
-        time_ms: webhookTime,
-        order_id: data.orderId
-      });
       
-      // Only show error toast for confirmation step
+      // Enhanced error logging with context
+      const errorContext = {
+        step: data.bookingStep,
+        error_type: error.constructor?.name || 'UnknownError',
+        error_message: error.message,
+        time_to_failure_ms: webhookTime,
+        function_attempted: (data.order_id || data.orderId) && isValidUUID(data.order_id || data.orderId)
+          ? 'enhanced-booking-webhook-v2' 
+          : 'send-booking-transaction-to-zapier',
+        payload_info: {
+          size_kb: Math.round(JSON.stringify(data).length / 1024 * 100) / 100,
+          validation_results: dataValidation
+        },
+        recovery_suggestions: [
+          'Check webhook endpoint availability',
+          'Verify payload structure',
+          'Review network connectivity'
+        ]
+      };
+      
+      console.error('🚨 useBookingWebhook: Critical webhook failure:', errorContext);
+      
+      // Graceful error handling for confirmation step
       if (data.bookingStep === 'confirmation') {
+        console.log('🛡️ useBookingWebhook: Graceful error handling for confirmation:', {
+          order_id: data.order_id || data.orderId,
+          fallback_action: 'Show success message despite webhook failure'
+        });
+        
         toast({
           title: "Booking confirmed",
-          description: "Your service has been scheduled (notification processing).",
+          description: "Your service has been scheduled (notifications processing).",
           variant: "default"
         });
       }
       
       throw error;
     } finally {
+      const totalTime = Date.now() - webhookStartTime;
+      console.log('⏱️ useBookingWebhook: Execution completed:', {
+        step: data.bookingStep,
+        total_execution_time_ms: totalTime,
+        loading_state_cleared: true
+      });
+      
       setIsLoading(false);
     }
   };

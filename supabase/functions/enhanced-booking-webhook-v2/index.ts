@@ -196,6 +196,26 @@ serve(async (req) => {
 
     // Build the webhook payload in EXACT OrderEntry format (only specified keys)
     const payloadGenerationStart = Date.now();
+    
+    // Pre-validation logging for debugging
+    console.log('📋 Pre-payload generation validation:', {
+      order_id: orderData.id,
+      has_subcontractor: !!assignedSubcontractor,
+      amount_cents: baseAmount,
+      amount_dollars: amountInDollars,
+      add_ons_count: addOns.length,
+      customer_info: {
+        has_name: !!orderData.customer_name,
+        has_email: !!orderData.customer_email,
+        has_phone: !!orderData.customer_phone
+      },
+      address_info: {
+        has_street: !!(address.street || address.address),
+        has_city: !!address.city,
+        has_state: !!address.state
+      }
+    });
+    
     const webhookPayload = {
       order_details: {
         id: orderData.id,
@@ -297,12 +317,67 @@ serve(async (req) => {
     };
 
     const payloadGenerationTime = Date.now() - payloadGenerationStart;
+    const payloadString = JSON.stringify(webhookPayload);
+    const payloadSizeKb = Math.round(payloadString.length / 1024 * 100) / 100;
+    
+    // COMPREHENSIVE PAYLOAD VERIFICATION LOGGING
     console.log(`📦 EXACT OrderEntry payload generated (${payloadGenerationTime}ms):`, {
       order_id: orderData.id,
       payload_keys: Object.keys(webhookPayload),
-      payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
-      subcontractor_assigned: !!assignedSubcontractor
+      payload_size_kb: payloadSizeKb,
+      subcontractor_assigned: !!assignedSubcontractor,
+      verification: {
+        order_details_id: webhookPayload.order_details.id,
+        customer_name: webhookPayload.order_details.customer_name,
+        amount: webhookPayload.order_details.amount,
+        service_type: webhookPayload.order_details.service_type,
+        add_ons_count: webhookPayload.order_details.add_ons.length,
+        subcontractor_name: webhookPayload.subcontractor_payment.assigned_subcontractor.name,
+        payment_method: webhookPayload.payment_data.payment_method,
+        transaction_id: webhookPayload.payment_data.transaction_id,
+        booking_source: webhookPayload.analytics.booking_source
+      }
     });
+    
+    // Detailed field validation
+    const validation = {
+      required_fields_present: {
+        order_details: !!webhookPayload.order_details,
+        subcontractor_payment: !!webhookPayload.subcontractor_payment,
+        financial_breakdown: !!webhookPayload.financial_breakdown,
+        payment_data: !!webhookPayload.payment_data,
+        analytics: !!webhookPayload.analytics
+      },
+      order_details_complete: {
+        id: !!webhookPayload.order_details.id,
+        customer_name: !!webhookPayload.order_details.customer_name,
+        amount: typeof webhookPayload.order_details.amount === 'number',
+        service_type: !!webhookPayload.order_details.service_type,
+        scheduled_date: !!webhookPayload.order_details.scheduled_date
+      },
+      financial_data_valid: {
+        base_service_cost: typeof webhookPayload.financial_breakdown.base_service_cost === 'number',
+        final_cost: typeof webhookPayload.financial_breakdown.final_cost === 'number',
+        amounts_match: webhookPayload.order_details.amount === webhookPayload.payment_data.amount_paid
+      }
+    };
+    
+    console.log('🔍 Payload validation results:', validation);
+    
+    // Check for potential issues
+    const issues = [];
+    if (!validation.required_fields_present.order_details) issues.push('Missing order_details');
+    if (!validation.required_fields_present.subcontractor_payment) issues.push('Missing subcontractor_payment');
+    if (!validation.required_fields_present.financial_breakdown) issues.push('Missing financial_breakdown');
+    if (!validation.required_fields_present.payment_data) issues.push('Missing payment_data');
+    if (!validation.required_fields_present.analytics) issues.push('Missing analytics');
+    if (!validation.financial_data_valid.amounts_match) issues.push('Amount mismatch between order and payment');
+    
+    if (issues.length > 0) {
+      console.warn('⚠️ Payload validation issues found:', issues);
+    } else {
+      console.log('✅ Payload validation passed - all required fields present and valid');
+    }
 
     // Get active webhook configurations
     const { data: webhookConfigs, error: configError } = await supabase
@@ -333,47 +408,100 @@ serve(async (req) => {
     for (const config of webhookConfigs) {
       const webhookStartTime = Date.now();
       console.log(`🚀 Sending EXACT OrderEntry format webhook to: ${config.webhook_url}`);
+      
+      // Enhanced pre-send logging
+      console.log(`📤 Webhook transmission details:`, {
+        endpoint: config.webhook_url,
+        payload_size_bytes: payloadString.length,
+        payload_size_kb: payloadSizeKb,
+        content_type: 'application/json',
+        user_agent: 'BayAreaCleaningPros-OrderEntry/2.0',
+        webhook_version: 'v2-exact-orderentry',
+        order_id: orderData.id,
+        timestamp: new Date().toISOString()
+      });
 
       let webhookResponse;
       let responseText = '';
       let isSuccess = false;
       let responseTime = 0;
+      let connectionInfo = {};
 
       try {
+        // Enhanced headers for better tracking
+        const webhookHeaders = {
+          'Content-Type': 'application/json',
+          'User-Agent': 'BayAreaCleaningPros-OrderEntry/2.0',
+          'X-Webhook-Version': 'v2-exact-orderentry',
+          'X-Order-ID': orderData.id,
+          'X-Payload-Size': payloadString.length.toString(),
+          'X-Timestamp': new Date().toISOString(),
+          'X-Webhook-Config-ID': config.id
+        };
+
         webhookResponse = await fetch(config.webhook_url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'BayAreaCleaningPros-OrderEntry/2.0',
-            'X-Webhook-Version': 'v2-exact-orderentry',
-            'X-Order-ID': orderData.id
-          },
-          body: JSON.stringify(webhookPayload)
+          headers: webhookHeaders,
+          body: payloadString
         });
 
         responseText = await webhookResponse.text();
         responseTime = Date.now() - webhookStartTime;
         isSuccess = webhookResponse.ok;
+        
+        // Capture response details
+        connectionInfo = {
+          status: webhookResponse.status,
+          status_text: webhookResponse.statusText,
+          response_headers: Object.fromEntries(webhookResponse.headers.entries()),
+          response_size: responseText.length,
+          connection_time_ms: responseTime
+        };
 
         console.log(`${isSuccess ? '✅' : '❌'} OrderEntry webhook ${isSuccess ? 'succeeded' : 'failed'} (${responseTime}ms):`, {
-          status: webhookResponse.status,
+          ...connectionInfo,
           url: config.webhook_url,
-          response_size: responseText.length,
-          order_id: orderData.id
+          order_id: orderData.id,
+          response_preview: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
         });
+        
+        // Additional success metrics
+        if (isSuccess) {
+          console.log(`📊 Webhook success metrics:`, {
+            endpoint: config.webhook_url,
+            response_time_ms: responseTime,
+            payload_size_kb: payloadSizeKb,
+            response_size_bytes: responseText.length,
+            efficiency_score: payloadSizeKb / responseTime * 1000 // KB per second
+          });
+        }
 
       } catch (fetchError) {
         responseTime = Date.now() - webhookStartTime;
-        console.error(`🚨 OrderEntry webhook fetch error (${responseTime}ms):`, {
-          error: fetchError.message,
+        
+        // Enhanced error logging
+        const errorDetails = {
+          error_type: fetchError.name || 'UnknownError',
+          error_message: fetchError.message,
           url: config.webhook_url,
-          order_id: orderData.id
-        });
-        responseText = fetchError.message;
+          order_id: orderData.id,
+          response_time_ms: responseTime,
+          stack_trace: fetchError.stack?.substring(0, 500)
+        };
+        
+        console.error(`🚨 OrderEntry webhook fetch error (${responseTime}ms):`, errorDetails);
+        responseText = `${fetchError.name}: ${fetchError.message}`;
         isSuccess = false;
+        
+        connectionInfo = {
+          error_type: fetchError.name,
+          error_message: fetchError.message,
+          connection_time_ms: responseTime,
+          failed_at: 'fetch'
+        };
       }
 
-      // Log webhook delivery
+      // Enhanced webhook delivery logging
       const logData = {
         webhook_config_id: config.id,
         webhook_url: config.webhook_url,
@@ -385,12 +513,22 @@ serve(async (req) => {
         error_message: isSuccess ? null : responseText.substring(0, 500)
       };
 
+      const logStartTime = Date.now();
       const { error: logError } = await supabase
         .from('webhook_delivery_logs')
         .insert(logData);
+      
+      const logTime = Date.now() - logStartTime;
 
       if (logError) {
-        console.error('Error logging webhook delivery:', logError);
+        console.error(`🚨 Error logging webhook delivery (${logTime}ms):`, logError);
+      } else {
+        console.log(`📝 Webhook delivery logged successfully (${logTime}ms):`, {
+          log_id: 'auto-generated',
+          webhook_url: config.webhook_url,
+          success: isSuccess,
+          response_status: webhookResponse?.status || null
+        });
       }
 
       results.push({
@@ -399,22 +537,47 @@ serve(async (req) => {
         success: isSuccess,
         status: webhookResponse?.status || null,
         response_time_ms: responseTime,
-        payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
-        error: isSuccess ? null : responseText
+        payload_size_kb: payloadSizeKb,
+        connection_info: connectionInfo,
+        error: isSuccess ? null : responseText.substring(0, 200),
+        performance_metrics: {
+          throughput_kbps: payloadSizeKb / (responseTime / 1000),
+          efficiency_score: isSuccess ? (payloadSizeKb / responseTime * 1000) : 0
+        }
       });
     }
 
     const successCount = results.filter(r => r.success).length;
     const totalCount = results.length;
     const totalProcessingTime = Date.now() - startTime;
-
-    console.log(`🎯 EXACT OrderEntry webhook delivery completed:`, {
+    
+    // Enhanced completion metrics
+    const completionMetrics = {
       success_rate: `${successCount}/${totalCount}`,
+      success_percentage: totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0,
       total_time_ms: totalProcessingTime,
       order_id: orderData.id,
       lookup_method: lookupMethod,
-      payload_keys_sent: Object.keys(webhookPayload)
-    });
+      payload_keys_sent: Object.keys(webhookPayload),
+      average_response_time: results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.response_time_ms, 0) / results.length) : 0,
+      total_payload_size_kb: payloadSizeKb,
+      endpoints_called: totalCount,
+      failed_endpoints: results.filter(r => !r.success).map(r => ({ url: r.webhook_url, error: r.error }))
+    };
+
+    console.log(`🎯 EXACT OrderEntry webhook delivery completed:`, completionMetrics);
+    
+    // Performance analysis
+    if (results.length > 0) {
+      const performanceAnalysis = {
+        fastest_response_ms: Math.min(...results.map(r => r.response_time_ms)),
+        slowest_response_ms: Math.max(...results.map(r => r.response_time_ms)),
+        average_throughput_kbps: results.reduce((sum, r) => sum + (r.performance_metrics?.throughput_kbps || 0), 0) / results.length,
+        total_data_transferred_kb: payloadSizeKb * totalCount
+      };
+      
+      console.log(`📈 Performance analysis:`, performanceAnalysis);
+    }
 
     return new Response(JSON.stringify({
       success: true,
@@ -424,8 +587,19 @@ serve(async (req) => {
       processing_stats: {
         total_time_ms: totalProcessingTime,
         lookup_method: lookupMethod,
-        payload_size_kb: Math.round(JSON.stringify(webhookPayload).length / 1024 * 100) / 100,
-        payload_keys: Object.keys(webhookPayload)
+        payload_size_kb: payloadSizeKb,
+        payload_keys: Object.keys(webhookPayload),
+        average_response_time_ms: results.length > 0 ? Math.round(results.reduce((sum, r) => sum + r.response_time_ms, 0) / results.length) : 0,
+        success_percentage: totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0
+      },
+      diagnostics: {
+        lookup_attempts: lookupAttempts,
+        payload_validation: validation,
+        performance_metrics: results.length > 0 ? {
+          fastest_response_ms: Math.min(...results.map(r => r.response_time_ms)),
+          slowest_response_ms: Math.max(...results.map(r => r.response_time_ms)),
+          total_data_transferred_kb: payloadSizeKb * totalCount
+        } : null
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
