@@ -111,7 +111,7 @@ const ServiceDetails = () => {
 
       if (error || !data?.order) {
         toast.error("Order not found");
-        navigate('/guest-booking');
+        setLoading(false);
         return;
       }
 
@@ -159,7 +159,6 @@ const ServiceDetails = () => {
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
-      navigate('/guest-booking');
     } finally {
       setLoading(false);
     }
