@@ -84,18 +84,26 @@ const queryClient = new QueryClient();
 // Simplified Domain Router
 function DomainRouter() {
   const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
   const isDevelopment = import.meta.env.DEV;
   
   // In development, log domain routing for debugging
   if (isDevelopment) {
-    console.log('Domain router processing:', hostname);
+    console.log('Domain router processing:', hostname, pathname);
   }
+  
+  // Guest-accessible paths that should bypass domain redirects
+  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking'];
   
   // Core domain routing (simplified)
   if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
     return <Index />;
   }
   if (hostname.startsWith('members.') || hostname.startsWith('portal.')) {
+    // Allow guest paths to bypass portal redirect
+    if (guestPaths.includes(pathname)) {
+      return null; // Let normal routing handle it
+    }
     return <Navigate to="/my-services" replace />;
   }
   if (hostname.startsWith('cleaners.') || hostname.startsWith('subcon.')) {
