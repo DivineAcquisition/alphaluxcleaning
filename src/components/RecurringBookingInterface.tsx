@@ -514,10 +514,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
 
   const handleSubmitSelection = () => {
     setShowPaymentOptions(true);
-    // Scroll to payment options
-    setTimeout(() => {
-      document.getElementById('payment-options')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    // Removed auto-scroll to give user control over navigation
   };
 
   const handleApplyReferralCode = async () => {
@@ -723,10 +720,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const handlePaymentOptionSelect = (option: string) => {
     setSelectedPaymentOption(option);
     setShowCompleteBooking(true);
-    // Scroll to complete booking section
-    setTimeout(() => {
-      document.getElementById('complete-booking')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    // Removed auto-scroll to give user control over navigation
   };
 
   const handleCompleteBooking = async () => {

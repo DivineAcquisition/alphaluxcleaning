@@ -59,7 +59,9 @@ const createStripePromise = async (): Promise<Stripe | null> => {
     if (!publishableKey || !isValidKey(publishableKey)) {
       console.error('🔴 No valid Stripe publishable key found');
       if (typeof window !== 'undefined') {
-        toast.error('Payment system configuration needed. Please contact support.');
+        toast.error('Payment system unavailable. Please try again or contact support.', {
+          description: 'Unable to load payment configuration'
+        });
       }
       return null;
     }
@@ -69,7 +71,9 @@ const createStripePromise = async (): Promise<Stripe | null> => {
   } catch (error) {
     console.error('🔴 Failed to initialize Stripe:', error);
     if (typeof window !== 'undefined') {
-      toast.error('Unable to load payment system. Please refresh the page.');
+      toast.error('Payment system error. Please refresh the page.', {
+        description: 'Failed to initialize payment processing'
+      });
     }
     return null;
   }
