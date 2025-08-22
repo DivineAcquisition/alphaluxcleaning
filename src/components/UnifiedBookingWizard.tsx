@@ -382,39 +382,105 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
 
             {/* Service Tier Selection */}
             <div>
-              <h3 className="text-xl font-semibold mb-4">Choose Your Service Level</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {bookingTiers.map((tier) => (
-                  <button
-                    key={tier.id}
-                    onClick={() => updateField('homeSize', tier.id)}
-                    className={cn(
-                      "p-6 rounded-lg border-2 text-left transition-all duration-200 hover:shadow-lg",
-                      bookingData.homeSize === tier.id
-                        ? "border-primary bg-primary/5 shadow-clean"
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    {tier.popular && (
-                      <Badge className="mb-2 bg-primary text-primary-foreground">Most Popular</Badge>
-                    )}
-                    <h4 className="font-bold text-lg mb-2">{tier.description}</h4>
-                    <p className="text-sm text-muted-foreground mb-3">{tier.shortDescription}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-primary">
-                        ${tier.basePrice}
-                        {bookingData.addMembership && (
-                          <span className="block text-sm text-success font-normal">
-                            ${tier.basePrice - 20} with membership
-                          </span>
+              <div className="flex items-center gap-3 mb-6">
+                <h3 className="text-xl font-semibold">Choose Your Service Level</h3>
+                {bookingData.frequency === 'one-time' && (
+                  <Badge className="bg-gradient-to-r from-success to-success/80 text-white animate-pulse">
+                    One-Time Discount!
+                  </Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {bookingTiers.map((tier) => {
+                  const isOneTime = bookingData.frequency === 'one-time';
+                  const originalPrice = tier.basePrice;
+                  let discountedPrice = originalPrice;
+                  let discountPercent = 0;
+                  
+                  if (isOneTime) {
+                    if (tier.id === 'general' || tier.id === 'complete') {
+                      discountedPrice = Math.round(originalPrice * 0.85);
+                      discountPercent = 15;
+                    } else if (tier.id === 'premium') {
+                      discountedPrice = Math.round(originalPrice * 0.80);
+                      discountPercent = 20;
+                    }
+                  }
+                  
+                  return (
+                    <button
+                      key={tier.id}
+                      onClick={() => updateField('homeSize', tier.id)}
+                      className={cn(
+                        "relative p-6 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+                        bookingData.homeSize === tier.id
+                          ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
+                          : "border-muted-foreground/20 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
+                      )}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          {tier.popular && (
+                            <Badge className="mb-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md">
+                              Most Popular
+                            </Badge>
+                          )}
+                          {isOneTime && discountPercent > 0 && (
+                            <Badge className="mb-2 bg-gradient-to-r from-success to-success/80 text-white shadow-md">
+                              {discountPercent}% OFF
+                            </Badge>
+                          )}
+                        </div>
+                        {bookingData.homeSize === tier.id && (
+                          <CheckCircle className="h-6 w-6 text-primary" />
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {tier.hours}h • {tier.cleaners} cleaners
+                      
+                      <h4 className="font-bold text-lg mb-2 text-foreground">{tier.description}</h4>
+                      <p className="text-sm text-muted-foreground mb-4">{tier.shortDescription}</p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-baseline gap-2">
+                          {isOneTime && discountPercent > 0 ? (
+                            <>
+                              <span className="text-lg text-muted-foreground line-through">
+                                ${originalPrice}
+                              </span>
+                              <span className="text-2xl font-bold text-success">
+                                ${discountedPrice}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-2xl font-bold text-primary">
+                              ${originalPrice}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {bookingData.addMembership && (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs border-success text-success">
+                              Member Price
+                            </Badge>
+                            <span className="text-sm font-medium text-success">
+                              ${(isOneTime && discountPercent > 0 ? discountedPrice : originalPrice) - 20}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="text-sm text-muted-foreground flex items-center gap-2 mt-3">
+                          <Clock className="h-4 w-4" />
+                          {tier.hours}h cleaning • {tier.cleaners} professional cleaners
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                      
+                      {/* Subtle gradient overlay for selected card */}
+                      {bookingData.homeSize === tier.id && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-xl pointer-events-none" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -428,18 +494,28 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                       key={option.id}
                       onClick={() => updateField('frequency', option.id)}
                       className={cn(
-                        "p-4 rounded-lg border-2 text-left transition-all duration-200",
+                        "relative p-4 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.02]",
                         bookingData.frequency === option.id
-                          ? "border-primary bg-primary/5 shadow-clean"
-                          : "border-border hover:border-primary/50"
+                          ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
+                          : "border-muted-foreground/30 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
                       )}
                     >
-                      <h4 className="font-semibold mb-1">{option.name}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">{option.description}</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-foreground">{option.name}</h4>
+                        {bookingData.frequency === option.id && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
                       {option.discount > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {option.discount}% off
+                        <Badge className="bg-gradient-to-r from-success to-success/80 text-white text-xs shadow-sm">
+                          {option.discount}% off recurring
                         </Badge>
+                      )}
+                      
+                      {/* Subtle gradient overlay for selected card */}
+                      {bookingData.frequency === option.id && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-xl pointer-events-none" />
                       )}
                     </button>
                   ))}
@@ -452,34 +528,60 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
               <div className="animate-fade-in">
                 <h3 className="text-xl font-semibold mb-4">Optional Add-Ons</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {addOnServices.map((addOn) => (
-                    <button
-                      key={addOn.id}
-                      onClick={() => toggleAddOn(addOn.id)}
-                      className={cn(
-                        "p-4 rounded-lg border-2 text-left transition-all duration-200",
-                        bookingData.addOns.includes(addOn.id)
-                          ? "border-primary bg-primary/5 shadow-clean"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{addOn.name}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">
-                            +${bookingData.addMembership ? Math.round(addOn.price * 0.9) : addOn.price}
-                            {bookingData.addMembership && (
-                              <span className="text-xs text-success ml-1">(10% off)</span>
+                  {addOnServices.map((addOn) => {
+                    const originalPrice = addOn.price;
+                    const memberPrice = bookingData.addMembership ? Math.round(originalPrice * 0.9) : originalPrice;
+                    const isSelected = bookingData.addOns.includes(addOn.id);
+                    
+                    return (
+                      <button
+                        key={addOn.id}
+                        onClick={() => toggleAddOn(addOn.id)}
+                        className={cn(
+                          "relative p-4 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.01]",
+                          isSelected
+                            ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
+                            : "border-muted-foreground/30 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-foreground">{addOn.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              {bookingData.addMembership ? (
+                                <div className="space-y-1">
+                                  <div className="text-xs text-muted-foreground line-through">
+                                    +${originalPrice}
+                                  </div>
+                                  <div className="font-bold text-success">
+                                    +${memberPrice}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="font-bold text-primary">+${originalPrice}</span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle className="h-5 w-5 text-primary" />
                             )}
-                          </span>
-                          {bookingData.addOns.includes(addOn.id) && (
-                            <CheckCircle className="h-5 w-5 text-primary" />
-                          )}
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{addOn.description}</p>
-                    </button>
-                  ))}
+                        
+                        <p className="text-sm text-muted-foreground mb-2">{addOn.description}</p>
+                        
+                        {bookingData.addMembership && (
+                          <Badge variant="outline" className="text-xs border-success text-success">
+                            10% member discount
+                          </Badge>
+                        )}
+                        
+                        {/* Subtle gradient overlay for selected card */}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-xl pointer-events-none" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
