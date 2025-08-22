@@ -74,15 +74,15 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const [conflictCheckInterval, setConflictCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
   const timeSlots = [
-    { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false },
-    { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM', popular: true },
-    { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM', popular: true },
-    { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM', popular: false },
-    { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM', popular: false },
-    { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM', popular: true },
-    { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM', popular: true },
-    { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM', popular: false },
-    { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false }
+    { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM' },
+    { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM' },
+    { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM' },
+    { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM' },
+    { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM' },
+    { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM' },
+    { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM' },
+    { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM' },
+    { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM' }
   ];
 
   // Generate next 14 days starting 5 days out (excluding Sundays)
@@ -564,9 +564,6 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-sm sm:text-base">{slot.label}</span>
                       <div className="flex items-center gap-1">
-                        {slot.popular && available && (
-                          <Star className="h-3 w-3 text-yellow-500" />
-                        )}
                         {available ? (
                           <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                         ) : (
@@ -575,9 +572,6 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                       </div>
                     </div>
                     <div className="text-xs text-muted-foreground">{slot.range}</div>
-                    {slot.popular && available && (
-                      <Badge variant="secondary" className="text-xs mt-1">Popular</Badge>
-                    )}
                     {!available && (
                       <Badge variant="destructive" className="text-xs mt-1">Unavailable</Badge>
                     )}

@@ -257,14 +257,14 @@ export function ModernBookingFlow({
       await sendWebhookForStep(currentStep);
       
       setCurrentStep(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Removed auto-scroll to give user control over navigation
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Removed auto-scroll to give user control over navigation
     }
   };
 
@@ -342,7 +342,7 @@ export function ModernBookingFlow({
     }
     
     setCurrentStep(4);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Removed auto-scroll to give user control over navigation
     
     onComplete?.();
   }, [bookingData, handleDataUpdate, onComplete, sendWebhookForStep]);

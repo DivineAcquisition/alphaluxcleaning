@@ -65,12 +65,12 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
 
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM', popular: false, available: true },
-    { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM', popular: true, available: true },
-    { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM', popular: true, available: true },
+    { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM', popular: false, available: true },
+    { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM', popular: false, available: true },
     { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM', popular: false, available: true },
     { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM', popular: false, available: true },
-    { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM', popular: true, available: true },
-    { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM', popular: true, available: true },
+    { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM', popular: false, available: true },
+    { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM', popular: false, available: true },
     { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM', popular: false, available: true },
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false, available: true }
   ]);
