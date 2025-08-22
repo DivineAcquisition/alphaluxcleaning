@@ -7,6 +7,7 @@ import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { RecurringBookingInterface } from "@/components/RecurringBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
+import { UnifiedBookingWizard } from "@/components/UnifiedBookingWizard";
 
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
@@ -189,76 +190,19 @@ const Index = () => {
               {/* Header Section */}
               <div className="text-center">
                 <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  Choose Your Residential Services
+                  Book Your Cleaning Service
                 </h2>
                 <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto">
-                  Customize your cleaning experience with our flexible options
+                  Complete your entire booking in one place - all information saves automatically
                 </p>
               </div>
 
-
-              {/* Service Configuration Section */}
-              <RecurringBookingInterface 
-                newClient={true} 
-                onBookingUpdate={data => {
-                  setPricingData({
-                    hours: data.tier.hours,
-                    cleaningType: 'standard',
-                    serviceType: data.recurring.frequency === 'once' ? 'hourly' : 'recurring',
-                    membership: data.membership,
-                    addOns: data.addOns,
-                    recurring: data.recurring
-                  });
-                  setCalculatedPrice(data.pricing.total);
-                  setPriceBreakdown({
-                    basePrice: data.tier.basePrice,
-                    addOns: data.addOns,
-                    membership: data.membership,
-                    recurring: data.recurring,
-                    savings: data.pricing.recurringDiscount + data.pricing.membershipDiscount
-                  });
+              {/* Unified Booking Wizard */}
+              <UnifiedBookingWizard
+                onBookingComplete={(sessionId) => {
+                  window.location.href = `/order-status?session_id=${sessionId}`;
                 }}
               />
-
-              {/* Secure Booking Button */}
-              {pricingData && calculatedPrice > 0 && (
-                <div className="text-center mt-8">
-                  <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
-                    <CardContent className="p-6">
-                      <div className="text-center text-white space-y-4">
-                        <h3 className="text-xl font-bold">Ready to Book Your Service?</h3>
-                        <p className="text-white/90">
-                          Book instantly as a guest or create an account for faster future bookings
-                        </p>
-                        <Button 
-                          asChild
-                          size="lg"
-                          variant="secondary"
-                          className="bg-white text-primary hover:bg-white/90 font-semibold"
-                        >
-                          <a href="/guest-booking">
-                            Book Now - No Account Required
-                          </a>
-                        </Button>
-                        <p className="text-xs text-white/70">
-                          ✨ Account creation is optional and happens after booking
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-
-              {/* Service Details Button */}
-              {pricingData && (
-                <div className="text-center">
-                  <ServiceDetailsDialog 
-                    cleaningType={pricingData.cleaningType || 'standard'}
-                    serviceType={pricingData.serviceType || 'hourly'}
-                  />
-                </div>
-              )}
               
               
 

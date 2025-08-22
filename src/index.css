@@ -138,6 +138,26 @@ All colors MUST be HSL.
   .safe-area-pb {
     padding-bottom: max(1rem, var(--safe-area-inset-bottom));
   }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .shadow-clean {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
   
   .safe-area-pt {
     padding-top: max(1rem, var(--safe-area-inset-top));
