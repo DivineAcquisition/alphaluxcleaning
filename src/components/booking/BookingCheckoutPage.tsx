@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -10,12 +9,10 @@ import { CreditCard, Shield, Sparkles, ArrowLeft, ArrowRight, Check, Tag, X, Ale
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise, checkStripeReady } from '@/lib/stripe';
-import { EnhancedPaymentInterface } from '@/components/payment/EnhancedPaymentInterface';
-import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
+import { checkStripeReady } from '@/lib/stripe';
+import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { PaymentErrorBoundary } from '@/components/payment/PaymentErrorBoundary';
-import { calculatePaymentAmount, toStripeAmount, formatPrice } from '@/lib/pricing-utils';
+import { formatPrice } from '@/lib/pricing-utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBookingWebhook } from '@/hooks/useBookingWebhook';
 
@@ -485,42 +482,27 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           </Card>
         )}
 
-        {/* Enhanced Payment Form */}
+        {/* Embedded Payment Form */}
         {showPaymentForm && clientSecret && (
-          <Elements 
-            stripe={stripePromise} 
-            options={{
-              clientSecret,
-      appearance: {
-        theme: 'stripe',
-        variables: {
-          colorPrimary: 'hsl(273 100% 50%)',
-          colorBackground: 'hsl(0 0% 100%)',
-          colorText: 'hsl(210 40% 8%)',
-          colorDanger: 'hsl(0 84.2% 60.2%)',
-          fontFamily: 'Plus Jakarta Sans, sans-serif',
-          borderRadius: '8px',
-        },
-      },
-      loader: 'never' // Prevent auto-focus issues
+          <CustomStripePayment
+            paymentData={{
+              amount: paymentAmount,
+              customerEmail: user?.email || 'guest@example.com',
+              customerName: user?.user_metadata?.full_name || 'Guest User',
+              customerPhone: bookingData.contactNumber,
+              cleaningType: bookingData.homeSize,
+              frequency: bookingData.frequency,
+              addOns: bookingData.addOns,
+              serviceAddress: bookingData.address.street,
+              city: bookingData.address.city,
+              state: bookingData.address.state,
+              zipCode: bookingData.address.zipCode,
+              paymentType: paymentType
             }}
-          >
-            <Card className="shadow-clean border-primary/20">
-              <CardContent className="p-6">
-                <EnhancedPaymentInterface
-                  amount={toStripeAmount(paymentAmount)}
-                  onSuccess={handlePaymentSuccess}
-                  onCancel={handlePaymentCancel}
-                  isSetupIntent={paymentType === 'pay_after_service'}
-                  clientSecret={clientSecret}
-                  customerData={{
-                    email: user?.email || 'guest@example.com',
-                    name: user?.user_metadata?.full_name || 'Guest User'
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </Elements>
+            onSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+            className="shadow-clean"
+          />
         )}
 
         {/* Stripe Loading Error Fallback */}
