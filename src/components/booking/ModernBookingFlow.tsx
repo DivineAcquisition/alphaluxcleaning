@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { ServiceAreaVerificationPage } from './ServiceAreaVerificationPage';
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
@@ -71,7 +70,7 @@ export function ModernBookingFlow({
   };
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -97,13 +96,11 @@ export function ModernBookingFlow({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return bookingData.serviceZipCode;
+        return bookingData.serviceZipCode && bookingData.homeSize && bookingData.frequency;
       case 2:
-        return bookingData.homeSize && bookingData.frequency;
-      case 3:
         return bookingData.serviceDate && bookingData.serviceTime && 
                bookingData.address?.street && bookingData.contactNumber;
-      case 4:
+      case 3:
         return true;
       default:
         return false;
@@ -119,10 +116,9 @@ export function ModernBookingFlow({
             <ProgressIndicator 
               currentStep={currentStep} 
               steps={[
-                { id: 1, title: 'Service Area', description: 'Verify ZIP code coverage' },
-                { id: 2, title: 'Service Selection', description: 'Choose your cleaning service' },
-                { id: 3, title: 'Details & Scheduling', description: 'Schedule and location info' },
-                { id: 4, title: 'Payment', description: 'Complete your booking' }
+                { id: 1, title: 'Service Selection', description: 'Choose your cleaning service' },
+                { id: 2, title: 'Details & Scheduling', description: 'Schedule and location info' },
+                { id: 3, title: 'Payment', description: 'Complete your booking' }
               ]} 
             />
           </div>
@@ -133,14 +129,6 @@ export function ModernBookingFlow({
               <Card className="shadow-clean">
                 <CardContent className="p-6">
                   {currentStep === 1 && (
-                    <ServiceAreaVerificationPage
-                      bookingData={bookingData}
-                      updateBookingData={updateData}
-                      onNext={handleNext}
-                    />
-                  )}
-
-                  {currentStep === 2 && (
                     <BookingSelectionPage
                       bookingData={bookingData}
                       updateBookingData={updateData}
@@ -148,7 +136,7 @@ export function ModernBookingFlow({
                     />
                   )}
 
-                  {currentStep === 3 && (
+                  {currentStep === 2 && (
                     <BookingDetailsPage
                       bookingData={bookingData}
                       updateBookingData={updateData}
@@ -157,7 +145,7 @@ export function ModernBookingFlow({
                     />
                   )}
 
-                  {currentStep === 4 && (
+                  {currentStep === 3 && (
                     <BookingCheckoutPage
                       bookingData={bookingData}
                       updateBookingData={updateData}
@@ -166,8 +154,8 @@ export function ModernBookingFlow({
                     />
                   )}
 
-                  {/* Navigation Buttons - only show for steps 1, 2 & 3 */}
-                  {currentStep < 4 && (
+                  {/* Navigation Buttons - only show for steps 1 & 2 */}
+                  {currentStep < 3 && (
                     <div className="flex justify-between mt-8 pt-6 border-t">
                       <Button
                         variant="outline"

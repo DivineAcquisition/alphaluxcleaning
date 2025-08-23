@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BookingData {
+  serviceZipCode: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -101,6 +103,33 @@ const addOns = [
 
 export function BookingSelectionPage({ bookingData, updateBookingData, onNext }: Props) {
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(bookingData.addOns || []);
+  const [zipCodeValid, setZipCodeValid] = useState(false);
+
+  // Validate ZIP code
+  const validateZipCode = (zipCode: string) => {
+    const bayAreaZipCodes = ['94102', '94103', '94104', '94105', '94107', '94108', '94109', '94110', '94111', '94112', '94114', '94115', '94116', '94117', '94118', '94121', '94122', '94123', '94124', '94127', '94129', '94130', '94131', '94132', '94133', '94134', '94158', '95014', '95050', '95051', '95054', '95070'];
+    return bayAreaZipCodes.includes(zipCode);
+  };
+
+  // Check existing ZIP code on mount
+  useEffect(() => {
+    if (bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5) {
+      setZipCodeValid(validateZipCode(bookingData.serviceZipCode));
+    }
+  }, []);
+
+  const handleZipCodeChange = (zipCode: string) => {
+    updateBookingData({ serviceZipCode: zipCode });
+    if (zipCode.length === 5) {
+      const isValid = validateZipCode(zipCode);
+      setZipCodeValid(isValid);
+      if (!isValid) {
+        // Handle invalid ZIP code
+      }
+    } else {
+      setZipCodeValid(false);
+    }
+  };
 
   // Calculate pricing
   useEffect(() => {
@@ -156,6 +185,47 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
       {/* Left Column - Form */}
       <div className="lg:col-span-2 space-y-8">
         
+        {/* Service Area Verification - First */}
+        <Card className="shadow-clean border-primary/20">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Service Area
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                We provide cleaning services throughout the San Francisco Bay Area. Enter your ZIP code to get started.
+              </p>
+              <div className="flex gap-3">
+                <Input
+                  placeholder="Enter ZIP code"
+                  value={bookingData.serviceZipCode || ''}
+                  onChange={(e) => handleZipCodeChange(e.target.value)}
+                  className="flex-1"
+                  maxLength={5}
+                />
+                {zipCodeValid && (
+                  <div className="flex items-center text-success">
+                    <CheckCircle className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+              {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
+                <p className="text-destructive text-sm">
+                  Sorry, we don't currently service this ZIP code. Please contact us for availability.
+                </p>
+              )}
+              {zipCodeValid && (
+                <p className="text-success text-sm font-medium">
+                  Great! We service your area. Choose your cleaning service below.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Service Tier Selection */}
         <Card className="shadow-clean">
           <CardHeader>
@@ -340,7 +410,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
             
             <Button 
               onClick={onNext}
-              disabled={!bookingData.homeSize || !bookingData.frequency}
+              disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency}
               className="w-full"
               size="lg"
             >
