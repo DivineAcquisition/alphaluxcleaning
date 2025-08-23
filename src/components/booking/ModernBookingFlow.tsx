@@ -19,6 +19,7 @@ interface Address {
 
 // Define the structure for booking data
 interface BookingData {
+  serviceZipCode: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -95,7 +96,7 @@ export function ModernBookingFlow({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return bookingData.homeSize && bookingData.frequency;
+        return bookingData.serviceZipCode && bookingData.homeSize && bookingData.frequency;
       case 2:
         return bookingData.serviceDate && bookingData.serviceTime && 
                bookingData.address?.street && bookingData.contactNumber;

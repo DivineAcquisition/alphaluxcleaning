@@ -5,6 +5,7 @@ import {
   validateEmail, 
   validateName 
 } from '@/lib/validation-utils';
+import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 
 interface ValidationError {
   field: string;
@@ -69,6 +70,16 @@ export const useFormValidation = (): FormValidationHook => {
           const zipValidation = validateZipCode(value);
           if (!zipValidation.isValid) {
             addError(field, zipValidation.message!);
+            return false;
+          }
+        }
+        break;
+
+      case 'service_zip_code':
+        if (value && value.trim()) {
+          const serviceAreaValidation = validateServiceAreaZipCode(value);
+          if (!serviceAreaValidation.isValid) {
+            addError(field, serviceAreaValidation.message!);
             return false;
           }
         }
