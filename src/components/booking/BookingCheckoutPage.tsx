@@ -37,6 +37,8 @@ interface BookingData {
   paymentType: 'pay_after_service' | '25_percent_with_discount';
   promoDiscount: number;
   nextDayFee?: number;
+  customerEmail?: string;
+  customerName?: string;
 }
 
 interface Props {
@@ -163,8 +165,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     try {
       // Send webhook on payment success
       const customerInfo = {
-        name: user?.user_metadata?.full_name || 'Guest User',
-        email: user?.email || 'guest@example.com',
+        name: bookingData.customerName || user?.user_metadata?.full_name || 'Guest User',
+        email: bookingData.customerEmail || user?.email || 'guest@example.com',
         phone: bookingData.contactNumber || '',
         address: bookingData.address.street || '',
         city: bookingData.address.city || '',
@@ -436,8 +438,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           <CustomStripePayment
             paymentData={{
               amount: paymentAmount,
-              customerEmail: user?.email || 'guest@example.com',
-              customerName: user?.user_metadata?.full_name || 'Guest User',
+              customerEmail: bookingData.customerEmail || user?.email || 'guest@example.com',
+              customerName: bookingData.customerName || user?.user_metadata?.full_name || 'Guest User',
               customerPhone: bookingData.contactNumber,
               cleaningType: bookingData.homeSize,
               frequency: bookingData.frequency,

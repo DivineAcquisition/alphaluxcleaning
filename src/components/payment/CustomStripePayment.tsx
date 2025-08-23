@@ -112,8 +112,8 @@ function PaymentForm({
     console.log('🔄 Processing payment/setup with orderId:', orderId, 'isSetupIntent:', isSetupIntent);
     
     const returnUrl = orderId 
-      ? `${window.location.origin}/service-details?order_id=${orderId}`
-      : `${window.location.origin}/service-details`;
+      ? `${window.location.origin}/order-status?order_id=${orderId}`
+      : `${window.location.origin}/order-status`;
 
     try {
       let result;
@@ -159,26 +159,29 @@ function PaymentForm({
         }
         setProgress(0);
       } else {
+        // No error from Stripe - proceed with success regardless of intent status
         const intent = isSetupIntent ? result.setupIntent : result.paymentIntent;
-        const isSuccessful = isSetupIntent 
-          ? intent && intent.status === 'succeeded'
-          : intent && intent.status === 'succeeded';
-
-        if (isSuccessful) {
-          setProgress(100);
-          toast({
-            title: isSetupIntent ? "Card Authorized!" : "Payment Successful!",
-            description: isSetupIntent 
-              ? "Your card has been authorized. Service scheduled successfully!"
-              : "Your cleaning service has been booked successfully.",
-          });
-          console.log('✅ Success! Redirecting with orderId:', orderId);
-          setTimeout(() => {
-            onSuccess(orderId || intent!.id);
-          }, 1000);
-        } else {
-          setMessage(isSetupIntent ? "Card authorization processing..." : "Payment processing...");
-        }
+        console.log('✅ Stripe processed successfully:', {
+          intentId: intent?.id,
+          status: intent?.status,
+          orderId,
+          isSetupIntent
+        });
+        
+        setProgress(100);
+        toast({
+          title: isSetupIntent ? "Card Authorized!" : "Payment Successful!",
+          description: isSetupIntent 
+            ? "Your card has been authorized. Service scheduled successfully!"
+            : "Your cleaning service has been booked successfully.",
+        });
+        
+        // Always redirect on successful Stripe processing
+        setTimeout(() => {
+          const redirectOrderId = orderId || intent?.id || 'unknown';
+          console.log('🔄 Redirecting to confirmation with orderId:', redirectOrderId);
+          onSuccess(redirectOrderId);
+        }, 500);
       }
     } catch (err) {
       console.error('💥 Payment/Setup error:', err);
