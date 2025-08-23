@@ -40,7 +40,7 @@ interface PaymentData {
 
 interface CustomStripePaymentProps {
   paymentData: PaymentData;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (orderId: string) => void;
   onCancel: () => void;
   className?: string;
 }
@@ -49,12 +49,14 @@ function PaymentForm({
   paymentData, 
   onSuccess, 
   onCancel, 
-  clientSecret 
+  clientSecret,
+  isSetupIntent = false 
 }: { 
   paymentData: PaymentData;
-  onSuccess: (paymentIntentId: string) => void;
+  onSuccess: (orderId: string) => void;
   onCancel: () => void;
   clientSecret: string;
+  isSetupIntent?: boolean;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -107,50 +109,86 @@ function PaymentForm({
     }
 
     const orderId = localStorage.getItem('current_order_id');
+    console.log('🔄 Processing payment/setup with orderId:', orderId, 'isSetupIntent:', isSetupIntent);
+    
     const returnUrl = orderId 
       ? `${window.location.origin}/service-details?order_id=${orderId}`
       : `${window.location.origin}/service-details`;
 
-
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: returnUrl,
-        receipt_email: paymentData.customerEmail,
-      },
-      redirect: 'if_required'
-    });
-
-    setProgress(75);
-
-    if (error) {
-      if (error.type === "card_error" || error.type === "validation_error") {
-        setMessage(error.message || "Payment failed");
-        toast({
-          title: "Payment Failed",
-          description: error.message || "Please check your payment details and try again.",
-          variant: "destructive",
+    try {
+      let result;
+      
+      if (isSetupIntent) {
+        console.log('📋 Confirming setup intent for card authorization');
+        result = await stripe.confirmSetup({
+          elements,
+          confirmParams: {
+            return_url: returnUrl,
+          },
+          redirect: 'if_required'
         });
       } else {
-        setMessage("An unexpected error occurred.");
-        toast({
-          title: "Payment Error",
-          description: "An unexpected error occurred. Please try again.",
-          variant: "destructive",
+        console.log('💳 Confirming payment intent for charge');
+        result = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: returnUrl,
+            receipt_email: paymentData.customerEmail,
+          },
+          redirect: 'if_required'
         });
       }
-      setProgress(0);
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      setProgress(100);
+
+      setProgress(75);
+
+      if (result.error) {
+        if (result.error.type === "card_error" || result.error.type === "validation_error") {
+          setMessage(result.error.message || "Payment failed");
+          toast({
+            title: isSetupIntent ? "Card Authorization Failed" : "Payment Failed",
+            description: result.error.message || "Please check your payment details and try again.",
+            variant: "destructive",
+          });
+        } else {
+          setMessage("An unexpected error occurred.");
+          toast({
+            title: isSetupIntent ? "Authorization Error" : "Payment Error",
+            description: "An unexpected error occurred. Please try again.",
+            variant: "destructive",
+          });
+        }
+        setProgress(0);
+      } else {
+        const intent = isSetupIntent ? result.setupIntent : result.paymentIntent;
+        const isSuccessful = isSetupIntent 
+          ? intent && intent.status === 'succeeded'
+          : intent && intent.status === 'succeeded';
+
+        if (isSuccessful) {
+          setProgress(100);
+          toast({
+            title: isSetupIntent ? "Card Authorized!" : "Payment Successful!",
+            description: isSetupIntent 
+              ? "Your card has been authorized. Service scheduled successfully!"
+              : "Your cleaning service has been booked successfully.",
+          });
+          console.log('✅ Success! Redirecting with orderId:', orderId);
+          setTimeout(() => {
+            onSuccess(orderId || intent!.id);
+          }, 1000);
+        } else {
+          setMessage(isSetupIntent ? "Card authorization processing..." : "Payment processing...");
+        }
+      }
+    } catch (err) {
+      console.error('💥 Payment/Setup error:', err);
+      setMessage("An unexpected error occurred during processing.");
       toast({
-        title: "Payment Successful!",
-        description: "Your cleaning service has been booked successfully.",
+        title: "Processing Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
-      setTimeout(() => {
-        onSuccess(paymentIntent.id);
-      }, 1000);
-    } else {
-      setMessage("Payment processing...");
+      setProgress(0);
     }
 
     setIsLoading(false);
@@ -269,11 +307,11 @@ function PaymentForm({
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing...
+                  {isSetupIntent ? 'Authorizing...' : 'Processing...'}
                 </>
               ) : (
                 <>
-                  Pay ${paymentData.amount.toFixed(2)}
+                  {isSetupIntent ? 'Authorize Card' : `Pay $${paymentData.amount.toFixed(2)}`}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
@@ -302,6 +340,7 @@ export function CustomStripePayment({
   className
 }: CustomStripePaymentProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isSetupIntent, setIsSetupIntent] = useState(false);
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -326,8 +365,15 @@ export function CustomStripePayment({
       }
 
       if (data?.client_secret && data?.order_id) {
-        console.log('Received client secret and order_id');
+        console.log('✅ Received client secret and order_id:', data.order_id);
+        console.log('🔍 Payment type detection:', {
+          setup_intent_id: data.setup_intent_id,
+          payment_intent_id: data.payment_intent_id,
+          amount: paymentData.amount
+        });
+        
         setClientSecret(data.client_secret);
+        setIsSetupIntent(!!data.setup_intent_id); // True if setup intent, false if payment intent
         // Store order_id for the return URL
         localStorage.setItem('current_order_id', data.order_id);
       } else {
@@ -413,6 +459,7 @@ export function CustomStripePayment({
           onSuccess={onSuccess}
           onCancel={onCancel}
           clientSecret={clientSecret}
+          isSetupIntent={isSetupIntent}
         />
       </Elements>
     </div>
