@@ -56,11 +56,9 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [stripeReady, setStripeReady] = useState(false);
   const [systemError, setSystemError] = useState<string | null>(null);
-  const [isSetupIntent, setIsSetupIntent] = useState(false);
 
   // Check if Stripe is ready on component mount
   useEffect(() => {
@@ -97,9 +95,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       totalPrice: finalTotal
     });
   }, [paymentType, promoDiscount, finalTotal]);
-
-  // Debounced payment amount update to prevent infinite re-renders
-  const debouncedPaymentAmount = React.useMemo(() => paymentAmount, [paymentAmount]);
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {
@@ -147,65 +142,20 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
   const processPayment = async () => {
-    await processEmbeddedPayment();
-  };
-
-  const processEmbeddedPayment = async () => {
-    await createPaymentIntent();
-  };
-
-  const createPaymentIntent = async () => {
-    setIsProcessingPayment(true);
-    try {
-      // Use authenticated user info
-      const customerEmail = user?.email || 'guest@example.com';
-      const customerName = user?.user_metadata?.full_name || 'Guest User';
-      
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-          body: {
-            amount: paymentAmount, // Already in dollars
-            customerEmail: customerEmail,
-            customerName: customerName,
-            customerPhone: bookingData.contactNumber,
-            paymentType: paymentType,
-            booking_data: bookingData,
-            cleaningType: bookingData.homeSize, // Use homeSize as cleaning type
-            frequency: bookingData.frequency,
-            serviceAddress: `${bookingData.address.street}`,
-            city: bookingData.address.city,
-            state: bookingData.address.state,
-            zipCode: bookingData.address.zipCode
-          }
-      });
-
-      if (error) throw error;
-
-      if (data?.client_secret) {
-        setClientSecret(data.client_secret);
-        setIsSetupIntent(data.is_setup_intent || false);
-        setShowPaymentForm(true);
-        
-        // Scroll to top of checkout to prevent auto-scrolling to bottom
-        setTimeout(() => {
-          checkoutRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        }, 100);
-        
-        // Show different message based on setup intent vs payment intent
-        if (data.is_setup_intent) {
-          toast.success('Card authorization ready - no charge will occur now');
-        }
-      } else {
-        throw new Error('No client secret received');
-      }
-    } catch (error) {
-      console.error('Payment intent creation error:', error);
-      toast.error('Failed to initialize payment. Please try again.');
-    } finally {
-      setIsProcessingPayment(false);
+    if (!stripeReady) {
+      toast.error('Payment system not ready. Please refresh the page.');
+      return;
     }
+    
+    setShowPaymentForm(true);
+    
+    // Scroll to top of checkout to prevent auto-scrolling to bottom
+    setTimeout(() => {
+      checkoutRef.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 100);
   };
 
 
@@ -270,7 +220,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
   const handlePaymentCancel = () => {
     setShowPaymentForm(false);
-    setClientSecret(null);
   };
 
   return (
@@ -483,7 +432,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         )}
 
         {/* Embedded Payment Form */}
-        {showPaymentForm && clientSecret && (
+        {showPaymentForm && (
           <CustomStripePayment
             paymentData={{
               amount: paymentAmount,
@@ -492,7 +441,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
               customerPhone: bookingData.contactNumber,
               cleaningType: bookingData.homeSize,
               frequency: bookingData.frequency,
-              addOns: bookingData.addOns,
               serviceAddress: bookingData.address.street,
               city: bookingData.address.city,
               state: bookingData.address.state,
@@ -506,15 +454,15 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         )}
 
         {/* Stripe Loading Error Fallback */}
-        {showPaymentForm && !clientSecret && (
+        {showPaymentForm && !stripeReady && (
           <Card className="shadow-clean border-destructive/20">
             <CardContent className="p-6 text-center space-y-4">
               <div className="text-destructive text-lg font-semibold">Payment System Unavailable</div>
               <p className="text-muted-foreground">
                 Unable to load the secure payment form. Please try refreshing the page.
               </p>
-              <Button onClick={createPaymentIntent} variant="outline" className="w-full">
-                Try Again
+              <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+                Refresh Page
               </Button>
             </CardContent>
           </Card>

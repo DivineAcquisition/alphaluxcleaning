@@ -129,8 +129,7 @@ serve(async (req) => {
           service_address: serviceAddress || '',
           city: city || '',
           state: state || '',
-          zip_code: zipCode || '',
-          booking_data: JSON.stringify(booking_data || {})
+          zip_code: zipCode || ''
         }
       });
       
@@ -203,8 +202,7 @@ serve(async (req) => {
           service_address: serviceAddress || '',
           city: city || '',
           state: state || '',
-          zip_code: zipCode || '',
-          booking_data: JSON.stringify(booking_data || {})
+          zip_code: zipCode || ''
         }
       });
       
