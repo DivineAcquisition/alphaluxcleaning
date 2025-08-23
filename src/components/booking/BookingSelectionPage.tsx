@@ -3,13 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin } from 'lucide-react';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 
 interface BookingData {
-  serviceZipCode: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -104,7 +101,6 @@ const addOns = [
 
 export function BookingSelectionPage({ bookingData, updateBookingData, onNext }: Props) {
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(bookingData.addOns || []);
-  const [zipError, setZipError] = useState<string>('');
 
   // Calculate pricing
   useEffect(() => {
@@ -144,20 +140,6 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
     }
   }, [bookingData.homeSize, bookingData.frequency, selectedAddOns, bookingData.nextDayFee]);
 
-  const handleZipCodeChange = (zipCode: string) => {
-    updateBookingData({ serviceZipCode: zipCode });
-    
-    if (zipCode.length >= 5) {
-      const validation = validateServiceAreaZipCode(zipCode);
-      if (!validation.isValid) {
-        setZipError(validation.message || 'Invalid ZIP code');
-      } else {
-        setZipError('');
-      }
-    } else {
-      setZipError('');
-    }
-  };
 
   const toggleAddOn = (addOnValue: string) => {
     const updated = selectedAddOns.includes(addOnValue)
@@ -168,54 +150,12 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
 
   const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
   const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
-  const isZipCodeValid = bookingData.serviceZipCode && validateServiceAreaZipCode(bookingData.serviceZipCode).isValid;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Column - Form */}
       <div className="lg:col-span-2 space-y-8">
         
-        {/* Service Area Verification */}
-        <Card className="shadow-clean border-primary/20">
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Service Area Check
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="zipcode" className="text-sm font-medium">
-                  Enter your ZIP code to verify service availability
-                </label>
-                <Input
-                  id="zipcode"
-                  placeholder="Enter ZIP code (e.g. 77520)"
-                  value={bookingData.serviceZipCode || ''}
-                  onChange={(e) => handleZipCodeChange(e.target.value)}
-                  className={cn(
-                    "text-lg",
-                    zipError ? "border-destructive" : isZipCodeValid ? "border-success" : ""
-                  )}
-                />
-                {zipError && (
-                  <p className="text-destructive text-sm">{zipError}</p>
-                )}
-                {isZipCodeValid && (
-                  <p className="text-success text-sm flex items-center gap-1">
-                    ✓ Great! We service your area within our 40-mile radius from Baytown, TX
-                  </p>
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                <p><strong>Bay Area Cleaning Services</strong> serves the Greater Baytown area within a 40-mile radius.</p>
-                <p>This includes Baytown, Pasadena, Deer Park, La Porte, East Houston, and surrounding communities.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Service Tier Selection */}
         <Card className="shadow-clean">
           <CardHeader>
@@ -400,7 +340,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
             
             <Button 
               onClick={onNext}
-              disabled={!isZipCodeValid || !bookingData.homeSize || !bookingData.frequency}
+              disabled={!bookingData.homeSize || !bookingData.frequency}
               className="w-full"
               size="lg"
             >
