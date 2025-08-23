@@ -8,7 +8,6 @@ import { RecurringBookingInterface } from "@/components/RecurringBookingInterfac
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import VisualScheduler from "@/components/VisualScheduler";
 import { UnifiedBookingWizard } from "@/components/UnifiedBookingWizard";
-
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
@@ -28,7 +27,6 @@ const Index = () => {
     seconds: 59
   });
 
-
   // Track page view on component mount
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
@@ -36,12 +34,9 @@ const Index = () => {
     // Load chat widget with conditional loading to prevent payment conflicts
     const loadChatWidget = () => {
       // Don't load chat widget on payment/booking pages to prevent conflicts
-      if (window.location.pathname.includes('/booking') || 
-          window.location.pathname.includes('/payment') ||
-          document.querySelector('[data-stripe-element]')) {
+      if (window.location.pathname.includes('/booking') || window.location.pathname.includes('/payment') || document.querySelector('[data-stripe-element]')) {
         return;
       }
-      
       const script = document.createElement('script');
       script.src = 'https://widgets.leadconnectorhq.com/loader.js';
       script.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
@@ -198,21 +193,17 @@ const Index = () => {
               </div>
 
               {/* Unified Booking Wizard */}
-              <UnifiedBookingWizard
-                onBookingComplete={(paymentIntentId) => {
-                  console.log('🔄 Booking complete, redirecting to order confirmation with order_id:', paymentIntentId);
-                  window.location.href = `/order-confirmation?order_id=${paymentIntentId}`;
-                }}
-              />
+              <UnifiedBookingWizard onBookingComplete={paymentIntentId => {
+              console.log('🔄 Booking complete, redirecting to order confirmation with order_id:', paymentIntentId);
+              window.location.href = `/order-confirmation?order_id=${paymentIntentId}`;
+            }} />
               
               
 
               {/* Membership CTA */}
               <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
                 <CardContent className="p-6 text-center space-y-4">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Want More Savings? Join Clean & Covered™
-                  </h3>
+                  <h3 className="text-2xl font-bold text-gray-900">Want More Savings? Join BACP Club™</h3>
                   <p className="text-gray-600 max-w-2xl mx-auto">
                     Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
                   </p>
@@ -241,8 +232,7 @@ const Index = () => {
         </Tabs>
 
         {/* Development Tools - Only shown in development mode */}
-        {import.meta.env.DEV && (
-          <div className="w-full max-w-6xl mx-auto mt-12 px-2 sm:px-4">
+        {import.meta.env.DEV && <div className="w-full max-w-6xl mx-auto mt-12 px-2 sm:px-4">
             <Card className="border-dashed border-2 border-muted-foreground/20">
               <CardContent className="p-6">
                 <div className="text-center space-y-4">
@@ -260,8 +250,7 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          </div>}
       </div>
     </div>;
 };
