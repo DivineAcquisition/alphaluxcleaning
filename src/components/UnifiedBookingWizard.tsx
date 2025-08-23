@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import existing booking components for reuse
 import { BookingCheckoutPage } from '@/components/booking/BookingCheckoutPage';
@@ -378,10 +379,27 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
     if (!waitlistEmail.trim()) return;
     
     try {
-      // TODO: Add API call to save waitlist data
-      setWaitlistSubmitted(true);
-      toast.success("Added to Waitlist! We'll notify you when we expand to your area.");
+      const { data, error } = await supabase.functions.invoke('join-expansion-waitlist', {
+        body: {
+          email: waitlistEmail.trim(),
+          zip_code: bookingData.serviceZipCode
+        }
+      });
+
+      if (error) {
+        console.error('Waitlist submission error:', error);
+        toast.error("Failed to join waitlist. Please try again.");
+        return;
+      }
+
+      if (data.success) {
+        setWaitlistSubmitted(true);
+        toast.success(data.message || "Successfully joined the expansion waitlist!");
+      } else {
+        toast.error(data.error || "Failed to join waitlist. Please try again.");
+      }
     } catch (error) {
+      console.error('Waitlist submission error:', error);
       toast.error("Failed to join waitlist. Please try again.");
     }
   };

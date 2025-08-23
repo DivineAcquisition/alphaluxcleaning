@@ -1088,6 +1088,30 @@ export type Database = {
           },
         ]
       }
+      expansion_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notified: boolean | null
+          zip_code: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notified?: boolean | null
+          zip_code: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notified?: boolean | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
       failed_login_attempts: {
         Row: {
           attempt_time: string
