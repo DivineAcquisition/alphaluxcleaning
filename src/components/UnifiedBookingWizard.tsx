@@ -499,7 +499,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
             </Card>
 
             {/* BACP Club™ Membership */}
-            <Card className="shadow-clean border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+            <Card className={cn(
+              "shadow-clean border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5 transition-opacity",
+              zipCodeStatus !== 'valid' && "opacity-50 pointer-events-none"
+            )}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
@@ -539,6 +542,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                     <Switch
                       checked={bookingData.addMembership}
                       onCheckedChange={(checked) => updateField('addMembership', checked)}
+                      disabled={zipCodeStatus !== 'valid'}
                     />
                     {bookingData.addMembership && (
                       <Badge className="bg-success text-success-foreground">
@@ -551,7 +555,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
             </Card>
 
             {/* Service Tier Selection */}
-            <div>
+            <div className={cn(
+              "transition-opacity",
+              zipCodeStatus !== 'valid' && "opacity-50 pointer-events-none"
+            )}>
               <div className="flex items-center gap-3 mb-6">
                 <h3 className="text-xl font-semibold">Choose Your Service Level</h3>
                 {bookingData.frequency === 'one-time' && (
@@ -581,8 +588,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                     <button
                       key={tier.id}
                       onClick={() => updateField('homeSize', tier.id)}
+                      disabled={zipCodeStatus !== 'valid'}
                       className={cn(
-                        "relative p-6 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
+                        "relative p-6 rounded-xl border-2 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50",
+                        zipCodeStatus === 'valid' && "hover:shadow-xl hover:scale-[1.02]",
                         bookingData.homeSize === tier.id
                           ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
                           : "border-muted-foreground/20 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
@@ -656,15 +665,20 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
 
             {/* Frequency Selection */}
             {bookingData.homeSize && (
-              <div className="animate-fade-in">
+              <div className={cn(
+                "animate-fade-in transition-opacity",
+                zipCodeStatus !== 'valid' && "opacity-50 pointer-events-none"
+              )}>
                 <h3 className="text-xl font-semibold mb-4">How Often?</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {recurringOptions.map((option) => (
                     <button
                       key={option.id}
                       onClick={() => updateField('frequency', option.id)}
+                      disabled={zipCodeStatus !== 'valid'}
                       className={cn(
-                        "relative p-4 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.02]",
+                        "relative p-4 rounded-xl border-2 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50",
+                        zipCodeStatus === 'valid' && "hover:shadow-lg hover:scale-[1.02]",
                         bookingData.frequency === option.id
                           ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
                           : "border-muted-foreground/30 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
@@ -695,7 +709,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
 
             {/* Add-Ons Selection */}
             {bookingData.frequency && (
-              <div className="animate-fade-in">
+              <div className={cn(
+                "animate-fade-in transition-opacity",
+                zipCodeStatus !== 'valid' && "opacity-50 pointer-events-none"
+              )}>
                 <h3 className="text-xl font-semibold mb-4">Optional Add-Ons</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {addOnServices.map((addOn) => {
@@ -707,8 +724,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                       <button
                         key={addOn.id}
                         onClick={() => toggleAddOn(addOn.id)}
+                        disabled={zipCodeStatus !== 'valid'}
                         className={cn(
-                          "relative p-4 rounded-xl border-2 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.01]",
+                          "relative p-4 rounded-xl border-2 text-left transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50",
+                          zipCodeStatus === 'valid' && "hover:shadow-lg hover:scale-[1.01]",
                           isSelected
                             ? "border-primary bg-gradient-to-br from-primary/10 to-accent/5 shadow-lg ring-2 ring-primary/20"
                             : "border-muted-foreground/30 bg-card hover:border-primary/60 hover:bg-primary/5 shadow-md"
