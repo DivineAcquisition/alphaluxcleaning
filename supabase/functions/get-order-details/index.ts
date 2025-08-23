@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -28,13 +29,14 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Select only columns that actually exist in the orders table
     const selectFields = `
       id, stripe_session_id, stripe_payment_intent_id, stripe_setup_intent_id, amount, currency, 
       status,
       created_at, updated_at, scheduled_date, scheduled_time, 
       cleaning_type, frequency, square_footage, 
       customer_name, customer_email, customer_phone,
-      service_details, add_ons, user_id, subcontractor_assigned
+      service_details, add_ons, user_id
     `;
 
     let data = null;
