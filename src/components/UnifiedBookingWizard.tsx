@@ -424,7 +424,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <p className="text-muted-foreground">
-                    We provide cleaning services throughout the Greater Baytown area within 40 miles. Enter your ZIP code to get started.
+                    We currently serve the Greater Baytown, Texas area within a 40-mile radius. Enter your ZIP code to get started.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -453,12 +453,12 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                   {zipCodeStatus === 'texas-expansion' && !waitlistSubmitted && (
                     <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
                       <div className="space-y-3">
-                        <p className="text-blue-800 text-sm font-medium">
-                          🌟 Exciting News! We're expanding throughout Texas and will be in your area soon!
-                        </p>
-                        <p className="text-blue-700 text-sm">
-                          Join our expansion waitlist and we'll notify you as soon as we're available in ZIP code {bookingData.serviceZipCode}.
-                        </p>
+                         <p className="text-blue-800 text-sm font-medium">
+                           🌟 Exciting News! We're expanding throughout Texas and will be in your area soon!
+                         </p>
+                         <p className="text-blue-700 text-sm">
+                           Your ZIP code is outside our current 40-mile Baytown service radius. Join our expansion waitlist and we'll notify you as soon as we start servicing ZIP code {bookingData.serviceZipCode}.
+                         </p>
                         <div className="flex gap-2">
                           <Input
                             placeholder="Enter your email"
