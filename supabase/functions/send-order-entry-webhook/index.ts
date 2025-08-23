@@ -11,6 +11,7 @@ interface OrderEntryWebhookData {
   booking_id?: string;
   order_id?: string;
   webhook_url?: string;
+  comprehensive_data?: any; // New field for comprehensive booking data
 }
 
 serve(async (req) => {
@@ -23,11 +24,11 @@ serve(async (req) => {
     const requestData: OrderEntryWebhookData = await req.json();
     console.log('Order entry webhook request data:', requestData);
 
-    const { assignment_id, booking_id, order_id, webhook_url } = requestData;
+    const { assignment_id, booking_id, order_id, webhook_url, comprehensive_data } = requestData;
 
-    if (!assignment_id && !booking_id && !order_id) {
+    if (!assignment_id && !booking_id && !order_id && !comprehensive_data) {
       return new Response(
-        JSON.stringify({ error: 'assignment_id, booking_id, or order_id is required' }),
+        JSON.stringify({ error: 'assignment_id, booking_id, order_id, or comprehensive_data is required' }),
         { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
@@ -129,21 +130,31 @@ serve(async (req) => {
     }
 
     // Construct comprehensive webhook payload
-    const webhookPayload = {
-      event_type: 'order_entry',
-      timestamp: new Date().toISOString(),
-      source: 'bay_area_cleaning_pros',
-      order_data: orderData,
-      assignment_data: assignmentData,
-      booking_data: assignmentData?.bookings || null,
-      subcontractor_data: assignmentData?.subcontractors || assignmentData?.assignments || null,
-      metadata: {
-        assignment_id,
-        booking_id,
-        order_id,
-        processed_at: new Date().toISOString()
-      }
-    };
+    let webhookPayload;
+    
+    if (comprehensive_data) {
+      // Use comprehensive data from booking flow
+      console.log('Using comprehensive booking data for webhook payload');
+      webhookPayload = comprehensive_data;
+    } else {
+      // Use traditional data fetching method
+      console.log('Using database-fetched data for webhook payload');
+      webhookPayload = {
+        event_type: 'order_entry',
+        timestamp: new Date().toISOString(),
+        source: 'bay_area_cleaning_pros',
+        order_data: orderData,
+        assignment_data: assignmentData,
+        booking_data: assignmentData?.bookings || null,
+        subcontractor_data: assignmentData?.subcontractors || assignmentData?.assignments || null,
+        metadata: {
+          assignment_id,
+          booking_id,
+          order_id,
+          processed_at: new Date().toISOString()
+        }
+      };
+    }
 
     console.log('Sending order entry webhook to:', targetWebhookUrl);
 
