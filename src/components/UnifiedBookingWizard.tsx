@@ -123,6 +123,7 @@ const addOnServices = [
 
 interface BookingData {
   // Step 1: Service Selection
+  serviceZipCode: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -164,6 +165,7 @@ interface BookingData {
 }
 
 const initialBookingData: BookingData = {
+  serviceZipCode: '',
   homeSize: '',
   frequency: 'one-time',
   addOns: [],
@@ -272,7 +274,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
-        return bookingData.homeSize && bookingData.frequency;
+        return bookingData.serviceZipCode && bookingData.homeSize && bookingData.frequency;
       case 2:
         return bookingData.serviceDate && 
                bookingData.serviceTime && 
@@ -336,11 +338,73 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
     updateField('addOns', newAddOns);
   };
 
+  // Validate ZIP code function
+  const validateZipCode = (zipCode: string) => {
+    const bayAreaZipCodes = ['94102', '94103', '94104', '94105', '94107', '94108', '94109', '94110', '94111', '94112', '94114', '94115', '94116', '94117', '94118', '94121', '94122', '94123', '94124', '94127', '94129', '94130', '94131', '94132', '94133', '94134', '94158', '95014', '95050', '95051', '95054', '95070'];
+    return bayAreaZipCodes.includes(zipCode);
+  };
+
+  const [zipCodeValid, setZipCodeValid] = React.useState(false);
+
+  // Check ZIP code validity when it changes
+  React.useEffect(() => {
+    if (bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5) {
+      setZipCodeValid(validateZipCode(bookingData.serviceZipCode));
+    } else {
+      setZipCodeValid(false);
+    }
+  }, [bookingData.serviceZipCode]);
+
+  const handleZipCodeChange = (zipCode: string) => {
+    updateField('serviceZipCode', zipCode);
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-8">
+            {/* Service Area Verification - First */}
+            <Card className="shadow-clean border-primary/20">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Service Area
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">
+                    We provide cleaning services throughout the San Francisco Bay Area. Enter your ZIP code to get started.
+                  </p>
+                  <div className="flex gap-3">
+                    <Input
+                      placeholder="Enter ZIP code"
+                      value={bookingData.serviceZipCode || ''}
+                      onChange={(e) => handleZipCodeChange(e.target.value)}
+                      className="flex-1"
+                      maxLength={5}
+                    />
+                    {zipCodeValid && (
+                      <div className="flex items-center text-success">
+                        <CheckCircle className="h-5 w-5" />
+                      </div>
+                    )}
+                  </div>
+                  {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
+                    <p className="text-destructive text-sm">
+                      Sorry, we don't currently service this ZIP code. Please contact us for availability.
+                    </p>
+                  )}
+                  {zipCodeValid && (
+                    <p className="text-success text-sm font-medium">
+                      Great! We service your area. Choose your cleaning service below.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* BACP Club™ Membership */}
             <Card className="shadow-clean border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardHeader>
