@@ -169,7 +169,7 @@ interface BookingData {
 const initialBookingData: BookingData = {
   serviceZipCode: '',
   homeSize: '',
-  frequency: 'one-time',
+  frequency: '',
   addOns: [],
   addMembership: false,
   serviceDate: '',
