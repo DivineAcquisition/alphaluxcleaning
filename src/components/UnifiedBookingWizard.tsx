@@ -12,6 +12,7 @@ import { CheckCircle, Circle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home,
 import { cn } from '@/lib/utils';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { toast } from 'sonner';
+import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 
 // Import existing booking components for reuse
 import { BookingCheckoutPage } from '@/components/booking/BookingCheckoutPage';
@@ -274,7 +275,10 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
   const canProceedToNext = () => {
     switch (currentStep) {
       case 1:
-        return bookingData.serviceZipCode && bookingData.homeSize && bookingData.frequency;
+        return bookingData.serviceZipCode && 
+               bookingData.homeSize && 
+               bookingData.frequency &&
+               zipCodeStatus === 'valid'; // Only allow valid service area ZIP codes
       case 2:
         return bookingData.serviceDate && 
                bookingData.serviceTime && 
@@ -338,22 +342,49 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
     updateField('addOns', newAddOns);
   };
 
-  // Validate ZIP code function
-  const validateZipCode = (zipCode: string) => {
-    const bayAreaZipCodes = ['94102', '94103', '94104', '94105', '94107', '94108', '94109', '94110', '94111', '94112', '94114', '94115', '94116', '94117', '94118', '94121', '94122', '94123', '94124', '94127', '94129', '94130', '94131', '94132', '94133', '94134', '94158', '95014', '95050', '95051', '95054', '95070'];
-    return bayAreaZipCodes.includes(zipCode);
+  // Texas ZIP code detection
+  const isTexasZipCode = (zipCode: string): boolean => {
+    if (!zipCode || zipCode.length < 5) return false;
+    const prefix = zipCode.substring(0, 2);
+    return ['73', '75', '76', '77', '78', '79', '88'].includes(prefix);
   };
 
-  const [zipCodeValid, setZipCodeValid] = React.useState(false);
+  const [zipCodeStatus, setZipCodeStatus] = React.useState<'valid' | 'texas-expansion' | 'unavailable' | 'pending'>('pending');
+  const [showWaitlist, setShowWaitlist] = React.useState(false);
+  const [waitlistEmail, setWaitlistEmail] = React.useState('');
+  const [waitlistSubmitted, setWaitlistSubmitted] = React.useState(false);
 
   // Check ZIP code validity when it changes
   React.useEffect(() => {
     if (bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5) {
-      setZipCodeValid(validateZipCode(bookingData.serviceZipCode));
+      const validation = validateServiceAreaZipCode(bookingData.serviceZipCode);
+      if (validation.isValid) {
+        setZipCodeStatus('valid');
+        setShowWaitlist(false);
+      } else if (isTexasZipCode(bookingData.serviceZipCode)) {
+        setZipCodeStatus('texas-expansion');
+        setShowWaitlist(true);
+      } else {
+        setZipCodeStatus('unavailable');
+        setShowWaitlist(false);
+      }
     } else {
-      setZipCodeValid(false);
+      setZipCodeStatus('pending');
+      setShowWaitlist(false);
     }
   }, [bookingData.serviceZipCode]);
+
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistEmail.trim()) return;
+    
+    try {
+      // TODO: Add API call to save waitlist data
+      setWaitlistSubmitted(true);
+      toast.success("Added to Waitlist! We'll notify you when we expand to your area.");
+    } catch (error) {
+      toast.error("Failed to join waitlist. Please try again.");
+    }
+  };
 
   const handleZipCodeChange = (zipCode: string) => {
     updateField('serviceZipCode', zipCode);
@@ -375,7 +406,7 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <p className="text-muted-foreground">
-                    We provide cleaning services throughout the San Francisco Bay Area. Enter your ZIP code to get started.
+                    We provide cleaning services throughout the Greater Baytown area within 40 miles. Enter your ZIP code to get started.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -385,21 +416,65 @@ export function UnifiedBookingWizard({ onBookingComplete }: UnifiedBookingWizard
                       className="flex-1"
                       maxLength={5}
                     />
-                    {zipCodeValid && (
+                    {zipCodeStatus === 'valid' && (
                       <div className="flex items-center text-success">
                         <CheckCircle className="h-5 w-5" />
                       </div>
                     )}
                   </div>
-                  {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
-                    <p className="text-destructive text-sm">
-                      Sorry, we don't currently service this ZIP code. Please contact us for availability.
-                    </p>
+
+                  {/* ZIP Code Status Messages */}
+                  {zipCodeStatus === 'valid' && (
+                    <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                      <p className="text-success text-sm font-medium">
+                        Great! We service your area. Choose your cleaning service below.
+                      </p>
+                    </div>
                   )}
-                  {zipCodeValid && (
-                    <p className="text-success text-sm font-medium">
-                      Great! We service your area. Choose your cleaning service below.
-                    </p>
+
+                  {zipCodeStatus === 'texas-expansion' && !waitlistSubmitted && (
+                    <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                      <div className="space-y-3">
+                        <p className="text-blue-800 text-sm font-medium">
+                          🌟 Exciting News! We're expanding throughout Texas and will be in your area soon!
+                        </p>
+                        <p className="text-blue-700 text-sm">
+                          Join our expansion waitlist and we'll notify you as soon as we're available in ZIP code {bookingData.serviceZipCode}.
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter your email"
+                            value={waitlistEmail}
+                            onChange={(e) => setWaitlistEmail(e.target.value)}
+                            type="email"
+                            className="flex-1"
+                          />
+                          <Button 
+                            onClick={handleWaitlistSubmit}
+                            disabled={!waitlistEmail.trim()}
+                            size="sm"
+                          >
+                            Join Waitlist
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {waitlistSubmitted && (
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                      <p className="text-green-800 text-sm font-medium">
+                        ✅ You're on the list! We'll email you at {waitlistEmail} when we start servicing your area.
+                      </p>
+                    </div>
+                  )}
+
+                  {zipCodeStatus === 'unavailable' && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-destructive text-sm">
+                        Sorry, we don't currently service this area. We're focused on Texas expansion. Contact us for special requests.
+                      </p>
+                    </div>
                   )}
                 </div>
               </CardContent>
