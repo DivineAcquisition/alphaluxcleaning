@@ -30,7 +30,7 @@ interface BookingData {
 }
 
 interface Props {
-  bookingData: BookingData;
+  bookingData: Partial<BookingData>;
   updateBookingData: (updates: Partial<BookingData>) => void;
   onNext: () => void;
   onBack: () => void;

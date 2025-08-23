@@ -129,7 +129,7 @@ export function ModernBookingFlow({
                 <CardContent className="p-6">
                   {currentStep === 1 && (
                     <BookingSelectionPage
-                      bookingData={bookingData as any}
+                      bookingData={bookingData}
                       updateBookingData={updateData}
                       onNext={handleNext}
                     />
@@ -137,7 +137,7 @@ export function ModernBookingFlow({
 
                   {currentStep === 2 && (
                     <BookingDetailsPage
-                      bookingData={bookingData as any}
+                      bookingData={bookingData}
                       updateBookingData={updateData}
                       onNext={handleNext}
                       onBack={handleBack}
@@ -146,7 +146,7 @@ export function ModernBookingFlow({
 
                   {currentStep === 3 && (
                     <BookingCheckoutPage
-                      bookingData={bookingData as any}
+                      bookingData={bookingData}
                       updateBookingData={updateData}
                       onPaymentSuccess={handleBookingComplete}
                       onBack={handleBack}

@@ -42,7 +42,7 @@ interface BookingData {
 }
 
 interface Props {
-  bookingData: BookingData;
+  bookingData: Partial<BookingData>;
   updateBookingData: (updates: Partial<BookingData>) => void;
   onPaymentSuccess: (sessionId: string) => void;
   onBack: () => void;
