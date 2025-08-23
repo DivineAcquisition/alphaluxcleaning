@@ -112,7 +112,14 @@ export function ModernBookingFlow({
         <div className="max-w-7xl mx-auto">
           {/* Progress Indicator */}
           <div className="mb-8">
-            <ProgressIndicator currentStep={currentStep} totalSteps={3} />
+            <ProgressIndicator 
+              currentStep={currentStep} 
+              steps={[
+                { id: 1, title: 'Service Selection', description: 'Choose your cleaning service' },
+                { id: 2, title: 'Details & Scheduling', description: 'Schedule and location info' },
+                { id: 3, title: 'Payment', description: 'Complete your booking' }
+              ]} 
+            />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
@@ -122,16 +129,16 @@ export function ModernBookingFlow({
                 <CardContent className="p-6">
                   {currentStep === 1 && (
                     <BookingSelectionPage
-                      bookingData={bookingData}
-                      onDataUpdate={updateData}
+                      bookingData={bookingData as any}
+                      updateBookingData={updateData}
                       onNext={handleNext}
                     />
                   )}
 
                   {currentStep === 2 && (
                     <BookingDetailsPage
-                      bookingData={bookingData}
-                      onDataUpdate={updateData}
+                      bookingData={bookingData as any}
+                      updateBookingData={updateData}
                       onNext={handleNext}
                       onBack={handleBack}
                     />
@@ -139,11 +146,10 @@ export function ModernBookingFlow({
 
                   {currentStep === 3 && (
                     <BookingCheckoutPage
-                      bookingData={bookingData}
-                      onDataUpdate={updateData}
-                      onComplete={handleBookingComplete}
+                      bookingData={bookingData as any}
+                      updateBookingData={updateData}
+                      onPaymentSuccess={handleBookingComplete}
                       onBack={handleBack}
-                      guestMode={guestMode}
                     />
                   )}
 
