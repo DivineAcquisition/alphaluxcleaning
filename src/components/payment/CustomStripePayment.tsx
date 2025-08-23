@@ -112,8 +112,8 @@ function PaymentForm({
     console.log('🔄 Processing payment/setup with orderId:', orderId, 'isSetupIntent:', isSetupIntent);
     
     const returnUrl = orderId 
-      ? `${window.location.origin}/order-status?order_id=${orderId}`
-      : `${window.location.origin}/order-status`;
+      ? `${window.location.origin}/order-confirmation?order_id=${orderId}`
+      : `${window.location.origin}/order-confirmation`;
 
     try {
       let result;

@@ -200,8 +200,8 @@ const Index = () => {
               {/* Unified Booking Wizard */}
               <UnifiedBookingWizard
                 onBookingComplete={(paymentIntentId) => {
-                  console.log('🔄 Booking complete, redirecting to order status with order_id:', paymentIntentId);
-                  window.location.href = `/order-status?order_id=${paymentIntentId}`;
+                  console.log('🔄 Booking complete, redirecting to order confirmation with order_id:', paymentIntentId);
+                  window.location.href = `/order-confirmation?order_id=${paymentIntentId}`;
                 }}
               />
               

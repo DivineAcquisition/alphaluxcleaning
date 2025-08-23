@@ -30,7 +30,7 @@ serve(async (req) => {
 
     const selectFields = `
       id, stripe_session_id, stripe_payment_intent_id, stripe_setup_intent_id, amount, currency, 
-      order_status as status, payment_status,
+      status,
       created_at, updated_at, scheduled_date, scheduled_time, 
       cleaning_type, frequency, square_footage, 
       customer_name, customer_email, customer_phone,
