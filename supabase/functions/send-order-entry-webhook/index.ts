@@ -120,13 +120,14 @@ serve(async (req) => {
     const targetWebhookUrl = webhook_url || Deno.env.get('DEFAULT_WEBHOOK_URL');
     
     if (!targetWebhookUrl) {
+      console.log('No webhook URL configured, skipping webhook transmission');
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          message: 'No webhook URL provided and no default webhook URL configured' 
+          success: true, 
+          message: 'Order processed successfully but no webhook URL configured for external transmission' 
         }),
         { 
-          status: 400, 
+          status: 200, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
         }
       );

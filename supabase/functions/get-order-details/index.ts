@@ -155,7 +155,34 @@ serve(async (req) => {
     }
 
     console.log("Order found successfully:", data.id);
-    return new Response(JSON.stringify({ order: data }), {
+    
+    // Enhance order data with proper structure and fallbacks
+    const enhancedOrder = {
+      ...data,
+      // Ensure service_details has proper structure
+      service_details: data.service_details || {},
+      // Extract cleaning type from service_details if not in main fields
+      cleaning_type: data.cleaning_type || data.service_details?.service_type || data.service_details?.cleaningType || 'Residential Cleaning',
+      // Extract frequency
+      frequency: data.frequency || data.service_details?.frequency || 'One-time',
+      // Extract scheduled date/time from service_details if not in main fields
+      scheduled_date: data.scheduled_date || data.service_details?.service_date,
+      scheduled_time: data.scheduled_time || data.service_details?.service_time,
+      // Ensure amount is properly formatted (convert from cents if needed)
+      amount: data.amount || data.service_details?.total_price || data.service_details?.finalTotal || 0,
+      // Add service address from various possible locations
+      service_address: data.service_details?.serviceAddress || data.service_details?.address || {
+        street: data.service_details?.street_address || '',
+        city: data.service_details?.city || '',
+        state: data.service_details?.state || 'CA',
+        zipCode: data.service_details?.zip_code || ''
+      },
+      // Add payment info for post-service payment display
+      payment_type: data.service_details?.payment_type || 'pay_after_service',
+      final_total: data.service_details?.final_total || data.service_details?.totalPrice || data.amount || 0
+    };
+    
+    return new Response(JSON.stringify({ order: enhancedOrder }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

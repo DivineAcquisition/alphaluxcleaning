@@ -165,6 +165,57 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     try {
+      // Save order to database first
+      const orderData = {
+        id: paymentIntentId,
+        stripe_payment_intent_id: paymentIntentId,
+        amount: Math.round(finalTotal * 100), // Convert to cents
+        currency: 'usd',
+        status: 'confirmed',
+        cleaning_type: bookingData.homeSize || 'general',
+        frequency: bookingData.frequency || 'one-time',
+        scheduled_date: bookingData.serviceDate,
+        scheduled_time: bookingData.serviceTime,
+        customer_name: bookingData.customerName || user?.user_metadata?.full_name || 'Guest User',
+        customer_email: bookingData.customerEmail || user?.email || 'guest@example.com',
+        customer_phone: bookingData.contactNumber,
+        user_id: user?.id,
+        service_details: {
+          service_type: 'residential_cleaning',
+          cleaningType: bookingData.homeSize,
+          frequency: bookingData.frequency,
+          addOns: bookingData.addOns,
+          serviceAddress: bookingData.address,
+          specialInstructions: bookingData.specialInstructions,
+          basePrice: bookingData.basePrice,
+          addOnPrices: bookingData.addOnPrices,
+          frequencyDiscount: bookingData.frequencyDiscount,
+          membershipDiscount: bookingData.membershipDiscount || 0,
+          promoDiscount: promoDiscount,
+          nextDayFee: bookingData.nextDayFee || 0,
+          totalPrice: finalTotal,
+          payment_type: paymentType,
+          payment_amount: paymentAmount,
+          final_total: finalTotal,
+          squareFootage: bookingData.squareFootage,
+          bedrooms: bookingData.bedrooms,
+          bathrooms: bookingData.bathrooms,
+          dwellingType: bookingData.dwellingType,
+          flooringType: bookingData.flooringType
+        }
+      };
+
+      // Insert order into database
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData]);
+
+      if (orderError) {
+        console.error('Failed to save order:', orderError);
+      } else {
+        console.log('Order saved successfully');
+      }
+
       // Create comprehensive order entry webhook data
       const orderEntryData = {
         event_type: 'order_entry',

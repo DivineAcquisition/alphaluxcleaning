@@ -20,6 +20,10 @@ interface Order {
   scheduled_time: string;
   created_at: string;
   service_details: any;
+  service_address?: any;
+  payment_type?: string;
+  final_total?: number;
+  frequency?: string;
 }
 
 export default function OrderConfirmation() {
@@ -208,19 +212,27 @@ export default function OrderConfirmation() {
                     <Package className="h-5 w-5 text-primary" />
                     Service Details
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Service Type:</strong> {order.cleaning_type?.replace(/_/g, ' ')}</p>
-                    <p><strong>Amount:</strong> ${(order.amount / 100).toFixed(2)}</p>
-                    <p><strong>Scheduled Date:</strong> {formatDate(order.scheduled_date)}</p>
-                    {order.scheduled_time && (
-                      <p><strong>Scheduled Time:</strong> {order.scheduled_time}</p>
-                    )}
-                  </div>
+                   <div className="space-y-2 text-sm">
+                     <p><strong>Service Type:</strong> {order.cleaning_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                     <p><strong>Frequency:</strong> {order.frequency?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'One-time'}</p>
+                     <p><strong>Scheduled Date:</strong> {formatDate(order.scheduled_date)}</p>
+                     {order.scheduled_time && (
+                       <p><strong>Scheduled Time:</strong> {order.scheduled_time}</p>
+                     )}
+                     <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                       <p className="text-amber-800 dark:text-amber-200 font-semibold">
+                         <strong>Payment:</strong> {order.payment_type === 'pay_after_service' ? 'Pay After Service' : '25% Now + 75% After Service'}
+                       </p>
+                       <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
+                         Total Amount: ${((order.final_total || order.amount) / 100).toFixed(2)}
+                       </p>
+                     </div>
+                   </div>
                 </div>
               </div>
 
               {/* Service Address */}
-              {order.service_details?.serviceAddress && (
+              {(order.service_address || order.service_details?.serviceAddress) && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-lg font-semibold">
                     <MapPin className="h-5 w-5 text-primary" />
@@ -228,13 +240,15 @@ export default function OrderConfirmation() {
                   </div>
                   <div className="text-sm bg-muted/30 p-4 rounded-lg">
                     <p>
-                      {order.service_details.serviceAddress.street}
-                      {order.service_details.serviceAddress.apartment && 
-                        `, ${order.service_details.serviceAddress.apartment}`
+                      {(order.service_address?.street || order.service_details?.serviceAddress?.street)}
+                      {(order.service_address?.apartment || order.service_details?.serviceAddress?.apartment) && 
+                        `, ${order.service_address?.apartment || order.service_details?.serviceAddress?.apartment}`
                       }
                     </p>
                     <p>
-                      {order.service_details.serviceAddress.city}, {order.service_details.serviceAddress.state} {order.service_details.serviceAddress.zipCode}
+                      {(order.service_address?.city || order.service_details?.serviceAddress?.city)}, {' '}
+                      {(order.service_address?.state || order.service_details?.serviceAddress?.state)} {' '}
+                      {(order.service_address?.zipCode || order.service_details?.serviceAddress?.zipCode)}
                     </p>
                   </div>
                 </div>
