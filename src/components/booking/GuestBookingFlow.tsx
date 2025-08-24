@@ -28,6 +28,9 @@ interface QuoteData {
   bathrooms?: string;
   dwellingType?: string;
   flooringType?: string;
+  // Date & time
+  serviceDate?: string;
+  serviceTime?: string;
 }
 
 interface BookingData {
@@ -105,6 +108,8 @@ export function GuestBookingFlow() {
           addOns: quote.addOns || [],
           addOnPrices: quote.addOnPrices || {},
           frequencyDiscount: quote.frequencyDiscount || 0,
+          serviceDate: quote.serviceDate || '',
+          serviceTime: quote.serviceTime || '',
           address: {
             ...prev.address,
             city: quote.location || '',
@@ -215,6 +220,26 @@ export function GuestBookingFlow() {
                       </div>
                     )}
 
+                    {/* Date & Time if pre-selected from Legacy Booking */}
+                    {(quoteData.serviceDate || quoteData.serviceTime) && (
+                      <div className="border-t pt-3 mt-3">
+                        <h4 className="font-medium text-sm mb-2">Selected Appointment:</h4>
+                        <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                          {quoteData.serviceDate && (
+                            <div>Date: {new Date(quoteData.serviceDate).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}</div>
+                          )}
+                          {quoteData.serviceTime && (
+                            <div>Time: {quoteData.serviceTime}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Add-ons if available */}
                     {quoteData.addOns && quoteData.addOns.length > 0 && (
                       <div className="border-t pt-3 mt-3">
@@ -301,6 +326,44 @@ export function GuestBookingFlow() {
         );
 
       case 2:
+        // If date/time already selected in Legacy Booking, skip scheduling step
+        if (bookingData.serviceDate && bookingData.serviceTime) {
+          // Auto-advance to payment
+          React.useEffect(() => {
+            setCurrentStep(3);
+          }, []);
+          
+          return (
+            <Card className="shadow-clean">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Appointment Confirmed
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <div className="text-lg font-medium mb-2">Your appointment is scheduled for:</div>
+                  <div className="text-xl text-primary font-bold mb-1">
+                    {new Date(bookingData.serviceDate).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </div>
+                  <div className="text-lg text-primary font-semibold">
+                    {bookingData.serviceTime}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Continue to payment to confirm your booking
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        
         return (
           <Card className="shadow-clean">
             <CardHeader>

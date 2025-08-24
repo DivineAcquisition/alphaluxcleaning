@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users } from 'lucide-react';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { GuestBookingFlow } from './GuestBookingFlow';
@@ -29,6 +29,10 @@ interface BookingData {
   bathrooms: string;
   dwellingType: string;
   flooringType: string;
+  
+  // Date & Time Selection
+  serviceDate: string;
+  serviceTime: string;
 }
 
 // Square footage-based pricing tiers with 20% across-the-board discount applied
@@ -268,7 +272,15 @@ export function LegacyBookingFlow() {
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: property details
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: property details, 5: date/time
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  
+  // Countdown timer state (matching main page)
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 23,
+    minutes: 59,
+    seconds: 59
+  });
 
   const updateBookingData = (updates: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...updates }));
@@ -311,7 +323,40 @@ export function LegacyBookingFlow() {
     }
   };
 
-  // Update step progression when home size is selected
+  // Countdown timer effect (matching main page)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        let newSeconds = prev.seconds - 1;
+        let newMinutes = prev.minutes;
+        let newHours = prev.hours;
+        if (newSeconds < 0) {
+          newSeconds = 59;
+          newMinutes = prev.minutes - 1;
+          if (newMinutes < 0) {
+            newMinutes = 59;
+            newHours = prev.hours - 1;
+            if (newHours < 0) {
+              // Reset to 24 hours when it reaches 0
+              return {
+                hours: 23,
+                minutes: 59,
+                seconds: 59
+              };
+            }
+          }
+        }
+        return {
+          hours: newHours,
+          minutes: newMinutes,
+          seconds: newSeconds
+        };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Update step progression when selections are made
   useEffect(() => {
     if (zipCodeValid && bookingData.homeSize) {
       setCurrentStep(3); // Move to frequency selection
@@ -319,7 +364,11 @@ export function LegacyBookingFlow() {
     if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
       setCurrentStep(4); // Move to property details
     }
-  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency]);
+    if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
+        bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) {
+      setCurrentStep(5); // Move to date/time selection
+    }
+  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.bedrooms, bookingData.bathrooms, bookingData.dwellingType]);
 
   // Calculate pricing with new square footage structure
   useEffect(() => {
@@ -366,6 +415,47 @@ export function LegacyBookingFlow() {
     setSelectedAddOns(updated);
   };
 
+  // Time selection functions (matching EnhancedSchedulingStep)
+  const timeSlots = [
+    { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM' },
+    { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM' },
+    { value: '10:00 AM', label: '10:00 AM', range: '10:00 - 12:00 PM' },
+    { value: '11:00 AM', label: '11:00 AM', range: '11:00 AM - 1:00 PM' },
+    { value: '12:00 PM', label: '12:00 PM', range: '12:00 - 2:00 PM' },
+    { value: '1:00 PM', label: '1:00 PM', range: '1:00 - 3:00 PM' },
+    { value: '2:00 PM', label: '2:00 PM', range: '2:00 - 4:00 PM' },
+    { value: '3:00 PM', label: '3:00 PM', range: '3:00 - 5:00 PM' },
+    { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM' }
+  ];
+
+  // Generate available dates (no Sundays, 5 days minimum)
+  const generateAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 5; i <= 35; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      if (date.getDay() !== 0) { // Skip Sundays
+        dates.push(date);
+      }
+      
+      if (dates.length >= 21) break;
+    }
+    
+    return dates;
+  };
+
+  const availableDates = generateAvailableDates();
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      updateBookingData({ serviceDate: date.toISOString().split('T')[0] });
+    }
+  };
+
   const handleNext = () => {
     // Store booking data in localStorage for guest booking flow
     localStorage.setItem('quoteData', JSON.stringify({
@@ -382,7 +472,10 @@ export function LegacyBookingFlow() {
       bedrooms: bookingData.bedrooms,
       bathrooms: bookingData.bathrooms,
       dwellingType: bookingData.dwellingType,
-      flooringType: bookingData.flooringType
+      flooringType: bookingData.flooringType,
+      // Date & time
+      serviceDate: bookingData.serviceDate,
+      serviceTime: bookingData.serviceTime
     }));
     
     setShowBookingFlow(true);
@@ -396,26 +489,78 @@ export function LegacyBookingFlow() {
   const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 py-12">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4 bg-accent/20 text-accent-foreground">
-            Legacy Square Footage Pricing
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Square Footage-Based Cleaning Services
-          </h1>
-          <p className="text-xl text-muted-foreground mb-6 max-w-3xl mx-auto">
-            Professional cleaning services for {SERVICE_AREA_INFO.centerCity} and surrounding areas within {SERVICE_AREA_INFO.radiusMiles} miles. 20% discount already applied to all services.
-          </p>
-          <div className="flex justify-center mb-8">
-            <Link to="/guest-booking">
-              <Button variant="outline" size="sm">
-                Try New Booking System →
-              </Button>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+      <div className="container mx-auto py-8 px-4">
+        {/* Enhanced Header with Promotional Messaging */}
+        <div className="text-center mb-8">
+          <h1 className="sm:text-4xl font-jakarta font-bold tracking-tight mb-4 px-0 mx-0 my-0 py-0 text-2xl text-center">Square Footage Pricing</h1>
+          <p className="sm:text-xl font-inter text-muted-foreground max-w-2xl mx-auto font-semibold text-sm px-[10px]">Legacy pricing system for residential cleaning services</p>
+        </div>
+
+        {/* New Client Special Banner - Matching Main Page */}
+        <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4 mb-8">
+          <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
+            <CardContent className="p-4 md:p-6">
+              <div className="text-center text-white">
+                {/* Header */}
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
+                  <h2 className="text-xl md:text-2xl font-jakarta font-bold">
+                    🎉 New Client Special
+                  </h2>
+                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
+                </div>
+                
+                {/* Main Offer */}
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+                  <h3 className="text-lg md:text-xl font-jakarta font-bold mb-2 text-yellow-300">
+                    🏡 All Home Sizes Welcome
+                  </h3>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">20% OFF</span>
+                  </div>
+                  <p className="text-sm md:text-base font-semibold">All Services + BACP Club™ Benefits</p>
+                  <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
+                    <p className="text-sm font-bold text-yellow-300">Starting at $137/month (was $171)</p>
+                  </div>
+                </div>
+
+                {/* Countdown Timer */}
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 md:h-5 w-5 text-yellow-300" />
+                    <span className="text-sm md:text-base font-semibold">Offer Expires In:</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold tabular-nums">
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    </div>
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    </div>
+                    <span className="w-2 text-center">:</span>
+                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
+                      <span className="text-xs md:text-sm">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
+                  ⚡ First-time clients only • Book within 30 days
+                </p>
+                
+                {/* Try New System Button */}
+                <div className="flex justify-center mt-4">
+                  <Link to="/guest-booking">
+                    <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                      Try New Booking System →
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -800,8 +945,105 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Add-Ons Selection - Show only after property details completed */}
-            {currentStep >= 4 && bookingData.frequency && bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType && (
+            {/* Date & Time Selection - Show only after property details completed */}
+            {currentStep >= 5 && (
+              <Card className="shadow-clean bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <CalendarIcon className="h-6 w-6" />
+                    Choose Your Appointment Time
+                  </CardTitle>
+                  <p className="text-primary-foreground/80">
+                    Select your preferred date and time for your cleaning service
+                  </p>
+                </CardHeader>
+                
+                <CardContent className="p-6">
+                  <div className="bg-white rounded-lg p-6 shadow-inner">
+                    <div className="space-y-6">
+                      {/* Quick Date Selection */}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-4">Select Date</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {availableDates.slice(0, 6).map((date, index) => {
+                            const isSelected = selectedDate?.toDateString() === date.toDateString();
+                            
+                            return (
+                              <button
+                                key={date.toISOString()}
+                                onClick={() => handleDateSelect(date)}
+                                className={cn(
+                                  "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
+                                  isSelected 
+                                    ? "border-primary bg-primary/5 shadow-clean"
+                                    : "border-border hover:border-primary/50"
+                                )}
+                              >
+                                <div className="flex flex-col">
+                                  <div className="font-medium text-gray-800">
+                                    {date.toLocaleDateString('en-US', { 
+                                      weekday: 'short', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Time Selection */}
+                      {selectedDate && bookingData.serviceDate && (
+                        <div className="animate-fade-in">
+                          <h4 className="font-semibold text-gray-800 mb-4">Select Time</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {timeSlots.map((slot) => (
+                              <button
+                                key={slot.value}
+                                onClick={() => updateBookingData({ serviceTime: slot.value })}
+                                className={cn(
+                                  "p-3 rounded-lg border text-left transition-all duration-200",
+                                  bookingData.serviceTime === slot.value
+                                    ? "border-primary bg-primary/5 shadow-clean"
+                                    : "border-border hover:border-primary/50"
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-gray-800">{slot.label}</div>
+                                    <div className="text-xs text-gray-600">{slot.range}</div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if property details completed but no date/time */}
+            {currentStep === 5 && !bookingData.serviceDate && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <CalendarIcon className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Choose Your Appointment</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select your preferred date and time above
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add-Ons Selection - Show only after date/time selected */}
+            {currentStep >= 5 && bookingData.serviceDate && bookingData.serviceTime && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -958,6 +1200,15 @@ export function LegacyBookingFlow() {
                         </div>
                         <span className={cn("text-sm", (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "text-success" : currentStep >= 4 ? "text-foreground" : "text-muted-foreground")}>
                           {(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "✓ Property Details Added" : "Add Property Details"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          (bookingData.serviceDate && bookingData.serviceTime) ? "bg-success text-success-foreground" : currentStep >= 5 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          5
+                        </div>
+                        <span className={cn("text-sm", (bookingData.serviceDate && bookingData.serviceTime) ? "text-success" : currentStep >= 5 ? "text-foreground" : "text-muted-foreground")}>
+                          {(bookingData.serviceDate && bookingData.serviceTime) ? "✓ Date & Time Selected" : "Choose Date & Time"}
                         </span>
                       </div>
                     </div>
