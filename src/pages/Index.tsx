@@ -11,7 +11,7 @@ import { UnifiedBookingWizard } from "@/components/UnifiedBookingWizard";
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ServiceDetailsDialog } from "@/components/ServiceDetailsDialog";
-import { ReferralSection } from "@/components/ReferralSection";
+
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
   const [pricingData, setPricingData] = useState(null);
@@ -203,12 +203,6 @@ const Index = () => {
               {/* Membership CTA */}
               
 
-              {/* Referral Section */}
-              <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
-                <CardContent className="p-6">
-                  <ReferralSection />
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
           

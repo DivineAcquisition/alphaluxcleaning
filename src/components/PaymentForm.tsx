@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, User, Mail, Phone, Gift, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -426,20 +427,30 @@ export function PaymentForm({
                        <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
                      </div>}
                    
-                   {!appliedReferral && <div className="text-left">
-                       <div className="flex gap-2">
-                         <Input value={referralCode} onChange={e => setReferralCode(e.target.value)} placeholder="Enter your friend's referral code" className="flex-1 text-left" />
-                         <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name} variant="outline" size="sm">
-                           Apply
-                         </Button>
-                       </div>
-                       <p className="text-xs text-muted-foreground text-left mt-2">
-                         Get 10% off your service with a friend's referral code
-                       </p>
-                       {(!customerInfo.email || !customerInfo.name) && <p className="text-xs text-orange-600 text-left mt-1">
-                           Please fill in your name and email first
-                         </p>}
-                     </div>}
+                    {!appliedReferral && <div className="text-left">
+                        <div className="flex gap-2">
+                          <Input value={referralCode} onChange={e => setReferralCode(e.target.value)} placeholder="Enter your friend's referral code" className="flex-1 text-left" />
+                          <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name} variant="outline" size="sm">
+                            Apply
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left mt-2">
+                          Get 10% off your service with a friend's referral code
+                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          {(!customerInfo.email || !customerInfo.name) && <p className="text-xs text-orange-600 text-left">
+                              Please fill in your name and email first
+                            </p>}
+                          <ReferralCodeDialog 
+                            onCodeGenerated={(code) => setReferralCode(code)}
+                            trigger={
+                              <Button variant="link" className="p-0 h-auto text-sm text-primary">
+                                Don't have a referral code? Generate one here!
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </div>}
                  </div>
                </div>
 
