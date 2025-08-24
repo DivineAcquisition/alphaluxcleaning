@@ -6,11 +6,13 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { GuestBookingFlow } from './GuestBookingFlow';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
+import { hasUsedPromoOffer, CustomerData } from '@/lib/offer-tracking';
 
 interface BookingData {
   serviceZipCode: string;
@@ -274,6 +276,8 @@ export function LegacyBookingFlow() {
   const [showBookingFlow, setShowBookingFlow] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: property details, 5: date/time
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [offerEligible, setOfferEligible] = useState(true);
+  const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
   
   // Countdown timer state (matching main page)
   const [timeLeft, setTimeLeft] = useState({
@@ -376,8 +380,10 @@ export function LegacyBookingFlow() {
     const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
 
     if (selectedTier && selectedFrequency) {
-      // Get base price from the selected frequency type (already includes 20% discount)
-      const basePrice = selectedTier.pricing[selectedFrequency.priceKey] || 0;
+      // Get base price based on offer eligibility
+      const basePrice = offerEligible 
+        ? selectedTier.pricing[selectedFrequency.priceKey] || 0
+        : selectedTier.originalPricing[selectedFrequency.priceKey] || 0;
       
       const addOnTotal = selectedAddOns.reduce((total, addOn) => {
         const addOnItem = addOns.find(a => a.value === addOn);
@@ -393,9 +399,11 @@ export function LegacyBookingFlow() {
         return acc;
       }, {} as { [key: string]: number });
 
-      // Calculate savings from 20% discount
+      // Calculate savings from 20% discount (only if offer is eligible)
       const originalPrice = selectedTier.originalPricing[selectedFrequency.priceKey] || 0;
-      const frequencyDiscount = originalPrice > 0 ? Math.round((originalPrice - basePrice) * 100) / 100 : 0;
+      const frequencyDiscount = offerEligible && originalPrice > 0 
+        ? Math.round((originalPrice - basePrice) * 100) / 100 
+        : 0;
 
       updateBookingData({
         basePrice,
@@ -406,7 +414,7 @@ export function LegacyBookingFlow() {
         squareFootage: selectedTier.label // Store square footage for order records
       });
     }
-  }, [bookingData.homeSize, bookingData.frequency, selectedAddOns, bookingData.nextDayFee]);
+  }, [bookingData.homeSize, bookingData.frequency, selectedAddOns, bookingData.nextDayFee, offerEligible]);
 
   const toggleAddOn = (addOnValue: string) => {
     const updated = selectedAddOns.includes(addOnValue)
@@ -457,6 +465,15 @@ export function LegacyBookingFlow() {
   };
 
   const handleNext = () => {
+    // Check if customer has already used the promotional offer
+    const customerData: CustomerData = {
+      zipCode: bookingData.serviceZipCode,
+      // We'll check again with full customer details in the booking flow
+    };
+
+    // For now, we'll do a basic check. Full validation will happen in GuestBookingFlow
+    // when we have complete customer information (name, email, phone, address)
+    
     // Store booking data in localStorage for guest booking flow
     localStorage.setItem('quoteData', JSON.stringify({
       zipCode: bookingData.serviceZipCode,
@@ -468,6 +485,7 @@ export function LegacyBookingFlow() {
       addOns: selectedAddOns,
       addOnPrices: bookingData.addOnPrices,
       frequencyDiscount: bookingData.frequencyDiscount,
+      offerEligible: offerEligible,
       // Property details
       bedrooms: bookingData.bedrooms,
       bathrooms: bookingData.bathrooms,
@@ -520,9 +538,9 @@ export function LegacyBookingFlow() {
                     <span className="text-2xl md:text-3xl font-bold text-yellow-300">20% OFF</span>
                   </div>
                   <p className="text-sm md:text-base font-semibold">All Services + BACP Club™ Benefits</p>
-                  <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
-                    <p className="text-sm font-bold text-yellow-300">Starting at $137/month (was $171)</p>
-                  </div>
+                   <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
+                     <p className="text-sm font-bold text-yellow-300">Save up $150+/</p>
+                   </div>
                 </div>
 
                 {/* Countdown Timer */}
@@ -546,18 +564,9 @@ export function LegacyBookingFlow() {
                   </div>
                 </div>
 
-                <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
-                  ⚡ First-time clients only • Book within 30 days
-                </p>
-                
-                {/* Try New System Button */}
-                <div className="flex justify-center mt-4">
-                  <Link to="/guest-booking">
-                    <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-                      Try New Booking System →
-                    </Button>
-                  </Link>
-                </div>
+                 <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
+                   ⚡ {offerEligible ? 'First-time clients only • Book within 30 days' : 'Offer already redeemed'}
+                 </p>
               </div>
             </CardContent>
           </Card>
@@ -671,22 +680,24 @@ export function LegacyBookingFlow() {
                                   <p className="text-lg font-bold text-primary">Call for Quote</p>
                                   <p className="text-xs text-muted-foreground">(281) 809-9901</p>
                                 </div>
-                              ) : (
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="line-through text-muted-foreground text-sm">
-                                      ${tier.originalPricing.oneTime}
-                                    </span>
-                                    <Badge variant="secondary" className="text-xs bg-success/20 text-success">
-                                      20% OFF
-                                    </Badge>
-                                  </div>
-                                  <p className="text-lg font-bold text-primary">
-                                    Starting at ${tier.pricing.monthly}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">monthly service</p>
-                                </div>
-                              )}
+                               ) : (
+                                 <div>
+                                   {offerEligible && (
+                                     <div className="flex items-center gap-2">
+                                       <span className="line-through text-muted-foreground text-sm">
+                                         ${tier.originalPricing.oneTime}
+                                       </span>
+                                       <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                         20% OFF
+                                       </Badge>
+                                     </div>
+                                   )}
+                                   <p className="text-lg font-bold text-primary">
+                                     Starting at ${offerEligible ? tier.pricing.monthly : tier.originalPricing.monthly}
+                                   </p>
+                                   <p className="text-xs text-muted-foreground">monthly service</p>
+                                 </div>
+                               )}
                             </div>
                           </div>
                         </div>
@@ -756,25 +767,25 @@ export function LegacyBookingFlow() {
                             <span className="font-semibold">{option.label}</span>
                           </div>
                           
-                          {selectedTier && !selectedTier.requiresQuote ? (
-                            <div className="space-y-2">
-                              {originalPrice > 0 && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-muted-foreground line-through">
-                                    ${originalPrice}
-                                  </span>
-                                  <Badge variant="secondary" className="text-xs bg-success/20 text-success">
-                                    20% OFF
-                                  </Badge>
-                                </div>
-                              )}
-                              <div className="text-center">
-                                <p className="text-xl font-bold text-primary">
-                                  {price > 0 ? `$${price}` : 'Call for Quote'}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{option.description}</p>
-                              </div>
-                            </div>
+                           {selectedTier && !selectedTier.requiresQuote ? (
+                             <div className="space-y-2">
+                               {originalPrice > 0 && offerEligible && (
+                                 <div className="flex items-center justify-between">
+                                   <span className="text-sm text-muted-foreground line-through">
+                                     ${originalPrice}
+                                   </span>
+                                   <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                     20% OFF
+                                   </Badge>
+                                 </div>
+                               )}
+                               <div className="text-center">
+                                 <p className="text-xl font-bold text-primary">
+                                   {price > 0 ? `$${offerEligible ? price : originalPrice}` : 'Call for Quote'}
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">{option.description}</p>
+                               </div>
+                             </div>
                           ) : (
                             <div className="text-center">
                               <p className="text-sm text-muted-foreground">{option.description}</p>
@@ -1100,12 +1111,12 @@ export function LegacyBookingFlow() {
                           </div>
                         </div>
                         
-                        {bookingData.frequencyDiscount > 0 && (
-                          <div className="flex justify-between text-success">
-                            <span>20% Discount Applied</span>
-                            <span>-${bookingData.frequencyDiscount}</span>
-                          </div>
-                        )}
+                         {bookingData.frequencyDiscount > 0 && offerEligible && (
+                           <div className="flex justify-between text-success">
+                             <span>20% Discount Applied</span>
+                             <span>-${bookingData.frequencyDiscount}</span>
+                           </div>
+                         )}
                         
                         {selectedAddOns.length > 0 && (
                           <div className="space-y-2">
@@ -1134,17 +1145,25 @@ export function LegacyBookingFlow() {
                           </div>
                         )}
                         
-                        {bookingData.frequencyDiscount > 0 && (
-                          <div className="bg-success/10 border border-success/20 rounded-lg p-3 mt-3">
-                            <div className="flex items-center gap-2 text-success">
-                              <CheckCircle className="h-4 w-4" />
-                              <span className="font-medium">You're saving ${bookingData.frequencyDiscount}!</span>
-                            </div>
-                            <p className="text-sm text-success/80 mt-1">
-                              20% discount applied to all services
-                            </p>
-                          </div>
-                        )}
+                         {bookingData.frequencyDiscount > 0 && offerEligible && (
+                           <div className="bg-success/10 border border-success/20 rounded-lg p-3 mt-3">
+                             <div className="flex items-center gap-2 text-success">
+                               <CheckCircle className="h-4 w-4" />
+                               <span className="font-medium">You're saving ${bookingData.frequencyDiscount}!</span>
+                             </div>
+                             <p className="text-sm text-success/80 mt-1">
+                               20% discount applied to all services
+                             </p>
+                           </div>
+                         )}
+                         
+                         {!offerEligible && (
+                           <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 mt-3">
+                             <p className="text-sm text-warning font-medium">
+                               This promotional offer has already been redeemed for your details.
+                             </p>
+                           </div>
+                         )}
                       </div>
                     )}
                     
@@ -1216,9 +1235,25 @@ export function LegacyBookingFlow() {
                 </Card>
               )}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+           </div>
+         </div>
+       </div>
+       
+       {/* Alert Dialog for Offer Already Used */}
+       <AlertDialog open={showOfferUsedAlert} onOpenChange={setShowOfferUsedAlert}>
+         <AlertDialogContent>
+           <AlertDialogHeader>
+             <AlertDialogTitle>Promotional Offer Already Redeemed</AlertDialogTitle>
+             <AlertDialogDescription>
+               Our records show that this promotional offer has already been used with your details (name, address, email, or phone number). 
+               Each customer can only redeem this special offer once. You can continue with regular pricing.
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogAction onClick={() => setShowOfferUsedAlert(false)}>
+             Continue with Regular Pricing
+           </AlertDialogAction>
+         </AlertDialogContent>
+       </AlertDialog>
+     </div>
+   );
+ }

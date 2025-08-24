@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ArrowLeft, ArrowRight, Calendar, MapPin, User, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import ModernScheduler from '@/components/ModernScheduler';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
+import { hasUsedPromoOffer, markPromoOfferUsed, CustomerData } from '@/lib/offer-tracking';
 
 interface QuoteData {
   homeSize: string;
@@ -23,6 +25,7 @@ interface QuoteData {
   addOns?: string[];
   addOnPrices?: { [key: string]: number };
   frequencyDiscount?: number;
+  offerEligible?: boolean;
   // Property details
   bedrooms?: string;
   bathrooms?: string;
@@ -55,6 +58,9 @@ interface BookingData {
   paymentType: 'pay_after_service' | '25_percent_with_discount';
   promoDiscount: number;
   nextDayFee?: number;
+  customerName?: string;
+  customerEmail?: string;
+  offerEligible?: boolean;
 }
 
 const steps = [
@@ -66,6 +72,7 @@ const steps = [
 export function GuestBookingFlow() {
   const [currentStep, setCurrentStep] = useState(1);
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null);
+  const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData>({
     homeSize: '',
     serviceType: '',
@@ -86,7 +93,8 @@ export function GuestBookingFlow() {
     frequencyDiscount: 0,
     totalPrice: 0,
     paymentType: 'pay_after_service',
-    promoDiscount: 0
+    promoDiscount: 0,
+    offerEligible: true
   });
 
   // Load quote data from localStorage on mount
@@ -110,6 +118,7 @@ export function GuestBookingFlow() {
           frequencyDiscount: quote.frequencyDiscount || 0,
           serviceDate: quote.serviceDate || '',
           serviceTime: quote.serviceTime || '',
+          offerEligible: quote.offerEligible !== undefined ? quote.offerEligible : true,
           address: {
             ...prev.address,
             city: quote.location || '',
@@ -129,13 +138,45 @@ export function GuestBookingFlow() {
     setBookingData(prev => ({ ...prev, ...updates }));
   };
 
+  // Check offer eligibility when customer details are complete
+  const checkOfferEligibility = (customerData: CustomerData) => {
+    const hasUsed = hasUsedPromoOffer(customerData);
+    
+    if (hasUsed && bookingData.offerEligible) {
+      // Customer has already used the offer, update pricing to original
+      setBookingData(prev => ({
+        ...prev,
+        offerEligible: false,
+        frequencyDiscount: 0,
+        // Recalculate total without discount
+        totalPrice: prev.basePrice + Object.values(prev.addOnPrices).reduce((sum, price) => sum + price, 0) + (prev.nextDayFee || 0)
+      }));
+      
+      setShowOfferUsedAlert(true);
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleNext = () => {
     if (currentStep === 1) {
       // Validate step 1 fields
-      if (!bookingData.address.street || !bookingData.contactNumber) {
+      if (!bookingData.address.street || !bookingData.contactNumber || !bookingData.customerName || !bookingData.customerEmail) {
         toast.error('Please fill in all required fields');
         return;
       }
+
+      // Check offer eligibility with complete customer data
+      const customerData: CustomerData = {
+        name: bookingData.customerName,
+        email: bookingData.customerEmail,
+        phone: bookingData.contactNumber,
+        zipCode: bookingData.address.zipCode,
+        address: bookingData.address.street
+      };
+
+      checkOfferEligibility(customerData);
     }
     
     if (currentStep === 2) {
@@ -154,6 +195,18 @@ export function GuestBookingFlow() {
   };
 
   const handlePaymentSuccess = (sessionId: string) => {
+    // Mark offer as used if it was eligible and used
+    if (bookingData.offerEligible && bookingData.frequencyDiscount > 0) {
+      const customerData: CustomerData = {
+        name: bookingData.customerName,
+        email: bookingData.customerEmail,
+        phone: bookingData.contactNumber,
+        zipCode: bookingData.address.zipCode,
+        address: bookingData.address.street
+      };
+      markPromoOfferUsed(customerData);
+    }
+
     toast.success('Booking confirmed! Redirecting to confirmation...');
     // Clear both possible quote data storage keys
     localStorage.removeItem('quoteData');
@@ -258,19 +311,43 @@ export function GuestBookingFlow() {
                 </div>
               )}
 
-              {/* Contact Information */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="contactNumber">Phone Number *</Label>
-                  <Input
-                    id="contactNumber"
-                    type="tel"
-                    placeholder="(555) 123-4567"
-                    value={bookingData.contactNumber}
-                    onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
-                    required
-                  />
-                </div>
+               {/* Contact Information */}
+               <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <Label htmlFor="customerName">Full Name *</Label>
+                     <Input
+                       id="customerName"
+                       placeholder="John Doe"
+                       value={bookingData.customerName || ''}
+                       onChange={(e) => updateBookingData({ customerName: e.target.value })}
+                       required
+                     />
+                   </div>
+                   <div>
+                     <Label htmlFor="customerEmail">Email Address *</Label>
+                     <Input
+                       id="customerEmail"
+                       type="email"
+                       placeholder="john@example.com"
+                       value={bookingData.customerEmail || ''}
+                       onChange={(e) => updateBookingData({ customerEmail: e.target.value })}
+                       required
+                     />
+                   </div>
+                 </div>
+
+                 <div>
+                   <Label htmlFor="contactNumber">Phone Number *</Label>
+                   <Input
+                     id="contactNumber"
+                     type="tel"
+                     placeholder="(555) 123-4567"
+                     value={bookingData.contactNumber}
+                     onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
+                     required
+                   />
+                 </div>
 
                 <div>
                   <Label htmlFor="street">Street Address *</Label>
@@ -456,9 +533,25 @@ export function GuestBookingFlow() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+           )}
+         </div>
+       </div>
+       
+       {/* Alert Dialog for Offer Already Used */}
+       <AlertDialog open={showOfferUsedAlert} onOpenChange={setShowOfferUsedAlert}>
+         <AlertDialogContent>
+           <AlertDialogHeader>
+             <AlertDialogTitle>Promotional Offer Already Redeemed</AlertDialogTitle>
+             <AlertDialogDescription>
+               Our records show that this promotional offer has already been used with your details (name, address, email, or phone number). 
+               Each customer can only redeem this special offer once. You can continue with regular pricing.
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogAction onClick={() => setShowOfferUsedAlert(false)}>
+             Continue with Regular Pricing
+           </AlertDialogAction>
+         </AlertDialogContent>
+       </AlertDialog>
+     </div>
+   );
+ }
