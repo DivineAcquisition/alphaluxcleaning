@@ -186,9 +186,25 @@ const Index = () => {
                 <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   Book Your Cleaning Service
                 </h2>
-                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto">
+                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto mb-6">
                   Complete your entire booking in one place - all information saves automatically
                 </p>
+                
+                {/* Booking Options */}
+                <div className="flex justify-center gap-4 mb-8">
+                  <Button 
+                    onClick={() => window.location.href = '/guest-booking'}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    New Booking Experience
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/legacy-booking'}
+                    variant="outline"
+                  >
+                    Square Footage Pricing
+                  </Button>
+                </div>
               </div>
 
               {/* Unified Booking Wizard */}

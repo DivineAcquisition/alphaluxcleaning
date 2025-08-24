@@ -17,6 +17,7 @@ import ServiceDetails from '@/pages/ServiceDetails';
 import ScheduleService from '@/pages/ScheduleService';
 import BookingConfirmation from '@/pages/BookingConfirmation';
 import GuestBooking from '@/pages/GuestBooking';
+import LegacyBooking from '@/pages/LegacyBooking';
 import TestBooking from '@/pages/TestBooking';
 import CustomerDashboard from '@/pages/CustomerDashboard';
 import CustomerMobilePortal from '@/pages/CustomerMobilePortal';
@@ -152,6 +153,7 @@ function App() {
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
                 <Route path="/test-booking" element={<TestBooking />} />
                 <Route path="/guest-booking" element={<GuestBooking />} />
+                <Route path="/legacy-booking" element={<LegacyBooking />} />
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
                 
