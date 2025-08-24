@@ -493,7 +493,7 @@ export function LegacyBookingFlow() {
       <div className="container mx-auto py-8 px-4">
         {/* Enhanced Header with Promotional Messaging */}
         <div className="text-center mb-8">
-          <h1 className="sm:text-4xl font-jakarta font-bold tracking-tight mb-4 px-0 mx-0 my-0 py-0 text-2xl text-center">Square Footage Pricing</h1>
+          <h1 className="sm:text-4xl font-jakarta font-bold tracking-tight mb-4 px-0 mx-0 my-0 py-0 text-2xl text-center">Premium Cleaning Service</h1>
           <p className="sm:text-xl font-inter text-muted-foreground max-w-2xl mx-auto font-semibold text-sm px-[10px]">Legacy pricing system for residential cleaning services</p>
         </div>
 
