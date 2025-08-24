@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Home as HomeIcon, Clock, Sparkles } from "lucide-react";
+import { Building2, Home as HomeIcon } from "lucide-react";
 import { PricingCalculator } from "@/components/dashboard/PricingCalculator";
 import { RecurringBookingInterface } from "@/components/RecurringBookingInterface";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
@@ -20,11 +20,6 @@ const Index = () => {
   const [schedulingData, setSchedulingData] = useState({
     scheduledDate: "",
     scheduledTime: ""
-  });
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 23,
-    minutes: 59,
-    seconds: 59
   });
 
   // Track page view on component mount
@@ -57,38 +52,6 @@ const Index = () => {
     };
   }, []);
 
-  // Countdown timer effect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        let newSeconds = prev.seconds - 1;
-        let newMinutes = prev.minutes;
-        let newHours = prev.hours;
-        if (newSeconds < 0) {
-          newSeconds = 59;
-          newMinutes = prev.minutes - 1;
-          if (newMinutes < 0) {
-            newMinutes = 59;
-            newHours = prev.hours - 1;
-            if (newHours < 0) {
-              // Reset to 24 hours when it reaches 0
-              return {
-                hours: 23,
-                minutes: 59,
-                seconds: 59
-              };
-            }
-          }
-        }
-        return {
-          hours: newHours,
-          minutes: newMinutes,
-          seconds: newSeconds
-        };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
   const handleSchedulingUpdate = (data: any) => {
     setSchedulingData(data);
   };
@@ -110,62 +73,6 @@ const Index = () => {
           <p className="sm:text-xl font-inter text-muted-foreground max-w-2xl mx-auto font-semibold text-sm px-[10px]">BayAreaCleaningPros premier cleaning service for residential and commercial properties</p>
         </div>
 
-        {/* New Client Special Banner */}
-        <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4 mb-8">
-          <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
-            <CardContent className="p-4 md:p-6">
-              <div className="text-center text-white">
-                {/* Header */}
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
-                  <h2 className="text-xl md:text-2xl font-jakarta font-bold">
-                    🎉 New Client Special
-                  </h2>
-                  <Sparkles className="h-5 w-5 md:h-6 w-6 animate-pulse text-yellow-300" />
-                </div>
-                
-                {/* Main Offer */}
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
-                  <h3 className="text-lg md:text-xl font-jakarta font-bold mb-2 text-yellow-300">
-                    🏡 All Home Sizes Welcome
-                  </h3>
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">20% OFF</span>
-                  </div>
-                  <p className="text-sm md:text-base font-semibold">All Services + BACP Club™ Benefits</p>
-                  <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
-                    <p className="text-sm font-bold text-yellow-300">Starting at $137/month (was $171)</p>
-                  </div>
-                </div>
-
-                {/* Countdown Timer */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3 border border-white/30">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 md:h-5 w-5 text-yellow-300" />
-                    <span className="text-sm md:text-base font-semibold">Offer Expires In:</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 text-lg md:text-xl font-mono font-bold tabular-nums">
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
-                      <span className="text-xs md:text-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
-                    </div>
-                    <span className="w-2 text-center">:</span>
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
-                      <span className="text-xs md:text-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                    </div>
-                    <span className="w-2 text-center">:</span>
-                    <div className="bg-white/30 px-2 py-1 rounded border border-white/40 min-w-[36px] flex justify-center">
-                      <span className="text-xs md:text-sm">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs md:text-sm font-inter font-semibold text-white/90">
-                  ⚡ First-time clients only • Book within 30 days
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <Tabs defaultValue="residential" className="w-full max-w-6xl mx-auto px-0">
           <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
@@ -183,28 +90,12 @@ const Index = () => {
             <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4">
               {/* Header Section */}
               <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   Book Your Cleaning Service
                 </h2>
-                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto mb-6">
+                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto mb-8">
                   Complete your entire booking in one place - all information saves automatically
                 </p>
-                
-                {/* Booking Options */}
-                <div className="flex justify-center gap-4 mb-8">
-                  <Button 
-                    onClick={() => window.location.href = '/guest-booking'}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    New Booking Experience
-                  </Button>
-                  <Button 
-                    onClick={() => window.location.href = '/legacy-booking'}
-                    variant="outline"
-                  >
-                    Square Footage Pricing
-                  </Button>
-                </div>
               </div>
 
               {/* Unified Booking Wizard */}
