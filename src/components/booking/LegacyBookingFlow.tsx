@@ -274,7 +274,7 @@ export function LegacyBookingFlow() {
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: property details, 5: date/time
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: date/time, 5: property details
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [offerEligible, setOfferEligible] = useState(true);
   const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
@@ -366,13 +366,13 @@ export function LegacyBookingFlow() {
       setCurrentStep(3); // Move to frequency selection
     }
     if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
-      setCurrentStep(4); // Move to property details
+      setCurrentStep(4); // Move to date/time selection
     }
     if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
-        bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) {
-      setCurrentStep(5); // Move to date/time selection
+        bookingData.serviceDate && bookingData.serviceTime) {
+      setCurrentStep(5); // Move to property details
     }
-  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.bedrooms, bookingData.bathrooms, bookingData.dwellingType]);
+  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.serviceDate, bookingData.serviceTime]);
 
   // Calculate pricing with new square footage structure
   useEffect(() => {
@@ -808,15 +808,112 @@ export function LegacyBookingFlow() {
                     <Sparkles className="h-8 w-8 mx-auto mb-3 text-accent" />
                     <p className="text-lg font-medium text-foreground mb-2">Choose Service Type</p>
                     <p className="text-sm text-muted-foreground">
-                      Select your preferred cleaning frequency above to see your total
+                      Select your preferred cleaning frequency above to continue
                     </p>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Property Details - Show only after frequency selected */}
+            {/* Date & Time Selection - Show only after frequency selected */}
             {currentStep >= 4 && (
+              <Card className="shadow-clean bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <CalendarIcon className="h-6 w-6" />
+                    Choose Your Appointment Time
+                  </CardTitle>
+                  <p className="text-primary-foreground/80">
+                    Select your preferred date and time for your cleaning service
+                  </p>
+                </CardHeader>
+                
+                <CardContent className="p-6">
+                  <div className="bg-white rounded-lg p-6 shadow-inner">
+                    <div className="space-y-6">
+                      {/* Quick Date Selection */}
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-4">Select Date</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {availableDates.slice(0, 6).map((date, index) => {
+                            const isSelected = selectedDate?.toDateString() === date.toDateString();
+                            
+                            return (
+                              <button
+                                key={date.toISOString()}
+                                onClick={() => handleDateSelect(date)}
+                                className={cn(
+                                  "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
+                                  isSelected 
+                                    ? "border-primary bg-primary/5 shadow-clean"
+                                    : "border-border hover:border-primary/50"
+                                )}
+                              >
+                                <div className="flex flex-col">
+                                  <div className="font-medium text-gray-800">
+                                    {date.toLocaleDateString('en-US', { 
+                                      weekday: 'short', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Time Selection */}
+                      {selectedDate && bookingData.serviceDate && (
+                        <div className="animate-fade-in">
+                          <h4 className="font-semibold text-gray-800 mb-4">Select Time</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {timeSlots.map((slot) => (
+                              <button
+                                key={slot.value}
+                                onClick={() => updateBookingData({ serviceTime: slot.value })}
+                                className={cn(
+                                  "p-3 rounded-lg border text-left transition-all duration-200",
+                                  bookingData.serviceTime === slot.value
+                                    ? "border-primary bg-primary/5 shadow-clean"
+                                    : "border-border hover:border-primary/50"
+                                )}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="font-medium text-gray-800">{slot.label}</div>
+                                    <div className="text-xs text-gray-600">{slot.range}</div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if frequency selected but no date/time */}
+            {currentStep === 4 && !bookingData.serviceDate && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <CalendarIcon className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Schedule Your Service</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select your preferred date and time above
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Property Details - Show only after date/time selected */}
+            {currentStep >= 5 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -941,8 +1038,8 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Show prompt if frequency selected but no property details */}
-            {currentStep === 4 && bookingData.frequency && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
+            {/* Show prompt if date/time selected but no property details */}
+            {currentStep === 5 && bookingData.serviceDate && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
               <Card className="shadow-clean border-accent/50 bg-accent/5">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -956,105 +1053,8 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Date & Time Selection - Show only after property details completed */}
-            {currentStep >= 5 && (
-              <Card className="shadow-clean bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                    <CalendarIcon className="h-6 w-6" />
-                    Choose Your Appointment Time
-                  </CardTitle>
-                  <p className="text-primary-foreground/80">
-                    Select your preferred date and time for your cleaning service
-                  </p>
-                </CardHeader>
-                
-                <CardContent className="p-6">
-                  <div className="bg-white rounded-lg p-6 shadow-inner">
-                    <div className="space-y-6">
-                      {/* Quick Date Selection */}
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-4">Select Date</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {availableDates.slice(0, 6).map((date, index) => {
-                            const isSelected = selectedDate?.toDateString() === date.toDateString();
-                            
-                            return (
-                              <button
-                                key={date.toISOString()}
-                                onClick={() => handleDateSelect(date)}
-                                className={cn(
-                                  "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
-                                  isSelected 
-                                    ? "border-primary bg-primary/5 shadow-clean"
-                                    : "border-border hover:border-primary/50"
-                                )}
-                              >
-                                <div className="flex flex-col">
-                                  <div className="font-medium text-gray-800">
-                                    {date.toLocaleDateString('en-US', { 
-                                      weekday: 'short', 
-                                      month: 'short', 
-                                      day: 'numeric' 
-                                    })}
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Time Selection */}
-                      {selectedDate && bookingData.serviceDate && (
-                        <div className="animate-fade-in">
-                          <h4 className="font-semibold text-gray-800 mb-4">Select Time</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {timeSlots.map((slot) => (
-                              <button
-                                key={slot.value}
-                                onClick={() => updateBookingData({ serviceTime: slot.value })}
-                                className={cn(
-                                  "p-3 rounded-lg border text-left transition-all duration-200",
-                                  bookingData.serviceTime === slot.value
-                                    ? "border-primary bg-primary/5 shadow-clean"
-                                    : "border-border hover:border-primary/50"
-                                )}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <div className="font-medium text-gray-800">{slot.label}</div>
-                                    <div className="text-xs text-gray-600">{slot.range}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Show prompt if property details completed but no date/time */}
-            {currentStep === 5 && !bookingData.serviceDate && (
-              <Card className="shadow-clean border-accent/50 bg-accent/5">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <CalendarIcon className="h-8 w-8 mx-auto mb-3 text-accent" />
-                    <p className="text-lg font-medium text-foreground mb-2">Choose Your Appointment</p>
-                    <p className="text-sm text-muted-foreground">
-                      Select your preferred date and time above
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Add-Ons Selection - Show only after date/time selected */}
-            {currentStep >= 5 && bookingData.serviceDate && bookingData.serviceTime && (
+            {/* Add-Ons Selection - Show only after property details completed */}
+            {currentStep >= 5 && bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1169,11 +1169,11 @@ export function LegacyBookingFlow() {
                     
                     <Button 
                       onClick={handleNext}
-                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType}
+                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.serviceDate || !bookingData.serviceTime || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType}
                       className="w-full"
                       size="lg"
                     >
-                      Next: Date & Details
+                      Complete Booking
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </CardContent>
