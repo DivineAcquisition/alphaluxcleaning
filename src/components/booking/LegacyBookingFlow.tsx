@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
 import { hasUsedPromoOffer, CustomerData, markPromoOfferUsed } from '@/lib/offer-tracking';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
+import { toast } from 'sonner';
 
 interface BookingData {
   serviceZipCode: string;
@@ -506,10 +507,20 @@ export function LegacyBookingFlow() {
       return !bookingData[field as keyof BookingData];
     });
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (bookingData.customerEmail && !emailRegex.test(bookingData.customerEmail)) {
+      toast.error('Please enter a valid email address');
+      const element = document.querySelector(`[data-step="7"]`);
+      element?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    
     if (missingFields.length > 0 || !bookingData.address?.street || !zipCodeValid) {
       // Scroll to the first missing section
       const element = document.querySelector(`[data-step="${currentStep}"]`);
       element?.scrollIntoView({ behavior: 'smooth' });
+      toast.error('Please complete all required fields');
       return;
     }
     
@@ -1178,10 +1189,14 @@ export function LegacyBookingFlow() {
                       <Input
                         id="customerEmail"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Enter your email (e.g., john@example.com)"
                         value={bookingData.customerEmail || ''}
                         onChange={(e) => updateBookingData({ customerEmail: e.target.value })}
+                        className={bookingData.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.customerEmail) ? "border-destructive" : ""}
                       />
+                      {bookingData.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.customerEmail) && (
+                        <p className="text-sm text-destructive">Please enter a valid email address</p>
+                      )}
                     </div>
 
                     {/* Contact Number */}
