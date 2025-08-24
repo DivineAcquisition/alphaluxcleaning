@@ -159,14 +159,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     }
     
     setShowPaymentForm(true);
-    
-    // Scroll to top of checkout to prevent auto-scrolling to bottom
-    setTimeout(() => {
-      checkoutRef.current?.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }, 100);
+    // No scrolling - keep user at current position in the payment selection area
   };
 
 

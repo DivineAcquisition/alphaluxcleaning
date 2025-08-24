@@ -74,42 +74,45 @@ serve(async (req) => {
       }
     }
 
-    // Fetch booking data if booking_id provided
-    if (booking_id && !assignmentData) {
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('id', booking_id)
-        .single();
+    // Only fetch database data if comprehensive_data is not provided
+    if (!comprehensive_data) {
+      // Fetch booking data if booking_id provided
+      if (booking_id && !assignmentData) {
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('id', booking_id)
+          .single();
 
-      if (bookingError) {
-        console.error('Booking fetch error:', bookingError);
-      } else {
-        // Get assignments for this booking
-        const { data: assignments } = await supabase
-          .from('subcontractor_job_assignments')
-          .select(`
-            *,
-            subcontractors (*)
-          `)
-          .eq('booking_id', booking_id);
+        if (bookingError) {
+          console.log('Booking fetch error (expected if comprehensive_data provided):', bookingError);
+        } else {
+          // Get assignments for this booking
+          const { data: assignments } = await supabase
+            .from('subcontractor_job_assignments')
+            .select(`
+              *,
+              subcontractors (*)
+            `)
+            .eq('booking_id', booking_id);
 
-        assignmentData = { bookings: booking, assignments };
+          assignmentData = { bookings: booking, assignments };
+        }
       }
-    }
 
-    // Fetch order data if order_id provided
-    if (order_id) {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', order_id)
-        .single();
+      // Fetch order data if order_id provided
+      if (order_id) {
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', order_id)
+          .single();
 
-      if (orderError) {
-        console.error('Order fetch error:', orderError);
-      } else {
-        orderData = order;
+        if (orderError) {
+          console.log('Order fetch error (expected if comprehensive_data provided):', orderError);
+        } else {
+          orderData = order;
+        }
       }
     }
 
