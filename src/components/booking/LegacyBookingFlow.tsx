@@ -274,7 +274,7 @@ export function LegacyBookingFlow() {
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: date/time, 5: property details
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: add-ons, 5: date/time, 6: property details
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [offerEligible, setOfferEligible] = useState(true);
   const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
@@ -366,11 +366,14 @@ export function LegacyBookingFlow() {
       setCurrentStep(3); // Move to frequency selection
     }
     if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
-      setCurrentStep(4); // Move to date/time selection
+      setCurrentStep(4); // Move to add-ons selection
+    }
+    if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
+      setCurrentStep(5); // Move to date/time selection
     }
     if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
         bookingData.serviceDate && bookingData.serviceTime) {
-      setCurrentStep(5); // Move to property details
+      setCurrentStep(6); // Move to property details
     }
   }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.serviceDate, bookingData.serviceTime]);
 
@@ -815,90 +818,119 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Date & Time Selection - Show only after frequency selected */}
+            {/* Add-Ons Selection - Show only after frequency selected */}
             {currentStep >= 4 && (
-              <Card className="shadow-clean bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                    <CalendarIcon className="h-6 w-6" />
-                    Choose Your Appointment Time
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Optional Add-Ons
                   </CardTitle>
-                  <p className="text-primary-foreground/80">
-                    Select your preferred date and time for your cleaning service
-                  </p>
                 </CardHeader>
-                
-                <CardContent className="p-6">
-                  <div className="bg-white rounded-lg p-6 shadow-inner">
-                    <div className="space-y-6">
-                      {/* Quick Date Selection */}
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-4">Select Date</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {availableDates.slice(0, 6).map((date, index) => {
-                            const isSelected = selectedDate?.toDateString() === date.toDateString();
-                            
-                            return (
-                              <button
-                                key={date.toISOString()}
-                                onClick={() => handleDateSelect(date)}
-                                className={cn(
-                                  "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
-                                  isSelected 
-                                    ? "border-primary bg-primary/5 shadow-clean"
-                                    : "border-border hover:border-primary/50"
-                                )}
-                              >
-                                <div className="flex flex-col">
-                                  <div className="font-medium text-gray-800">
-                                    {date.toLocaleDateString('en-US', { 
-                                      weekday: 'short', 
-                                      month: 'short', 
-                                      day: 'numeric' 
-                                    })}
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {addOns.map((addOn) => (
+                      <div
+                        key={addOn.value}
+                        className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={selectedAddOns.includes(addOn.value)}
+                            onCheckedChange={() => toggleAddOn(addOn.value)}
+                          />
+                          <span className="font-medium">{addOn.label}</span>
                         </div>
+                        <span className="text-primary font-semibold">+${addOn.price}</span>
                       </div>
-
-                      {/* Time Selection */}
-                      {selectedDate && bookingData.serviceDate && (
-                        <div className="animate-fade-in">
-                          <h4 className="font-semibold text-gray-800 mb-4">Select Time</h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {timeSlots.map((slot) => (
-                              <button
-                                key={slot.value}
-                                onClick={() => updateBookingData({ serviceTime: slot.value })}
-                                className={cn(
-                                  "p-3 rounded-lg border text-left transition-all duration-200",
-                                  bookingData.serviceTime === slot.value
-                                    ? "border-primary bg-primary/5 shadow-clean"
-                                    : "border-border hover:border-primary/50"
-                                )}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <div className="font-medium text-gray-800">{slot.label}</div>
-                                    <div className="text-xs text-gray-600">{slot.range}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Show prompt if frequency selected but no date/time */}
-            {currentStep === 4 && !bookingData.serviceDate && (
+            {/* Date & Time Selection - Show only after add-ons selection */}
+            {currentStep >= 5 && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    Schedule Your Service
+                  </CardTitle>
+                  <p className="text-muted-foreground">
+                    Select your preferred date and time for your cleaning service
+                  </p>
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Quick Date Selection */}
+                    <div>
+                      <h4 className="font-semibold mb-4">Select Date</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {availableDates.slice(0, 6).map((date, index) => {
+                          const isSelected = selectedDate?.toDateString() === date.toDateString();
+                          
+                          return (
+                            <button
+                              key={date.toISOString()}
+                              onClick={() => handleDateSelect(date)}
+                              className={cn(
+                                "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
+                                isSelected 
+                                  ? "border-primary bg-primary/5 shadow-clean"
+                                  : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className="flex flex-col">
+                                <div className="font-medium">
+                                  {date.toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Time Selection */}
+                    {selectedDate && bookingData.serviceDate && (
+                      <div className="animate-fade-in">
+                        <h4 className="font-semibold mb-4">Select Time</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {timeSlots.map((slot) => (
+                            <button
+                              key={slot.value}
+                              onClick={() => updateBookingData({ serviceTime: slot.value })}
+                              className={cn(
+                                "p-3 rounded-lg border text-left transition-all duration-200",
+                                bookingData.serviceTime === slot.value
+                                  ? "border-primary bg-primary/5 shadow-clean"
+                                  : "border-border hover:border-primary/50"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium">{slot.label}</div>
+                                  <div className="text-xs text-muted-foreground">{slot.range}</div>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if add-ons step but no date/time selected */}
+            {currentStep === 5 && !bookingData.serviceDate && (
               <Card className="shadow-clean border-accent/50 bg-accent/5">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -913,7 +945,7 @@ export function LegacyBookingFlow() {
             )}
 
             {/* Property Details - Show only after date/time selected */}
-            {currentStep >= 5 && (
+            {currentStep >= 6 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1039,7 +1071,7 @@ export function LegacyBookingFlow() {
             )}
 
             {/* Show prompt if date/time selected but no property details */}
-            {currentStep === 5 && bookingData.serviceDate && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
+            {currentStep === 6 && bookingData.serviceDate && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
               <Card className="shadow-clean border-accent/50 bg-accent/5">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -1053,36 +1085,6 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Add-Ons Selection - Show only after property details completed */}
-            {currentStep >= 5 && bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType && (
-              <Card className="shadow-clean">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    Optional Add-Ons
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {addOns.map((addOn) => (
-                      <div
-                        key={addOn.value}
-                        className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={selectedAddOns.includes(addOn.value)}
-                            onCheckedChange={() => toggleAddOn(addOn.value)}
-                          />
-                          <span className="font-medium">{addOn.label}</span>
-                        </div>
-                        <span className="text-primary font-semibold">+${addOn.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Right Column - Price Summary - Show only when there's pricing to display */}
@@ -1214,11 +1216,11 @@ export function LegacyBookingFlow() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                          (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "bg-success text-success-foreground" : currentStep >= 4 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          currentStep >= 4 ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
                           4
                         </div>
-                        <span className={cn("text-sm", (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "text-success" : currentStep >= 4 ? "text-foreground" : "text-muted-foreground")}>
-                          {(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "✓ Property Details Added" : "Add Property Details"}
+                        <span className={cn("text-sm", currentStep >= 4 ? "text-success" : "text-muted-foreground")}>
+                          {currentStep >= 4 ? "✓ Add-Ons Available" : "Select Add-Ons"}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1228,6 +1230,15 @@ export function LegacyBookingFlow() {
                         </div>
                         <span className={cn("text-sm", (bookingData.serviceDate && bookingData.serviceTime) ? "text-success" : currentStep >= 5 ? "text-foreground" : "text-muted-foreground")}>
                           {(bookingData.serviceDate && bookingData.serviceTime) ? "✓ Date & Time Selected" : "Choose Date & Time"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "bg-success text-success-foreground" : currentStep >= 6 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          6
+                        </div>
+                        <span className={cn("text-sm", (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "text-success" : currentStep >= 6 ? "text-foreground" : "text-muted-foreground")}>
+                          {(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "✓ Property Details Added" : "Add Property Details"}
                         </span>
                       </div>
                     </div>
