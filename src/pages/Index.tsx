@@ -201,17 +201,7 @@ const Index = () => {
               
 
               {/* Membership CTA */}
-              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-blue-50">
-                <CardContent className="p-6 text-center space-y-4">
-                  <h3 className="text-2xl font-bold text-gray-900">Want More Savings? Join BACP Club™</h3>
-                  <p className="text-gray-600 max-w-2xl mx-auto">
-                    Get $20 credit every month, priority scheduling, and exclusive member perks for just $30/month.
-                  </p>
-                  <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                    <a href="/membership">Learn About Membership</a>
-                  </Button>
-                </CardContent>
-              </Card>
+              
 
               {/* Referral Section */}
               <Card className="bg-gradient-to-br from-primary/5 to-accent/5">
