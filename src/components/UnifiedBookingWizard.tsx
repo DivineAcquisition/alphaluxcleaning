@@ -145,7 +145,7 @@ interface BookingData {
   nextDayFee?: number;
   
   // Property Details
-  squareFootage: number;
+  squareFootage?: string; // Changed to string to match square footage ranges
   bedrooms: string;
   bathrooms: string;
   dwellingType: string;
@@ -182,7 +182,7 @@ const initialBookingData: BookingData = {
   },
   contactNumber: '',
   specialInstructions: '',
-  squareFootage: 1000,
+  squareFootage: '',
   bedrooms: '',
   bathrooms: '',
   dwellingType: '',

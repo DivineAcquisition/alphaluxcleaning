@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle } from 'lucide-react';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BookingData {
@@ -17,6 +17,7 @@ interface BookingData {
   frequencyDiscount: number;
   totalPrice: number;
   nextDayFee?: number;
+  squareFootage?: string; // Add square footage for backward compatibility
 }
 
 interface Props {
@@ -25,67 +26,223 @@ interface Props {
   onNext: () => void;
 }
 
+// Square footage-based pricing tiers with 20% across-the-board discount applied
 const homeSizes = [
-  { 
-    value: 'general', 
-    label: 'General Clean', 
-    icon: Home, 
-    basePrice: 220,
-    description: '2 hours - Perfect for regular maintenance',
-    hours: 2,
-    cleaners: 2
+  {
+    value: 'under-1000',
+    label: 'Under 1,000 sq ft',
+    icon: Home,
+    description: 'Cozy homes and apartments',
+    originalPricing: {
+      oneTime: 225.31,
+      biweekly: 118.59,
+      monthly: 171.26,
+      deepClean: 305.05
+    },
+    // Apply 20% discount across all prices
+    pricing: {
+      oneTime: Math.round(225.31 * 0.8 * 100) / 100,
+      biweekly: Math.round(118.59 * 0.8 * 100) / 100,
+      monthly: Math.round(171.26 * 0.8 * 100) / 100,
+      deepClean: Math.round(305.05 * 0.8 * 100) / 100
+    }
   },
-  { 
-    value: 'complete', 
-    label: 'Deep Clean', 
-    icon: Star, 
-    basePrice: 420,
-    description: '4 hours - Our most popular comprehensive service',
-    hours: 4,
-    cleaners: 2,
+  {
+    value: '1001-1400',
+    label: '1,001-1,400 sq ft',
+    icon: Home,
+    description: 'Small to medium homes',
+    originalPricing: {
+      oneTime: 235.09,
+      biweekly: 125.58,
+      monthly: 186.59,
+      deepClean: 327.77
+    },
+    pricing: {
+      oneTime: Math.round(235.09 * 0.8 * 100) / 100,
+      biweekly: Math.round(125.58 * 0.8 * 100) / 100,
+      monthly: Math.round(186.59 * 0.8 * 100) / 100,
+      deepClean: Math.round(327.77 * 0.8 * 100) / 100
+    },
     popular: true
   },
-  { 
-    value: 'premium', 
-    label: 'Premium Deep Clean', 
-    icon: Sparkles, 
-    basePrice: 500,
-    description: '6 hours - Complete top-to-bottom transformation',
-    hours: 6,
-    cleaners: 3
+  {
+    value: '1401-1800',
+    label: '1,401-1,800 sq ft',
+    icon: Home,
+    description: 'Medium sized homes',
+    originalPricing: {
+      oneTime: 255.27,
+      biweekly: 140.06,
+      monthly: 225.73,
+      deepClean: 355.94
+    },
+    pricing: {
+      oneTime: Math.round(255.27 * 0.8 * 100) / 100,
+      biweekly: Math.round(140.06 * 0.8 * 100) / 100,
+      monthly: Math.round(225.73 * 0.8 * 100) / 100,
+      deepClean: Math.round(355.94 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '1801-2400',
+    label: '1,801-2,400 sq ft',
+    icon: Home,
+    description: 'Large family homes',
+    originalPricing: {
+      oneTime: 265.41,
+      biweekly: 150.15,
+      monthly: 234.87,
+      deepClean: 385.13
+    },
+    pricing: {
+      oneTime: Math.round(265.41 * 0.8 * 100) / 100,
+      biweekly: Math.round(150.15 * 0.8 * 100) / 100,
+      monthly: Math.round(234.87 * 0.8 * 100) / 100,
+      deepClean: Math.round(385.13 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '2401-2800',
+    label: '2,401-2,800 sq ft',
+    icon: Home,
+    description: 'Very large homes',
+    originalPricing: {
+      oneTime: 285.28,
+      biweekly: 175.14,
+      monthly: 245.76,
+      deepClean: 405.01
+    },
+    pricing: {
+      oneTime: Math.round(285.28 * 0.8 * 100) / 100,
+      biweekly: Math.round(175.14 * 0.8 * 100) / 100,
+      monthly: Math.round(245.76 * 0.8 * 100) / 100,
+      deepClean: Math.round(405.01 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '2801-3300',
+    label: '2,801-3,300 sq ft',
+    icon: Home,
+    description: 'Extra large homes',
+    originalPricing: {
+      oneTime: 297.46,
+      biweekly: 188.62,
+      monthly: 287.92,
+      deepClean: 459.16
+    },
+    pricing: {
+      oneTime: Math.round(297.46 * 0.8 * 100) / 100,
+      biweekly: Math.round(188.62 * 0.8 * 100) / 100,
+      monthly: Math.round(287.92 * 0.8 * 100) / 100,
+      deepClean: Math.round(459.16 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '3301-3900',
+    label: '3,301-3,900 sq ft',
+    icon: Home,
+    description: 'Luxury homes',
+    originalPricing: {
+      oneTime: 346.34,
+      biweekly: 197.61,
+      monthly: 307.81,
+      deepClean: 478.39
+    },
+    pricing: {
+      oneTime: Math.round(346.34 * 0.8 * 100) / 100,
+      biweekly: Math.round(197.61 * 0.8 * 100) / 100,
+      monthly: Math.round(307.81 * 0.8 * 100) / 100,
+      deepClean: Math.round(478.39 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '3901-4500',
+    label: '3,901-4,500 sq ft',
+    icon: Building,
+    description: 'Estate homes',
+    originalPricing: {
+      oneTime: 378.67,
+      biweekly: 231.58,
+      monthly: 368.69,
+      deepClean: 512.60
+    },
+    pricing: {
+      oneTime: Math.round(378.67 * 0.8 * 100) / 100,
+      biweekly: Math.round(231.58 * 0.8 * 100) / 100,
+      monthly: Math.round(368.69 * 0.8 * 100) / 100,
+      deepClean: Math.round(512.60 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '4501-5100',
+    label: '4,501-5,100 sq ft',
+    icon: Building,
+    description: 'Mansion homes',
+    originalPricing: {
+      oneTime: 461.37,
+      biweekly: 242.05,
+      monthly: 428.17,
+      deepClean: 564.24
+    },
+    pricing: {
+      oneTime: Math.round(461.37 * 0.8 * 100) / 100,
+      biweekly: Math.round(242.05 * 0.8 * 100) / 100,
+      monthly: Math.round(428.17 * 0.8 * 100) / 100,
+      deepClean: Math.round(564.24 * 0.8 * 100) / 100
+    }
+  },
+  {
+    value: '5100-plus',
+    label: '5,100+ sq ft',
+    icon: Building,
+    description: 'Custom estate - call for quote',
+    originalPricing: {
+      oneTime: 0,
+      biweekly: 0,
+      monthly: 0,
+      deepClean: 0
+    },
+    pricing: {
+      oneTime: 0,
+      biweekly: 0,
+      monthly: 0,
+      deepClean: 0
+    },
+    requiresQuote: true
   }
 ];
 
 const recurringOptions = [
   {
     value: 'one-time',
-    label: 'One-Time',
+    label: 'One-Time Service',
     icon: Sparkles,
-    discount: 0.15, // 15% off for one-time bookings
-    description: 'Single service - 15% discount included'
-  },
-  {
-    value: 'weekly',
-    label: 'Weekly',
-    icon: RefreshCw,
-    discount: 0.10,
-    description: 'Every week - 10% recurring discount',
-    recommended: true
+    priceKey: 'oneTime',
+    description: 'Single cleaning service'
   },
   {
     value: 'bi-weekly',
-    label: 'Bi-Weekly',
+    label: 'Every Other Week',
     icon: RefreshCw,
-    discount: 0.07,
-    description: 'Every 2 weeks - 7% recurring discount',
+    priceKey: 'biweekly',
+    description: 'Bi-weekly recurring service',
     popular: true
   },
   {
     value: 'monthly',
-    label: 'Monthly',
+    label: 'Monthly Service',
     icon: RefreshCw,
-    discount: 0.05,
-    description: 'Once a month - 5% recurring discount'
+    priceKey: 'monthly',
+    description: 'Monthly recurring service'
+  },
+  {
+    value: 'deep-clean',
+    label: 'Ultimate Deep Clean',
+    icon: Star,
+    priceKey: 'deepClean',
+    description: 'Premium deep cleaning service',
+    recommended: true
   }
 ];
 
@@ -131,25 +288,20 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
     }
   };
 
-  // Calculate pricing
+  // Calculate pricing with new square footage structure
   useEffect(() => {
     const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
     const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
 
     if (selectedTier && selectedFrequency) {
-      let basePrice = selectedTier.basePrice;
-      
-      // Apply discount based on frequency
-      if (selectedFrequency.discount > 0) {
-        basePrice = Math.round(basePrice * (1 - selectedFrequency.discount));
-      }
+      // Get base price from the selected frequency type (already includes 20% discount)
+      const basePrice = selectedTier.pricing[selectedFrequency.priceKey] || 0;
       
       const addOnTotal = selectedAddOns.reduce((total, addOn) => {
         const addOnItem = addOns.find(a => a.value === addOn);
         return total + (addOnItem?.price || 0);
       }, 0);
       
-      const frequencyDiscount = Math.round(selectedTier.basePrice * selectedFrequency.discount);
       const nextDayFee = bookingData.nextDayFee || 0;
       const totalPrice = basePrice + addOnTotal + nextDayFee;
 
@@ -159,12 +311,17 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
         return acc;
       }, {} as { [key: string]: number });
 
+      // Calculate savings from 20% discount
+      const originalPrice = selectedTier.originalPricing[selectedFrequency.priceKey] || 0;
+      const frequencyDiscount = originalPrice > 0 ? Math.round((originalPrice - basePrice) * 100) / 100 : 0;
+
       updateBookingData({
         basePrice,
         addOnPrices,
         frequencyDiscount,
         totalPrice,
-        addOns: selectedAddOns
+        addOns: selectedAddOns,
+        squareFootage: selectedTier.label // Store square footage for order records
       });
     }
   }, [bookingData.homeSize, bookingData.frequency, selectedAddOns, bookingData.nextDayFee]);
@@ -226,12 +383,12 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
           </CardContent>
         </Card>
 
-        {/* Service Tier Selection */}
+        {/* Home Size Selection */}
         <Card className="shadow-clean">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Home className="h-5 w-5" />
-              Service Tier
+              Home Size (Square Footage)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -241,17 +398,18 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                 return (
                   <div
                     key={tier.value}
-                    onClick={() => updateBookingData({ homeSize: tier.value })}
+                    onClick={() => !tier.requiresQuote && updateBookingData({ homeSize: tier.value })}
                     className={cn(
                       "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
                       bookingData.homeSize === tier.value
                         ? "border-primary bg-primary/5 shadow-clean"
-                        : "border-border hover:border-primary/50"
+                        : "border-border hover:border-primary/50",
+                      tier.requiresQuote && "opacity-75"
                     )}
                   >
                     {tier.popular && (
                       <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
-                        Popular
+                        Most Popular
                       </Badge>
                     )}
                     <div className="flex items-center justify-between">
@@ -263,8 +421,27 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-primary">${tier.basePrice}</p>
-                        <p className="text-xs text-muted-foreground">{tier.cleaners} cleaners</p>
+                        {tier.requiresQuote ? (
+                          <div>
+                            <p className="text-lg font-bold text-primary">Call for Quote</p>
+                            <p className="text-xs text-muted-foreground">(281) 809-9901</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-muted-foreground text-sm">
+                                ${tier.originalPricing.oneTime}
+                              </span>
+                              <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                20% OFF
+                              </Badge>
+                            </div>
+                            <p className="text-lg font-bold text-primary">
+                              Starting at ${tier.pricing.monthly}
+                            </p>
+                            <p className="text-xs text-muted-foreground">monthly service</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -275,18 +452,22 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
         </Card>
 
 
-        {/* Frequency Selection */}
+        {/* Service Type Selection */}
         <Card className="shadow-clean">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5" />
-              Frequency
+              Service Type & Frequency
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {recurringOptions.map((option) => {
                 const Icon = option.icon;
+                const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
+                const price = selectedTier?.pricing[option.priceKey] || 0;
+                const originalPrice = selectedTier?.originalPricing[option.priceKey] || 0;
+                
                 return (
                   <div
                     key={option.value}
@@ -295,29 +476,50 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                       "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
                       bookingData.frequency === option.value
                         ? "border-primary bg-primary/5 shadow-clean"
-                        : "border-border hover:border-primary/50"
+                        : "border-border hover:border-primary/50",
+                      !selectedTier && "opacity-50 pointer-events-none"
                     )}
                   >
                     {option.recommended && (
                       <Badge className="absolute -top-2 -right-2 bg-success text-success-foreground">
-                        Best Value
+                        Recommended
                       </Badge>
                     )}
                     {option.popular && (
                       <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
-                        Popular
+                        Most Popular
                       </Badge>
                     )}
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
                       <Icon className="h-5 w-5 text-primary" />
                       <span className="font-semibold">{option.label}</span>
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm text-success font-medium">
-                        {option.discount > 0 ? `${Math.round(option.discount * 100)}% off` : 'Standard rate'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{option.description}</p>
-                    </div>
+                    
+                    {selectedTier && !selectedTier.requiresQuote ? (
+                      <div className="space-y-2">
+                        {originalPrice > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground line-through">
+                              ${originalPrice}
+                            </span>
+                            <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                              20% OFF
+                            </Badge>
+                          </div>
+                        )}
+                        <div className="text-center">
+                          <p className="text-xl font-bold text-primary">
+                            {price > 0 ? `$${price}` : 'Call for Quote'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{option.description}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground">{option.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Select home size first</p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -361,14 +563,24 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
           <CardContent className="space-y-4">
             {selectedTier && selectedFrequency && (
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Base Service</span>
-                  <span className="font-semibold">${selectedTier.basePrice}</span>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="font-medium">{selectedTier.label}</span>
+                    <div className="text-sm text-muted-foreground">{selectedFrequency.label}</div>
+                  </div>
+                  <div className="text-right">
+                    {selectedTier.originalPricing[selectedFrequency.priceKey] > 0 && (
+                      <div className="text-xs text-muted-foreground line-through">
+                        ${selectedTier.originalPricing[selectedFrequency.priceKey]}
+                      </div>
+                    )}
+                    <span className="font-semibold text-primary">${bookingData.basePrice}</span>
+                  </div>
                 </div>
                 
-                {selectedFrequency.discount > 0 && (
+                {bookingData.frequencyDiscount > 0 && (
                   <div className="flex justify-between text-success">
-                    <span>{selectedFrequency.label} Discount</span>
+                    <span>20% Discount Applied</span>
                     <span>-${bookingData.frequencyDiscount}</span>
                   </div>
                 )}
@@ -400,10 +612,16 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                   </div>
                 )}
                 
-                {selectedFrequency && selectedFrequency.discount > 0 && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    You're saving ${bookingData.frequencyDiscount} with this {selectedFrequency.label.toLowerCase()} booking!
-                  </p>
+                {bookingData.frequencyDiscount > 0 && (
+                  <div className="bg-success/10 border border-success/20 rounded-lg p-3 mt-3">
+                    <div className="flex items-center gap-2 text-success">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">You're saving ${bookingData.frequencyDiscount}!</span>
+                    </div>
+                    <p className="text-sm text-success/80 mt-1">
+                      20% discount applied to all services
+                    </p>
+                  </div>
                 )}
               </div>
             )}

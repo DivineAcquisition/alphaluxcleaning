@@ -31,7 +31,7 @@ interface BookingData {
   nextDayFee?: number;
   
   // Property Details
-  squareFootage: number;
+  squareFootage?: string;
   bedrooms: string;
   bathrooms: string;
   dwellingType: string;
@@ -204,13 +204,13 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Square Footage</Label>
-              <Select value={bookingData.squareFootage.toString()} onValueChange={(value) => updateBookingData({ squareFootage: parseInt(value) })}>
+              <Select value={bookingData.squareFootage || ''} onValueChange={(value) => updateBookingData({ squareFootage: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {squareFootageOptions.map((option, index) => (
-                    <SelectItem key={option} value={(1000 + index * 400).toString()}>
+                  {squareFootageOptions.map((option) => (
+                    <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>
                   ))}

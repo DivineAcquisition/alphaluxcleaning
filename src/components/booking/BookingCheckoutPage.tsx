@@ -16,6 +16,7 @@ import { formatPrice } from '@/lib/pricing-utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
+  serviceZipCode?: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -41,7 +42,7 @@ interface BookingData {
   customerName?: string;
   
   // Property Details
-  squareFootage?: number;
+  squareFootage?: string; // Changed to string to match the label format
   bedrooms?: string;
   bathrooms?: string;
   dwellingType?: string;
