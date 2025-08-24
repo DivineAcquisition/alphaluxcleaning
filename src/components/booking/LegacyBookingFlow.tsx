@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock, User, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
-import { GuestBookingFlow } from './GuestBookingFlow';
+import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
-import { hasUsedPromoOffer, CustomerData } from '@/lib/offer-tracking';
+import { hasUsedPromoOffer, CustomerData, markPromoOfferUsed } from '@/lib/offer-tracking';
+import { BookingCheckoutPage } from './BookingCheckoutPage';
 
 interface BookingData {
   serviceZipCode: string;
@@ -35,6 +36,22 @@ interface BookingData {
   // Date & Time Selection
   serviceDate: string;
   serviceTime: string;
+  
+  // Contact & Address Details
+  customerName: string;
+  customerEmail: string;
+  contactNumber: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  specialInstructions: string;
+  
+  // Payment
+  paymentType: 'pay_after_service' | '25_percent_with_discount';
+  promoDiscount: number;
 }
 
 // Square footage-based pricing tiers with 20% across-the-board discount applied
@@ -269,12 +286,15 @@ const addOns = [
 ];
 
 export function LegacyBookingFlow() {
-  const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
+  const navigate = useNavigate();
+  const [bookingData, setBookingData] = useState<Partial<BookingData>>({
+    address: { street: '', city: '', state: 'CA', zipCode: '' }
+  });
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
-  const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: add-ons, 5: date/time, 6: property details
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: add-ons, 5: date/time, 6: property details, 7: contact/address
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [offerEligible, setOfferEligible] = useState(true);
   const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
@@ -375,7 +395,12 @@ export function LegacyBookingFlow() {
         bookingData.serviceDate && bookingData.serviceTime) {
       setCurrentStep(6); // Move to property details
     }
-  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.serviceDate, bookingData.serviceTime]);
+    if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
+        bookingData.serviceDate && bookingData.serviceTime &&
+        bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) {
+      setCurrentStep(7); // Move to contact/address details
+    }
+  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.serviceDate, bookingData.serviceTime, bookingData.bedrooms, bookingData.bathrooms, bookingData.dwellingType]);
 
   // Calculate pricing with new square footage structure
   useEffect(() => {
@@ -467,43 +492,77 @@ export function LegacyBookingFlow() {
     }
   };
 
-  const handleNext = () => {
+  const handleProceedToCheckout = () => {
+    // Validate all required fields
+    const requiredFields = [
+      'serviceZipCode', 'homeSize', 'frequency', 'serviceDate', 'serviceTime',
+      'bedrooms', 'bathrooms', 'dwellingType', 'customerName', 'customerEmail', 'contactNumber'
+    ];
+    
+    const missingFields = requiredFields.filter(field => {
+      if (field === 'customerName' || field === 'customerEmail' || field === 'contactNumber') {
+        return !bookingData[field];
+      }
+      return !bookingData[field as keyof BookingData];
+    });
+    
+    if (missingFields.length > 0 || !bookingData.address?.street || !zipCodeValid) {
+      // Scroll to the first missing section
+      const element = document.querySelector(`[data-step="${currentStep}"]`);
+      element?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    
     // Check if customer has already used the promotional offer
-    const customerData: CustomerData = {
-      zipCode: bookingData.serviceZipCode,
-      // We'll check again with full customer details in the booking flow
-    };
-
-    // For now, we'll do a basic check. Full validation will happen in GuestBookingFlow
-    // when we have complete customer information (name, email, phone, address)
+    if (offerEligible) {
+      const customerData: CustomerData = {
+        name: bookingData.customerName,
+        email: bookingData.customerEmail,
+        phone: bookingData.contactNumber,
+        zipCode: bookingData.serviceZipCode,
+        address: bookingData.address?.street
+      };
+      
+      if (hasUsedPromoOffer(customerData)) {
+        setOfferEligible(false);
+        setShowOfferUsedAlert(true);
+        return;
+      }
+    }
     
-    // Store booking data in localStorage for guest booking flow
-    localStorage.setItem('quoteData', JSON.stringify({
-      zipCode: bookingData.serviceZipCode,
-      homeSize: bookingData.homeSize,
-      squareFootage: bookingData.squareFootage,
-      serviceType: bookingData.frequency,
-      quoteAmount: bookingData.totalPrice,
-      basePrice: bookingData.basePrice,
-      addOns: selectedAddOns,
-      addOnPrices: bookingData.addOnPrices,
-      frequencyDiscount: bookingData.frequencyDiscount,
-      offerEligible: offerEligible,
-      // Property details
-      bedrooms: bookingData.bedrooms,
-      bathrooms: bookingData.bathrooms,
-      dwellingType: bookingData.dwellingType,
-      flooringType: bookingData.flooringType,
-      // Date & time
-      serviceDate: bookingData.serviceDate,
-      serviceTime: bookingData.serviceTime
-    }));
-    
-    setShowBookingFlow(true);
+    setShowCheckout(true);
   };
 
-  if (showBookingFlow) {
-    return <GuestBookingFlow />;
+  const handlePaymentSuccess = (sessionId: string) => {
+    // Mark promo offer as used if eligible
+    if (offerEligible && bookingData.customerName && bookingData.customerEmail) {
+      const customerData: CustomerData = {
+        name: bookingData.customerName,
+        email: bookingData.customerEmail,
+        phone: bookingData.contactNumber,
+        zipCode: bookingData.serviceZipCode,
+        address: bookingData.address?.street
+      };
+      markPromoOfferUsed(customerData);
+    }
+    
+    // Navigate to order confirmation
+    navigate(`/order-confirmation?session_id=${sessionId}`);
+  };
+
+  const handleBackFromCheckout = () => {
+    setShowCheckout(false);
+  };
+
+  if (showCheckout) {
+    return (
+      <BookingCheckoutPage 
+        bookingData={bookingData as BookingData}
+        updateBookingData={updateBookingData}
+        onPaymentSuccess={handlePaymentSuccess}
+        onBack={handleBackFromCheckout}
+      />
+    );
   }
 
   const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
@@ -1085,6 +1144,153 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
+            {/* Contact & Address Details - Step 7 */}
+            {currentStep >= 7 && (
+              <Card className="shadow-clean" data-step="7">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Contact & Service Address
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Customer Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="customerName" className="text-sm font-medium flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Full Name *
+                      </Label>
+                      <Input
+                        id="customerName"
+                        placeholder="Enter your full name"
+                        value={bookingData.customerName || ''}
+                        onChange={(e) => updateBookingData({ customerName: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Customer Email */}
+                    <div className="space-y-2">
+                      <Label htmlFor="customerEmail" className="text-sm font-medium flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email Address *
+                      </Label>
+                      <Input
+                        id="customerEmail"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={bookingData.customerEmail || ''}
+                        onChange={(e) => updateBookingData({ customerEmail: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Contact Number */}
+                    <div className="space-y-2">
+                      <Label htmlFor="contactNumber" className="text-sm font-medium flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Phone Number *
+                      </Label>
+                      <Input
+                        id="contactNumber"
+                        type="tel"
+                        placeholder="(555) 123-4567"
+                        value={bookingData.contactNumber || ''}
+                        onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Service Address */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="street" className="text-sm font-medium flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        Service Address *
+                      </Label>
+                      <Input
+                        id="street"
+                        placeholder="Street address where service will be performed"
+                        value={bookingData.address?.street || ''}
+                        onChange={(e) => updateBookingData({ 
+                          address: { 
+                            ...bookingData.address, 
+                            street: e.target.value,
+                            zipCode: bookingData.serviceZipCode || bookingData.address?.zipCode || ''
+                          } 
+                        })}
+                      />
+                    </div>
+
+                    {/* City, State (auto-filled based on ZIP) */}
+                    <div className="space-y-2">
+                      <Label htmlFor="city" className="text-sm font-medium">City</Label>
+                      <Input
+                        id="city"
+                        placeholder="City"
+                        value={bookingData.address?.city || ''}
+                        onChange={(e) => updateBookingData({ 
+                          address: { ...bookingData.address, city: e.target.value } 
+                        })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state" className="text-sm font-medium">State</Label>
+                      <Select 
+                        value={bookingData.address?.state || 'CA'} 
+                        onValueChange={(value) => updateBookingData({ 
+                          address: { ...bookingData.address, state: value } 
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CA">California</SelectItem>
+                          <SelectItem value="TX">Texas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Special Instructions */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="specialInstructions" className="text-sm font-medium">
+                        Special Instructions (Optional)
+                      </Label>
+                      <Textarea
+                        id="specialInstructions"
+                        placeholder="Any specific cleaning requests, access instructions, or notes for our team..."
+                        value={bookingData.specialInstructions || ''}
+                        onChange={(e) => updateBookingData({ specialInstructions: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  {(!bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street) && (
+                    <div className="p-3 rounded-lg bg-muted/50 border mt-4">
+                      <p className="text-sm text-muted-foreground">
+                        Please complete all required contact and address fields to continue.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if property details completed but no contact details */}
+            {currentStep === 7 && (!bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street) && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <User className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Contact Details Required</p>
+                    <p className="text-sm text-muted-foreground">
+                      Please provide your contact information and service address above
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           </div>
 
           {/* Right Column - Price Summary - Show only when there's pricing to display */}
@@ -1170,12 +1376,12 @@ export function LegacyBookingFlow() {
                     )}
                     
                     <Button 
-                      onClick={handleNext}
-                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.serviceDate || !bookingData.serviceTime || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType}
+                      onClick={handleProceedToCheckout}
+                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.serviceDate || !bookingData.serviceTime || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType || !bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street}
                       className="w-full"
                       size="lg"
                     >
-                      Complete Booking
+                      Proceed to Payment
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </CardContent>
@@ -1239,6 +1445,15 @@ export function LegacyBookingFlow() {
                         </div>
                         <span className={cn("text-sm", (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "text-success" : currentStep >= 6 ? "text-foreground" : "text-muted-foreground")}>
                           {(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "✓ Property Details Added" : "Add Property Details"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          (bookingData.customerName && bookingData.customerEmail && bookingData.contactNumber && bookingData.address?.street) ? "bg-success text-success-foreground" : currentStep >= 7 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          7
+                        </div>
+                        <span className={cn("text-sm", (bookingData.customerName && bookingData.customerEmail && bookingData.contactNumber && bookingData.address?.street) ? "text-success" : currentStep >= 7 ? "text-foreground" : "text-muted-foreground")}>
+                          {(bookingData.customerName && bookingData.customerEmail && bookingData.contactNumber && bookingData.address?.street) ? "✓ Contact Details Added" : "Add Contact Details"}
                         </span>
                       </div>
                     </div>
