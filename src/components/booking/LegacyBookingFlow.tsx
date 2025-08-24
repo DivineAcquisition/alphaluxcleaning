@@ -8,6 +8,7 @@ import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, 
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { GuestBookingFlow } from './GuestBookingFlow';
+import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
 
 interface BookingData {
   serviceZipCode: string;
@@ -257,37 +258,57 @@ export function LegacyBookingFlow() {
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({});
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [zipCodeValid, setZipCodeValid] = useState(false);
+  const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showBookingFlow, setShowBookingFlow] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency
 
   const updateBookingData = (updates: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...updates }));
   };
 
-  // Validate ZIP code
+  // Validate ZIP code using Baytown service area
   const validateZipCode = (zipCode: string) => {
-    const bayAreaZipCodes = ['94102', '94103', '94104', '94105', '94107', '94108', '94109', '94110', '94111', '94112', '94114', '94115', '94116', '94117', '94118', '94121', '94122', '94123', '94124', '94127', '94129', '94130', '94131', '94132', '94133', '94134', '94158', '95014', '95050', '95051', '95054', '95070'];
-    return bayAreaZipCodes.includes(zipCode);
+    const validation = validateServiceAreaZipCode(zipCode);
+    return validation.isValid;
   };
 
   // Check existing ZIP code on mount
   useEffect(() => {
     if (bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5) {
-      setZipCodeValid(validateZipCode(bookingData.serviceZipCode));
+      const validation = validateServiceAreaZipCode(bookingData.serviceZipCode);
+      setZipCodeValid(validation.isValid);
+      if (!validation.isValid) {
+        setZipCodeError(validation.message || '');
+      }
     }
   }, []);
 
   const handleZipCodeChange = (zipCode: string) => {
     updateBookingData({ serviceZipCode: zipCode });
+    setZipCodeError('');
+    
     if (zipCode.length === 5) {
-      const isValid = validateZipCode(zipCode);
-      setZipCodeValid(isValid);
-      if (!isValid) {
-        // Handle invalid ZIP code
+      const validation = validateServiceAreaZipCode(zipCode);
+      setZipCodeValid(validation.isValid);
+      
+      if (validation.isValid) {
+        setCurrentStep(2); // Move to home size selection
+      } else {
+        setZipCodeError(validation.message || '');
+        setCurrentStep(1); // Stay on ZIP code step
       }
     } else {
       setZipCodeValid(false);
+      setCurrentStep(1);
     }
   };
+
+  // Update step progression when home size is selected
+  useEffect(() => {
+    if (zipCodeValid && bookingData.homeSize) {
+      setCurrentStep(3); // Move to frequency selection
+    }
+  }, [zipCodeValid, bookingData.homeSize]);
 
   // Calculate pricing with new square footage structure
   useEffect(() => {
@@ -370,7 +391,7 @@ export function LegacyBookingFlow() {
             Square Footage-Based Cleaning Services
           </h1>
           <p className="text-xl text-muted-foreground mb-6 max-w-3xl mx-auto">
-            Professional cleaning services priced by your home's square footage. 20% discount already applied to all services.
+            Professional cleaning services for {SERVICE_AREA_INFO.centerCity} and surrounding areas within {SERVICE_AREA_INFO.radiusMiles} miles. 20% discount already applied to all services.
           </p>
           <div className="flex justify-center mb-8">
             <Link to="/guest-booking">
@@ -396,7 +417,7 @@ export function LegacyBookingFlow() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <p className="text-muted-foreground">
-                    We provide cleaning services throughout the San Francisco Bay Area. Enter your ZIP code to get started.
+                    We provide cleaning services throughout {SERVICE_AREA_INFO.centerCity} and surrounding areas within {SERVICE_AREA_INFO.radiusMiles} miles. Enter your ZIP code to get started.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -412,10 +433,29 @@ export function LegacyBookingFlow() {
                       </div>
                     )}
                   </div>
-                  {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
-                    <p className="text-destructive text-sm">
-                      Sorry, we don't currently service this ZIP code. Please contact us for availability.
-                    </p>
+                  {zipCodeError && (
+                    <div className="space-y-2">
+                      <p className="text-destructive text-sm">
+                        {zipCodeError}
+                      </p>
+                      {bookingData.serviceZipCode && bookingData.serviceZipCode.startsWith('7') && (
+                        <div className="bg-muted/50 p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            We're expanding throughout Texas! Join our waitlist to be notified when we reach your area:
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              // This could trigger a modal or redirect to waitlist signup
+                              console.log('Join waitlist for:', bookingData.serviceZipCode);
+                            }}
+                          >
+                            Join Expansion Waitlist
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   )}
                   {zipCodeValid && (
                     <p className="text-success text-sm font-medium">
@@ -426,259 +466,339 @@ export function LegacyBookingFlow() {
               </CardContent>
             </Card>
 
-            {/* Home Size Selection */}
-            <Card className="shadow-clean">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="h-5 w-5" />
-                  Home Size (Square Footage)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  {homeSizes.map((tier) => {
-                    const Icon = tier.icon;
-                    return (
-                      <div
-                        key={tier.value}
-                        onClick={() => !tier.requiresQuote && updateBookingData({ homeSize: tier.value })}
-                        className={cn(
-                          "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
-                          bookingData.homeSize === tier.value
-                            ? "border-primary bg-primary/5 shadow-clean"
-                            : "border-border hover:border-primary/50",
-                          tier.requiresQuote && "opacity-75"
-                        )}
-                      >
-                        {tier.popular && (
-                          <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
-                            Most Popular
-                          </Badge>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Icon className="h-5 w-5 text-primary" />
-                            <div>
-                              <span className="font-semibold block">{tier.label}</span>
-                              <p className="text-sm text-muted-foreground">{tier.description}</p>
+            {/* Home Size Selection - Show only after valid ZIP */}
+            {currentStep >= 2 && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="h-5 w-5" />
+                    Home Size (Square Footage)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4">
+                    {homeSizes.map((tier) => {
+                      const Icon = tier.icon;
+                      return (
+                        <div
+                          key={tier.value}
+                          onClick={() => !tier.requiresQuote && updateBookingData({ homeSize: tier.value })}
+                          className={cn(
+                            "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
+                            bookingData.homeSize === tier.value
+                              ? "border-primary bg-primary/5 shadow-clean"
+                              : "border-border hover:border-primary/50",
+                            tier.requiresQuote && "opacity-75"
+                          )}
+                        >
+                          {tier.popular && (
+                            <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                              Most Popular
+                            </Badge>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Icon className="h-5 w-5 text-primary" />
+                              <div>
+                                <span className="font-semibold block">{tier.label}</span>
+                                <p className="text-sm text-muted-foreground">{tier.description}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {tier.requiresQuote ? (
+                                <div>
+                                  <p className="text-lg font-bold text-primary">Call for Quote</p>
+                                  <p className="text-xs text-muted-foreground">(281) 809-9901</p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="line-through text-muted-foreground text-sm">
+                                      ${tier.originalPricing.oneTime}
+                                    </span>
+                                    <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                      20% OFF
+                                    </Badge>
+                                  </div>
+                                  <p className="text-lg font-bold text-primary">
+                                    Starting at ${tier.pricing.monthly}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">monthly service</p>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div className="text-right">
-                            {tier.requiresQuote ? (
-                              <div>
-                                <p className="text-lg font-bold text-primary">Call for Quote</p>
-                                <p className="text-xs text-muted-foreground">(281) 809-9901</p>
-                              </div>
-                            ) : (
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="line-through text-muted-foreground text-sm">
-                                    ${tier.originalPricing.oneTime}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if ZIP valid but no home size selected */}
+            {currentStep === 2 && !bookingData.homeSize && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Home className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Select Your Home Size</p>
+                    <p className="text-sm text-muted-foreground">
+                      Choose your home's square footage above to see pricing options
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Service Type Selection - Show only after home size selected */}
+            {currentStep >= 3 && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Service Type
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {recurringOptions.map((option) => {
+                      const Icon = option.icon;
+                      const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
+                      const price = selectedTier?.pricing[option.priceKey] || 0;
+                      const originalPrice = selectedTier?.originalPricing[option.priceKey] || 0;
+                      
+                      return (
+                        <div
+                          key={option.value}
+                          onClick={() => updateBookingData({ frequency: option.value })}
+                          className={cn(
+                            "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
+                            bookingData.frequency === option.value
+                              ? "border-primary bg-primary/5 shadow-clean"
+                              : "border-border hover:border-primary/50",
+                            !selectedTier && "opacity-50 pointer-events-none"
+                          )}
+                        >
+                          {option.recommended && (
+                            <Badge className="absolute -top-2 -right-2 bg-success text-success-foreground">
+                              Recommended
+                            </Badge>
+                          )}
+                          {option.popular && (
+                            <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                              Most Popular
+                            </Badge>
+                          )}
+                          <div className="flex items-center gap-3 mb-3">
+                            <Icon className="h-5 w-5 text-primary" />
+                            <span className="font-semibold">{option.label}</span>
+                          </div>
+                          
+                          {selectedTier && !selectedTier.requiresQuote ? (
+                            <div className="space-y-2">
+                              {originalPrice > 0 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground line-through">
+                                    ${originalPrice}
                                   </span>
                                   <Badge variant="secondary" className="text-xs bg-success/20 text-success">
                                     20% OFF
                                   </Badge>
                                 </div>
-                                <p className="text-lg font-bold text-primary">
-                                  Starting at ${tier.pricing.monthly}
+                              )}
+                              <div className="text-center">
+                                <p className="text-xl font-bold text-primary">
+                                  {price > 0 ? `$${price}` : 'Call for Quote'}
                                 </p>
-                                <p className="text-xs text-muted-foreground">monthly service</p>
+                                <p className="text-xs text-muted-foreground">{option.description}</p>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Service Type Selection */}
-            <Card className="shadow-clean">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <RefreshCw className="h-5 w-5" />
-                  Service Type & Frequency
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {recurringOptions.map((option) => {
-                    const Icon = option.icon;
-                    const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
-                    const price = selectedTier?.pricing[option.priceKey] || 0;
-                    const originalPrice = selectedTier?.originalPricing[option.priceKey] || 0;
-                    
-                    return (
-                      <div
-                        key={option.value}
-                        onClick={() => updateBookingData({ frequency: option.value })}
-                        className={cn(
-                          "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
-                          bookingData.frequency === option.value
-                            ? "border-primary bg-primary/5 shadow-clean"
-                            : "border-border hover:border-primary/50",
-                          !selectedTier && "opacity-50 pointer-events-none"
-                        )}
-                      >
-                        {option.recommended && (
-                          <Badge className="absolute -top-2 -right-2 bg-success text-success-foreground">
-                            Recommended
-                          </Badge>
-                        )}
-                        {option.popular && (
-                          <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
-                            Most Popular
-                          </Badge>
-                        )}
-                        <div className="flex items-center gap-3 mb-3">
-                          <Icon className="h-5 w-5 text-primary" />
-                          <span className="font-semibold">{option.label}</span>
-                        </div>
-                        
-                        {selectedTier && !selectedTier.requiresQuote ? (
-                          <div className="space-y-2">
-                            {originalPrice > 0 && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground line-through">
-                                  ${originalPrice}
-                                </span>
-                                <Badge variant="secondary" className="text-xs bg-success/20 text-success">
-                                  20% OFF
-                                </Badge>
-                              </div>
-                            )}
-                            <div className="text-center">
-                              <p className="text-xl font-bold text-primary">
-                                {price > 0 ? `$${price}` : 'Call for Quote'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">{option.description}</p>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="text-center">
-                            <p className="text-sm text-muted-foreground">{option.description}</p>
-                            <p className="text-xs text-muted-foreground mt-1">Select home size first</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                          ) : (
+                            <div className="text-center">
+                              <p className="text-sm text-muted-foreground">{option.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1">Select home size first</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Add-ons */}
-            <Card className="shadow-clean">
-              <CardHeader>
-                <CardTitle>Add-on Services</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {addOns.map((addOn) => (
-                    <div
-                      key={addOn.value}
-                      className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Switch
-                          checked={selectedAddOns.includes(addOn.value)}
-                          onCheckedChange={() => toggleAddOn(addOn.value)}
-                        />
-                        <span className="font-medium">{addOn.label}</span>
+            {/* Show prompt if home size selected but no frequency */}
+            {currentStep === 3 && !bookingData.frequency && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Sparkles className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Choose Service Type</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select your preferred cleaning frequency above to see your total
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add-Ons Selection - Show only after frequency selected */}
+            {currentStep >= 3 && bookingData.frequency && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Optional Add-Ons
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {addOns.map((addOn) => (
+                      <div
+                        key={addOn.value}
+                        className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={selectedAddOns.includes(addOn.value)}
+                            onCheckedChange={() => toggleAddOn(addOn.value)}
+                          />
+                          <span className="font-medium">{addOn.label}</span>
+                        </div>
+                        <span className="text-primary font-semibold">+${addOn.price}</span>
                       </div>
-                      <span className="text-primary font-semibold">+${addOn.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Right Column - Price Summary */}
+          {/* Right Column - Price Summary - Show only when there's pricing to display */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-32 shadow-clean border-primary/20">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-                <CardTitle>Price Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedTier && selectedFrequency && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">{selectedTier.label}</span>
-                        <div className="text-sm text-muted-foreground">{selectedFrequency.label}</div>
-                      </div>
-                      <div className="text-right">
-                        {selectedTier.originalPricing[selectedFrequency.priceKey] > 0 && (
-                          <div className="text-xs text-muted-foreground line-through">
-                            ${selectedTier.originalPricing[selectedFrequency.priceKey]}
+            <div className="sticky top-8">
+              {currentStep >= 2 && bookingData.homeSize && bookingData.frequency ? (
+                <Card className="shadow-clean border-primary/20">
+                  <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+                    <CardTitle>Booking Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedTier && selectedFrequency && (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="font-medium">{selectedTier.label}</span>
+                            <div className="text-sm text-muted-foreground">{selectedFrequency.label}</div>
+                          </div>
+                          <div className="text-right">
+                            {selectedTier.originalPricing[selectedFrequency.priceKey] > 0 && (
+                              <div className="text-xs text-muted-foreground line-through">
+                                ${selectedTier.originalPricing[selectedFrequency.priceKey]}
+                              </div>
+                            )}
+                            <span className="font-semibold text-primary">${bookingData.basePrice}</span>
+                          </div>
+                        </div>
+                        
+                        {bookingData.frequencyDiscount > 0 && (
+                          <div className="flex justify-between text-success">
+                            <span>20% Discount Applied</span>
+                            <span>-${bookingData.frequencyDiscount}</span>
                           </div>
                         )}
-                        <span className="font-semibold text-primary">${bookingData.basePrice}</span>
-                      </div>
-                    </div>
-                    
-                    {bookingData.frequencyDiscount > 0 && (
-                      <div className="flex justify-between text-success">
-                        <span>20% Discount Applied</span>
-                        <span>-${bookingData.frequencyDiscount}</span>
-                      </div>
-                    )}
-                    
-                    {selectedAddOns.length > 0 && (
-                      <div className="space-y-2">
-                        {selectedAddOns.map(addOn => {
-                          const addOnItem = addOns.find(a => a.value === addOn);
-                          return addOnItem ? (
-                            <div key={addOn} className="flex justify-between text-sm">
-                              <span>{addOnItem.label}</span>
-                              <span>+${addOnItem.price}</span>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                    
-                    <hr className="border-border" />
-                    
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-primary">${bookingData.totalPrice}</span>
-                    </div>
-                    
-                    {bookingData.nextDayFee && bookingData.nextDayFee > 0 && (
-                      <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
-                        <p className="text-sm font-medium text-primary">Includes $50 Next Day Priority Fee</p>
-                      </div>
-                    )}
-                    
-                    {bookingData.frequencyDiscount > 0 && (
-                      <div className="bg-success/10 border border-success/20 rounded-lg p-3 mt-3">
-                        <div className="flex items-center gap-2 text-success">
-                          <CheckCircle className="h-4 w-4" />
-                          <span className="font-medium">You're saving ${bookingData.frequencyDiscount}!</span>
+                        
+                        {selectedAddOns.length > 0 && (
+                          <div className="space-y-2">
+                            {selectedAddOns.map(addOn => {
+                              const addOnItem = addOns.find(a => a.value === addOn);
+                              return addOnItem ? (
+                                <div key={addOn} className="flex justify-between text-sm">
+                                  <span>{addOnItem.label}</span>
+                                  <span>+${addOnItem.price}</span>
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                        
+                        <hr className="border-border" />
+                        
+                        <div className="flex justify-between text-lg font-bold">
+                          <span>Total</span>
+                          <span className="text-primary">${bookingData.totalPrice}</span>
                         </div>
-                        <p className="text-sm text-success/80 mt-1">
-                          20% discount applied to all services
-                        </p>
+                        
+                        {bookingData.nextDayFee && bookingData.nextDayFee > 0 && (
+                          <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+                            <p className="text-sm font-medium text-primary">Includes $50 Next Day Priority Fee</p>
+                          </div>
+                        )}
+                        
+                        {bookingData.frequencyDiscount > 0 && (
+                          <div className="bg-success/10 border border-success/20 rounded-lg p-3 mt-3">
+                            <div className="flex items-center gap-2 text-success">
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="font-medium">You're saving ${bookingData.frequencyDiscount}!</span>
+                            </div>
+                            <p className="text-sm text-success/80 mt-1">
+                              20% discount applied to all services
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={handleNext}
-                  disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency}
-                  className="w-full"
-                  size="lg"
-                >
-                  Next: Date & Details
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
+                    
+                    <Button 
+                      onClick={handleNext}
+                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency}
+                      className="w-full"
+                      size="lg"
+                    >
+                      Next: Date & Details
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="shadow-clean border-muted">
+                  <CardHeader>
+                    <CardTitle className="text-center">Get Your Quote</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium", 
+                          zipCodeValid ? "bg-success text-success-foreground" : currentStep >= 1 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          1
+                        </div>
+                        <span className={cn("text-sm", zipCodeValid ? "text-success" : "text-muted-foreground")}>
+                          {zipCodeValid ? "✓ Service Area Verified" : "Enter ZIP Code"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          bookingData.homeSize ? "bg-success text-success-foreground" : currentStep >= 2 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          2
+                        </div>
+                        <span className={cn("text-sm", bookingData.homeSize ? "text-success" : currentStep >= 2 ? "text-foreground" : "text-muted-foreground")}>
+                          {bookingData.homeSize ? "✓ Home Size Selected" : "Select Home Size"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          bookingData.frequency ? "bg-success text-success-foreground" : currentStep >= 3 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          3
+                        </div>
+                        <span className={cn("text-sm", bookingData.frequency ? "text-success" : currentStep >= 3 ? "text-foreground" : "text-muted-foreground")}>
+                          {bookingData.frequency ? "✓ Service Type Selected" : "Choose Service Type"}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </div>
