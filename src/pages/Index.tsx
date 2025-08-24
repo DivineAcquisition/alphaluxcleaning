@@ -127,15 +127,14 @@ const Index = () => {
                 {/* Main Offer */}
                 <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
                   <h3 className="text-lg md:text-xl font-jakarta font-bold mb-2 text-yellow-300">
-                    Complete Clean Package
+                    🏡 All Home Sizes Welcome
                   </h3>
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <span className="text-lg md:text-xl line-through text-white/70">$420</span>
-                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">$349</span>
+                    <span className="text-2xl md:text-3xl font-bold text-yellow-300">20% OFF</span>
                   </div>
-                  <p className="text-sm md:text-base font-semibold">Save $71 + $20 Credit With BACP Membership</p>
+                  <p className="text-sm md:text-base font-semibold">All Services + BACP Club™ Benefits</p>
                   <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
-                    <p className="text-sm font-bold text-yellow-300">Total Savings: $149!</p>
+                    <p className="text-sm font-bold text-yellow-300">Starting at $137/month (was $171)</p>
                   </div>
                 </div>
 
