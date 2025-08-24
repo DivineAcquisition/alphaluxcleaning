@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { GuestBookingFlow } from './GuestBookingFlow';
@@ -21,6 +23,12 @@ interface BookingData {
   totalPrice: number;
   nextDayFee?: number;
   squareFootage?: string;
+  
+  // Property Details
+  bedrooms: string;
+  bathrooms: string;
+  dwellingType: string;
+  flooringType: string;
 }
 
 // Square footage-based pricing tiers with 20% across-the-board discount applied
@@ -260,7 +268,7 @@ export function LegacyBookingFlow() {
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: property details
 
   const updateBookingData = (updates: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...updates }));
@@ -308,7 +316,10 @@ export function LegacyBookingFlow() {
     if (zipCodeValid && bookingData.homeSize) {
       setCurrentStep(3); // Move to frequency selection
     }
-  }, [zipCodeValid, bookingData.homeSize]);
+    if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
+      setCurrentStep(4); // Move to property details
+    }
+  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency]);
 
   // Calculate pricing with new square footage structure
   useEffect(() => {
@@ -366,7 +377,12 @@ export function LegacyBookingFlow() {
       basePrice: bookingData.basePrice,
       addOns: selectedAddOns,
       addOnPrices: bookingData.addOnPrices,
-      frequencyDiscount: bookingData.frequencyDiscount
+      frequencyDiscount: bookingData.frequencyDiscount,
+      // Property details
+      bedrooms: bookingData.bedrooms,
+      bathrooms: bookingData.bathrooms,
+      dwellingType: bookingData.dwellingType,
+      flooringType: bookingData.flooringType
     }));
     
     setShowBookingFlow(true);
@@ -643,8 +659,149 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Add-Ons Selection - Show only after frequency selected */}
-            {currentStep >= 3 && bookingData.frequency && (
+            {/* Property Details - Show only after frequency selected */}
+            {currentStep >= 4 && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Property Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Bedrooms */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bedrooms" className="text-sm font-medium flex items-center gap-2">
+                        <BedDouble className="h-4 w-4" />
+                        Bedrooms *
+                      </Label>
+                      <Select 
+                        value={bookingData.bedrooms || ''} 
+                        onValueChange={(value) => updateBookingData({ bedrooms: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select bedrooms" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Bedroom</SelectItem>
+                          <SelectItem value="2">2 Bedrooms</SelectItem>
+                          <SelectItem value="3">3 Bedrooms</SelectItem>
+                          <SelectItem value="4">4 Bedrooms</SelectItem>
+                          <SelectItem value="5">5 Bedrooms</SelectItem>
+                          <SelectItem value="6">6 Bedrooms</SelectItem>
+                          <SelectItem value="7">7 Bedrooms</SelectItem>
+                          <SelectItem value="8+">8+ Bedrooms</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Bathrooms */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bathrooms" className="text-sm font-medium flex items-center gap-2">
+                        <Bath className="h-4 w-4" />
+                        Bathrooms *
+                      </Label>
+                      <Select 
+                        value={bookingData.bathrooms || ''} 
+                        onValueChange={(value) => updateBookingData({ bathrooms: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select bathrooms" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 Bathroom</SelectItem>
+                          <SelectItem value="1.5">1.5 Bathrooms</SelectItem>
+                          <SelectItem value="2">2 Bathrooms</SelectItem>
+                          <SelectItem value="2.5">2.5 Bathrooms</SelectItem>
+                          <SelectItem value="3">3 Bathrooms</SelectItem>
+                          <SelectItem value="3.5">3.5 Bathrooms</SelectItem>
+                          <SelectItem value="4">4 Bathrooms</SelectItem>
+                          <SelectItem value="4.5">4.5 Bathrooms</SelectItem>
+                          <SelectItem value="5">5 Bathrooms</SelectItem>
+                          <SelectItem value="6+">6+ Bathrooms</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Dwelling Type */}
+                    <div className="space-y-2">
+                      <Label htmlFor="dwellingType" className="text-sm font-medium flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        Dwelling Type *
+                      </Label>
+                      <Select 
+                        value={bookingData.dwellingType || ''} 
+                        onValueChange={(value) => updateBookingData({ dwellingType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select dwelling type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="house">Single Family House</SelectItem>
+                          <SelectItem value="apartment">Apartment</SelectItem>
+                          <SelectItem value="condo">Condominium</SelectItem>
+                          <SelectItem value="townhouse">Townhouse</SelectItem>
+                          <SelectItem value="duplex">Duplex</SelectItem>
+                          <SelectItem value="mobile-home">Mobile Home</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Flooring Type - Optional */}
+                    <div className="space-y-2">
+                      <Label htmlFor="flooringType" className="text-sm font-medium flex items-center gap-2">
+                        <Home className="h-4 w-4" />
+                        Primary Flooring (Optional)
+                      </Label>
+                      <Select 
+                        value={bookingData.flooringType || ''} 
+                        onValueChange={(value) => updateBookingData({ flooringType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select flooring type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hardwood">Hardwood</SelectItem>
+                          <SelectItem value="carpet">Carpet</SelectItem>
+                          <SelectItem value="tile">Tile</SelectItem>
+                          <SelectItem value="laminate">Laminate</SelectItem>
+                          <SelectItem value="vinyl">Vinyl</SelectItem>
+                          <SelectItem value="mixed">Mixed Flooring</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {(!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
+                    <div className="p-3 rounded-lg bg-muted/50 border">
+                      <p className="text-sm text-muted-foreground">
+                        Please complete the required property details to continue.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if frequency selected but no property details */}
+            {currentStep === 4 && bookingData.frequency && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType) && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Users className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Property Details Required</p>
+                    <p className="text-sm text-muted-foreground">
+                      Please provide your property details above to continue with booking
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add-Ons Selection - Show only after property details completed */}
+            {currentStep >= 4 && bookingData.frequency && bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -751,7 +908,7 @@ export function LegacyBookingFlow() {
                     
                     <Button 
                       onClick={handleNext}
-                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency}
+                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType}
                       className="w-full"
                       size="lg"
                     >
@@ -792,6 +949,15 @@ export function LegacyBookingFlow() {
                         </div>
                         <span className={cn("text-sm", bookingData.frequency ? "text-success" : currentStep >= 3 ? "text-foreground" : "text-muted-foreground")}>
                           {bookingData.frequency ? "✓ Service Type Selected" : "Choose Service Type"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                          (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "bg-success text-success-foreground" : currentStep >= 4 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                          4
+                        </div>
+                        <span className={cn("text-sm", (bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "text-success" : currentStep >= 4 ? "text-foreground" : "text-muted-foreground")}>
+                          {(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) ? "✓ Property Details Added" : "Add Property Details"}
                         </span>
                       </div>
                     </div>

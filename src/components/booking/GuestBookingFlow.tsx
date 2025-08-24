@@ -16,7 +16,18 @@ interface QuoteData {
   location: string;
   zipCode: string;
   quote: number;
+  quoteAmount?: number;
   timestamp: string;
+  squareFootage?: string;
+  basePrice?: number;
+  addOns?: string[];
+  addOnPrices?: { [key: string]: number };
+  frequencyDiscount?: number;
+  // Property details
+  bedrooms?: string;
+  bathrooms?: string;
+  dwellingType?: string;
+  flooringType?: string;
 }
 
 interface BookingData {
@@ -77,7 +88,7 @@ export function GuestBookingFlow() {
 
   // Load quote data from localStorage on mount
   React.useEffect(() => {
-    const storedQuote = localStorage.getItem('instant_quote');
+    const storedQuote = localStorage.getItem('quoteData') || localStorage.getItem('instant_quote');
     if (storedQuote) {
       try {
         const quote = JSON.parse(storedQuote);
@@ -89,8 +100,11 @@ export function GuestBookingFlow() {
           homeSize: quote.homeSize,
           serviceType: quote.serviceType,
           frequency: quote.frequency,
-          basePrice: quote.quote,
-          totalPrice: quote.quote,
+          basePrice: quote.basePrice || quote.quote,
+          totalPrice: quote.quoteAmount || quote.quote,
+          addOns: quote.addOns || [],
+          addOnPrices: quote.addOnPrices || {},
+          frequencyDiscount: quote.frequencyDiscount || 0,
           address: {
             ...prev.address,
             city: quote.location || '',
@@ -136,7 +150,8 @@ export function GuestBookingFlow() {
 
   const handlePaymentSuccess = (sessionId: string) => {
     toast.success('Booking confirmed! Redirecting to confirmation...');
-    // Clear the stored quote data
+    // Clear both possible quote data storage keys
+    localStorage.removeItem('quoteData');
     localStorage.removeItem('instant_quote');
     // Redirect to confirmation page
     window.location.href = `/booking-confirmation?session_id=${sessionId}`;
@@ -165,20 +180,55 @@ export function GuestBookingFlow() {
               {/* Quote Summary */}
               {quoteData && (
                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                  <h3 className="font-semibold text-primary mb-2">Your Quote</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Service:</strong> {quoteData.serviceType?.replace(/_/g, ' ')}
+                  <h3 className="font-semibold text-primary mb-3">Your Quote</h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <strong>Service:</strong> {quoteData.serviceType?.replace(/_/g, ' ')}
+                      </div>
+                      <div>
+                        <strong>Size:</strong> {quoteData.squareFootage || quoteData.homeSize?.replace('br', ' bedroom')}
+                      </div>
+                      <div>
+                        <strong>Frequency:</strong> {quoteData.frequency?.replace(/_/g, ' ')}
+                      </div>
+                      <div>
+                        <strong>Total:</strong> ${quoteData.quoteAmount || quoteData.quote}
+                      </div>
                     </div>
-                    <div>
-                      <strong>Size:</strong> {quoteData.homeSize?.replace('br', ' bedroom')}
-                    </div>
-                    <div>
-                      <strong>Frequency:</strong> {quoteData.frequency?.replace(/_/g, ' ')}
-                    </div>
-                    <div>
-                      <strong>Total:</strong> ${quoteData.quote}
-                    </div>
+                    
+                    {/* Property Details if available */}
+                    {(quoteData.bedrooms || quoteData.bathrooms || quoteData.dwellingType) && (
+                      <div className="border-t pt-3 mt-3">
+                        <h4 className="font-medium text-sm mb-2">Property Details:</h4>
+                        <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                          {quoteData.bedrooms && (
+                            <div>Bedrooms: {quoteData.bedrooms}</div>
+                          )}
+                          {quoteData.bathrooms && (
+                            <div>Bathrooms: {quoteData.bathrooms}</div>
+                          )}
+                          {quoteData.dwellingType && (
+                            <div className="col-span-2">Type: {quoteData.dwellingType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add-ons if available */}
+                    {quoteData.addOns && quoteData.addOns.length > 0 && (
+                      <div className="border-t pt-3 mt-3">
+                        <h4 className="font-medium text-sm mb-2">Add-ons:</h4>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          {quoteData.addOns.map((addOn) => (
+                            <div key={addOn} className="flex justify-between">
+                              <span>{addOn.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                              <span>+${quoteData.addOnPrices?.[addOn] || 0}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
