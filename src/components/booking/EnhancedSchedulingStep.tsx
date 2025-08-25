@@ -192,51 +192,51 @@ export function EnhancedSchedulingStep({
           {!nextDayUpsell ? (
             <div className="space-y-6">
               {/* Quick Select Options */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {quickSelectOptions.map((option, index) => (
                   <Button
                     key={index}
                     variant="outline"
                     size="sm"
                     onClick={option.action}
-                    className="text-xs"
+                    className="text-xs sm:text-sm flex-1 sm:flex-none min-h-[40px] sm:min-h-auto"
                   >
                     {option.label}
-                    <ArrowRight className="h-3 w-3 ml-1" />
+                    <ArrowRight className="h-3 w-3 ml-1 sm:ml-2" />
                   </Button>
                 ))}
               </div>
 
               {/* Weekly Availability Grid */}
               <div>
-                <Label className="text-sm font-medium mb-3 block">Select Date *</Label>
-                <div className="space-y-4">
+                <Label className="text-sm sm:text-base font-medium mb-3 block">Select Date *</Label>
+                <div className="space-y-4 sm:space-y-6">
                   {weeksData.map((week, weekIndex) => (
-                    <div key={weekIndex} className="space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground px-1">
+                    <div key={weekIndex} className="space-y-3">
+                      <div className="text-xs sm:text-sm font-medium text-muted-foreground px-1">
                         Week of {format(week.weekStart, 'MMM d')} - {format(week.weekEnd, 'MMM d')}
                       </div>
-                      <div className="grid grid-cols-6 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
                         {week.days.map((day, dayIndex) => (
                           <Card
                             key={dayIndex}
                             className={cn(
-                              "cursor-pointer border-2 transition-all hover:shadow-sm p-0",
+                              "cursor-pointer border-2 transition-all hover:shadow-sm p-0 animate-scale-in",
                               selectedDate && isSameDay(selectedDate, day.date)
-                                ? "border-primary bg-primary/5 shadow-sm"
+                                ? "border-primary bg-primary/5 shadow-sm scale-105"
                                 : day.available
-                                  ? "border-border hover:border-primary/50 hover:bg-primary/5"
+                                  ? "border-border hover:border-primary/50 hover:bg-primary/5 active:scale-95"
                                   : "border-muted bg-muted/30 cursor-not-allowed opacity-60"
                             )}
                             onClick={() => day.available && onDateChange(day.date)}
                           >
-                            <CardContent className="p-3 text-center">
-                              <div className="space-y-1">
-                                <div className="text-xs font-medium text-muted-foreground">
+                            <CardContent className="p-3 sm:p-4 text-center min-h-[80px] sm:min-h-[90px] flex flex-col justify-center">
+                              <div className="space-y-1 sm:space-y-2">
+                                <div className="text-xs sm:text-sm font-medium text-muted-foreground">
                                   {format(day.date, 'EEE')}
                                 </div>
                                 <div className={cn(
-                                  "text-lg font-semibold",
+                                  "text-xl sm:text-2xl font-bold",
                                   selectedDate && isSameDay(selectedDate, day.date)
                                     ? "text-primary"
                                     : day.available ? "text-foreground" : "text-muted-foreground"
@@ -245,11 +245,11 @@ export function EnhancedSchedulingStep({
                                 </div>
                                 <div className="text-xs">
                                   {day.available ? (
-                                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                                    <Badge variant="secondary" className="text-xs px-2 py-1">
                                       {day.slotsCount} slots
                                     </Badge>
                                   ) : (
-                                    <span className="text-muted-foreground">Busy</span>
+                                    <span className="text-muted-foreground font-medium">Busy</span>
                                   )}
                                 </div>
                               </div>
@@ -260,46 +260,51 @@ export function EnhancedSchedulingStep({
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-4 px-2 sm:px-0 text-center sm:text-left">
                   We require at least 5 days advance notice. Sundays are not available.
                 </p>
               </div>
 
               {/* Time Slots */}
               {selectedDate && (
-                <div className="space-y-3">
+                <div className="space-y-4 animate-fade-in">
                   <Separator />
                   <div>
-                    <Label className="text-sm font-medium mb-3 block">
+                    <Label className="text-sm sm:text-base font-medium mb-4 block">
                       Select Time for {format(selectedDate, 'EEEE, MMMM d')} *
                     </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       {currentTimeSlots.map((slot) => (
                         <Button
                           key={slot.value}
                           variant={selectedTime === slot.value ? "default" : "outline"}
                           className={cn(
-                            "justify-between h-auto p-3",
+                            "justify-between h-auto p-4 sm:p-3 min-h-[60px] sm:min-h-[50px] text-left",
                             !slot.available && "opacity-50 cursor-not-allowed",
-                            selectedTime === slot.value && "ring-2 ring-primary ring-offset-2"
+                            selectedTime === slot.value && "ring-2 ring-primary ring-offset-2 scale-105",
+                            "transition-all duration-200 active:scale-95"
                           )}
                           disabled={!slot.available}
                           onClick={() => slot.available && onTimeChange(slot.value)}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{slot.label}</span>
-                            {slot.popular && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Star className="h-3 w-3 mr-1" />
-                                Popular
-                              </Badge>
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold text-sm sm:text-base">{slot.label}</span>
+                              {slot.popular && (
+                                <Badge variant="secondary" className="text-xs mt-1">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Popular Choice
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            {slot.available ? (
+                              <CheckCircle2 className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Full</span>
                             )}
                           </div>
-                          {slot.available ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Full</span>
-                          )}
                         </Button>
                       ))}
                     </div>
