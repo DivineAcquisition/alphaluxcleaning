@@ -17,60 +17,115 @@ import { PricingSummarySticky } from './PricingSummarySticky';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 
-// Simplified service types with fixed pricing
+// Exact pricing matrix matching provided rates
+const pricingMatrix = {
+  'under-1000': {
+    weekly: 97.50,
+    biweekly: 118.59,
+    monthly: 171.26,
+    oneTime: 225.31,
+    deepClean: 305.05
+  },
+  '1001-1400': {
+    weekly: 115.94,
+    biweekly: 125.58,
+    monthly: 186.59,
+    oneTime: 235.09,
+    deepClean: 327.77
+  },
+  '1401-1800': {
+    weekly: 125.67,
+    biweekly: 140.06,
+    monthly: 225.73,
+    oneTime: 255.27,
+    deepClean: 355.94
+  },
+  '1801-2400': {
+    weekly: 132.81,
+    biweekly: 150.15,
+    monthly: 234.87,
+    oneTime: 265.41,
+    deepClean: 385.13
+  },
+  '2401-2800': {
+    weekly: 158.26,
+    biweekly: 175.14,
+    monthly: 245.76,
+    oneTime: 285.28,
+    deepClean: 405.01
+  },
+  '2801-3300': {
+    weekly: 168.73,
+    biweekly: 188.62,
+    monthly: 287.92,
+    oneTime: 297.46,
+    deepClean: 459.16
+  },
+  '3301-3900': {
+    weekly: 178.82,
+    biweekly: 197.61,
+    monthly: 307.81,
+    oneTime: 346.34,
+    deepClean: 478.39
+  },
+  '3901-4500': {
+    weekly: 215.29,
+    biweekly: 231.58,
+    monthly: 368.69,
+    oneTime: 378.67,
+    deepClean: 512.60
+  },
+  '4501-5100': {
+    weekly: 228.56,
+    biweekly: 242.05,
+    monthly: 428.17,
+    oneTime: 461.37,
+    deepClean: 564.24
+  }
+};
+
+// Service types based on frequency and type
 const serviceTypes = [
   {
-    id: 'general',
-    name: 'General Cleaning',
+    id: 'regular',
+    name: 'Regular Cleaning',
     description: 'Perfect for regular maintenance cleaning',
-    basePrice: 180,
+    basePrice: 0, // Using exact pricing matrix
     icon: Home,
-    popular: false,
+    popular: true,
     features: [
       'All surfaces dusted and wiped',
       'Floors vacuumed and mopped',
-      'Bathrooms cleaned',
-      'Kitchen cleaned'
+      'Bathrooms cleaned and sanitized',
+      'Kitchen cleaned',
+      'Trash emptied'
     ],
-    recurring: true
+    recurring: true,
+    hasFrequency: true
   },
   {
     id: 'deep',
     name: 'Deep Cleaning',
     description: 'Comprehensive top-to-bottom cleaning',
-    basePrice: 245, // 35% premium
+    basePrice: 0, // Using exact pricing matrix
     icon: Sparkles,
-    popular: true,
+    popular: false,
     features: [
-      'Everything in General Clean',
+      'Everything in Regular Clean',
       'Inside appliances cleaned',
       'Detailed bathroom sanitization',
       'Light fixtures dusted',
-      'Window sills cleaned'
+      'Window sills cleaned',
+      'Baseboards wiped'
     ],
-    recurring: true
+    recurring: false,
+    hasFrequency: false
   },
   {
-    id: 'move-in',
-    name: 'Move-In Cleaning',
-    description: 'Get your new home move-in ready',
-    basePrice: 270, // 50% premium
-    icon: Shield,
-    popular: false,
-    features: [
-      'Everything in Deep Clean',
-      'Cabinet interiors wiped',
-      'Drawer interiors cleaned',
-      'Extra sanitization',
-      'Move-in ready guarantee'
-    ],
-    recurring: false
-  },
-  {
-    id: 'move-out',
+    id: 'moveout',
     name: 'Move-Out Cleaning',
     description: 'Leave your old home spotless',
-    basePrice: 270, // 50% premium
+    basePrice: 0, // Using exact pricing matrix
     icon: Zap,
     popular: false,
     features: [
@@ -80,29 +135,31 @@ const serviceTypes = [
       'Final walk-through',
       'Damage deposit protection'
     ],
-    recurring: false
+    recurring: false,
+    hasFrequency: false
   }
 ];
 
-// Home sizes matching exact pricing calculator square footage tiers
+// Home sizes matching exact pricing tiers
 const homeSizes = [
-  { id: 'under-1000', name: 'Under 1,000 sq ft', multiplier: 1.0, description: 'Studio/1 BR apartments' },
-  { id: '1001-1400', name: '1,001 - 1,400 sq ft', multiplier: 1.043, description: '1-2 BR condos/homes' },
-  { id: '1401-1800', name: '1,401 - 1,800 sq ft', multiplier: 1.133, description: '2-3 BR homes' },
-  { id: '1801-2400', name: '1,801 - 2,400 sq ft', multiplier: 1.178, description: '3 BR homes' },
-  { id: '2401-2800', name: '2,401 - 2,800 sq ft', multiplier: 1.266, description: '3-4 BR homes' },
-  { id: '2801-3300', name: '2,801 - 3,300 sq ft', multiplier: 1.320, description: '4 BR homes' },
-  { id: '3301-3900', name: '3,301 - 3,900 sq ft', multiplier: 1.537, description: '4-5 BR homes' },
-  { id: '3901-4500', name: '3,901 - 4,500 sq ft', multiplier: 1.681, description: '5 BR homes' },
-  { id: '4501-5100', name: '4,501 - 5,100 sq ft', multiplier: 2.048, description: '5+ BR homes' }
+  { id: 'under-1000', name: 'Under 1,000 sq ft', multiplier: 1, description: 'Studio/1 BR apartments' },
+  { id: '1001-1400', name: '1,001 - 1,400 sq ft', multiplier: 1, description: '1-2 BR condos/homes' },
+  { id: '1401-1800', name: '1,401 - 1,800 sq ft', multiplier: 1, description: '2-3 BR homes' },
+  { id: '1801-2400', name: '1,801 - 2,400 sq ft', multiplier: 1, description: '3 BR homes' },
+  { id: '2401-2800', name: '2,401 - 2,800 sq ft', multiplier: 1, description: '3-4 BR homes' },
+  { id: '2801-3300', name: '2,801 - 3,300 sq ft', multiplier: 1, description: '4 BR homes' },
+  { id: '3301-3900', name: '3,301 - 3,900 sq ft', multiplier: 1, description: '4-5 BR homes' },
+  { id: '3901-4500', name: '3,901 - 4,500 sq ft', multiplier: 1, description: '5 BR homes' },
+  { id: '4501-5100', name: '4,501 - 5,100 sq ft', multiplier: 1, description: '5+ BR homes' },
+  { id: 'over-5100', name: '5,100+ sq ft', multiplier: 1, description: 'Requires in-person estimate' }
 ];
 
-// Simplified frequency options
+// Frequency options for regular cleaning
 const frequencyOptions = [
-  { id: 'one-time', name: 'One-Time', discount: 0, description: 'Single cleaning' },
-  { id: 'weekly', name: 'Weekly', discount: 15, description: 'Every week - Best value!' },
-  { id: 'bi-weekly', name: 'Bi-Weekly', discount: 10, description: 'Every 2 weeks' },
-  { id: 'monthly', name: 'Monthly', discount: 5, description: 'Once a month' }
+  { id: 'weekly', name: 'Weekly', discount: 0, description: 'Every week - Best value!' },
+  { id: 'biweekly', name: 'Bi-Weekly', discount: 0, description: 'Every 2 weeks' },
+  { id: 'monthly', name: 'Monthly', discount: 0, description: 'Once a month' },
+  { id: 'oneTime', name: 'One-Time', discount: 0, description: 'Single cleaning' }
 ];
 
 // Add-on services with fixed pricing
@@ -202,21 +259,34 @@ export function ModernLegacyBooking() {
     }));
   };
 
-  // Calculate pricing whenever relevant fields change
-  useEffect(() => {
-    const selectedService = serviceTypes.find(s => s.id === bookingData.serviceType);
-    const selectedSize = homeSizes.find(h => h.id === bookingData.homeSize);
-    const selectedFrequency = frequencyOptions.find(f => f.id === bookingData.frequency);
-
-    if (!selectedService || !selectedSize) {
-      updateField('basePrice', 0);
-      updateField('totalPrice', 0);
-      updateField('savings', 0);
-      return;
+  // Get exact price from pricing matrix
+  const getExactPrice = () => {
+    if (!bookingData.homeSize) return 0;
+    
+    // Handle homes over 5,100 sq ft
+    if (bookingData.homeSize === 'over-5100') {
+      return 0; // Requires estimate
     }
 
-    // Calculate base price with home size multiplier
-    const basePrice = Math.round(selectedService.basePrice * selectedSize.multiplier);
+    const sizePricing = pricingMatrix[bookingData.homeSize as keyof typeof pricingMatrix];
+    if (!sizePricing) return 0;
+
+    let basePrice = 0;
+    
+    if (bookingData.serviceType === 'regular' && bookingData.frequency) {
+      basePrice = sizePricing[bookingData.frequency as keyof typeof sizePricing] || 0;
+    } else if (bookingData.serviceType === 'deep') {
+      basePrice = sizePricing.deepClean;
+    } else if (bookingData.serviceType === 'moveout') {
+      basePrice = sizePricing.deepClean; // Move-out uses same pricing as deep clean
+    }
+
+    return basePrice;
+  };
+
+  // Calculate pricing whenever relevant fields change
+  useEffect(() => {
+    const basePrice = getExactPrice();
     
     // Calculate add-ons total
     const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
@@ -224,16 +294,11 @@ export function ModernLegacyBooking() {
       return total + (addOn?.price || 0);
     }, 0);
 
-    // Calculate subtotal
-    const subtotal = basePrice + addOnsTotal;
-    
-    // Apply frequency discount
-    const discount = selectedFrequency ? (subtotal * selectedFrequency.discount / 100) : 0;
-    const totalPrice = subtotal - discount;
+    const totalPrice = basePrice + addOnsTotal;
 
     updateField('basePrice', basePrice);
     updateField('totalPrice', totalPrice);
-    updateField('savings', discount);
+    updateField('savings', 0); // No discounts with exact pricing
   }, [bookingData.serviceType, bookingData.homeSize, bookingData.frequency, bookingData.addOns]);
 
   // Validate ZIP code
@@ -254,7 +319,16 @@ export function ModernLegacyBooking() {
       case 1:
         return zipCodeValid && bookingData.serviceType !== '';
       case 2:
-        return bookingData.homeSize !== '' && bookingData.frequency !== '';
+        // Handle homes over 5,100 sq ft
+        if (bookingData.homeSize === 'over-5100') {
+          return false; // Block progression - requires estimate
+        }
+        // Regular cleaning requires frequency selection
+        if (bookingData.serviceType === 'regular') {
+          return bookingData.homeSize !== '' && bookingData.frequency !== '';
+        }
+        // Deep clean and move-out only need home size
+        return bookingData.homeSize !== '';
       case 3:
         return (
           (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) &&
@@ -394,15 +468,28 @@ export function ModernLegacyBooking() {
                       key={size.id}
                       className={cn(
                         "cursor-pointer border-2 transition-all hover:shadow-md",
+                        size.id === 'over-5100' && "border-warning bg-warning/5",
                         bookingData.homeSize === size.id
                           ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
+                          : size.id === 'over-5100' 
+                            ? "border-warning hover:border-warning/70"
+                            : "border-border hover:border-primary/50"
                       )}
-                      onClick={() => updateField('homeSize', size.id)}
+                      onClick={() => {
+                        updateField('homeSize', size.id);
+                        if (size.id === 'over-5100') {
+                          toast.info('Homes over 5,100 sq ft require an in-person estimate. Please call to schedule.');
+                        }
+                      }}
                     >
                       <CardContent className="p-4">
                         <h3 className="font-semibold">{size.name}</h3>
                         <p className="text-sm text-muted-foreground">{size.description}</p>
+                        {size.id === 'over-5100' && (
+                          <Badge variant="outline" className="mt-2 border-warning text-warning">
+                            Call Required
+                          </Badge>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -410,8 +497,8 @@ export function ModernLegacyBooking() {
               </CardContent>
             </Card>
 
-            {/* Frequency Selection */}
-            {bookingData.homeSize && (
+            {/* Frequency Selection - Only for Regular Cleaning */}
+            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && bookingData.serviceType === 'regular' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -421,12 +508,11 @@ export function ModernLegacyBooking() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {frequencyOptions
-                      .filter(option => {
-                        const selectedService = serviceTypes.find(s => s.id === bookingData.serviceType);
-                        return selectedService?.recurring || option.id === 'one-time';
-                      })
-                      .map((option) => (
+                    {frequencyOptions.map((option) => {
+                      const sizePricing = pricingMatrix[bookingData.homeSize as keyof typeof pricingMatrix];
+                      const price = sizePricing ? sizePricing[option.id as keyof typeof sizePricing] : 0;
+                      
+                      return (
                         <Card
                           key={option.id}
                           className={cn(
@@ -438,23 +524,56 @@ export function ModernLegacyBooking() {
                           onClick={() => updateField('frequency', option.id)}
                         >
                           <CardContent className="p-4 text-center">
-                            {option.discount > 0 && (
-                              <Badge className="absolute -top-2 -right-2 bg-success">
-                                {option.discount}% OFF
-                              </Badge>
-                            )}
                             <h3 className="font-semibold">{option.name}</h3>
                             <p className="text-sm text-muted-foreground">{option.description}</p>
+                            {price > 0 && (
+                              <p className="text-lg font-bold text-primary mt-2">
+                                {formatPrice(price)}
+                              </p>
+                            )}
                           </CardContent>
                         </Card>
-                      ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
             )}
 
+            {/* Show price for Deep Clean and Move-Out */}
+            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && (
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-2xl font-bold text-primary">
+                    {formatPrice(getExactPrice())}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {bookingData.serviceType === 'deep' ? 'Deep Cleaning' : 'Move-Out Cleaning'} Price
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Large Home Estimate Notice */}
+            {bookingData.homeSize === 'over-5100' && (
+              <Card className="bg-warning/5 border-warning/20">
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-xl font-bold text-warning mb-2">
+                    In-Person Estimate Required
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Homes over 5,100 sq ft require an in-person estimate. Please call us to schedule your consultation.
+                  </p>
+                  <Button className="mt-4" variant="outline">
+                    Call for Estimate
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Add-ons Selection */}
-            {bookingData.frequency && (
+            {((bookingData.serviceType === 'regular' && bookingData.frequency) || 
+              (bookingData.serviceType !== 'regular' && bookingData.homeSize && bookingData.homeSize !== 'over-5100')) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Optional Add-Ons</CardTitle>

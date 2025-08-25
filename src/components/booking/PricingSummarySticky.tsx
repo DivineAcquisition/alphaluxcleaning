@@ -144,18 +144,6 @@ export function PricingSummarySticky({
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">{formatPrice(subtotal)}</span>
             </div>
-
-            {hasDiscount && (
-              <div className="flex justify-between text-sm">
-                <span className="text-success flex items-center gap-1">
-                  <Tag className="h-3 w-3" />
-                  {selectedFrequency?.name} Discount ({selectedFrequency?.discount}%)
-                </span>
-                <span className="font-medium text-success">
-                  -{formatPrice(bookingData.savings)}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Total */}
@@ -166,22 +154,8 @@ export function PricingSummarySticky({
               <p className="text-2xl font-bold text-primary">
                 {formatPrice(bookingData.totalPrice)}
               </p>
-              {hasDiscount && (
-                <p className="text-sm text-muted-foreground line-through">
-                  {formatPrice(subtotal)}
-                </p>
-              )}
             </div>
           </div>
-
-          {/* Savings Badge */}
-          {hasDiscount && (
-            <div className="text-center">
-              <Badge className="bg-success text-success-foreground">
-                You save {formatPrice(bookingData.savings)}!
-              </Badge>
-            </div>
-          )}
 
           {/* Payment Note */}
           <div className="pt-4 border-t border-border/50">
