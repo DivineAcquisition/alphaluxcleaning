@@ -45,7 +45,28 @@ export function ReferralCodeDialog({ onCodeGenerated, trigger }: ReferralCodeDia
         toast.error(result.error);
       } else if (result?.code) {
         setGeneratedCode(result.code);
-        toast.success("Referral code generated successfully!");
+        
+        // Send referral email
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-referral-email', {
+            body: {
+              ownerName: name,
+              ownerEmail: email,
+              referralCode: result.code
+            }
+          });
+          
+          if (emailError) {
+            console.error('Email error:', emailError);
+            toast.success("Referral code generated! Check your email for details.");
+          } else {
+            toast.success("Referral code generated and sent to your email!");
+          }
+        } catch (emailError) {
+          console.error('Failed to send email:', emailError);
+          toast.success("Referral code generated! Email delivery may be delayed.");
+        }
+        
         onCodeGenerated?.(result.code);
         copyToClipboard(result.code);
       }

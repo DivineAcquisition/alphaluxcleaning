@@ -33,10 +33,29 @@ export function PostPaymentReferralSection() {
       if (result?.success) {
         setGeneratedCode(result.code);
         
+        // Send referral email
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-referral-email', {
+            body: {
+              ownerName: name,
+              ownerEmail: email,
+              referralCode: result.code
+            }
+          });
+          
+          if (emailError) {
+            console.error('Email error:', emailError);
+            toast.success("Referral code generated! Check your email for details.");
+          } else {
+            toast.success("Referral code generated and sent to your email!");
+          }
+        } catch (emailError) {
+          console.error('Failed to send email:', emailError);
+          toast.success("Referral code generated! Email delivery may be delayed.");
+        }
+        
         // Automatically copy to clipboard
         await copyToClipboard(result.code);
-        
-        toast.success("Referral code generated and copied to clipboard!");
       } else {
         toast.error(result?.error || "Failed to generate referral code");
       }
