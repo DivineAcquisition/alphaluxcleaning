@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { checkStripeReady } from '@/lib/stripe';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { PaymentErrorBoundary } from '@/components/payment/PaymentErrorBoundary';
-import { formatPrice } from '@/lib/pricing-utils';
+import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
@@ -34,6 +34,7 @@ interface BookingData {
   addOnPrices: { [key: string]: number };
   frequencyDiscount: number;
   membershipDiscount?: number;
+  membershipFee?: number;
   totalPrice: number;
   paymentType: 'pay_after_service' | '25_percent_with_discount';
   promoDiscount: number;
@@ -84,13 +85,19 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     checkStripe();
   }, []);
 
-  // Calculate final pricing with membership discount
-  const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
+  // Calculate final pricing with 20% global discount and membership
+  const originalBaseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
+  const globalDiscountAmount = calculateGlobalDiscountAmount(originalBaseTotal);
+  const baseTotal = originalBaseTotal - globalDiscountAmount; // Base total with 20% discount applied
+  
   const recurringDiscount = isRecurring ? bookingData.frequencyDiscount : 0;
-  const membershipDiscount = bookingData.addMembership ? 20 : 0; // $20 membership discount
+  const membershipFee = bookingData.addMembership ? 39 : 0; // $39/month membership fee
+  const membershipDiscount = bookingData.addMembership ? 20 : 0; // $20 membership credit on current service
   const totalDiscount = recurringDiscount + promoDiscount + membershipDiscount;
   const nextDayFee = bookingData.nextDayFee || 0;
-  const finalTotal = baseTotal + nextDayFee - totalDiscount;
+  
+  // Final calculation: base total + membership fee + next day fee - all discounts
+  const finalTotal = baseTotal + membershipFee + nextDayFee - totalDiscount;
   let paymentAmount = 0;
   
   if (paymentType === '25_percent_with_discount') {
@@ -106,7 +113,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       paymentType,
       promoDiscount,
       totalPrice: finalTotal,
-      membershipDiscount: bookingData.addMembership ? 20 : 0
+      membershipDiscount: bookingData.addMembership ? 20 : 0,
+      membershipFee: bookingData.addMembership ? 39 : 0
     });
   }, [paymentType, promoDiscount, finalTotal, bookingData.addMembership]);
 
@@ -299,10 +307,28 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           promo_code_used: promoCode || null,
           user_authenticated: !!user,
           
-          // Enhanced booking details
-          discount_20_percent_applied: true,
-          membership_discount_applied: membershipDiscount > 0,
-          payment_option_selected: paymentType,
+        // Enhanced Pricing Breakdown
+        pricing_details: {
+          original_base_total: Math.round(originalBaseTotal * 100), // in cents
+          global_discount_20_percent: Math.round(globalDiscountAmount * 100), // in cents
+          base_total_after_global_discount: Math.round(baseTotal * 100), // in cents
+          membership_monthly_fee: Math.round(membershipFee * 100), // in cents
+          membership_service_credit: Math.round(membershipDiscount * 100), // in cents
+          recurring_discount: Math.round(recurringDiscount * 100), // in cents
+          promo_discount: Math.round(promoDiscount * 100), // in cents
+          next_day_fee: Math.round(nextDayFee * 100), // in cents
+          final_total: Math.round(finalTotal * 100), // in cents
+          payment_amount: Math.round(paymentAmount * 100), // in cents
+          
+          // Formatted for display
+          original_base_total_display: formatPrice(originalBaseTotal),
+          global_discount_display: formatPrice(globalDiscountAmount),
+          base_total_display: formatPrice(baseTotal),
+          membership_fee_display: formatPrice(membershipFee),
+          membership_discount_display: formatPrice(membershipDiscount),
+          final_total_display: formatPrice(finalTotal),
+          payment_amount_display: formatPrice(paymentAmount)
+        },
           total_savings: totalDiscount
         },
         
@@ -385,27 +411,30 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
               <div className="flex-1">
-                <h4 className="font-semibold text-primary">Add Membership & Save</h4>
+                <h4 className="font-semibold text-primary">Add Clean Covered Membership</h4>
                 <div className="space-y-2 mt-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success" />
-                    <span>Priority booking - book up to 30 days in advance</span>
+                    <span>Priority booking & scheduling</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success" />
-                    <span>$20 monthly credit towards services</span>
+                    <span>$20 monthly service credit</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success" />
-                    <span>Exclusive member-only discounts</span>
+                    <span>Exclusive member discounts</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success" />
-                    <span>Cancel anytime, no long-term commitment</span>
+                    <span>Cancel anytime, no commitment</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-medium text-success">
+                    <span>$39/month + $20 credit on this service!</span>
                   </div>
                 </div>
                 <Badge className="mt-3 bg-success text-success-foreground">
-                  Save $20/month on services!
+                  Net: $19/month (includes $20 credit today!)
                 </Badge>
               </div>
               <Switch
@@ -681,100 +710,67 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       {/* Right Column - Order Summary */}
       <div className="lg:col-span-1">
         <Card className="sticky top-32 shadow-clean border-primary/20">
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
-            <CardTitle>Order Summary</CardTitle>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Price Breakdown
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            
-            {/* Service Details */}
-            <div className="space-y-2">
-              <h4 className="font-semibold">Service Details</h4>
-              <div className="text-sm space-y-1">
-                <p><span className="text-muted-foreground">Service:</span> {bookingData.homeSize.replace('_', ' ')}</p>
-                <p><span className="text-muted-foreground">Date:</span> {new Date(bookingData.serviceDate).toLocaleDateString()}</p>
-                <p><span className="text-muted-foreground">Time:</span> {bookingData.serviceTime}</p>
-                <p><span className="text-muted-foreground">Address:</span> {bookingData.address.street}</p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Pricing Breakdown */}
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span>Base Service</span>
-                <span>${formatPrice(bookingData.basePrice, { showCurrency: false })}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Original Service Price</span>
+                <span className="line-through text-muted-foreground">{formatPrice(originalBaseTotal)}</span>
+              </div>
+              <div className="flex justify-between items-center text-success">
+                <span>20% Limited Time Discount</span>
+                <span>-{formatPrice(globalDiscountAmount)}</span>
+              </div>
+              <div className="flex justify-between items-center font-medium">
+                <span>Service Total (with 20% off)</span>
+                <span>{formatPrice(baseTotal)}</span>
               </div>
               
-              {Object.keys(bookingData.addOnPrices).length > 0 && (
-                <div className="space-y-1">
-               {Object.entries(bookingData.addOnPrices).map(([addOn, price]) => (
-                   <div key={addOn} className="flex justify-between text-sm">
-                     <span className="text-muted-foreground">{addOn.replace(/-/g, ' ')}</span>
-                     <span>+${formatPrice(price, { showCurrency: false })}</span>
-                   </div>
-                 ))}
-               </div>
-             )}
-             
-             {nextDayFee > 0 && (
-               <div className="flex justify-between text-primary">
-                 <span>Next Day Priority Fee</span>
-                 <span>+${formatPrice(nextDayFee, { showCurrency: false })}</span>
-               </div>
-             )}
-             
-             {recurringDiscount > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Recurring Discount</span>
-                  <span>-${formatPrice(recurringDiscount, { showCurrency: false })}</span>
-                </div>
+              {bookingData.addMembership && (
+                <>
+                  <div className="border-t pt-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Membership Fee (monthly)</span>
+                      <span>+{formatPrice(membershipFee)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-success">
+                      <span>Membership Credit (this service)</span>
+                      <span>-{formatPrice(membershipDiscount)}</span>
+                    </div>
+                  </div>
+                </>
               )}
               
-              {membershipDiscount > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Membership Discount</span>
-                  <span>-${formatPrice(membershipDiscount, { showCurrency: false })}</span>
+              {nextDayFee > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>Next-Day Service Fee</span>
+                  <span>+{formatPrice(nextDayFee)}</span>
                 </div>
               )}
               
               {promoDiscount > 0 && (
-                <div className="flex justify-between text-success">
-                  <span>Promo Discount</span>
-                  <span>-${formatPrice(promoDiscount, { showCurrency: false })}</span>
+                <div className="flex justify-between items-center text-success">
+                  <span>Promo Code Discount</span>
+                  <span>-{formatPrice(promoDiscount)}</span>
                 </div>
               )}
               
-              <Separator />
-              
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total</span>
-                <span className="text-primary">${formatPrice(finalTotal, { showCurrency: false })}</span>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span>Total Due Today</span>
+                  <span className="text-primary">{formatPrice(finalTotal)}</span>
+                </div>
+                {bookingData.addMembership && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Membership will continue at $39/month with $20 monthly credit
+                  </p>
+                )}
               </div>
-              
-              {paymentType === '25_percent_with_discount' && (
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium">Paying Today: {formatPrice(paymentAmount)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Save {formatPrice(finalTotal * 0.05)} with 5% discount! Remaining {formatPrice(finalTotal * 0.95 - paymentAmount)} due after service
-                  </p>
-                </div>
-              )}
-              
-              {paymentType === 'pay_after_service' && (
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm font-medium">Paying Today: $0.00 (Authorization Only)</p>
-                  <p className="text-xs text-muted-foreground">
-                    Full amount {formatPrice(finalTotal)} will be charged after service completion
-                  </p>
-                </div>
-              )}
-              
-              {totalDiscount > 0 && (
-                <div className="text-center text-success font-medium">
-                  Total Savings: {formatPrice(totalDiscount)}
-                </div>
-              )}
             </div>
 
             {!showPaymentForm && (

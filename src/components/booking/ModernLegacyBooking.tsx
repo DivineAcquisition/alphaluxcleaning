@@ -10,77 +10,77 @@ import { CheckCircle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin,
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
-import { formatPrice } from '@/lib/pricing-utils';
+import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 
-// Pricing matrix with 20% discount already applied - LIMITED TIME OFFER
+// Original pricing matrix - 20% discount applied automatically in calculations
 const pricingMatrix = {
   'under-1000': {
-    weekly: 78.00,    // was 97.50
-    biweekly: 94.87,  // was 118.59
-    monthly: 137.01,  // was 171.26
-    oneTime: 180.25,  // was 225.31
-    deepClean: 244.04 // was 305.05
+    weekly: 97.50,
+    biweekly: 118.59,
+    monthly: 171.26,
+    oneTime: 225.31,
+    deepClean: 305.05
   },
   '1001-1400': {
-    weekly: 92.75,    // was 115.94
-    biweekly: 100.46, // was 125.58
-    monthly: 149.27,  // was 186.59
-    oneTime: 188.07,  // was 235.09
-    deepClean: 262.22 // was 327.77
+    weekly: 115.94,
+    biweekly: 125.58,
+    monthly: 186.59,
+    oneTime: 235.09,
+    deepClean: 327.77
   },
   '1401-1800': {
-    weekly: 100.54,   // was 125.67
-    biweekly: 112.05, // was 140.06
-    monthly: 180.58,  // was 225.73
-    oneTime: 204.22,  // was 255.27
-    deepClean: 284.75 // was 355.94
+    weekly: 125.67,
+    biweekly: 140.06,
+    monthly: 225.73,
+    oneTime: 255.27,
+    deepClean: 355.94
   },
   '1801-2400': {
-    weekly: 106.25,   // was 132.81
-    biweekly: 120.12, // was 150.15
-    monthly: 187.90,  // was 234.87
-    oneTime: 212.33,  // was 265.41
-    deepClean: 308.10 // was 385.13
+    weekly: 132.81,
+    biweekly: 150.15,
+    monthly: 234.87,
+    oneTime: 265.41,
+    deepClean: 385.13
   },
   '2401-2800': {
-    weekly: 126.61,   // was 158.26
-    biweekly: 140.11, // was 175.14
-    monthly: 196.61,  // was 245.76
-    oneTime: 228.22,  // was 285.28
-    deepClean: 324.01 // was 405.01
+    weekly: 158.26,
+    biweekly: 175.14,
+    monthly: 245.76,
+    oneTime: 285.28,
+    deepClean: 405.01
   },
   '2801-3300': {
-    weekly: 134.98,   // was 168.73
-    biweekly: 150.90, // was 188.62
-    monthly: 230.34,  // was 287.92
-    oneTime: 237.97,  // was 297.46
-    deepClean: 367.33 // was 459.16
+    weekly: 168.73,
+    biweekly: 188.62,
+    monthly: 287.92,
+    oneTime: 297.46,
+    deepClean: 459.16
   },
   '3301-3900': {
-    weekly: 143.06,   // was 178.82
-    biweekly: 158.09, // was 197.61
-    monthly: 246.25,  // was 307.81
-    oneTime: 277.07,  // was 346.34
-    deepClean: 382.71 // was 478.39
+    weekly: 178.82,
+    biweekly: 197.61,
+    monthly: 307.81,
+    oneTime: 346.34,
+    deepClean: 478.39
   },
   '3901-4500': {
-    weekly: 172.23,   // was 215.29
-    biweekly: 185.26, // was 231.58
-    monthly: 294.95,  // was 368.69
-    oneTime: 302.94,  // was 378.67
-    deepClean: 410.08 // was 512.60
+    weekly: 215.29,
+    biweekly: 231.58,
+    monthly: 368.69,
+    oneTime: 378.67,
+    deepClean: 512.60
   },
   '4501-5100': {
-    weekly: 182.85,   // was 228.56
-    biweekly: 193.64, // was 242.05
-    monthly: 342.54,  // was 428.17
-    oneTime: 369.10,  // was 461.37
-    deepClean: 451.39 // was 564.24
+    weekly: 228.56,
+    biweekly: 242.05,
+    monthly: 342.54,
+    oneTime: 369.10,
+    deepClean: 451.39
   }
 };
 
@@ -260,7 +260,7 @@ export function ModernLegacyBooking() {
     }));
   };
 
-  // Get exact price from pricing matrix
+  // Get exact price from pricing matrix with 20% discount applied
   const getExactPrice = () => {
     if (!bookingData.homeSize) return 0;
     
@@ -272,22 +272,23 @@ export function ModernLegacyBooking() {
     const sizePricing = pricingMatrix[bookingData.homeSize as keyof typeof pricingMatrix];
     if (!sizePricing) return 0;
 
-    let basePrice = 0;
+    let originalPrice = 0;
     
     if (bookingData.serviceType === 'regular' && bookingData.frequency) {
-      basePrice = sizePricing[bookingData.frequency as keyof typeof sizePricing] || 0;
+      originalPrice = sizePricing[bookingData.frequency as keyof typeof sizePricing] || 0;
     } else if (bookingData.serviceType === 'deep') {
-      basePrice = sizePricing.deepClean;
+      originalPrice = sizePricing.deepClean;
     } else if (bookingData.serviceType === 'moveout') {
-      basePrice = sizePricing.deepClean; // Move-out uses same pricing as deep clean
+      originalPrice = sizePricing.deepClean; // Move-out uses same pricing as deep clean
     }
 
-    return basePrice;
+    // Apply 20% global discount
+    return applyGlobalDiscount(originalPrice);
   };
 
-  // Calculate pricing whenever relevant fields change
+  // Calculate pricing whenever relevant fields change with 20% discount applied
   useEffect(() => {
-    const basePrice = getExactPrice();
+    const discountedPrice = getExactPrice(); // Already includes 20% discount
     
     // Calculate add-ons total
     const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
@@ -295,12 +296,14 @@ export function ModernLegacyBooking() {
       return total + (addOn?.price || 0);
     }, 0);
 
-    const totalPrice = basePrice + addOnsTotal;
+    // Calculate discounted add-ons (20% off add-ons too)
+    const discountedAddOnsTotal = applyGlobalDiscount(addOnsTotal);
+    const totalPrice = discountedPrice + discountedAddOnsTotal;
 
-    updateField('basePrice', basePrice);
+    updateField('basePrice', discountedPrice);
     updateField('totalPrice', totalPrice);
-    updateField('savings', 0); // No discounts with exact pricing
-  }, [bookingData.serviceType, bookingData.homeSize, bookingData.frequency, bookingData.addOns]);
+    updateField('savings', 0);
+  }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, bookingData.addOns]);
 
   // Validate ZIP code
   useEffect(() => {
