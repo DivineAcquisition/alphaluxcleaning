@@ -8,7 +8,7 @@ export default function CustomerPortalDashboard() {
     <CustomerPortalWrapper 
       title="Customer Dashboard" 
       description="Manage your cleaning services and account"
-      requiresAuth={true}
+      requiresAuth={false}
     >
       <CustomerPortalNavigation title="Dashboard" />
       <MobileCustomerPortal />

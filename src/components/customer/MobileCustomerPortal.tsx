@@ -25,18 +25,16 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useCustomerData } from '@/hooks/useCustomerData';
-import { useAuth } from '@/contexts/AuthContext';
+import { useCustomerPortal } from '@/contexts/CustomerPortalContext';
 import { EnhancedServiceManagement } from '@/components/customer/EnhancedServiceManagement';
 import { ChatFallback } from '@/components/customer/ChatFallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
 export function MobileCustomerPortal() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { profile, orders, bookings, notifications, stats, loading, refreshAll, markNotificationAsRead } = useCustomerData();
+  const { profile, orders, bookings, notifications, stats, loading, refreshAll, markNotificationAsRead, customerEmail } = useCustomerPortal();
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const upcomingServices = bookings.filter(booking => 
@@ -107,7 +105,7 @@ export function MobileCustomerPortal() {
             </div>
             <div>
               <h2 className="text-xl font-bold">
-                Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'Valued Customer'}!
+                Welcome back, {profile?.full_name || customerEmail?.split('@')[0] || 'Valued Customer'}!
               </h2>
               <p className="text-white/80">Your cleaning services at a glance</p>
             </div>
@@ -474,9 +472,9 @@ export function MobileCustomerPortal() {
                       </div>
                       <div>
                         <h4 className="font-medium text-foreground">
-                          {profile?.full_name || user?.email?.split('@')[0] || 'Customer'}
+                          {profile?.full_name || customerEmail?.split('@')[0] || 'Customer'}
                         </h4>
-                        <p className="text-sm text-muted-foreground">{user?.email}</p>
+                        <p className="text-sm text-muted-foreground">{customerEmail}</p>
                       </div>
                     </div>
                     {profile?.phone && (

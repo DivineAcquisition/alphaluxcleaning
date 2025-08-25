@@ -86,7 +86,7 @@ export default function CustomerMobilePortal() {
     <CustomerPortalWrapper 
       title="Mobile Customer Portal" 
       description="Manage your services on the go"
-      requiresAuth={true}
+      requiresAuth={false}
     >
       <CustomerErrorBoundary>
         <div className="min-h-screen bg-background">

@@ -159,23 +159,11 @@ function App() {
                 <Route path="/membership" element={<CleanCoveredMembership />} />
                 <Route path="/modern-booking" element={<ModernBooking />} />
                 
-                {/* Customer portal routes */}
-                <Route path="/customer-mobile-portal" element={
-                  <ProtectedRoute requiredRole="customer">
-                    <CustomerMobilePortal />
-                  </ProtectedRoute>
-                } />
-                <Route path="/customer-portal-dashboard" element={
-                  <ProtectedRoute requiredRole="customer">
-                    <CustomerPortalDashboard />
-                  </ProtectedRoute>
-                } />
+                {/* Customer portal routes - now public with email-based access */}
+                <Route path="/customer-mobile-portal" element={<CustomerMobilePortal />} />
+                <Route path="/customer-portal-dashboard" element={<CustomerPortalDashboard />} />
                 <Route path="/customer-portal" element={<Navigate to="/customer-portal-dashboard" replace />} />
-                <Route path="/my-services" element={
-                  <ProtectedRoute requiredRole="customer">
-                    <CustomerDashboard />
-                  </ProtectedRoute>
-                } />
+                <Route path="/my-services" element={<CustomerDashboard />} />
                 
                 {/* Subcontractor routes */}
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />

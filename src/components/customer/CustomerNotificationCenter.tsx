@@ -13,10 +13,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useCustomerData } from '@/hooks/useCustomerData';
+import { useCustomerPortal } from '@/contexts/CustomerPortalContext';
 
 export function CustomerNotificationCenter() {
-  const { notifications, markNotificationAsRead } = useCustomerData();
+  const { notifications, markNotificationAsRead } = useCustomerPortal();
 
   const getNotificationIcon = (type: string, importance: string) => {
     if (importance === 'high') {

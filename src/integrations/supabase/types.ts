@@ -4339,6 +4339,10 @@ export type Database = {
         Args: { p_booking_id: string; p_customer_email: string }
         Returns: Json
       }
+      get_customer_data_by_email_safe: {
+        Args: { p_email: string }
+        Returns: Json
+      }
       get_customer_order_status_secure: {
         Args: { p_customer_email: string; p_order_id: string }
         Returns: Json
@@ -4466,6 +4470,10 @@ export type Database = {
       }
       mark_notification_read: {
         Args: { p_customer_id: string; p_notification_id: string }
+        Returns: boolean
+      }
+      mark_notification_read_by_email: {
+        Args: { p_customer_email: string; p_notification_id: string }
         Returns: boolean
       }
       mark_onboarding_token_used: {
