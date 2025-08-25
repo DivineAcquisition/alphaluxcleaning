@@ -211,8 +211,8 @@ export function GuestBookingFlow() {
     // Clear both possible quote data storage keys
     localStorage.removeItem('quoteData');
     localStorage.removeItem('instant_quote');
-    // Redirect to confirmation page
-    window.location.href = `/booking-confirmation?session_id=${sessionId}`;
+    // Redirect to order confirmation page
+    window.location.href = `/order-confirmation?session_id=${sessionId}`;
   };
 
   const handleSchedulingComplete = (data: { scheduled_date: string; scheduled_time: string }) => {

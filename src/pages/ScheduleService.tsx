@@ -169,8 +169,8 @@ const ScheduleService = () => {
       } else if (sessionId) {
         navigate(`/order-status?session_id=${sessionId}`);
       } else {
-        // Fallback to booking confirmation if no ID available
-        navigate('/booking-confirmation');
+        // Fallback to order confirmation if no ID available
+        navigate('/order-confirmation');
       }
     }
   };

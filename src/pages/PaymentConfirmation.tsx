@@ -316,7 +316,7 @@ const PaymentConfirmation = () => {
                   <Button 
                     onClick={() => {
                       const params = sessionId ? `session_id=${sessionId}` : `order_id=${orderId}`;
-                      navigate(`/booking-confirmation?${params}`);
+                      navigate(`/order-confirmation?${params}`);
                     }}
                     className="mt-4"
                   >

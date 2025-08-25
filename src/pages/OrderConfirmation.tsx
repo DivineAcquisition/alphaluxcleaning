@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Navigation } from "@/components/Navigation";
-import { CheckCircle, MapPin, User, Calendar, Clock, Package, ArrowLeft, ExternalLink } from "lucide-react";
+import { CheckCircle, MapPin, User, Calendar, Clock, Package, ArrowLeft, ExternalLink, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -112,6 +112,28 @@ export default function OrderConfirmation() {
 
   const handleCheckStatus = () => {
     navigate(`/order-status?order_id=${order?.id}`);
+  };
+
+  const handleTextUs = () => {
+    const currentHour = new Date().getHours();
+    const isBusinessHours = currentHour >= 9 && currentHour < 18; // 9 AM to 6 PM
+    const phoneNumber = '4153887667'; // Business phone number
+    const message = encodeURIComponent(`Hi! I just placed an order (ID: ${order?.id}) and have a question.`);
+    
+    if (isBusinessHours) {
+      // During business hours, open SMS
+      window.open(`sms:${phoneNumber}?body=${message}`, '_blank');
+    } else {
+      // Outside business hours, still allow SMS but show notice
+      toast.info('We typically respond to texts between 9 AM - 6 PM PST');
+      window.open(`sms:${phoneNumber}?body=${message}`, '_blank');
+    }
+  };
+
+  const getBusinessHoursStatus = () => {
+    const currentHour = new Date().getHours();
+    const isBusinessHours = currentHour >= 9 && currentHour < 18;
+    return isBusinessHours ? 'We\'re available now!' : 'Text us anytime - we respond 9 AM - 6 PM PST';
   };
 
   if (loading) {
@@ -302,8 +324,19 @@ export default function OrderConfirmation() {
             </Button>
             <Button onClick={handleCheckStatus} className="flex-1">
               <ExternalLink className="h-4 w-4 mr-2" />
-              Track Order Status
+              Check Order Status
             </Button>
+            <Button onClick={handleTextUs} variant="secondary" className="flex-1">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Text Us (9-6)
+            </Button>
+          </div>
+          
+          {/* Business Hours Info */}
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              {getBusinessHoursStatus()}
+            </p>
           </div>
         </div>
       </div>
