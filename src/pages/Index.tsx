@@ -5,7 +5,7 @@ import { Building2, Home as HomeIcon } from "lucide-react";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
-import { ModernLegacyBooking } from "@/components/booking/ModernLegacyBooking";
+import { UnifiedBookingWizard } from "@/components/UnifiedBookingWizard";
 
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
@@ -65,7 +65,23 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="residential">
-            <ModernLegacyBooking />
+            <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4">
+              {/* Header Section */}
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-jakarta font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  Book Your Cleaning Service
+                </h2>
+                <p className="font-inter font-semibold text-muted-foreground text-lg max-w-3xl mx-auto mb-8">
+                  Complete your entire booking in one place - all information saves automatically
+                </p>
+              </div>
+
+              {/* Unified Booking Wizard */}
+              <UnifiedBookingWizard onBookingComplete={paymentIntentId => {
+                console.log('🔄 Booking complete, redirecting to order confirmation with order_id:', paymentIntentId);
+                window.location.href = `/order-confirmation?order_id=${paymentIntentId}`;
+              }} />
+            </div>
           </TabsContent>
           
           <TabsContent value="commercial">
