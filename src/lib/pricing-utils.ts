@@ -9,6 +9,20 @@ export interface PriceDisplayOptions {
 }
 
 /**
+ * Apply 20% discount to price - current promotion
+ */
+export function applyGlobalDiscount(price: number): number {
+  return Math.round(price * 0.8 * 100) / 100; // 20% off, rounded to nearest cent
+}
+
+/**
+ * Calculate 20% discount amount
+ */
+export function calculateGlobalDiscountAmount(price: number): number {
+  return Math.round(price * 0.2 * 100) / 100; // 20% discount amount
+}
+
+/**
  * Convert cents to dollars
  */
 export function centsToDollars(cents: number): number {

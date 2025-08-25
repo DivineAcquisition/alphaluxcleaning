@@ -17,70 +17,70 @@ import { PricingSummarySticky } from './PricingSummarySticky';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 
-// Exact pricing matrix matching provided rates
+// Pricing matrix with 20% discount already applied - LIMITED TIME OFFER
 const pricingMatrix = {
   'under-1000': {
-    weekly: 97.50,
-    biweekly: 118.59,
-    monthly: 171.26,
-    oneTime: 225.31,
-    deepClean: 305.05
+    weekly: 78.00,    // was 97.50
+    biweekly: 94.87,  // was 118.59
+    monthly: 137.01,  // was 171.26
+    oneTime: 180.25,  // was 225.31
+    deepClean: 244.04 // was 305.05
   },
   '1001-1400': {
-    weekly: 115.94,
-    biweekly: 125.58,
-    monthly: 186.59,
-    oneTime: 235.09,
-    deepClean: 327.77
+    weekly: 92.75,    // was 115.94
+    biweekly: 100.46, // was 125.58
+    monthly: 149.27,  // was 186.59
+    oneTime: 188.07,  // was 235.09
+    deepClean: 262.22 // was 327.77
   },
   '1401-1800': {
-    weekly: 125.67,
-    biweekly: 140.06,
-    monthly: 225.73,
-    oneTime: 255.27,
-    deepClean: 355.94
+    weekly: 100.54,   // was 125.67
+    biweekly: 112.05, // was 140.06
+    monthly: 180.58,  // was 225.73
+    oneTime: 204.22,  // was 255.27
+    deepClean: 284.75 // was 355.94
   },
   '1801-2400': {
-    weekly: 132.81,
-    biweekly: 150.15,
-    monthly: 234.87,
-    oneTime: 265.41,
-    deepClean: 385.13
+    weekly: 106.25,   // was 132.81
+    biweekly: 120.12, // was 150.15
+    monthly: 187.90,  // was 234.87
+    oneTime: 212.33,  // was 265.41
+    deepClean: 308.10 // was 385.13
   },
   '2401-2800': {
-    weekly: 158.26,
-    biweekly: 175.14,
-    monthly: 245.76,
-    oneTime: 285.28,
-    deepClean: 405.01
+    weekly: 126.61,   // was 158.26
+    biweekly: 140.11, // was 175.14
+    monthly: 196.61,  // was 245.76
+    oneTime: 228.22,  // was 285.28
+    deepClean: 324.01 // was 405.01
   },
   '2801-3300': {
-    weekly: 168.73,
-    biweekly: 188.62,
-    monthly: 287.92,
-    oneTime: 297.46,
-    deepClean: 459.16
+    weekly: 134.98,   // was 168.73
+    biweekly: 150.90, // was 188.62
+    monthly: 230.34,  // was 287.92
+    oneTime: 237.97,  // was 297.46
+    deepClean: 367.33 // was 459.16
   },
   '3301-3900': {
-    weekly: 178.82,
-    biweekly: 197.61,
-    monthly: 307.81,
-    oneTime: 346.34,
-    deepClean: 478.39
+    weekly: 143.06,   // was 178.82
+    biweekly: 158.09, // was 197.61
+    monthly: 246.25,  // was 307.81
+    oneTime: 277.07,  // was 346.34
+    deepClean: 382.71 // was 478.39
   },
   '3901-4500': {
-    weekly: 215.29,
-    biweekly: 231.58,
-    monthly: 368.69,
-    oneTime: 378.67,
-    deepClean: 512.60
+    weekly: 172.23,   // was 215.29
+    biweekly: 185.26, // was 231.58
+    monthly: 294.95,  // was 368.69
+    oneTime: 302.94,  // was 378.67
+    deepClean: 410.08 // was 512.60
   },
   '4501-5100': {
-    weekly: 228.56,
-    biweekly: 242.05,
-    monthly: 428.17,
-    oneTime: 461.37,
-    deepClean: 564.24
+    weekly: 182.85,   // was 228.56
+    biweekly: 193.64, // was 242.05
+    monthly: 342.54,  // was 428.17
+    oneTime: 369.10,  // was 461.37
+    deepClean: 451.39 // was 564.24
   }
 };
 
@@ -247,6 +247,7 @@ export function ModernLegacyBooking() {
   const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const updateField = (field: keyof BookingData, value: any) => {
     setBookingData(prev => ({ ...prev, [field]: value }));
@@ -354,6 +355,10 @@ export function ModernLegacyBooking() {
         setShowCheckout(true);
       } else {
         setCurrentStep(prev => prev + 1);
+        // Auto-scroll to top of container
+        setTimeout(() => {
+          containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       }
     }
   };
@@ -361,6 +366,10 @@ export function ModernLegacyBooking() {
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+      // Auto-scroll to top of container
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -378,7 +387,7 @@ export function ModernLegacyBooking() {
           ...bookingData,
           paymentType: 'pay_after_service' as const,
           promoDiscount: 0,
-          frequencyDiscount: bookingData.savings,
+          frequencyDiscount: 0,
           membershipDiscount: 0,
           addOnPrices: bookingData.addOns.reduce((acc, addOnId) => {
             const addOn = addOnServices.find(a => a.id === addOnId);
@@ -844,16 +853,24 @@ export function ModernLegacyBooking() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
+            <div className="mb-4">
+              <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-lg px-4 py-2 animate-pulse">
+                🔥 LIMITED TIME: 20% OFF ALL SERVICES! 🔥
+              </Badge>
+            </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Book Your Cleaning Service
             </h1>
             <p className="text-muted-foreground text-lg">
               Professional cleaning services in the Greater Baytown area
+            </p>
+            <p className="text-sm text-success font-semibold mt-2">
+              All prices already include 20% discount - Save big today!
             </p>
           </div>
 

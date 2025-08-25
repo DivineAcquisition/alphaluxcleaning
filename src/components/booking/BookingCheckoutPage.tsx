@@ -84,10 +84,11 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     checkStripe();
   }, []);
 
-  // Calculate final pricing
+  // Calculate final pricing with membership discount
   const baseTotal = bookingData.basePrice + Object.values(bookingData.addOnPrices).reduce((sum, price) => sum + price, 0);
   const recurringDiscount = isRecurring ? bookingData.frequencyDiscount : 0;
-  const totalDiscount = recurringDiscount + promoDiscount;
+  const membershipDiscount = bookingData.addMembership ? 20 : 0; // $20 membership discount
+  const totalDiscount = recurringDiscount + promoDiscount + membershipDiscount;
   const nextDayFee = bookingData.nextDayFee || 0;
   const finalTotal = baseTotal + nextDayFee - totalDiscount;
   let paymentAmount = 0;
@@ -104,9 +105,10 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     updateBookingData({ 
       paymentType,
       promoDiscount,
-      totalPrice: finalTotal
+      totalPrice: finalTotal,
+      membershipDiscount: bookingData.addMembership ? 20 : 0
     });
-  }, [paymentType, promoDiscount, finalTotal]);
+  }, [paymentType, promoDiscount, finalTotal, bookingData.addMembership]);
 
   const validatePromoCode = async () => {
     if (!promoCode.trim()) {
@@ -243,7 +245,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           base_price: bookingData.basePrice,
           add_on_prices: bookingData.addOnPrices,
           frequency_discount: bookingData.frequencyDiscount,
-          membership_discount: bookingData.membershipDiscount || 0,
+          membership_discount: membershipDiscount,
           promo_discount: promoDiscount,
           next_day_fee: bookingData.nextDayFee || 0,
           total_price: bookingData.totalPrice,
@@ -251,7 +253,22 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           // Payment Information
           payment_type: bookingData.paymentType,
           payment_amount: paymentAmount,
-          final_total: finalTotal
+          final_total: finalTotal,
+          
+          // All calculated totals for webhook
+          calculated_breakdown: {
+            base_total: baseTotal,
+            add_ons_total: Object.values(bookingData.addOnPrices || {}).reduce((sum, price) => sum + price, 0),
+            subtotal: baseTotal,
+            recurring_discount: recurringDiscount,
+            membership_discount: membershipDiscount,
+            promo_discount: promoDiscount,
+            total_discounts: totalDiscount,
+            next_day_fee: nextDayFee,
+            final_total: finalTotal,
+            payment_amount: paymentAmount,
+            amount_due_after: paymentType === 'pay_after_service' ? finalTotal : (finalTotal * 0.95 - paymentAmount)
+          }
         },
         
         // Customer Information
@@ -270,8 +287,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           square_footage: bookingData.squareFootage || null,
           bedrooms: bookingData.bedrooms || null,
           bathrooms: bookingData.bathrooms || null,
-          dwelling_type: bookingData.dwellingType || null,
-          flooring_type: bookingData.flooringType || null
+          dwelling_type: bookingData.dwellingType || null
         },
         
         // Booking Information
@@ -281,7 +297,13 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           is_recurring: bookingData.frequency !== 'one-time',
           membership_added: bookingData.addMembership || false,
           promo_code_used: promoCode || null,
-          user_authenticated: !!user
+          user_authenticated: !!user,
+          
+          // Enhanced booking details
+          discount_20_percent_applied: true,
+          membership_discount_applied: membershipDiscount > 0,
+          payment_option_selected: paymentType,
+          total_savings: totalDiscount
         },
         
         // Metadata
@@ -351,6 +373,87 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         
         {/* Left Column - Payment Form */}
         <div className="lg:col-span-2 space-y-6">
+        
+        {/* Membership Signup */}
+        <Card className="shadow-clean">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Clean Covered Membership - Save $20 Monthly!
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+              <div className="flex-1">
+                <h4 className="font-semibold text-primary">Add Membership & Save</h4>
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success" />
+                    <span>Priority booking - book up to 30 days in advance</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success" />
+                    <span>$20 monthly credit towards services</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success" />
+                    <span>Exclusive member-only discounts</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-success" />
+                    <span>Cancel anytime, no long-term commitment</span>
+                  </div>
+                </div>
+                <Badge className="mt-3 bg-success text-success-foreground">
+                  Save $20/month on services!
+                </Badge>
+              </div>
+              <Switch
+                checked={bookingData.addMembership || false}
+                onCheckedChange={(checked) => updateBookingData({ addMembership: checked })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Referral Code Generation */}
+        <Card className="shadow-clean">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              Generate Your Referral Code
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">Share & Earn Together!</h4>
+              <p className="text-sm text-blue-800 mb-3">
+                Create your personal referral code and share with friends. When they book, you both get rewards!
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-blue-600" />
+                  <span className="text-blue-800">Your friend gets 25% off their first cleaning</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-blue-600" />
+                  <span className="text-blue-800">You earn $25 credit when they book</span>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="mt-3 border-blue-300 text-blue-700 hover:bg-blue-100"
+                onClick={() => {
+                  const referralCode = `${bookingData.customerName?.replace(/\s+/g, '').toUpperCase() || 'GUEST'}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+                  navigator.clipboard.writeText(referralCode);
+                  toast.success(`Referral code "${referralCode}" copied to clipboard!`);
+                }}
+              >
+                Generate My Code
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
         {/* Recurring Service Toggle */}
         <Card className="shadow-clean">
@@ -625,6 +728,13 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
                 <div className="flex justify-between text-success">
                   <span>Recurring Discount</span>
                   <span>-${formatPrice(recurringDiscount, { showCurrency: false })}</span>
+                </div>
+              )}
+              
+              {membershipDiscount > 0 && (
+                <div className="flex justify-between text-success">
+                  <span>Membership Discount</span>
+                  <span>-${formatPrice(membershipDiscount, { showCurrency: false })}</span>
                 </div>
               )}
               
