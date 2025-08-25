@@ -15,7 +15,7 @@ import { formatPrice } from '@/lib/pricing-utils';
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
-import { EnhancedSchedulingStep } from '@/components/EnhancedSchedulingStep';
+import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 
 // Simplified service types with fixed pricing
 const serviceTypes = [
@@ -124,6 +124,7 @@ interface BookingData {
   // Step 3: Scheduling & Details
   serviceDate: string;
   serviceTime: string;
+  nextDayUpsell: boolean;
   address: {
     street: string;
     city: string;
@@ -154,6 +155,7 @@ const initialBookingData: BookingData = {
   addOns: [],
   serviceDate: '',
   serviceTime: '',
+  nextDayUpsell: false,
   address: {
     street: '',
     city: '',
@@ -251,7 +253,7 @@ export function ModernLegacyBooking() {
         return bookingData.homeSize !== '' && bookingData.frequency !== '';
       case 3:
         return (
-          bookingData.serviceDate !== '' &&
+          (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) &&
           bookingData.serviceTime !== '' &&
           bookingData.address.street !== '' &&
           bookingData.customerName !== '' &&
@@ -492,53 +494,22 @@ export function ModernLegacyBooking() {
       case 3:
         return (
           <div className="space-y-8">
-            {/* Scheduling - Custom implementation */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Schedule Your Service
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="serviceDate">Preferred Date *</Label>
-                    <Input
-                      id="serviceDate"
-                      type="date"
-                      value={bookingData.serviceDate}
-                      onChange={(e) => updateField('serviceDate', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="serviceTime">Preferred Time *</Label>
-                    <Select value={bookingData.serviceTime} onValueChange={(value) => updateField('serviceTime', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="8:00 AM">8:00 AM</SelectItem>
-                        <SelectItem value="9:00 AM">9:00 AM</SelectItem>
-                        <SelectItem value="10:00 AM">10:00 AM</SelectItem>
-                        <SelectItem value="11:00 AM">11:00 AM</SelectItem>
-                        <SelectItem value="12:00 PM">12:00 PM</SelectItem>
-                        <SelectItem value="1:00 PM">1:00 PM</SelectItem>
-                        <SelectItem value="2:00 PM">2:00 PM</SelectItem>
-                        <SelectItem value="3:00 PM">3:00 PM</SelectItem>
-                        <SelectItem value="4:00 PM">4:00 PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    We'll confirm your appointment within 24 hours and send you all the details.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Enhanced Scheduling */}
+            <EnhancedSchedulingStep
+              selectedDate={bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined}
+              selectedTime={bookingData.serviceTime}
+              nextDayUpsell={bookingData.nextDayUpsell}
+              onDateChange={(date) => updateField('serviceDate', date ? date.toISOString().split('T')[0] : '')}
+              onTimeChange={(time) => updateField('serviceTime', time)}
+              onNextDayToggle={(enabled) => {
+                updateField('nextDayUpsell', enabled);
+                if (enabled) {
+                  // Clear regular date selection when next-day is enabled
+                  updateField('serviceDate', '');
+                }
+              }}
+              serviceType={bookingData.serviceType}
+            />
 
             {/* Customer Information */}
             <Card>
