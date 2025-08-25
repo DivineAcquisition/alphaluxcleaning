@@ -1,12 +1,12 @@
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
-import { LegacyBookingFlow } from '@/components/booking/LegacyBookingFlow';
+import { SinglePageBooking } from '@/components/booking/SinglePageBooking';
 
 export default function LegacyBooking() {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <LegacyBookingFlow />
+      <SinglePageBooking />
     </div>
   );
 }
