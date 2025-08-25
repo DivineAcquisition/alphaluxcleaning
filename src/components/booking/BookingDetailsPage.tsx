@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRight, Star, Sparkles } from 'lucide-react';
@@ -184,135 +185,119 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
         </CardContent>
       </Card>
 
-      {/* Date & Time Selection */}
+      {/* Date Selection */}
       <Card className="shadow-clean animate-fade-in">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5" />
-            Choose Your Date & Time
+            Choose Your Date
           </CardTitle>
-          <p className="text-muted-foreground mt-2">
-            Select your preferred date and time for your cleaning service
-          </p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Date Selection Dropdown */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-primary" />
-              <h4 className="font-semibold">Select Date</h4>
+        <CardContent>
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                disabled={isDateDisabled}
+                className="rounded-md border mx-auto"
+                classNames={{
+                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                  day_today: "bg-accent text-accent-foreground",
+                }}
+              />
             </div>
-            <Select 
-              value={selectedDate ? selectedDate.toISOString() : ''} 
-              onValueChange={(value) => handleDateSelect(new Date(value))}
-            >
-              <SelectTrigger className="w-full h-12 text-left">
-                <SelectValue placeholder="Choose your preferred date" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableDates.map((date, index) => {
+            
+            {/* Quick Date Selection */}
+            <div className="flex-1 space-y-3">
+              <h4 className="font-semibold">Quick Select</h4>
+              <div className="grid grid-cols-1 gap-2">
+                {availableDates.slice(0, 6).map((date, index) => {
+                  const isSelected = selectedDate?.toDateString() === date.toDateString();
                   const isTomorrow = index === 0;
-                  const isNextDay = nextDayBooking && index === 0;
                   
                   return (
-                    <SelectItem 
-                      key={date.toISOString()} 
-                      value={date.toISOString()}
-                      className="py-3"
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => handleDateSelect(date)}
+                      className={cn(
+                        "p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md",
+                        isSelected 
+                          ? "border-primary bg-primary/5 shadow-clean"
+                          : "border-border hover:border-primary/50"
+                      )}
                     >
-                      <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="font-medium">
                             {date.toLocaleDateString('en-US', { 
                               weekday: 'long', 
-                              month: 'long', 
+                              month: 'short', 
                               day: 'numeric' 
                             })}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {date.toLocaleDateString('en-US', { year: 'numeric' })}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
                           {isTomorrow && (
-                            <Badge variant="secondary" className="text-xs">Tomorrow</Badge>
-                          )}
-                          {isNextDay && (
-                            <Badge className="bg-primary text-xs">Priority</Badge>
+                            <Badge variant="secondary" className="mt-1">Tomorrow</Badge>
                           )}
                         </div>
+                        {isSelected && (
+                          <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          </div>
+                        )}
                       </div>
-                    </SelectItem>
+                    </button>
                   );
                 })}
-              </SelectContent>
-            </Select>
+              </div>
+            </div>
           </div>
-
-          {/* Time Selection Dropdown */}
-          {selectedDate && (
-            <div className="space-y-3 animate-fade-in">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <h4 className="font-semibold">Select Time</h4>
-              </div>
-              <Select 
-                value={bookingData.serviceTime} 
-                onValueChange={(value) => updateBookingData({ serviceTime: value })}
-              >
-                <SelectTrigger className="w-full h-12 text-left">
-                  <SelectValue placeholder="Choose your preferred time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeSlots.map((slot) => (
-                    <SelectItem 
-                      key={slot.value} 
-                      value={slot.value}
-                      className="py-3"
-                    >
-                       <div className="flex items-center justify-between w-full">
-                         <div>
-                           <div className="font-medium">{slot.label}</div>
-                           <div className="text-sm text-muted-foreground">{slot.range}</div>
-                         </div>
-                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Selected Summary */}
-          {selectedDate && bookingData.serviceTime && (
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
-              <div className="flex items-center gap-2 text-primary mb-2">
-                <Star className="h-4 w-4" />
-                <span className="font-semibold">Your Booking Summary</span>
-              </div>
-              <div className="text-sm space-y-1">
-                <p>
-                  <span className="font-medium">Date:</span> {selectedDate.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'long', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-                <p>
-                  <span className="font-medium">Time:</span> {timeSlots.find(t => t.value === bookingData.serviceTime)?.label}
-                </p>
-                {nextDayBooking && (
-                  <p className="text-primary font-medium">
-                    <Sparkles className="h-3 w-3 inline mr-1" />
-                    Priority Next-Day Service (+$50)
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Time Slot Selection */}
+      {selectedDate && (
+        <Card className="shadow-clean animate-fade-in" id="time-slot-section">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Select Your Time
+              {isLoadingAvailability && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary ml-2" />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.value}
+                  onClick={() => handleTimeSelect(slot.value)}
+                  className={cn(
+                    "p-3 rounded-lg border-2 text-left transition-all duration-200",
+                    bookingData.serviceTime === slot.value
+                      ? "border-primary bg-primary/5 shadow-clean"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{slot.label}</div>
+                      <div className="text-xs text-muted-foreground">{slot.range}</div>
+                    </div>
+                    {bookingData.serviceTime === slot.value && (
+                      <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Address Information */}
       {bookingData.serviceTime && (
