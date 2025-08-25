@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -12,9 +11,10 @@ import {
   Star, 
   Zap, 
   CheckCircle2,
-  Crown
+  Crown,
+  ArrowRight
 } from 'lucide-react';
-import { format, addDays, isWeekend, isSunday } from 'date-fns';
+import { format, addDays, isSunday, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface TimeSlot {
@@ -81,26 +81,63 @@ export function EnhancedSchedulingStep({
     return dates;
   };
 
+  // Generate weeks for the weekly grid view
+  const generateWeeksData = () => {
+    const weeks = [];
+    const startDate = addDays(new Date(), 5); // Start 5 days from now
+    
+    for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
+      const weekStart = addDays(startDate, weekIndex * 7);
+      const weekStartMonday = startOfWeek(weekStart, { weekStartsOn: 1 }); // Start on Monday
+      const weekEnd = endOfWeek(weekStartMonday, { weekStartsOn: 1 });
+      
+      const weekDays = eachDayOfInterval({ start: weekStartMonday, end: weekEnd })
+        .filter(day => !isSunday(day)) // Exclude Sundays
+        .filter(day => day >= startDate) // Only include dates from 5 days out
+        .map(day => ({
+          date: day,
+          available: Math.random() > 0.3, // Mock availability - 70% chance of being available
+          slotsCount: Math.floor(Math.random() * 6) + 3 // 3-8 available slots
+        }));
+
+      if (weekDays.length > 0) {
+        weeks.push({
+          weekStart: weekStartMonday,
+          weekEnd,
+          days: weekDays
+        });
+      }
+    }
+    
+    return weeks;
+  };
+
   const availableDates = generateAvailableDates();
+  const weeksData = generateWeeksData();
   const tomorrow = addDays(new Date(), 1);
   const nextDayFee = 50;
 
   // All time slots are available (no calendar integration)
   const currentTimeSlots = baseTimeSlots.map(slot => ({ ...slot, available: true }));
 
-  const disabledDates = (date: Date) => {
-    // Disable dates before 5 days from now
-    const minDate = addDays(new Date(), 5);
-    if (date < minDate) return true;
-    
-    // Disable Sundays
-    if (isSunday(date)) return true;
-    
-    // Only allow dates in our available range
-    return !availableDates.some(availableDate => 
-      format(availableDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    );
-  };
+  const quickSelectOptions = [
+    { label: 'This Week', action: () => {
+      const thisWeekStart = addDays(new Date(), 5);
+      const firstAvailableThisWeek = weeksData[0]?.days.find(day => day.available);
+      if (firstAvailableThisWeek) {
+        onDateChange(firstAvailableThisWeek.date);
+      }
+    }},
+    { label: 'Next Week', action: () => {
+      const nextWeekData = weeksData[1];
+      if (nextWeekData) {
+        const firstAvailableNextWeek = nextWeekData.days.find(day => day.available);
+        if (firstAvailableNextWeek) {
+          onDateChange(firstAvailableNextWeek.date);
+        }
+      }
+    }}
+  ];
 
   return (
     <div className="space-y-6">
@@ -153,76 +190,122 @@ export function EnhancedSchedulingStep({
         </CardHeader>
         <CardContent className="space-y-6">
           {!nextDayUpsell ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Calendar */}
+            <div className="space-y-6">
+              {/* Quick Select Options */}
+              <div className="flex flex-wrap gap-2">
+                {quickSelectOptions.map((option, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={option.action}
+                    className="text-xs"
+                  >
+                    {option.label}
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                ))}
+              </div>
+
+              {/* Weekly Availability Grid */}
               <div>
                 <Label className="text-sm font-medium mb-3 block">Select Date *</Label>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={onDateChange}
-                  disabled={disabledDates}
-                  className="rounded-md border shadow-sm p-3 pointer-events-auto"
-                  classNames={{
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                    day_today: "bg-accent text-accent-foreground",
-                    day_disabled: "text-muted-foreground opacity-50"
-                  }}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
+                <div className="space-y-4">
+                  {weeksData.map((week, weekIndex) => (
+                    <div key={weekIndex} className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground px-1">
+                        Week of {format(week.weekStart, 'MMM d')} - {format(week.weekEnd, 'MMM d')}
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {week.days.map((day, dayIndex) => (
+                          <Card
+                            key={dayIndex}
+                            className={cn(
+                              "cursor-pointer border-2 transition-all hover:shadow-sm p-0",
+                              selectedDate && isSameDay(selectedDate, day.date)
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : day.available
+                                  ? "border-border hover:border-primary/50 hover:bg-primary/5"
+                                  : "border-muted bg-muted/30 cursor-not-allowed opacity-60"
+                            )}
+                            onClick={() => day.available && onDateChange(day.date)}
+                          >
+                            <CardContent className="p-3 text-center">
+                              <div className="space-y-1">
+                                <div className="text-xs font-medium text-muted-foreground">
+                                  {format(day.date, 'EEE')}
+                                </div>
+                                <div className={cn(
+                                  "text-lg font-semibold",
+                                  selectedDate && isSameDay(selectedDate, day.date)
+                                    ? "text-primary"
+                                    : day.available ? "text-foreground" : "text-muted-foreground"
+                                )}>
+                                  {format(day.date, 'd')}
+                                </div>
+                                <div className="text-xs">
+                                  {day.available ? (
+                                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                                      {day.slotsCount} slots
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground">Busy</span>
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
                   We require at least 5 days advance notice. Sundays are not available.
                 </p>
               </div>
 
               {/* Time Slots */}
-              <div>
-                <Label className="text-sm font-medium mb-3 block">
-                  Select Time * 
-                  {selectedDate && (
-                    <span className="text-muted-foreground font-normal">
-                      for {format(selectedDate, 'EEEE, MMMM d')}
-                    </span>
-                  )}
-                </Label>
-                
-                {selectedDate ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {currentTimeSlots.map((slot) => (
-                      <Button
-                        key={slot.value}
-                        variant={selectedTime === slot.value ? "default" : "outline"}
-                        className={cn(
-                          "w-full justify-between h-auto p-3",
-                          !slot.available && "opacity-50 cursor-not-allowed",
-                          selectedTime === slot.value && "ring-2 ring-primary ring-offset-2"
-                        )}
-                        disabled={!slot.available}
-                        onClick={() => slot.available && onTimeChange(slot.value)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{slot.label}</span>
-                          {slot.popular && (
-                            <Badge variant="secondary" className="text-xs">
-                              <Star className="h-3 w-3 mr-1" />
-                              Popular
-                            </Badge>
+              {selectedDate && (
+                <div className="space-y-3">
+                  <Separator />
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">
+                      Select Time for {format(selectedDate, 'EEEE, MMMM d')} *
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {currentTimeSlots.map((slot) => (
+                        <Button
+                          key={slot.value}
+                          variant={selectedTime === slot.value ? "default" : "outline"}
+                          className={cn(
+                            "justify-between h-auto p-3",
+                            !slot.available && "opacity-50 cursor-not-allowed",
+                            selectedTime === slot.value && "ring-2 ring-primary ring-offset-2"
                           )}
-                        </div>
-                        {slot.available ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Unavailable</span>
-                        )}
-                      </Button>
-                    ))}
+                          disabled={!slot.available}
+                          onClick={() => slot.available && onTimeChange(slot.value)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{slot.label}</span>
+                            {slot.popular && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Star className="h-3 w-3 mr-1" />
+                                Popular
+                              </Badge>
+                            )}
+                          </div>
+                          {slot.available ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Full</span>
+                          )}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Please select a date first</p>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ) : (
             // Next-day time selection
