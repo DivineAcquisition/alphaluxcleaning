@@ -164,11 +164,22 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   };
 
   const processPayment = async () => {
+    console.log('💳 ProcessPayment Debug:', {
+      stripeReady,
+      systemError,
+      showPaymentForm,
+      finalTotal,
+      paymentAmount,
+      paymentType
+    });
+    
     if (!stripeReady) {
+      console.error('❌ Stripe not ready:', { stripeReady, systemError });
       toast.error('Payment system not ready. Please refresh the page.');
       return;
     }
     
+    console.log('✅ Setting showPaymentForm to true');
     setShowPaymentForm(true);
     // No scrolling - keep user at current position in the payment selection area
   };

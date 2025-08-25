@@ -84,7 +84,14 @@ export function EnhancedSchedulingStep({
   // Generate weeks for the weekly grid view
   const generateWeeksData = () => {
     const weeks = [];
-    const startDate = addDays(new Date(), 5); // Start 5 days from now
+    const today = new Date();
+    const startDate = addDays(today, 5); // Start 5 days from now
+    
+    console.log('🗓️ Date Debug Info:', {
+      today: format(today, 'yyyy-MM-dd'),
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      selectedDate: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null
+    });
     
     for (let weekIndex = 0; weekIndex < 4; weekIndex++) {
       const weekStart = addDays(startDate, weekIndex * 7);
@@ -94,11 +101,15 @@ export function EnhancedSchedulingStep({
       const weekDays = eachDayOfInterval({ start: weekStartMonday, end: weekEnd })
         .filter(day => !isSunday(day)) // Exclude Sundays
         .filter(day => day >= startDate) // Only include dates from 5 days out
-        .map(day => ({
-          date: day,
-          available: Math.random() > 0.3, // Mock availability - 70% chance of being available
-          slotsCount: Math.floor(Math.random() * 6) + 3 // 3-8 available slots
-        }));
+        .map(day => {
+          // Normalize date to avoid timezone issues
+          const normalizedDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+          return {
+            date: normalizedDate,
+            available: Math.random() > 0.3, // Mock availability - 70% chance of being available
+            slotsCount: Math.floor(Math.random() * 6) + 3 // 3-8 available slots
+          };
+        });
 
       if (weekDays.length > 0) {
         weeks.push({
@@ -228,7 +239,16 @@ export function EnhancedSchedulingStep({
                                   ? "border-border hover:border-primary/50 hover:bg-primary/5 active:scale-95"
                                   : "border-muted bg-muted/30 cursor-not-allowed opacity-60"
                             )}
-                            onClick={() => day.available && onDateChange(day.date)}
+                            onClick={() => {
+                              if (day.available) {
+                                console.log('📅 Date selected:', {
+                                  clickedDate: format(day.date, 'yyyy-MM-dd'),
+                                  displayedDate: format(day.date, 'd'),
+                                  dayOfWeek: format(day.date, 'EEE')
+                                });
+                                onDateChange(day.date);
+                              }
+                            }}
                           >
                             <CardContent className="p-3 sm:p-4 text-center min-h-[80px] sm:min-h-[90px] flex flex-col justify-center">
                               <div className="space-y-1 sm:space-y-2">
