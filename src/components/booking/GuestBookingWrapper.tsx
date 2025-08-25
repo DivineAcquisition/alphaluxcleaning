@@ -207,12 +207,6 @@ export function GuestBookingWrapper() {
 
   // Show main booking flow
   return (
-    <ModernBookingFlow
-      initialData={bookingData}
-      onDataUpdate={handleBookingUpdate}
-      onStepChange={handleStepChange}
-      onComplete={handleBookingComplete}
-      guestMode={!user}
-    />
+    <ModernBookingFlow />
   );
 }
