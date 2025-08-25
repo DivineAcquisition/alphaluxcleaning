@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -335,6 +335,16 @@ const addOns = [
 
 export function LegacyBookingFlow() {
   const navigate = useNavigate();
+  
+  // Scroll refs for auto-scroll functionality
+  const serviceTypeRef = useRef<HTMLDivElement>(null);
+  const frequencyRef = useRef<HTMLDivElement>(null);
+  const homeSizeRef = useRef<HTMLDivElement>(null);
+  const addOnsRef = useRef<HTMLDivElement>(null);
+  const dateTimeRef = useRef<HTMLDivElement>(null);
+  const propertyDetailsRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+  
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({
     address: { street: '', city: '', state: 'CA', zipCode: '' }
   });
@@ -356,6 +366,17 @@ export function LegacyBookingFlow() {
 
   const updateBookingData = (updates: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...updates }));
+  };
+
+  // Auto-scroll function with smooth behavior
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>, delay = 800) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+    }, delay);
   };
 
   // Validate ZIP code using Baytown service area
@@ -384,7 +405,8 @@ export function LegacyBookingFlow() {
       setZipCodeValid(validation.isValid);
       
       if (validation.isValid) {
-        setCurrentStep(2); // Move to home size selection
+        setCurrentStep(2); // Move to service type selection
+        scrollToSection(serviceTypeRef);
       } else {
         setZipCodeError(validation.message || '');
         setCurrentStep(1); // Stay on ZIP code step
@@ -570,6 +592,15 @@ export function LegacyBookingFlow() {
     if (date) {
       setSelectedDate(date);
       updateBookingData({ serviceDate: date.toISOString().split('T')[0] });
+      // Auto-scroll to time selection after brief delay to let content render
+      setTimeout(() => {
+        const timeSection = document.querySelector('[data-time-selection]');
+        timeSection?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'nearest'
+        });
+      }, 300);
     }
   };
 
@@ -662,7 +693,7 @@ export function LegacyBookingFlow() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
-      <div className="container mx-auto py-8 px-4">
+      <div className="w-full max-w-7xl mx-auto py-8 px-4">
         {/* Enhanced Header with Promotional Messaging */}
         <div className="text-center mb-8">
           <h1 className="sm:text-4xl font-jakarta font-bold tracking-tight mb-4 px-0 mx-0 my-0 py-0 text-2xl text-center">Premium Cleaning Service</h1>
@@ -726,9 +757,9 @@ export function LegacyBookingFlow() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Form */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 max-w-4xl mx-auto lg:mx-0 space-y-8">
             
             {/* Service Area Verification - First */}
             <Card className="shadow-clean border-primary/20">
@@ -792,7 +823,7 @@ export function LegacyBookingFlow() {
 
             {/* Service Type Selection - Show only after valid ZIP */}
             {currentStep >= 2 && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={serviceTypeRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5" />
@@ -806,7 +837,15 @@ export function LegacyBookingFlow() {
                       return (
                         <div
                           key={service.value}
-                          onClick={() => updateBookingData({ serviceType: service.value, frequency: service.oneTimeOnly ? 'one-time' : '' })}
+                          onClick={() => {
+                            updateBookingData({ serviceType: service.value, frequency: service.oneTimeOnly ? 'one-time' : '' });
+                            // Auto-scroll based on service type
+                            if (service.oneTimeOnly) {
+                              scrollToSection(homeSizeRef);
+                            } else {
+                              scrollToSection(frequencyRef);
+                            }
+                          }}
                           className={cn(
                             "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
                             bookingData.serviceType === service.value
@@ -867,7 +906,7 @@ export function LegacyBookingFlow() {
 
             {/* Frequency Selection - Show only for General/Deep cleaning after service type selected */}
             {currentStep >= 3 && bookingData.serviceType && selectedService?.allowsRecurring && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={frequencyRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <RefreshCw className="h-5 w-5" />
@@ -882,7 +921,10 @@ export function LegacyBookingFlow() {
                       return (
                         <div
                           key={option.value}
-                          onClick={() => updateBookingData({ frequency: option.value })}
+                          onClick={() => {
+                            updateBookingData({ frequency: option.value });
+                            scrollToSection(homeSizeRef);
+                          }}
                           className={cn(
                             "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
                             bookingData.frequency === option.value
@@ -937,7 +979,7 @@ export function LegacyBookingFlow() {
 
             {/* Home Size Selection - Show after frequency or directly after Move-In/Move-Out */}
             {currentStep >= 4 && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={homeSizeRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Home className="h-5 w-5" />
@@ -966,7 +1008,12 @@ export function LegacyBookingFlow() {
                       return (
                         <div
                           key={tier.value}
-                          onClick={() => !tier.requiresQuote && updateBookingData({ homeSize: tier.value })}
+                          onClick={() => {
+                            if (!tier.requiresQuote) {
+                              updateBookingData({ homeSize: tier.value });
+                              scrollToSection(addOnsRef);
+                            }
+                          }}
                           className={cn(
                             "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
                             bookingData.homeSize === tier.value
@@ -1027,7 +1074,7 @@ export function LegacyBookingFlow() {
 
             {/* Add-Ons Selection - Show only after home size selected */}
             {currentStep >= 5 && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={addOnsRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5" />
@@ -1044,7 +1091,13 @@ export function LegacyBookingFlow() {
                         <div className="flex items-center gap-3">
                           <Switch
                             checked={selectedAddOns.includes(addOn.value)}
-                            onCheckedChange={() => toggleAddOn(addOn.value)}
+                            onCheckedChange={() => {
+                              toggleAddOn(addOn.value);
+                              // Auto-scroll after first add-on interaction
+                              if (selectedAddOns.length === 0) {
+                                scrollToSection(dateTimeRef);
+                              }
+                            }}
                           />
                           <span className="font-medium">{addOn.label}</span>
                         </div>
@@ -1052,13 +1105,23 @@ export function LegacyBookingFlow() {
                       </div>
                     ))}
                   </div>
+                  <div className="mt-4 text-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => scrollToSection(dateTimeRef)}
+                      className="w-full"
+                    >
+                      Continue to Date & Time
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
 
             {/* Date & Time Selection - Show only after add-ons selection */}
             {currentStep >= 6 && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={dateTimeRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarIcon className="h-5 w-5" />
@@ -1106,13 +1169,16 @@ export function LegacyBookingFlow() {
 
                     {/* Time Selection */}
                     {selectedDate && bookingData.serviceDate && (
-                      <div className="animate-fade-in">
+                      <div className="animate-fade-in" data-time-selection>
                         <h4 className="font-semibold mb-4">Select Time</h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {timeSlots.map((slot) => (
                             <button
                               key={slot.value}
-                              onClick={() => updateBookingData({ serviceTime: slot.value })}
+                              onClick={() => {
+                                updateBookingData({ serviceTime: slot.value });
+                                scrollToSection(propertyDetailsRef);
+                              }}
                               className={cn(
                                 "p-3 rounded-lg border text-left transition-all duration-200",
                                 bookingData.serviceTime === slot.value
@@ -1153,7 +1219,7 @@ export function LegacyBookingFlow() {
 
             {/* Property Details - Show only after date/time selected */}
             {currentStep >= 7 && (
-              <Card className="shadow-clean">
+              <Card className="shadow-clean" ref={propertyDetailsRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
@@ -1170,7 +1236,12 @@ export function LegacyBookingFlow() {
                       </Label>
                       <Select 
                         value={bookingData.bedrooms || ''} 
-                        onValueChange={(value) => updateBookingData({ bedrooms: value })}
+                        onValueChange={(value) => {
+                          updateBookingData({ bedrooms: value });
+                          if (bookingData.bathrooms && bookingData.dwellingType) {
+                            scrollToSection(contactRef);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select bedrooms" />
@@ -1196,7 +1267,12 @@ export function LegacyBookingFlow() {
                       </Label>
                       <Select 
                         value={bookingData.bathrooms || ''} 
-                        onValueChange={(value) => updateBookingData({ bathrooms: value })}
+                        onValueChange={(value) => {
+                          updateBookingData({ bathrooms: value });
+                          if (bookingData.bedrooms && bookingData.dwellingType) {
+                            scrollToSection(contactRef);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select bathrooms" />
@@ -1224,7 +1300,12 @@ export function LegacyBookingFlow() {
                       </Label>
                       <Select 
                         value={bookingData.dwellingType || ''} 
-                        onValueChange={(value) => updateBookingData({ dwellingType: value })}
+                        onValueChange={(value) => {
+                          updateBookingData({ dwellingType: value });
+                          if (bookingData.bedrooms && bookingData.bathrooms) {
+                            scrollToSection(contactRef);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select dwelling type" />
@@ -1294,7 +1375,7 @@ export function LegacyBookingFlow() {
 
             {/* Contact & Address Details - Step 8 */}
             {currentStep >= 8 && (
-              <Card className="shadow-clean" data-step="8">
+              <Card className="shadow-clean" data-step="8" ref={contactRef}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
@@ -1446,7 +1527,7 @@ export function LegacyBookingFlow() {
           </div>
 
           {/* Right Column - Price Summary - Show only when there's pricing to display */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 max-w-md mx-auto lg:mx-0">
             <div className="sticky top-8">
             {currentStep >= 2 && bookingData.serviceType && bookingData.homeSize && 
              (selectedService?.oneTimeOnly || bookingData.frequency) ? (
