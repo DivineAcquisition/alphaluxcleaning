@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -11,13 +11,11 @@ import {
   Clock, 
   Star, 
   Zap, 
-  CheckCircle2, 
-  Loader2,
+  CheckCircle2,
   Crown
 } from 'lucide-react';
 import { format, addDays, isWeekend, isSunday } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 
 interface TimeSlot {
   value: string;
@@ -45,9 +43,6 @@ export function EnhancedSchedulingStep({
   onNextDayToggle,
   serviceType = 'general'
 }: EnhancedSchedulingStepProps) {
-  const [availabilityData, setAvailabilityData] = useState<{[key: string]: TimeSlot[]}>({});
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
-  const [calendarConnected, setCalendarConnected] = useState(false);
 
   const baseTimeSlots: Omit<TimeSlot, 'available'>[] = [
     { value: '8:00 AM', label: '8:00 AM - 10:00 AM', popular: false },
@@ -71,52 +66,6 @@ export function EnhancedSchedulingStep({
     return durations[type] || 2;
   };
 
-  const checkDateAvailability = async (date: Date) => {
-    if (!date) return;
-    
-    setIsCheckingAvailability(true);
-    const dateKey = format(date, 'yyyy-MM-dd');
-    
-    try {
-      // Check calendar connection first
-      const { data: connectionData } = await supabase.functions.invoke('get-live-availability', {
-        body: { action: 'check_connection' }
-      });
-      
-      setCalendarConnected(connectionData?.connected || false);
-      
-      // Get availability for the date
-      const { data: availabilityResponse } = await supabase.functions.invoke('get-live-availability', {
-        body: { 
-          date: dateKey,
-          duration: getServiceDuration(serviceType)
-        }
-      });
-
-      // Process availability data
-      const timeSlotsWithAvailability = baseTimeSlots.map(slot => ({
-        ...slot,
-        available: availabilityResponse?.available_slots?.some((availableSlot: any) => 
-          availableSlot.start.includes(slot.value.replace(' AM', '').replace(' PM', ''))
-        ) ?? true // Default to available if no data
-      }));
-
-      setAvailabilityData(prev => ({
-        ...prev,
-        [dateKey]: timeSlotsWithAvailability
-      }));
-    } catch (error) {
-      console.error('Error checking availability:', error);
-      // Fallback: set all slots as available
-      const fallbackSlots = baseTimeSlots.map(slot => ({ ...slot, available: true }));
-      setAvailabilityData(prev => ({
-        ...prev,
-        [dateKey]: fallbackSlots
-      }));
-    } finally {
-      setIsCheckingAvailability(false);
-    }
-  };
 
   // Generate available dates (5 days out, excluding Sundays)
   const generateAvailableDates = () => {
@@ -136,16 +85,8 @@ export function EnhancedSchedulingStep({
   const tomorrow = addDays(new Date(), 1);
   const nextDayFee = 50;
 
-  // Check availability when date changes
-  useEffect(() => {
-    if (selectedDate && !nextDayUpsell) {
-      checkDateAvailability(selectedDate);
-    }
-  }, [selectedDate, serviceType, nextDayUpsell]);
-
-  const currentTimeSlots = selectedDate && !nextDayUpsell 
-    ? availabilityData[format(selectedDate, 'yyyy-MM-dd')] || []
-    : baseTimeSlots.map(slot => ({ ...slot, available: true }));
+  // All time slots are available (no calendar integration)
+  const currentTimeSlots = baseTimeSlots.map(slot => ({ ...slot, available: true }));
 
   const disabledDates = (date: Date) => {
     // Disable dates before 5 days from now
@@ -209,12 +150,6 @@ export function EnhancedSchedulingStep({
             <CalendarIcon className="h-5 w-5 text-primary" />
             {nextDayUpsell ? 'Next-Day Service Time' : 'Choose Your Date & Time'}
           </CardTitle>
-          {!calendarConnected && !nextDayUpsell && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-              Calendar integration unavailable - showing estimated availability
-            </div>
-          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {!nextDayUpsell ? (
@@ -250,14 +185,7 @@ export function EnhancedSchedulingStep({
                   )}
                 </Label>
                 
-                {isCheckingAvailability ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      Checking availability...
-                    </span>
-                  </div>
-                ) : selectedDate ? (
+                {selectedDate ? (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {currentTimeSlots.map((slot) => (
                       <Button
