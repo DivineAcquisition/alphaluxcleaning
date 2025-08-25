@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock, User, Phone, Mail } from 'lucide-react';
+import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock, User, Phone, Mail, TruckIcon, PackageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
@@ -18,8 +18,9 @@ import { toast } from 'sonner';
 
 interface BookingData {
   serviceZipCode: string;
+  serviceType: string; // NEW: General, Deep, Move-In, Move-Out
   homeSize: string;
-  frequency: string;
+  frequency: string; // Only applies to General and Deep
   addOns: string[];
   basePrice: number;
   addOnPrices: { [key: string]: number };
@@ -242,6 +243,50 @@ const homeSizes = [
   }
 ];
 
+// 4 Main Service Types
+const serviceTypes = [
+  {
+    value: 'general',
+    label: 'General Cleaning',
+    icon: Home,
+    description: 'Regular maintenance cleaning for well-maintained homes',
+    features: ['All surfaces dusted', 'Floors vacuumed & mopped', 'Bathrooms cleaned', 'Kitchen sanitized'],
+    allowsRecurring: true,
+    priceMultiplier: 1.0
+  },
+  {
+    value: 'deep',
+    label: 'Deep Cleaning',
+    icon: Star,
+    description: 'Comprehensive detailed cleaning service',
+    features: ['Everything in General', 'Inside appliances', 'Detailed scrubbing', 'Light fixtures'],
+    allowsRecurring: true,
+    priceMultiplier: 1.35,
+    popular: true
+  },
+  {
+    value: 'move-in',
+    label: 'Move-In Cleaning',
+    icon: TruckIcon,
+    description: 'Specialized cleaning for new occupancy',
+    features: ['Deep clean included', 'Inside all appliances', 'Cabinet interiors', 'Ready to move in'],
+    allowsRecurring: false,
+    priceMultiplier: 1.5,
+    oneTimeOnly: true
+  },
+  {
+    value: 'move-out',
+    label: 'Move-Out Cleaning',
+    icon: PackageIcon,
+    description: 'Specialized cleaning for vacating properties',
+    features: ['Deep clean included', 'Deposit recovery focus', 'Inside all appliances', 'Rental ready'],
+    allowsRecurring: false,
+    priceMultiplier: 1.5,
+    oneTimeOnly: true
+  }
+];
+
+// Frequency options for General and Deep Cleaning only
 const recurringOptions = [
   {
     value: 'one-time',
@@ -251,27 +296,29 @@ const recurringOptions = [
     description: 'Single cleaning service'
   },
   {
+    value: 'weekly',
+    label: 'Weekly Service',
+    icon: RefreshCw,
+    priceKey: 'weekly',
+    description: 'Weekly recurring service - Best value',
+    discount: 0.15 // 15% discount
+  },
+  {
     value: 'bi-weekly',
     label: 'Every Other Week',
     icon: RefreshCw,
     priceKey: 'biweekly',
     description: 'Bi-weekly recurring service',
-    popular: true
+    popular: true,
+    discount: 0.10 // 10% discount
   },
   {
     value: 'monthly',
     label: 'Monthly Service',
     icon: RefreshCw,
     priceKey: 'monthly',
-    description: 'Monthly recurring service'
-  },
-  {
-    value: 'deep-clean',
-    label: 'Ultimate Deep Clean',
-    icon: Star,
-    priceKey: 'deepClean',
-    description: 'Premium deep cleaning service',
-    recommended: true
+    description: 'Monthly recurring service',
+    discount: 0.05 // 5% discount
   }
 ];
 
@@ -295,7 +342,7 @@ export function LegacyBookingFlow() {
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [zipCodeError, setZipCodeError] = useState<string>('');
   const [showCheckout, setShowCheckout] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: home size, 3: frequency, 4: add-ons, 5: date/time, 6: property details, 7: contact/address
+  const [currentStep, setCurrentStep] = useState(1); // 1: zip, 2: service type, 3: frequency (if applicable), 4: home size, 5: add-ons, 6: date/time, 7: property details, 8: contact/address
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [offerEligible, setOfferEligible] = useState(true);
   const [showOfferUsedAlert, setShowOfferUsedAlert] = useState(false);
@@ -383,36 +430,69 @@ export function LegacyBookingFlow() {
 
   // Update step progression when selections are made
   useEffect(() => {
-    if (zipCodeValid && bookingData.homeSize) {
-      setCurrentStep(3); // Move to frequency selection
+    if (zipCodeValid && bookingData.serviceType) {
+      const selectedService = serviceTypes.find(s => s.value === bookingData.serviceType);
+      if (selectedService?.oneTimeOnly) {
+        // Move-in/Move-out skip frequency selection
+        setCurrentStep(4); // Move to home size
+      } else {
+        setCurrentStep(3); // Move to frequency selection
+      }
     }
-    if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
-      setCurrentStep(4); // Move to add-ons selection
+    if (zipCodeValid && bookingData.serviceType && bookingData.frequency) {
+      setCurrentStep(4); // Move to home size selection
     }
-    if (zipCodeValid && bookingData.homeSize && bookingData.frequency) {
-      setCurrentStep(5); // Move to date/time selection
+    if (zipCodeValid && bookingData.serviceType && 
+        ((bookingData.frequency) || (serviceTypes.find(s => s.value === bookingData.serviceType)?.oneTimeOnly)) && 
+        bookingData.homeSize) {
+      setCurrentStep(5); // Move to add-ons selection
     }
-    if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
-        bookingData.serviceDate && bookingData.serviceTime) {
-      setCurrentStep(6); // Move to property details
+    if (zipCodeValid && bookingData.serviceType && 
+        ((bookingData.frequency) || (serviceTypes.find(s => s.value === bookingData.serviceType)?.oneTimeOnly)) && 
+        bookingData.homeSize) {
+      setCurrentStep(6); // Move to date/time selection
     }
-    if (zipCodeValid && bookingData.homeSize && bookingData.frequency && 
-        bookingData.serviceDate && bookingData.serviceTime &&
+    if (zipCodeValid && bookingData.serviceType && 
+        ((bookingData.frequency) || (serviceTypes.find(s => s.value === bookingData.serviceType)?.oneTimeOnly)) && 
+        bookingData.homeSize && bookingData.serviceDate && bookingData.serviceTime) {
+      setCurrentStep(7); // Move to property details
+    }
+    if (zipCodeValid && bookingData.serviceType && 
+        ((bookingData.frequency) || (serviceTypes.find(s => s.value === bookingData.serviceType)?.oneTimeOnly)) && 
+        bookingData.homeSize && bookingData.serviceDate && bookingData.serviceTime &&
         bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType) {
-      setCurrentStep(7); // Move to contact/address details
+      setCurrentStep(8); // Move to contact/address details
     }
-  }, [zipCodeValid, bookingData.homeSize, bookingData.frequency, bookingData.serviceDate, bookingData.serviceTime, bookingData.bedrooms, bookingData.bathrooms, bookingData.dwellingType]);
+  }, [zipCodeValid, bookingData.serviceType, bookingData.frequency, bookingData.homeSize, bookingData.serviceDate, bookingData.serviceTime, bookingData.bedrooms, bookingData.bathrooms, bookingData.dwellingType]);
 
-  // Calculate pricing with new square footage structure
+  // Calculate pricing with new service type structure
   useEffect(() => {
     const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
+    const selectedService = serviceTypes.find(s => s.value === bookingData.serviceType);
     const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
 
-    if (selectedTier && selectedFrequency) {
-      // Get base price based on offer eligibility
-      const basePrice = offerEligible 
-        ? selectedTier.pricing[selectedFrequency.priceKey] || 0
-        : selectedTier.originalPricing[selectedFrequency.priceKey] || 0;
+    if (selectedTier && selectedService) {
+      // Base price calculation with service type multiplier
+      let basePrice = 0;
+      
+      if (selectedService.oneTimeOnly) {
+        // Move-in/Move-out pricing (use oneTime pricing with service multiplier)
+        basePrice = Math.round(selectedTier.pricing.oneTime * selectedService.priceMultiplier);
+      } else if (selectedFrequency) {
+        // General/Deep cleaning with frequency
+        let tierPrice = selectedTier.pricing[selectedFrequency.priceKey] || selectedTier.pricing.oneTime;
+        basePrice = Math.round(tierPrice * selectedService.priceMultiplier);
+        
+        // Apply frequency discount for recurring services
+        if (selectedFrequency.discount && selectedFrequency.value !== 'one-time') {
+          basePrice = Math.round(basePrice * (1 - selectedFrequency.discount));
+        }
+      }
+      
+      // Apply 20% new client discount if eligible
+      if (!offerEligible) {
+        basePrice = Math.round(basePrice / 0.8); // Reverse the discount to get original price
+      }
       
       const addOnTotal = selectedAddOns.reduce((total, addOn) => {
         const addOnItem = addOns.find(a => a.value === addOn);
@@ -428,9 +508,9 @@ export function LegacyBookingFlow() {
         return acc;
       }, {} as { [key: string]: number });
 
-      // Calculate savings from 20% discount (only if offer is eligible)
-      const originalPrice = selectedTier.originalPricing[selectedFrequency.priceKey] || 0;
-      const frequencyDiscount = offerEligible && originalPrice > 0 
+      // Calculate discount savings
+      const originalPrice = Math.round(basePrice / 0.8);
+      const frequencyDiscount = offerEligible && originalPrice > basePrice 
         ? Math.round((originalPrice - basePrice) * 100) / 100 
         : 0;
 
@@ -443,7 +523,7 @@ export function LegacyBookingFlow() {
         squareFootage: selectedTier.label // Store square footage for order records
       });
     }
-  }, [bookingData.homeSize, bookingData.frequency, selectedAddOns, bookingData.nextDayFee, offerEligible]);
+  }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, selectedAddOns, bookingData.nextDayFee, offerEligible]);
 
   const toggleAddOn = (addOnValue: string) => {
     const updated = selectedAddOns.includes(addOnValue)
@@ -511,7 +591,7 @@ export function LegacyBookingFlow() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (bookingData.customerEmail && !emailRegex.test(bookingData.customerEmail)) {
       toast.error('Please enter a valid email address');
-      const element = document.querySelector(`[data-step="7"]`);
+      const element = document.querySelector(`[data-step="8"]`);
       element?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -577,6 +657,7 @@ export function LegacyBookingFlow() {
   }
 
   const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
+  const selectedService = serviceTypes.find(s => s.value === bookingData.serviceType);
   const selectedFrequency = recurringOptions.find(r => r.value === bookingData.frequency);
 
   return (
@@ -709,8 +790,153 @@ export function LegacyBookingFlow() {
               </CardContent>
             </Card>
 
-            {/* Home Size Selection - Show only after valid ZIP */}
+            {/* Service Type Selection - Show only after valid ZIP */}
             {currentStep >= 2 && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Choose Your Service Type
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {serviceTypes.map((service) => {
+                      const Icon = service.icon;
+                      return (
+                        <div
+                          key={service.value}
+                          onClick={() => updateBookingData({ serviceType: service.value, frequency: service.oneTimeOnly ? 'one-time' : '' })}
+                          className={cn(
+                            "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
+                            bookingData.serviceType === service.value
+                              ? "border-primary bg-primary/5 shadow-clean"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          {service.popular && (
+                            <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                              Most Popular
+                            </Badge>
+                          )}
+                          <div className="flex flex-col h-full">
+                            <div className="flex items-center gap-3 mb-3">
+                              <Icon className="h-6 w-6 text-primary" />
+                              <span className="font-semibold text-lg">{service.label}</span>
+                              {service.oneTimeOnly && (
+                                <Badge variant="outline" className="text-xs">One-Time Only</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4 flex-grow">
+                              {service.description}
+                            </p>
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-foreground">What's included:</p>
+                              <ul className="text-xs text-muted-foreground space-y-1">
+                                {service.features.map((feature, index) => (
+                                  <li key={index} className="flex items-center gap-2">
+                                    <CheckCircle className="h-3 w-3 text-success flex-shrink-0" />
+                                    {feature}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if ZIP valid but no service type selected */}
+            {currentStep === 2 && !bookingData.serviceType && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Sparkles className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Choose Your Service Type</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select the type of cleaning service you need above
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Frequency Selection - Show only for General/Deep cleaning after service type selected */}
+            {currentStep >= 3 && bookingData.serviceType && selectedService?.allowsRecurring && (
+              <Card className="shadow-clean">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <RefreshCw className="h-5 w-5" />
+                    Service Frequency
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {recurringOptions.map((option) => {
+                      const Icon = option.icon;
+                      
+                      return (
+                        <div
+                          key={option.value}
+                          onClick={() => updateBookingData({ frequency: option.value })}
+                          className={cn(
+                            "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
+                            bookingData.frequency === option.value
+                              ? "border-primary bg-primary/5 shadow-clean"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          {option.popular && (
+                            <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                              Most Popular
+                            </Badge>
+                          )}
+                          <div className="flex items-center gap-3 mb-3">
+                            <Icon className="h-5 w-5 text-primary" />
+                            <span className="font-semibold">{option.label}</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            {option.discount && (
+                              <div className="flex items-center justify-center">
+                                <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                  {Math.round(option.discount * 100)}% OFF Recurring
+                                </Badge>
+                              </div>
+                            )}
+                            <div className="text-center">
+                              <p className="text-sm text-muted-foreground">{option.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show prompt if service type selected but no frequency for recurring services */}
+            {currentStep === 3 && bookingData.serviceType && selectedService?.allowsRecurring && !bookingData.frequency && (
+              <Card className="shadow-clean border-accent/50 bg-accent/5">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <RefreshCw className="h-8 w-8 mx-auto mb-3 text-accent" />
+                    <p className="text-lg font-medium text-foreground mb-2">Choose Service Frequency</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select your preferred cleaning frequency above to continue
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Home Size Selection - Show after frequency or directly after Move-In/Move-Out */}
+            {currentStep >= 4 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -722,6 +948,21 @@ export function LegacyBookingFlow() {
                   <div className="grid grid-cols-1 gap-4">
                     {homeSizes.map((tier) => {
                       const Icon = tier.icon;
+                      // Calculate price preview based on selected service type and frequency
+                      let displayPrice = 0;
+                      if (selectedService) {
+                        if (selectedService.oneTimeOnly) {
+                          displayPrice = Math.round(tier.pricing.oneTime * selectedService.priceMultiplier);
+                        } else if (selectedFrequency) {
+                          let tierPrice = tier.pricing[selectedFrequency.priceKey] || tier.pricing.oneTime;
+                          displayPrice = Math.round(tierPrice * selectedService.priceMultiplier);
+                          if (selectedFrequency.discount && selectedFrequency.value !== 'one-time') {
+                            displayPrice = Math.round(displayPrice * (1 - selectedFrequency.discount));
+                          }
+                        }
+                      }
+                      const originalPrice = Math.round(displayPrice / 0.8);
+                      
                       return (
                         <div
                           key={tier.value}
@@ -753,24 +994,27 @@ export function LegacyBookingFlow() {
                                   <p className="text-lg font-bold text-primary">Call for Quote</p>
                                   <p className="text-xs text-muted-foreground">(281) 809-9901</p>
                                 </div>
-                               ) : (
-                                 <div>
-                                   {offerEligible && (
-                                     <div className="flex items-center gap-2">
-                                       <span className="line-through text-muted-foreground text-sm">
-                                         ${tier.originalPricing.oneTime}
-                                       </span>
-                                       <Badge variant="secondary" className="text-xs bg-success/20 text-success">
-                                         20% OFF
-                                       </Badge>
-                                     </div>
-                                   )}
-                                   <p className="text-lg font-bold text-primary">
-                                     Starting at ${offerEligible ? tier.pricing.monthly : tier.originalPricing.monthly}
-                                   </p>
-                                   <p className="text-xs text-muted-foreground">monthly service</p>
-                                 </div>
-                               )}
+                              ) : (
+                                <div>
+                                  {offerEligible && originalPrice > displayPrice && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="line-through text-muted-foreground text-sm">
+                                        ${originalPrice}
+                                      </span>
+                                      <Badge variant="secondary" className="text-xs bg-success/20 text-success">
+                                        20% OFF
+                                      </Badge>
+                                    </div>
+                                  )}
+                                  <p className="text-lg font-bold text-primary">
+                                    {displayPrice > 0 ? `$${offerEligible ? displayPrice : originalPrice}` : 'Select service first'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {selectedService?.oneTimeOnly ? 'one-time service' : 
+                                     selectedFrequency ? selectedFrequency.description : 'select frequency'}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -781,115 +1025,8 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Show prompt if ZIP valid but no home size selected */}
-            {currentStep === 2 && !bookingData.homeSize && (
-              <Card className="shadow-clean border-accent/50 bg-accent/5">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <Home className="h-8 w-8 mx-auto mb-3 text-accent" />
-                    <p className="text-lg font-medium text-foreground mb-2">Select Your Home Size</p>
-                    <p className="text-sm text-muted-foreground">
-                      Choose your home's square footage above to see pricing options
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Service Type Selection - Show only after home size selected */}
-            {currentStep >= 3 && (
-              <Card className="shadow-clean">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Service Type
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {recurringOptions.map((option) => {
-                      const Icon = option.icon;
-                      const selectedTier = homeSizes.find(h => h.value === bookingData.homeSize);
-                      const price = selectedTier?.pricing[option.priceKey] || 0;
-                      const originalPrice = selectedTier?.originalPricing[option.priceKey] || 0;
-                      
-                      return (
-                        <div
-                          key={option.value}
-                          onClick={() => updateBookingData({ frequency: option.value })}
-                          className={cn(
-                            "relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg",
-                            bookingData.frequency === option.value
-                              ? "border-primary bg-primary/5 shadow-clean"
-                              : "border-border hover:border-primary/50",
-                            !selectedTier && "opacity-50 pointer-events-none"
-                          )}
-                        >
-                          {option.recommended && (
-                            <Badge className="absolute -top-2 -right-2 bg-success text-success-foreground">
-                              Recommended
-                            </Badge>
-                          )}
-                          {option.popular && (
-                            <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
-                              Most Popular
-                            </Badge>
-                          )}
-                          <div className="flex items-center gap-3 mb-3">
-                            <Icon className="h-5 w-5 text-primary" />
-                            <span className="font-semibold">{option.label}</span>
-                          </div>
-                          
-                           {selectedTier && !selectedTier.requiresQuote ? (
-                             <div className="space-y-2">
-                               {originalPrice > 0 && offerEligible && (
-                                 <div className="flex items-center justify-between">
-                                   <span className="text-sm text-muted-foreground line-through">
-                                     ${originalPrice}
-                                   </span>
-                                   <Badge variant="secondary" className="text-xs bg-success/20 text-success">
-                                     20% OFF
-                                   </Badge>
-                                 </div>
-                               )}
-                               <div className="text-center">
-                                 <p className="text-xl font-bold text-primary">
-                                   {price > 0 ? `$${offerEligible ? price : originalPrice}` : 'Call for Quote'}
-                                 </p>
-                                 <p className="text-xs text-muted-foreground">{option.description}</p>
-                               </div>
-                             </div>
-                          ) : (
-                            <div className="text-center">
-                              <p className="text-sm text-muted-foreground">{option.description}</p>
-                              <p className="text-xs text-muted-foreground mt-1">Select home size first</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Show prompt if home size selected but no frequency */}
-            {currentStep === 3 && !bookingData.frequency && (
-              <Card className="shadow-clean border-accent/50 bg-accent/5">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <Sparkles className="h-8 w-8 mx-auto mb-3 text-accent" />
-                    <p className="text-lg font-medium text-foreground mb-2">Choose Service Type</p>
-                    <p className="text-sm text-muted-foreground">
-                      Select your preferred cleaning frequency above to continue
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Add-Ons Selection - Show only after frequency selected */}
-            {currentStep >= 4 && (
+            {/* Add-Ons Selection - Show only after home size selected */}
+            {currentStep >= 5 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -920,7 +1057,7 @@ export function LegacyBookingFlow() {
             )}
 
             {/* Date & Time Selection - Show only after add-ons selection */}
-            {currentStep >= 5 && (
+            {currentStep >= 6 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -999,8 +1136,8 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Show prompt if add-ons step but no date/time selected */}
-            {currentStep === 5 && !bookingData.serviceDate && (
+            {/* Show prompt if date/time step but no date/time selected */}
+            {currentStep === 6 && !bookingData.serviceDate && (
               <Card className="shadow-clean border-accent/50 bg-accent/5">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -1015,7 +1152,7 @@ export function LegacyBookingFlow() {
             )}
 
             {/* Property Details - Show only after date/time selected */}
-            {currentStep >= 6 && (
+            {currentStep >= 7 && (
               <Card className="shadow-clean">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1155,9 +1292,9 @@ export function LegacyBookingFlow() {
               </Card>
             )}
 
-            {/* Contact & Address Details - Step 7 */}
-            {currentStep >= 7 && (
-              <Card className="shadow-clean" data-step="7">
+            {/* Contact & Address Details - Step 8 */}
+            {currentStep >= 8 && (
+              <Card className="shadow-clean" data-step="8">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
@@ -1292,7 +1429,7 @@ export function LegacyBookingFlow() {
             )}
 
             {/* Show prompt if property details completed but no contact details */}
-            {currentStep === 7 && (!bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street) && (
+            {currentStep === 8 && (!bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street) && (
               <Card className="shadow-clean border-accent/50 bg-accent/5">
                 <CardContent className="pt-6">
                   <div className="text-center">
@@ -1311,25 +1448,24 @@ export function LegacyBookingFlow() {
           {/* Right Column - Price Summary - Show only when there's pricing to display */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              {currentStep >= 2 && bookingData.homeSize && bookingData.frequency ? (
+            {currentStep >= 2 && bookingData.serviceType && bookingData.homeSize && 
+             (selectedService?.oneTimeOnly || bookingData.frequency) ? (
                 <Card className="shadow-clean border-primary/20">
                   <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
                     <CardTitle>Booking Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {selectedTier && selectedFrequency && (
+                    {selectedTier && selectedService && (
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <div>
                             <span className="font-medium">{selectedTier.label}</span>
-                            <div className="text-sm text-muted-foreground">{selectedFrequency.label}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {selectedService.label}
+                              {!selectedService.oneTimeOnly && selectedFrequency && ` - ${selectedFrequency.label}`}
+                            </div>
                           </div>
                           <div className="text-right">
-                            {selectedTier.originalPricing[selectedFrequency.priceKey] > 0 && (
-                              <div className="text-xs text-muted-foreground line-through">
-                                ${selectedTier.originalPricing[selectedFrequency.priceKey]}
-                              </div>
-                            )}
                             <span className="font-semibold text-primary">${bookingData.basePrice}</span>
                           </div>
                         </div>
@@ -1392,7 +1528,10 @@ export function LegacyBookingFlow() {
                     
                     <Button 
                       onClick={handleProceedToCheckout}
-                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.homeSize || !bookingData.frequency || !bookingData.serviceDate || !bookingData.serviceTime || !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType || !bookingData.customerName || !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street}
+                      disabled={!bookingData.serviceZipCode || !zipCodeValid || !bookingData.serviceType || !bookingData.homeSize || 
+                               (!selectedService?.oneTimeOnly && !bookingData.frequency) || !bookingData.serviceDate || !bookingData.serviceTime || 
+                               !bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType || !bookingData.customerName || 
+                               !bookingData.customerEmail || !bookingData.contactNumber || !bookingData.address?.street}
                       className="w-full"
                       size="lg"
                     >
@@ -1417,24 +1556,33 @@ export function LegacyBookingFlow() {
                           {zipCodeValid ? "✓ Service Area Verified" : "Enter ZIP Code"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                          bookingData.homeSize ? "bg-success text-success-foreground" : currentStep >= 2 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
-                          2
-                        </div>
-                        <span className={cn("text-sm", bookingData.homeSize ? "text-success" : currentStep >= 2 ? "text-foreground" : "text-muted-foreground")}>
-                          {bookingData.homeSize ? "✓ Home Size Selected" : "Select Home Size"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                          bookingData.frequency ? "bg-success text-success-foreground" : currentStep >= 3 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
-                          3
-                        </div>
-                        <span className={cn("text-sm", bookingData.frequency ? "text-success" : currentStep >= 3 ? "text-foreground" : "text-muted-foreground")}>
-                          {bookingData.frequency ? "✓ Service Type Selected" : "Choose Service Type"}
-                        </span>
-                      </div>
+                       <div className="flex items-center gap-3">
+                         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium", 
+                           bookingData.serviceType ? "bg-success text-success-foreground" : currentStep >= 2 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                           2
+                         </div>
+                         <span className={cn("text-sm", bookingData.serviceType ? "text-success" : currentStep >= 2 ? "text-foreground" : "text-muted-foreground")}>
+                           {bookingData.serviceType ? "✓ Service Type Selected" : "Choose Service Type"}
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                           (!selectedService?.allowsRecurring || bookingData.frequency) ? "bg-success text-success-foreground" : currentStep >= 3 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                           3
+                         </div>
+                         <span className={cn("text-sm", (!selectedService?.allowsRecurring || bookingData.frequency) ? "text-success" : currentStep >= 3 ? "text-foreground" : "text-muted-foreground")}>
+                           {selectedService?.oneTimeOnly ? "✓ One-Time Service" : bookingData.frequency ? "✓ Frequency Selected" : "Choose Frequency"}
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                           bookingData.homeSize ? "bg-success text-success-foreground" : currentStep >= 4 ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>
+                           4
+                         </div>
+                         <span className={cn("text-sm", bookingData.homeSize ? "text-success" : currentStep >= 4 ? "text-foreground" : "text-muted-foreground")}>
+                           {bookingData.homeSize ? "✓ Home Size Selected" : "Select Home Size"}
+                         </span>
+                       </div>
                       <div className="flex items-center gap-3">
                         <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
                           currentStep >= 4 ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
