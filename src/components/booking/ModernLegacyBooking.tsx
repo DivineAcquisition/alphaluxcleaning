@@ -84,13 +84,17 @@ const serviceTypes = [
   }
 ];
 
-// Simplified home sizes with clear multipliers
+// Home sizes matching exact pricing calculator square footage tiers
 const homeSizes = [
-  { id: 'small', name: 'Small (1-2 BR)', multiplier: 1.0, description: 'Up to 1,200 sq ft' },
-  { id: 'medium', name: 'Medium (2-3 BR)', multiplier: 1.3, description: '1,200 - 2,000 sq ft' },
-  { id: 'large', name: 'Large (3-4 BR)', multiplier: 1.6, description: '2,000 - 3,000 sq ft' },
-  { id: 'extra-large', name: 'Extra Large (4-5 BR)', multiplier: 2.0, description: '3,000 - 4,500 sq ft' },
-  { id: 'estate', name: 'Estate (5+ BR)', multiplier: 2.5, description: 'Over 4,500 sq ft' }
+  { id: 'under-1000', name: 'Under 1,000 sq ft', multiplier: 1.0, description: 'Studio/1 BR apartments' },
+  { id: '1001-1400', name: '1,001 - 1,400 sq ft', multiplier: 1.043, description: '1-2 BR condos/homes' },
+  { id: '1401-1800', name: '1,401 - 1,800 sq ft', multiplier: 1.133, description: '2-3 BR homes' },
+  { id: '1801-2400', name: '1,801 - 2,400 sq ft', multiplier: 1.178, description: '3 BR homes' },
+  { id: '2401-2800', name: '2,401 - 2,800 sq ft', multiplier: 1.266, description: '3-4 BR homes' },
+  { id: '2801-3300', name: '2,801 - 3,300 sq ft', multiplier: 1.320, description: '4 BR homes' },
+  { id: '3301-3900', name: '3,301 - 3,900 sq ft', multiplier: 1.537, description: '4-5 BR homes' },
+  { id: '3901-4500', name: '3,901 - 4,500 sq ft', multiplier: 1.681, description: '5 BR homes' },
+  { id: '4501-5100', name: '4,501 - 5,100 sq ft', multiplier: 2.048, description: '5+ BR homes' }
 ];
 
 // Simplified frequency options
