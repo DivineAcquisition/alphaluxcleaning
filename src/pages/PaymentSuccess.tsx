@@ -117,7 +117,7 @@ export default function PaymentSuccess() {
         console.log('✅ Navigating to order-status-confirmation with order_id:', orderData.id, 'found via:', foundIdentifier);
         // Clean up localStorage only on success
         localStorage.removeItem('current_order_id');
-        navigate(`/order-status-confirmation?order_id=${orderData.id}`, { replace: true });
+        navigate(`/order-status?order_id=${orderData.id}`, { replace: true });
       } else {
         console.log('❌ No valid order data found, redirecting to guest-booking after delay');
         console.log('Available identifiers were:', { sessionId, orderId, paymentIntentId, setupIntentId });

@@ -24,7 +24,7 @@ import CustomerMobilePortal from '@/pages/CustomerMobilePortal';
 import OrderStatus from '@/pages/OrderStatus';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import OrderConfirmation from '@/pages/OrderConfirmation';
-import OrderStatusConfirmation from '@/pages/OrderStatusConfirmation';
+
 
 // Subcontractor pages
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
@@ -95,7 +95,7 @@ function DomainRouter() {
   }
   
   // Guest-accessible paths that should bypass domain redirects
-  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/order-status-confirmation', '/guest-booking', '/service-details', '/schedule-service', '/booking-confirmation', '/membership'];
+  const guestPaths = ['/payment-success', '/order-confirmation', '/order-status', '/guest-booking', '/service-details', '/schedule-service', '/booking-confirmation', '/membership'];
   
   // Core domain routing (simplified)
   if (hostname.startsWith('book.') || hostname.startsWith('booking.')) {
@@ -149,7 +149,7 @@ function App() {
                 <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                <Route path="/order-status-confirmation" element={<OrderStatusConfirmation />} />
+                
                 <Route path="/service-details" element={<ServiceDetails />} />
                 <Route path="/schedule-service" element={<ScheduleService />} />
                 <Route path="/booking-confirmation" element={<BookingConfirmation />} />
