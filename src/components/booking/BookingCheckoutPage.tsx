@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
   serviceZipCode?: string;
+  serviceType?: string;
   homeSize: string;
   frequency: string;
   addOns: string[];
@@ -297,7 +298,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         
         // Service Details (with separate and unified date/time)
         serviceType: 'residential_cleaning',
-        cleaningType: mapCleaningType(bookingData.homeSize || ''),
+        cleaningType: mapCleaningType(bookingData.serviceType || ''),
         homeSize: bookingData.homeSize,
         frequency: bookingData.frequency,
         addOns: bookingData.addOns || [],
