@@ -69,7 +69,7 @@ export const ChatFallback: React.FC<ChatFallbackProps> = ({ className = "" }) =>
   };
 
   const handlePhoneCall = () => {
-    window.open('tel:(281) 809-9901', '_self');
+    window.open('tel:2818099901', '_self');
   };
 
   if (!chatAvailable) {

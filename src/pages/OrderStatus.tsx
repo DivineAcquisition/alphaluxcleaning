@@ -49,6 +49,7 @@ interface Order {
   frequency: string;
   add_ons: string[];
   service_details: any;
+  service_address?: string;
   scheduled_date?: string;
   scheduled_time?: string;
   created_at: string;
@@ -344,6 +345,7 @@ export default function OrderStatus() {
                           {orderItem.frequency && (
                             <p><span className="font-medium">Frequency:</span> {orderItem.frequency}</p>
                           )}
+                          <p><span className="font-medium">Service Address:</span> {orderItem.service_address || 'Address on file'}</p>
                           <p><span className="font-medium">Amount:</span> ${orderItem.amount}</p>
                         </div>
                       </div>
@@ -466,7 +468,7 @@ export default function OrderStatus() {
                           Update Contact
                         </Button>
                         <Button 
-                          onClick={() => window.location.href = 'tel:+14152290101'}
+                          onClick={() => window.location.href = 'tel:2818099901'}
                           variant="outline"
                           className="w-full border-accent/50 text-accent hover:bg-accent/10"
                         >
