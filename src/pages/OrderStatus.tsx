@@ -340,14 +340,12 @@ export default function OrderStatus() {
                           <Star className="h-5 w-5" />
                           Service Details
                         </h3>
-                        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                          <p><span className="font-medium">Service:</span> {orderItem.cleaning_type}</p>
-                          {orderItem.frequency && (
-                            <p><span className="font-medium">Frequency:</span> {orderItem.frequency}</p>
-                          )}
-                          <p><span className="font-medium">Service Address:</span> {orderItem.service_address || 'Address on file'}</p>
-                          <p><span className="font-medium">Amount:</span> ${orderItem.amount}</p>
-                        </div>
+                         <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                           <p><span className="font-medium">Service:</span> {orderItem.cleaning_type || 'Residential Cleaning'}</p>
+                           <p><span className="font-medium">Frequency:</span> {orderItem.frequency || 'One-Time'}</p>
+                           <p><span className="font-medium">Service Address:</span> {orderItem.service_address || 'Address on file'}</p>
+                           <p><span className="font-medium">Total Amount:</span> ${typeof orderItem.amount === 'number' ? orderItem.amount.toFixed(2) : '0.00'}</p>
+                         </div>
                       </div>
 
                       {/* Contact Information */}

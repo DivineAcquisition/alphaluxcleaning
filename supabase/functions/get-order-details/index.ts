@@ -156,30 +156,78 @@ serve(async (req) => {
 
     console.log("Order found successfully:", data.id);
     
+    // Helper function to map square footage to cleaning type
+    const mapSquareFootageToCleaningType = (sqft: string | number): string => {
+      if (typeof sqft === 'string') {
+        if (sqft.includes('1200')) return 'Studio/1BR Deep Cleaning';
+        if (sqft.includes('1500')) return '1-2BR Deep Cleaning';
+        if (sqft.includes('2000')) return '2-3BR Deep Cleaning';
+        if (sqft.includes('2401') || sqft.includes('2800')) return '3-4BR Deep Cleaning';
+        if (sqft.includes('3200')) return '4-5BR Deep Cleaning';
+        if (sqft.includes('4000')) return '5+BR Deep Cleaning';
+      }
+      return 'Residential Deep Cleaning';
+    };
+
+    // Helper function to format service address
+    const formatServiceAddress = (serviceDetails: any): string => {
+      if (serviceDetails?.serviceAddress && typeof serviceDetails.serviceAddress === 'string') {
+        return serviceDetails.serviceAddress;
+      }
+      
+      const parts = [];
+      if (serviceDetails?.street_address) parts.push(serviceDetails.street_address);
+      if (serviceDetails?.city) parts.push(serviceDetails.city);
+      if (serviceDetails?.state) parts.push(serviceDetails.state);
+      if (serviceDetails?.zip_code) parts.push(serviceDetails.zip_code);
+      
+      return parts.length > 0 ? parts.join(', ') : 'Address on file';
+    };
+
+    // Helper function to extract correct amount
+    const extractAmount = (data: any): number => {
+      // Try multiple possible locations for the amount
+      if (data.service_details?.totalPrice) return parseFloat(data.service_details.totalPrice);
+      if (data.service_details?.finalTotal) return parseFloat(data.service_details.finalTotal);
+      if (data.service_details?.final_total) return parseFloat(data.service_details.final_total);
+      if (data.service_details?.total_price) return parseFloat(data.service_details.total_price);
+      if (data.amount && data.amount > 0) return parseFloat(data.amount);
+      
+      // If amount is in cents, convert to dollars
+      if (data.service_details?.amount_in_cents) return data.service_details.amount_in_cents / 100;
+      
+      return 0;
+    };
+
     // Enhance order data with proper structure and fallbacks
     const enhancedOrder = {
       ...data,
       // Ensure service_details has proper structure
       service_details: data.service_details || {},
-      // Extract cleaning type from service_details if not in main fields
-      cleaning_type: data.cleaning_type || data.service_details?.service_type || data.service_details?.cleaningType || 'Residential Cleaning',
-      // Extract frequency
-      frequency: data.frequency || data.service_details?.frequency || 'One-time',
+      // Extract and map cleaning type properly
+      cleaning_type: (() => {
+        if (data.cleaning_type && data.cleaning_type !== data.service_details?.homeSize) {
+          return data.cleaning_type;
+        }
+        if (data.service_details?.cleaningType && data.service_details.cleaningType !== data.service_details?.homeSize) {
+          return data.service_details.cleaningType;
+        }
+        // Map square footage to cleaning type
+        const homeSize = data.service_details?.homeSize || data.square_footage;
+        return mapSquareFootageToCleaningType(homeSize);
+      })(),
+      // Extract frequency with better fallbacks
+      frequency: data.frequency || data.service_details?.frequency || (data.service_details?.serviceType === 'recurring' ? 'Weekly' : 'One-Time'),
       // Extract scheduled date/time from service_details if not in main fields
-      scheduled_date: data.scheduled_date || data.service_details?.service_date,
-      scheduled_time: data.scheduled_time || data.service_details?.service_time,
-      // Ensure amount is properly formatted (convert from cents if needed)
-      amount: data.amount || data.service_details?.total_price || data.service_details?.finalTotal || 0,
-      // Add service address from various possible locations
-      service_address: data.service_details?.serviceAddress || data.service_details?.address || {
-        street: data.service_details?.street_address || '',
-        city: data.service_details?.city || '',
-        state: data.service_details?.state || 'CA',
-        zipCode: data.service_details?.zip_code || ''
-      },
+      scheduled_date: data.scheduled_date || data.service_details?.service_date || data.service_details?.serviceDateSeparate,
+      scheduled_time: data.scheduled_time || data.service_details?.service_time || data.service_details?.serviceTimeSeparate,
+      // Extract correct amount
+      amount: extractAmount(data),
+      // Format service address properly
+      service_address: formatServiceAddress(data.service_details),
       // Add payment info for post-service payment display
       payment_type: data.service_details?.payment_type || 'pay_after_service',
-      final_total: data.service_details?.final_total || data.service_details?.totalPrice || data.amount || 0
+      final_total: extractAmount(data)
     };
     
     return new Response(JSON.stringify({ order: enhancedOrder }), {
