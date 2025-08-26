@@ -253,6 +253,20 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         promoCode || ''
       );
 
+// Cleaning type mapping function
+      const mapCleaningType = (serviceType: string): string => {
+        const cleaningTypeMap: { [key: string]: string } = {
+          'regular': 'Regular Cleaning',
+          'deep': 'Deep Cleaning', 
+          'moveout': 'Move-Out Cleaning',
+          'movein': 'Move-In Cleaning',
+          'post_construction': 'Post-Construction Cleaning',
+          'residential_cleaning': 'Residential Cleaning',
+          'commercial_cleaning': 'Commercial Cleaning'
+        };
+        return cleaningTypeMap[serviceType] || 'Residential Cleaning';
+      };
+
       // Format data for GHL
       const ghlFormattedData = formatPricingForGHL(
         pricingBreakdown,
@@ -266,7 +280,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           zipCode: bookingData.address?.zipCode || ''
         },
         {
-          serviceType: bookingData.homeSize || 'residential_cleaning',
+          serviceType: 'residential_cleaning',
           homeSize: bookingData.homeSize,
           frequency: bookingData.frequency,
           flooringType: bookingData.flooringType,
@@ -282,7 +296,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         source: 'bay_area_cleaning_pros',
         
         // Service Details (with separate and unified date/time)
-        serviceType: bookingData.homeSize || 'residential_cleaning',
+        serviceType: 'residential_cleaning',
+        cleaningType: mapCleaningType(bookingData.homeSize || ''),
         homeSize: bookingData.homeSize,
         frequency: bookingData.frequency,
         addOns: bookingData.addOns || [],
