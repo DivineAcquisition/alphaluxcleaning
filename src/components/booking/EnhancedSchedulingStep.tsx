@@ -81,8 +81,8 @@ export function EnhancedSchedulingStep({
     return dates;
   };
 
-  // Generate weeks for the weekly grid view
-  const generateWeeksData = () => {
+  // Generate weeks for the weekly grid view - STABLE VERSION
+  const generateWeeksData = React.useMemo(() => {
     const weeks = [];
     const today = new Date();
     const startDate = addDays(today, 5); // Start 5 days from now
@@ -104,10 +104,13 @@ export function EnhancedSchedulingStep({
         .map(day => {
           // Normalize date to avoid timezone issues
           const normalizedDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+          // Use stable availability based on day of month to avoid shifting
+          const dayOfMonth = normalizedDate.getDate();
+          const isWeekend = normalizedDate.getDay() === 6;
           return {
             date: normalizedDate,
-            available: Math.random() > 0.3, // Mock availability - 70% chance of being available
-            slotsCount: Math.floor(Math.random() * 6) + 3 // 3-8 available slots
+            available: !isWeekend && (dayOfMonth % 7 !== 0), // Stable availability pattern
+            slotsCount: Math.max(3, 8 - (dayOfMonth % 6)) // Stable slot count 3-8
           };
         });
 
@@ -121,10 +124,10 @@ export function EnhancedSchedulingStep({
     }
     
     return weeks;
-  };
+  }, []); // Empty dependency array - generate once
 
-  const availableDates = generateAvailableDates();
-  const weeksData = generateWeeksData();
+  const availableDates = React.useMemo(() => generateAvailableDates(), []);
+  const weeksData = generateWeeksData;
   const tomorrow = addDays(new Date(), 1);
   const nextDayFee = 50;
 
@@ -232,11 +235,11 @@ export function EnhancedSchedulingStep({
                           <Card
                             key={dayIndex}
                             className={cn(
-                              "cursor-pointer border-2 transition-all hover:shadow-sm p-0 animate-scale-in",
+                              "cursor-pointer border-2 transition-colors duration-200 hover:shadow-sm p-0",
                               selectedDate && isSameDay(selectedDate, day.date)
-                                ? "border-primary bg-primary/5 shadow-sm scale-105"
+                                ? "border-primary bg-primary/10 shadow-sm"
                                 : day.available
-                                  ? "border-border hover:border-primary/50 hover:bg-primary/5 active:scale-95"
+                                  ? "border-border hover:border-primary/50 hover:bg-primary/5"
                                   : "border-muted bg-muted/30 cursor-not-allowed opacity-60"
                             )}
                             onClick={() => {
@@ -286,8 +289,8 @@ export function EnhancedSchedulingStep({
               </div>
 
               {/* Time Slots */}
-              {selectedDate && (
-                <div className="space-y-4 animate-fade-in">
+                {selectedDate && (
+                <div className="space-y-4">
                   <Separator />
                   <div>
                     <Label className="text-sm sm:text-base font-medium mb-4 block">
@@ -301,8 +304,8 @@ export function EnhancedSchedulingStep({
                           className={cn(
                             "justify-between h-auto p-4 sm:p-3 min-h-[60px] sm:min-h-[50px] text-left",
                             !slot.available && "opacity-50 cursor-not-allowed",
-                            selectedTime === slot.value && "ring-2 ring-primary ring-offset-2 scale-105",
-                            "transition-all duration-200 active:scale-95"
+                            selectedTime === slot.value && "ring-2 ring-primary ring-offset-2",
+                            "transition-colors duration-200"
                           )}
                           disabled={!slot.available}
                           onClick={() => slot.available && onTimeChange(slot.value)}

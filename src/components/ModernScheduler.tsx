@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import SlotTakenDialog from './SlotTakenDialog';
 import { LiveAvailabilityWidget } from './LiveAvailabilityWidget';
 
@@ -85,8 +86,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM' }
   ];
 
-  // Generate next 14 days starting 5 days out (excluding Sundays)
-  const generateDates = () => {
+  // Generate next 14 days starting 5 days out (excluding Sundays) - STABLE VERSION
+  const generateDates = React.useMemo(() => {
     const dates = [];
     const today = new Date();
     
@@ -96,7 +97,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
       
       if (date.getDay() !== 0) { // Skip Sundays
         dates.push({
-          value: date.toISOString().split('T')[0],
+          value: format(date, 'yyyy-MM-dd'), // Use date-fns for consistent formatting
           day: date.getDate(),
           month: date.toLocaleDateString('en-US', { month: 'short' }),
           weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -109,7 +110,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     }
     
     return dates;
-  };
+  }, []); // Memoize to prevent regeneration
 
   // Temporarily disabled Google Calendar integration for faster loading
   const checkDateAvailability = async (date: string, isPollingUpdate = false) => {
@@ -195,10 +196,11 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   }, [selectedDate, nextDayUpsell]);
 
   useEffect(() => {
-    if (nextDayUpsell) {
+    if (nextDayUpsell && !selectedDate) {
+      // Only auto-select if no date is already selected
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowISO = tomorrow.toISOString().split('T')[0];
+      const tomorrowISO = format(tomorrow, 'yyyy-MM-dd');
       setSelectedDate(tomorrowISO);
       checkDateAvailability(tomorrowISO);
     }
@@ -360,7 +362,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
     }
   };
 
-  const dates = generateDates();
+  const dates = generateDates;
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">

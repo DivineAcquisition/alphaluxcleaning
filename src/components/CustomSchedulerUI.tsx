@@ -7,6 +7,7 @@ import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight, Load
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ComprehensiveBookingData {
   bookingStep: string;
@@ -79,8 +80,8 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM' }
   ];
 
-  // Generate next 14 days starting 5 days out (excluding Sundays)
-  const generateDates = () => {
+  // Generate next 14 days starting 5 days out (excluding Sundays) - STABLE VERSION
+  const generateDates = React.useMemo(() => {
     const dates = [];
     const today = new Date();
     
@@ -90,7 +91,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
       
       if (date.getDay() !== 0) { // Skip Sundays
         dates.push({
-          value: date.toISOString().split('T')[0],
+          value: format(date, 'yyyy-MM-dd'), // Use stable date formatting
           day: date.getDate(),
           month: date.toLocaleDateString('en-US', { month: 'short' }),
           weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -103,7 +104,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     }
     
     return dates;
-  };
+  }, []); // Memoize to prevent regeneration
 
   // Temporarily disabled Google Calendar integration for faster loading
   const checkDateAvailability = async (date: string, isPollingUpdate = false) => {
@@ -278,7 +279,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
     }
   };
 
-  const dates = generateDates();
+  const dates = generateDates;
 
   return (
     <div className="space-y-4">

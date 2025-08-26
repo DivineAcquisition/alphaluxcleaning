@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 import SchedulingSuccessFlow from './SchedulingSuccessFlow';
 
 interface ModernSchedulerProps {
@@ -75,7 +76,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     { value: '4:00 PM', label: '4:00 PM', range: '4:00 - 6:00 PM', popular: false, available: true }
   ]);
 
-  const generateDates = (): DateOption[] => {
+  const generateDates = React.useMemo((): DateOption[] => {
     const dates = [];
     const today = new Date();
     
@@ -85,7 +86,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
       
       if (date.getDay() !== 0) { // Skip Sundays
         dates.push({
-          value: date.toISOString().split('T')[0],
+          value: format(date, 'yyyy-MM-dd'), // Use date-fns for consistent formatting
           day: date.getDate(),
           month: date.toLocaleDateString('en-US', { month: 'short' }),
           weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -103,33 +104,34 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     }
     
     return dates;
-  };
+  }, []); // Memoize to prevent regeneration
 
-  // Enhanced availability checking with real-time feedback
+  // Enhanced availability checking with STABLE feedback (no random data)
   const checkAvailability = async (date: string) => {
     setIsCheckingAvailability(true);
     setAvailabilityStatus('checking');
     
     try {
       // Simulate availability check (replace with real API call)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Simulate different availability scenarios
-      const dayOfWeek = new Date(date).getDay();
+      // Use stable availability based on date characteristics
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.getDay();
+      const dayOfMonth = dateObj.getDate();
       const isWeekend = dayOfWeek === 6 || dayOfWeek === 0;
-      const random = Math.random();
       
       let availabilityResult: 'available' | 'limited' | 'unavailable' = 'available';
       
       if (isWeekend) {
-        availabilityResult = random > 0.7 ? 'limited' : 'unavailable';
-      } else if (random > 0.8) {
+        availabilityResult = 'unavailable';
+      } else if (dayOfMonth % 7 === 0) {
         availabilityResult = 'limited';
       }
       
       setAvailabilityStatus(availabilityResult);
       
-      // Update time slots based on availability
+      // Update time slots based on stable availability
       setTimeSlots(prevSlots => 
         prevSlots.map(slot => ({
           ...slot,
@@ -262,7 +264,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
     }
   };
 
-  const dates = generateDates();
+  const dates = generateDates;
   const selectedDateObj = dates.find(d => d.value === selectedDate);
   const selectedTimeObj = timeSlots.find(t => t.value === selectedTime);
 
