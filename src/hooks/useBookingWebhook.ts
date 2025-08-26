@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { calculateComprehensivePricing, formatPricingForGHL } from '@/lib/comprehensive-pricing';
 
 interface BookingWebhookData {
   // Service Selection Data
@@ -8,6 +9,7 @@ interface BookingWebhookData {
   serviceType?: string;
   frequency?: string;
   addOns?: string[];
+  flooringType?: string;
   
   // Service Details
   serviceDate?: string;
@@ -32,13 +34,36 @@ interface BookingWebhookData {
     zipCode: string;
   };
   
-  // Pricing Information
+  // Comprehensive Pricing Information
   basePrice?: number;
   addOnPrices?: { [key: string]: number };
+  
+  // Detailed Discount Information
+  discounts?: {
+    global?: { percentage: number; dollarAmount: number; description: string };
+    frequency?: { percentage: number; dollarAmount: number; description: string };
+    membership?: { percentage: number; dollarAmount: number; description: string };
+    referral?: { percentage: number; dollarAmount: number; description: string };
+    promo?: { percentage: number; dollarAmount: number; description: string };
+  };
+  
+  // Labor Cost Information
+  laborCosts?: {
+    tier1Rate: number;
+    tier2Rate: number;
+    tier3Rate: number;
+    estimatedHours: number;
+    estimatedLaborCost: number;
+  };
+  
+  // Legacy discount fields (for backwards compatibility)
   frequencyDiscount?: number;
   membershipDiscount?: number;
   referralDiscount?: number;
+  promoDiscount?: number;
+  
   totalPrice?: number;
+  totalSavings?: number;
   
   // Payment Information
   paymentType?: 'full' | 'half' | 'prepayment';
@@ -62,6 +87,9 @@ interface BookingWebhookData {
   orderId?: string; // Use order_id instead
   bookingId?: string; // Use booking_id instead
   sessionId?: string; // Use session_id instead
+  
+  // GHL Formatted Data
+  ghlFormattedData?: any;
 }
 
 export const useBookingWebhook = () => {
@@ -102,14 +130,69 @@ export const useBookingWebhook = () => {
     });
     
     try {
-      // Normalize ID fields for consistency
+      // Calculate comprehensive pricing breakdown
+      const pricingBreakdown = calculateComprehensivePricing(
+        data.basePrice || 0,
+        Object.values(data.addOnPrices || {}).reduce((sum, price) => sum + price, 0),
+        data.homeSize || '',
+        data.frequency || '',
+        data.membership || false,
+        !!(data.discounts?.referral?.dollarAmount || data.referralDiscount),
+        '' // No promo code from current data
+      );
+
+      // Format data for GHL
+      const ghlFormattedData = formatPricingForGHL(
+        pricingBreakdown,
+        {
+          name: data.customerInfo?.name || '',
+          email: data.customerInfo?.email || '',
+          phone: data.customerInfo?.phone || data.contactNumber || '',
+          address: data.address?.street || data.customerInfo?.address || '',
+          city: data.address?.city || data.customerInfo?.city || '',
+          state: data.address?.state || data.customerInfo?.state || 'TX',
+          zipCode: data.address?.zipCode || data.customerInfo?.zipCode || ''
+        },
+        {
+          serviceType: data.serviceType,
+          homeSize: data.homeSize,
+          frequency: data.frequency,
+          flooringType: data.flooringType,
+          addOns: data.addOns,
+          serviceDate: data.serviceDate,
+          serviceTime: data.serviceTime
+        }
+      );
+
+      // Normalize ID fields for consistency and add enhanced data
       const normalizedData = {
         ...data,
         order_id: data.order_id || data.orderId,
         booking_id: data.booking_id || data.bookingId,
         session_id: data.session_id || data.sessionId,
         timestamp: new Date().toISOString(),
-        source: 'booking_flow'
+        source: 'booking_flow',
+        
+        // Enhanced pricing data
+        discounts: {
+          global: pricingBreakdown.globalDiscount,
+          frequency: pricingBreakdown.frequencyDiscount,
+          membership: pricingBreakdown.membershipDiscount,
+          referral: pricingBreakdown.referralDiscount,
+          promo: pricingBreakdown.promoDiscount
+        },
+        laborCosts: pricingBreakdown.laborCosts,
+        totalSavings: pricingBreakdown.totalSavings,
+        
+        // GHL formatted data
+        ghlFormattedData: ghlFormattedData,
+        
+        // Service date/time separation and combination
+        serviceDateSeparate: data.serviceDate,
+        serviceTimeSeparate: data.serviceTime,
+        serviceDateTime: data.serviceDate && data.serviceTime 
+          ? `${data.serviceDate} ${data.serviceTime}` 
+          : undefined
       };
 
       // Choose webhook function based on order_id validity

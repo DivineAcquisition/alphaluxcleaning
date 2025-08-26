@@ -13,6 +13,7 @@ import { checkStripeReady } from '@/lib/stripe';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { PaymentErrorBoundary } from '@/components/payment/PaymentErrorBoundary';
 import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
+import { calculateComprehensivePricing, formatPricingForGHL } from '@/lib/comprehensive-pricing';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingData {
@@ -238,11 +239,110 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         console.log('Order saved successfully');
       }
 
-      // Create comprehensive order entry webhook data
+      // Create comprehensive order entry webhook data with enhanced pricing
+      const addOnsTotal = Object.values(bookingData.addOnPrices || {}).reduce((sum, price) => sum + price, 0);
+      
+      // Calculate comprehensive pricing breakdown
+      const pricingBreakdown = calculateComprehensivePricing(
+        bookingData.basePrice || 0,
+        addOnsTotal,
+        bookingData.homeSize || '',
+        bookingData.frequency || '',
+        bookingData.addMembership || false,
+        promoDiscount > 0,
+        promoCode || ''
+      );
+
+      // Format data for GHL
+      const ghlFormattedData = formatPricingForGHL(
+        pricingBreakdown,
+        {
+          name: bookingData.customerName || user?.user_metadata?.full_name || 'Guest User',
+          email: bookingData.customerEmail || user?.email || 'guest@example.com',
+          phone: bookingData.contactNumber || '',
+          address: bookingData.address?.street || '',
+          city: bookingData.address?.city || '',
+          state: bookingData.address?.state || 'TX',
+          zipCode: bookingData.address?.zipCode || ''
+        },
+        {
+          serviceType: 'residential_cleaning',
+          homeSize: bookingData.homeSize,
+          frequency: bookingData.frequency,
+          flooringType: bookingData.flooringType,
+          addOns: bookingData.addOns,
+          serviceDate: bookingData.serviceDate,
+          serviceTime: bookingData.serviceTime
+        }
+      );
+
       const orderEntryData = {
         event_type: 'order_entry',
         timestamp: new Date().toISOString(),
         source: 'bay_area_cleaning_pros',
+        
+        // Service Details (with separate and unified date/time)
+        serviceType: 'residential_cleaning',
+        homeSize: bookingData.homeSize,
+        frequency: bookingData.frequency,
+        addOns: bookingData.addOns || [],
+        flooringType: bookingData.flooringType || 'not_specified',
+        serviceDateSeparate: bookingData.serviceDate,
+        serviceTimeSeparate: bookingData.serviceTime,
+        serviceDateTime: `${bookingData.serviceDate} ${bookingData.serviceTime}`,
+        specialInstructions: bookingData.specialInstructions,
+        
+        // Customer Information
+        customerInfo: {
+          name: bookingData.customerName || user?.user_metadata?.full_name || 'Guest User',
+          email: bookingData.customerEmail || user?.email || 'guest@example.com',
+          phone: bookingData.contactNumber || '',
+          address: bookingData.address?.street || '',
+          city: bookingData.address?.city || '',
+          state: bookingData.address?.state || 'TX',
+          zipCode: bookingData.address?.zipCode || ''
+        },
+        
+        // Property Details
+        propertyDetails: {
+          squareFootage: bookingData.squareFootage || null,
+          bedrooms: bookingData.bedrooms || null,
+          bathrooms: bookingData.bathrooms || null,
+          dwellingType: bookingData.dwellingType || null,
+          flooringType: bookingData.flooringType || null
+        },
+        
+        // Comprehensive Pricing Information
+        basePrice: bookingData.basePrice || 0,
+        addOnPrices: bookingData.addOnPrices || {},
+        
+        // Detailed discount breakdowns
+        discounts: {
+          global: pricingBreakdown.globalDiscount,
+          frequency: pricingBreakdown.frequencyDiscount,
+          membership: pricingBreakdown.membershipDiscount,
+          referral: pricingBreakdown.referralDiscount,
+          promo: pricingBreakdown.promoDiscount
+        },
+        
+        // Labor cost information
+        laborCosts: pricingBreakdown.laborCosts,
+        
+        // Legacy discount fields (backwards compatibility)
+        frequencyDiscount: recurringDiscount,
+        membershipDiscount: membershipDiscount,
+        promoDiscount: promoDiscount,
+        
+        // Final totals
+        totalPrice: finalTotal,
+        totalSavings: pricingBreakdown.totalSavings,
+        
+        // Payment Information
+        paymentType: paymentType,
+        paymentAmount: paymentAmount,
+        
+        // GHL formatted data
+        ghlFormattedData: ghlFormattedData,
         
         // Order Information
         order_data: {
@@ -251,33 +351,33 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           status: 'confirmed',
           created_at: new Date().toISOString(),
           
-          // Service Details
-          service_type: 'residential_cleaning',
-          home_size: bookingData.homeSize,
-          frequency: bookingData.frequency,
-          add_ons: bookingData.addOns,
-          service_date: bookingData.serviceDate,
-          service_time: bookingData.serviceTime,
-          special_instructions: bookingData.specialInstructions,
-          
-          // Pricing Information
-          base_price: bookingData.basePrice,
-          add_on_prices: bookingData.addOnPrices,
-          frequency_discount: bookingData.frequencyDiscount,
-          membership_discount: membershipDiscount,
-          promo_discount: promoDiscount,
-          next_day_fee: bookingData.nextDayFee || 0,
-          total_price: bookingData.totalPrice,
-          
-          // Payment Information
-          payment_type: bookingData.paymentType,
-          payment_amount: paymentAmount,
-          final_total: finalTotal,
+          // Enhanced Pricing Breakdown
+          pricing_details: {
+            original_base_total: Math.round(originalBaseTotal * 100), // in cents
+            global_discount_20_percent: Math.round(globalDiscountAmount * 100), // in cents
+            base_total_after_global_discount: Math.round(baseTotal * 100), // in cents
+            membership_monthly_fee: Math.round(membershipFee * 100), // in cents
+            membership_service_credit: Math.round(membershipDiscount * 100), // in cents
+            recurring_discount: Math.round(recurringDiscount * 100), // in cents
+            promo_discount: Math.round(promoDiscount * 100), // in cents
+            next_day_fee: Math.round(nextDayFee * 100), // in cents
+            final_total: Math.round(finalTotal * 100), // in cents
+            payment_amount: Math.round(paymentAmount * 100), // in cents
+            
+            // Formatted for display
+            original_base_total_display: formatPrice(originalBaseTotal),
+            global_discount_display: formatPrice(globalDiscountAmount),
+            base_total_display: formatPrice(baseTotal),
+            membership_fee_display: formatPrice(membershipFee),
+            membership_discount_display: formatPrice(membershipDiscount),
+            final_total_display: formatPrice(finalTotal),
+            payment_amount_display: formatPrice(paymentAmount)
+          },
           
           // All calculated totals for webhook
           calculated_breakdown: {
             base_total: baseTotal,
-            add_ons_total: Object.values(bookingData.addOnPrices || {}).reduce((sum, price) => sum + price, 0),
+            add_ons_total: addOnsTotal,
             subtotal: baseTotal,
             recurring_discount: recurringDiscount,
             membership_discount: membershipDiscount,
@@ -297,16 +397,17 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           phone: bookingData.contactNumber || '',
           
           // Address Information
-          street_address: bookingData.address.street || '',
-          city: bookingData.address.city || '',
-          state: bookingData.address.state || 'CA',
-          zip_code: bookingData.address.zipCode || '',
+          street_address: bookingData.address?.street || '',
+          city: bookingData.address?.city || '',
+          state: bookingData.address?.state || 'TX',
+          zip_code: bookingData.address?.zipCode || '',
           
           // Property Details (if available)
           square_footage: bookingData.squareFootage || null,
           bedrooms: bookingData.bedrooms || null,
           bathrooms: bookingData.bathrooms || null,
-          dwelling_type: bookingData.dwellingType || null
+          dwelling_type: bookingData.dwellingType || null,
+          flooring_type: bookingData.flooringType || null
         },
         
         // Booking Information
@@ -317,29 +418,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           membership_added: bookingData.addMembership || false,
           promo_code_used: promoCode || null,
           user_authenticated: !!user,
-          
-        // Enhanced Pricing Breakdown
-        pricing_details: {
-          original_base_total: Math.round(originalBaseTotal * 100), // in cents
-          global_discount_20_percent: Math.round(globalDiscountAmount * 100), // in cents
-          base_total_after_global_discount: Math.round(baseTotal * 100), // in cents
-          membership_monthly_fee: Math.round(membershipFee * 100), // in cents
-          membership_service_credit: Math.round(membershipDiscount * 100), // in cents
-          recurring_discount: Math.round(recurringDiscount * 100), // in cents
-          promo_discount: Math.round(promoDiscount * 100), // in cents
-          next_day_fee: Math.round(nextDayFee * 100), // in cents
-          final_total: Math.round(finalTotal * 100), // in cents
-          payment_amount: Math.round(paymentAmount * 100), // in cents
-          
-          // Formatted for display
-          original_base_total_display: formatPrice(originalBaseTotal),
-          global_discount_display: formatPrice(globalDiscountAmount),
-          base_total_display: formatPrice(baseTotal),
-          membership_fee_display: formatPrice(membershipFee),
-          membership_discount_display: formatPrice(membershipDiscount),
-          final_total_display: formatPrice(finalTotal),
-          payment_amount_display: formatPrice(paymentAmount)
-        },
           total_savings: totalDiscount
         },
         
@@ -350,7 +428,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           session_id: paymentIntentId,
           processed_at: new Date().toISOString(),
           platform: 'web',
-          user_agent: navigator.userAgent
+          user_agent: navigator.userAgent,
+          webhook_version: '2.0_comprehensive'
         }
       };
 

@@ -182,6 +182,7 @@ interface BookingData {
   homeSize: string;
   frequency: string;
   addOns: string[];
+  flooringType: string;
   
   // Step 3: Scheduling & Details
   serviceDate: string;
@@ -215,6 +216,7 @@ const initialBookingData: BookingData = {
   homeSize: '',
   frequency: '',
   addOns: [],
+  flooringType: '',
   serviceDate: '',
   serviceTime: '',
   nextDayUpsell: false,
@@ -328,12 +330,12 @@ export function ModernLegacyBooking() {
         if (bookingData.homeSize === 'over-5100') {
           return false; // Block progression - requires estimate
         }
-        // Regular cleaning requires frequency selection
+        // Regular cleaning requires frequency selection and flooring type
         if (bookingData.serviceType === 'regular') {
-          return bookingData.homeSize !== '' && bookingData.frequency !== '';
+          return bookingData.homeSize !== '' && bookingData.frequency !== '' && bookingData.flooringType !== '';
         }
-        // Deep clean and move-out only need home size
-        return bookingData.homeSize !== '';
+        // Deep clean and move-out need home size and flooring type
+        return bookingData.homeSize !== '' && bookingData.flooringType !== '';
       case 3:
         return (
           (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) &&
@@ -509,6 +511,36 @@ export function ModernLegacyBooking() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Flooring Type Selection */}
+            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="h-5 w-5 text-primary" />
+                    Flooring Type
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={bookingData.flooringType}
+                    onValueChange={(value) => updateField('flooringType', value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select primary flooring type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hardwood">Hardwood</SelectItem>
+                      <SelectItem value="carpet">Carpet</SelectItem>
+                      <SelectItem value="tile">Tile</SelectItem>
+                      <SelectItem value="laminate">Laminate</SelectItem>
+                      <SelectItem value="mixed">Mixed Flooring</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Frequency Selection - Only for Regular Cleaning */}
             {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && bookingData.serviceType === 'regular' && (
