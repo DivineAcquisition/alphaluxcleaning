@@ -194,6 +194,21 @@ export function calculateComprehensivePricing(
 }
 
 export function formatPricingForGHL(pricing: PricingBreakdown, customerInfo: any, serviceDetails: any): any {
+  // Calculate customer LTV
+  const customerLTV = calculateCustomerLTV(pricing.finalTotal, serviceDetails.frequency);
+  
+  // Map cleaning type
+  const cleaningTypeMap: { [key: string]: string } = {
+    'regular': 'Regular Cleaning',
+    'deep': 'Deep Cleaning', 
+    'moveout': 'Move-Out Cleaning',
+    'movein': 'Move-In Cleaning',
+    'post_construction': 'Post-Construction Cleaning',
+    'residential_cleaning': 'Residential Cleaning',
+    'commercial_cleaning': 'Commercial Cleaning'
+  };
+  const cleaningType = cleaningTypeMap[serviceDetails.serviceType] || serviceDetails.serviceType || 'General Cleaning';
+  
   return {
     // Contact Information (GHL Format)
     contact: {
@@ -210,6 +225,7 @@ export function formatPricingForGHL(pricing: PricingBreakdown, customerInfo: any
     // Service Information
     service: {
       serviceType: serviceDetails.serviceType || '',
+      cleaningType: cleaningType, // Human-readable cleaning type
       homeSize: serviceDetails.homeSize || '',
       frequency: serviceDetails.frequency || '',
       flooringType: serviceDetails.flooringType || '',
@@ -265,6 +281,7 @@ export function formatPricingForGHL(pricing: PricingBreakdown, customerInfo: any
       stage: 'new_booking',
       leadScore: calculateLeadScore(pricing.finalTotal, serviceDetails.frequency),
       dealValue: pricing.finalTotal,
+      customerLTV: customerLTV, // Customer lifetime value
       source: 'website_booking'
     },
     
@@ -292,4 +309,42 @@ function calculateLeadScore(totalValue: number, frequency: string): number {
   score += 10; // All bookings get base service bonus
   
   return Math.min(100, score);
+}
+
+/**
+ * Calculate Customer Lifetime Value (LTV) based on service frequency and price
+ */
+export function calculateCustomerLTV(
+  servicePrice: number,
+  frequency: string,
+  retentionMonths: number = 12 // Default 12-month retention assumption
+): number {
+  if (!servicePrice || servicePrice <= 0) return 0;
+  
+  let servicesPerYear = 0;
+  
+  // Calculate services per year based on frequency
+  switch (frequency?.toLowerCase()) {
+    case 'weekly':
+      servicesPerYear = 52;
+      break;
+    case 'biweekly':
+    case 'bi-weekly':
+      servicesPerYear = 26;
+      break;
+    case 'monthly':
+      servicesPerYear = 12;
+      break;
+    case 'quarterly':
+      servicesPerYear = 4;
+      break;
+    default:
+      // One-time service
+      return Math.round(servicePrice * 100) / 100;
+  }
+  
+  // Calculate LTV: price per service × services per year × retention period (in years)
+  const ltv = servicePrice * servicesPerYear * (retentionMonths / 12);
+  
+  return Math.round(ltv * 100) / 100;
 }

@@ -1,7 +1,22 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { calculateComprehensivePricing, formatPricingForGHL } from '@/lib/comprehensive-pricing';
+import { calculateComprehensivePricing, formatPricingForGHL, calculateCustomerLTV } from '@/lib/comprehensive-pricing';
+
+// Cleaning type mapping function
+const mapCleaningType = (serviceType: string): string => {
+  const cleaningTypeMap: { [key: string]: string } = {
+    'regular': 'Regular Cleaning',
+    'deep': 'Deep Cleaning', 
+    'moveout': 'Move-Out Cleaning',
+    'movein': 'Move-In Cleaning',
+    'post_construction': 'Post-Construction Cleaning',
+    'residential_cleaning': 'Residential Cleaning',
+    'commercial_cleaning': 'Commercial Cleaning'
+  };
+  
+  return cleaningTypeMap[serviceType] || serviceType || 'General Cleaning';
+};
 
 interface BookingWebhookData {
   // Service Selection Data
@@ -148,6 +163,15 @@ export const useBookingWebhook = () => {
         '' // No promo code from current data
       );
 
+      // Calculate customer lifetime value
+      const customerLTV = calculateCustomerLTV(
+        pricingBreakdown.finalTotal,
+        data.frequency || ''
+      );
+
+      // Map cleaning type to human-readable format
+      const cleaningType = mapCleaningType(data.serviceType || '');
+
       // Format data for GHL
       const ghlFormattedData = formatPricingForGHL(
         pricingBreakdown,
@@ -226,10 +250,12 @@ export const useBookingWebhook = () => {
         
         // Core service information (ensuring frequency is properly captured)
         serviceType: data.serviceType || 'residential_cleaning',
+        cleaningType: cleaningType, // Human-readable cleaning type
         homeSize: data.homeSize || '',
         frequency: data.frequency || '', // Ensure frequency is captured
         addOns: data.addOns || [],
         flooringType: data.flooringType || '',
+        customerLTV: customerLTV, // Customer lifetime value
         
         // Service scheduling with separate and unified formats
         serviceDateSeparate: data.serviceDate,
