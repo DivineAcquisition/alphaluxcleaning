@@ -23,6 +23,12 @@ interface BookingWebhookData {
   contactNumber?: string;
   specialInstructions?: string;
   
+  // Property Details
+  squareFootage?: number;
+  bedrooms?: string;
+  bathrooms?: string;
+  dwellingType?: string;
+  
   // Customer Information
   customerInfo?: {
     name: string;
@@ -61,6 +67,7 @@ interface BookingWebhookData {
   membershipDiscount?: number;
   referralDiscount?: number;
   promoDiscount?: number;
+  promoCode?: string;
   
   totalPrice?: number;
   totalSavings?: number;
@@ -211,30 +218,141 @@ export const useBookingWebhook = () => {
         }
       });
 
-      // Enhanced payload preparation
+      // Comprehensive webhook payload (eliminates duplicates)
+      const comprehensivePayload = {
+        event_type: "order_entry",
+        timestamp: new Date().toISOString(),
+        source: "bay_area_cleaning_pros",
+        
+        // Core service information (ensuring frequency is properly captured)
+        serviceType: data.serviceType || 'residential_cleaning',
+        homeSize: data.homeSize || '',
+        frequency: data.frequency || '', // Ensure frequency is captured
+        addOns: data.addOns || [],
+        flooringType: data.flooringType || '',
+        
+        // Service scheduling with separate and unified formats
+        serviceDateSeparate: data.serviceDate,
+        serviceTimeSeparate: data.serviceTime, 
+        serviceDateTime: data.serviceDate && data.serviceTime 
+          ? `${data.serviceDate} ${data.serviceTime}` 
+          : '',
+        specialInstructions: data.specialInstructions || '',
+        
+        // Customer information
+        customerInfo: {
+          name: data.customerInfo?.name || '',
+          email: data.customerInfo?.email || '',
+          phone: data.customerInfo?.phone || data.contactNumber || '',
+          address: data.address?.street || data.customerInfo?.address || '',
+          city: data.address?.city || data.customerInfo?.city || '',
+          state: data.address?.state || data.customerInfo?.state || 'TX',
+          zipCode: data.address?.zipCode || data.customerInfo?.zipCode || ''
+        },
+        
+        // Property details
+        propertyDetails: {
+          squareFootage: data.squareFootage || null,
+          bedrooms: data.bedrooms || null,
+          bathrooms: data.bathrooms || null,
+          dwellingType: data.dwellingType || null,
+          flooringType: data.flooringType || ''
+        },
+        
+        // Comprehensive pricing (no duplicates)
+        basePrice: pricingBreakdown.basePrice,
+        addOnPrices: data.addOnPrices || {},
+        discounts: {
+          global: pricingBreakdown.globalDiscount,
+          frequency: pricingBreakdown.frequencyDiscount,
+          membership: pricingBreakdown.membershipDiscount,
+          referral: pricingBreakdown.referralDiscount,
+          promo: pricingBreakdown.promoDiscount
+        },
+        
+        // Enhanced labor costs for all tiers
+        laborCosts: {
+          tier1Rate: pricingBreakdown.laborCosts.tier1Rate,
+          tier2Rate: pricingBreakdown.laborCosts.tier2Rate,
+          tier3Rate: pricingBreakdown.laborCosts.tier3Rate,
+          estimatedHours: pricingBreakdown.laborCosts.estimatedHours,
+          // Calculate total costs for each tier
+          tier1TotalCost: Math.round(pricingBreakdown.laborCosts.tier1Rate * pricingBreakdown.laborCosts.estimatedHours * 100) / 100,
+          tier2TotalCost: Math.round(pricingBreakdown.laborCosts.tier2Rate * pricingBreakdown.laborCosts.estimatedHours * 100) / 100,
+          tier3TotalCost: Math.round(pricingBreakdown.laborCosts.tier3Rate * pricingBreakdown.laborCosts.estimatedHours * 100) / 100,
+          estimatedLaborCost: pricingBreakdown.laborCosts.estimatedLaborCost
+        },
+        
+        // Legacy pricing fields (remove duplicates)
+        frequencyDiscount: pricingBreakdown.frequencyDiscount.dollarAmount,
+        membershipDiscount: pricingBreakdown.membershipDiscount.dollarAmount,
+        promoDiscount: pricingBreakdown.promoDiscount.dollarAmount,
+        totalPrice: pricingBreakdown.finalTotal,
+        totalSavings: pricingBreakdown.totalSavings,
+        
+        // Payment information
+        paymentType: data.paymentType || 'pay_after_service',
+        paymentAmount: data.paymentAmount || 0,
+        
+        // GHL formatted data
+        ghlFormattedData: ghlFormattedData,
+        
+        // Metadata
+        order_data: {
+          id: normalizedData.order_id,
+          payment_intent_id: normalizedData.order_id,
+          status: 'confirmed',
+          created_at: normalizedData.timestamp
+        },
+        customer_data: {
+          name: data.customerInfo?.name || '',
+          email: data.customerInfo?.email || '',
+          phone: data.customerInfo?.phone || data.contactNumber || '',
+          street_address: data.address?.street || data.customerInfo?.address || '',
+          city: data.address?.city || data.customerInfo?.city || '',
+          state: data.address?.state || data.customerInfo?.state || 'TX',
+          zip_code: data.address?.zipCode || data.customerInfo?.zipCode || '',
+          square_footage: data.squareFootage || null,
+          bedrooms: data.bedrooms || null,
+          bathrooms: data.bathrooms || null,
+          dwelling_type: data.dwellingType || null,
+          flooring_type: data.flooringType || ''
+        },
+        booking_data: {
+          booking_id: normalizedData.booking_id,
+          booking_step: data.bookingStep,
+          is_recurring: !!data.frequency && data.frequency !== '',
+          membership_added: !!data.membership,
+          promo_code_used: data.promoCode || null,
+          user_authenticated: false,
+          total_savings: pricingBreakdown.totalSavings
+        },
+        metadata: {
+          order_id: normalizedData.order_id,
+          booking_id: normalizedData.booking_id,
+          session_id: normalizedData.session_id,
+          processed_at: normalizedData.timestamp,
+          platform: 'web',
+          user_agent: navigator.userAgent,
+          webhook_version: '2.0_comprehensive'
+        }
+      };
+
+      // Enhanced payload preparation based on order ID validity
       const payload = hasValidOrderId ? {
-        ...normalizedData,
-        trigger_event: data.bookingStep,
-        debug_info: {
-          source: 'useBookingWebhook',
-          validation_results: dataValidation,
-          selected_function: functionName
-        }
+        order_id: normalizedData.order_id,
+        booking_id: normalizedData.booking_id,
+        comprehensive_data: comprehensivePayload
       } : {
-        transactionData: normalizedData,
-        type: 'booking_step',
-        debug_info: {
-          source: 'useBookingWebhook',
-          validation_results: dataValidation,
-          selected_function: functionName
-        }
+        transactionData: comprehensivePayload,
+        type: 'booking_step'
       };
 
       console.log('📋 useBookingWebhook: Prepared payload info:', {
         function: functionName,
         payload_structure: Object.keys(payload),
         payload_size_kb: Math.round(JSON.stringify(payload).length / 1024 * 100) / 100,
-        contains_debug_info: !!payload.debug_info
+        contains_comprehensive_data: !!(payload as any).comprehensive_data
       });
 
       const { data: result, error } = await supabase.functions.invoke(functionName, {

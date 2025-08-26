@@ -14,62 +14,6 @@ interface OrderEntryWebhookData {
   comprehensive_data?: any; // New field for comprehensive booking data
 }
 
-interface GHLFormattedPayload {
-  contact: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    address1: string;
-    city: string;
-    state: string;
-    postalCode: string;
-  };
-  service: {
-    serviceType: string;
-    homeSize: string;
-    frequency: string;
-    flooringType: string;
-    addOns: string[];
-    serviceDate: string;
-    serviceTime: string;
-    serviceDateTime: string;
-  };
-  pricing: {
-    basePrice: number;
-    addOnsPrice: number;
-    subtotal: number;
-    globalDiscountPercent: number;
-    globalDiscountAmount: number;
-    frequencyDiscountPercent: number;
-    frequencyDiscountAmount: number;
-    membershipDiscountPercent: number;
-    membershipDiscountAmount: number;
-    referralDiscountPercent: number;
-    referralDiscountAmount: number;
-    promoDiscountPercent: number;
-    promoDiscountAmount: number;
-    totalDiscounts: number;
-    finalTotal: number;
-    totalSavings: number;
-  };
-  laborCosts: {
-    tier1HourlyRate: number;
-    tier2HourlyRate: number;
-    tier3HourlyRate: number;
-    estimatedHours: number;
-    estimatedLaborCost: number;
-  };
-  pipeline: {
-    stage: string;
-    leadScore: number;
-    dealValue: number;
-    source: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -100,38 +44,38 @@ serve(async (req) => {
     let orderData: any = null;
     let assignmentData: any = null;
 
-    // Fetch assignment data if assignment_id provided
-    if (assignment_id) {
-      const { data: assignment, error: assignmentError } = await supabase
-        .from('subcontractor_job_assignments')
-        .select(`
-          *,
-          bookings (*),
-          subcontractors (*)
-        `)
-        .eq('id', assignment_id)
-        .single();
-
-      if (assignmentError) {
-        console.error('Assignment fetch error:', assignmentError);
-      } else {
-        assignmentData = assignment;
-        
-        // Try to get order data from booking
-        if (assignment?.bookings) {
-          const { data: order } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('customer_email', assignment.bookings.customer_email)
-            .eq('service_date', assignment.bookings.service_date)
-            .single();
-          orderData = order;
-        }
-      }
-    }
-
     // Only fetch database data if comprehensive_data is not provided
     if (!comprehensive_data) {
+      // Fetch assignment data if assignment_id provided
+      if (assignment_id) {
+        const { data: assignment, error: assignmentError } = await supabase
+          .from('subcontractor_job_assignments')
+          .select(`
+            *,
+            bookings (*),
+            subcontractors (*)
+          `)
+          .eq('id', assignment_id)
+          .single();
+
+        if (assignmentError) {
+          console.error('Assignment fetch error:', assignmentError);
+        } else {
+          assignmentData = assignment;
+          
+          // Try to get order data from booking
+          if (assignment?.bookings) {
+            const { data: order } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('customer_email', assignment.bookings.customer_email)
+              .eq('service_date', assignment.bookings.service_date)
+              .single();
+            orderData = order;
+          }
+        }
+      }
+
       // Fetch booking data if booking_id provided
       if (booking_id && !assignmentData) {
         const { data: booking, error: bookingError } = await supabase
@@ -189,79 +133,15 @@ serve(async (req) => {
       );
     }
 
-    // Construct comprehensive webhook payload with GHL formatting
+    // Construct webhook payload - streamlined to eliminate duplicates
     let webhookPayload: any;
     
     if (comprehensive_data) {
-      // Use comprehensive data from booking flow
+      // Use comprehensive data from booking flow - streamlined, no duplicates
       console.log('Using comprehensive booking data for webhook payload');
       
-      // Enhanced payload with GHL formatting and comprehensive data
-      webhookPayload = {
-        event_type: 'order_entry',
-        timestamp: new Date().toISOString(),
-        source: 'bay_area_cleaning_pros',
-        
-        // Original comprehensive data
-        comprehensive_booking_data: comprehensive_data,
-        
-        // GHL formatted data (if available)
-        ghl_formatted_data: comprehensive_data.ghlFormattedData || null,
-        
-        // Enhanced service information with separate and unified date/time
-        service_details: {
-          service_type: comprehensive_data.serviceType,
-          home_size: comprehensive_data.homeSize,
-          frequency: comprehensive_data.frequency,
-          flooring_type: comprehensive_data.flooringType,
-          add_ons: comprehensive_data.addOns || [],
-          service_date_separate: comprehensive_data.serviceDateSeparate || comprehensive_data.serviceDate,
-          service_time_separate: comprehensive_data.serviceTimeSeparate || comprehensive_data.serviceTime,
-          service_date_time_unified: comprehensive_data.serviceDateTime || 
-            (comprehensive_data.serviceDate && comprehensive_data.serviceTime ? 
-              `${comprehensive_data.serviceDate} ${comprehensive_data.serviceTime}` : null)
-        },
-        
-        // Comprehensive pricing breakdown
-        pricing_breakdown: {
-          base_price: comprehensive_data.basePrice || 0,
-          add_ons_price: Object.values(comprehensive_data.addOnPrices || {}).reduce((sum: number, price: any) => sum + price, 0),
-          
-          // Detailed discount information
-          discounts: comprehensive_data.discounts || {
-            global: { percentage: 0, dollarAmount: 0, description: 'No global discount' },
-            frequency: { percentage: 0, dollarAmount: 0, description: 'No frequency discount' },
-            membership: { percentage: 0, dollarAmount: 0, description: 'No membership discount' },
-            referral: { percentage: 0, dollarAmount: 0, description: 'No referral discount' },
-            promo: { percentage: 0, dollarAmount: 0, description: 'No promo discount' }
-          },
-          
-          // Labor cost information
-          labor_costs: comprehensive_data.laborCosts || {
-            tier1Rate: 16.00,
-            tier2Rate: 18.00,
-            tier3Rate: 21.00,
-            estimatedHours: 3,
-            estimatedLaborCost: 54.00
-          },
-          
-          total_price: comprehensive_data.totalPrice || 0,
-          total_savings: comprehensive_data.totalSavings || 0
-        },
-        
-        // Customer information
-        customer_info: comprehensive_data.customerInfo || {},
-        
-        // Metadata
-        metadata: {
-          assignment_id,
-          booking_id,
-          order_id,
-          processed_at: new Date().toISOString(),
-          data_source: 'comprehensive_booking_flow',
-          webhook_version: '2.0'
-        }
-      };
+      // Streamlined webhook payload (eliminates all duplicates)
+      webhookPayload = comprehensive_data;
     } else {
       // Use traditional data fetching method with enhanced structure
       console.log('Using database-fetched data for webhook payload');

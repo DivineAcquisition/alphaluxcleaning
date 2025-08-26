@@ -43,6 +43,9 @@ export interface PricingBreakdown {
     tier2Rate: number;
     tier3Rate: number;
     estimatedHours: number;
+    tier1TotalCost: number;
+    tier2TotalCost: number;
+    tier3TotalCost: number;
     estimatedLaborCost: number;
   };
   
@@ -152,13 +155,17 @@ export function calculateComprehensivePricing(
     }
   }
   
-  // Labor cost calculations
+  // Enhanced labor cost calculations for all tiers
   const estimatedHours = ESTIMATED_HOURS[homeSize as keyof typeof ESTIMATED_HOURS] || 3;
   const laborCosts = {
     tier1Rate: TIER_RATES.tier1,
     tier2Rate: TIER_RATES.tier2,
     tier3Rate: TIER_RATES.tier3,
     estimatedHours,
+    // Calculate total cost for each tier
+    tier1TotalCost: Math.round(TIER_RATES.tier1 * estimatedHours * 100) / 100,
+    tier2TotalCost: Math.round(TIER_RATES.tier2 * estimatedHours * 100) / 100,
+    tier3TotalCost: Math.round(TIER_RATES.tier3 * estimatedHours * 100) / 100,
     estimatedLaborCost: Math.round(TIER_RATES.tier2 * estimatedHours * 100) / 100 // Default to Tier 2
   };
   
@@ -241,11 +248,14 @@ export function formatPricingForGHL(pricing: PricingBreakdown, customerInfo: any
       totalSavings: pricing.totalSavings
     },
     
-    // Labor Cost Information
+    // Labor Cost Information (all tiers)
     laborCosts: {
       tier1HourlyRate: pricing.laborCosts.tier1Rate,
       tier2HourlyRate: pricing.laborCosts.tier2Rate,
       tier3HourlyRate: pricing.laborCosts.tier3Rate,
+      tier1TotalCost: pricing.laborCosts.tier1TotalCost,
+      tier2TotalCost: pricing.laborCosts.tier2TotalCost,
+      tier3TotalCost: pricing.laborCosts.tier3TotalCost,
       estimatedHours: pricing.laborCosts.estimatedHours,
       estimatedLaborCost: pricing.laborCosts.estimatedLaborCost
     },
