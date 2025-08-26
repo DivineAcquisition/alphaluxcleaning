@@ -5,6 +5,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
+import { AirtableIntegrationPanel } from "@/components/admin/AirtableIntegrationPanel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -205,6 +206,14 @@ const AdminPortal = () => {
               </div>
             </AdminCard>
           </AdminGrid>
+        </AdminSection>
+
+        {/* Airtable Integration */}
+        <AdminSection 
+          title="Airtable Integration"
+          description="Real-time data synchronization with your Airtable base"
+        >
+          <AirtableIntegrationPanel />
         </AdminSection>
       </div>
     </AdminLayout>

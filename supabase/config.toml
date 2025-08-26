@@ -1,5 +1,8 @@
 project_id = "kqoezqzogleaaupjzxch"
 
+[functions.sync-to-airtable]
+verify_jwt = false
+
 [functions.send-booking-webhook]
 verify_jwt = false
 
