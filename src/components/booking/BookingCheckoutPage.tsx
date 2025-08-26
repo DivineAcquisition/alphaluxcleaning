@@ -266,7 +266,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           zipCode: bookingData.address?.zipCode || ''
         },
         {
-          serviceType: 'residential_cleaning',
+          serviceType: bookingData.homeSize || 'residential_cleaning',
           homeSize: bookingData.homeSize,
           frequency: bookingData.frequency,
           flooringType: bookingData.flooringType,
@@ -282,7 +282,7 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
         source: 'bay_area_cleaning_pros',
         
         // Service Details (with separate and unified date/time)
-        serviceType: 'residential_cleaning',
+        serviceType: bookingData.homeSize || 'residential_cleaning',
         homeSize: bookingData.homeSize,
         frequency: bookingData.frequency,
         addOns: bookingData.addOns || [],
