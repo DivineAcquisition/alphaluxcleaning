@@ -129,6 +129,37 @@ async function handlePaymentSucceeded(paymentIntent: any, supabaseClient: any) {
     body: { order_id: order.id }
   });
 
+  // Send GHL payment webhook for successful payments
+  try {
+    const ghlPaymentData = {
+      event_type: 'payment_successful',
+      paymentIntentId: paymentIntent.id,
+      order_id: order.id,
+      amount: paymentIntent.amount / 100, // Convert from cents
+      finalTotal: paymentIntent.amount / 100,
+      paymentAmount: paymentIntent.amount / 100,
+      customer: {
+        name: order.customer_name || 'Unknown Customer',
+        email: order.customer_email || '',
+        phone: order.customer_phone || ''
+      },
+      serviceType: order.service_details?.service_type || 'residential_cleaning',
+      homeSize: order.service_details?.cleaningType || '',
+      frequency: order.service_details?.frequency || 'one-time',
+      serviceDate: order.service_details?.serviceDate || order.scheduled_date,
+      serviceTime: order.service_details?.serviceTime || order.scheduled_time,
+      userAuthenticated: !!order.user_id
+    };
+
+    await supabaseClient.functions.invoke('send-ghl-payment-webhook', {
+      body: ghlPaymentData
+    });
+
+    logStep("GHL payment webhook sent", { orderId: order.id });
+  } catch (error) {
+    logStep("Failed to send GHL payment webhook", { error: error.message, orderId: order.id });
+  }
+
   logStep("Payment success processed", { orderId: order.id });
 }
 
