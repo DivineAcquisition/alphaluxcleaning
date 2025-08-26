@@ -6,6 +6,7 @@ import { CommercialEstimateSection } from "@/components/CommercialEstimateSectio
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ModernLegacyBooking } from "@/components/booking/ModernLegacyBooking";
+import { GHLWebhookTest } from "@/components/GHLWebhookTest";
 
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
@@ -88,8 +89,10 @@ const Index = () => {
                   </p>
                   <div className="flex flex-col items-center gap-4">
                     <TestSubcontractorButton />
+                    <GHLWebhookTest />
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p>• Creates a test subcontractor user for development</p>
+                      <p>• Test GHL payment webhook integration</p>
                       <p>• You can also access onboarding directly at <a href="/subcontractor-onboarding" className="text-primary hover:underline">/subcontractor-onboarding</a></p>
                     </div>
                   </div>
