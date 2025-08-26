@@ -516,33 +516,37 @@ export default function OrderStatus() {
         )}
       </div>
 
-      {/* Dialogs */}
-      <RescheduleRequestDialog
-        open={rescheduleDialogOpen}
-        onOpenChange={setRescheduleDialogOpen}
-        order={order}
-        onSuccess={() => {
-          toast.success("Request submitted! We'll contact you shortly.");
-        }}
-      />
+      {/* Dialogs - render only when an order is loaded */}
+      {order && (
+        <>
+          <RescheduleRequestDialog
+            open={rescheduleDialogOpen}
+            onOpenChange={setRescheduleDialogOpen}
+            order={order}
+            onSuccess={() => {
+              toast.success("Request submitted! We'll contact you shortly.");
+            }}
+          />
 
-      <UpdateAddressDialog
-        open={addressDialogOpen}
-        onOpenChange={setAddressDialogOpen}
-        order={order}
-        onSuccess={() => {
-          toast.success("Address updated successfully!");
-        }}
-      />
+          <UpdateAddressDialog
+            open={addressDialogOpen}
+            onOpenChange={setAddressDialogOpen}
+            order={order}
+            onSuccess={() => {
+              toast.success("Address updated successfully!");
+            }}
+          />
 
-      <UpdateContactDialog
-        open={contactDialogOpen}
-        onOpenChange={setContactDialogOpen}
-        order={order}
-        onSuccess={() => {
-          toast.success("Contact information updated successfully!");
-        }}
-      />
+          <UpdateContactDialog
+            open={contactDialogOpen}
+            onOpenChange={setContactDialogOpen}
+            order={order}
+            onSuccess={() => {
+              toast.success("Contact information updated successfully!");
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
