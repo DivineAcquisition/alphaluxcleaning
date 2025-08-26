@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { toLocalDate, getTomorrowLocal } from '@/lib/date-helpers';
 
 interface ComprehensiveBookingData {
   bookingStep: string;
@@ -138,7 +139,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
 
   const isTimeSlotAvailable = (time: string) => {
     const checkDate = nextDayUpsell ? 
-      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+      getTomorrowLocal() : 
       selectedDate;
     
     if (!checkDate || !availabilityData[checkDate]) {

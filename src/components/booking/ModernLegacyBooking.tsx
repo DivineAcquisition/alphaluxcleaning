@@ -16,6 +16,7 @@ import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
+import { toLocalDate } from '@/lib/date-helpers';
 
 // Original pricing matrix - 20% discount applied automatically in calculations
 const pricingMatrix = {
@@ -634,7 +635,7 @@ export function ModernLegacyBooking() {
               selectedDate={bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined}
               selectedTime={bookingData.serviceTime}
               nextDayUpsell={bookingData.nextDayUpsell}
-              onDateChange={(date) => updateField('serviceDate', date ? date.toISOString().split('T')[0] : '')}
+              onDateChange={(date) => updateField('serviceDate', date ? toLocalDate(date) : '')}
               onTimeChange={(time) => updateField('serviceTime', time)}
               onNextDayToggle={(enabled) => {
                 updateField('nextDayUpsell', enabled);

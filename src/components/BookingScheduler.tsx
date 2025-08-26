@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, CheckCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { toLocalDate, getTomorrowLocal } from '@/lib/date-helpers';
 
 interface SchedulingData {
   scheduledDate: string;
@@ -62,7 +63,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
       // Skip Sundays (0 = Sunday)
       if (date.getDay() !== 0) {
         dates.push({
-          value: date.toISOString().split('T')[0],
+          value: toLocalDate(date),
           label: date.toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'short', 
@@ -79,9 +80,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
 
   // Get tomorrow's date
   const getTomorrowDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return getTomorrowLocal();
   };
 
   // Check calendar availability for priority bookings only

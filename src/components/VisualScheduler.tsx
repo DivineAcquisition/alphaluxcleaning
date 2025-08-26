@@ -8,6 +8,7 @@ import { Calendar, Clock, Star, Zap, CheckCircle2, ArrowRight } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { toLocalDate, getTomorrowLocal } from '@/lib/date-helpers';
 
 interface ComprehensiveBookingData {
   bookingStep: string;
@@ -113,9 +114,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
   useEffect(() => {
     const checkNextDayAvailability = async () => {
       try {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowISO = tomorrow.toISOString().split('T')[0];
+        const tomorrowISO = getTomorrowLocal();
         
         const { data, error } = await supabase.functions.invoke('check-calendar-availability', {
           body: { date: tomorrowISO, timeSlots: ['9:00 AM'] }
@@ -148,9 +147,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
   // Check tomorrow's availability when next day upsell is enabled
   useEffect(() => {
     if (nextDayUpsell) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowISO = tomorrow.toISOString().split('T')[0];
+      const tomorrowISO = getTomorrowLocal();
       checkDateAvailability(tomorrowISO);
     }
   }, [nextDayUpsell]);
@@ -158,7 +155,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
   // Helper function to check if a time slot is available
   const isTimeSlotAvailable = (time: string, date?: string) => {
     const checkDate = date || (nextDayUpsell ? 
-      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+      getTomorrowLocal() : 
       serviceDate
     );
     
@@ -178,9 +175,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
           return;
         }
         // Set service date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setServiceDate(tomorrow.toISOString().split('T')[0]);
+        setServiceDate(getTomorrowLocal());
       } else {
         if (!serviceDate) {
           toast.error('Please select a service date');
@@ -197,7 +192,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
       // Update order with scheduling data
       if (sessionId) {
         const finalDate = nextDayUpsell ? 
-          new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+          getTomorrowLocal() : 
           serviceDate;
 
         await supabase
@@ -283,7 +278,7 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
       // Skip Sundays (0 = Sunday)
       if (date.getDay() !== 0) {
         dates.push({
-          value: date.toISOString().split('T')[0],
+          value: toLocalDate(date),
           label: date.toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'long', 

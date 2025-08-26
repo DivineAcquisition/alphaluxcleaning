@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import SlotTakenDialog from './SlotTakenDialog';
 import { LiveAvailabilityWidget } from './LiveAvailabilityWidget';
+import { toLocalDate, getTomorrowLocal } from '@/lib/date-helpers';
 
 interface ComprehensiveBookingData {
   bookingStep: string;
@@ -208,7 +209,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
   const isTimeSlotAvailable = (time: string) => {
     const checkDate = nextDayUpsell ? 
-      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+      getTomorrowLocal() : 
       selectedDate;
     
     if (!checkDate || !availabilityData[checkDate]) {
@@ -546,8 +547,8 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
                         // Show popup for unavailable slot
                         setAttemptedSlot({ 
                           date: nextDayUpsell ? 
-                            new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
-                            selectedDate, 
+                            getTomorrowLocal() : 
+                            selectedDate,
                           time: slot.value 
                         });
                         setShowSlotTakenDialog(true);

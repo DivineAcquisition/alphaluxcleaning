@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'sonner';
+import { toLocalDate } from '@/lib/date-helpers';
 
 interface RecurringService {
   id: string;
@@ -35,15 +36,10 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
   );
   const [selectedTime, setSelectedTime] = useState(service.preferred_time || "");
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleReschedule = async () => {
     if (!selectedDate || !selectedTime) {
-      toast({
-        title: "Missing Information",
-        description: "Please select both a date and time",
-        variant: "destructive",
-      });
+      toast.error('Please select both a date and time');
       return;
     }
 
@@ -55,7 +51,7 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
       };
 
       const newValues = {
-        next_service_date: selectedDate.toISOString().split('T')[0],
+        next_service_date: toLocalDate(selectedDate),
         preferred_time: selectedTime
       };
 
@@ -110,20 +106,13 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
         }
       });
 
-      toast({
-        title: "Service Rescheduled",
-        description: `Your service has been rescheduled to ${selectedDate.toLocaleDateString()} at ${selectedTime}`,
-      });
+      toast.success(`Service rescheduled to ${selectedDate.toLocaleDateString()} at ${selectedTime}`);
 
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error('Error rescheduling service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reschedule service",
-        variant: "destructive",
-      });
+      toast.error('Failed to reschedule service');
     } finally {
       setLoading(false);
     }

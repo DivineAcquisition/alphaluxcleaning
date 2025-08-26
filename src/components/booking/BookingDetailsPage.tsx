@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { US_STATES } from '@/lib/states';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useBookingRetry, bookingRetryStrategies } from '@/hooks/useBookingRetry';
+import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
 interface BookingData {
   serviceDate: string;
@@ -51,7 +52,7 @@ const timeSlots = [
 export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onBack }: Props) {
   const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined
+    bookingData.serviceDate ? parseLocalDate(bookingData.serviceDate) : undefined
   );
   const [nextDayBooking, setNextDayBooking] = useState(false);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
@@ -101,7 +102,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
           
           const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
           updateBookingData({ 
-            serviceDate: date.toISOString().split('T')[0],
+            serviceDate: toLocalDate(date),
             nextDayFee
           });
         }, 'availability check');

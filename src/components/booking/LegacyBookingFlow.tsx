@@ -10,11 +10,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { Textarea } from '@/components/ui/textarea';
 import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building, BedDouble, Bath, Users, CalendarIcon, Clock, User, Phone, Mail, TruckIcon, PackageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
 import { hasUsedPromoOffer, CustomerData, markPromoOfferUsed } from '@/lib/offer-tracking';
 import { BookingCheckoutPage } from './BookingCheckoutPage';
-import { toast } from 'sonner';
+import { toLocalDate } from '@/lib/date-helpers';
 
 interface BookingData {
   serviceZipCode: string;
@@ -591,7 +593,7 @@ export function LegacyBookingFlow() {
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      updateBookingData({ serviceDate: date.toISOString().split('T')[0] });
+      updateBookingData({ serviceDate: toLocalDate(date) });
       // Auto-scroll to time selection after brief delay to let content render
       setTimeout(() => {
         const timeSection = document.querySelector('[data-time-selection]');

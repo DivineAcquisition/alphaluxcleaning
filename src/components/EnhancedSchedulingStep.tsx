@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRight, Star, Sparkles, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { US_STATES } from '@/lib/states';
+import { toLocalDate } from '@/lib/date-helpers';
 
 interface BookingData {
   // Step 1: Service Selection
@@ -120,7 +123,7 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
       setSelectedDate(date);
       const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
       updateBookingData({ 
-        serviceDate: date.toISOString().split('T')[0],
+        serviceDate: toLocalDate(date),
         nextDayFee
       });
     }
