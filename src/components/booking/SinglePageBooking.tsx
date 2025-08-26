@@ -307,6 +307,7 @@ export function SinglePageBooking() {
         }}
         onPaymentSuccess={(sessionId) => {
           console.log('Payment successful:', sessionId);
+          window.location.href = `/order-confirmation?order_id=${sessionId}`;
         }}
         onBack={() => setShowCheckout(false)}
       />

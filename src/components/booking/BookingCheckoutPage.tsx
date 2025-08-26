@@ -374,6 +374,9 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
       // Don't block payment success for webhook errors
     }
     
+    // Store order ID in localStorage for confirmation page
+    localStorage.setItem('current_order_id', paymentIntentId);
+    
     onPaymentSuccess(paymentIntentId);
   };
 

@@ -39,16 +39,22 @@ export default function OrderConfirmation() {
     if (orderId || sessionId) {
       fetchOrderDetails();
     } else {
-      toast.error("No order information found");
-      setLoading(false);
+      // Check localStorage as fallback
+      const storedOrderId = localStorage.getItem('current_order_id');
+      if (storedOrderId) {
+        fetchOrderDetails(storedOrderId);
+      } else {
+        toast.error("No order information found");
+        setLoading(false);
+      }
     }
   }, [orderId, sessionId]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = async (fallbackOrderId?: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('get-order-details', {
-        body: { 
-          order_id: orderId,
+        body: {
+          order_id: fallbackOrderId || orderId,
           session_id: sessionId
         }
       });
