@@ -10,7 +10,6 @@ import { useCustomerDataByEmail } from '@/hooks/useCustomerDataByEmail';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-
 interface PaymentData {
   amount: number;
   customerEmail: string;
@@ -28,13 +27,13 @@ interface PaymentData {
   zipCode?: string;
   paymentType?: string;
 }
-
 export default function CustomerPayments() {
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const {
     loading,
     orders,
@@ -44,28 +43,19 @@ export default function CustomerPayments() {
   } = useCustomerDataByEmail(customerEmail);
 
   // Filter orders that require payment
-  const unpaidOrders = orders.filter(order => 
-    order.status === 'pending' || 
-    order.status === 'pay_after_service' || 
-    !order.status ||
-    (order.service_status && order.service_status === 'pending_payment')
-  );
-
+  const unpaidOrders = orders.filter(order => order.status === 'pending' || order.status === 'pay_after_service' || !order.status || order.service_status && order.service_status === 'pending_payment');
   const totalAmountDue = unpaidOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
-
   const handleEmailSubmit = async (email: string) => {
     setCustomerEmail(email);
   };
-
   const handlePayNow = (order: any) => {
     setSelectedOrder(order);
     setShowPayment(true);
   };
-
   const handlePaymentSuccess = (orderId: string) => {
     toast({
       title: "Payment Successful!",
-      description: "Your payment has been processed successfully.",
+      description: "Your payment has been processed successfully."
     });
     setShowPayment(false);
     setSelectedOrder(null);
@@ -74,12 +64,10 @@ export default function CustomerPayments() {
       fetchCustomerData(customerEmail);
     }
   };
-
   const handlePaymentCancel = () => {
     setShowPayment(false);
     setSelectedOrder(null);
   };
-
   const handleBackToServices = () => {
     setShowPayment(false);
     setSelectedOrder(null);
@@ -87,19 +75,12 @@ export default function CustomerPayments() {
 
   // If no email is set, show email entry form
   if (!customerEmail) {
-    return (
-      <EmailPortalAccess 
-        onEmailSubmit={handleEmailSubmit}
-        loading={loading}
-        error={error}
-      />
-    );
+    return <EmailPortalAccess onEmailSubmit={handleEmailSubmit} loading={loading} error={error} />;
   }
 
   // If email is set but no data found, show error state
   if (customerEmail && !loading && !hasData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <Alert variant="destructive">
@@ -108,29 +89,22 @@ export default function CustomerPayments() {
                 No service records found for this email address. Please check your email or contact support.
               </AlertDescription>
             </Alert>
-            <Button 
-              onClick={() => setCustomerEmail(null)} 
-              variant="outline" 
-              className="w-full mt-4"
-            >
+            <Button onClick={() => setCustomerEmail(null)} variant="outline" className="w-full mt-4">
               Try Different Email
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Loading your services...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Show payment form if an order is selected
@@ -150,16 +124,10 @@ export default function CustomerPayments() {
       zipCode: selectedOrder.service_details?.zip_code,
       paymentType: 'one-time'
     };
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-4">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
-            <Button 
-              onClick={handleBackToServices} 
-              variant="outline" 
-              className="mb-4"
-            >
+            <Button onClick={handleBackToServices} variant="outline" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Services
             </Button>
@@ -176,12 +144,10 @@ export default function CustomerPayments() {
                     <span>Service Type</span>
                     <span>{selectedOrder.cleaning_type}</span>
                   </div>
-                  {selectedOrder.scheduled_date && (
-                    <div className="flex justify-between text-sm">
+                  {selectedOrder.scheduled_date && <div className="flex justify-between text-sm">
                       <span>Service Date</span>
                       <span>{format(new Date(selectedOrder.scheduled_date), 'PPP')}</span>
-                    </div>
-                  )}
+                    </div>}
                   <div className="flex justify-between font-semibold">
                     <span>Total Amount</span>
                     <span>${selectedOrder.amount.toFixed(2)}</span>
@@ -191,19 +157,13 @@ export default function CustomerPayments() {
             </Card>
           </div>
 
-          <CustomStripePayment
-            paymentData={paymentData}
-            onSuccess={handlePaymentSuccess}
-            onCancel={handlePaymentCancel}
-          />
+          <CustomStripePayment paymentData={paymentData} onSuccess={handlePaymentSuccess} onCancel={handlePaymentCancel} />
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Main payment portal view
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <Card>
@@ -214,12 +174,7 @@ export default function CustomerPayments() {
             </CardDescription>
             <div className="text-sm text-muted-foreground mt-2">
               Account: {customerEmail}
-              <Button 
-                onClick={() => setCustomerEmail(null)} 
-                variant="link" 
-                size="sm" 
-                className="ml-2 h-auto p-0"
-              >
+              <Button onClick={() => setCustomerEmail(null)} variant="link" size="sm" className="ml-2 h-auto p-0">
                 Change Email
               </Button>
             </div>
@@ -227,8 +182,7 @@ export default function CustomerPayments() {
         </Card>
 
         {/* Payment Summary */}
-        {unpaidOrders.length > 0 && (
-          <Card>
+        {unpaidOrders.length > 0 && <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
@@ -244,15 +198,12 @@ export default function CustomerPayments() {
                 {unpaidOrders.length} service{unpaidOrders.length !== 1 ? 's' : ''} require{unpaidOrders.length === 1 ? 's' : ''} payment
               </p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Services Requiring Payment */}
-        {unpaidOrders.length > 0 ? (
-          <div className="space-y-4">
+        {unpaidOrders.length > 0 ? <div className="space-y-4">
             <h3 className="text-lg font-semibold">Services Requiring Payment</h3>
-            {unpaidOrders.map((order) => (
-              <Card key={order.id} className="hover:shadow-md transition-shadow">
+            {unpaidOrders.map(order => <Card key={order.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-2 flex-1">
@@ -263,52 +214,38 @@ export default function CustomerPayments() {
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                        {order.scheduled_date && (
-                          <div className="flex items-center gap-1">
+                        {order.scheduled_date && <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>{format(new Date(order.scheduled_date), 'PPP')}</span>
-                          </div>
-                        )}
-                        {order.service_details?.service_address && (
-                          <div className="flex items-center gap-1">
+                          </div>}
+                        {order.service_details?.service_address && <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             <span className="truncate">{order.service_details.service_address}</span>
-                          </div>
-                        )}
+                          </div>}
                       </div>
 
-                      {order.add_ons && order.add_ons.length > 0 && (
-                        <div className="text-sm">
+                      {order.add_ons && order.add_ons.length > 0 && <div className="text-sm">
                           <span className="text-muted-foreground">Add-ons: </span>
                           <span>{order.add_ons.join(', ')}</span>
-                        </div>
-                      )}
+                        </div>}
                     </div>
 
                     <div className="flex flex-col sm:items-end gap-3">
                       <div className="text-right">
                         <div className="text-2xl font-bold">${order.amount.toFixed(2)}</div>
-                        {order.scheduled_time && (
-                          <div className="text-sm text-muted-foreground">{order.scheduled_time}</div>
-                        )}
+                        {order.scheduled_time && <div className="text-sm text-muted-foreground">{order.scheduled_time}</div>}
                       </div>
                       
-                      <Button 
-                        onClick={() => handlePayNow(order)}
-                        className="w-full sm:w-auto"
-                      >
+                      <Button onClick={() => handlePayNow(order)} className="w-full sm:w-auto">
                         <CreditCard className="h-4 w-4 mr-2" />
                         Pay Now
                       </Button>
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          /* No unpaid services */
-          <Card>
+              </Card>)}
+          </div> : (/* No unpaid services */
+      <Card>
             <CardContent className="py-12 text-center">
               <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">All Payments Complete</h3>
@@ -316,8 +253,7 @@ export default function CustomerPayments() {
                 Great news! All your services have been paid for. No outstanding payments required.
               </p>
             </CardContent>
-          </Card>
-        )}
+          </Card>)}
 
         {/* Support Info */}
         <Card className="bg-muted/50">
@@ -326,9 +262,7 @@ export default function CustomerPayments() {
               <h4 className="font-medium">Need Help?</h4>
               <p className="text-sm text-muted-foreground">
                 Contact our support team at{' '}
-                <a href="mailto:support@bayareacleaningprofessionals.com" className="text-primary hover:underline">
-                  support@bayareacleaningprofessionals.com
-                </a>
+                <a href="mailto:support@bayareacleaningprofessionals.com" className="text-primary hover:underline">support@bayareacleaningpros.com</a>
               </p>
               <p className="text-xs text-muted-foreground">
                 Payments are processed securely via Stripe
@@ -337,6 +271,5 @@ export default function CustomerPayments() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
