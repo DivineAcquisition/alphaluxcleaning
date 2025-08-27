@@ -81,6 +81,7 @@ import Billing from '@/pages/Billing';
 
 // Customer portal
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
+import CustomerPayments from '@/pages/CustomerPayments';
 
 const queryClient = new QueryClient();
 
@@ -166,6 +167,7 @@ function App() {
                 <Route path="/customer-portal-dashboard" element={<CustomerPortalDashboard />} />
                 <Route path="/customer-portal" element={<Navigate to="/customer-portal-dashboard" replace />} />
                 <Route path="/my-services" element={<CustomerDashboard />} />
+                <Route path="/customer-payments" element={<CustomerPayments />} />
                 
                 {/* Subcontractor routes */}
                 <Route path="/subcontractor" element={<SubcontractorPortal />} />
