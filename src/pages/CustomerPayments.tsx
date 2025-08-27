@@ -10,6 +10,8 @@ import { useCustomerDataByEmail } from '@/hooks/useCustomerDataByEmail';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { calculateServicePrice, orderRequiresPayment, getServiceDisplayInfo } from '@/lib/service-price-calculator';
+
 interface PaymentData {
   amount: number;
   customerEmail: string;
@@ -42,20 +44,35 @@ export default function CustomerPayments() {
     fetchCustomerData
   } = useCustomerDataByEmail(customerEmail);
 
-  // Debug: Log all orders to see what we're getting
-  console.log('CustomerPayments - All orders for email:', customerEmail, orders);
+  // Filter orders that require payment and calculate actual amounts owed
+  const unpaidOrders = orders.filter(orderRequiresPayment).map(order => {
+    const calculation = calculateServicePrice(order);
+    const displayInfo = getServiceDisplayInfo(order);
+    
+    return {
+      ...order,
+      calculatedAmount: calculation.amountDue,
+      originalPrice: calculation.originalPrice,
+      amountPaid: calculation.amountPaid,
+      serviceName: displayInfo.serviceName,
+      serviceDescription: displayInfo.serviceDescription,
+      squareFootageDisplay: displayInfo.squareFootageDisplay,
+      paymentType: calculation.serviceDetails.paymentType,
+      priceBreakdown: calculation.priceBreakdown
+    };
+  });
   
-  // For now, show ALL orders to debug the issue
-  // Later we'll add proper filtering based on payment_status
-  const unpaidOrders = orders;
-  
-  console.log('CustomerPayments - Showing all orders for debugging:', unpaidOrders);
-  const totalAmountDue = unpaidOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
+  const totalAmountDue = unpaidOrders.reduce((sum, order) => sum + (order.calculatedAmount || 0), 0);
   const handleEmailSubmit = async (email: string) => {
     setCustomerEmail(email);
   };
   const handlePayNow = (order: any) => {
-    setSelectedOrder(order);
+    // Use the calculated amount for payment
+    const orderWithCalculatedAmount = {
+      ...order,
+      amount: order.calculatedAmount || order.amount
+    };
+    setSelectedOrder(orderWithCalculatedAmount);
     setShowPayment(true);
   };
   const handlePaymentSuccess = (orderId: string) => {
@@ -155,7 +172,7 @@ export default function CustomerPayments() {
                       <span>{format(new Date(selectedOrder.scheduled_date), 'PPP')}</span>
                     </div>}
                   <div className="flex justify-between font-semibold">
-                    <span>Total Amount</span>
+                    <span>Amount Due</span>
                     <span>${selectedOrder.amount.toFixed(2)}</span>
                   </div>
                 </div>
@@ -214,9 +231,11 @@ export default function CustomerPayments() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-medium">{order.cleaning_type || 'Cleaning Service'}</h4>
-                        <Badge variant="outline">{order.frequency || 'One-time'}</Badge>
-                        <Badge variant="destructive">Payment Required</Badge>
+                        <h4 className="font-medium">{order.serviceName}</h4>
+                        <Badge variant="outline">{order.squareFootageDisplay}</Badge>
+                        <Badge variant="secondary">{order.paymentType === 'pay_after_service' ? 'Pay After Service' : 
+                          order.paymentType === 'deposit' ? 'Remaining Balance' : 
+                          order.paymentType === '25_percent_with_discount' ? 'Final Payment' : 'Payment Required'}</Badge>
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
@@ -234,11 +253,19 @@ export default function CustomerPayments() {
                           <span className="text-muted-foreground">Add-ons: </span>
                           <span>{order.add_ons.join(', ')}</span>
                         </div>}
+                      
+                      {order.paymentType !== 'pay_after_service' && order.amountPaid > 0 && (
+                        <div className="text-sm space-y-1">
+                          <div className="text-muted-foreground">Service Total: <span className="text-foreground font-medium">${order.originalPrice.toFixed(2)}</span></div>
+                          <div className="text-muted-foreground">Amount Paid: <span className="text-foreground font-medium">${order.amountPaid.toFixed(2)}</span></div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:items-end gap-3">
                       <div className="text-right">
-                        <div className="text-2xl font-bold">${order.amount.toFixed(2)}</div>
+                        <div className="text-2xl font-bold">${order.calculatedAmount.toFixed(2)}</div>
+                        <div className="text-sm text-muted-foreground">Amount Due</div>
                         {order.scheduled_time && <div className="text-sm text-muted-foreground">{order.scheduled_time}</div>}
                       </div>
                       
