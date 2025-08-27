@@ -246,7 +246,7 @@ export default function CustomerPayments() {
             {/* Collections Disclaimer */}
             <Alert className="border-warning bg-warning/5 mt-4">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="text-warning-foreground/80 text-left">
+              <AlertDescription className="text-foreground text-left">
                 <strong>Payment Notice:</strong> Outstanding balances will be subject to collections proceedings after 14 days of non-payment following service completion.
               </AlertDescription>
             </Alert>

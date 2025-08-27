@@ -1,16 +1,29 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield, CreditCard, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 export function Navigation() {
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     user,
     userRole,
     signOut
   } = useAuth();
+
+  // Redirect admins to admin dashboard if they're on customer pages
+  useEffect(() => {
+    if (user && (userRole === 'admin' || userRole === 'super_admin')) {
+      const isCustomerPage = location.pathname.includes('/customer') || 
+                           location.pathname === '/my-services' || 
+                           location.pathname === '/billing';
+      if (isCustomerPage) {
+        navigate('/admin', { replace: true });
+      }
+    }
+  }, [user, userRole, location.pathname, navigate]);
   const getNavItems = () => {
     const baseItems = [{
       path: "/",
