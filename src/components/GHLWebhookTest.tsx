@@ -157,7 +157,7 @@ export const GHLWebhookTest = () => {
               Test your GoHighLevel inbound webhook with sample payment data
             </p>
             <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
-              Webhook URL: https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/ea96e1ce-c49a-4e24-a88f-638e5ec52edd
+              Webhook URL: https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/94998e4d-5fcc-45ea-a91f-2585e8f88600
             </p>
           </div>
           

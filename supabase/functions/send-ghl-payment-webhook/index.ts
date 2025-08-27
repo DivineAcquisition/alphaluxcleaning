@@ -21,7 +21,7 @@ serve(async (req) => {
     const body = await req.json();
     logStep("Request body received", { bodyKeys: Object.keys(body) });
 
-    const ghlWebhookUrl = "https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/ea96e1ce-c49a-4e24-a88f-638e5ec52edd";
+    const ghlWebhookUrl = "https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/94998e4d-5fcc-45ea-a91f-2585e8f88600";
 
     // Format the payment data for GHL
     const ghlPayload = {
