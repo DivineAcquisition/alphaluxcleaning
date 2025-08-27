@@ -4106,6 +4106,51 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_test_orders: {
+        Row: {
+          amount: number
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          service_type: string
+          status: string | null
+          test_data: Json | null
+          updated_at: string | null
+          webhook_response: Json | null
+          webhook_status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          service_type: string
+          status?: string | null
+          test_data?: Json | null
+          updated_at?: string | null
+          webhook_response?: Json | null
+          webhook_status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          service_type?: string
+          status?: string | null
+          test_data?: Json | null
+          updated_at?: string | null
+          webhook_response?: Json | null
+          webhook_status?: string | null
+        }
+        Relationships: []
+      }
       workflow_executions: {
         Row: {
           completed_at: string | null

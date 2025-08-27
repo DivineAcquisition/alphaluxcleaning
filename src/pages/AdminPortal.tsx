@@ -7,6 +7,7 @@ import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { AirtableIntegrationPanel } from "@/components/admin/AirtableIntegrationPanel";
 import { GHLOrderSync } from "@/components/admin/GHLOrderSync";
+import { CustomerPaymentWebhookTest } from "@/components/admin/CustomerPaymentWebhookTest";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -223,6 +224,14 @@ const AdminPortal = () => {
           description="Send recent orders to your GoHighLevel webhook for processing"
         >
           <GHLOrderSync />
+        </AdminSection>
+
+        {/* Customer Payment Webhook Test */}
+        <AdminSection 
+          title="Customer Payment Webhook Testing"
+          description="Create test orders and test the customer payment webhook integration"
+        >
+          <CustomerPaymentWebhookTest />
         </AdminSection>
       </div>
     </AdminLayout>
