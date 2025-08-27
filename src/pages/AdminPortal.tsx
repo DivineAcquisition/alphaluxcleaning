@@ -6,6 +6,7 @@ import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminGrid } from "@/components/admin/AdminGrid";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { AirtableIntegrationPanel } from "@/components/admin/AirtableIntegrationPanel";
+import { GHLOrderSync } from "@/components/admin/GHLOrderSync";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -214,6 +215,14 @@ const AdminPortal = () => {
           description="Real-time data synchronization with your Airtable base"
         >
           <AirtableIntegrationPanel />
+        </AdminSection>
+
+        {/* GHL Order Sync */}
+        <AdminSection 
+          title="GoHighLevel Integration"
+          description="Send recent orders to your GoHighLevel webhook for processing"
+        >
+          <GHLOrderSync />
         </AdminSection>
       </div>
     </AdminLayout>
