@@ -57,24 +57,22 @@ export function CustomerPaymentWebhookTest() {
   });
 
   const samplePayload = {
-    customer: {
-      name: testOrderForm.customer_name,
-      email: testOrderForm.customer_email,
-      phone: testOrderForm.customer_phone
+    orderId: selectedOrderId || `test_order_${Date.now()}`,
+    paymentIntentId: `test_txn_${Date.now()}`,
+    amount: testOrderForm.amount,
+    customerEmail: testOrderForm.customer_email,
+    customerName: testOrderForm.customer_name,
+    customerPhone: testOrderForm.customer_phone,
+    serviceDetails: {
+      serviceType: testOrderForm.service_type,
+      address: 'Test Address, San Francisco, CA 94102',
+      serviceDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      serviceTime: '10:00 AM - 12:00 PM',
+      cleaningType: 'general'
     },
-    payment: {
-      amount: testOrderForm.amount,
-      currency: 'USD',
-      status: 'completed',
-      payment_method: 'card',
-      transaction_id: `test_txn_${Date.now()}`
-    },
-    service: {
-      type: testOrderForm.service_type,
-      date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      time: '10:00 AM - 12:00 PM'
-    },
-    order_id: selectedOrderId || `test_order_${Date.now()}`,
+    paymentStatus: 'completed',
+    currency: 'USD',
+    paymentMethod: 'card',
     webhook_test: true,
     timestamp: new Date().toISOString()
   };
