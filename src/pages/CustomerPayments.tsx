@@ -42,8 +42,14 @@ export default function CustomerPayments() {
     fetchCustomerData
   } = useCustomerDataByEmail(customerEmail);
 
-  // Filter orders that require payment
-  const unpaidOrders = orders.filter(order => order.status === 'pending' || order.status === 'pay_after_service' || !order.status || order.service_status && order.service_status === 'pending_payment');
+  // Debug: Log all orders to see what we're getting
+  console.log('CustomerPayments - All orders for email:', customerEmail, orders);
+  
+  // For now, show ALL orders to debug the issue
+  // Later we'll add proper filtering based on payment_status
+  const unpaidOrders = orders;
+  
+  console.log('CustomerPayments - Showing all orders for debugging:', unpaidOrders);
   const totalAmountDue = unpaidOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
   const handleEmailSubmit = async (email: string) => {
     setCustomerEmail(email);

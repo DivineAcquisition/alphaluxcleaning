@@ -35,6 +35,7 @@ interface CustomerOrder {
   recurring_frequency: string | null;
   next_service_date: string | null;
   service_status: string | null;
+  payment_status: string | null;
 }
 
 interface CustomerBooking {
