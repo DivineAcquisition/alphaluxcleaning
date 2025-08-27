@@ -70,6 +70,7 @@ import SecuritySettings from '@/pages/SecuritySettings';
 
 // Auth & utility pages
 import Auth from '@/pages/Auth';
+import CustomerAuth from '@/pages/CustomerAuth';
 import SignUp from '@/pages/SignUp';
 import PasswordReset from '@/pages/PasswordReset';
 import OAuthCallback from '@/pages/OAuthCallback';
@@ -136,9 +137,10 @@ function App() {
             <div className="min-h-screen flex flex-col">
               <div className="flex-1">
                 <Routes>
-                {/* Public routes with domain-based routing */}
-                <Route path="/" element={<DomainRouter />} />
+                 {/* Public routes with domain-based routing */}
+                 <Route path="/" element={<DomainRouter />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/customer-auth" element={<CustomerAuth />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/oauth/callback" element={<OAuthCallback />} />

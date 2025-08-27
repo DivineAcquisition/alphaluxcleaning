@@ -190,9 +190,6 @@ export function Navigation() {
               (() => {
                 const hostname = window.location.hostname;
                 const isBookingDomain = hostname.startsWith('book.');
-                const signInUrl = isBookingDomain 
-                  ? 'https://portal.bayareacleaningpros.com/auth' 
-                  : '/auth';
                 
                 return (
                   <Button 
@@ -200,9 +197,11 @@ export function Navigation() {
                     size="sm" 
                     onClick={() => {
                       if (isBookingDomain) {
-                        window.location.href = signInUrl;
+                        // Route customers to customer auth page on booking domain
+                        window.location.href = '/customer-auth';
                       } else {
-                        window.location.href = signInUrl;
+                        // Route admins/staff to admin auth page
+                        window.location.href = '/auth';
                       }
                     }}
                     className="flex items-center gap-2"
