@@ -13,15 +13,15 @@ interface CustomerPortalWrapperProps {
 function CustomerPortalContent({ children }: { children: React.ReactNode }) {
   const { customerEmail, setCustomerEmail, loading, error, hasData } = useCustomerPortal();
 
-  const handleEmailSubmit = async (email: string) => {
-    setCustomerEmail(email);
+  const handleSearchSubmit = async (type: 'email' | 'order_id', value: string) => {
+    setCustomerEmail(value);
   };
 
   // If no email is set, show the email entry form
   if (!customerEmail) {
     return (
       <EmailPortalAccess 
-        onEmailSubmit={handleEmailSubmit}
+        onSearchSubmit={handleSearchSubmit}
         loading={loading}
         error={error}
       />
@@ -32,7 +32,7 @@ function CustomerPortalContent({ children }: { children: React.ReactNode }) {
   if (customerEmail && !loading && !hasData) {
     return (
       <EmailPortalAccess 
-        onEmailSubmit={handleEmailSubmit}
+        onSearchSubmit={handleSearchSubmit}
         loading={loading}
         error={error || "No service records found for this email address."}
       />

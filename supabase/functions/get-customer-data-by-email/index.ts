@@ -24,12 +24,12 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    const { email } = await req.json();
+    const { email, order_id, search_type } = await req.json();
     
-    if (!email) {
-      logStep('Missing email parameter');
+    if (!email && !order_id) {
+      logStep('Missing search parameters');
       return new Response(
-        JSON.stringify({ error: 'Email is required' }), 
+        JSON.stringify({ error: 'Email or Order ID is required' }), 
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -37,6 +37,86 @@ serve(async (req) => {
       );
     }
 
+    if (search_type === 'order_id' && order_id) {
+      logStep('Fetching customer data by Order ID', { order_id });
+      
+      // First get the order to find the customer email
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('customer_email, id')
+        .eq('id', order_id)
+        .single();
+
+      if (orderError || !orderData) {
+        logStep('Order not found', { error: orderError?.message });
+        return new Response(
+          JSON.stringify({ error: 'Order not found' }),
+          { 
+            status: 404, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Now fetch customer data using the email from the order
+      const { data, error } = await supabase.rpc('get_customer_data_by_email_safe', {
+        p_email: orderData.customer_email
+      });
+
+      if (error) {
+        logStep('Database error', { error: error.message });
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch customer data' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Filter orders to only include the specific order requested
+      if (data && data.orders) {
+        data.orders = data.orders.filter((order: any) => order.id === order_id);
+      }
+
+      // Calculate stats for the filtered data
+      const orders = data.orders || [];
+      const completedOrders = orders.filter((order: any) => 
+        order.service_status === 'completed' || order.status === 'completed'
+      );
+      
+      const totalSpent = orders.reduce((sum: number, order: any) => sum + (order.amount / 100), 0);
+      
+      const stats = {
+        totalOrders: orders.length,
+        completedServices: completedOrders.length,
+        upcomingServices: 0,
+        totalSpent,
+        averageRating: 4.8,
+        memberSince: orders[0]?.created_at || ''
+      };
+
+      const responseData = {
+        ...data,
+        stats,
+        hasData: orders.length > 0
+      };
+
+      logStep('Successfully retrieved customer data by Order ID', { 
+        order_id, 
+        ordersCount: orders.length
+      });
+
+      return new Response(
+        JSON.stringify(responseData),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Default email search
     logStep('Validating email and fetching customer data', { email });
 
     // Call the secure database function

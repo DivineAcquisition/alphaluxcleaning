@@ -77,7 +77,7 @@ interface CustomerStats {
   memberSince: string;
 }
 
-export const useCustomerDataByEmail = (email: string | null) => {
+export const useCustomerDataByEmail = (email: string | null, orderId: string | null = null) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
@@ -88,15 +88,19 @@ export const useCustomerDataByEmail = (email: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const [hasData, setHasData] = useState(false);
 
-  const fetchCustomerData = async (customerEmail: string) => {
-    if (!customerEmail) return;
+  const fetchCustomerData = async (searchValue: string, searchType: 'email' | 'order_id' = 'email') => {
+    if (!searchValue) return;
     
     setLoading(true);
     setError(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('get-customer-data-by-email', {
-        body: { email: customerEmail }
+        body: { 
+          email: searchType === 'email' ? searchValue : null,
+          order_id: searchType === 'order_id' ? searchValue : null,
+          search_type: searchType
+        }
       });
 
       if (error) {
@@ -166,16 +170,20 @@ export const useCustomerDataByEmail = (email: string | null) => {
 
   const refreshAll = async () => {
     if (email) {
-      await fetchCustomerData(email);
+      await fetchCustomerData(email, 'email');
+    } else if (orderId) {
+      await fetchCustomerData(orderId, 'order_id');
     }
   };
 
-  // Auto-fetch when email changes
+  // Auto-fetch when email or orderId changes
   useEffect(() => {
     if (email) {
-      fetchCustomerData(email);
+      fetchCustomerData(email, 'email');
+    } else if (orderId) {
+      fetchCustomerData(orderId, 'order_id');
     } else {
-      // Reset state when no email
+      // Reset state when no search criteria
       setProfile(null);
       setOrders([]);
       setBookings([]);
@@ -185,7 +193,7 @@ export const useCustomerDataByEmail = (email: string | null) => {
       setHasData(false);
       setLoading(false);
     }
-  }, [email]);
+  }, [email, orderId]);
 
   return {
     loading, 

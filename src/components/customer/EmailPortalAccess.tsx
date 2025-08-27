@@ -4,34 +4,57 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Shield, ArrowRight } from 'lucide-react';
+import { Loader2, Mail, Shield, ArrowRight, FileText } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EmailPortalAccessProps {
-  onEmailSubmit: (email: string) => void;
+  onSearchSubmit: (searchType: 'email' | 'order_id', value: string) => void;
   loading?: boolean;
   error?: string | null;
 }
 
-export function EmailPortalAccess({ onEmailSubmit, loading = false, error }: EmailPortalAccessProps) {
+export function EmailPortalAccess({ onSearchSubmit, loading = false, error }: EmailPortalAccessProps) {
   const [email, setEmail] = useState('');
-  const [isValidEmail, setIsValidEmail] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  const [searchType, setSearchType] = useState<'email' | 'order_id'>('email');
+  const [isValidInput, setIsValidInput] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     return emailRegex.test(email);
   };
 
+  const validateOrderId = (id: string) => {
+    // UUID format validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     setEmail(newEmail);
-    setIsValidEmail(validateEmail(newEmail));
+    setIsValidInput(validateEmail(newEmail));
+  };
+
+  const handleOrderIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newOrderId = e.target.value;
+    setOrderId(newOrderId);
+    setIsValidInput(validateOrderId(newOrderId));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isValidEmail && !loading) {
-      onEmailSubmit(email);
+    if (isValidInput && !loading) {
+      const value = searchType === 'email' ? email : orderId;
+      onSearchSubmit(searchType, value);
     }
+  };
+
+  const handleTabChange = (value: string) => {
+    setSearchType(value as 'email' | 'order_id');
+    setIsValidInput(false);
+    setEmail('');
+    setOrderId('');
   };
 
   return (
@@ -43,7 +66,7 @@ export function EmailPortalAccess({ onEmailSubmit, loading = false, error }: Ema
           </div>
           <CardTitle className="text-2xl">Access Your Services</CardTitle>
           <CardDescription>
-            Enter your email address to view your cleaning services and account information
+            Enter your email address or Order ID to view your cleaning services and account information
           </CardDescription>
         </CardHeader>
         
@@ -54,40 +77,73 @@ export function EmailPortalAccess({ onEmailSubmit, loading = false, error }: Ema
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={handleEmailChange}
-                  className="pl-10"
-                  required
-                  disabled={loading}
-                />
-              </div>
-              {email && !isValidEmail && (
-                <p className="text-sm text-destructive">Please enter a valid email address</p>
-              )}
-            </div>
+          <Tabs value={searchType} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </TabsTrigger>
+              <TabsTrigger value="order_id" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Order ID
+              </TabsTrigger>
+            </TabsList>
 
-            <Button 
-              type="submit" 
-              disabled={!isValidEmail || loading} 
-              className="w-full"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <ArrowRight className="h-4 w-4 mr-2" />
-              )}
-              {loading ? 'Checking...' : 'Access My Services'}
-            </Button>
-          </form>
+            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+              <TabsContent value="email" className="space-y-2 mt-0">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={handleEmailChange}
+                    className="pl-10"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                {email && !isValidInput && searchType === 'email' && (
+                  <p className="text-sm text-destructive">Please enter a valid email address</p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="order_id" className="space-y-2 mt-0">
+                <Label htmlFor="orderId">Order ID</Label>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="orderId"
+                    type="text"
+                    placeholder="e.g., 12345678-1234-1234-1234-123456789abc"
+                    value={orderId}
+                    onChange={handleOrderIdChange}
+                    className="pl-10"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                {orderId && !isValidInput && searchType === 'order_id' && (
+                  <p className="text-sm text-destructive">Please enter a valid Order ID</p>
+                )}
+              </TabsContent>
+
+              <Button 
+                type="submit" 
+                disabled={!isValidInput || loading} 
+                className="w-full"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                )}
+                {loading ? 'Checking...' : 'Access My Services'}
+              </Button>
+            </form>
+          </Tabs>
 
           <div className="text-center space-y-4">
             <div className="relative">

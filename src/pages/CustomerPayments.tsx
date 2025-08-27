@@ -11,6 +11,7 @@ import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { calculateServicePrice, orderRequiresPayment, getServiceDisplayInfo } from '@/lib/service-price-calculator';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentData {
   amount: number;
@@ -33,6 +34,7 @@ export default function CustomerPayments() {
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [searchType, setSearchType] = useState<'email' | 'order_id'>('email');
   const {
     toast
   } = useToast();
@@ -42,7 +44,7 @@ export default function CustomerPayments() {
     error,
     hasData,
     fetchCustomerData
-  } = useCustomerDataByEmail(customerEmail);
+  } = useCustomerDataByEmail(searchType === 'email' ? customerEmail : null, searchType === 'order_id' ? customerEmail : null);
 
   // Filter orders that require payment and calculate actual amounts owed
   const unpaidOrders = orders.filter(orderRequiresPayment).map(order => {
@@ -63,8 +65,9 @@ export default function CustomerPayments() {
   });
   
   const totalAmountDue = unpaidOrders.reduce((sum, order) => sum + (order.calculatedAmount || 0), 0);
-  const handleEmailSubmit = async (email: string) => {
-    setCustomerEmail(email);
+  const handleSearchSubmit = (type: 'email' | 'order_id', value: string) => {
+    setSearchType(type);
+    setCustomerEmail(value);
   };
   const handlePayNow = (order: any) => {
     // Use the calculated amount for payment and include display info
@@ -75,7 +78,32 @@ export default function CustomerPayments() {
     setSelectedOrder(orderWithCalculatedAmount);
     setShowPayment(true);
   };
-  const handlePaymentSuccess = (orderId: string) => {
+  const handlePaymentSuccess = async (orderId: string) => {
+    if (!selectedOrder) return;
+    
+    // Send webhook for customer portal payments
+    try {
+      await supabase.functions.invoke('customer-payment-webhook', {
+        body: {
+          orderId: selectedOrder.id,
+          paymentIntentId: orderId || 'customer_portal_payment',
+          amount: selectedOrder.calculatedAmount || selectedOrder.amount,
+          customerEmail: selectedOrder.customer_email || customerEmail,
+          customerName: selectedOrder.customer_name || 'Valued Customer',
+          serviceDetails: {
+            serviceType: selectedOrder.serviceName || selectedOrder.cleaning_type,
+            address: selectedOrder.service_details?.service_address,
+            serviceDate: selectedOrder.scheduled_date,
+            cleaningType: selectedOrder.cleaning_type
+          },
+          paymentStatus: 'completed'
+        }
+      });
+    } catch (webhookError) {
+      console.error('Webhook error:', webhookError);
+      // Don't fail the payment success flow for webhook errors
+    }
+    
     toast({
       title: "Payment Successful!",
       description: "Your payment has been processed successfully."
@@ -98,7 +126,7 @@ export default function CustomerPayments() {
 
   // If no email is set, show email entry form
   if (!customerEmail) {
-    return <EmailPortalAccess onEmailSubmit={handleEmailSubmit} loading={loading} error={error} />;
+    return <EmailPortalAccess onSearchSubmit={handleSearchSubmit} loading={loading} error={error} />;
   }
 
   // If email is set but no data found, show error state
@@ -214,10 +242,19 @@ export default function CustomerPayments() {
             <CardDescription>
               Complete payments for your cleaning services
             </CardDescription>
+            
+            {/* Collections Disclaimer */}
+            <Alert className="border-warning bg-warning/5 mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-warning-foreground/80 text-left">
+                <strong>Payment Notice:</strong> Outstanding balances will be subject to collections proceedings after 14 days of non-payment following service completion.
+              </AlertDescription>
+            </Alert>
+            
             <div className="text-sm text-muted-foreground mt-2">
               Account: {customerEmail}
               <Button onClick={() => setCustomerEmail(null)} variant="link" size="sm" className="ml-2 h-auto p-0">
-                Change Email
+                Change Search
               </Button>
             </div>
           </CardHeader>
