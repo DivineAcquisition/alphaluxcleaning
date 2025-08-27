@@ -49,37 +49,55 @@ export interface ServicePriceCalculation {
 }
 
 /**
- * Parse square footage from cleaningType string (e.g., "2401-2800" -> 2400)
+ * Extract square footage from service details or use defaults based on cleaning type
  */
-function parseSquareFootageFromCleaningType(cleaningType: string): number {
-  // Handle ranges like "2401-2800"
-  const rangeMatch = cleaningType.match(/(\d+)-(\d+)/);
+function getSquareFootageFromServiceDetails(serviceDetails: any, cleaningType: string): number {
+  // First try to get from service_details
+  if (serviceDetails?.square_footage && serviceDetails.square_footage > 0) {
+    return serviceDetails.square_footage;
+  }
+  
+  // Try to parse from cleaning type if it contains ranges like "2401-2800"
+  const rangeMatch = cleaningType?.match(/(\d+)-(\d+)/);
   if (rangeMatch) {
     const min = parseInt(rangeMatch[1]);
     const max = parseInt(rangeMatch[2]);
-    return (min + max) / 2; // Use middle of range
+    return (min + max) / 2;
   }
   
-  // Handle single numbers
-  const numberMatch = cleaningType.match(/(\d+)/);
+  // Handle single numbers in cleaning type
+  const numberMatch = cleaningType?.match(/(\d+)/);
   if (numberMatch) {
     return parseInt(numberMatch[1]);
   }
   
-  return 1000; // Default fallback
+  // Default based on cleaning type
+  const type = cleaningType?.toLowerCase() || '';
+  if (type.includes('small') || type.includes('studio')) {
+    return 800;
+  } else if (type.includes('large') || type.includes('complete')) {
+    return 2500;
+  } else if (type.includes('deep')) {
+    return 1800;
+  }
+  
+  return 1500; // Default fallback for general cleaning
 }
 
 /**
- * Determine cleaning type from service details
+ * Determine cleaning type from service details and cleaning_type field
  */
-function getCleaningTypeFromServiceDetails(serviceDetails: any): string {
+function getCleaningTypeFromServiceDetails(serviceDetails: any, cleaningType: string): string {
+  // Check service details first
+  const serviceCleaningType = (serviceDetails?.cleaning_type || cleaningType || '').toLowerCase();
+  
   // Check if it's deep cleaning
-  if (serviceDetails.cleaning_type?.toLowerCase().includes('deep')) {
+  if (serviceCleaningType.includes('deep')) {
     return 'deep';
   }
   
   // Check frequency to determine if it's regular or one-time
-  const frequency = serviceDetails.recurring_frequency || serviceDetails.frequency;
+  const frequency = serviceDetails?.recurring_frequency || serviceDetails?.frequency;
   if (frequency === 'weekly' || frequency === 'biweekly' || frequency === 'monthly') {
     return 'regular';
   }
@@ -106,11 +124,11 @@ function getFrequencyFromServiceDetails(serviceDetails: any): string {
 export function calculateServicePrice(order: any): ServicePriceCalculation {
   const serviceDetails = order.service_details || {};
   
-  // Parse square footage from cleaningType field (which contains ranges like "2401-2800")
-  const squareFootage = parseSquareFootageFromCleaningType(order.cleaning_type || '1000');
+  // Get square footage from service details or defaults
+  const squareFootage = getSquareFootageFromServiceDetails(serviceDetails, order.cleaning_type);
   
   // Determine actual cleaning type and frequency
-  const cleaningType = getCleaningTypeFromServiceDetails(serviceDetails);
+  const cleaningType = getCleaningTypeFromServiceDetails(serviceDetails, order.cleaning_type);
   const frequency = getFrequencyFromServiceDetails(serviceDetails);
   
   // Find appropriate pricing tier
@@ -197,8 +215,11 @@ export function getServiceDisplayInfo(order: any): {
   const calculation = calculateServicePrice(order);
   const { cleaningType, frequency, squareFootage } = calculation.serviceDetails;
   
+  // Get user-friendly cleaning type name
+  const rawCleaningType = (order.cleaning_type || '').toLowerCase();
   let serviceName = '';
-  if (cleaningType === 'deep') {
+  
+  if (cleaningType === 'deep' || rawCleaningType.includes('deep')) {
     serviceName = 'Deep Cleaning';
   } else if (frequency === 'weekly') {
     serviceName = 'Weekly Cleaning';
@@ -207,7 +228,16 @@ export function getServiceDisplayInfo(order: any): {
   } else if (frequency === 'monthly') {
     serviceName = 'Monthly Cleaning';
   } else {
-    serviceName = 'One-Time Cleaning';
+    // Map raw cleaning types to user-friendly names
+    if (rawCleaningType.includes('complete')) {
+      serviceName = 'Complete Cleaning';
+    } else if (rawCleaningType.includes('general')) {
+      serviceName = 'General Cleaning';
+    } else if (rawCleaningType.includes('standard')) {
+      serviceName = 'Standard Cleaning';
+    } else {
+      serviceName = 'One-Time Cleaning';
+    }
   }
   
   const serviceDescription = `${serviceName} for ${squareFootage} sq ft home`;

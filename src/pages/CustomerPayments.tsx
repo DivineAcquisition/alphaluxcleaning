@@ -67,7 +67,7 @@ export default function CustomerPayments() {
     setCustomerEmail(email);
   };
   const handlePayNow = (order: any) => {
-    // Use the calculated amount for payment
+    // Use the calculated amount for payment and include display info
     const orderWithCalculatedAmount = {
       ...order,
       amount: order.calculatedAmount || order.amount
@@ -165,15 +165,34 @@ export default function CustomerPayments() {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between text-sm">
                     <span>Service Type</span>
-                    <span>{selectedOrder.cleaning_type}</span>
+                    <span>{selectedOrder.serviceName || selectedOrder.cleaning_type}</span>
                   </div>
+                  {selectedOrder.squareFootageDisplay && <div className="flex justify-between text-sm">
+                      <span>Home Size</span>
+                      <span>{selectedOrder.squareFootageDisplay}</span>
+                    </div>}
                   {selectedOrder.scheduled_date && <div className="flex justify-between text-sm">
                       <span>Service Date</span>
                       <span>{format(new Date(selectedOrder.scheduled_date), 'PPP')}</span>
                     </div>}
-                  <div className="flex justify-between font-semibold">
+                  {selectedOrder.paymentType !== 'pay_after_service' && selectedOrder.originalPrice && (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Service Total</span>
+                        <span>${selectedOrder.originalPrice.toFixed(2)}</span>
+                      </div>
+                      {selectedOrder.amountPaid > 0 && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Amount Paid</span>
+                          <span>-${selectedOrder.amountPaid.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <Separator />
+                  <div className="flex justify-between font-semibold text-lg">
                     <span>Amount Due</span>
-                    <span>${selectedOrder.amount.toFixed(2)}</span>
+                    <span>${selectedOrder.calculatedAmount?.toFixed(2) || selectedOrder.amount.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
