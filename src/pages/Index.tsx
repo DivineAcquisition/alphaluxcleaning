@@ -15,30 +15,6 @@ const Index = () => {
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
 
-    // Load chat widget with conditional loading to prevent payment conflicts
-    const loadChatWidget = () => {
-      // Don't load chat widget on payment/booking pages to prevent conflicts
-      if (window.location.pathname.includes('/booking') || window.location.pathname.includes('/payment') || document.querySelector('[data-stripe-element]')) {
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://widgets.leadconnectorhq.com/loader.js';
-      script.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
-      script.setAttribute('data-widget-id', '688b7acb81758b9cee3c0c05');
-      script.async = true;
-      script.defer = true; // Use defer to prevent render blocking
-      document.head.appendChild(script);
-    };
-
-    // Defer chat widget loading
-    setTimeout(loadChatWidget, 2000);
-    return () => {
-      // Cleanup script on unmount
-      const existingScript = document.querySelector('script[data-widget-id="688b7acb81758b9cee3c0c05"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
   }, []);
 
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
