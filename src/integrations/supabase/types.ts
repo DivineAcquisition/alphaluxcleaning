@@ -3428,6 +3428,41 @@ export type Database = {
           },
         ]
       }
+      subcontractor_sensitive: {
+        Row: {
+          created_at: string
+          id: string
+          ssn_hash: string
+          ssn_last4: string
+          subcontractor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ssn_hash: string
+          ssn_last4: string
+          subcontractor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ssn_hash?: string
+          ssn_last4?: string
+          subcontractor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_sensitive_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: true
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractors: {
         Row: {
           account_status: string | null

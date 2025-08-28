@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -5,153 +6,51 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, LogIn, UserPlus, Home, KeyRound } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { Loader2, LogIn, Home } from 'lucide-react';
 
 export default function Auth() {
-  const { user, userRole, signIn, loading } = useAuth();
+  const { user, isAdmin, signIn, loading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
+  const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // Form state
-  const [signInData, setSignInData] = useState({ email: '', password: '' });
-
-  // Redirect authenticated users based on subdomain and role
+  // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
-    if (user && userRole) {
-      const hostname = window.location.hostname;
-      
-      // Determine redirect based on subdomain and role
-      if (userRole === 'admin' || userRole === 'super_admin') {
-        if (hostname.startsWith('admin.')) {
-          navigate('/admin');
-        } else {
-          window.location.href = 'https://admin.bayareacleaningpros.com/admin';
-        }
-      } else if (userRole === 'office_manager') {
-        if (hostname.startsWith('office.')) {
-          navigate('/office-manager-dashboard');
-        } else {
-          window.location.href = 'https://office.bayareacleaningpros.com/office-manager-dashboard';
-        }
-      } else if (userRole === 'subcontractor') {
-        if (hostname.startsWith('cleaners.')) {
-          navigate('/subcontractor-dashboard');
-        } else {
-          window.location.href = 'https://cleaners.bayareacleaningpros.com/subcontractor-dashboard';
-        }
+    if (user && !loading) {
+      if (isAdmin) {
+        navigate('/admin');
       } else {
-        // Default to customer portal
-        if (hostname.startsWith('portal.')) {
-          navigate('/customer-portal-dashboard');
-        } else {
-          window.location.href = 'https://portal.bayareacleaningpros.com/customer-portal-dashboard';
-        }
+        navigate('/customer-portal-dashboard');
       }
     }
-  }, [user, userRole, navigate]);
+  }, [user, isAdmin, loading, navigate]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    if (!signInData.email || !signInData.password) {
+    if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       setIsSubmitting(false);
       return;
     }
 
-    try {
-      const { error } = await signIn(signInData.email, signInData.password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password');
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Please check your email and confirm your account');
-        } else {
-          setError(error.message);
-        }
-      } else {
-        toast.success('Successfully signed in!');
-      }
-    } catch (error) {
-      setError('An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-
-  const handleGoogleSignIn = async () => {
-    setIsSubmitting(true);
-    setError(null);
+    const { error } = await signIn(formData.email, formData.password);
     
-    try {
-      // Determine the correct callback URL based on current domain
-      const hostname = window.location.hostname;
-      let callbackUrl;
-      
-      if (hostname.includes('bayareacleaningpros.com')) {
-        // Production domains - preserve subdomain
-        callbackUrl = `${window.location.protocol}//${hostname}/oauth/callback`;
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password');
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Please check your email and confirm your account');
       } else {
-        // Development - use current origin
-        callbackUrl = `${window.location.origin}/oauth/callback`;
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-        },
-      });
-      
-      if (error) {
         setError(error.message);
-        setIsSubmitting(false);
       }
-    } catch (error) {
-      setError('Failed to connect with Google');
-      setIsSubmitting(false);
     }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    if (!resetEmail) {
-      setError('Please enter your email address');
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/password-reset`,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        toast.success('Password reset email sent! Check your inbox.');
-        setShowPasswordReset(false);
-        setResetEmail('');
-      }
-    } catch (error) {
-      setError('An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
+    
+    setIsSubmitting(false);
   };
 
   if (loading) {
@@ -168,113 +67,53 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Bay Area Cleaning Pros
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Join thousands of satisfied customers
+          <p className="text-muted-foreground">
+            Sign in to access your dashboard
           </p>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl md:text-2xl text-center">Sign In</CardTitle>
-            <CardDescription className="text-center text-sm md:text-base">
-              Welcome back! Access your cleaning dashboard
+            <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+            <CardDescription className="text-center">
+              Enter your credentials to access the platform
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Google Sign In Button */}
-            <div className="space-y-4 mb-6">
-              <Button
-                onClick={handleGoogleSignIn}
-                disabled={isSubmitting}
-                variant="outline"
-                className="w-full h-12 text-base font-medium border-2 hover:bg-accent/10"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      />
-                    </svg>
-                    Continue with Google
-                  </>
-                )}
-              </Button>
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-muted" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-background px-4 text-muted-foreground">or</span>
-                </div>
-              </div>
-            </div>
-
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <form onSubmit={handleSignIn} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signin-email" className="text-sm font-medium">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
                 <Input
-                  id="signin-email"
+                  id="email"
                   type="email"
                   placeholder="your.email@example.com"
-                  value={signInData.email}
-                  onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   className="h-12 text-base"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                 <Input
-                  id="signin-password"
+                  id="password"
                   type="password"
                   placeholder="Enter your password"
-                  value={signInData.password}
-                  onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   className="h-12 text-base"
                   required
                 />
-              </div>
-              
-              <div className="text-right">
-                <Button 
-                  type="button" 
-                  variant="link" 
-                  className="h-auto p-0 text-sm"
-                  onClick={() => setShowPasswordReset(true)}
-                >
-                  Forgot password?
-                </Button>
               </div>
 
               <Button 
@@ -282,88 +121,19 @@ export default function Auth() {
                 className="w-full h-12 text-base font-medium" 
                 disabled={isSubmitting}
               >
-               {isSubmitting ? (
-                 <>
-                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                   Signing you in...
-                 </>
-               ) : (
-                 <>
-                   <LogIn className="mr-2 h-5 w-5" />
-                   Access Dashboard
-                 </>
-               )}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Signing you in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign In
+                  </>
+                )}
               </Button>
             </form>
-
-            {/* Create Account Link */}
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                New to Bay Area Cleaning Pros?
-              </p>
-              <Button variant="outline" asChild className="w-full">
-                <Link to="/signup" className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Create Account
-                </Link>
-              </Button>
-            </div>
-
-            {/* Password Reset Modal */}
-            {showPasswordReset && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                <Card className="w-full max-w-md">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <KeyRound className="h-5 w-5" />
-                      Reset Password
-                    </CardTitle>
-                    <CardDescription>
-                      Enter your email address and we'll send you a link to reset your password.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handlePasswordReset} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="reset-email">Email</Label>
-                        <Input
-                          id="reset-email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={resetEmail}
-                          onChange={(e) => setResetEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setShowPasswordReset(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          className="flex-1" 
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            'Send Reset Link'
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
 
             <div className="mt-6 text-center">
               <Button 
