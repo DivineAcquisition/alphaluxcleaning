@@ -18,7 +18,9 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  getUserRole: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -138,6 +140,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+          }
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
+      toast({
+        title: "Welcome!",
+        description: "Please check your email to confirm your account.",
+      });
+      
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Sign Up Error", 
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const getUserRole = async (): Promise<string | null> => {
+    if (!user) return null;
+    return userRole;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUserRole(null);
@@ -157,7 +204,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     loading,
     signIn,
+    signUp,
     signOut,
+    getUserRole,
   };
 
   return (
