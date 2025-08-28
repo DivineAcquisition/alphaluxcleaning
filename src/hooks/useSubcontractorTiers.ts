@@ -77,29 +77,37 @@ export function useSubcontractorTiers() {
       };
     }
     
-    // Fallback to static definitions
+    // Fallback to static definitions with updated rates
     switch (tierLevel) {
+      case 4:
+        return {
+          tier_level: 4,
+          tier_name: 'Premium',
+          hourly_rate: 20.00,
+          monthly_fee: 70.00,
+          requirements: { reviews: 30, jobs: 40 }
+        };
       case 3:
         return {
           tier_level: 3,
           tier_name: 'Elite',
-          hourly_rate: 21.00,
-          monthly_fee: 65.00,
-          requirements: { reviews: 25, jobs: 30 }
+          hourly_rate: 18.00,
+          monthly_fee: 55.00,
+          requirements: { reviews: 20, jobs: 25 }
         };
       case 2:
         return {
           tier_level: 2,
           tier_name: 'Professional',
-          hourly_rate: 18.00,
-          monthly_fee: 50.00,
-          requirements: { reviews: 15, jobs: 20 }
+          hourly_rate: 16.00,
+          monthly_fee: 40.00,
+          requirements: { reviews: 10, jobs: 15 }
         };
       default:
         return {
           tier_level: 1,
           tier_name: 'Standard',
-          hourly_rate: 16.00,
+          hourly_rate: 14.00,
           monthly_fee: 25.00,
           requirements: { reviews: 0, jobs: 0 }
         };
@@ -110,12 +118,12 @@ export function useSubcontractorTiers() {
     if (tierConfigs.length > 0) {
       return tierConfigs.map(config => getTierInfo(config.tier_level));
     }
-    return [1, 2, 3].map(level => getTierInfo(level));
+    return [1, 2, 3, 4].map(level => getTierInfo(level));
   };
 
   const getNextTier = (currentLevel: number): TierInfo | null => {
     const nextLevel = currentLevel + 1;
-    return nextLevel <= 3 ? getTierInfo(nextLevel) : null;
+    return nextLevel <= 4 ? getTierInfo(nextLevel) : null;
   };
 
   const canUpgradeToTier = (subcontractor: SubcontractorWithTier, targetTier: number): boolean => {

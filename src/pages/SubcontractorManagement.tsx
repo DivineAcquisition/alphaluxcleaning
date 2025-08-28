@@ -33,6 +33,7 @@ import { SecurityAuditPanel } from '@/components/admin/SecurityAuditPanel';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { QuickAddSubcontractorDialog } from '@/components/admin/QuickAddSubcontractorDialog';
 
 export default function SubcontractorManagement() {
   const { toast } = useToast();
@@ -57,6 +58,7 @@ export default function SubcontractorManagement() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [selectedSubcontractorForStatus, setSelectedSubcontractorForStatus] = useState<EnhancedSubcontractor | null>(null);
   const [processingNotifications, setProcessingNotifications] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   // Filters
   const [filters, setFilters] = useState<FilterOptions>({
@@ -492,10 +494,19 @@ export default function SubcontractorManagement() {
               </TabsTrigger>
             </TabsList>
             
-            <Button onClick={refreshSubcontractors} variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Refresh Data
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Add Subcontractor
+              </Button>
+              <Button onClick={refreshSubcontractors} variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Refresh Data
+              </Button>
+            </div>
           </div>
 
           {/* All Subcontractors Tab */}
@@ -672,9 +683,10 @@ export default function SubcontractorManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Tier 1 - Standard</SelectItem>
-                    <SelectItem value="2">Tier 2 - Professional</SelectItem>
-                    <SelectItem value="3">Tier 3 - Premium</SelectItem>
+                    <SelectItem value="1">Tier 1 - Standard ($14/hr)</SelectItem>
+                    <SelectItem value="2">Tier 2 - Professional ($16/hr)</SelectItem>
+                    <SelectItem value="3">Tier 3 - Elite ($18/hr)</SelectItem>
+                    <SelectItem value="4">Tier 4 - Premium ($20/hr)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -698,6 +710,15 @@ export default function SubcontractorManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Quick Add Subcontractor Dialog */}
+        <QuickAddSubcontractorDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onSuccess={() => {
+            refreshSubcontractors();
+          }}
+        />
       </div>
     </AdminLayout>
   );
