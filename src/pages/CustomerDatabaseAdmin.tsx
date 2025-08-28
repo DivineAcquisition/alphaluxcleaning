@@ -40,7 +40,7 @@ interface Order {
   service_details: any;
 }
 
-const CustomerDatabaseAdmin = () => {
+function CustomerDatabaseAdmin() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
@@ -372,6 +372,6 @@ const CustomerDatabaseAdmin = () => {
       </div>
     </AdminLayout>
   );
-};
+}
 
 export default CustomerDatabaseAdmin;
