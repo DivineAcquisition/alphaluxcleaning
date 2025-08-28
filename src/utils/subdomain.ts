@@ -124,14 +124,8 @@ export function getCurrentSubdomain(): SubdomainType {
   
   const hostname = window.location.hostname;
   
-  // Handle localhost and IP addresses - allow URL params for testing
+  // Handle localhost and IP addresses
   if (hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-    // Check for subdomain parameter for development testing
-    const urlParams = new URLSearchParams(window.location.search);
-    const testSubdomain = urlParams.get('subdomain') as SubdomainType;
-    if (testSubdomain && SUBDOMAIN_CONFIG[testSubdomain]) {
-      return testSubdomain;
-    }
     return 'main';
   }
   
@@ -231,32 +225,26 @@ export function getCurrentSubdomainConfig(): SubdomainConfig {
  */
 export function isRouteAllowedOnSubdomain(route: string): boolean {
   const currentSubdomain = getCurrentSubdomain();
+  const config = SUBDOMAIN_CONFIG[currentSubdomain];
   
-  // Auth routes are allowed everywhere
-  if (route === '/auth' || route === '/signup' || route.startsWith('/oauth')) {
-    return true;
-  }
-  
-  // For localhost, be more permissive to avoid development issues
-  if (window.location.hostname === 'localhost') {
-    return true;
-  }
+  // For now, we'll implement basic route restrictions
+  // This can be expanded with more specific route mappings
   
   switch (currentSubdomain) {
     case 'admin':
-      return route.startsWith('/admin') || route.startsWith('/subcontractor-management') || route.startsWith('/job-assignments');
+      return route.startsWith('/admin') || route === '/auth' || route === '/oauth';
     case 'portal':
-      return route.startsWith('/customer') || route === '/customer-portal-dashboard';
+      return route.startsWith('/customer') || route === '/auth' || route === '/oauth' || route === '/signup';
     case 'cleaners':
-      return route.startsWith('/subcontractor') || route === '/subcontractor-dashboard';
+      return route.startsWith('/subcontractor') || route === '/auth' || route === '/oauth';
     case 'subcon':
-      return route.startsWith('/subcontractor-management') || route.startsWith('/job-assignments');
+      return route.startsWith('/subcontractor-management') || route === '/auth' || route === '/oauth';
     case 'office':
-      return route.startsWith('/office') || route === '/office-manager-dashboard';
+      return route.startsWith('/office') || route === '/auth' || route === '/oauth';
     case 'book':
-      return route.startsWith('/booking') || route.startsWith('/schedule') || route === '/booking';
+      return route.startsWith('/booking') || route.startsWith('/schedule') || route === '/auth' || route === '/signup';
     case 'main':
-      return route === '/' || route === '/index';
+      return route === '/' || route === '/auth' || route === '/signup' || route === '/oauth';
     default:
       return true; // Allow all routes for other subdomains for now
   }

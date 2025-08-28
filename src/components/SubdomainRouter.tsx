@@ -19,25 +19,11 @@ export function SubdomainRouter({ children }: SubdomainRouterProps) {
   const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
   
-  // Debug logging for development
-  useEffect(() => {
-    if (window.location.hostname === 'localhost') {
-      console.log('🔍 SubdomainRouter Debug:', {
-        currentSubdomain: getCurrentSubdomain(),
-        pathname: location.pathname,
-        userRole,
-        user: !!user,
-        loading,
-        isRedirecting
-      });
-    }
-  }, [user, userRole, loading, location.pathname, isRedirecting]);
-  
   useEffect(() => {
     // Skip redirects during loading or if already redirecting
     if (loading || isRedirecting) return;
     
-    // Skip redirects for localhost to avoid development issues
+    // Skip redirects for localhost
     if (window.location.hostname === 'localhost') return;
     
     // Skip redirects for auth/oauth routes
@@ -56,10 +42,10 @@ export function SubdomainRouter({ children }: SubdomainRouterProps) {
   // Show loading during auth check or redirect
   if (loading || isRedirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="text-foreground">Loading...</span>
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
         </div>
       </div>
     );
@@ -68,15 +54,11 @@ export function SubdomainRouter({ children }: SubdomainRouterProps) {
   // Check if current route is allowed on this subdomain
   if (!isRouteAllowedOnSubdomain(location.pathname)) {
     const config = getCurrentSubdomainConfig();
-    console.warn('🚫 Route not allowed:', {
-      route: location.pathname,
-      subdomain: getCurrentSubdomain(),
-      defaultRoute: config.defaultRoute
-    });
     return <Navigate to={config.defaultRoute} replace />;
   }
 
   // Check role permissions for protected subdomains
+  const currentSubdomain = getCurrentSubdomain();
   const config = getCurrentSubdomainConfig();
   
   // If subdomain requires authentication and user is not authenticated
@@ -88,7 +70,7 @@ export function SubdomainRouter({ children }: SubdomainRouterProps) {
   if (!config.isPublic && user && !isRoleAllowedOnSubdomain(userRole)) {
     // Show access denied message
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-6">
