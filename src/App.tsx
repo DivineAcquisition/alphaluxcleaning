@@ -15,6 +15,8 @@ import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerManagementHub from '@/pages/CustomerManagementHub';
 import SecurityCenter from '@/pages/SecurityCenter';
 import UserManagement from '@/pages/UserManagement';
+import TierSystemConfig from '@/pages/TierSystemConfig';
+import ReviewsPortal from '@/pages/ReviewsPortal';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
@@ -153,6 +155,22 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <ApplicationManager />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tier-management" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <TierSystemConfig />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reviews-portal" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ReviewsPortal />
                 </ProtectedRoute>
               } 
             />
