@@ -14,6 +14,10 @@ import OAuthCallback from '@/pages/OAuthCallback';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
+import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
+import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
+import BookingPage from '@/pages/BookingPage';
+import JobAssignments from '@/pages/JobAssignments';
 
 const queryClient = new QueryClient();
 
@@ -67,6 +71,31 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <CustomerPortalDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/subcontractor-dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <SubcontractorDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/office-manager-dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <OfficeManagerDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/booking" element={<BookingPage />} />
+              <Route 
+                path="/job-assignments" 
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <JobAssignments />
                   </ProtectedRoute>
                 } 
               />

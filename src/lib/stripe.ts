@@ -1,6 +1,6 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 // Dynamic Stripe loader that fetches publishable key from Supabase
 
@@ -12,11 +12,6 @@ declare global {
 
 const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_test_') || k.startsWith('pk_live_'));
 
-// Initialize Supabase client
-const supabase = createClient(
-  "https://kqoezqzogleaaupjzxch.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI"
-);
 
 // Function to fetch Stripe publishable key from Supabase
 const fetchStripeKey = async (): Promise<string | null> => {
