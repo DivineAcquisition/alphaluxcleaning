@@ -2,6 +2,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import SecuritySettings from "@/pages/SecuritySettings";
 import { SecurityDashboard } from "@/components/admin/SecurityDashboard";
 import { SecurityMonitoring } from "@/components/admin/SecurityMonitoring";
+import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SecurityCenter() {
@@ -18,17 +19,23 @@ export default function SecurityCenter() {
         </TabsList>
 
         <TabsContent value="monitoring" className="space-y-6">
-          <SecurityMonitoring />
+          <AdminErrorBoundary>
+            <SecurityMonitoring />
+          </AdminErrorBoundary>
         </TabsContent>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <SecurityDashboard />
+          <AdminErrorBoundary>
+            <SecurityDashboard />
+          </AdminErrorBoundary>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <div className="max-w-4xl">
-            <SecuritySettings />
-          </div>
+          <AdminErrorBoundary>
+            <div className="max-w-4xl">
+              <SecuritySettings />
+            </div>
+          </AdminErrorBoundary>
         </TabsContent>
       </Tabs>
     </AdminLayout>

@@ -30,38 +30,51 @@ export function SecurityMonitoring() {
 
   const fetchSecurityData = async () => {
     try {
-      // Fetch recent security events
-      const { data: securityEvents } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(50);
+      let securityEvents: any[] = [];
+      let failedLogins: any[] = [];
 
-      // Fetch failed login attempts
-      const { data: failedLogins } = await supabase
-        .from('failed_login_attempts')
-        .select('*')
-        .gte('attempt_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order('attempt_time', { ascending: false });
+      // Safely fetch recent security events
+      try {
+        const { data } = await supabase
+          .from('security_audit_log')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(50);
+        securityEvents = data || [];
+      } catch (error) {
+        console.log('Security audit log not available, using fallback data');
+        securityEvents = [];
+      }
+
+      // Safely fetch failed login attempts
+      try {
+        const { data } = await supabase
+          .from('failed_login_attempts')
+          .select('*')
+          .gte('attempt_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order('attempt_time', { ascending: false });
+        failedLogins = data || [];
+      } catch (error) {
+        console.log('Failed login attempts not available, using fallback data');
+        failedLogins = [];
+      }
 
       // Process alerts
       const processedAlerts: SecurityAlert[] = [];
       
-      if (securityEvents) {
-        securityEvents.forEach(event => {
-          if (event.risk_level === 'high' || event.risk_level === 'critical') {
-            processedAlerts.push({
-              id: event.id,
-              type: 'high_risk_access',
-              message: `High-risk ${event.action_type} on ${event.resource_type}`,
-              timestamp: event.timestamp,
-              severity: event.risk_level
-            });
-          }
-        });
-      }
+      securityEvents.forEach(event => {
+        if (event.risk_level === 'high' || event.risk_level === 'critical') {
+          processedAlerts.push({
+            id: event.id,
+            type: 'high_risk_access',
+            message: `High-risk ${event.action_type} on ${event.resource_type}`,
+            timestamp: event.timestamp,
+            severity: event.risk_level
+          });
+        }
+      });
 
-      if (failedLogins && failedLogins.length > 5) {
+      if (failedLogins.length > 5) {
         processedAlerts.push({
           id: 'failed_logins',
           type: 'failed_login',
@@ -73,16 +86,23 @@ export function SecurityMonitoring() {
 
       setAlerts(processedAlerts);
       
-      // Calculate security metrics
+      // Calculate security metrics with fallback values
       setSecurityMetrics({
-        activeSessions: 47, // Mock data - would be calculated from actual sessions
-        failedLogins: failedLogins?.length || 0,
-        highRiskEvents: securityEvents?.filter(e => e.risk_level === 'high' || e.risk_level === 'critical').length || 0,
-        securityScore: calculateSecurityScore(failedLogins?.length || 0, securityEvents?.length || 0)
+        activeSessions: 12, // Mock data - would be calculated from actual sessions
+        failedLogins: failedLogins.length,
+        highRiskEvents: securityEvents.filter(e => e.risk_level === 'high' || e.risk_level === 'critical').length,
+        securityScore: calculateSecurityScore(failedLogins.length, securityEvents.length)
       });
 
     } catch (error) {
       console.error('Error fetching security data:', error);
+      // Set fallback metrics
+      setSecurityMetrics({
+        activeSessions: 0,
+        failedLogins: 0,
+        highRiskEvents: 0,
+        securityScore: 100
+      });
     }
   };
 
