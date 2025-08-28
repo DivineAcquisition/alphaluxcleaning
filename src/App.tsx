@@ -12,6 +12,9 @@ import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminPortal from '@/pages/AdminPortal';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
+import CustomerManagementHub from '@/pages/CustomerManagementHub';
+import SecurityCenter from '@/pages/SecurityCenter';
+import UserManagement from '@/pages/UserManagement';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
@@ -65,7 +68,39 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <AdminDashboard />
+                  <AdminPortal />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/customers" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <CustomerManagementHub />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/subcontractors" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <SubcontractorManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/security" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <SecurityCenter />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <UserManagement />
                 </ProtectedRoute>
               } 
             />
