@@ -4,13 +4,10 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
-import { SubdomainRouter } from '@/components/SubdomainRouter';
 
 // Pages
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
-import SignUp from '@/pages/SignUp';
-import OAuthCallback from '@/pages/OAuthCallback';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
@@ -40,38 +37,34 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <SubdomainRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/oauth/callback" element={<OAuthCallback />} />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/subcontractor-management" 
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <SubcontractorManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/customer-portal-dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <CustomerPortalDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </SubdomainRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/subcontractor-management" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <SubcontractorManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer-portal-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <CustomerPortalDashboard />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
         </Router>
         <Toaster />
         <Sonner />
