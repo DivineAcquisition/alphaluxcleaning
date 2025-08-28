@@ -200,31 +200,13 @@ export function Navigation() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu> : (
-              (() => {
-                const hostname = window.location.hostname;
-                const isBookingDomain = hostname.startsWith('book.');
-                
-                return (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      if (isBookingDomain) {
-                        // Route customers to order status page on booking domain
-                        window.location.href = '/order-status';
-                      } else {
-                        // Route admins/staff to admin auth page
-                        window.location.href = '/auth';
-                      }
-                    }}
-                    className="flex items-center gap-2"
-                  >
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <LogIn className="h-4 w-4" />
                     Sign In
                   </Button>
-                );
-              })()
-            )}
+                </Link>
+              )}
 
             {/* Mobile Menu */}
             <div className="md:hidden">

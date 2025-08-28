@@ -8,9 +8,18 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 // Pages
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
+import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
+import OrderStatus from '@/pages/OrderStatus';
+import OrderConfirmation from '@/pages/OrderConfirmation';
+import ScheduleService from '@/pages/ScheduleService';
+import OAuthCallback from '@/pages/OAuthCallback';
+import ModernBooking from '@/pages/ModernBooking';
+import LegacyBooking from '@/pages/LegacyBooking';
+import NewBooking from '@/pages/NewBooking';
+import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
@@ -40,6 +49,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route 
               path="/admin" 
               element={
@@ -64,6 +74,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route path="/order-status" element={<OrderStatus />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/schedule-service" element={<ScheduleService />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/booking" element={<ModernBooking />} />
+            <Route path="/legacy-booking" element={<LegacyBooking />} />
+            <Route path="/new-booking" element={<NewBooking />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
         <Toaster />
