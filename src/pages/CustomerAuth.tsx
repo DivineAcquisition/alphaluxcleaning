@@ -75,7 +75,7 @@ export default function CustomerAuth() {
                   'Accessing...'
                 ) : (
                   <>
-                    Access My Services
+                    Continue
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

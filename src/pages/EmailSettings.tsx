@@ -8,14 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Mail, Send, Settings, Bell } from "lucide-react";
+import { Mail, Send, Settings, Bell, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function EmailSettings() {
   const [smtpSettings, setSmtpSettings] = useState({
     host: "smtp.gmail.com",
     port: "587"
   });
+  
+  const [testEmail, setTestEmail] = useState("");
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
 
   const [notifications, setNotifications] = useState({
     booking: true,
@@ -28,8 +32,33 @@ export default function EmailSettings() {
     toast.success("SMTP settings saved successfully!");
   };
 
-  const handleTestEmail = () => {
-    toast.success("Test email sent successfully!");
+  const handleTestEmail = async () => {
+    if (!testEmail || !testEmail.includes('@')) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsTestingEmail(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('test-email-confirmation', {
+        body: { testEmail }
+      });
+
+      if (error) {
+        console.error('Email test error:', error);
+        toast.error(`Email test failed: ${error.message || 'Unknown error'}`);
+      } else if (data?.success) {
+        toast.success("Test email sent successfully! Check your inbox.");
+      } else {
+        toast.error(`Email test failed: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Email test error:', error);
+      toast.error("Failed to send test email. Please check your configuration.");
+    } finally {
+      setIsTestingEmail(false);
+    }
   };
 
   return (
@@ -106,12 +135,28 @@ export default function EmailSettings() {
                 rows={4}
               />
             </div>
-            <div className="flex gap-2">
-              <Button>
-                <Send className="h-4 w-4 mr-2" />
-                Test Email
-              </Button>
-              <Button variant="outline">Save Templates</Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="test-email">Test Email Address</Label>
+                <Input 
+                  id="test-email"
+                  type="email"
+                  placeholder="test@example.com"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleTestEmail} disabled={isTestingEmail}>
+                  {isTestingEmail ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  {isTestingEmail ? 'Sending...' : 'Test Email'}
+                </Button>
+                <Button variant="outline">Save Templates</Button>
+              </div>
             </div>
           </CardContent>
         </Card>

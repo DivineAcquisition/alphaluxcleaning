@@ -210,8 +210,8 @@ export function Navigation() {
                     size="sm" 
                     onClick={() => {
                       if (isBookingDomain) {
-                        // Route customers to customer auth page on booking domain
-                        window.location.href = '/customer-auth';
+                        // Route customers to order status page on booking domain
+                        window.location.href = '/order-status';
                       } else {
                         // Route admins/staff to admin auth page
                         window.location.href = '/auth';

@@ -64,7 +64,7 @@ export function EmailPortalAccess({ onSearchSubmit, loading = false, error }: Em
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             <Shield className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Access Your Services</CardTitle>
+          <CardTitle className="text-2xl">Track Your Order</CardTitle>
           <CardDescription>
             Enter your email address or Order ID to view your cleaning services and account information
           </CardDescription>
@@ -140,7 +140,7 @@ export function EmailPortalAccess({ onSearchSubmit, loading = false, error }: Em
                 ) : (
                   <ArrowRight className="h-4 w-4 mr-2" />
                 )}
-                {loading ? 'Checking...' : 'Access My Services'}
+                {loading ? 'Checking...' : 'View Orders'}
               </Button>
             </form>
           </Tabs>
@@ -164,8 +164,8 @@ export function EmailPortalAccess({ onSearchSubmit, loading = false, error }: Em
             <div className="pt-4 border-t">
               <p className="text-xs text-muted-foreground">
                 Can't find your services? Contact us at{' '}
-                <a href="mailto:support@bayareacleaningprofessionals.com" className="text-primary hover:underline">
-                  support@bayareacleaningprofessionals.com
+                <a href="mailto:support@bayareacleaningpros.com" className="text-primary hover:underline">
+                  support@bayareacleaningpros.com
                 </a>
               </p>
             </div>
