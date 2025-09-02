@@ -2034,6 +2034,81 @@ export type Database = {
         }
         Relationships: []
       }
+      job_assignment_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string | null
+          assignment_id: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          new_status: string | null
+          old_status: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string | null
+          assignment_id: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string | null
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      job_assignment_tokens: {
+        Row: {
+          action: string
+          assignment_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          assignment_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          assignment_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       job_assignments: {
         Row: {
           acceptance_at: string | null
@@ -2332,6 +2407,69 @@ export type Database = {
           token_hmac?: string
           updated_at?: string | null
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      message_queue: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          external_id: string | null
+          failed_at: string | null
+          id: string
+          max_retries: number
+          payload_json: Json
+          recipient_email: string | null
+          recipient_id: string | null
+          recipient_phone: string | null
+          retries: number
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          template_code: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          failed_at?: string | null
+          id?: string
+          max_retries?: number
+          payload_json?: Json
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          retries?: number
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_code: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          external_id?: string | null
+          failed_at?: string | null
+          id?: string
+          max_retries?: number
+          payload_json?: Json
+          recipient_email?: string | null
+          recipient_id?: string | null
+          recipient_phone?: string | null
+          retries?: number
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_code?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3564,6 +3702,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reminder_queue: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          reminder_type: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          reminder_type: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          reminder_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       revenue_entries: {
         Row: {
@@ -5547,6 +5715,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      generate_assignment_token: {
+        Args: {
+          p_action: string
+          p_assignment_id: string
+          p_expires_hours?: number
+        }
+        Returns: string
+      }
       generate_bi_insights: {
         Args: { p_insight_type: string; p_time_period?: string }
         Returns: Json
@@ -5769,6 +5945,10 @@ export type Database = {
         }
         Returns: string
       }
+      queue_job_assignment_notification: {
+        Args: { p_assignment_id: string; p_subcontractor_id: string }
+        Returns: Json
+      }
       queue_notification: {
         Args: {
           p_booking_id?: string
@@ -5838,6 +6018,10 @@ export type Database = {
               p_event_title?: string
               p_start_time: string
             }
+        Returns: Json
+      }
+      use_assignment_token: {
+        Args: { p_action: string; p_token: string }
         Returns: Json
       }
       validate_and_use_referral_code: {
