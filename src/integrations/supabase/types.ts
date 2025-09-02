@@ -1689,6 +1689,54 @@ export type Database = {
           },
         ]
       }
+      ip_threat_intelligence: {
+        Row: {
+          block_reason: string | null
+          country_code: string | null
+          first_seen: string | null
+          id: string
+          ip_address: unknown
+          is_blocked: boolean | null
+          is_proxy: boolean | null
+          is_tor: boolean | null
+          is_vpn: boolean | null
+          last_updated: string | null
+          metadata: Json | null
+          reputation_sources: Json | null
+          threat_score: number | null
+        }
+        Insert: {
+          block_reason?: string | null
+          country_code?: string | null
+          first_seen?: string | null
+          id?: string
+          ip_address: unknown
+          is_blocked?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_vpn?: boolean | null
+          last_updated?: string | null
+          metadata?: Json | null
+          reputation_sources?: Json | null
+          threat_score?: number | null
+        }
+        Update: {
+          block_reason?: string | null
+          country_code?: string | null
+          first_seen?: string | null
+          id?: string
+          ip_address?: unknown
+          is_blocked?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_vpn?: boolean | null
+          last_updated?: string | null
+          metadata?: Json | null
+          reputation_sources?: Json | null
+          threat_score?: number | null
+        }
+        Relationships: []
+      }
       job_tracking: {
         Row: {
           actual_duration: unknown | null
@@ -2952,6 +3000,59 @@ export type Database = {
           searchable_content?: string
         }
         Relationships: []
+      }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          assigned_to: string | null
+          created_at: string | null
+          description: string | null
+          event_id: string | null
+          id: string
+          metadata: Json | null
+          resolved_at: string | null
+          severity: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_type: string
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_type?: string
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "security_audit_log"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_audit_log: {
         Row: {

@@ -103,10 +103,58 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Rate limiting check first  
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Extract user from JWT
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Enhanced rate limiting for SMS actions
+    const { data: rateLimitResult } = await supabase.rpc('check_enhanced_rate_limit', {
+      p_identifier: user.id,
+      p_identifier_type: 'user_id',
+      p_action_type: 'sms',
+      p_max_attempts: 5,
+      p_window_minutes: 60
+    });
+
+    if (!rateLimitResult?.allowed) {
+      await supabase.rpc('log_security_event', {
+        p_user_id: user.id,
+        p_action_type: 'sms_rate_limited',
+        p_resource_type: 'sms_service',
+        p_resource_id: user.id,
+        p_risk_level: 'medium'
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit exceeded', 
+          blocked_until: rateLimitResult?.blocked_until,
+          reason: rateLimitResult?.reason 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { to, action, userId, resourceId, templateData = {}, priority = 'normal' }: SecureSMSRequest = await req.json();
 
