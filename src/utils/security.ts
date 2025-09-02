@@ -40,7 +40,7 @@ export function getSecurityHeaders(): SecurityHeaders {
     ].join('; ');
     
     headers['X-Frame-Options'] = 'DENY';
-  } else if (currentDomain === 'booking' || currentDomain === 'www') {
+  } else if (currentDomain === 'book' || currentDomain === 'www') {
     // More permissive CSP for public booking domains
     headers['Content-Security-Policy'] = [
       `default-src 'self'`,
@@ -168,7 +168,7 @@ export function getRobotsConfig(): string {
   const currentDomain = getCurrentDomain();
   
   switch (currentDomain) {
-    case 'booking':
+    case 'book':
     case 'www':
       // Allow indexing for public booking domains
       return `User-agent: *

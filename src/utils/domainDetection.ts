@@ -3,7 +3,7 @@
  * Detects current subdomain and provides domain-aware functionality
  */
 
-export type DomainType = 'app' | 'contractor' | 'booking' | 'www' | 'api' | 'status' | 'localhost';
+export type DomainType = 'app' | 'contractor' | 'book' | 'www' | 'api' | 'status' | 'localhost';
 
 export interface DomainConfig {
   subdomain: DomainType;
@@ -25,8 +25,8 @@ const DOMAIN_CONFIGS: Record<DomainType, DomainConfig> = {
     defaultRedirectPath: '/subcontractor-portal',
     isSecure: true
   },
-  booking: {
-    subdomain: 'booking',
+  book: {
+    subdomain: 'book',
     allowedRoles: ['customer', 'client'],
     defaultRedirectPath: '/booking',
     isSecure: false // Public booking access
