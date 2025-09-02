@@ -5457,6 +5457,14 @@ export type Database = {
         Args: { p_cleaners: Json }
         Returns: Json
       }
+      calculate_contractor_payroll: {
+        Args: {
+          p_contractor_id: string
+          p_period_end: string
+          p_period_start: string
+        }
+        Returns: Json
+      }
       calculate_subcontractor_tier: {
         Args: { p_completed_jobs: number; p_review_count: number }
         Returns: number
@@ -5542,6 +5550,15 @@ export type Database = {
       generate_bi_insights: {
         Args: { p_insight_type: string; p_time_period?: string }
         Returns: Json
+      }
+      generate_magic_token: {
+        Args: {
+          p_action: string
+          p_entity: string
+          p_entity_id: string
+          p_expires_hours?: number
+        }
+        Returns: string
       }
       get_application_by_token: {
         Args: { p_token: string }
@@ -5743,6 +5760,15 @@ export type Database = {
         }
         Returns: Json
       }
+      queue_contractor_message: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["message_channel"]
+          p_contractor_id: string
+          p_payload_json?: Json
+          p_template_code: string
+        }
+        Returns: string
+      }
       queue_notification: {
         Args: {
           p_booking_id?: string
@@ -5822,6 +5848,15 @@ export type Database = {
           p_user_name?: string
         }
         Returns: Json
+      }
+      validate_magic_token: {
+        Args: {
+          p_action: string
+          p_entity: string
+          p_entity_id: string
+          p_token_hmac: string
+        }
+        Returns: boolean
       }
       validate_onboarding_token: {
         Args: { p_token: string }
