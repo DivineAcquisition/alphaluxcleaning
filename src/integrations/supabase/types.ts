@@ -378,6 +378,7 @@ export type Database = {
       bookings: {
         Row: {
           assigned_employee_id: string | null
+          company_id: string | null
           created_at: string
           customer_email: string
           customer_name: string
@@ -395,6 +396,7 @@ export type Database = {
         }
         Insert: {
           assigned_employee_id?: string | null
+          company_id?: string | null
           created_at?: string
           customer_email: string
           customer_name: string
@@ -412,6 +414,7 @@ export type Database = {
         }
         Update: {
           assigned_employee_id?: string | null
+          company_id?: string | null
           created_at?: string
           customer_email?: string
           customer_name?: string
@@ -428,6 +431,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_order_id_fkey"
             columns: ["order_id"]
@@ -485,6 +495,7 @@ export type Database = {
           business_type: string
           city: string
           cleaning_type: string
+          company_id: string | null
           contact_person: string
           created_at: string
           email: string
@@ -514,6 +525,7 @@ export type Database = {
           business_type: string
           city: string
           cleaning_type: string
+          company_id?: string | null
           contact_person: string
           created_at?: string
           email: string
@@ -543,6 +555,7 @@ export type Database = {
           business_type?: string
           city?: string
           cleaning_type?: string
+          company_id?: string | null
           contact_person?: string
           created_at?: string
           email?: string
@@ -564,7 +577,15 @@ export type Database = {
           user_id?: string | null
           zip_code?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commercial_estimates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
@@ -906,6 +927,7 @@ export type Database = {
           address: string | null
           average_rating: number | null
           city: string | null
+          company_id: string | null
           created_at: string | null
           customer_since: string | null
           email: string
@@ -929,6 +951,7 @@ export type Database = {
           address?: string | null
           average_rating?: number | null
           city?: string | null
+          company_id?: string | null
           created_at?: string | null
           customer_since?: string | null
           email: string
@@ -952,6 +975,7 @@ export type Database = {
           address?: string | null
           average_rating?: number | null
           city?: string | null
+          company_id?: string | null
           created_at?: string | null
           customer_since?: string | null
           email?: string
@@ -971,7 +995,15 @@ export type Database = {
           user_id?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_service_requests: {
         Row: {
@@ -1156,6 +1188,47 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_routing_config: {
+        Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
+          company_id: string
+          created_at: string
+          default_redirect_path: string
+          id: string
+          is_active: boolean
+          subdomain: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          company_id: string
+          created_at?: string
+          default_redirect_path?: string
+          id?: string
+          is_active?: boolean
+          subdomain: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          company_id?: string
+          created_at?: string
+          default_redirect_path?: string
+          id?: string
+          is_active?: boolean
+          subdomain?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_routing_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -2127,6 +2200,7 @@ export type Database = {
           auto_charged: boolean | null
           cancellation_reason: string | null
           cleaning_type: string | null
+          company_id: string | null
           completed_at: string | null
           completion_notes: string | null
           created_at: string
@@ -2165,6 +2239,7 @@ export type Database = {
           auto_charged?: boolean | null
           cancellation_reason?: string | null
           cleaning_type?: string | null
+          company_id?: string | null
           completed_at?: string | null
           completion_notes?: string | null
           created_at?: string
@@ -2203,6 +2278,7 @@ export type Database = {
           auto_charged?: boolean | null
           cancellation_reason?: string | null
           cleaning_type?: string | null
+          company_id?: string | null
           completed_at?: string | null
           completion_notes?: string | null
           created_at?: string
@@ -2235,7 +2311,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_analytics: {
         Row: {
@@ -3601,6 +3685,7 @@ export type Database = {
           address: string
           calendar_id: string | null
           city: string
+          company_id: string | null
           completed_jobs_count: number | null
           created_at: string
           email: string
@@ -3629,6 +3714,7 @@ export type Database = {
           address: string
           calendar_id?: string | null
           city: string
+          company_id?: string | null
           completed_jobs_count?: number | null
           created_at?: string
           email: string
@@ -3657,6 +3743,7 @@ export type Database = {
           address?: string
           calendar_id?: string | null
           city?: string
+          company_id?: string | null
           completed_jobs_count?: number | null
           created_at?: string
           email?: string
@@ -3680,7 +3767,15 @@ export type Database = {
           user_id?: string | null
           zip_code?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subcontractors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -4607,6 +4702,13 @@ export type Database = {
       get_tier_benefits: {
         Args: { p_tier_level: number }
         Returns: Json
+      }
+      get_user_allowed_domains: {
+        Args: { p_user_id: string }
+        Returns: {
+          default_redirect_path: string
+          subdomain: string
+        }[]
       }
       get_user_calendar_token: {
         Args: { p_provider: string; p_user_id: string }

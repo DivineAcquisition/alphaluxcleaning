@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
+import { DomainAwareRouter, DomainAwareProtectedRoute } from '@/components/DomainAwareRouter';
+import { SecurityProvider } from '@/components/SecurityProvider';
+import { isBookingRoute } from '@/utils/domainDetection';
 
 // Pages
 import Index from '@/pages/Index';
@@ -42,30 +45,36 @@ import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
+// Enhanced ProtectedRoute with domain awareness and booking preservation
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) {
-  const { user, isAdmin, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>;
+  const location = window.location;
+  const pathname = location.pathname;
+  
+  // Preserve booking functionality - bypass domain checks for booking routes
+  if (isBookingRoute(pathname)) {
+    return (
+      <DomainAwareProtectedRoute bypassDomainCheck={true}>
+        {children}
+      </DomainAwareProtectedRoute>
+    );
   }
-
-  if (!user) {
-    return <Navigate to="/auth" />;
-  }
-
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/customer-portal-dashboard" />;
-  }
-
-  return <>{children}</>;
+  
+  // Use domain-aware protection for all other routes
+  return (
+    <DomainAwareProtectedRoute requireAdmin={requireAdmin}>
+      {children}
+    </DomainAwareProtectedRoute>
+  );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <Routes>
+        <SecurityProvider>
+          <Router>
+            <DomainAwareRouter>
+              <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
@@ -241,9 +250,11 @@ function App() {
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </DomainAwareRouter>
         </Router>
         <Toaster />
         <Sonner />
+        </SecurityProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
