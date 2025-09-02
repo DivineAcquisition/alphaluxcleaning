@@ -3,7 +3,7 @@
  * Detects current subdomain and provides domain-aware functionality
  */
 
-export type DomainType = 'app' | 'contractor' | 'book' | 'www' | 'api' | 'status' | 'localhost';
+export type DomainType = 'app' | 'contractor' | 'book' | 'www' | 'api' | 'status' | 'portal' | 'localhost';
 
 export interface DomainConfig {
   subdomain: DomainType;
@@ -48,6 +48,12 @@ const DOMAIN_CONFIGS: Record<DomainType, DomainConfig> = {
     allowedRoles: [],
     defaultRedirectPath: '/status',
     isSecure: false
+  },
+  portal: {
+    subdomain: 'portal',
+    allowedRoles: ['customer', 'client'],
+    defaultRedirectPath: '/customer-portal-dashboard',
+    isSecure: true
   },
   localhost: {
     subdomain: 'localhost',
