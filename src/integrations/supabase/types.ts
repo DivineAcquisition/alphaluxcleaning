@@ -486,6 +486,42 @@ export type Database = {
         }
         Relationships: []
       }
+      clients: {
+        Row: {
+          address_json: Json | null
+          company_id: string | null
+          contact_json: Json | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          address_json?: Json | null
+          company_id?: string | null
+          contact_json?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          address_json?: Json | null
+          company_id?: string | null
+          contact_json?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       commercial_estimates: {
         Row: {
           address: string
@@ -587,6 +623,56 @@ export type Database = {
           },
         ]
       }
+      comms_preferences: {
+        Row: {
+          allow_email: boolean | null
+          allow_sms: boolean | null
+          company_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          id: string
+          locale: string | null
+          preferred_channel:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          allow_email?: boolean | null
+          allow_sms?: boolean | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          locale?: string | null
+          preferred_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          allow_email?: boolean | null
+          allow_sms?: boolean | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          id?: string
+          locale?: string | null
+          preferred_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comms_preferences_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: true
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -641,6 +727,143 @@ export type Database = {
           updated_at?: string
           website?: string | null
           zip_code?: string | null
+        }
+        Relationships: []
+      }
+      contractor_message_templates: {
+        Row: {
+          active: boolean | null
+          body_text: string
+          channel: Database["public"]["Enums"]["message_channel"]
+          code: string
+          company_id: string | null
+          created_at: string | null
+          id: string
+          subject: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          body_text: string
+          channel: Database["public"]["Enums"]["message_channel"]
+          code: string
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          subject?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          body_text?: string
+          channel?: Database["public"]["Enums"]["message_channel"]
+          code?: string
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          subject?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      contractor_messages: {
+        Row: {
+          channel: Database["public"]["Enums"]["message_channel"]
+          company_id: string | null
+          created_at: string | null
+          delivered_at: string | null
+          error_text: string | null
+          external_id: string | null
+          id: string
+          payload_json: Json | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["message_status"] | null
+          template_code: string
+          to_contractor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["message_channel"]
+          company_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_text?: string | null
+          external_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["message_status"] | null
+          template_code: string
+          to_contractor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["message_channel"]
+          company_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          error_text?: string | null
+          external_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["message_status"] | null
+          template_code?: string
+          to_contractor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contractor_messages_to_contractor_id_fkey"
+            columns: ["to_contractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contractor_webhooks_outbox: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          event_code: string
+          id: string
+          last_error: string | null
+          next_attempt: string | null
+          payload_json: Json
+          retries: number | null
+          status: Database["public"]["Enums"]["webhook_status"] | null
+          target: Database["public"]["Enums"]["webhook_target"]
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          event_code: string
+          id?: string
+          last_error?: string | null
+          next_attempt?: string | null
+          payload_json: Json
+          retries?: number | null
+          status?: Database["public"]["Enums"]["webhook_status"] | null
+          target: Database["public"]["Enums"]["webhook_target"]
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          event_code?: string
+          id?: string
+          last_error?: string | null
+          next_attempt?: string | null
+          payload_json?: Json
+          retries?: number | null
+          status?: Database["public"]["Enums"]["webhook_status"] | null
+          target?: Database["public"]["Enums"]["webhook_target"]
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1123,6 +1346,47 @@ export type Database = {
           },
         ]
       }
+      delivery_logs: {
+        Row: {
+          at: string | null
+          company_id: string | null
+          created_at: string | null
+          event: string
+          id: string
+          message_id: string | null
+          provider: Database["public"]["Enums"]["webhook_target"]
+          raw_json: Json | null
+        }
+        Insert: {
+          at?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          event: string
+          id?: string
+          message_id?: string | null
+          provider: Database["public"]["Enums"]["webhook_target"]
+          raw_json?: Json | null
+        }
+        Update: {
+          at?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          event?: string
+          id?: string
+          message_id?: string | null
+          provider?: Database["public"]["Enums"]["webhook_target"]
+          raw_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_logs_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "contractor_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           company_id: string | null
@@ -1436,6 +1700,39 @@ export type Database = {
           },
         ]
       }
+      inbound_events: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          kind: string
+          payload_json: Json | null
+          processed_at: string | null
+          provider: Database["public"]["Enums"]["webhook_target"]
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          kind: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          provider: Database["public"]["Enums"]["webhook_target"]
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          kind?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          provider?: Database["public"]["Enums"]["webhook_target"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       incidents: {
         Row: {
           booking_id: string | null
@@ -1737,6 +2034,94 @@ export type Database = {
         }
         Relationships: []
       }
+      job_assignments: {
+        Row: {
+          acceptance_at: string | null
+          acceptance_status:
+            | Database["public"]["Enums"]["acceptance_status"]
+            | null
+          assigned_at: string | null
+          assigned_by: string | null
+          company_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          job_id: string | null
+          pay_override_type:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          pay_override_value: number | null
+          respond_token_id: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          acceptance_at?: string | null
+          acceptance_status?:
+            | Database["public"]["Enums"]["acceptance_status"]
+            | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          job_id?: string | null
+          pay_override_type?:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          pay_override_value?: number | null
+          respond_token_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          acceptance_at?: string | null
+          acceptance_status?:
+            | Database["public"]["Enums"]["acceptance_status"]
+            | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          job_id?: string | null
+          pay_override_type?:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          pay_override_value?: number | null
+          respond_token_id?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_job_assignments_respond_token"
+            columns: ["respond_token_id"]
+            isOneToOne: false
+            referencedRelation: "magic_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assignments_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assignments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_tracking: {
         Row: {
           actual_duration: unknown | null
@@ -1783,6 +2168,68 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "subcontractor_job_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          client_id: string | null
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          instructions_text: string | null
+          location_json: Json | null
+          price_quote: number | null
+          pricing_model: Database["public"]["Enums"]["pricing_model"] | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          service_type: string
+          status: Database["public"]["Enums"]["job_status"] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          instructions_text?: string | null
+          location_json?: Json | null
+          price_quote?: number | null
+          pricing_model?: Database["public"]["Enums"]["pricing_model"] | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          service_type: string
+          status?: Database["public"]["Enums"]["job_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          instructions_text?: string | null
+          location_json?: Json | null
+          price_quote?: number | null
+          pricing_model?: Database["public"]["Enums"]["pricing_model"] | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          service_type?: string
+          status?: Database["public"]["Enums"]["job_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1848,6 +2295,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      magic_tokens: {
+        Row: {
+          action: string
+          company_id: string | null
+          created_at: string | null
+          entity: string
+          entity_id: string
+          expires_at: string
+          id: string
+          token_hmac: string
+          updated_at: string | null
+          used_at: string | null
+        }
+        Insert: {
+          action: string
+          company_id?: string | null
+          created_at?: string | null
+          entity: string
+          entity_id: string
+          expires_at: string
+          id?: string
+          token_hmac: string
+          updated_at?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          action?: string
+          company_id?: string | null
+          created_at?: string | null
+          entity?: string
+          entity_id?: string
+          expires_at?: string
+          id?: string
+          token_hmac?: string
+          updated_at?: string | null
+          used_at?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -2494,6 +2980,196 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          method: Database["public"]["Enums"]["payout_method"] | null
+          paid_at: string | null
+          payroll_record_id: string | null
+          processor_ref: string | null
+          status: Database["public"]["Enums"]["payout_status"] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payout_method"] | null
+          paid_at?: string | null
+          payroll_record_id?: string | null
+          processor_ref?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payout_method"] | null
+          paid_at?: string | null
+          payroll_record_id?: string | null
+          processor_ref?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_payroll_record_id_fkey"
+            columns: ["payroll_record_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_periods: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          period_end: string
+          period_start: string
+          status: Database["public"]["Enums"]["payroll_period_status"] | null
+          totals_json: Json | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          status?: Database["public"]["Enums"]["payroll_period_status"] | null
+          totals_json?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          status?: Database["public"]["Enums"]["payroll_period_status"] | null
+          totals_json?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      payroll_records: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          bonus: number | null
+          company_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          deduction: number | null
+          id: string
+          job_id: string | null
+          memo: string | null
+          pay_calc: number | null
+          pay_type: Database["public"]["Enums"]["pay_type"]
+          payroll_period_id: string | null
+          rate: number
+          status: Database["public"]["Enums"]["payroll_record_status"] | null
+          timesheet_id: string | null
+          units: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bonus?: number | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deduction?: number | null
+          id?: string
+          job_id?: string | null
+          memo?: string | null
+          pay_calc?: number | null
+          pay_type: Database["public"]["Enums"]["pay_type"]
+          payroll_period_id?: string | null
+          rate: number
+          status?: Database["public"]["Enums"]["payroll_record_status"] | null
+          timesheet_id?: string | null
+          units: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bonus?: number | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deduction?: number | null
+          id?: string
+          job_id?: string | null
+          memo?: string | null
+          pay_calc?: number | null
+          pay_type?: Database["public"]["Enums"]["pay_type"]
+          payroll_period_id?: string | null
+          rate?: number
+          status?: Database["public"]["Enums"]["payroll_record_status"] | null
+          timesheet_id?: string | null
+          units?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_records_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_payroll_period_id_fkey"
+            columns: ["payroll_period_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_records_timesheet_id_fkey"
+            columns: ["timesheet_id"]
+            isOneToOne: false
+            referencedRelation: "timesheets"
             referencedColumns: ["id"]
           },
         ]
@@ -3255,6 +3931,39 @@ export type Database = {
           },
         ]
       }
+      shortlinks: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          slug: string
+          updated_at: string | null
+          url: string
+          used_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          slug: string
+          updated_at?: string | null
+          url: string
+          used_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          slug?: string
+          updated_at?: string | null
+          url?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       subcontractor_applications: {
         Row: {
           address: string | null
@@ -3784,26 +4493,41 @@ export type Database = {
         Row: {
           account_status: string | null
           address: string
+          base_rate_type:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          base_rate_value: number | null
           calendar_id: string | null
           city: string
           company_id: string | null
           completed_jobs_count: number | null
+          contractor_status:
+            | Database["public"]["Enums"]["contractor_status"]
+            | null
           created_at: string
           email: string
+          flags_count: number | null
           full_name: string
           hourly_rate: number | null
           id: string
+          insurance_expiry: string | null
           is_available: boolean | null
           jobs_completed_this_month: number | null
           monthly_fee: number | null
+          payout_account_status:
+            | Database["public"]["Enums"]["payout_account_status"]
+            | null
           phone: string | null
           rating: number | null
           review_count: number | null
+          service_zones: string[] | null
+          skills: string[] | null
           split_tier: string
           state: string
           stripe_customer_id: string | null
           subscription_id: string | null
           subscription_status: string | null
+          tax_form_status: string | null
           tier_level: number | null
           total_earnings: number | null
           updated_at: string
@@ -3813,26 +4537,41 @@ export type Database = {
         Insert: {
           account_status?: string | null
           address: string
+          base_rate_type?:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          base_rate_value?: number | null
           calendar_id?: string | null
           city: string
           company_id?: string | null
           completed_jobs_count?: number | null
+          contractor_status?:
+            | Database["public"]["Enums"]["contractor_status"]
+            | null
           created_at?: string
           email: string
+          flags_count?: number | null
           full_name: string
           hourly_rate?: number | null
           id?: string
+          insurance_expiry?: string | null
           is_available?: boolean | null
           jobs_completed_this_month?: number | null
           monthly_fee?: number | null
+          payout_account_status?:
+            | Database["public"]["Enums"]["payout_account_status"]
+            | null
           phone?: string | null
           rating?: number | null
           review_count?: number | null
+          service_zones?: string[] | null
+          skills?: string[] | null
           split_tier: string
           state: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tax_form_status?: string | null
           tier_level?: number | null
           total_earnings?: number | null
           updated_at?: string
@@ -3842,26 +4581,41 @@ export type Database = {
         Update: {
           account_status?: string | null
           address?: string
+          base_rate_type?:
+            | Database["public"]["Enums"]["contractor_rate_type"]
+            | null
+          base_rate_value?: number | null
           calendar_id?: string | null
           city?: string
           company_id?: string | null
           completed_jobs_count?: number | null
+          contractor_status?:
+            | Database["public"]["Enums"]["contractor_status"]
+            | null
           created_at?: string
           email?: string
+          flags_count?: number | null
           full_name?: string
           hourly_rate?: number | null
           id?: string
+          insurance_expiry?: string | null
           is_available?: boolean | null
           jobs_completed_this_month?: number | null
           monthly_fee?: number | null
+          payout_account_status?:
+            | Database["public"]["Enums"]["payout_account_status"]
+            | null
           phone?: string | null
           rating?: number | null
           review_count?: number | null
+          service_zones?: string[] | null
+          skills?: string[] | null
           split_tier?: string
           state?: string
           stripe_customer_id?: string | null
           subscription_id?: string | null
           subscription_status?: string | null
+          tax_form_status?: string | null
           tier_level?: number | null
           total_earnings?: number | null
           updated_at?: string
@@ -4035,6 +4789,81 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      timesheets: {
+        Row: {
+          break_minutes: number | null
+          company_id: string | null
+          contractor_id: string | null
+          created_at: string | null
+          created_by: string | null
+          end_time: string
+          evidence_urls: string[] | null
+          hours_calc: number | null
+          id: string
+          job_id: string | null
+          notes_text: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["timesheet_status"] | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          break_minutes?: number | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_time: string
+          evidence_urls?: string[] | null
+          hours_calc?: number | null
+          id?: string
+          job_id?: string | null
+          notes_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["timesheet_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          break_minutes?: number | null
+          company_id?: string | null
+          contractor_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          end_time?: string
+          evidence_urls?: string[] | null
+          hours_calc?: number | null
+          id?: string
+          job_id?: string | null
+          notes_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["timesheet_status"] | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timesheets_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tip_analytics: {
         Row: {
@@ -5008,6 +5837,7 @@ export type Database = {
       }
     }
     Enums: {
+      acceptance_status: "pending" | "accepted" | "declined" | "expired"
       app_role:
         | "super_admin"
         | "enterprise_client"
@@ -5019,6 +5849,32 @@ export type Database = {
         | "recurring_cleaner"
         | "subcontractor_partner"
         | "client"
+      contractor_rate_type: "hourly" | "flat" | "commission"
+      contractor_status: "active" | "onboarding" | "inactive"
+      job_status:
+        | "draft"
+        | "awaiting_acceptance"
+        | "assigned"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      message_channel: "sms" | "email"
+      message_status: "queued" | "sent" | "delivered" | "failed"
+      pay_type: "hourly" | "flat" | "commission" | "overtime"
+      payout_account_status: "none" | "pending" | "verified"
+      payout_method: "manual" | "bank_transfer"
+      payout_status: "initiated" | "completed" | "failed"
+      payroll_period_status: "open" | "locked" | "paid"
+      payroll_record_status:
+        | "pending"
+        | "approved"
+        | "sent"
+        | "completed"
+        | "disputed"
+      pricing_model: "hourly" | "flat"
+      timesheet_status: "submitted" | "manager_review" | "approved" | "rejected"
+      webhook_status: "queued" | "sent" | "failed"
+      webhook_target: "ghl" | "twilio" | "resend"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5146,6 +6002,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      acceptance_status: ["pending", "accepted", "declined", "expired"],
       app_role: [
         "super_admin",
         "enterprise_client",
@@ -5158,6 +6015,34 @@ export const Constants = {
         "subcontractor_partner",
         "client",
       ],
+      contractor_rate_type: ["hourly", "flat", "commission"],
+      contractor_status: ["active", "onboarding", "inactive"],
+      job_status: [
+        "draft",
+        "awaiting_acceptance",
+        "assigned",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      message_channel: ["sms", "email"],
+      message_status: ["queued", "sent", "delivered", "failed"],
+      pay_type: ["hourly", "flat", "commission", "overtime"],
+      payout_account_status: ["none", "pending", "verified"],
+      payout_method: ["manual", "bank_transfer"],
+      payout_status: ["initiated", "completed", "failed"],
+      payroll_period_status: ["open", "locked", "paid"],
+      payroll_record_status: [
+        "pending",
+        "approved",
+        "sent",
+        "completed",
+        "disputed",
+      ],
+      pricing_model: ["hourly", "flat"],
+      timesheet_status: ["submitted", "manager_review", "approved", "rejected"],
+      webhook_status: ["queued", "sent", "failed"],
+      webhook_target: ["ghl", "twilio", "resend"],
     },
   },
 } as const
