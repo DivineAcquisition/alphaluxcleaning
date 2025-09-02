@@ -51,6 +51,15 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     // Check domain access permissions
     const config = getCurrentDomainConfig();
     
+    // Handle domain-specific default redirects when visiting root path
+    if (currentPath === '/' && currentDomain !== 'www') {
+      const defaultPath = config.defaultRedirectPath;
+      if (defaultPath !== '/') {
+        navigate(defaultPath);
+        return;
+      }
+    }
+    
     // For secure domains, check if user is authenticated and has proper role
     if (config.isSecure) {
       if (!user) {
