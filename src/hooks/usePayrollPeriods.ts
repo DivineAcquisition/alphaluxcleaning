@@ -194,6 +194,39 @@ export function usePayrollPeriods() {
     }
   };
 
+  const exportPayrollCSV = async (periodId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('export-payroll-csv', {
+        body: { period_id: periodId }
+      });
+
+      if (error) throw error;
+
+      // Create download link
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `payroll_export_${periodId}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Payroll CSV exported successfully",
+      });
+    } catch (error) {
+      console.error('Error exporting payroll CSV:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export payroll CSV",
+        variant: "destructive",
+      });
+    }
+  };
+
   const calculateContractorPayroll = async (contractorId: string, periodStart: string, periodEnd: string) => {
     try {
       const { data, error } = await supabase.rpc('calculate_contractor_payroll', {
@@ -234,6 +267,7 @@ export function usePayrollPeriods() {
     createPayrollPeriod,
     lockPayrollPeriod,
     approvePayrollRecord,
-    calculateContractorPayroll
+    calculateContractorPayroll,
+    exportPayrollCSV
   };
 }
