@@ -36,12 +36,6 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     const currentDomain = getCurrentDomain();
     const currentPath = location.pathname;
     
-    // Always allow booking routes - CRITICAL for preserving booking functionality
-    if (shouldBypassDomainRestrictions(currentPath)) {
-      setDomainError(null);
-      return;
-    }
-
     // Development mode - allow everything
     if (currentDomain === 'localhost') {
       setDomainError(null);
@@ -51,13 +45,19 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     // Check domain access permissions
     const config = getCurrentDomainConfig();
     
-    // Handle domain-specific default redirects when visiting root path
+    // Handle domain-specific default redirects when visiting root path - BEFORE bypass check
     if (currentPath === '/' && currentDomain !== 'www') {
       const defaultPath = config.defaultRedirectPath;
       if (defaultPath !== '/') {
-        navigate(defaultPath);
+        navigate(defaultPath, { replace: true });
         return;
       }
+    }
+    
+    // Always allow booking routes - CRITICAL for preserving booking functionality
+    if (shouldBypassDomainRestrictions(currentPath)) {
+      setDomainError(null);
+      return;
     }
     
     // For secure domains, check if user is authenticated and has proper role
