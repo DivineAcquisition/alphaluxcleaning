@@ -13,6 +13,8 @@ interface TeamMember {
   city?: string;
   state?: string;
   split_tier?: string;
+  tier_level?: number;
+  review_count?: number;
   created_at: string;
   updated_at: string;
 }

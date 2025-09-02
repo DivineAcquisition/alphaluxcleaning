@@ -43,6 +43,17 @@ import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import NotFound from '@/pages/NotFound';
 
+// Admin Portal Pages
+import AdminPortalLayout from '@/pages/admin/AdminPortalLayout';
+import AdminPortalDashboard from '@/pages/admin/AdminPortalDashboard';
+import ContractorsPage from '@/pages/admin/ContractorsPage';
+import JobsPage from '@/pages/admin/JobsPage';
+import PayrollPage from '@/pages/admin/PayrollPage';
+
+// Contractor Portal Pages
+import ContractorPortalLayout from '@/pages/contractor/ContractorPortalLayout';
+import ContractorOffersPage from '@/pages/contractor/ContractorOffersPage';
+
 const queryClient = new QueryClient();
 
 // Enhanced ProtectedRoute with domain awareness and booking preservation
@@ -76,13 +87,54 @@ function App() {
             <DomainAwareRouter>
               <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
+            
+            {/* Admin Portal Routes (app.bayareacleaningpros.com) */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute requireAdmin>
+                <AdminPortalLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<AdminPortalDashboard />} />
+            </Route>
+            <Route path="/contractors" element={
+              <ProtectedRoute requireAdmin>
+                <AdminPortalLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<ContractorsPage />} />
+            </Route>
+            <Route path="/jobs" element={
+              <ProtectedRoute requireAdmin>
+                <AdminPortalLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<JobsPage />} />
+            </Route>
+            <Route path="/payroll" element={
+              <ProtectedRoute requireAdmin>
+                <AdminPortalLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<PayrollPage />} />
+            </Route>
             <Route 
               path="/admin" 
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminPortal />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Contractor Portal Routes */}
+            <Route 
+              path="/offers" 
+              element={
+                <ProtectedRoute>
+                  <ContractorOffersPage />
                 </ProtectedRoute>
               } 
             />
