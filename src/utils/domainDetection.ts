@@ -28,7 +28,7 @@ const DOMAIN_CONFIGS: Record<DomainType, DomainConfig> = {
   book: {
     subdomain: 'book',
     allowedRoles: ['customer', 'client'],
-    defaultRedirectPath: '/booking',
+    defaultRedirectPath: '/',
     isSecure: false // Public booking access
   },
   www: {

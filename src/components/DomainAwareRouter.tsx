@@ -43,8 +43,24 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       return;
     }
 
-    // Early cross-domain redirect for booking routes
-    if (isBookingRoute(currentPath) && currentDomain !== 'book') {
+    // Handle /booking redirects
+    if (currentPath.startsWith('/booking')) {
+      const { search, hash, hostname } = window.location;
+      const parts = hostname.split('.');
+      const baseDomain = parts.slice(-2).join('.');
+      
+      if (currentDomain !== 'book') {
+        // Redirect from other domains to book domain root
+        window.location.replace(`https://book.${baseDomain}/${search}${hash}`);
+      } else {
+        // On book domain, redirect /booking to root
+        window.location.replace(`/${search}${hash}`);
+      }
+      return;
+    }
+
+    // Early cross-domain redirect for other booking routes (excluding /booking)
+    if (isBookingRoute(currentPath) && !currentPath.startsWith('/booking') && currentDomain !== 'book') {
       const { search, hash, hostname } = window.location;
       const parts = hostname.split('.');
       const baseDomain = parts.slice(-2).join('.');
