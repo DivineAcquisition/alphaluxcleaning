@@ -1,6 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { DomainAwareRouter } from '@/components/DomainAwareRouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -242,6 +243,7 @@ function App() {
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </DomainAwareRouter>
         </Router>
         <Toaster />
         <Sonner />
