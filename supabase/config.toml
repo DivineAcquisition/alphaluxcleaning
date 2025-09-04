@@ -1,6 +1,5 @@
 project_id = "kqoezqzogleaaupjzxch"
 
-# Public webhook functions (no auth required for external systems)
 [functions.sync-to-airtable]
 verify_jwt = false
 
@@ -16,6 +15,21 @@ verify_jwt = false
 [functions.enhanced-booking-webhook-v2]
 verify_jwt = false
 
+[functions.create-payment-intent]
+verify_jwt = false
+
+[functions.get-stripe-config]
+verify_jwt = false
+
+[functions.get-order-details]
+verify_jwt = false
+
+[functions.update-order-details]
+verify_jwt = false
+
+[functions.create-test-subcontractor]
+verify_jwt = false
+
 [functions.send-subcontractor-updates]
 verify_jwt = false
 
@@ -28,56 +42,8 @@ verify_jwt = false
 [functions.send-order-entry-webhook]
 verify_jwt = false
 
-# Public application functions (limited auth required)
 [functions.join-expansion-waitlist]
 verify_jwt = false
 
-[functions.handle-secure-action]
-verify_jwt = false
-
-# SECURED FUNCTIONS (JWT Required)
-# Payment functions require authentication
-[functions.create-payment-intent]
-verify_jwt = true
-
-[functions.get-stripe-config]
-verify_jwt = true
-
-# Admin functions require authentication
-[functions.get-order-details]
-verify_jwt = true
-
-[functions.update-order-details]
-verify_jwt = true
-
-[functions.create-test-subcontractor]
-verify_jwt = true
-
-# Communication functions require authentication
 [functions.send-referral-email]
-verify_jwt = true
-
-[functions.secure-sms-actions]  
-verify_jwt = true
-
-[functions.enhanced-communication-hub]
-verify_jwt = true
-
-# Job assignment workflow functions
-[functions.handle-assignment-response]
 verify_jwt = false
-
-[functions.send-job-notifications]
-verify_jwt = true
-
-[functions.process-message-queue]
-verify_jwt = false
-
-[functions.process-reminders]
-verify_jwt = false
-
-[functions.webhook-status-updates]
-verify_jwt = false
-
-[functions.export-payroll-csv]
-verify_jwt = true

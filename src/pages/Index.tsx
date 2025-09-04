@@ -1,31 +1,22 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Building2, Home as HomeIcon } from "lucide-react";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ModernLegacyBooking } from "@/components/booking/ModernLegacyBooking";
 import { GHLWebhookTest } from "@/components/GHLWebhookTest";
-import GuestBooking from "@/pages/GuestBooking";
-import { getCurrentDomain } from "@/utils/domainDetection";
 
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
-  const currentDomain = getCurrentDomain();
 
   // Track page view on component mount
   useEffect(() => {
     trackViewContent('Cleaning Services Homepage');
+
   }, []);
 
-  // If we're on the book domain, render the guest booking flow directly
-  if (currentDomain === 'book') {
-    return <GuestBooking />;
-  }
-
-  // For other domains, show the landing page with CTA
   return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
@@ -51,19 +42,7 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="residential">
-            <Card className="w-full max-w-4xl mx-auto">
-              <CardContent className="p-8 text-center">
-                <h2 className="text-2xl font-semibold mb-4">Residential Cleaning Services</h2>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Get your home sparkling clean with our professional residential cleaning services.
-                </p>
-                <Button size="lg" asChild>
-                  <a href={`https://book.${window.location.hostname.split('.').slice(-2).join('.')}/`}>
-                    Book Your Cleaning
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
+            <ModernLegacyBooking />
           </TabsContent>
           
           <TabsContent value="commercial">

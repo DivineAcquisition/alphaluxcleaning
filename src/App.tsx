@@ -4,9 +4,6 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
-import { DomainAwareRouter, DomainAwareProtectedRoute } from '@/components/DomainAwareRouter';
-import { SecurityProvider } from '@/components/SecurityProvider';
-import { isBookingRoute } from '@/utils/domainDetection';
 
 // Pages
 import Index from '@/pages/Index';
@@ -18,9 +15,6 @@ import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerManagementHub from '@/pages/CustomerManagementHub';
 import SecurityCenter from '@/pages/SecurityCenter';
 import UserManagement from '@/pages/UserManagement';
-import CustomerDatabaseAdmin from '@/pages/CustomerDatabaseAdmin';
-import AdminBookingPreview from '@/pages/AdminBookingPreview';
-import TipsManagement from '@/pages/TipsManagement';
 import TierSystemConfig from '@/pages/TierSystemConfig';
 import ReviewsPortal from '@/pages/ReviewsPortal';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
@@ -43,98 +37,40 @@ import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import NotFound from '@/pages/NotFound';
 
-// Admin Portal Pages
-import AdminPortalLayout from '@/pages/admin/AdminPortalLayout';
-import AdminPortalDashboard from '@/pages/admin/AdminPortalDashboard';
-import ContractorsPage from '@/pages/admin/ContractorsPage';
-import JobsPage from '@/pages/admin/JobsPage';
-import PayrollPage from '@/pages/admin/PayrollPage';
-
-// Contractor Portal Pages
-import ContractorPortalLayout from '@/pages/contractor/ContractorPortalLayout';
-import ContractorOffersPage from '@/pages/contractor/ContractorOffersPage';
-
 const queryClient = new QueryClient();
 
-// Enhanced ProtectedRoute with domain awareness and booking preservation
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) {
-  const location = window.location;
-  const pathname = location.pathname;
-  
-  // Preserve booking functionality - bypass domain checks for booking routes
-  if (isBookingRoute(pathname)) {
-    return (
-      <DomainAwareProtectedRoute bypassDomainCheck={true}>
-        {children}
-      </DomainAwareProtectedRoute>
-    );
+  const { user, isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
-  
-  // Use domain-aware protection for all other routes
-  return (
-    <DomainAwareProtectedRoute requireAdmin={requireAdmin}>
-      {children}
-    </DomainAwareProtectedRoute>
-  );
+
+  if (!user) {
+    return <Navigate to="/auth" />;
+  }
+
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/customer-portal-dashboard" />;
+  }
+
+  return <>{children}</>;
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SecurityProvider>
-          <Router>
-            <DomainAwareRouter>
-              <Routes>
+        <Router>
+          <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
-            
-            {/* Admin Portal Routes (app.bayareacleaningpros.com) */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute requireAdmin>
-                <AdminPortalLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<AdminPortalDashboard />} />
-            </Route>
-            <Route path="/contractors" element={
-              <ProtectedRoute requireAdmin>
-                <AdminPortalLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<ContractorsPage />} />
-            </Route>
-            <Route path="/jobs" element={
-              <ProtectedRoute requireAdmin>
-                <AdminPortalLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<JobsPage />} />
-            </Route>
-            <Route path="/payroll" element={
-              <ProtectedRoute requireAdmin>
-                <AdminPortalLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<PayrollPage />} />
-            </Route>
             <Route 
               path="/admin" 
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminPortal />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Contractor Portal Routes */}
-            <Route 
-              path="/offers" 
-              element={
-                <ProtectedRoute>
-                  <ContractorOffersPage />
                 </ProtectedRoute>
               } 
             />
@@ -167,30 +103,6 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <UserManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/customer-dashboard-admin" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <CustomerDatabaseAdmin />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin-booking-preview" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminBookingPreview />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/tips-management" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <TipsManagement />
                 </ProtectedRoute>
               } 
             />
@@ -302,11 +214,9 @@ function App() {
             
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </DomainAwareRouter>
         </Router>
         <Toaster />
         <Sonner />
-        </SecurityProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

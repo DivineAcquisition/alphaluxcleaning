@@ -95,7 +95,6 @@ serve(async (req) => {
         state: requestData.state,
         zip_code: requestData.zip_code,
         tier_level: requestData.tier_level,
-        split_tier: requestData.tier_level.toString(), // Add split_tier field
         hourly_rate: tierConfig.hourly_rate,
         monthly_fee: tierConfig.monthly_fee,
         is_available: true,

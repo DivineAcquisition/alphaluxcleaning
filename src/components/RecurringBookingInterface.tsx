@@ -232,7 +232,7 @@ function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetu
     const isDevelopment = import.meta.env.DEV;
     const baseUrl = isDevelopment 
       ? window.location.origin 
-      : 'https://book.bayareacleaningpros.com';
+      : 'https://portal.bayareacleaningpros.com';
     
     const returnUrl = orderId 
       ? `${baseUrl}/service-details?order_id=${orderId}`
@@ -1569,11 +1569,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                     description: "Redirecting to service details..."
                                   });
                                   console.log('Navigation triggered with orderId:', orderId);
-                                  // Navigate to service details page on book domain
+                                  // Navigate to service details page on portal domain
                                   const isDevelopment = import.meta.env.DEV;
                                   const baseUrl = isDevelopment 
                                     ? window.location.origin 
-                                    : 'https://book.bayareacleaningpros.com';
+                                    : 'https://portal.bayareacleaningpros.com';
                                   
                                   if (orderId) {
                                     window.location.href = `${baseUrl}/service-details?order_id=${orderId}`;
