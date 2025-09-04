@@ -243,7 +243,7 @@ function App() {
             
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </DomainAwareRouter>
+        </DomainAwareRouter>
         </Router>
         <Toaster />
         <Sonner />
