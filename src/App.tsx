@@ -15,6 +15,9 @@ import SubcontractorManagement from '@/pages/SubcontractorManagement';
 import CustomerManagementHub from '@/pages/CustomerManagementHub';
 import SecurityCenter from '@/pages/SecurityCenter';
 import UserManagement from '@/pages/UserManagement';
+import CustomerDatabaseAdmin from '@/pages/CustomerDatabaseAdmin';
+import AdminBookingPreview from '@/pages/AdminBookingPreview';
+import TipsManagement from '@/pages/TipsManagement';
 import TierSystemConfig from '@/pages/TierSystemConfig';
 import ReviewsPortal from '@/pages/ReviewsPortal';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
@@ -103,6 +106,30 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <UserManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer-dashboard-admin" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <CustomerDatabaseAdmin />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin-booking-preview" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminBookingPreview />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tips-management" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <TipsManagement />
                 </ProtectedRoute>
               } 
             />

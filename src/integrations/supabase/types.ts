@@ -901,6 +901,78 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profiles: {
+        Row: {
+          address: string | null
+          average_rating: number | null
+          city: string | null
+          created_at: string | null
+          customer_since: string | null
+          email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          last_service_date: string | null
+          phone: string | null
+          preferred_time: string | null
+          special_instructions: string | null
+          state: string | null
+          total_orders: number | null
+          total_spent_cents: number | null
+          updated_at: string | null
+          user_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          average_rating?: number | null
+          city?: string | null
+          created_at?: string | null
+          customer_since?: string | null
+          email: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          last_service_date?: string | null
+          phone?: string | null
+          preferred_time?: string | null
+          special_instructions?: string | null
+          state?: string | null
+          total_orders?: number | null
+          total_spent_cents?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          average_rating?: number | null
+          city?: string | null
+          created_at?: string | null
+          customer_since?: string | null
+          email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          last_service_date?: string | null
+          phone?: string | null
+          preferred_time?: string | null
+          special_instructions?: string | null
+          state?: string | null
+          total_orders?: number | null
+          total_spent_cents?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       customer_service_requests: {
         Row: {
           admin_notes: string | null
@@ -1087,6 +1159,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_logs: {
+        Row: {
+          clicked_at: string | null
+          created_at: string | null
+          delivered_at: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          provider: string | null
+          provider_message_id: string | null
+          recipient_email: string
+          sender_email: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_email: string
+          sender_email?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_email?: string
+          sender_email?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       expansion_waitlist: {
         Row: {
@@ -3665,36 +3797,42 @@ export type Database = {
       }
       tier_system_config: {
         Row: {
+          benefits: Json | null
           created_at: string | null
           hourly_rate: number
           id: string
           is_active: boolean | null
           jobs_required: number
           monthly_fee: number
+          requirements: Json | null
           reviews_required: number
           tier_level: number
           tier_name: string
           updated_at: string | null
         }
         Insert: {
+          benefits?: Json | null
           created_at?: string | null
           hourly_rate: number
           id?: string
           is_active?: boolean | null
           jobs_required: number
           monthly_fee: number
+          requirements?: Json | null
           reviews_required: number
           tier_level: number
           tier_name: string
           updated_at?: string | null
         }
         Update: {
+          benefits?: Json | null
           created_at?: string | null
           hourly_rate?: number
           id?: string
           is_active?: boolean | null
           jobs_required?: number
           monthly_fee?: number
+          requirements?: Json | null
           reviews_required?: number
           tier_level?: number
           tier_name?: string
