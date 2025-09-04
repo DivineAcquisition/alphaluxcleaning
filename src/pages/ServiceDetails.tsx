@@ -66,7 +66,7 @@ const ServiceDetails = () => {
           _user_id: user.id
         });
         
-        if (userRole === 'super_admin') {
+        if (userRole === 'admin') {
           // Admin can access without session ID - use mock data
           setFormData(prev => ({
             ...prev,
@@ -224,7 +224,7 @@ const ServiceDetails = () => {
           _user_id: user.id
         });
         
-        if (userRole === 'super_admin' && !sessionId) {
+        if (userRole === 'admin' && !sessionId) {
           toast.success("Admin preview: Service details saved!");
           navigate('/schedule-service?admin_preview=true');
           return;

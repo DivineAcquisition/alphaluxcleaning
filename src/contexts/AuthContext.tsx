@@ -4,19 +4,19 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Admin email list - centralized configuration
-const ADMIN_EMAILS = [
-  'admin1@bayareacleaningpros.com',
-  'ellie@bayareacleaningpros.com',
-  'divineacquisition.io@gmail.com'
-];
+// Company configuration
+const COMPANY_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: string | null;
   isAdmin: boolean;
+  isManager: boolean;
+  isContractor: boolean;
+  isCustomer: boolean;
   loading: boolean;
+  companyId: string;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -32,8 +32,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Determine if user is admin based on email
-  const isAdmin = user ? ADMIN_EMAILS.includes(user.email || '') : false;
+  // Role-based boolean flags
+  const isAdmin = userRole === 'admin';
+  const isManager = userRole === 'manager';
+  const isContractor = userRole === 'contractor';
+  const isCustomer = userRole === 'customer';
 
   // Set session timeout for 2 hours
   useEffect(() => {
@@ -59,26 +62,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Determine role based on email
-          const email = session.user.email;
-          if (email && ADMIN_EMAILS.includes(email)) {
-            setUserRole('super_admin');
-            // Ensure admin role is set in database
+          // Get role from database
+          setTimeout(async () => {
             try {
-              await supabase
-                .from('user_roles')
-                .upsert({ 
-                  user_id: session.user.id, 
-                  role: 'super_admin' 
-                }, { 
-                  onConflict: 'user_id,role' 
-                });
+              const { data, error } = await supabase.rpc('get_user_role', {
+                _user_id: session.user.id,
+                _company_id: COMPANY_ID
+              });
+              
+              if (!error && data) {
+                setUserRole(data);
+              } else {
+                // Default to customer if no role found
+                setUserRole('customer');
+                // Create customer role
+                await supabase
+                  .from('user_roles')
+                  .upsert({ 
+                    user_id: session.user.id, 
+                    role: 'customer',
+                    company_id: COMPANY_ID
+                  }, { 
+                    onConflict: 'user_id,role,company_id' 
+                  });
+              }
             } catch (error) {
-              console.log('Role assignment will be handled by database functions');
+              console.log('Error getting user role:', error);
+              setUserRole('customer');
             }
-          } else {
-            setUserRole('customer');
-          }
+          }, 0);
         } else {
           setUserRole(null);
         }
@@ -88,15 +100,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const email = session.user.email;
-        if (email && ADMIN_EMAILS.includes(email)) {
-          setUserRole('super_admin');
+        // Get role from database immediately
+        const { data, error } = await supabase.rpc('get_user_role', {
+          _user_id: session.user.id,
+          _company_id: COMPANY_ID
+        });
+        
+        if (!error && data) {
+          setUserRole(data);
         } else {
           setUserRole('customer');
         }
@@ -202,7 +219,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     userRole,
     isAdmin,
+    isManager,
+    isContractor,
+    isCustomer,
     loading,
+    companyId: COMPANY_ID,
     signIn,
     signUp,
     signOut,

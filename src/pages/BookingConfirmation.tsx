@@ -46,7 +46,7 @@ const BookingConfirmation = () => {
           _user_id: user.id
         });
         
-        if (userRole === 'super_admin') {
+        if (userRole === 'admin') {
           // Set mock order data for admin preview
           setOrderDetails({
             id: 'admin-preview-order',
