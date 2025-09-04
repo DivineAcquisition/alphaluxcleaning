@@ -1455,6 +1455,7 @@ export type Database = {
       }
       domain_routing_config: {
         Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
           company_id: string
           created_at: string
           default_redirect_path: string
@@ -1464,6 +1465,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
           company_id: string
           created_at?: string
           default_redirect_path?: string
@@ -1473,6 +1475,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
           company_id?: string
           created_at?: string
           default_redirect_path?: string
