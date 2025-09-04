@@ -8,7 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
 import { ModernLegacyBooking } from "@/components/booking/ModernLegacyBooking";
 import { GHLWebhookTest } from "@/components/GHLWebhookTest";
-import ModernBooking from "@/pages/ModernBooking";
+import GuestBooking from "@/pages/GuestBooking";
 import { getCurrentDomain } from "@/utils/domainDetection";
 
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
@@ -20,9 +20,9 @@ const Index = () => {
     trackViewContent('Cleaning Services Homepage');
   }, []);
 
-  // If we're on the book domain, render the booking flow directly
+  // If we're on the book domain, render the guest booking flow directly
   if (currentDomain === 'book') {
-    return <ModernBooking />;
+    return <GuestBooking />;
   }
 
   // For other domains, show the landing page with CTA

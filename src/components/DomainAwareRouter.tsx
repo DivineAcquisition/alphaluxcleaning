@@ -43,6 +43,19 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       return;
     }
 
+    // Handle auth/portal redirects from book domain to portal domain
+    if (currentDomain === 'book' && (
+      currentPath.startsWith('/auth') || 
+      currentPath.startsWith('/customer-portal') ||
+      currentPath.startsWith('/portal')
+    )) {
+      const { search, hash, hostname } = window.location;
+      const parts = hostname.split('.');
+      const baseDomain = parts.slice(-2).join('.');
+      window.location.replace(`https://portal.${baseDomain}${currentPath}${search}${hash}`);
+      return;
+    }
+
     // Handle /booking redirects
     if (currentPath.startsWith('/booking')) {
       const { search, hash, hostname } = window.location;
