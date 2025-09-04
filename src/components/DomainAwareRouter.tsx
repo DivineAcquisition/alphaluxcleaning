@@ -13,6 +13,7 @@ import {
   shouldBypassDomainRestrictions,
   getDefaultRedirectForUser,
   getDomainForRole,
+  isBookingRoute,
   DomainType
 } from '@/utils/domainDetection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -42,6 +43,15 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       return;
     }
 
+    // Early cross-domain redirect for booking routes
+    if (isBookingRoute(currentPath) && currentDomain !== 'book') {
+      const { search, hash, hostname } = window.location;
+      const parts = hostname.split('.');
+      const baseDomain = parts.slice(-2).join('.');
+      window.location.replace(`https://book.${baseDomain}${currentPath}${search}${hash}`);
+      return;
+    }
+    
     // Check domain access permissions
     const config = getCurrentDomainConfig();
     
