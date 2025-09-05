@@ -9,7 +9,7 @@ export function detectDomain(): DomainInfo {
   const hostname = window.location.hostname;
   
   // Development/localhost detection
-  if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('lovable.dev')) {
+  if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
     return {
       subdomain: 'app', // Default to admin in development
       baseDomain: 'bayareacleaningpros.com',

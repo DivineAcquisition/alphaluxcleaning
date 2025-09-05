@@ -46,17 +46,22 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     !!user
   );
 
-  if (redirectCheck.shouldRedirect && redirectCheck.redirectUrl && domainInfo.isProduction) {
-    // Only redirect in production environments
-    window.location.href = redirectCheck.redirectUrl;
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Redirecting to appropriate portal...</p>
+  if (redirectCheck.shouldRedirect && redirectCheck.redirectUrl) {
+    // For development, use Navigate. For production, use window.location
+    if (domainInfo.isProduction) {
+      window.location.href = redirectCheck.redirectUrl;
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Redirecting to appropriate portal...</p>
+          </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      // In development, just redirect to booking page
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <>{children}</>;
