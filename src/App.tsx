@@ -241,6 +241,8 @@ function App() {
               } 
             />
             
+            <Route path="/subcontractor-response" element={<SubcontractorJobAcceptance />} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </DomainAwareRouter>
