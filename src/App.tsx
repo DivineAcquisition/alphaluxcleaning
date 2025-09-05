@@ -49,7 +49,7 @@ import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
 import ContractorApplications from '@/pages/contractor/ContractorApplications';
 import ContractorSubcontractors from '@/pages/contractor/ContractorSubcontractors';
 import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
-import GuestBooking from '@/pages/GuestBooking';
+import { ConditionalHomepage } from '@/components/ConditionalHomepage';
 
 const queryClient = new QueryClient();
 
@@ -77,8 +77,8 @@ function App() {
       <AuthProvider>
         <Router>
           <DomainAwareRouter>
-            <Routes>
-            <Route path="/" element={<Index />} />
+          <Routes>
+            <Route path="/" element={<ConditionalHomepage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
             <Route 
@@ -171,7 +171,6 @@ function App() {
             <Route path="/booking" element={<ModernBooking />} />
             <Route path="/legacy-booking" element={<LegacyBooking />} />
             <Route path="/new-booking" element={<NewBooking />} />
-            <Route path="/guest-booking" element={<GuestBooking />} />
             
             {/* Admin Routes */}
             <Route 
