@@ -298,6 +298,45 @@ export type Database = {
           },
         ]
       }
+      automation_assignment_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          priority: number
+          rule_name: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number
+          rule_name: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number
+          rule_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       automation_executions: {
         Row: {
           automation_rule_id: string
@@ -2343,6 +2382,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_photos: {
+        Row: {
+          assignment_id: string | null
+          caption: string | null
+          created_by: string
+          id: string
+          photo_type: string
+          photo_url: string
+          uploaded_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          caption?: string | null
+          created_by: string
+          id?: string
+          photo_type: string
+          photo_url: string
+          uploaded_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          caption?: string | null
+          created_by?: string
+          id?: string
+          photo_type?: string
+          photo_url?: string
+          uploaded_at?: string
+        }
+        Relationships: []
       }
       job_tracking: {
         Row: {
@@ -4747,6 +4816,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subcontractor_performance_metrics: {
+        Row: {
+          assignments_accepted: number | null
+          assignments_completed: number | null
+          assignments_received: number | null
+          avg_response_time_minutes: number | null
+          created_at: string
+          customer_rating_avg: number | null
+          id: string
+          metric_date: string
+          on_time_percentage: number | null
+          subcontractor_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignments_accepted?: number | null
+          assignments_completed?: number | null
+          assignments_received?: number | null
+          avg_response_time_minutes?: number | null
+          created_at?: string
+          customer_rating_avg?: number | null
+          id?: string
+          metric_date?: string
+          on_time_percentage?: number | null
+          subcontractor_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignments_accepted?: number | null
+          assignments_completed?: number | null
+          assignments_received?: number | null
+          avg_response_time_minutes?: number | null
+          created_at?: string
+          customer_rating_avg?: number | null
+          id?: string
+          metric_date?: string
+          on_time_percentage?: number | null
+          subcontractor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       subcontractor_profiles: {
         Row: {
