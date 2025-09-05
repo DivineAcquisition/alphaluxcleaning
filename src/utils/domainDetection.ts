@@ -43,6 +43,22 @@ export function detectDomain(): DomainInfo {
   const parts = hostname.split('.');
   
   if (parts.length >= 3) {
+    // Handle multi-level subdomains like my.book.bayareacleaningpros.com
+    if (parts.length >= 4) {
+      const fullSubdomain = parts.slice(0, -2).join('.');
+      const baseDomain = parts.slice(-2).join('.');
+      
+      const targetAudience = getTargetAudience(fullSubdomain);
+      
+      return {
+        subdomain: fullSubdomain,
+        baseDomain,
+        isProduction: true,
+        targetAudience
+      };
+    }
+    
+    // Handle regular single-level subdomains
     const subdomain = parts[0];
     const baseDomain = parts.slice(1).join('.');
     
@@ -66,6 +82,11 @@ export function detectDomain(): DomainInfo {
 }
 
 function getTargetAudience(subdomain: string): 'admin' | 'contractor' | 'customer' | 'guest' {
+  // Handle multi-level subdomains ending with .book (e.g., my.book, partner.book)
+  if (subdomain.endsWith('.book') || subdomain === 'book') {
+    return 'guest';
+  }
+  
   switch (subdomain) {
     case 'app':
       return 'admin';
@@ -73,8 +94,6 @@ function getTargetAudience(subdomain: string): 'admin' | 'contractor' | 'custome
       return 'contractor';
     case 'portal':
       return 'customer';
-    case 'book':
-      return 'guest';
     default:
       return 'admin'; // Fallback to admin
   }
@@ -97,13 +116,13 @@ export function shouldRedirectBasedOnDomainAndRole(
   userRole: string | null, 
   isAuthenticated: boolean
 ): { shouldRedirect: boolean; redirectUrl?: string; reason?: string } {
-  // Book domain should always be guest-friendly
-  if (subdomain === 'book') {
+  // Book domain (including multi-level like my.book) should always be guest-friendly
+  if (subdomain === 'book' || subdomain.endsWith('.book')) {
     return { shouldRedirect: false };
   }
   
   // If not authenticated, only book domain is allowed
-  if (!isAuthenticated && subdomain !== 'book') {
+  if (!isAuthenticated && subdomain !== 'book' && !subdomain.endsWith('.book')) {
     return {
       shouldRedirect: true,
       redirectUrl: buildDomainUrl('book'),
