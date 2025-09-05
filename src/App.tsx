@@ -49,7 +49,6 @@ import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
 import ContractorApplications from '@/pages/contractor/ContractorApplications';
 import ContractorSubcontractors from '@/pages/contractor/ContractorSubcontractors';
 import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
-import { ConditionalHomepage } from '@/components/ConditionalHomepage';
 
 const queryClient = new QueryClient();
 
@@ -77,8 +76,8 @@ function App() {
       <AuthProvider>
         <Router>
           <DomainAwareRouter>
-          <Routes>
-            <Route path="/" element={<ConditionalHomepage />} />
+            <Routes>
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
             <Route 

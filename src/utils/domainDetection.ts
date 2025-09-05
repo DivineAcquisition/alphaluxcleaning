@@ -43,7 +43,6 @@ export function detectDomain(): DomainInfo {
   const parts = hostname.split('.');
   
   if (parts.length >= 3) {
-    // Handle regular single-level subdomains
     const subdomain = parts[0];
     const baseDomain = parts.slice(1).join('.');
     
