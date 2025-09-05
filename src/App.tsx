@@ -39,6 +39,7 @@ import CustomerDashboard from '@/pages/CustomerDashboard';
 import CustomerPayments from '@/pages/CustomerPayments';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
+import SubcontractorJobAcceptance from '@/pages/SubcontractorJobAcceptance';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
