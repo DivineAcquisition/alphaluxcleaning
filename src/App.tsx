@@ -2,12 +2,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { DomainAwareRouter } from '@/components/DomainAwareRouter';
+import { detectDomain } from '@/utils/domainDetection';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 
 // Pages
 import Index from '@/pages/Index';
+import GuestBooking from '@/pages/GuestBooking';
 import Auth from '@/pages/Auth';
 import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -52,6 +54,18 @@ import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontract
 
 const queryClient = new QueryClient();
 
+function DomainAwareHome() {
+  const domain = detectDomain();
+  
+  // Show booking flow for book subdomain
+  if (domain.subdomain === 'book') {
+    return <GuestBooking />;
+  }
+  
+  // Show general homepage for all other domains
+  return <Index />;
+}
+
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) {
   const { user, isAdmin, loading } = useAuth();
 
@@ -77,7 +91,7 @@ function App() {
         <Router>
           <DomainAwareRouter>
             <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<DomainAwareHome />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
             <Route 
