@@ -36,11 +36,7 @@ interface Application {
   admin_notes?: string;
 }
 
-interface ApplicationManagerProps {
-  useContractorLayout?: boolean;
-}
-
-export default function ApplicationManager({ useContractorLayout = false }: ApplicationManagerProps) {
+export default function ApplicationManager() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -118,7 +114,7 @@ export default function ApplicationManager({ useContractorLayout = false }: Appl
     rejected: applications.filter(app => app.status === "rejected").length
   };
 
-  if (loading && !useContractorLayout) {
+  if (loading) {
     return (
       <AdminLayout title="Application Manager" description="Loading applications...">
         <div className="flex items-center justify-center h-64">
@@ -128,269 +124,257 @@ export default function ApplicationManager({ useContractorLayout = false }: Appl
     );
   }
 
-  if (loading && useContractorLayout) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  const content = (
-    <AdminSection 
-      title="Application Overview"
-      description="Track and process subcontractor applications with comprehensive insights"
-    >
-      {/* Stats Cards */}
-      <AdminGrid columns={4} gap="md">
-        <AdminCard
-          variant="metric"
-          title="Total Applications"
-          icon={<FileText className="h-4 w-4" />}
-        >
-          <div className="text-3xl font-bold tracking-tight">{stats.total}</div>
-          <p className="text-xs text-muted-foreground mt-1">All time</p>
-        </AdminCard>
-
-        <AdminCard
-          variant="metric"
-          title="Pending Review"
-          icon={<Clock className="h-4 w-4" />}
-        >
-          <div className="text-3xl font-bold tracking-tight text-warning">{stats.pending}</div>
-          <p className="text-xs text-muted-foreground mt-1">Needs attention</p>
-        </AdminCard>
-
-        <AdminCard
-          variant="metric"
-          title="Approved"
-          icon={<CheckCircle className="h-4 w-4" />}
-        >
-          <div className="text-3xl font-bold tracking-tight text-success">{stats.approved}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}% approval rate
-          </p>
-        </AdminCard>
-
-        <AdminCard
-          variant="metric"
-          title="Rejected"
-          icon={<XCircle className="h-4 w-4" />}
-        >
-          <div className="text-3xl font-bold tracking-tight text-destructive">{stats.rejected}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            {stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0}% rejection rate
-          </p>
-        </AdminCard>
-      </AdminGrid>
-
-      {/* Applications List */}
-      <AdminCard
-        title="Recent Applications"
-        description="Review and process subcontractor applications with detailed information"
-        variant="default"
-      >
-        <div className="space-y-4">
-          {applications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No applications found
-            </div>
-          ) : (
-            applications.map((application) => {
-              const StatusIcon = getStatusIcon(application.status);
-              return (
-                <div 
-                  key={application.id} 
-                  className="flex items-center justify-between p-6 border border-border/40 rounded-xl bg-card/20 hover:bg-card/40 transition-all duration-200 hover:shadow-md"
-                >
-                  <div className="flex items-center space-x-5">
-                    <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl flex items-center justify-center border border-primary/20">
-                      <User className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-lg tracking-tight">{application.full_name}</h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          📧 {application.email}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          📞 {application.phone}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground/80 bg-muted/30 px-2 py-1 rounded-md inline-block">
-                        Submitted: {new Date(application.created_at).toLocaleDateString()} • 
-                        Availability: {application.availability}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Badge 
-                      variant={getStatusColor(application.status)} 
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium"
-                    >
-                      <StatusIcon className="h-4 w-4" />
-                      {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                    </Badge>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="hover:bg-primary/10 hover:border-primary/40"
-                          onClick={() => setSelectedApplication(application)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Application Details - {selectedApplication?.full_name}</DialogTitle>
-                          <DialogDescription>
-                            Review the complete application and make a decision
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        {selectedApplication && (
-                          <div className="space-y-6">
-                            {/* Personal Info */}
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <div>
-                                <Label className="font-semibold">Contact Information</Label>
-                                <div className="mt-2 space-y-1 text-sm">
-                                  <p><strong>Email:</strong> {selectedApplication.email}</p>
-                                  <p><strong>Phone:</strong> {selectedApplication.phone}</p>
-                                  <p><strong>Availability:</strong> {selectedApplication.availability}</p>
-                                </div>
-                              </div>
-                              <div>
-                                <Label className="font-semibold">Emergency Contact</Label>
-                                <div className="mt-2 space-y-1 text-sm">
-                                  <p><strong>Name:</strong> {selectedApplication.emergency_contact_name}</p>
-                                  <p><strong>Phone:</strong> {selectedApplication.emergency_contact_phone}</p>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Experience */}
-                            <div>
-                              <Label className="font-semibold">Why Join Us</Label>
-                              <p className="mt-2 text-sm bg-muted/50 p-3 rounded-lg">
-                                {selectedApplication.why_join_us}
-                              </p>
-                            </div>
-
-                            {selectedApplication.previous_cleaning_experience && (
-                              <div>
-                                <Label className="font-semibold">Previous Experience</Label>
-                                <p className="mt-2 text-sm bg-muted/50 p-3 rounded-lg">
-                                  {selectedApplication.previous_cleaning_experience}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Capabilities */}
-                            <div>
-                              <Label className="font-semibold">Capabilities & Requirements</Label>
-                              <div className="mt-2 grid md:grid-cols-2 gap-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                  {selectedApplication.has_drivers_license ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                  Driver's License
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {selectedApplication.has_own_vehicle ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                  Own Vehicle
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {selectedApplication.reliable_transportation ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                  Reliable Transportation
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {selectedApplication.can_lift_heavy_items ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                  Can Lift Heavy Items
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {selectedApplication.comfortable_with_chemicals ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
-                                  Comfortable with Chemicals
-                                </div>
-                              </div>
-                            </div>
-
-                            {selectedApplication.status === "pending" && (
-                              <div className="space-y-4 pt-4 border-t">
-                                <div>
-                                  <Label htmlFor="adminNotes">Admin Notes (optional)</Label>
-                                  <Textarea
-                                    id="adminNotes"
-                                    value={adminNotes}
-                                    onChange={(e) => setAdminNotes(e.target.value)}
-                                    placeholder="Add any notes about this application..."
-                                    rows={3}
-                                  />
-                                </div>
-                                <div className="flex gap-3 justify-end">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => handleApproval(selectedApplication.id, 'rejected')}
-                                    disabled={processingId === selectedApplication.id}
-                                    className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
-                                  >
-                                    {processingId === selectedApplication.id ? "Processing..." : "Reject"}
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleApproval(selectedApplication.id, 'approved')}
-                                    disabled={processingId === selectedApplication.id}
-                                    className="hover:bg-success/10 hover:border-success/40"
-                                  >
-                                    {processingId === selectedApplication.id ? "Processing..." : "Approve"}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-
-                    {application.status === "pending" && (
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="hover:bg-success/10 hover:border-success/40 hover:text-success"
-                          onClick={() => handleApproval(application.id, 'approved')}
-                          disabled={processingId === application.id}
-                        >
-                          {processingId === application.id ? "..." : "Approve"}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
-                          onClick={() => handleApproval(application.id, 'rejected')}
-                          disabled={processingId === application.id}
-                        >
-                          {processingId === application.id ? "..." : "Reject"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </AdminCard>
-    </AdminSection>
-  );
-
-  return useContractorLayout ? content : (
+  return (
     <AdminLayout 
       title="Application Manager" 
       description="Review and manage subcontractor applications efficiently"
     >
-      {content}
+      <AdminSection 
+        title="Application Overview"
+        description="Track and process subcontractor applications with comprehensive insights"
+      >
+        {/* Stats Cards */}
+        <AdminGrid columns={4} gap="md">
+          <AdminCard
+            variant="metric"
+            title="Total Applications"
+            icon={<FileText className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">All time</p>
+          </AdminCard>
+
+          <AdminCard
+            variant="metric"
+            title="Pending Review"
+            icon={<Clock className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-warning">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground mt-1">Needs attention</p>
+          </AdminCard>
+
+          <AdminCard
+            variant="metric"
+            title="Approved"
+            icon={<CheckCircle className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-success">{stats.approved}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}% approval rate
+            </p>
+          </AdminCard>
+
+          <AdminCard
+            variant="metric"
+            title="Rejected"
+            icon={<XCircle className="h-4 w-4" />}
+          >
+            <div className="text-3xl font-bold tracking-tight text-destructive">{stats.rejected}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0}% rejection rate
+            </p>
+          </AdminCard>
+        </AdminGrid>
+
+        {/* Applications List */}
+        <AdminCard
+          title="Recent Applications"
+          description="Review and process subcontractor applications with detailed information"
+          variant="default"
+        >
+          <div className="space-y-4">
+            {applications.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No applications found
+              </div>
+            ) : (
+              applications.map((application) => {
+                const StatusIcon = getStatusIcon(application.status);
+                return (
+                  <div 
+                    key={application.id} 
+                    className="flex items-center justify-between p-6 border border-border/40 rounded-xl bg-card/20 hover:bg-card/40 transition-all duration-200 hover:shadow-md"
+                  >
+                    <div className="flex items-center space-x-5">
+                      <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                        <User className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-lg tracking-tight">{application.full_name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            📧 {application.email}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            📞 {application.phone}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground/80 bg-muted/30 px-2 py-1 rounded-md inline-block">
+                          Submitted: {new Date(application.created_at).toLocaleDateString()} • 
+                          Availability: {application.availability}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Badge 
+                        variant={getStatusColor(application.status)} 
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium"
+                      >
+                        <StatusIcon className="h-4 w-4" />
+                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                      </Badge>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="hover:bg-primary/10 hover:border-primary/40"
+                            onClick={() => setSelectedApplication(application)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Application Details - {selectedApplication?.full_name}</DialogTitle>
+                            <DialogDescription>
+                              Review the complete application and make a decision
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          {selectedApplication && (
+                            <div className="space-y-6">
+                              {/* Personal Info */}
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label className="font-semibold">Contact Information</Label>
+                                  <div className="mt-2 space-y-1 text-sm">
+                                    <p><strong>Email:</strong> {selectedApplication.email}</p>
+                                    <p><strong>Phone:</strong> {selectedApplication.phone}</p>
+                                    <p><strong>Availability:</strong> {selectedApplication.availability}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label className="font-semibold">Emergency Contact</Label>
+                                  <div className="mt-2 space-y-1 text-sm">
+                                    <p><strong>Name:</strong> {selectedApplication.emergency_contact_name}</p>
+                                    <p><strong>Phone:</strong> {selectedApplication.emergency_contact_phone}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Experience */}
+                              <div>
+                                <Label className="font-semibold">Why Join Us</Label>
+                                <p className="mt-2 text-sm bg-muted/50 p-3 rounded-lg">
+                                  {selectedApplication.why_join_us}
+                                </p>
+                              </div>
+
+                              {selectedApplication.previous_cleaning_experience && (
+                                <div>
+                                  <Label className="font-semibold">Previous Experience</Label>
+                                  <p className="mt-2 text-sm bg-muted/50 p-3 rounded-lg">
+                                    {selectedApplication.previous_cleaning_experience}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Capabilities */}
+                              <div>
+                                <Label className="font-semibold">Capabilities & Requirements</Label>
+                                <div className="mt-2 grid md:grid-cols-2 gap-2 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    {selectedApplication.has_drivers_license ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                    Driver's License
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {selectedApplication.has_own_vehicle ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                    Own Vehicle
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {selectedApplication.reliable_transportation ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                    Reliable Transportation
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {selectedApplication.can_lift_heavy_items ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                    Can Lift Heavy Items
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {selectedApplication.comfortable_with_chemicals ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                                    Comfortable with Chemicals
+                                  </div>
+                                </div>
+                              </div>
+
+                              {selectedApplication.status === "pending" && (
+                                <div className="space-y-4 pt-4 border-t">
+                                  <div>
+                                    <Label htmlFor="adminNotes">Admin Notes (optional)</Label>
+                                    <Textarea
+                                      id="adminNotes"
+                                      value={adminNotes}
+                                      onChange={(e) => setAdminNotes(e.target.value)}
+                                      placeholder="Add any notes about this application..."
+                                      rows={3}
+                                    />
+                                  </div>
+                                  <div className="flex gap-3 justify-end">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => handleApproval(selectedApplication.id, 'rejected')}
+                                      disabled={processingId === selectedApplication.id}
+                                      className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
+                                    >
+                                      {processingId === selectedApplication.id ? "Processing..." : "Reject"}
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleApproval(selectedApplication.id, 'approved')}
+                                      disabled={processingId === selectedApplication.id}
+                                      className="hover:bg-success/10 hover:border-success/40"
+                                    >
+                                      {processingId === selectedApplication.id ? "Processing..." : "Approve"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+
+                      {application.status === "pending" && (
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="hover:bg-success/10 hover:border-success/40 hover:text-success"
+                            onClick={() => handleApproval(application.id, 'approved')}
+                            disabled={processingId === application.id}
+                          >
+                            {processingId === application.id ? "..." : "Approve"}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="hover:bg-destructive/10 hover:border-destructive/40 hover:text-destructive"
+                            onClick={() => handleApproval(application.id, 'rejected')}
+                            disabled={processingId === application.id}
+                          >
+                            {processingId === application.id ? "..." : "Reject"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </AdminCard>
+      </AdminSection>
     </AdminLayout>
   );
 }
