@@ -14,6 +14,11 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
   const [domainInfo] = useState(() => detectDomain());
 
   useEffect(() => {
+    // Skip all redirect logic in non-production environments (Lovable preview, localhost, etc.)
+    if (!domainInfo.isProduction) {
+      return;
+    }
+
     // Handle auth/portal redirects from book domain
     if (domainInfo.subdomain === 'book') {
       const authPaths = ['/auth', '/customer-portal', '/customer-portal-dashboard', '/portal'];
@@ -25,7 +30,7 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
         return;
       }
     }
-  }, [location, domainInfo.subdomain]);
+  }, [location, domainInfo.subdomain, domainInfo.isProduction]);
 
   // Show loading while auth is determining
   if (loading) {
@@ -39,16 +44,16 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     );
   }
 
-  // Check if current domain/role combination requires redirect
-  const redirectCheck = shouldRedirectBasedOnDomainAndRole(
-    domainInfo.subdomain,
-    userRole,
-    !!user
-  );
+  // Skip domain-based redirects in non-production environments
+  if (domainInfo.isProduction) {
+    // Check if current domain/role combination requires redirect
+    const redirectCheck = shouldRedirectBasedOnDomainAndRole(
+      domainInfo.subdomain,
+      userRole,
+      !!user
+    );
 
-  if (redirectCheck.shouldRedirect && redirectCheck.redirectUrl) {
-    // For development, use Navigate. For production, use window.location
-    if (domainInfo.isProduction) {
+    if (redirectCheck.shouldRedirect && redirectCheck.redirectUrl) {
       window.location.href = redirectCheck.redirectUrl;
       return (
         <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
@@ -58,9 +63,6 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
           </div>
         </div>
       );
-    } else {
-      // In development, just redirect to booking page
-      return <Navigate to="/" replace />;
     }
   }
 

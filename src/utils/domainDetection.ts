@@ -7,6 +7,17 @@ export interface DomainInfo {
 
 export function detectDomain(): DomainInfo {
   const hostname = window.location.hostname;
+  const search = window.location.search;
+  
+  // Check for manual override
+  if (search.includes('disableDomainRouting=1')) {
+    return {
+      subdomain: 'book',
+      baseDomain: 'bayareacleaningpros.com',
+      isProduction: false,
+      targetAudience: 'guest'
+    };
+  }
   
   // Development/localhost detection
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
@@ -15,6 +26,16 @@ export function detectDomain(): DomainInfo {
       baseDomain: 'bayareacleaningpros.com',
       isProduction: false,
       targetAudience: 'admin'
+    };
+  }
+  
+  // Lovable preview detection
+  if (hostname.includes('lovable.app') || hostname.includes('lovable.dev')) {
+    return {
+      subdomain: 'book', // Use guest mode to avoid auth redirects
+      baseDomain: 'bayareacleaningpros.com',
+      isProduction: false,
+      targetAudience: 'guest'
     };
   }
   
