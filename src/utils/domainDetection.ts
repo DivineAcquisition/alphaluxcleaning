@@ -118,7 +118,7 @@ export function shouldRedirectBasedOnDomainAndRole(
   // Role-based domain enforcement
   const domainRoleMap = {
     app: ['admin', 'manager'],
-    contractor: ['contractor'],
+    contractor: ['admin', 'manager', 'super_admin'],
     portal: ['customer']
   };
   
