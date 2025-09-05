@@ -11,7 +11,7 @@ interface AssignmentStatus {
   id: string;
   booking_id: string;
   subcontractor_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  status: string; // Will be 'pending' | 'accepted' | 'declined' | 'expired' after migration
   priority: 'normal' | 'high' | 'urgent';
   assigned_at: string;
   expires_at: string;
@@ -103,10 +103,7 @@ export function RealtimeAssignmentDashboard() {
           booking_id,
           subcontractor_id,
           status,
-          priority,
           assigned_at,
-          expires_at,
-          response_received_at,
           bookings!inner (
             customer_name,
             customer_phone,
@@ -156,13 +153,13 @@ export function RealtimeAssignmentDashboard() {
         booking_id: assignment.booking_id,
         subcontractor_id: assignment.subcontractor_id,
         status: assignment.status,
-        priority: assignment.priority,
+        priority: 'normal' as const, // Default until migration is complete
         assigned_at: assignment.assigned_at,
-        expires_at: assignment.expires_at,
-        response_received_at: assignment.response_received_at,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Default 24 hours
+        response_received_at: undefined,
         booking: Array.isArray(assignment.bookings) ? assignment.bookings[0] : assignment.bookings,
         subcontractor: Array.isArray(assignment.subcontractors) ? assignment.subcontractors[0] : assignment.subcontractors,
-        response: assignment.subcontractor_responses?.[0]
+        response: assignment.subcontractor_responses?.[0] || undefined
       })) || [];
 
       // Process queue data

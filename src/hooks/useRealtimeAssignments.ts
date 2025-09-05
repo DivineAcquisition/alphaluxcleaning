@@ -5,7 +5,7 @@ interface AssignmentUpdate {
   id: string;
   booking_id: string;
   subcontractor_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  status: string; // Will be 'pending' | 'accepted' | 'declined' | 'expired' after migration
   priority: 'normal' | 'high' | 'urgent';
   assigned_at: string;
   expires_at: string;
@@ -92,17 +92,20 @@ export function useRealtimeAssignments() {
           booking_id,
           subcontractor_id,
           status,
-          priority,
-          assigned_at,
-          expires_at,
-          response_received_at
+          assigned_at
         `)
         .gte('assigned_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
         .order('assigned_at', { ascending: false });
 
       if (error) throw error;
 
-      setAssignments(data || []);
+      const mappedData = (data || []).map(assignment => ({
+        ...assignment,
+        priority: 'normal' as const,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        response_received_at: undefined
+      }));
+      setAssignments(mappedData);
       await calculateStats();
     } catch (error) {
       console.error('Error fetching assignments:', error);

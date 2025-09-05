@@ -4458,13 +4458,17 @@ export type Database = {
         Row: {
           accepted_at: string | null
           assigned_at: string
+          assignment_method: string | null
           booking_id: string | null
           completed_at: string | null
           created_at: string
           customer_rating: number | null
           drop_reason: string | null
           dropped_at: string | null
+          expires_at: string | null
           id: string
+          priority: string | null
+          response_received_at: string | null
           status: string
           subcontractor_id: string | null
           subcontractor_notes: string | null
@@ -4473,13 +4477,17 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           assigned_at?: string
+          assignment_method?: string | null
           booking_id?: string | null
           completed_at?: string | null
           created_at?: string
           customer_rating?: number | null
           drop_reason?: string | null
           dropped_at?: string | null
+          expires_at?: string | null
           id?: string
+          priority?: string | null
+          response_received_at?: string | null
           status?: string
           subcontractor_id?: string | null
           subcontractor_notes?: string | null
@@ -4488,13 +4496,17 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           assigned_at?: string
+          assignment_method?: string | null
           booking_id?: string | null
           completed_at?: string | null
           created_at?: string
           customer_rating?: number | null
           drop_reason?: string | null
           dropped_at?: string | null
+          expires_at?: string | null
           id?: string
+          priority?: string | null
+          response_received_at?: string | null
           status?: string
           subcontractor_id?: string | null
           subcontractor_notes?: string | null
