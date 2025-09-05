@@ -6415,7 +6415,15 @@ export type Database = {
     }
     Enums: {
       acceptance_status: "pending" | "accepted" | "declined" | "expired"
-      app_role: "admin" | "manager" | "contractor" | "customer"
+      app_role:
+        | "admin"
+        | "manager"
+        | "contractor"
+        | "customer"
+        | "owner"
+        | "dispatcher"
+        | "cleaner"
+        | "support"
       contractor_rate_type: "hourly" | "flat" | "commission"
       contractor_status: "active" | "onboarding" | "inactive"
       job_status:
@@ -6570,7 +6578,16 @@ export const Constants = {
   public: {
     Enums: {
       acceptance_status: ["pending", "accepted", "declined", "expired"],
-      app_role: ["admin", "manager", "contractor", "customer"],
+      app_role: [
+        "admin",
+        "manager",
+        "contractor",
+        "customer",
+        "owner",
+        "dispatcher",
+        "cleaner",
+        "support",
+      ],
       contractor_rate_type: ["hourly", "flat", "commission"],
       contractor_status: ["active", "onboarding", "inactive"],
       job_status: [
