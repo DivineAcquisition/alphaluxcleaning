@@ -44,6 +44,11 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     }
   }, [location, domainInfo.subdomain, domainInfo.isProduction]);
 
+  // Redirect root path to guest-booking when on book subdomain
+  if (domainInfo.subdomain === 'book' && location.pathname === '/') {
+    return <Navigate to="/guest-booking" replace />;
+  }
+
   // Show loading while auth is determining
   if (loading) {
     return (
