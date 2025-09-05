@@ -92,6 +92,105 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_analytics: {
+        Row: {
+          assignment_sent_at: string
+          booking_id: string
+          created_at: string
+          decline_reason: string | null
+          id: string
+          response_received_at: string | null
+          response_time_minutes: number | null
+          response_type: string | null
+          subcontractor_id: string | null
+        }
+        Insert: {
+          assignment_sent_at?: string
+          booking_id: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          response_received_at?: string | null
+          response_time_minutes?: number | null
+          response_type?: string | null
+          subcontractor_id?: string | null
+        }
+        Update: {
+          assignment_sent_at?: string
+          booking_id?: string
+          created_at?: string
+          decline_reason?: string | null
+          id?: string
+          response_received_at?: string | null
+          response_time_minutes?: number | null
+          response_type?: string | null
+          subcontractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_analytics_booking"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_analytics_subcontractor"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignment_queue: {
+        Row: {
+          assigned_at: string | null
+          booking_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          priority_order: number
+          status: string
+          subcontractor_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          booking_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          priority_order?: number
+          status?: string
+          subcontractor_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          booking_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          priority_order?: number
+          status?: string
+          subcontractor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_queue_booking"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_queue_subcontractor"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
@@ -665,6 +764,57 @@ export type Database = {
             foreignKeyName: "comms_preferences_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: true
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_logs: {
+        Row: {
+          booking_id: string | null
+          communication_type: string
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          metadata: Json | null
+          status: string
+          subcontractor_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          communication_type: string
+          content: string
+          created_at?: string
+          direction: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          subcontractor_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          communication_type?: string
+          content?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          subcontractor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_comm_booking"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_comm_subcontractor"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
             referencedRelation: "subcontractors"
             referencedColumns: ["id"]
           },
@@ -4228,6 +4378,82 @@ export type Database = {
         }
         Relationships: []
       }
+      subcontractor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          start_time: string
+          subcontractor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+          subcontractor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          subcontractor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_availability_subcontractor"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_blackouts: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          start_date: string
+          subcontractor_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          start_date: string
+          subcontractor_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          start_date?: string
+          subcontractor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_blackout_subcontractor"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_job_assignments: {
         Row: {
           accepted_at: string | null
@@ -5793,6 +6019,10 @@ export type Database = {
       }
       get_performance_insights: {
         Args: { p_days?: number }
+        Returns: Json
+      }
+      get_subcontractor_availability: {
+        Args: { p_date: string; p_subcontractor_id: string }
         Returns: Json
       }
       get_subcontractor_hub_data: {
