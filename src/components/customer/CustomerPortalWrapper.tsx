@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { CustomerPortalProvider, useCustomerPortal } from '@/contexts/CustomerPortalContext';
-import { EmailPortalAccess } from './EmailPortalAccess';
 import { Loader2 } from 'lucide-react';
 
 interface CustomerPortalWrapperProps {
@@ -13,30 +13,9 @@ interface CustomerPortalWrapperProps {
 function CustomerPortalContent({ children }: { children: React.ReactNode }) {
   const { customerEmail, setCustomerEmail, loading, error, hasData } = useCustomerPortal();
 
-  const handleSearchSubmit = async (type: 'email' | 'order_id', value: string) => {
-    setCustomerEmail(value);
-  };
-
-  // If no email is set, show the email entry form
-  if (!customerEmail) {
-    return (
-      <EmailPortalAccess 
-        onSearchSubmit={handleSearchSubmit}
-        loading={loading}
-        error={error}
-      />
-    );
-  }
-
-  // If email is set but no data found, show the email form with error
-  if (customerEmail && !loading && !hasData) {
-    return (
-      <EmailPortalAccess 
-        onSearchSubmit={handleSearchSubmit}
-        loading={loading}
-        error={error || "No service records found for this email address."}
-      />
-    );
+  // If no email is set or no data found, redirect to order-status page
+  if (!customerEmail || (customerEmail && !loading && !hasData)) {
+    return <Navigate to="/order-status" replace />;
   }
 
   // Show loading while fetching customer data

@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, CreditCard, Calendar, MapPin, DollarSign, AlertTriangle, ArrowLeft } from 'lucide-react';
-import { EmailPortalAccess } from '@/components/customer/EmailPortalAccess';
+import { Navigate } from 'react-router-dom';
 import { useCustomerDataByEmail } from '@/hooks/useCustomerDataByEmail';
 import { CustomStripePayment } from '@/components/payment/CustomStripePayment';
 import { useToast } from '@/hooks/use-toast';
@@ -124,28 +124,9 @@ export default function CustomerPayments() {
     setSelectedOrder(null);
   };
 
-  // If no email is set, show email entry form
-  if (!customerEmail) {
-    return <EmailPortalAccess onSearchSubmit={handleSearchSubmit} loading={loading} error={error} />;
-  }
-
-  // If email is set but no data found, show error state
-  if (customerEmail && !loading && !hasData) {
-    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                No service records found for this email address. Please check your email or contact support.
-              </AlertDescription>
-            </Alert>
-            <Button onClick={() => setCustomerEmail(null)} variant="outline" className="w-full mt-4">
-              Try Different Email
-            </Button>
-          </CardContent>
-        </Card>
-      </div>;
+  // If no email is set or no data found, redirect to order-status page
+  if (!customerEmail || (customerEmail && !loading && !hasData)) {
+    return <Navigate to="/order-status" replace />;
   }
 
   // Show loading state
