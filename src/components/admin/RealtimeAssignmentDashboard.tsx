@@ -159,7 +159,9 @@ export function RealtimeAssignmentDashboard() {
         response_received_at: undefined,
         booking: Array.isArray(assignment.bookings) ? assignment.bookings[0] : assignment.bookings,
         subcontractor: Array.isArray(assignment.subcontractors) ? assignment.subcontractors[0] : assignment.subcontractors,
-        response: assignment.subcontractor_responses?.[0] || undefined
+        response: Array.isArray(assignment.subcontractor_responses) && assignment.subcontractor_responses.length > 0 
+          ? assignment.subcontractor_responses[0] 
+          : undefined
       })) || [];
 
       // Process queue data
