@@ -43,6 +43,7 @@ export function detectDomain(): DomainInfo {
   const parts = hostname.split('.');
   
   if (parts.length >= 3) {
+    // Handle regular single-level subdomains
     const subdomain = parts[0];
     const baseDomain = parts.slice(1).join('.');
     
@@ -118,7 +119,7 @@ export function shouldRedirectBasedOnDomainAndRole(
   // Role-based domain enforcement
   const domainRoleMap = {
     app: ['admin', 'manager'],
-    contractor: ['contractor'],
+    contractor: ['admin', 'manager', 'super_admin'],
     portal: ['customer']
   };
   

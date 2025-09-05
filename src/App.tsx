@@ -40,7 +40,16 @@ import CustomerPayments from '@/pages/CustomerPayments';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorJobAcceptance from '@/pages/SubcontractorJobAcceptance';
+import DispatcherDashboard from '@/pages/DispatcherDashboard';
 import NotFound from '@/pages/NotFound';
+
+// Contractor Portal Components
+import ContractorAuth from '@/pages/ContractorAuth';
+import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
+import ContractorApplications from '@/pages/contractor/ContractorApplications';
+import ContractorSubcontractors from '@/pages/contractor/ContractorSubcontractors';
+import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
+import { ConditionalHomepage } from '@/components/ConditionalHomepage';
 
 const queryClient = new QueryClient();
 
@@ -68,8 +77,8 @@ function App() {
       <AuthProvider>
         <Router>
           <DomainAwareRouter>
-            <Routes>
-            <Route path="/" element={<Index />} />
+          <Routes>
+            <Route path="/" element={<ConditionalHomepage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
             <Route 
@@ -248,6 +257,65 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <DispatcherDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Contractor Portal Routes */}
+            <Route path="/contractor-auth" element={<ContractorAuth />} />
+            <Route 
+              path="/contractor" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ContractorDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/dispatch" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DispatcherDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/applications" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ContractorApplications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/subcontractors" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ContractorSubcontractors />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/hub" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ContractorSubcontractorHub />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/performance" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <SubcontractorManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/contractor/portal" 
+              element={
+                <ProtectedRoute>
+                  <SubcontractorPortal />
                 </ProtectedRoute>
               } 
             />
