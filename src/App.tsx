@@ -243,6 +243,14 @@ function App() {
             />
             
             <Route path="/subcontractor-response" element={<SubcontractorJobAcceptance />} />
+            <Route 
+              path="/dispatch" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DispatcherDashboard />
+                </ProtectedRoute>
+              } 
+            />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

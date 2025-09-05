@@ -621,6 +621,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cleaners: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          pay_value: number | null
+          phone: string | null
+          rating: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          pay_value?: number | null
+          phone?: string | null
+          rating?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          pay_value?: number | null
+          phone?: string | null
+          rating?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address_json: Json | null
@@ -1469,6 +1511,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customers: {
+        Row: {
+          address_json: Json | null
+          company_id: string
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_json?: Json | null
+          company_id?: string
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_json?: Json | null
+          company_id?: string
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       deals: {
         Row: {
