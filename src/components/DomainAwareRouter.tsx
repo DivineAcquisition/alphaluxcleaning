@@ -19,11 +19,14 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       return;
     }
 
-    // Handle booking slug redirects
+    // Handle booking slug redirects with startsWith to catch all booking paths
     const bookingPaths = ['/booking', '/legacy-booking', '/new-booking'];
-    const currentPath = location.pathname;
+    const currentPath = location.pathname.replace(/\/+$/, '') || '/'; // Normalize trailing slashes
     
-    if (bookingPaths.includes(currentPath)) {
+    // Check if current path starts with any booking path
+    const isBookingPath = bookingPaths.some(path => currentPath === path || currentPath.startsWith(path + '/'));
+    
+    if (isBookingPath) {
       if (domainInfo.subdomain !== 'book') {
         // Redirect to book subdomain root
         const redirectUrl = buildDomainUrl('book', '/');
@@ -31,6 +34,28 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
         return;
       } else {
         // Already on book subdomain, replace URL with root
+        window.history.replaceState(null, '', '/');
+        return;
+      }
+    }
+
+    // Enforce pure link on book subdomain - only allow specific whitelisted paths
+    if (domainInfo.subdomain === 'book') {
+      const allowedPaths = [
+        '/',
+        '/order-confirmation', 
+        '/payment-confirmation', 
+        '/payment-success', 
+        '/booking-confirmation', 
+        '/order-status',
+        '/oauth/callback'
+      ];
+      
+      const isAllowedPath = allowedPaths.some(path => 
+        currentPath === path || currentPath.startsWith(path + '?') || currentPath.startsWith(path + '#')
+      );
+      
+      if (!isAllowedPath) {
         window.history.replaceState(null, '', '/');
         return;
       }

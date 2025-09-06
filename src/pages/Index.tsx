@@ -63,7 +63,7 @@ const Index = () => {
                 <Button 
                   size="lg" 
                   className="text-lg px-8 py-6"
-                  onClick={() => window.open(buildDomainUrl('book', '/'), '_blank')}
+                  onClick={() => window.location.href = buildDomainUrl('book', '/')}
                 >
                   Book Your Cleaning Service Now
                 </Button>
