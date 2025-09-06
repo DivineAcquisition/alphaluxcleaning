@@ -13,6 +13,11 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
   const location = useLocation();
   const [domainInfo] = useState(() => detectDomain());
 
+  // EMERGENCY HOTFIX: Bypass all routing logic on book subdomain to ensure instant loading
+  if (domainInfo.subdomain === 'book') {
+    return <>{children}</>;
+  }
+
   useEffect(() => {
     // Skip all redirect logic in non-production environments (Lovable preview, localhost, etc.)
     if (!domainInfo.isProduction) {
