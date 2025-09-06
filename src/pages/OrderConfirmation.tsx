@@ -27,31 +27,42 @@ interface Order {
 }
 
 export default function OrderConfirmation() {
+  console.log("OrderConfirmation component mounted");
+  
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const orderId = searchParams.get('order_id');
   const sessionId = searchParams.get('session_id');
   
+  console.log("URL parameters:", { orderId, sessionId, href: window.location.href });
+  
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("useEffect triggered");
     if (orderId || sessionId) {
       fetchOrderDetails();
     } else {
-      // Check localStorage as fallback
       const storedOrderId = localStorage.getItem('current_order_id');
       if (storedOrderId) {
         fetchOrderDetails(storedOrderId);
       } else {
-        toast.error("No order information found");
+        setError("No order information found");
         setLoading(false);
       }
     }
   }, [orderId, sessionId]);
 
   const fetchOrderDetails = async (fallbackOrderId?: string) => {
+    console.log("Fetching order details:", { 
+      order_id: fallbackOrderId || orderId, 
+      session_id: sessionId 
+    });
+    
     try {
+      setError(null);
       const { data, error } = await supabase.functions.invoke('get-order-details', {
         body: {
           order_id: fallbackOrderId || orderId,
@@ -59,16 +70,29 @@ export default function OrderConfirmation() {
         }
       });
 
-      if (error || !data?.order) {
-        toast.error("Order not found");
-        setLoading(false);
+      console.log("Supabase response:", { data, error });
+
+      if (error) {
+        console.error("Supabase function error:", error);
+        setError(`Error: ${error.message || "Order not found"}`);
+        toast.error(`Error: ${error.message || "Order not found"}`);
         return;
       }
 
+      if (!data?.order) {
+        console.error("No order data returned:", data);
+        setError("Order not found - no data returned");
+        toast.error("Order not found");
+        return;
+      }
+
+      console.log("Order data loaded successfully:", data.order);
       setOrder(data.order);
     } catch (error) {
       console.error("Error fetching order details:", error);
-      toast.error("Failed to load order details");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Failed to load order details: ${errorMessage}`);
+      toast.error(`Failed to load order details: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -122,15 +146,13 @@ export default function OrderConfirmation() {
 
   const handleTextUs = () => {
     const currentHour = new Date().getHours();
-    const isBusinessHours = currentHour >= 9 && currentHour < 18; // 9 AM to 6 PM
-    const phoneNumber = '4153887667'; // Business phone number
+    const isBusinessHours = currentHour >= 9 && currentHour < 18;
+    const phoneNumber = '4153887667';
     const message = encodeURIComponent(`Hi! I just placed an order (ID: ${order?.id}) and have a question.`);
     
     if (isBusinessHours) {
-      // During business hours, open SMS
       window.open(`sms:${phoneNumber}?body=${message}`, '_blank');
     } else {
-      // Outside business hours, still allow SMS but show notice
       toast.info('We typically respond to texts between 9 AM - 6 PM PST');
       window.open(`sms:${phoneNumber}?body=${message}`, '_blank');
     }
@@ -151,6 +173,7 @@ export default function OrderConfirmation() {
             <CardContent className="text-center p-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading your order details...</p>
+              <p className="text-sm text-muted-foreground mt-2">Order ID: {orderId}</p>
             </CardContent>
           </Card>
         </div>
@@ -158,7 +181,7 @@ export default function OrderConfirmation() {
     );
   }
 
-  if (!order) {
+  if (error || !order) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
         <Navigation />
@@ -168,8 +191,13 @@ export default function OrderConfirmation() {
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Order Not Found</h2>
               <p className="text-muted-foreground mb-4">
-                We couldn't find your order. Please check your order ID or try again.
+                {error || "We couldn't find your order. Please check your order ID or try again."}
               </p>
+              <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                <p>Order ID: {orderId || 'Not provided'}</p>
+                <p>Session ID: {sessionId || 'Not provided'}</p>
+                <p>Domain: {window.location.hostname}</p>
+              </div>
               <Button onClick={handleBackToHome}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
