@@ -19,10 +19,26 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       return;
     }
 
+    // Handle booking slug redirects
+    const bookingPaths = ['/booking', '/legacy-booking', '/new-booking'];
+    const currentPath = location.pathname;
+    
+    if (bookingPaths.includes(currentPath)) {
+      if (domainInfo.subdomain !== 'book') {
+        // Redirect to book subdomain root
+        const redirectUrl = buildDomainUrl('book', '/');
+        window.location.href = redirectUrl;
+        return;
+      } else {
+        // Already on book subdomain, replace URL with root
+        window.history.replaceState(null, '', '/');
+        return;
+      }
+    }
+
     // Handle auth/portal redirects based on domain
     if (domainInfo.subdomain === 'book') {
       const authPaths = ['/auth', '/customer-portal', '/customer-portal-dashboard', '/portal'];
-      const currentPath = location.pathname;
       
       if (authPaths.some(path => currentPath.startsWith(path))) {
         const redirectUrl = buildDomainUrl('portal', location.pathname, location.search, location.hash);
@@ -34,7 +50,6 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
     // Handle contractor portal redirects
     if (domainInfo.subdomain === 'contractor') {
       const contractorPaths = ['/contractor', '/admin'];
-      const currentPath = location.pathname;
       
       if (!contractorPaths.some(path => currentPath.startsWith(path)) && currentPath !== '/auth') {
         const redirectUrl = buildDomainUrl('contractor', '/contractor', location.search, location.hash);

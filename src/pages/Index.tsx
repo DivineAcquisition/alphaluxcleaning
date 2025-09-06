@@ -5,8 +5,9 @@ import { Building2, Home as HomeIcon } from "lucide-react";
 import { CommercialEstimateSection } from "@/components/CommercialEstimateSection";
 import { Navigation } from "@/components/Navigation";
 import { TestSubcontractorButton } from "@/components/TestSubcontractorButton";
-import { ModernLegacyBooking } from "@/components/booking/ModernLegacyBooking";
 import { GHLWebhookTest } from "@/components/GHLWebhookTest";
+import { Button } from "@/components/ui/button";
+import { buildDomainUrl } from "@/utils/domainDetection";
 
 import { trackViewContent, trackInitiateCheckout } from "@/lib/facebook-pixel";
 const Index = () => {
@@ -42,7 +43,32 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="residential">
-            <ModernLegacyBooking />
+            <Card className="w-full max-w-4xl mx-auto">
+              <CardContent className="p-8 text-center space-y-6">
+                <div className="space-y-4">
+                  <h2 className="text-3xl font-bold">Residential Cleaning Services</h2>
+                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Experience premium residential cleaning with our professional team. 
+                    From regular maintenance to deep cleaning, we've got you covered.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <ul className="text-left max-w-md mx-auto space-y-2 text-muted-foreground">
+                    <li>• Regular Weekly/Bi-weekly/Monthly Cleaning</li>
+                    <li>• Deep Cleaning Services</li>
+                    <li>• Move-in/Move-out Cleaning</li>
+                    <li>• Custom Add-on Services</li>
+                  </ul>
+                </div>
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-6"
+                  onClick={() => window.open(buildDomainUrl('book', '/'), '_blank')}
+                >
+                  Book Your Cleaning Service Now
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="commercial">

@@ -168,9 +168,6 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/schedule-service" element={<ScheduleService />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
-            <Route path="/booking" element={<ModernBooking />} />
-            <Route path="/legacy-booking" element={<LegacyBooking />} />
-            <Route path="/new-booking" element={<NewBooking />} />
             
             {/* Admin Routes */}
             <Route 
