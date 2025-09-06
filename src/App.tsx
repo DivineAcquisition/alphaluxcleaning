@@ -8,6 +8,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 
 // Pages
 import Index from '@/pages/Index';
+import { DomainAwareHome } from '@/components/DomainAwareHome';
 import Auth from '@/pages/Auth';
 import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -77,7 +78,7 @@ function App() {
         <Router>
           <DomainAwareRouter>
             <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<DomainAwareHome />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<SignUp />} />
             <Route 
