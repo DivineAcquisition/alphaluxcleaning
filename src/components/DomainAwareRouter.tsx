@@ -3,6 +3,7 @@ import { useLocation, Navigate } from 'react-router-dom';
 import { detectDomain, shouldRedirectBasedOnDomainAndRole, buildDomainUrl } from '@/utils/domainDetection';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { BookDomainGuard } from './BookDomainGuard';
 
 interface DomainAwareRouterProps {
   children: React.ReactNode;
@@ -13,9 +14,9 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
   const location = useLocation();
   const [domainInfo] = useState(() => detectDomain());
 
-  // EMERGENCY HOTFIX: Bypass all routing logic on book subdomain to ensure instant loading
+  // Fast-load book domain with proper URL guard
   if (domainInfo.subdomain === 'book') {
-    return <>{children}</>;
+    return <BookDomainGuard>{children}</BookDomainGuard>;
   }
 
   useEffect(() => {
@@ -35,43 +36,6 @@ export function DomainAwareRouter({ children }: DomainAwareRouterProps) {
       if (domainInfo.subdomain !== 'book') {
         // Redirect to book subdomain root
         const redirectUrl = buildDomainUrl('book', '/');
-        window.location.href = redirectUrl;
-        return;
-      } else {
-        // Already on book subdomain, replace URL with root
-        window.history.replaceState(null, '', '/');
-        return;
-      }
-    }
-
-    // Enforce pure link on book subdomain - only allow specific whitelisted paths
-    if (domainInfo.subdomain === 'book') {
-      const allowedPaths = [
-        '/',
-        '/order-confirmation', 
-        '/payment-confirmation', 
-        '/payment-success', 
-        '/booking-confirmation', 
-        '/order-status',
-        '/oauth/callback'
-      ];
-      
-      const isAllowedPath = allowedPaths.some(path => 
-        currentPath === path || currentPath.startsWith(path + '?') || currentPath.startsWith(path + '#')
-      );
-      
-      if (!isAllowedPath) {
-        window.history.replaceState(null, '', '/');
-        return;
-      }
-    }
-
-    // Handle auth/portal redirects based on domain
-    if (domainInfo.subdomain === 'book') {
-      const authPaths = ['/auth', '/customer-portal', '/customer-portal-dashboard', '/portal'];
-      
-      if (authPaths.some(path => currentPath.startsWith(path))) {
-        const redirectUrl = buildDomainUrl('portal', location.pathname, location.search, location.hash);
         window.location.href = redirectUrl;
         return;
       }
