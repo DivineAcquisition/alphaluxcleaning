@@ -28,6 +28,7 @@ import OrderConfirmation from '@/pages/OrderConfirmation';
 import BookingConfirmation from '@/pages/BookingConfirmation';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import StripeTestPage from '@/pages/StripeTestPage';
 import ScheduleService from '@/pages/ScheduleService';
 import OAuthCallback from '@/pages/OAuthCallback';
 import ModernBooking from '@/pages/ModernBooking';
@@ -166,6 +167,7 @@ function App() {
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/stripe-test" element={<StripeTestPage />} />
             <Route path="/schedule-service" element={<ScheduleService />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
             
