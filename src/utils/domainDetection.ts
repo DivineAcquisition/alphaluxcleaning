@@ -30,7 +30,7 @@ export function detectDomain(): DomainInfo {
   }
   
   // Lovable preview detection
-  if (hostname.includes('lovable.app') || hostname.includes('lovable.dev')) {
+  if (hostname.includes('lovable.app') || hostname.includes('lovable.dev') || hostname.includes('lovableproject.com')) {
     return {
       subdomain: 'book', // Use guest mode to avoid auth redirects
       baseDomain: 'bayareacleaningpros.com',
