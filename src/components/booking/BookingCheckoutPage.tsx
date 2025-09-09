@@ -78,10 +78,17 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
   // Check if Stripe is ready on component mount
   useEffect(() => {
     const checkStripe = async () => {
-      const ready = await checkStripeReady();
-      setStripeReady(ready);
-      if (!ready) {
-        setSystemError('Payment system not available. Please try refreshing the page.');
+      try {
+        console.log('🔄 Checking Stripe readiness...');
+        const ready = await checkStripeReady();
+        console.log('✅ Stripe ready:', ready);
+        setStripeReady(ready);
+        if (!ready) {
+          setSystemError('Payment system not available. Please try refreshing the page.');
+        }
+      } catch (error) {
+        console.error('❌ Stripe check failed:', error);
+        setSystemError('Payment system error. Please try refreshing the page.');
       }
     };
     checkStripe();
@@ -772,8 +779,22 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
           </Card>
         )}
 
+        {/* System Error Display */}
+        {systemError && (
+          <Card className="shadow-clean border-destructive/20">
+            <CardContent className="p-6 text-center space-y-4">
+              <AlertTriangle className="h-8 w-8 text-destructive mx-auto" />
+              <div className="text-destructive text-lg font-semibold">Payment System Issue</div>
+              <p className="text-muted-foreground">{systemError}</p>
+              <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+                Refresh Page
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Embedded Payment Form */}
-        {showPaymentForm && (
+        {showPaymentForm && stripeReady && !systemError && (
           <CustomStripePayment
             paymentData={{
               amount: paymentAmount,
