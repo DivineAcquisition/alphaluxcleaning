@@ -25,3 +25,11 @@ verify_jwt = false
 
 [functions.get-order-details]
 verify_jwt = false
+
+# Email Infrastructure Functions
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.email-webhook]
+verify_jwt = false

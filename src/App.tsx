@@ -41,6 +41,7 @@ import PaymentSuccess from '@/pages/PaymentSuccess';
 import StripeTestPage from '@/pages/StripeTestPage';
 import ScheduleService from '@/pages/ScheduleService';
 import OAuthCallback from '@/pages/OAuthCallback';
+import EmailSettings from '@/pages/EmailSettings';
 import ModernBooking from '@/pages/ModernBooking';
 import LegacyBooking from '@/pages/LegacyBooking';
 import NewBooking from '@/pages/NewBooking';
@@ -246,6 +247,22 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <ReviewsPortal />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/email-settings" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <EmailSettings />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/integrations/email" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <EmailSettings />
                 </ProtectedRoute>
               } 
             />
