@@ -40,13 +40,13 @@ export function HostBasedRouter({ children }: HostBasedRouterProps) {
     );
   }
 
-  // Handle redirecting hosts during loading
+  // Handle redirecting hosts during loading (like 'try' subdomain)
   if (domainInfo.redirectTo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Redirecting...</p>
+          <p className="text-muted-foreground">Redirecting to signup...</p>
         </div>
       </div>
     );
@@ -94,7 +94,13 @@ export function HostBasedRouter({ children }: HostBasedRouterProps) {
     }
   }
 
-  if (domainInfo.hostRole === 'portal' && currentPath !== '/customer-auth') {
+  if (domainInfo.hostRole === 'portal') {
+    // Allow access to customer-auth page
+    if (currentPath === '/customer-auth') {
+      return <>{children}</>;
+    }
+    
+    // For all other portal routes, check authentication
     if (!user || (userRole && userRole !== 'customer')) {
       return <Navigate to="/customer-auth" replace />;
     }

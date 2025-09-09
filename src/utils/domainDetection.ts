@@ -132,16 +132,34 @@ function getTargetAudience(subdomain: string): 'admin' | 'contractor' | 'custome
   }
 }
 
-export function buildDomainUrl(targetSubdomain: string, path = '/', search = '', hash = ''): string {
-  const domainInfo = detectDomain();
+export function buildDomainUrl(targetSubdomain: string, path: string = '', search: string = '', hash: string = ''): string {
+  const currentDomain = detectDomain();
   
-  if (!domainInfo.isProduction) {
-    // In development, just change the path
-    return `${path}${search}${hash}`;
+  // In development, just return the path
+  if (!currentDomain.isProduction) {
+    const fullPath = `${path}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`;
+    return fullPath || '/';
+  }
+
+  // Use environment variables for production URLs when available
+  const envUrls: Record<string, string> = {
+    'admin': process.env.APP_URL || '',
+    'book': process.env.BOOK_URL || '',
+    'contractor': process.env.SUB_URL || '',
+    'portal': process.env.PORTAL_URL || '',
+    'try': process.env.TRY_URL || '',
+    'root': process.env.ROOT_URL || ''
+  };
+  
+  // If we have an environment variable for this subdomain, use it
+  if (envUrls[targetSubdomain]) {
+    return `${envUrls[targetSubdomain]}${path}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`;
   }
   
-  const protocol = window.location.protocol;
-  return `${protocol}//${targetSubdomain}.${domainInfo.baseDomain}${path}${search}${hash}`;
+  // Fallback to building the URL manually
+  const protocol = 'https://';
+  const fullDomain = targetSubdomain ? `${targetSubdomain}.${currentDomain.baseDomain}` : currentDomain.baseDomain;
+  return `${protocol}${fullDomain}${path}${search ? '?' + search : ''}${hash ? '#' + hash : ''}`;
 }
 
 export function shouldRedirectBasedOnDomainAndRole(
@@ -149,50 +167,78 @@ export function shouldRedirectBasedOnDomainAndRole(
   userRole: string | null, 
   isAuthenticated: boolean
 ): { shouldRedirect: boolean; redirectUrl?: string; reason?: string } {
-  // Book domain should always be guest-friendly
-  if (subdomain === 'book') {
-    return { shouldRedirect: false };
-  }
-  
-  // If not authenticated, only book domain is allowed
-  if (!isAuthenticated && subdomain !== 'book') {
+  // Handle 'try' subdomain - always redirect to admin signup
+  if (subdomain === 'try') {
     return {
       shouldRedirect: true,
-      redirectUrl: buildDomainUrl('book'),
-      reason: 'Not authenticated'
+      redirectUrl: buildDomainUrl('admin', '/signup'),
+      reason: 'Try subdomain redirects to admin signup'
     };
   }
-  
-  if (!userRole) {
-    return { shouldRedirect: false };
-  }
-  
-  // Role-based domain enforcement
-  const domainRoleMap = {
-    app: ['admin', 'manager'],
-    contractor: ['admin', 'manager', 'super_admin'],
-    portal: ['customer']
-  };
-  
-  const allowedRoles = domainRoleMap[subdomain as keyof typeof domainRoleMap];
-  
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Redirect to appropriate domain based on role
-    const roleDomainMap = {
-      admin: 'app',
-      manager: 'app', 
-      contractor: 'contractor',
-      customer: 'portal'
-    };
-    
-    const targetDomain = roleDomainMap[userRole as keyof typeof roleDomainMap];
-    if (targetDomain) {
+
+  // Only authenticated users with specific roles should access contractor subdomain
+  if (subdomain === 'contractor') {
+    if (!isAuthenticated) {
       return {
         shouldRedirect: true,
-        redirectUrl: buildDomainUrl(targetDomain),
-        reason: `Role ${userRole} should use ${targetDomain} domain`
+        redirectUrl: buildDomainUrl('contractor', '/contractor-auth'),
+        reason: 'Authentication required for contractor portal'
       };
     }
+    
+    if (userRole && !['contractor', 'admin', 'manager'].includes(userRole)) {
+      return {
+        shouldRedirect: true,
+        redirectUrl: buildDomainUrl('admin', '/dashboard'),
+        reason: 'Insufficient permissions for contractor portal'
+      };
+    }
+  }
+  
+  // Only customers should access portal subdomain
+  if (subdomain === 'portal') {
+    if (!isAuthenticated) {
+      return {
+        shouldRedirect: true,
+        redirectUrl: buildDomainUrl('portal', '/customer-auth'),
+        reason: 'Authentication required for customer portal'
+      };
+    }
+    
+    if (userRole && userRole !== 'customer') {
+      // Redirect other roles to their appropriate domain
+      if (userRole === 'contractor') {
+        return {
+          shouldRedirect: true,
+          redirectUrl: buildDomainUrl('contractor', '/today'),
+          reason: 'Redirecting contractor to contractor portal'
+        };
+      } else {
+        return {
+          shouldRedirect: true,
+          redirectUrl: buildDomainUrl('admin', '/dashboard'),
+          reason: 'Redirecting to admin dashboard'
+        };
+      }
+    }
+  }
+  
+  // Admin subdomain should only be accessed by authenticated admin/manager users for protected routes
+  if (subdomain === 'admin' && userRole === 'customer') {
+    return {
+      shouldRedirect: true,
+      redirectUrl: buildDomainUrl('portal', '/dashboard'),
+      reason: 'Customers should use customer portal'
+    };
+  }
+  
+  // Unauthenticated users should generally use the book subdomain for public access
+  if (!isAuthenticated && !['book', 'root', 'try'].includes(subdomain)) {
+    return {
+      shouldRedirect: true,
+      redirectUrl: buildDomainUrl('book', '/'),
+      reason: 'Unauthenticated users should use booking portal'
+    };
   }
   
   return { shouldRedirect: false };
