@@ -95,14 +95,14 @@ export function HostBasedRouter({ children }: HostBasedRouterProps) {
   }
 
   if (domainInfo.hostRole === 'portal') {
-    // Allow access to customer-auth page
-    if (currentPath === '/customer-auth') {
+    // Allow access to customer portal auth and signup pages
+    if (currentPath === '/portal/login' || currentPath === '/portal/signup' || currentPath === '/customer-auth') {
       return <>{children}</>;
     }
     
     // For all other portal routes, check authentication
     if (!user || (userRole && userRole !== 'customer')) {
-      return <Navigate to="/customer-auth" replace />;
+      return <Navigate to="/portal/login" replace />;
     }
   }
 

@@ -18,6 +18,9 @@ import AdminLogin from '@/pages/AdminLogin';
 import CustomerLogin from '@/pages/CustomerLogin';
 import CustomerPortalHome from '@/pages/CustomerPortalHome';
 import CustomerPortalBilling from '@/pages/CustomerPortalBilling';
+import CustomerPortalBookings from '@/pages/CustomerPortalBookings';
+import CustomerPortalBookingsList from '@/pages/CustomerPortalBookingsList';
+import CustomerPortalSettings from '@/pages/CustomerPortalSettings';
 // Removed deleted pages
 import UserManagement from '@/pages/UserManagement';
 import CustomerDatabaseAdmin from '@/pages/CustomerDatabaseAdmin';
@@ -93,6 +96,9 @@ function App() {
             {/* Main Routes - Domain Aware */}
             <Route path="/" element={<DomainAwareHome />} />
             
+            {/* Auth Routes - available on all environments */}
+            <Route path="/auth" element={<AdminLogin />} />
+            
             {/* Admin Routes */}
             <Route path="/login" element={<AdminLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />
@@ -109,8 +115,15 @@ function App() {
             
             {/* Customer Portal Routes */}
             <Route path="/portal/login" element={<CustomerLogin />} />
+            <Route path="/portal/signup" element={<CustomerLogin />} />
             <Route path="/portal" element={<CustomerPortalHome />} />
             <Route path="/portal/billing" element={<CustomerPortalBilling />} />
+            <Route path="/portal/bookings" element={<CustomerPortalBookingsList />} />
+            <Route path="/portal/bookings/:id" element={<CustomerPortalBookings />} />
+            <Route path="/portal/settings" element={<CustomerPortalSettings />} />
+            
+            {/* Auth Routes */}
+            <Route path="/auth" element={<AdminLogin />} />
             
             {/* Legacy Routes */}
             <Route path="/signup" element={<SignUp />} />
@@ -359,9 +372,7 @@ function App() {
             />
             
             
-            {/* Customer Portal Routes */}
-            <Route path="/portal" element={<ComingSoonPage />} />
-            <Route path="/portal/*" element={<ComingSoonPage />} />
+            {/* Remove duplicate portal routes - they're handled above */}
             
             {/* Health Endpoints */}
             <Route path="/health/admin" element={<div>✅ Admin OK</div>} />

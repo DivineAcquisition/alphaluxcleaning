@@ -26,7 +26,7 @@ export function detectDomain(): DomainInfo {
     };
   }
   
-  // Development/localhost detection
+  // Development/localhost detection - allow all routes for development
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
     return {
       subdomain: 'admin', 
@@ -34,21 +34,21 @@ export function detectDomain(): DomainInfo {
       isProduction: false,
       targetAudience: 'admin',
       hostRole: 'admin',
-      allowedRoutes: ['/login', '/signup', '/onboard', '/dashboard', '/app', '/admin', '/billing', '/integrations'],
+      allowedRoutes: ['/', '/login', '/signup', '/auth', '/portal', '/portal/login', '/portal/signup', '/portal/billing', '/portal/bookings', '/portal/settings', '/customer-auth', '/dashboard', '/app', '/admin', '/billing', '/integrations'],
       brandColor: '#A58FFF'
     };
   }
   
-  // Lovable preview detection
+  // Lovable preview detection - allow all routes for preview
   if (hostname.includes('lovable.app') || hostname.includes('lovable.dev') || hostname.includes('lovableproject.com')) {
     return {
-      subdomain: 'book',
+      subdomain: 'admin',
       baseDomain: 'bayareacleaningpros.com',
       isProduction: false,
-      targetAudience: 'guest',
-      hostRole: 'book',
-      allowedRoutes: ['/b'],
-      brandColor: '#6600FF'
+      targetAudience: 'admin',
+      hostRole: 'admin',
+      allowedRoutes: ['/', '/login', '/signup', '/auth', '/portal', '/portal/login', '/portal/signup', '/portal/billing', '/portal/bookings', '/portal/settings', '/customer-auth', '/dashboard', '/app', '/admin', '/billing', '/integrations'],
+      brandColor: '#A58FFF'
     };
   }
   
@@ -75,7 +75,7 @@ export function detectDomain(): DomainInfo {
     'portal.bayareacleaningpros.com': {
       targetAudience: 'customer',
       hostRole: 'portal',
-      allowedRoutes: ['/portal', '/customer-auth', '/customer-dashboard'],
+      allowedRoutes: ['/portal', '/portal/login', '/portal/signup', '/portal/billing', '/portal/bookings', '/portal/settings', '/customer-auth', '/customer-dashboard'],
       brandColor: '#6600FF'
     },
     'try.bayareacleaningpros.com': {
