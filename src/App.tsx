@@ -24,6 +24,10 @@ import ReviewsPortal from '@/pages/ReviewsPortal';
 import CustomerPortalDashboard from '@/pages/CustomerPortalDashboard';
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
+import ContractorLogin from '@/pages/ContractorLogin';
+import ContractorUpcoming from '@/pages/ContractorUpcoming';
+import ContractorPayouts from '@/pages/ContractorPayouts';
+import ContractorAvailability from '@/pages/ContractorAvailability';
 import BookingConfirmation from '@/pages/BookingConfirmation';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import PaymentSuccess from '@/pages/PaymentSuccess';
@@ -282,7 +286,12 @@ function App() {
             />
             
             {/* Contractor Portal Routes */}
-            <Route path="/contractor-auth" element={<ContractorAuth />} />
+            <Route path="/contractor-auth" element={<ContractorLogin />} />
+            <Route path="/login" element={<ContractorLogin />} />
+            <Route path="/confirmation/:bookingId" element={<OrderConfirmation />} />
+            <Route path="/upcoming" element={<ContractorUpcoming />} />
+            <Route path="/payouts" element={<ContractorPayouts />} />
+            <Route path="/availability" element={<ContractorAvailability />} />
             <Route 
               path="/contractor" 
               element={

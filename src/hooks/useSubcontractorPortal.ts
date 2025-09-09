@@ -352,6 +352,43 @@ export function useSubcontractorPortal() {
     }
   };
 
+  // Respond to job assignment
+  const respondToAssignment = async (assignmentId: string, action: 'accept' | 'decline') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('assignment-response', {
+        body: {
+          assignment_id: assignmentId,
+          action
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Job ${action}ed successfully`,
+      });
+
+      // Refresh jobs
+      if (subcontractorId) {
+        await Promise.all([
+          fetchTodaysJobs(subcontractorId),
+          fetchUpcomingJobs(subcontractorId)
+        ]);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error(`Error ${action}ing assignment:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${action} job`,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const refreshJobs = async () => {
     if (subcontractorId) {
       await Promise.all([
@@ -389,6 +426,7 @@ export function useSubcontractorPortal() {
     checkOut,
     uploadJobPhotos,
     requestTimeOff,
+    respondToAssignment,
     refreshJobs,
   };
 }
