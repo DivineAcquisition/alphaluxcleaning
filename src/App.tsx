@@ -87,7 +87,11 @@ function App() {
             <DomainAwareRouter>
             <Routes>
             <Route path="/" element={<DomainAwareHome />} />
-            <Route path="/auth" element={<Auth />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute requireAdmin>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
             <Route path="/signup" element={<SignUp />} />
             <Route 
               path="/admin" 
