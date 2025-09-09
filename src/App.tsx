@@ -5,6 +5,8 @@ import { DomainAwareRouter } from '@/components/DomainAwareRouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
+import { HelmetProvider } from 'react-helmet-async';
+import ComingSoonPage from '@/pages/ComingSoonPage';
 
 // Pages
 import Index from '@/pages/Index';
@@ -74,10 +76,11 @@ function ProtectedRoute({ children, requireAdmin = false }: { children: React.Re
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <DomainAwareRouter>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <DomainAwareRouter>
             <Routes>
             <Route path="/" element={<DomainAwareHome />} />
             <Route path="/auth" element={<Auth />} />
@@ -329,6 +332,17 @@ function App() {
               } 
             />
             
+            
+            {/* Customer Portal Routes */}
+            <Route path="/portal" element={<ComingSoonPage />} />
+            <Route path="/portal/*" element={<ComingSoonPage />} />
+            
+            {/* Health Endpoints */}
+            <Route path="/health/admin" element={<div>✅ Admin OK</div>} />
+            <Route path="/health/book" element={<div>✅ Book OK</div>} />
+            <Route path="/health/sub" element={<div>✅ Sub OK</div>} />
+            <Route path="/health/portal" element={<div>✅ Portal OK</div>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </DomainAwareRouter>
@@ -337,6 +351,7 @@ function App() {
         <Sonner />
       </AuthProvider>
     </QueryClientProvider>
+  </HelmetProvider>
   );
 }
 

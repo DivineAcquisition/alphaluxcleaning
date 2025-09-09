@@ -3,6 +3,10 @@ export interface DomainInfo {
   baseDomain: string;
   isProduction: boolean;
   targetAudience: 'admin' | 'contractor' | 'customer' | 'guest';
+  hostRole: 'admin' | 'book' | 'sub' | 'portal' | 'try' | 'root';
+  allowedRoutes: string[];
+  brandColor: string;
+  redirectTo?: string;
 }
 
 export function detectDomain(): DomainInfo {
@@ -15,54 +19,101 @@ export function detectDomain(): DomainInfo {
       subdomain: 'book',
       baseDomain: 'bayareacleaningpros.com',
       isProduction: false,
-      targetAudience: 'guest'
+      targetAudience: 'guest',
+      hostRole: 'book',
+      allowedRoutes: ['/'],
+      brandColor: '#6600FF'
     };
   }
   
   // Development/localhost detection
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
     return {
-      subdomain: 'app', // Default to admin in development
+      subdomain: 'admin', 
       baseDomain: 'bayareacleaningpros.com',
       isProduction: false,
-      targetAudience: 'admin'
+      targetAudience: 'admin',
+      hostRole: 'admin',
+      allowedRoutes: ['/login', '/signup', '/onboard', '/dashboard', '/app', '/admin', '/billing', '/integrations'],
+      brandColor: '#A58FFF'
     };
   }
   
   // Lovable preview detection
   if (hostname.includes('lovable.app') || hostname.includes('lovable.dev') || hostname.includes('lovableproject.com')) {
     return {
-      subdomain: 'book', // Use guest mode to avoid auth redirects
+      subdomain: 'book',
       baseDomain: 'bayareacleaningpros.com',
       isProduction: false,
-      targetAudience: 'guest'
+      targetAudience: 'guest',
+      hostRole: 'book',
+      allowedRoutes: ['/b'],
+      brandColor: '#6600FF'
     };
   }
   
-  // Production domain detection
-  const parts = hostname.split('.');
+  // Production multi-host detection
+  const hostRoleMap: Record<string, Omit<DomainInfo, 'subdomain' | 'baseDomain' | 'isProduction'>> = {
+    'admin.bayareacleaningpros.com': {
+      targetAudience: 'admin',
+      hostRole: 'admin',
+      allowedRoutes: ['/login', '/signup', '/onboard', '/dashboard', '/app', '/admin', '/billing', '/integrations', '/auth'],
+      brandColor: '#A58FFF'
+    },
+    'book.bayareacleaningpros.com': {
+      targetAudience: 'guest', 
+      hostRole: 'book',
+      allowedRoutes: ['/b', '/', '/order-confirmation', '/payment-confirmation', '/payment-success', '/booking-confirmation', '/order-status'],
+      brandColor: '#6600FF'
+    },
+    'contractor.bayareacleaningpros.com': {
+      targetAudience: 'contractor',
+      hostRole: 'sub', 
+      allowedRoutes: ['/today', '/job', '/offer', '/contractor', '/auth'],
+      brandColor: '#A58FFF'
+    },
+    'portal.bayareacleaningpros.com': {
+      targetAudience: 'customer',
+      hostRole: 'portal',
+      allowedRoutes: ['/portal', '/customer-auth', '/customer-dashboard'],
+      brandColor: '#6600FF'
+    },
+    'try.bayareacleaningpros.com': {
+      targetAudience: 'guest',
+      hostRole: 'try',
+      allowedRoutes: [],
+      brandColor: '#A58FFF',
+      redirectTo: 'https://admin.bayareacleaningpros.com/signup'
+    },
+    'bayareacleaningpros.com': {
+      targetAudience: 'guest',
+      hostRole: 'root', 
+      allowedRoutes: [],
+      brandColor: '#6600FF',
+      redirectTo: 'https://try.bayareacleaningpros.com'
+    }
+  };
+
+  const hostConfig = hostRoleMap[hostname];
   
-  if (parts.length >= 3) {
-    // Handle regular single-level subdomains
-    const subdomain = parts[0];
-    const baseDomain = parts.slice(1).join('.');
-    
-    const targetAudience = getTargetAudience(subdomain);
-    
+  if (hostConfig) {
     return {
-      subdomain,
-      baseDomain,
+      subdomain: hostname.split('.')[0] || 'root',
+      baseDomain: 'bayareacleaningpros.com',
       isProduction: true,
-      targetAudience
+      ...hostConfig
     };
   }
   
-  // Fallback for apex domain or unknown structure
+  // Fallback for unknown hosts
   return {
-    subdomain: 'app',
+    subdomain: 'admin',
     baseDomain: hostname,
     isProduction: true,
-    targetAudience: 'admin'
+    targetAudience: 'admin',
+    hostRole: 'admin',
+    allowedRoutes: ['/login', '/signup', '/dashboard', '/app', '/admin'],
+    brandColor: '#A58FFF'
   };
 }
 
