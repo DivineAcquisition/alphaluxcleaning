@@ -92,6 +92,51 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_tokens: {
+        Row: {
+          booking_id: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          subcontractor_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          subcontractor_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          subcontractor_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_tokens_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auth_rate_limits: {
         Row: {
           attempt_count: number
@@ -133,15 +178,20 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone: string | null
+          entered_sqft: number | null
           estimated_duration: number | null
           id: string
           order_id: string | null
+          price_calc_meta: Json | null
           priority: string | null
           service_address: string
           service_date: string
+          service_id: string | null
           service_time: string
           special_instructions: string | null
           status: string
+          subcontractor_payout_amount: number | null
+          subcontractor_payout_mode: string | null
           updated_at: string
         }
         Insert: {
@@ -151,15 +201,20 @@ export type Database = {
           customer_email: string
           customer_name: string
           customer_phone?: string | null
+          entered_sqft?: number | null
           estimated_duration?: number | null
           id?: string
           order_id?: string | null
+          price_calc_meta?: Json | null
           priority?: string | null
           service_address: string
           service_date: string
+          service_id?: string | null
           service_time: string
           special_instructions?: string | null
           status?: string
+          subcontractor_payout_amount?: number | null
+          subcontractor_payout_mode?: string | null
           updated_at?: string
         }
         Update: {
@@ -169,15 +224,20 @@ export type Database = {
           customer_email?: string
           customer_name?: string
           customer_phone?: string | null
+          entered_sqft?: number | null
           estimated_duration?: number | null
           id?: string
           order_id?: string | null
+          price_calc_meta?: Json | null
           priority?: string | null
           service_address?: string
           service_date?: string
+          service_id?: string | null
           service_time?: string
           special_instructions?: string | null
           status?: string
+          subcontractor_payout_amount?: number | null
+          subcontractor_payout_mode?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -186,6 +246,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -228,6 +295,67 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      checkpoints: {
+        Row: {
+          booking_id: string
+          company_id: string
+          created_at: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          photos: Json | null
+          subcontractor_id: string
+          type: string
+        }
+        Insert: {
+          booking_id: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          photos?: Json | null
+          subcontractor_id: string
+          type: string
+        }
+        Update: {
+          booking_id?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          photos?: Json | null
+          subcontractor_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoints_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoints_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoints_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commercial_estimates: {
         Row: {
@@ -372,6 +500,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      companies: {
+        Row: {
+          brand_config: Json | null
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          plan: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_config?: Json | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          plan?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_config?: Json | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          plan?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       customer_feedback: {
         Row: {
@@ -1533,6 +1694,74 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          active: boolean | null
+          adders: Json | null
+          cleaning_speed_sqft_per_hour: number | null
+          company_id: string
+          created_at: string | null
+          description: string | null
+          hourly_rate: number | null
+          id: string
+          name: string
+          payout_flat_amount: number | null
+          payout_hourly_rate: number | null
+          payout_mode: string | null
+          payout_percent: number | null
+          pricing_mode: string | null
+          profit_multiplier: number | null
+          tiers: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          adders?: Json | null
+          cleaning_speed_sqft_per_hour?: number | null
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          payout_flat_amount?: number | null
+          payout_hourly_rate?: number | null
+          payout_mode?: string | null
+          payout_percent?: number | null
+          pricing_mode?: string | null
+          profit_multiplier?: number | null
+          tiers?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          adders?: Json | null
+          cleaning_speed_sqft_per_hour?: number | null
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          payout_flat_amount?: number | null
+          payout_hourly_rate?: number | null
+          payout_mode?: string | null
+          payout_percent?: number | null
+          pricing_mode?: string | null
+          profit_multiplier?: number | null
+          tiers?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_applications: {
         Row: {
           address: string | null
@@ -1748,6 +1977,56 @@ export type Database = {
           },
         ]
       }
+      subcontractor_metrics: {
+        Row: {
+          acceptance_rate: number | null
+          avg_duration_minutes: number | null
+          avg_rating: number | null
+          created_at: string | null
+          id: string
+          jobs_completed: number | null
+          on_time_rate: number | null
+          period_end: string
+          period_start: string
+          subcontractor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          acceptance_rate?: number | null
+          avg_duration_minutes?: number | null
+          avg_rating?: number | null
+          created_at?: string | null
+          id?: string
+          jobs_completed?: number | null
+          on_time_rate?: number | null
+          period_end: string
+          period_start: string
+          subcontractor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          acceptance_rate?: number | null
+          avg_duration_minutes?: number | null
+          avg_rating?: number | null
+          created_at?: string | null
+          id?: string
+          jobs_completed?: number | null
+          on_time_rate?: number | null
+          period_end?: string
+          period_start?: string
+          subcontractor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_metrics_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_notifications: {
         Row: {
           created_at: string
@@ -1909,10 +2188,88 @@ export type Database = {
           },
         ]
       }
+      subcontractor_service_areas: {
+        Row: {
+          created_at: string | null
+          id: string
+          subcontractor_id: string
+          zip: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          subcontractor_id: string
+          zip: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subcontractor_id?: string
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_service_areas_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_timeoff: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: string | null
+          subcontractor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: string | null
+          subcontractor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: string | null
+          subcontractor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_timeoff_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractors: {
         Row: {
           account_status: string | null
+          active: boolean | null
           address: string
+          avg_duration_minutes: number | null
           base_rate_type:
             | Database["public"]["Enums"]["contractor_rate_type"]
             | null
@@ -1939,6 +2296,7 @@ export type Database = {
             | null
           phone: string | null
           rating: number | null
+          reliability_score: number | null
           review_count: number | null
           service_zones: string[] | null
           skills: string[] | null
@@ -1956,7 +2314,9 @@ export type Database = {
         }
         Insert: {
           account_status?: string | null
+          active?: boolean | null
           address: string
+          avg_duration_minutes?: number | null
           base_rate_type?:
             | Database["public"]["Enums"]["contractor_rate_type"]
             | null
@@ -1983,6 +2343,7 @@ export type Database = {
             | null
           phone?: string | null
           rating?: number | null
+          reliability_score?: number | null
           review_count?: number | null
           service_zones?: string[] | null
           skills?: string[] | null
@@ -2000,7 +2361,9 @@ export type Database = {
         }
         Update: {
           account_status?: string | null
+          active?: boolean | null
           address?: string
+          avg_duration_minutes?: number | null
           base_rate_type?:
             | Database["public"]["Enums"]["contractor_rate_type"]
             | null
@@ -2027,6 +2390,7 @@ export type Database = {
             | null
           phone?: string | null
           rating?: number | null
+          reliability_score?: number | null
           review_count?: number | null
           service_zones?: string[] | null
           skills?: string[] | null
@@ -2820,6 +3184,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_quote_snapshot: {
+        Args: { p_addons?: Json; p_service_id: string; p_sqft: number }
+        Returns: Json
+      }
       calculate_subcontractor_tier: {
         Args: { p_completed_jobs: number; p_review_count: number }
         Returns: number
@@ -2842,6 +3210,10 @@ export type Database = {
       }
       check_suspicious_activity: {
         Args: { p_user_id: string }
+        Returns: Json
+      }
+      compute_payout: {
+        Args: { p_quote_total: number; p_service_id: string; p_sqft?: number }
         Returns: Json
       }
       create_initial_admin_users: {
@@ -2969,6 +3341,24 @@ export type Database = {
       get_customer_order_status_secure: {
         Args: { p_customer_email: string; p_order_id: string }
         Returns: Json
+      }
+      get_eligible_subcontractors: {
+        Args: {
+          p_booking_id: string
+          p_company_id: string
+          p_end_time: string
+          p_service_date: string
+          p_start_time: string
+          p_zip: string
+        }
+        Returns: {
+          distance_score: number
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          reliability_score: number
+        }[]
       }
       get_estimate_status_safe: {
         Args: { p_email: string; p_estimate_id: string }
