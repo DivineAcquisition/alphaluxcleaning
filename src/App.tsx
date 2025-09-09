@@ -12,10 +12,7 @@ import { DomainAwareHome } from '@/components/DomainAwareHome';
 import Auth from '@/pages/Auth';
 import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
-import AdminPortal from '@/pages/AdminPortal';
-import SubcontractorManagement from '@/pages/SubcontractorManagement';
-import CustomerManagementHub from '@/pages/CustomerManagementHub';
-import SecurityCenter from '@/pages/SecurityCenter';
+// Removed deleted pages
 import UserManagement from '@/pages/UserManagement';
 import CustomerDatabaseAdmin from '@/pages/CustomerDatabaseAdmin';
 import AdminBookingPreview from '@/pages/AdminBookingPreview';
@@ -42,7 +39,7 @@ import CustomerPayments from '@/pages/CustomerPayments';
 import SubcontractorDashboard from '@/pages/SubcontractorDashboard';
 import SubcontractorPortal from '@/pages/SubcontractorPortal';
 import SubcontractorJobAcceptance from '@/pages/SubcontractorJobAcceptance';
-import DispatcherDashboard from '@/pages/DispatcherDashboard';
+// Remove deleted pages from imports
 import NotFound from '@/pages/NotFound';
 
 // Contractor Portal Components

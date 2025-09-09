@@ -63,14 +63,7 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
 
       if (error) throw error;
 
-      // Log the modification
-      await supabase.from('service_modifications').insert({
-        order_id: service.id,
-        modification_type: 'reschedule',
-        old_value: oldValues,
-        new_value: newValues,
-        reason: 'Customer requested reschedule'
-      });
+      // Note: Simplified - removed complex modification logging
 
       // Send email notification
       const { data: user } = await supabase.auth.getUser();

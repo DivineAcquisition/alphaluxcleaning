@@ -60,14 +60,7 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
 
       if (error) throw error;
 
-      // Log the discount offer
-      await supabase.from('service_modifications').insert({
-        order_id: service.id,
-        modification_type: 'discount_offer',
-        old_value: { amount: service.amount },
-        new_value: { amount: discountedAmount, discount_percent: 25 },
-        reason: 'Retention discount accepted'
-      });
+      // Note: Simplified - removed complex modification logging
 
       // Send email notification
       const { data: user } = await supabase.auth.getUser();
@@ -143,14 +136,7 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
 
       if (error) throw error;
 
-      // Log the cancellation
-      await supabase.from('service_modifications').insert({
-        order_id: service.id,
-        modification_type: 'cancel',
-        old_value: { service_status: service.service_status },
-        new_value: { service_status: 'cancelled' },
-        reason: reason
-      });
+      // Note: Simplified - removed complex modification logging
 
       // Send cancellation email
       const { data: user } = await supabase.auth.getUser();

@@ -1,36 +1,20 @@
 project_id = "kqoezqzogleaaupjzxch"
 
-[functions.sync-to-airtable]
-verify_jwt = false
+# Core Business Edge Functions - Essential Only
 
-[functions.send-booking-webhook]
-verify_jwt = false
-
-[functions.send-booking-transaction-to-zapier]
-verify_jwt = false
-
-[functions.enhanced-booking-webhook]
+[functions.create-payment-intent]
 verify_jwt = false
 
 [functions.enhanced-booking-webhook-v2]
 verify_jwt = false
 
-[functions.create-payment-intent]
-verify_jwt = false
-
-[functions.get-stripe-config]
-verify_jwt = false
-
-[functions.get-order-details]
-verify_jwt = false
-
-[functions.update-order-details]
-verify_jwt = false
-
-[functions.create-test-subcontractor]
-verify_jwt = false
-
 [functions.send-subcontractor-updates]
+verify_jwt = false
+
+[functions.join-expansion-waitlist]
+verify_jwt = false
+
+[functions.send-referral-email]
 verify_jwt = false
 
 [functions.auth-email-handler]
@@ -39,11 +23,5 @@ verify_jwt = false
 [functions.send-admin-job-notification]
 verify_jwt = false
 
-[functions.send-order-entry-webhook]
-verify_jwt = false
-
-[functions.join-expansion-waitlist]
-verify_jwt = false
-
-[functions.send-referral-email]
+[functions.get-order-details]
 verify_jwt = false
