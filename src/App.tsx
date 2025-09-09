@@ -48,6 +48,9 @@ import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
 import ContractorApplications from '@/pages/contractor/ContractorApplications';
 
 import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
+import TeamManagement from '@/pages/TeamManagement';
+import TeamMemberProfile from '@/pages/TeamMemberProfile';
+import SubcontractorPortalToday from '@/pages/SubcontractorPortalToday';
 
 const queryClient = new QueryClient();
 
@@ -248,6 +251,32 @@ function App() {
             />
             
             <Route path="/subcontractor-response" element={<SubcontractorJobAcceptance />} />
+            
+            {/* New Subcontractor Management System Routes */}
+            <Route 
+              path="/app/team" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <TeamManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/app/team/:id" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <TeamMemberProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/today" 
+              element={
+                <ProtectedRoute>
+                  <SubcontractorPortalToday />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Contractor Portal Routes */}
             <Route path="/contractor-auth" element={<ContractorAuth />} />
