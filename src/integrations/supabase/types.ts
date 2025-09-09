@@ -1012,6 +1012,42 @@ export type Database = {
           },
         ]
       }
+      email_events: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          message_id: string | null
+          payload: Json | null
+          status: string | null
+          template_key: string
+          to_email: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          payload?: Json | null
+          status?: string | null
+          template_key: string
+          to_email: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          payload?: Json | null
+          status?: string | null
+          template_key?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           clicked_at: string | null
@@ -1069,6 +1105,99 @@ export type Database = {
           subject?: string
           template_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_settings: {
+        Row: {
+          brand: Json | null
+          company_id: string
+          created_at: string | null
+          from_email: string | null
+          from_name: string | null
+          id: string
+          reply_to: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand?: Json | null
+          company_id: string
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          reply_to?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: Json | null
+          company_id?: string
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          reply_to?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          overrides: Json | null
+          react_component_key: string
+          subject: string
+          template_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          overrides?: Json | null
+          react_component_key: string
+          subject: string
+          template_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          overrides?: Json | null
+          react_component_key?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      email_webhook_receipts: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          message_id: string
+          payload: Json
+          provider_event: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_id: string
+          payload: Json
+          provider_event: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          message_id?: string
+          payload?: Json
+          provider_event?: string
         }
         Relationships: []
       }
