@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,10 +16,17 @@ interface AuthContextType {
   isCustomer: boolean;
   loading: boolean;
   companyId: string;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  // Enhanced auth methods
+  requestAdminOTP: (email: string) => Promise<{ error: any }>;
+  verifyAdminOTP: (email: string, token: string) => Promise<{ error: any }>;
+  requestCustomerOTP: (email: string, name?: string) => Promise<{ error: any }>;
+  verifyCustomerOTP: (email: string, token: string, name?: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   getUserRole: () => Promise<string | null>;
+  // Legacy methods for backwards compatibility
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   // Role-based boolean flags
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === 'admin' || userRole === 'owner';
   const isManager = userRole === 'manager';
   const isContractor = userRole === 'contractor';
   const isCustomer = userRole === 'customer';
@@ -62,29 +68,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Get role from database
+          // Get role from company_users table
           setTimeout(async () => {
             try {
-              const { data, error } = await supabase.rpc('get_user_role', {
-                _user_id: session.user.id,
-                _company_id: COMPANY_ID
-              });
+              const { data, error } = await supabase
+                .from('company_users')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
               
               if (!error && data) {
-                setUserRole(data);
+                setUserRole(data.role);
               } else {
-                // Default to customer if no role found
-                setUserRole('customer');
-                // Create customer role
-                await supabase
-                  .from('user_roles')
-                  .upsert({ 
-                    user_id: session.user.id, 
-                    role: 'customer',
-                    company_id: COMPANY_ID
-                  }, { 
-                    onConflict: 'user_id,role,company_id' 
-                  });
+                // Check if it's legacy user_roles table
+                const { data: legacyRole } = await supabase.rpc('get_user_role', {
+                  _user_id: session.user.id,
+                  _company_id: COMPANY_ID
+                });
+                
+                if (legacyRole) {
+                  setUserRole(legacyRole);
+                } else {
+                  setUserRole('customer');
+                }
               }
             } catch (error) {
               console.log('Error getting user role:', error);
@@ -106,14 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Get role from database immediately
-        const { data, error } = await supabase.rpc('get_user_role', {
-          _user_id: session.user.id,
-          _company_id: COMPANY_ID
-        });
+        // Get role from company_users table
+        const { data, error } = await supabase
+          .from('company_users')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
         
         if (!error && data) {
-          setUserRole(data);
+          setUserRole(data.role);
         } else {
           setUserRole('customer');
         }
@@ -125,6 +132,166 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Enhanced OTP-based authentication methods
+  const requestAdminOTP = async (email: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-auth-otp', {
+        body: { email, type: 'request' }
+      });
+
+      if (error) {
+        toast({
+          title: "Request Failed", 
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Verification Code Sent",
+        description: "Check your email for the verification code.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Request Error",
+        description: "Failed to send verification code",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const verifyAdminOTP = async (email: string, token: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-auth-otp', {
+        body: { email, type: 'verify', token }
+      });
+
+      if (error || !data?.user) {
+        toast({
+          title: "Verification Failed",
+          description: "Invalid or expired code",
+          variant: "destructive", 
+        });
+        return { error: error || new Error('Verification failed') };
+      }
+
+      toast({
+        title: "Welcome Back!",
+        description: "Successfully signed in.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Verification Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const requestCustomerOTP = async (email: string, name?: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('customer-auth-otp', {
+        body: { email, type: 'request', name }
+      });
+
+      if (error) {
+        toast({
+          title: "Request Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Verification Code Sent", 
+        description: "Check your email for the verification code.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Request Error", 
+        description: "Failed to send verification code",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const verifyCustomerOTP = async (email: string, token: string, name?: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-auth-otp', {
+        body: { email, type: 'verify', token, name }
+      });
+
+      if (error || !data?.user) {
+        toast({
+          title: "Verification Failed",
+          description: "Invalid or expired code", 
+          variant: "destructive",
+        });
+        return { error: error || new Error('Verification failed') };
+      }
+
+      // Store customer portal token in localStorage for session management
+      if (data.portalToken) {
+        localStorage.setItem('customer_portal_token', data.portalToken);
+      }
+
+      toast({
+        title: "Welcome!",
+        description: "Successfully signed in to customer portal.",
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Verification Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Google Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Google Sign In Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  // Legacy password-based authentication (backwards compatibility)
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -204,6 +371,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('customer_portal_token');
     setUserRole(null);
     setUser(null);
     setSession(null);
@@ -224,10 +392,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isCustomer,
     loading,
     companyId: COMPANY_ID,
-    signIn,
-    signUp,
+    // Enhanced auth methods
+    requestAdminOTP,
+    verifyAdminOTP,
+    requestCustomerOTP,
+    verifyCustomerOTP,
+    signInWithGoogle,
     signOut,
     getUserRole,
+    // Legacy methods
+    signIn,
+    signUp,
   };
 
   return (

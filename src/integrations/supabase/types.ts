@@ -176,12 +176,14 @@ export type Database = {
           company_id: string | null
           created_at: string
           customer_email: string
+          customer_id: string | null
           customer_name: string
           customer_phone: string | null
           entered_sqft: number | null
           estimated_duration: number | null
           id: string
           order_id: string | null
+          payment_status: string | null
           price_calc_meta: Json | null
           priority: string | null
           service_address: string
@@ -190,6 +192,8 @@ export type Database = {
           service_time: string
           special_instructions: string | null
           status: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
           subcontractor_payout_amount: number | null
           subcontractor_payout_mode: string | null
           updated_at: string
@@ -199,12 +203,14 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           customer_email: string
+          customer_id?: string | null
           customer_name: string
           customer_phone?: string | null
           entered_sqft?: number | null
           estimated_duration?: number | null
           id?: string
           order_id?: string | null
+          payment_status?: string | null
           price_calc_meta?: Json | null
           priority?: string | null
           service_address: string
@@ -213,6 +219,8 @@ export type Database = {
           service_time: string
           special_instructions?: string | null
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           subcontractor_payout_amount?: number | null
           subcontractor_payout_mode?: string | null
           updated_at?: string
@@ -222,12 +230,14 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           customer_email?: string
+          customer_id?: string | null
           customer_name?: string
           customer_phone?: string | null
           entered_sqft?: number | null
           estimated_duration?: number | null
           id?: string
           order_id?: string | null
+          payment_status?: string | null
           price_calc_meta?: Json | null
           priority?: string | null
           service_address?: string
@@ -236,11 +246,20 @@ export type Database = {
           service_time?: string
           special_instructions?: string | null
           status?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           subcontractor_payout_amount?: number | null
           subcontractor_payout_mode?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_order_id_fkey"
             columns: ["order_id"]
@@ -534,6 +553,41 @@ export type Database = {
         }
         Relationships: []
       }
+      company_users: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_feedback: {
         Row: {
           booking_id: string | null
@@ -732,6 +786,54 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_portal_sessions: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_id: string
+          expires_at: string
+          id: string
+          last_active_at: string
+          revoked: boolean | null
+          session_token: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_id: string
+          expires_at?: string
+          id?: string
+          last_active_at?: string
+          revoked?: boolean | null
+          session_token: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_id?: string
+          expires_at?: string
+          id?: string
+          last_active_at?: string
+          revoked?: boolean | null
+          session_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_sessions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profiles: {
         Row: {
           address: string | null
@@ -859,6 +961,53 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          address: Json | null
+          company_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notify_email: boolean | null
+          phone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: Json | null
+          company_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          notify_email?: boolean | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: Json | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notify_email?: boolean | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -3334,6 +3483,10 @@ export type Database = {
         Args: { p_booking_id: string; p_customer_email: string }
         Returns: Json
       }
+      get_current_customer_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_customer_data_by_email_safe: {
         Args: { p_email: string }
         Returns: Json
@@ -3439,6 +3592,10 @@ export type Database = {
           metadata: Json
           relevance_score: number
         }[]
+      }
+      is_company_user: {
+        Args: { target_company_id: string }
+        Returns: boolean
       }
       log_performance_metric: {
         Args: {

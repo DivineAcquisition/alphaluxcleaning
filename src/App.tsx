@@ -14,6 +14,10 @@ import { DomainAwareHome } from '@/components/DomainAwareHome';
 import Auth from '@/pages/Auth';
 import SignUp from '@/pages/SignUp';
 import AdminDashboard from '@/pages/AdminDashboard';
+import AdminLogin from '@/pages/AdminLogin';
+import CustomerLogin from '@/pages/CustomerLogin';
+import CustomerPortalHome from '@/pages/CustomerPortalHome';
+import CustomerPortalBilling from '@/pages/CustomerPortalBilling';
 // Removed deleted pages
 import UserManagement from '@/pages/UserManagement';
 import CustomerDatabaseAdmin from '@/pages/CustomerDatabaseAdmin';
@@ -86,21 +90,30 @@ function App() {
           <Router>
             <DomainAwareRouter>
             <Routes>
+            {/* Main Routes - Domain Aware */}
             <Route path="/" element={<DomainAwareHome />} />
-          <Route path="/dashboard" element={
-            <ProtectedRoute requireAdmin>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
+            
+            {/* Admin Routes */}
+            <Route path="/login" element={<AdminLogin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute requireAdmin>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Customer Portal Routes */}
+            <Route path="/portal/login" element={<CustomerLogin />} />
+            <Route path="/portal" element={<CustomerPortalHome />} />
+            <Route path="/portal/billing" element={<CustomerPortalBilling />} />
+            
+            {/* Legacy Routes */}
             <Route path="/signup" element={<SignUp />} />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } 
-            />
             <Route 
               path="/admin/customers" 
               element={
