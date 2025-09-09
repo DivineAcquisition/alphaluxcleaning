@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 // Use the existing Stripe configuration from our lib
-import { stripePromise } from '@/lib/stripe';
+import { getStripePromise } from '@/lib/stripe';
 
 interface PaymentFormProps {
   amount: number;
@@ -311,7 +311,7 @@ export default function CustomerPortalBilling() {
                 )}
               </div>
 
-              <Elements stripe={stripePromise}>
+              <Elements stripe={getStripePromise()}>
                 <PaymentForm
                   amount={balance}
                   tipAmount={tipAmount}

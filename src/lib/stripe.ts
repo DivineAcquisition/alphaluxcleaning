@@ -88,6 +88,9 @@ export const hasStripeKey = async (): Promise<boolean> => {
   return stripe !== null;
 };
 
+// Export a function that returns the stripe promise (required by Elements component)
+export const getStripePromise = () => stripePromise;
+
 // Utility function to check if Stripe is ready
 export const checkStripeReady = async (): Promise<boolean> => {
   try {
