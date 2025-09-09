@@ -29,6 +29,7 @@ export function OTPForm({
   const [token, setToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +46,42 @@ export function OTPForm({
     if (!error) {
       setStep('verify');
       onOTPSent();
+      // Start cooldown timer
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setError(error.message);
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleResendCode = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    const { error } = await requestOTP(email, name);
+    
+    if (!error) {
+      // Start cooldown timer
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } else {
       setError(error.message);
     }
@@ -217,19 +254,36 @@ export function OTPForm({
               )}
             </Button>
 
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => {
-                setStep('email');
-                setToken('');
-                setError(null);
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Email
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleResendCode}
+                disabled={isLoading || resendCooldown > 0}
+              >
+                {resendCooldown > 0 ? (
+                  `Resend in ${resendCooldown}s`
+                ) : (
+                  'Resend Code'
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex-1"
+                onClick={() => {
+                  setStep('email');
+                  setToken('');
+                  setError(null);
+                  setResendCooldown(0);
+                }}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            </div>
           </form>
         )}
       </CardContent>

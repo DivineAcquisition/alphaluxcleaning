@@ -28,6 +28,12 @@ verify_jwt = false
 
 # Email Infrastructure Functions
 
+[functions.admin-auth-otp]
+verify_jwt = false
+
+[functions.customer-auth-otp]
+verify_jwt = false
+
 [functions.send-email]
 verify_jwt = false
 
