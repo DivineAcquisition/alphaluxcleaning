@@ -201,7 +201,7 @@ class CustomerErrorBoundary extends Component<Props, State> {
               </Alert>
 
               {/* Error Details (Development) */}
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <Alert>
                   <AlertDescription className="font-mono text-xs">
                     {this.state.error.message}

@@ -19,7 +19,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const stripePromise = loadStripe(process.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// Use the existing Stripe configuration from our lib
+import { stripePromise } from '@/lib/stripe';
 
 interface PaymentFormProps {
   amount: number;

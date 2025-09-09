@@ -143,12 +143,12 @@ export function buildDomainUrl(targetSubdomain: string, path: string = '', searc
 
   // Use environment variables for production URLs when available
   const envUrls: Record<string, string> = {
-    'admin': process.env.APP_URL || '',
-    'book': process.env.BOOK_URL || '',
-    'contractor': process.env.SUB_URL || '',
-    'portal': process.env.PORTAL_URL || '',
-    'try': process.env.TRY_URL || '',
-    'root': process.env.ROOT_URL || ''
+    'admin': import.meta.env.APP_URL || '',
+    'book': import.meta.env.BOOK_URL || '',
+    'contractor': import.meta.env.SUB_URL || '',
+    'portal': import.meta.env.PORTAL_URL || '',
+    'try': import.meta.env.TRY_URL || '',
+    'root': import.meta.env.ROOT_URL || ''
   };
   
   // If we have an environment variable for this subdomain, use it
