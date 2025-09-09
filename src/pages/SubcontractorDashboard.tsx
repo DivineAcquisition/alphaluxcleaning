@@ -351,16 +351,21 @@ const SubcontractorDashboard = () => {
 
       if (updateError) throw updateError;
 
-      // Record the drop
+      // Record the drop event in security logs
       const { error: dropError } = await supabase
-        .from('subcontractor_job_drops')
+        .from('security_logs')
         .insert({
-          subcontractor_id: subcontractor.id,
-          booking_id: bookingId,
-          assignment_id: assignmentId,
-          service_date: serviceDate,
-          hours_before_service: hoursBeforeService,
-          reason: dropReason
+          action: 'subcontractor_job_dropped',
+          user_id: user?.id ?? null,
+          resource: 'job_assignment',
+          details: {
+            subcontractor_id: subcontractor.id,
+            booking_id: bookingId,
+            assignment_id: assignmentId,
+            service_date: serviceDate,
+            hours_before_service: hoursBeforeService,
+            reason: dropReason
+          }
         });
 
       if (dropError) throw dropError;

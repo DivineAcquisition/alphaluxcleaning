@@ -46,7 +46,7 @@ import NotFound from '@/pages/NotFound';
 import ContractorAuth from '@/pages/ContractorAuth';
 import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
 import ContractorApplications from '@/pages/contractor/ContractorApplications';
-import ContractorSubcontractors from '@/pages/contractor/ContractorSubcontractors';
+
 import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
 
 const queryClient = new QueryClient();
@@ -83,7 +83,7 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <AdminPortal />
+                  <AdminDashboard />
                 </ProtectedRoute>
               } 
             />
@@ -91,7 +91,7 @@ function App() {
               path="/admin/customers" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <CustomerManagementHub />
+                  <UserManagement />
                 </ProtectedRoute>
               } 
             />
@@ -99,7 +99,7 @@ function App() {
               path="/admin/subcontractors" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <SubcontractorManagement />
+                  <ContractorSubcontractorHub />
                 </ProtectedRoute>
               } 
             />
@@ -107,7 +107,7 @@ function App() {
               path="/admin/security" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <SecurityCenter />
+                  <AdminDashboard />
                 </ProtectedRoute>
               } 
             />
@@ -147,7 +147,7 @@ function App() {
               path="/subcontractor-management" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <SubcontractorManagement />
+                  <ContractorSubcontractorHub />
                 </ProtectedRoute>
               } 
             />
@@ -173,7 +173,7 @@ function App() {
               path="/admin-portal" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <AdminPortal />
+                  <AdminDashboard />
                 </ProtectedRoute>
               } 
             />
@@ -248,14 +248,6 @@ function App() {
             />
             
             <Route path="/subcontractor-response" element={<SubcontractorJobAcceptance />} />
-            <Route 
-              path="/dispatch" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <DispatcherDashboard />
-                </ProtectedRoute>
-              } 
-            />
             
             {/* Contractor Portal Routes */}
             <Route path="/contractor-auth" element={<ContractorAuth />} />
@@ -264,14 +256,6 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <ContractorDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/contractor/dispatch" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <DispatcherDashboard />
                 </ProtectedRoute>
               } 
             />
@@ -287,7 +271,7 @@ function App() {
               path="/contractor/subcontractors" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <ContractorSubcontractors />
+                  <ContractorSubcontractorHub />
                 </ProtectedRoute>
               } 
             />
@@ -303,7 +287,7 @@ function App() {
               path="/contractor/performance" 
               element={
                 <ProtectedRoute requireAdmin>
-                  <SubcontractorManagement />
+                  <ContractorSubcontractorHub />
                 </ProtectedRoute>
               } 
             />
