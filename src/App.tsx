@@ -60,6 +60,7 @@ import NotFound from '@/pages/NotFound';
 import ContractorAuth from '@/pages/ContractorAuth';
 import ContractorDashboard from '@/pages/contractor/ContractorDashboard';
 import ContractorApplications from '@/pages/contractor/ContractorApplications';
+import { EmailTools } from '@/pages/EmailTools';
 
 import ContractorSubcontractorHub from '@/pages/contractor/ContractorSubcontractorHub';
 import TeamManagement from '@/pages/TeamManagement';
@@ -396,6 +397,9 @@ function App() {
             <Route path="/health/book" element={<div>✅ Book OK</div>} />
             <Route path="/health/sub" element={<div>✅ Sub OK</div>} />
             <Route path="/health/portal" element={<div>✅ Portal OK</div>} />
+            
+            {/* Development Tools */}
+            <Route path="/dev/email-tools" element={<EmailTools />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

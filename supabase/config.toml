@@ -2,6 +2,9 @@ project_id = "kqoezqzogleaaupjzxch"
 
 # Core Business Edge Functions - Essential Only
 
+[functions.test-email]
+verify_jwt = false
+
 [functions.create-payment-intent]
 verify_jwt = false
 

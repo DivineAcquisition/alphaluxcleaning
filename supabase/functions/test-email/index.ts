@@ -26,9 +26,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("📧 Sending test email to:", testEmail);
     console.log("🔑 RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
 
-    // Send simple test email
+    // Send simple test email with guaranteed sender
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <notifications@bayareacleaningpros.com>",
+      from: "Lovable <onboarding@resend.dev>",
       to: [testEmail],
       subject: "🧪 Test Email - System Check",
       html: `
@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }),
       {
-        status: 200, // Return 200 to avoid function errors
+        status: 500, // Return proper error status
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
