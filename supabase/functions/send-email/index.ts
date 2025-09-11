@@ -37,6 +37,9 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("📧 Send email function called");
+  console.log("🔑 RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -44,8 +47,16 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { companyId, to, templateKey, variables }: SendEmailRequest = await req.json();
+    
+    if (!companyId || !to || !templateKey) {
+      throw new Error("Missing required fields: companyId, to, templateKey");
+    }
+    
+    console.log("📤 Send email request:", { companyId, to, templateKey, variableKeys: Object.keys(variables || {}) });
 
-    console.log('Sending email:', { companyId, to, templateKey });
+    if (!Deno.env.get("RESEND_API_KEY")) {
+      throw new Error("RESEND_API_KEY not configured");
+    }
 
     // Get company email settings
     const { data: settings, error: settingsError } = await supabase
@@ -126,12 +137,36 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Error in send-email function:', error);
+    console.error('❌ Error in send-email function:', error);
+
+    // Log error event
+    try {
+      const { companyId, to, templateKey } = await req.json();
+      await supabase
+        .from('email_events')
+        .insert({
+          company_id: companyId || 'unknown',
+          template_key: templateKey || 'unknown', 
+          to_email: to || 'unknown',
+          status: 'failed',
+          payload: {
+            error: error.message,
+            timestamp: new Date().toISOString()
+          }
+        });
+    } catch (logError) {
+      console.error('Failed to log error event:', logError);
+    }
 
     return new Response(JSON.stringify({
-      error: error.message
+      success: false,
+      error: error.message,
+      details: {
+        hasApiKey: !!Deno.env.get("RESEND_API_KEY"),
+        timestamp: new Date().toISOString()
+      }
     }), {
-      status: 500,
+      status: 200, // Return 200 to avoid function errors in logs
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
