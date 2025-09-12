@@ -61,10 +61,28 @@ serve(async (req) => {
       serviceAddress;
 
     console.log("Validating required fields...");
-    if (!amount || !finalCustomerEmail) {
-      console.error("Missing required fields:", { amount, finalCustomerEmail });
-      throw new Error("Missing required fields: amount and customerEmail");
+    
+    // Allow amount = 0 for "Pay After Service" if fullAmount is provided
+    const isPayAfterService = (payment_type === 'pay_after_service' || paymentType === 'pay_after_service');
+    const hasValidAmount = amount > 0 || (isPayAfterService && (fullAmount > 0));
+    
+    if (!hasValidAmount || !finalCustomerEmail) {
+      console.error("Missing required fields:", { 
+        amount, 
+        fullAmount, 
+        isPayAfterService, 
+        hasValidAmount, 
+        finalCustomerEmail 
+      });
+      throw new Error("Missing required fields: valid amount and customerEmail");
     }
+    
+    console.log("Payment type determined:", {
+      isPayAfterService,
+      paymentMethod: payment_method,
+      amount: isPayAfterService ? 0 : amount,
+      fullAmount: fullAmount || amount
+    });
 
     console.log("Initializing Stripe...");
     // Initialize Stripe
@@ -207,8 +225,71 @@ serve(async (req) => {
       });
     }
 
-    console.log("Creating Stripe checkout session...");
-    // Create a one-time payment session (legacy flow)
+    // Handle "Pay After Service" with Stripe Checkout in setup mode
+    if (isPayAfterService) {
+      console.log("Creating Stripe checkout session in setup mode for Pay After Service...");
+      
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        customer_email: customerId ? undefined : finalCustomerEmail,
+        mode: "setup",
+        payment_method_types: ["card"],
+        success_url: `${req.headers.get("origin")}/service-details?setup=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get("origin")}/`,
+        metadata: {
+          payment_type: 'pay_after_service',
+          full_amount: Math.round(fullAmount || amount),
+          squareFootage: squareFootage?.toString() || "",
+          cleaningType: cleaningType || "",  
+          frequency: frequency || "",
+          addOns: addOns?.join(",") || "",
+          newClientSpecial: newClientSpecial ? "true" : "false",
+        }
+      });
+      
+      console.log("Setup checkout session created:", session.id);
+
+      // Create order record with authorized status
+      const orderData = {
+        stripe_session_id: session.id,
+        amount: Math.round(fullAmount || amount), // Store full amount
+        customer_name: finalCustomerName,
+        customer_email: finalCustomerEmail,
+        customer_phone: booking_data?.contactNumber || customerPhone,
+        service_details: booking_data || {
+          squareFootage,
+          cleaningType,
+          frequency,
+          addOns,
+          totalAmount: (fullAmount || amount) / 100,
+          serviceAddress: finalServiceAddress,
+          bedrooms,
+          bathrooms,
+          membershipStatus: membershipStatus || false,
+          addonMemberDiscount: addonMemberDiscount || 0,
+          paymentType: 'pay_after_service'
+        },
+        status: "authorized", // Different status for authorized payments
+        created_at: new Date().toISOString()
+      };
+
+      console.log("Inserting authorized order:", orderData);
+      const { error: orderError } = await supabaseClient.from("orders").insert(orderData);
+      
+      if (orderError) {
+        console.error("Database insert error for authorized order:", orderError);
+        throw new Error(`Database error: ${orderError.message}`);
+      }
+
+      console.log("Authorized order created successfully, returning setup URL");
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    console.log("Creating Stripe checkout session for payment...");
+    // Create a one-time payment session (regular flow)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : finalCustomerEmail,
