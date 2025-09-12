@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
-import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone } from "lucide-react";
+import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink } from "lucide-react";
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ const BookingConfirmation = () => {
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     // Check if admin preview mode
@@ -251,6 +252,62 @@ const BookingConfirmation = () => {
     }
   }, [orderDetails, sessionId, orderId]);
 
+  const handleCopyDetails = async () => {
+    const details = `
+Bay Area Cleaning Pros - Booking Confirmed
+
+📅 Service Date: ${new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}
+⏰ Service Time: ${orderDetails.scheduled_time}
+📋 Order ID: ${orderDetails.id}
+💰 Amount Paid: $${(orderDetails.amount / 100).toFixed(2)}
+
+Customer: ${orderDetails.customer_name}
+Email: ${orderDetails.customer_email}
+${orderDetails.customer_phone ? `Phone: ${orderDetails.customer_phone}` : ''}
+
+Questions? Call (281) 809-9901
+    `.trim();
+
+    try {
+      await navigator.clipboard.writeText(details);
+      setIsCopied(true);
+      toast.success('Booking details copied to clipboard!');
+      setTimeout(() => setIsCopied(false), 3000);
+    } catch (error) {
+      toast.error('Failed to copy details');
+    }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Bay Area Cleaning Pros - Booking Confirmed',
+          text: `Service scheduled for ${new Date(orderDetails.scheduled_date).toLocaleDateString()} at ${orderDetails.scheduled_time}`,
+          url: window.location.href
+        });
+      } catch (error) {
+        console.log('Share cancelled');
+      }
+    } else {
+      handleCopyDetails();
+    }
+  };
+
+  const handleViewOrderStatus = () => {
+    const identifier = sessionId || orderId;
+    if (identifier) {
+      navigate(`/order-status?${sessionId ? 'session_id' : 'order_id'}=${identifier}`);
+    } else {
+      navigate('/order-status');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
@@ -444,6 +501,103 @@ const BookingConfirmation = () => {
               <p>• Our team will arrive at your scheduled time</p>
               <p>• You can manage your booking in the customer portal at <strong>portal.bayareacleaningpros.com</strong></p>
               <p>• We'll send you reminders before your appointment</p>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-center">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Primary Actions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button
+                  onClick={handleViewOrderStatus}
+                  size="lg"
+                  className="flex items-center gap-2 h-14"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  View Order Status
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleCopyDetails}
+                  size="lg"
+                  className="flex items-center gap-2 h-14"
+                >
+                  {isCopied ? <CheckCheck className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                  {isCopied ? 'Copied!' : 'Copy Details'}
+                </Button>
+              </div>
+
+              {/* Contact Options */}
+              <div>
+                <h4 className="font-semibold text-center mb-4">Need Help? Contact Us</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="flex items-center gap-2 h-12"
+                  >
+                    <a href="tel:+12818099901">
+                      <Phone className="h-4 w-4" />
+                      Call Us
+                    </a>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="flex items-center gap-2 h-12"
+                  >
+                    <a href="sms:+12818099901?body=Hi, I have a question about my booking (Order ID: ${orderDetails.id})">
+                      <MessageSquare className="h-4 w-4" />
+                      Text Us
+                    </a>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="flex items-center gap-2 h-12"
+                  >
+                    <a href="mailto:info@bayareacleaningpros.com?subject=Booking Question - Order ${orderDetails.id}">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Share */}
+              <div className="text-center">
+                <Button
+                  variant="ghost"
+                  onClick={handleShare}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share Booking Details
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Emergency Contact */}
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-amber-800 text-sm">
+                  <span className="font-semibold">Need immediate assistance?</span>
+                  <br />
+                  Call our 24/7 hotline: 
+                  <Button variant="link" className="p-0 ml-1 h-auto text-sm font-bold text-amber-900" asChild>
+                    <a href="tel:+12818099901">(281) 809-9901</a>
+                  </Button>
+                </p>
+              </div>
             </CardContent>
           </Card>
 
