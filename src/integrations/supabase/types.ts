@@ -170,6 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_notification_triggers: {
+        Row: {
+          condition_data: Json | null
+          created_at: string
+          event_type: string
+          id: string
+          is_active: boolean
+          notification_template_id: string | null
+          trigger_name: string
+          updated_at: string
+        }
+        Insert: {
+          condition_data?: Json | null
+          created_at?: string
+          event_type: string
+          id?: string
+          is_active?: boolean
+          notification_template_id?: string | null
+          trigger_name: string
+          updated_at?: string
+        }
+        Update: {
+          condition_data?: Json | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          notification_template_id?: string | null
+          trigger_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           assigned_employee_id: string | null
