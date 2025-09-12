@@ -358,35 +358,65 @@ export function CustomStripePayment({
     setIsCreatingIntent(true);
     setError(null);
 
+    console.log('🚀 Starting payment intent creation with data:', {
+      customerEmail: paymentData.customerEmail,
+      customerName: paymentData.customerName,
+      amount: paymentData.amount,
+      paymentType: paymentData.paymentType,
+      cleaningType: paymentData.cleaningType,
+      serviceAddress: paymentData.serviceAddress
+    });
+
     try {
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
         body: paymentData
       });
 
+      console.log('📞 Supabase function response:', { data, error });
+
       if (error) {
-        throw error;
+        console.error('❌ Supabase function error:', error);
+        throw new Error(`Function error: ${error.message || JSON.stringify(error)}`);
       }
 
-      if (data?.client_secret && data?.order_id) {
-        console.log('✅ Received client secret and order_id:', data.order_id);
-        console.log('🔍 Payment type detection:', {
-          setup_intent_id: data.setup_intent_id,
-          payment_intent_id: data.payment_intent_id,
-          amount: paymentData.amount
-        });
-        
-        setClientSecret(data.client_secret);
-        setIsSetupIntent(!!data.setup_intent_id); // True if setup intent, false if payment intent
-        // Store order_id for the return URL
-        localStorage.setItem('current_order_id', data.order_id);
-      } else {
-        throw new Error('No client secret or order_id received');
+      if (!data) {
+        console.error('❌ No data received from function');
+        throw new Error('No response data received from payment service');
       }
+
+      if (!data.success) {
+        console.error('❌ Function returned error:', data.error);
+        throw new Error(data.error || data.details || 'Payment service returned an error');
+      }
+
+      if (!data.client_secret) {
+        console.error('❌ No client secret in response:', data);
+        throw new Error('Payment service did not return a client secret');
+      }
+
+      if (!data.order_id) {
+        console.error('❌ No order ID in response:', data);
+        throw new Error('Payment service did not return an order ID');
+      }
+
+      console.log('✅ Payment intent created successfully:', {
+        orderId: data.order_id,
+        isSetupIntent: data.is_setup_intent,
+        paymentIntentId: data.payment_intent_id,
+        setupIntentId: data.setup_intent_id,
+        amount: data.amount
+      });
+      
+      setClientSecret(data.client_secret);
+      setIsSetupIntent(data.is_setup_intent || !!data.setup_intent_id);
+      localStorage.setItem('current_order_id', data.order_id);
+      
     } catch (err) {
+      console.error('💥 Payment intent creation failed:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to initialize payment';
-      setError(errorMessage);
+      setError(`Payment setup failed: ${errorMessage}`);
       toast({
-        title: "Payment Setup Failed",
+        title: "Payment Setup Failed", 
         description: errorMessage,
         variant: "destructive",
       });
