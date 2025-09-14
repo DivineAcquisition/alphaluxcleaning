@@ -203,7 +203,9 @@ function App() {
             />
             <Route path="/order-status" element={<OrderStatus />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+            <Route path="/booking-confirmation/:orderId" element={<BookingConfirmation />} />
             <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/stripe-test" element={<StripeTestPage />} />

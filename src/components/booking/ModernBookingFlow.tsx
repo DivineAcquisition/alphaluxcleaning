@@ -81,9 +81,8 @@ export function ModernBookingFlow({
     }
   };
 
-  const handleBookingComplete = (paymentData: any) => {
-    console.log('🎉 Booking completed:', paymentData);
-    onComplete?.();
+  const handleBookingComplete = (orderId: string) => {
+    console.log('🎉 Booking completed in ModernBookingFlow:', orderId);
     
     // Clear any stored data
     setBookingData({});
@@ -91,6 +90,12 @@ export function ModernBookingFlow({
     toast.success('Booking completed successfully!', {
       description: 'You will receive a confirmation email shortly.'
     });
+    
+    // Navigate to confirmation page
+    window.location.href = `/booking-confirmation/${orderId}`;
+    
+    // Call onComplete callback if provided
+    onComplete?.();
   };
 
   const canProceed = () => {

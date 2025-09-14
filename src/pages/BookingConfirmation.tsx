@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
@@ -10,9 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
+  const { orderId: urlOrderId } = useParams(); // Get orderId from URL params (/booking-confirmation/:orderId)
   const navigate = useNavigate();
   const sessionId = searchParams.get('session_id');
-  const orderId = searchParams.get('order_id');
+  const queryOrderId = searchParams.get('order_id'); // Get orderId from query params (?order_id=...)
+  
+  // Use URL param orderId first, then query param orderId
+  const orderId = urlOrderId || queryOrderId;
 
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);

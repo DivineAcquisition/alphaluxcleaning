@@ -402,9 +402,11 @@ export function ModernLegacyBooking() {
           }, {} as Record<string, number>)
         }}
         updateBookingData={(updates) => setBookingData(prev => ({ ...prev, ...updates }))}
-        onPaymentSuccess={(sessionId) => {
+        onPaymentSuccess={(orderId) => {
+          console.log('🎉 Payment success in ModernLegacyBooking:', orderId);
           toast.success('Booking completed successfully!');
-          window.location.href = `/order-confirmation?order_id=${sessionId}`;
+          // Navigate to confirmation page with the order ID
+          window.location.href = `/booking-confirmation/${orderId}`;
         }}
         onBack={() => setShowCheckout(false)}
       />
