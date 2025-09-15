@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink } from "lucide-react";
-import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -105,9 +105,9 @@ const BookingConfirmation = () => {
       // Try to fetch by session_id first (existing flow)
       if (sessionId) {
         const result = await supabase
-          .from("orders")
+          .from("bookings")
           .select("*")
-          .eq("stripe_session_id", sessionId)
+          .eq("stripe_checkout_session_id", sessionId)
           .single();
         data = result.data;
         error = result.error;
@@ -116,7 +116,7 @@ const BookingConfirmation = () => {
       // If no data found and we have orderId, try fetching by order ID (new flow)
       if ((!data || error) && orderId) {
         const result = await supabase
-          .from("orders")
+          .from("bookings")
           .select("*")
           .eq("id", orderId)
           .single();
@@ -136,7 +136,7 @@ const BookingConfirmation = () => {
       }
 
       // Check if scheduling is complete
-      if (!data.scheduled_date) {
+      if (!data.service_date) {
         toast.error("Please schedule your service first");
         if (sessionId) {
           navigate(`/schedule-service?session_id=${sessionId}`);
@@ -165,7 +165,7 @@ const BookingConfirmation = () => {
   useEffect(() => {
     const identifier = sessionId || orderId;
     if (!identifier || !orderDetails) return;
-    if (!orderDetails?.scheduled_date) return; // ensure scheduled
+    if (!orderDetails?.service_date) return; // ensure scheduled
     
     const zapierKey = `zapier_booking_sent_${identifier}`;
     const webhookKey = `webhook_booking_sent_${identifier}`;
@@ -260,7 +260,7 @@ const BookingConfirmation = () => {
     const details = `
 Bay Area Cleaning Pros - Booking Confirmed
 
-📅 Service Date: ${new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
+📅 Service Date: ${new Date(orderDetails.service_date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -268,7 +268,7 @@ Bay Area Cleaning Pros - Booking Confirmed
     })}
 ⏰ Service Time: ${orderDetails.scheduled_time}
 📋 Order ID: ${orderDetails.id}
-💰 Amount Paid: $${(orderDetails.amount / 100).toFixed(2)}
+💰 Amount Paid: $${(orderDetails.est_price / 100).toFixed(2)}
 
 Customer: ${orderDetails.customer_name}
 Email: ${orderDetails.customer_email}
@@ -292,7 +292,7 @@ Questions? Call (281) 809-9901
       try {
         await navigator.share({
           title: 'Bay Area Cleaning Pros - Booking Confirmed',
-          text: `Service scheduled for ${new Date(orderDetails.scheduled_date).toLocaleDateString()} at ${orderDetails.scheduled_time}`,
+          text: `Service scheduled for ${new Date(orderDetails.service_date).toLocaleDateString()} at ${orderDetails.time_slot || orderDetails.scheduled_time || 'Time TBD'}`,
           url: window.location.href
         });
       } catch (error) {
@@ -368,7 +368,7 @@ Questions? Call (281) 809-9901
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-blue-600" />
                   <span className="text-lg font-semibold text-blue-800">
-                    {new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
+                     {new Date(orderDetails.service_date).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -378,9 +378,9 @@ Questions? Call (281) 809-9901
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-blue-600" />
-                  <span className="text-lg font-semibold text-blue-800">
-                    {orderDetails.scheduled_time}
-                  </span>
+                   <span className="text-lg font-semibold text-blue-800">
+                     {orderDetails.time_slot || orderDetails.scheduled_time || 'Time TBD'}
+                   </span>
                 </div>
               </div>
             </CardContent>
@@ -403,15 +403,15 @@ Questions? Call (281) 809-9901
                   <Home className="h-4 w-4" />
                   Service Information
                 </h4>
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                  <p><strong>Service Type:</strong> {orderDetails.cleaning_type?.replace(/_/g, ' ')}</p>
-                  <p><strong>Frequency:</strong> {orderDetails.frequency}</p>
-                  <p><strong>Square Footage:</strong> {orderDetails.square_footage} sq ft</p>
-                  <p><strong>Amount Paid:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
-                  {orderDetails.add_ons && orderDetails.add_ons.length > 0 && (
-                    <p><strong>Add-ons:</strong> {orderDetails.add_ons.join(', ')}</p>
-                  )}
-                </div>
+                 <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                   <p><strong>Service Type:</strong> {orderDetails.service_type?.replace(/_/g, ' ')}</p>
+                   <p><strong>Frequency:</strong> {orderDetails.frequency}</p>
+                   <p><strong>Square Footage:</strong> {orderDetails.sqft_or_bedrooms}</p>
+                   <p><strong>Amount Paid:</strong> ${(orderDetails.est_price / 100).toFixed(2)}</p>
+                   {orderDetails.addons && orderDetails.addons.length > 0 && (
+                     <p><strong>Add-ons:</strong> {Array.isArray(orderDetails.addons) ? orderDetails.addons.join(', ') : 'Various add-ons'}</p>
+                   )}
+                 </div>
               </div>
 
               {/* Customer Information */}
@@ -606,18 +606,6 @@ Questions? Call (281) 809-9901
           </Card>
 
           {/* Referral Code Generation */}
-          <div className="mb-8">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-green-800 mb-2">
-                🎉 Spread the Love & Earn Rewards!
-              </h3>
-              <p className="text-green-600">
-                Generate your personal referral code and start earning when friends book with us
-              </p>
-            </div>
-            <PostPaymentReferralSection />
-          </div>
-
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
