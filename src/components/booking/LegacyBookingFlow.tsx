@@ -381,7 +381,7 @@ export function LegacyBookingFlow() {
     }, delay);
   };
 
-  // Validate ZIP code using Baytown service area
+  // Validate ZIP code using Texas and California service areas
   const validateZipCode = (zipCode: string) => {
     const validation = validateServiceAreaZipCode(zipCode);
     return validation.isValid;
@@ -782,7 +782,7 @@ export function LegacyBookingFlow() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <p className="text-muted-foreground">
-                    We provide cleaning services throughout {SERVICE_AREA_INFO.centerCity} and surrounding areas within {SERVICE_AREA_INFO.radiusMiles} miles. Enter your ZIP code to get started.
+                    We provide cleaning services throughout Cali & Texas. Enter your ZIP code to get started.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -791,6 +791,8 @@ export function LegacyBookingFlow() {
                       onChange={(e) => handleZipCodeChange(e.target.value)}
                       className="flex-1"
                       maxLength={5}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
                     {zipCodeValid && (
                       <div className="flex items-center text-success">

@@ -357,7 +357,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <p className="text-muted-foreground">
-                We provide professional cleaning services throughout Texas and California. Enter your ZIP code to get started.
+                We provide professional cleaning services throughout Cali & Texas. Enter your ZIP code to get started.
               </p>
               <div className="flex gap-3">
                 <Input
@@ -366,6 +366,8 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                   onChange={(e) => handleZipCodeChange(e.target.value)}
                   className="flex-1"
                   maxLength={5}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                 />
                 {zipCodeValid && (
                   <div className="flex items-center text-success">

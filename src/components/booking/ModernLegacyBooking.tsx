@@ -421,7 +421,7 @@ export function ModernLegacyBooking() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <p className="text-muted-foreground">
-                    We serve the Greater Baytown, Texas area within a 40-mile radius.
+                    We serve Cali & Texas.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -429,7 +429,9 @@ export function ModernLegacyBooking() {
                       value={bookingData.zipCode}
                       onChange={(e) => updateField('zipCode', e.target.value)}
                       maxLength={5}
-                      className="flex-1"
+                      className="flex-1"  
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
                     {zipCodeValid && (
                       <div className="flex items-center text-success">
