@@ -32,6 +32,9 @@ verify_jwt = false
 [functions.get-order-details]
 verify_jwt = false
 
+[functions.get-stripe-config]
+verify_jwt = false
+
 # Email Infrastructure Functions
 
 [functions.admin-auth-otp]

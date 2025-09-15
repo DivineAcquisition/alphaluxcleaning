@@ -297,6 +297,28 @@ function generateEmailHTML(templateKey: string, variables: Record<string, any>, 
         <p>Please arrive on time and contact the customer if you need assistance.</p>
       `;
       break;
+      
+    case 'referral_code':
+      content = `
+        <h2 style="color: ${brandColor};">Your Referral Code is Ready!</h2>
+        <p>Hello ${variables.owner_name || 'Valued Customer'},</p>
+        <p>Thank you for choosing AlphaLux Clean! Here's your personal referral code to share with friends and family:</p>
+        <div style="background: #f9fafb; padding: 30px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px dashed ${brandColor};">
+          <h1 style="font-size: 32px; letter-spacing: 4px; margin: 0; color: ${brandColor}; font-weight: bold;">${variables.referral_code || 'REF123'}</h1>
+          <p style="margin: 10px 0 0 0; color: #666;">Share this code and save!</p>
+        </div>
+        <p><strong>How it works:</strong></p>
+        <ul style="margin: 20px 0; padding-left: 20px;">
+          <li>Share your referral code with friends</li>
+          <li>They save 50% on their first cleaning</li>
+          <li>You earn credits for future services</li>
+        </ul>
+        <p style="text-align: center;">
+          <a href="${variables.referral_link || '#'}" class="button" style="display: inline-block; margin: 20px 0;">Share Your Link</a>
+        </p>
+        <p>Start sharing and start saving! The more friends you refer, the more you save on future cleanings.</p>
+      `;
+      break;
     
     default:
       content = `

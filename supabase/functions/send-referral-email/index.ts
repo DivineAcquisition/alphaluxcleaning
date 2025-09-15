@@ -1,12 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@4.0.0";
-import { renderAsync } from 'npm:@react-email/components@0.0.22';
-import React from 'npm:react@18.3.1';
-
-// Import the referral welcome email template
-import { ReferralWelcomeEmail } from '../_shared/email-templates/referral-welcome.tsx';
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,34 +23,40 @@ serve(async (req: Request) => {
 
     console.log('📧 Sending referral email:', { ownerName, ownerEmail, referralCode });
 
-    // Create the referral link with pre-applied discount
-    const baseUrl = "https://bayareacleaningpros.com";
+    // Create the referral link with pre-applied discount  
+    const baseUrl = "https://alphaluxclean.com";
     const defaultReferralLink = referralLink || `${baseUrl}?referral=${referralCode}&discount=50`;
 
-    // Render the email template
-    const emailHtml = await renderAsync(
-      React.createElement(ReferralWelcomeEmail, {
-        ownerName: ownerName,
-        referralCode: referralCode,
-        referralLink: defaultReferralLink
+    // Send email using Supabase email system instead
+    const { error: emailError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+      },
+      body: JSON.stringify({
+        companyId: '550e8400-e29b-41d4-a716-446655440000',
+        to: ownerEmail,
+        templateKey: 'referral_code',
+        variables: {
+          owner_name: ownerName,
+          referral_code: referralCode,
+          referral_link: defaultReferralLink
+        }
       })
-    );
-
-    // Send the email using Resend
-    const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
-      to: [ownerEmail],
-      subject: "Your Referral Code is Ready! Share & Save 50%",
-      html: emailHtml,
     });
 
-    console.log("✅ Referral email sent successfully:", emailResponse);
+    if (emailError) {
+      console.error("❌ Error sending referral email:", emailError);
+      throw new Error("Failed to send referral email");
+    }
+
+    console.log("✅ Referral email sent successfully");
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Referral email sent successfully",
-        emailId: emailResponse.data?.id,
         referralCode,
         referralLink: defaultReferralLink
       }),
