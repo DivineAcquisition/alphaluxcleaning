@@ -10,14 +10,7 @@ export function AuthenticatedBookingInterface() {
 
   // If user is authenticated, show the booking flow
   if (user) {
-    return (
-      <ModernBookingFlow 
-        onComplete={() => {
-          console.log('✅ Booking completed in AuthenticatedBookingInterface');
-          // The navigation is handled in ModernBookingFlow's handleBookingComplete
-        }}
-      />
-    );
+    return <ModernBookingFlow />;
   }
 
   // If not authenticated, show login requirement

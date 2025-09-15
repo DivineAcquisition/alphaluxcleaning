@@ -196,8 +196,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     try {
-      console.log('💳 Payment success - processing order:', paymentIntentId);
-      
       // Save order to database first
       const orderData = {
         id: paymentIntentId,
@@ -245,25 +243,8 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
 
       if (orderError) {
         console.error('Failed to save order:', orderError);
-        toast.error('Failed to save order. Please contact support.');
       } else {
-        console.log('✅ Order saved successfully');
-        
-        // Send booking confirmation email
-        try {
-          console.log('📧 Sending confirmation email...');
-          const { error: emailError } = await supabase.functions.invoke('send-order-confirmation', {
-            body: { orderId: paymentIntentId }
-          });
-          
-          if (emailError) {
-            console.error('❌ Email error:', emailError);
-          } else {
-            console.log('✅ Confirmation email sent successfully');
-          }
-        } catch (error) {
-          console.error('❌ Failed to send confirmation email:', error);
-        }
+        console.log('Order saved successfully');
       }
 
       // Create comprehensive order entry webhook data with enhanced pricing
@@ -498,8 +479,6 @@ export function BookingCheckoutPage({ bookingData, updateBookingData, onPaymentS
     // Store order ID in localStorage for confirmation page
     localStorage.setItem('current_order_id', paymentIntentId);
     
-    // Call success callback with order ID
-    console.log('🔄 Calling onPaymentSuccess with orderId:', paymentIntentId);
     onPaymentSuccess(paymentIntentId);
   };
 

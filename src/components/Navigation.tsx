@@ -1,22 +1,67 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Home, Phone, Mail, ExternalLink, Menu, Calendar } from "lucide-react";
+import { Home, FileText, CheckCircle, Phone, Mail, ExternalLink, Menu, Users, UserPlus, Settings, LogIn, LogOut, Shield, CreditCard, Calendar } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 export function Navigation() {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const {
+    user,
+    userRole,
+    signOut
+  } = useAuth();
+
+  // Redirect admins to admin dashboard if they're on customer pages
+  useEffect(() => {
+    if (user && (userRole === 'admin' || userRole === 'super_admin')) {
+      const isCustomerPage = location.pathname.includes('/customer') || 
+                           location.pathname === '/my-services' || 
+                           location.pathname === '/billing';
+      if (isCustomerPage) {
+        navigate('/admin', { replace: true });
+      }
+    }
+  }, [user, userRole, location.pathname, navigate]);
   const getNavItems = () => {
-    return [{
+    const baseItems = [{
       path: "/",
-      label: "Book Cleaning",
+      label: "Home",
       icon: Home
     }, {
-      path: "/stripe-test",
-      label: "Test Payment",
-      icon: Calendar
+      path: "/order-status",
+      label: "Order Status",
+      icon: FileText
     }];
+    if (user) {
+      if (userRole === 'customer') {
+        baseItems.push({
+          path: "/my-services",
+          label: "My Services",
+          icon: Settings
+        });
+        baseItems.push({
+          path: "/billing",
+          label: "Billing",
+          icon: CreditCard
+        });
+      } else if (userRole === 'subcontractor') {
+        baseItems.push({
+          path: "/subcontractor-dashboard",
+          label: "Dashboard",
+          icon: Settings
+        });
+      } else if (userRole === 'admin') {
+        baseItems.push({
+          path: "/admin",
+          label: "Admin Portal",
+          icon: Shield
+        });
+      }
+    }
+    return baseItems;
   };
-  
   const navItems = getNavItems();
   return <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
@@ -86,6 +131,82 @@ export function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
             
+            {/* Auth Section */}
+            {user ? <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user.email?.split('@')[0]}</span>
+                    <span className="text-xs">({userRole})</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg z-[100]">
+                  <div className="px-3 py-2 text-sm border-b">
+                    <div className="font-medium">{user.email?.split('@')[0]}</div>
+                    <div className="text-xs text-muted-foreground">Role: {userRole}</div>
+                  </div>
+                  
+                  {(userRole === 'admin' || userRole === 'super_admin') && <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Admin Portal
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/tier-management" className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Tier Management
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/payment-dashboard" className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          Payment Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>}
+                  
+                  {userRole === 'customer' && <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/my-services" className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          My Services
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/billing" className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4" />
+                          Billing
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>}
+                  
+                  {userRole === 'subcontractor' && <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/subcontractor-dashboard" className="flex items-center gap-2">
+                          <Settings className="h-4 w-4" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>}
+                  
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu> : (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Button>
+                </Link>
+              )}
 
             {/* Mobile Menu */}
             <div className="md:hidden">
