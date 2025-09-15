@@ -14,7 +14,7 @@ import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from 
 
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
-// BookingCheckoutPage removed - keeping simplified booking flow
+import { PaymentForm } from '@/components/PaymentForm';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
@@ -387,20 +387,54 @@ export function ModernLegacyBooking() {
   };
 
   if (showCheckout) {
+    // Transform booking data into PaymentForm props format
+    const pricingData = {
+      squareFootage: parseInt(bookingData.homeSize.split('-')[0]) || 1000,
+      cleaningType: bookingData.serviceType === 'regular' ? 'standard' : 
+                   bookingData.serviceType === 'deep' ? 'deep_cleaning' : 'move_out',
+      frequency: bookingData.frequency || 'one-time',
+      addOns: bookingData.addOns,
+      bedrooms: parseInt(bookingData.bedrooms) || 1,
+      bathrooms: parseFloat(bookingData.bathrooms) || 1,
+      membership: false,
+      hours: 4 // Default hours estimate
+    };
+
+    const priceBreakdown = {
+      basePrice: bookingData.basePrice,
+      addOnsTotal: bookingData.addOns.reduce((total, addOnId) => {
+        const addOn = addOnServices.find(a => a.id === addOnId);
+        return total + (addOn?.price || 0);
+      }, 0),
+      total: bookingData.totalPrice,
+      savings: bookingData.savings
+    };
+
+    const schedulingData = {
+      scheduledDate: bookingData.serviceDate,
+      scheduledTime: bookingData.serviceTime,
+      nextDayBooking: bookingData.nextDayUpsell,
+      upchargeAmount: bookingData.nextDayUpsell ? 50 : 0 // Next day upcharge
+    };
+
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
-          <p className="text-muted-foreground mb-6">
-            Your booking details have been saved. You'll receive payment information via email.
-          </p>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="mb-6">
           <Button 
-            onClick={() => window.location.href = '/booking-confirmation'}
-            className="w-full max-w-sm"
+            variant="outline" 
+            onClick={() => setShowCheckout(false)}
+            className="mb-4"
           >
-            Confirm Booking
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Review
           </Button>
         </div>
+        <PaymentForm
+          pricingData={pricingData}
+          calculatedPrice={bookingData.totalPrice}
+          priceBreakdown={priceBreakdown}
+          schedulingData={schedulingData}
+        />
       </div>
     );
   }
