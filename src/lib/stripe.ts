@@ -1,9 +1,7 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
 
-// Dynamic Stripe loader that fetches publishable key from Supabase
-
+// Simplified Stripe configuration for booking flow
 declare global {
   interface Window {
     STRIPE_PUBLISHABLE_KEY?: string;
@@ -12,61 +10,31 @@ declare global {
 
 const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_test_') || k.startsWith('pk_live_'));
 
-// Initialize Supabase client
-const supabase = createClient(
-  "https://kqoezqzogleaaupjzxch.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxb2V6cXpvZ2xlYWF1cGp6eGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTA4MDQsImV4cCI6MjA2ODk2NjgwNH0.UIHq6w9SPXq_D6Fwx_BOa-THHCR94sJ4vvuXxR7QuMI"
-);
-
-// Function to fetch Stripe publishable key from Supabase
-const fetchStripeKey = async (): Promise<string | null> => {
-  try {
-    console.log('🔄 Fetching Stripe configuration from Supabase...');
-    
-    const { data, error } = await supabase.functions.invoke('get-stripe-config');
-    
-    if (error) {
-      console.error('🔴 Failed to fetch Stripe config:', error);
-      return null;
-    }
-    
-    if (data?.publishableKey && isValidKey(data.publishableKey)) {
-      console.log('✅ Stripe publishable key retrieved successfully');
-      return data.publishableKey;
-    }
-    
-    console.error('🔴 Invalid or missing Stripe publishable key in response');
-    return null;
-  } catch (error) {
-    console.error('🔴 Error fetching Stripe configuration:', error);
-    return null;
-  }
-};
+// Direct Stripe publishable key - replace with your actual key
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QTXa5DAinHcvxiHaXn1VKwAMnFYLaAHZqWn3z8eMlGQXOHcEJN8YpLTOJxNdUqAGwHxg6cMaKwYCsIKbgkNh5g100c9SaVk7C';
 
 // Create a promise that resolves to the Stripe instance
 const createStripePromise = async (): Promise<Stripe | null> => {
   try {
-    // Try local sources first (for development)
-    let publishableKey = (
-      typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
-    ) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY);
+    // Use the direct publishable key
+    let publishableKey = STRIPE_PUBLISHABLE_KEY;
 
-    // If no local key, fetch from Supabase
-    if (!publishableKey || !isValidKey(publishableKey)) {
-      publishableKey = await fetchStripeKey();
+    // Allow override from window object for testing
+    if (typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY) {
+      publishableKey = window.STRIPE_PUBLISHABLE_KEY;
     }
 
     if (!publishableKey || !isValidKey(publishableKey)) {
-      console.error('🔴 No valid Stripe publishable key found');
+      console.error('🔴 No valid Stripe publishable key configured');
       if (typeof window !== 'undefined') {
-        toast.error('Payment system unavailable. Please try again or contact support.', {
-          description: 'Unable to load payment configuration'
+        toast.error('Payment system unavailable. Please contact support.', {
+          description: 'Payment configuration missing'
         });
       }
       return null;
     }
 
-    console.log('✅ Initializing Stripe with valid key');
+    console.log('✅ Initializing Stripe with publishable key');
     return await loadStripe(publishableKey);
   } catch (error) {
     console.error('🔴 Failed to initialize Stripe:', error);
