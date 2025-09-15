@@ -14,7 +14,7 @@ import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from 
 
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
-import { BookingCheckoutPage } from './BookingCheckoutPage';
+// BookingCheckoutPage removed - keeping simplified booking flow
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
@@ -388,26 +388,20 @@ export function ModernLegacyBooking() {
 
   if (showCheckout) {
     return (
-      <BookingCheckoutPage
-        bookingData={{
-          ...bookingData,
-          paymentType: 'pay_after_service' as const,
-          promoDiscount: 0,
-          frequencyDiscount: 0,
-          membershipDiscount: 0,
-          addOnPrices: bookingData.addOns.reduce((acc, addOnId) => {
-            const addOn = addOnServices.find(a => a.id === addOnId);
-            if (addOn) acc[addOnId] = addOn.price;
-            return acc;
-          }, {} as Record<string, number>)
-        }}
-        updateBookingData={(updates) => setBookingData(prev => ({ ...prev, ...updates }))}
-        onPaymentSuccess={(sessionId) => {
-          toast.success('Booking completed successfully!');
-          window.location.href = `/order-confirmation?order_id=${sessionId}`;
-        }}
-        onBack={() => setShowCheckout(false)}
-      />
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
+          <p className="text-muted-foreground mb-6">
+            Your booking details have been saved. You'll receive payment information via email.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/booking-confirmation'}
+            className="w-full max-w-sm"
+          >
+            Confirm Booking
+          </Button>
+        </div>
+      </div>
     );
   }
 

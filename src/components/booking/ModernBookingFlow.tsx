@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { BookingSelectionPage } from './BookingSelectionPage';
 import { BookingDetailsPage } from './BookingDetailsPage';
-import { BookingCheckoutPage } from './BookingCheckoutPage';
+// BookingCheckoutPage removed - keeping simplified booking flow
 import { BookingSummaryCard } from './BookingSummaryCard';
 import { ProgressIndicator } from './ProgressIndicator';
 
@@ -146,12 +146,28 @@ export function ModernBookingFlow({
                   )}
 
                   {currentStep === 3 && (
-                    <BookingCheckoutPage
-                      bookingData={bookingData}
-                      updateBookingData={updateData}
-                      onPaymentSuccess={handleBookingComplete}
-                      onBack={handleBack}
-                    />
+                    <div className="max-w-4xl mx-auto p-6">
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
+                        <p className="text-muted-foreground mb-6">
+                          Your booking details have been saved. You'll receive payment information via email.
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                          <Button 
+                            variant="outline" 
+                            onClick={handleBack}
+                          >
+                            Back
+                          </Button>
+                          <Button 
+                            onClick={() => window.location.href = '/booking-confirmation'}
+                            className="w-full max-w-sm"
+                          >
+                            Confirm Booking
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Navigation Buttons - only show for steps 1 & 2 */}

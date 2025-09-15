@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
 import { hasUsedPromoOffer, CustomerData, markPromoOfferUsed } from '@/lib/offer-tracking';
-import { BookingCheckoutPage } from './BookingCheckoutPage';
+// BookingCheckoutPage removed - keeping simplified booking flow
 import { toLocalDate } from '@/lib/date-helpers';
 
 interface BookingData {
@@ -680,12 +680,20 @@ export function LegacyBookingFlow() {
 
   if (showCheckout) {
     return (
-      <BookingCheckoutPage 
-        bookingData={bookingData as BookingData}
-        updateBookingData={updateBookingData}
-        onPaymentSuccess={handlePaymentSuccess}
-        onBack={handleBackFromCheckout}
-      />
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
+          <p className="text-muted-foreground mb-6">
+            Your booking details have been saved. You'll receive payment information via email.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/booking-confirmation'}
+            className="w-full max-w-sm"
+          >
+            Confirm Booking
+          </Button>
+        </div>
+      </div>
     );
   }
 

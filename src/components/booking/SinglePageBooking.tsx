@@ -10,7 +10,7 @@ import { CheckCircle, MapPin, Home, Clock, Star, Sparkles, Calendar, Phone, User
 import { cn } from '@/lib/utils';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 import { formatPrice } from '@/lib/pricing-utils';
-import { BookingCheckoutPage } from '@/components/booking/BookingCheckoutPage';
+// BookingCheckoutPage removed - keeping simplified booking flow
 import { EnhancedSchedulingStep } from '@/components/EnhancedSchedulingStep';
 
 // Simplified service types with clear pricing
@@ -278,39 +278,20 @@ export function SinglePageBooking() {
 
   if (showCheckout) {
     return (
-      <BookingCheckoutPage
-        bookingData={{
-          ...bookingData,
-          paymentType: 'pay_after_service' as const,
-          totalPrice: bookingData.totalPrice,
-          serviceDate: bookingData.serviceDate,
-          serviceTime: bookingData.serviceTime,
-          address: bookingData.address,
-          contactNumber: bookingData.customerPhone,
-          customerName: bookingData.customerName,
-          customerEmail: bookingData.customerEmail,
-          bedrooms: bookingData.bedrooms,
-          bathrooms: bookingData.bathrooms,
-          specialInstructions: bookingData.specialInstructions,
-          addOns: bookingData.addOns,
-          basePrice: bookingData.basePrice,
-          addOnPrices: bookingData.addOns.reduce((acc, addOnId) => {
-            const addOn = addOnServices.find(a => a.id === addOnId);
-            if (addOn) acc[addOnId] = addOn.price;
-            return acc;
-          }, {} as { [key: string]: number }),
-          frequencyDiscount: bookingData.savings,
-          promoDiscount: 0
-        }}
-        updateBookingData={(updates) => {
-          setBookingData(prev => ({ ...prev, ...updates }));
-        }}
-        onPaymentSuccess={(sessionId) => {
-          console.log('Payment successful:', sessionId);
-          window.location.href = `/order-confirmation?order_id=${sessionId}`;
-        }}
-        onBack={() => setShowCheckout(false)}
-      />
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
+          <p className="text-muted-foreground mb-6">
+            Your booking details have been saved. You'll receive payment information via email.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/booking-confirmation'}
+            className="w-full max-w-sm"
+          >
+            Confirm Booking
+          </Button>
+        </div>
+      </div>
     );
   }
 
