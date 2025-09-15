@@ -262,10 +262,14 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(bookingData.addOns || []);
   const [zipCodeValid, setZipCodeValid] = useState(false);
 
-  // Validate ZIP code
+  // Validate ZIP code for Texas and California
   const validateZipCode = (zipCode: string) => {
-    const bayAreaZipCodes = ['94102', '94103', '94104', '94105', '94107', '94108', '94109', '94110', '94111', '94112', '94114', '94115', '94116', '94117', '94118', '94121', '94122', '94123', '94124', '94127', '94129', '94130', '94131', '94132', '94133', '94134', '94158', '95014', '95050', '95051', '95054', '95070'];
-    return bayAreaZipCodes.includes(zipCode);
+    const zip = parseInt(zipCode);
+    // Texas ZIP codes: 73301-79999, 75001-79999
+    const isTexas = (zip >= 73301 && zip <= 79999) || (zip >= 75001 && zip <= 79999);
+    // California ZIP codes: 90001-96162
+    const isCalifornia = zip >= 90001 && zip <= 96162;
+    return isTexas || isCalifornia;
   };
 
   // Check existing ZIP code on mount
@@ -353,7 +357,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <p className="text-muted-foreground">
-                We provide cleaning services throughout the San Francisco Bay Area. Enter your ZIP code to get started.
+                We provide professional cleaning services throughout Texas and California. Enter your ZIP code to get started.
               </p>
               <div className="flex gap-3">
                 <Input
@@ -371,7 +375,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
               </div>
               {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
                 <p className="text-destructive text-sm">
-                  Sorry, we don't currently service this ZIP code. Please contact us for availability.
+                  Sorry, we currently only service Texas and California. Please contact us at (281) 809-9901 for other locations.
                 </p>
               )}
               {zipCodeValid && (

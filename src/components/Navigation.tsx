@@ -26,11 +26,11 @@ export function Navigation() {
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center justify-center space-x-3">
             <img 
-              src="/lovable-uploads/58721dab-bcc3-4b69-bb80-6cca4ddf9f0c.png" 
-              alt="AlphaLuxClean" 
+              src="/assets/alphalux-logo.png" 
+              alt="AlphaLux Cleaning" 
               width="64" 
               height="64" 
-              className="h-32 w-32 md:h-16 md:w-16 object-contain" 
+              className="h-12 w-auto md:h-16 md:w-auto object-contain" 
             />
           </Link>
 

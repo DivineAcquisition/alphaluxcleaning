@@ -12,7 +12,7 @@ export function DomainAwareHome() {
             Book Your Cleaning Service
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Experience premium cleaning services with AlphaLuxClean. Professional, reliable, and affordable.
+            Experience premium cleaning services with AlphaLux Cleaning. Professional, reliable, and affordable throughout Texas and California.
           </p>
         </div>
         <ModernLegacyBooking />
