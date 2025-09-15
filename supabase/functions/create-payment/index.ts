@@ -54,8 +54,8 @@ serve(async (req) => {
     } = requestBody;
 
     // Extract data from booking_data if provided (new format)
-    const finalCustomerEmail = booking_data?.contactNumber || customerEmail;
-    const finalCustomerName = booking_data ? `Customer` : customerName;
+    const finalCustomerEmail = booking_data?.customerEmail || customerEmail;
+    const finalCustomerName = booking_data?.customerName || customerName || 'Customer';
     const finalServiceAddress = booking_data?.address ? 
       `${booking_data.address.street}, ${booking_data.address.city}, ${booking_data.address.state} ${booking_data.address.zipCode}` : 
       serviceAddress;
