@@ -410,95 +410,7 @@ export function ModernLegacyBooking() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Pricing Summary */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Pricing Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Service Type:</span>
-                    <span className="font-medium capitalize">{bookingData.serviceType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Home Size:</span>
-                    <span className="font-medium">{homeSizes.find(s => s.id === bookingData.homeSize)?.name}</span>
-                  </div>
-                  {bookingData.frequency && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Frequency:</span>
-                      <span className="font-medium">{frequencyOptions.find(f => f.id === bookingData.frequency)?.name}</span>
-                    </div>
-                  )}
-                  {bookingData.addOns.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-muted-foreground">Add-ons:</span>
-                      {bookingData.addOns.map(addOnId => {
-                        const addOn = addOnServices.find(a => a.id === addOnId);
-                        return (
-                          <div key={addOnId} className="flex justify-between text-sm">
-                            <span>• {addOn?.name}</span>
-                            <span>{formatPrice(addOn?.price || 0)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="border-t pt-3 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal:</span>
-                    <span>{formatPrice(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
-                      const addOn = addOnServices.find(a => a.id === addOnId);
-                      return total + (addOn?.price || 0);
-                    }, 0))}</span>
-                  </div>
-                  <div className="flex justify-between text-success">
-                    <span>20% Savings Applied:</span>
-                    <span>-{formatPrice(calculateGlobalDiscountAmount(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
-                      const addOn = addOnServices.find(a => a.id === addOnId);
-                      return total + (addOn?.price || 0);
-                    }, 0)))}</span>
-                  </div>
-                  {appliedReferral && (
-                    <div className="flex justify-between text-success">
-                      <span>Referral Discount ({appliedReferral.discount}%):</span>
-                      <span>-{formatPrice(bookingData.totalPrice * (appliedReferral.discount / 100))}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>Total:</span>
-                    <span className="text-primary">{formatPrice(bookingData.totalPrice)}</span>
-                  </div>
-                </div>
-                {selectedPaymentOption === '25_percent_with_discount' && (
-                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Today (25%):</span>
-                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.25)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>After Service:</span>
-                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.75)}</span>
-                      </div>
-                      <div className="flex justify-between text-success font-medium">
-                        <span>You Save:</span>
-                        <span>{formatPrice(bookingData.totalPrice * 0.05)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Payment Options */}
+          {/* Left Column - Payment Options */}
           <div className="lg:col-span-2 space-y-6">
             {/* Referral Code Section */}
             <Card>
@@ -738,9 +650,10 @@ export function ModernLegacyBooking() {
                         // Card authorization only
                         const { data, error } = await supabase.functions.invoke('create-payment', {
                           body: {
-                            amount: bookingData.totalPrice,
-                            type: 'authorization',
-                            bookingData,
+                            amount: 0, // Zero amount for authorization
+                            fullAmount: bookingData.totalPrice * 100, // Store full amount in cents
+                            payment_type: 'pay_after_service',
+                            booking_data: bookingData,
                             customerEmail: bookingData.customerEmail,
                             customerName: bookingData.customerName
                           }
@@ -748,8 +661,8 @@ export function ModernLegacyBooking() {
 
                         if (error) throw error;
                         
-                        if (data.checkout_url) {
-                          window.open(data.checkout_url, '_blank');
+                        if (data.url) {
+                          window.location.href = data.url;
                         }
                       } else {
                         // 25% upfront payment with 5% discount
@@ -758,10 +671,10 @@ export function ModernLegacyBooking() {
                         
                         const { data, error } = await supabase.functions.invoke('create-payment', {
                           body: {
-                            amount: upfrontAmount,
-                            type: 'upfront_with_discount',
-                            totalAmount: discountedTotal,
-                            bookingData,
+                            amount: upfrontAmount * 100, // Convert to cents
+                            fullAmount: discountedTotal * 100, // Store full amount in cents
+                            payment_type: '25_percent_with_discount',
+                            booking_data: bookingData,
                             customerEmail: bookingData.customerEmail,
                             customerName: bookingData.customerName
                           }
@@ -769,8 +682,8 @@ export function ModernLegacyBooking() {
 
                         if (error) throw error;
                         
-                        if (data.checkout_url) {
-                          window.open(data.checkout_url, '_blank');
+                        if (data.url) {
+                          window.location.href = data.url;
                         }
                       }
                     } catch (error) {
@@ -794,6 +707,94 @@ export function ModernLegacyBooking() {
                   )}
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Pricing Summary */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  Pricing Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Service Type:</span>
+                    <span className="font-medium capitalize">{bookingData.serviceType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Home Size:</span>
+                    <span className="font-medium">{homeSizes.find(s => s.id === bookingData.homeSize)?.name}</span>
+                  </div>
+                  {bookingData.frequency && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Frequency:</span>
+                      <span className="font-medium">{frequencyOptions.find(f => f.id === bookingData.frequency)?.name}</span>
+                    </div>
+                  )}
+                  {bookingData.addOns.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-muted-foreground">Add-ons:</span>
+                      {bookingData.addOns.map(addOnId => {
+                        const addOn = addOnServices.find(a => a.id === addOnId);
+                        return (
+                          <div key={addOnId} className="flex justify-between text-sm">
+                            <span>• {addOn?.name}</span>
+                            <span>{formatPrice(addOn?.price || 0)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span>{formatPrice(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
+                      const addOn = addOnServices.find(a => a.id === addOnId);
+                      return total + (addOn?.price || 0);
+                    }, 0))}</span>
+                  </div>
+                  <div className="flex justify-between text-success">
+                    <span>20% Savings Applied:</span>
+                    <span>-{formatPrice(calculateGlobalDiscountAmount(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
+                      const addOn = addOnServices.find(a => a.id === addOnId);
+                      return total + (addOn?.price || 0);
+                    }, 0)))}</span>
+                  </div>
+                  {appliedReferral && (
+                    <div className="flex justify-between text-success">
+                      <span>Referral Discount ({appliedReferral.discount}%):</span>
+                      <span>-{formatPrice(bookingData.totalPrice * (appliedReferral.discount / 100))}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Total:</span>
+                    <span className="text-primary">{formatPrice(bookingData.totalPrice)}</span>
+                  </div>
+                </div>
+                {selectedPaymentOption === '25_percent_with_discount' && (
+                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Today (25%):</span>
+                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.25)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>After Service:</span>
+                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.75)}</span>
+                      </div>
+                      <div className="flex justify-between text-success font-semibold border-t pt-1">
+                        <span>Total Savings:</span>
+                        <span>-{formatPrice(bookingData.totalPrice * 0.05)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
