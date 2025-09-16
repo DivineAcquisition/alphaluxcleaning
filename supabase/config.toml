@@ -8,6 +8,12 @@ verify_jwt = false
 [functions.create-payment]
 verify_jwt = false
 
+[functions.create-order-with-deposit]
+verify_jwt = false
+
+[functions.send-order-confirmation]
+verify_jwt = false
+
 [functions.create-payment-intent]
 verify_jwt = false
 

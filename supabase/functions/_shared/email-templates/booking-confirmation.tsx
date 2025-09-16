@@ -19,6 +19,10 @@ interface BookingConfirmationEmailProps {
   service_address?: string;
   service_type?: string;
   portal_url?: string;
+  deposit_amount?: string;
+  total_amount?: string;
+  remaining_balance?: string;
+  order_id?: string;
 }
 
 export const BookingConfirmationEmail = ({ 
@@ -27,7 +31,11 @@ export const BookingConfirmationEmail = ({
   service_time,
   service_address,
   service_type,
-  portal_url 
+  portal_url,
+  deposit_amount,
+  total_amount,
+  remaining_balance,
+  order_id
 }: BookingConfirmationEmailProps) => (
   <BaseEmailTemplate previewText={`Your cleaning is confirmed for ${service_date}`}>
     <Heading style={heading}>
@@ -39,8 +47,26 @@ export const BookingConfirmationEmail = ({
     </Text>
     
     <Text style={text}>
-      Great news! Your cleaning service has been confirmed. Here are the details:
+      Great news! Your cleaning service has been successfully scheduled and your 20% deposit has been received.
     </Text>
+    
+    {deposit_amount && (
+      <Section style={paymentSection}>
+        <Text style={paymentHeader}>Payment Details</Text>
+        <Text style={paymentItem}>
+          <strong>20% Deposit Paid:</strong> {deposit_amount}
+        </Text>
+        <Text style={paymentItem}>
+          <strong>Total Service Cost:</strong> {total_amount}
+        </Text>
+        <Text style={paymentItem}>
+          <strong>Remaining Balance:</strong> {remaining_balance}
+        </Text>
+        <Text style={paymentNote}>
+          The remaining balance will be collected after your service is completed.
+        </Text>
+      </Section>
+    )}
     
     <Section style={detailsSection}>
       <Text style={detailItem}>
@@ -62,7 +88,13 @@ export const BookingConfirmationEmail = ({
     </Section>
     
     <Text style={text}>
-      Our professional cleaning team will arrive at your scheduled time. We'll send you a reminder 24 hours before your appointment.
+      <strong>What happens next:</strong>
+    </Text>
+    <Text style={text}>
+      • Check your email for this confirmation<br/>
+      • A representative will contact you within 24 hours to confirm your booking<br/>
+      • We'll send you a reminder 24 hours before your appointment<br/>
+      • Our professional cleaning team will arrive at your scheduled time
     </Text>
     
     {portal_url && (
@@ -79,8 +111,14 @@ export const BookingConfirmationEmail = ({
       </>
     )}
     
+    {order_id && (
+      <Text style={text}>
+        <strong>Order ID:</strong> {order_id}
+      </Text>
+    )}
+    
     <Text style={text}>
-      Questions? Just reply to this email or call us at (415) 987-6543.
+      Questions? Just reply to this email or call us at (281) 809-9901.
     </Text>
   </BaseEmailTemplate>
 )
@@ -134,6 +172,34 @@ const button = {
   textAlign: 'center' as const,
   display: 'inline-block',
   padding: '12px 24px',
+}
+
+const paymentSection = {
+  background: '#e3f2fd',
+  border: '1px solid #bbdefb',
+  borderRadius: '8px',
+  padding: '20px',
+  margin: '20px 0',
+}
+
+const paymentHeader = {
+  color: '#1565c0',
+  fontSize: '18px',
+  fontWeight: '600',
+  margin: '0 0 12px 0',
+}
+
+const paymentItem = {
+  color: '#374151',
+  fontSize: '14px',
+  margin: '6px 0',
+}
+
+const paymentNote = {
+  color: '#6b7280',
+  fontSize: '12px',
+  fontStyle: 'italic',
+  margin: '12px 0 0 0',
 }
 
 export default BookingConfirmationEmail

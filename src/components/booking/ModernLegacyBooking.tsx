@@ -425,9 +425,39 @@ export function ModernLegacyBooking() {
           depositAmount={depositAmount}
           clientSecret={clientSecret}
           bookingData={bookingData}
-          onSuccess={() => {
-            console.log('Payment successful, redirecting to confirmation');
-            window.location.href = '/booking-confirmation';
+          onSuccess={async (paymentIntentId: string) => {
+            console.log('Payment successful, creating order:', paymentIntentId);
+            setIsProcessingPayment(true);
+            
+            try {
+              // Create order record with deposit payment
+              const { data: orderResult, error: orderError } = await supabase.functions.invoke('create-order-with-deposit', {
+                body: {
+                  bookingData,
+                  paymentIntentId,
+                  depositAmount: bookingData.totalPrice * 0.2,
+                  totalAmount: bookingData.totalPrice,
+                  customerEmail: bookingData.customerEmail,
+                  customerName: bookingData.customerName
+                }
+              });
+
+              if (orderError || !orderResult?.orderId) {
+                console.error('Error creating order:', orderError);
+                toast.error('Payment successful but failed to create order. Please contact support.');
+                return;
+              }
+
+              console.log('Order created successfully:', orderResult.orderId);
+              
+              // Redirect to confirmation with order ID
+              window.location.href = `/booking-confirmation?order_id=${orderResult.orderId}`;
+            } catch (error) {
+              console.error('Error in order creation:', error);
+              toast.error('Payment successful but failed to create order. Please contact support.');
+            } finally {
+              setIsProcessingPayment(false);
+            }
           }}
           onCancel={() => {
             setShowEmbeddedPayment(false);

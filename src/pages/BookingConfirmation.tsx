@@ -100,24 +100,24 @@ const BookingConfirmation = () => {
       
       // Try to fetch by session_id first (existing flow)
       if (sessionId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-        data = result.data;
-        error = result.error;
+    const result = await supabase
+      .from("orders")
+      .select("*")
+      .eq("stripe_session_id", sessionId)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
       }
       
       // If no data found and we have orderId, try fetching by order ID (new flow)
       if ((!data || error) && orderId) {
-        const result = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .single();
-        data = result.data;
-        error = result.error;
+    const result = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
       }
 
       if (error || !data) {
@@ -345,8 +345,26 @@ Questions? Call (281) 809-9901
                 </div>
                 <h1 className="text-3xl font-bold text-green-800">Booking Confirmed!</h1>
                 <p className="text-green-600 text-lg">
-                  Your cleaning service has been successfully scheduled and confirmed.
+                  Your cleaning service has been successfully scheduled and your 20% deposit has been received.
                 </p>
+                
+                {/* Payment Status */}
+                <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                    <span className="font-semibold text-blue-800">20% Deposit Paid</span>
+                  </div>
+                  <div className="text-sm text-blue-700 space-y-1">
+                    <p><strong>Total Service Cost:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
+                    {orderDetails.deposit_amount && (
+                      <p><strong>Deposit Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
+                    )}
+                    {orderDetails.balance_due && (
+                      <p><strong>Remaining Balance:</strong> ${(orderDetails.balance_due / 100).toFixed(2)}</p>
+                    )}
+                    <p className="text-xs italic mt-2">Remaining balance will be collected after service completion.</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -491,16 +509,46 @@ Questions? Call (281) 809-9901
           </Card>
 
           {/* What's Next */}
-          <Card className="border-0 shadow-lg bg-blue-50">
+          <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardHeader>
-              <CardTitle className="text-blue-800">What's Next?</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <MessageSquare className="h-5 w-5" />
+                What's Next?
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-blue-700">
-              <p>• You'll receive a confirmation email with all the details</p>
-              <p>• A customer account has been created for you (check your email for login details)</p>
-              <p>• Our team will arrive at your scheduled time</p>
-              <p>• You can manage your booking in the customer portal at <strong>portal.bayareacleaningpros.com</strong></p>
-              <p>• We'll send you reminders before your appointment</p>
+            <CardContent>
+              <div className="space-y-3 text-blue-700">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-800">1</span>
+                  </div>
+                  <p className="text-sm"><strong>Check your email</strong> for the booking confirmation and receipt</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-800">2</span>
+                  </div>
+                  <p className="text-sm"><strong>A representative will contact you</strong> within 24 hours to confirm your booking</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-800">3</span>
+                  </div>
+                  <p className="text-sm">You'll receive a <strong>reminder 24 hours</strong> before your appointment</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-800">4</span>
+                  </div>
+                  <p className="text-sm">Our professional team will arrive at your <strong>scheduled time</strong></p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-blue-800">5</span>
+                  </div>
+                  <p className="text-sm">The <strong>remaining balance</strong> will be collected after service completion</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

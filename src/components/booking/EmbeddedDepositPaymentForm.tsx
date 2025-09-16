@@ -11,7 +11,7 @@ interface EmbeddedDepositPaymentFormProps {
   totalAmount: number;
   depositAmount: number;
   clientSecret: string;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onCancel: () => void;
   bookingData: any;
 }
@@ -19,7 +19,7 @@ interface EmbeddedDepositPaymentFormProps {
 interface PaymentFormProps {
   totalAmount: number;
   depositAmount: number;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onCancel: () => void;
 }
 
@@ -57,7 +57,7 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
       } else if (result.paymentIntent?.status === 'succeeded') {
         console.log('Payment succeeded:', result.paymentIntent);
         toast.success('Payment successful! Redirecting to confirmation...');
-        onSuccess();
+        onSuccess(result.paymentIntent?.id || 'payment_succeeded');
       }
     } catch (error: any) {
       console.error('Payment error:', error);
@@ -241,7 +241,7 @@ export function EmbeddedDepositPaymentForm({
       <PaymentForm 
         totalAmount={totalAmount}
         depositAmount={depositAmount}
-        onSuccess={onSuccess}
+        onSuccess={(paymentIntentId: string) => onSuccess(paymentIntentId)}
         onCancel={onCancel}
       />
     </Elements>
