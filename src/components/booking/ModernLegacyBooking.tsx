@@ -410,281 +410,72 @@ export function ModernLegacyBooking() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Payment Options */}
+          {/* Left Column - Payment Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Referral Code Section */}
+            {/* Payment Information */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5 text-primary" />
-                  Referral Code
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  Payment Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Have a referral code?</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enter a friend's referral code to get additional savings
-                    </p>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter referral code"
-                        value={referralCode}
-                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                        className="flex-1"
-                      />
-                      <Button 
-                        variant="outline"
-                        onClick={async () => {
-                          if (!referralCode.trim()) return;
-                          
-                          try {
-                            // Call referral validation function
-                            const { data, error } = await supabase.functions.invoke('validate-referral-code', {
-                              body: { referralCode: referralCode.trim() }
-                            });
-                            
-                            if (error) throw error;
-                            
-                            if (data.valid) {
-                              setAppliedReferral({ code: referralCode, discount: data.discount || 5 });
-                              toast.success(`Referral code applied! You saved ${data.discount || 5}%`);
-                            } else {
-                              toast.error('Invalid referral code');
-                            }
-                          } catch (error) {
-                            toast.error('Failed to validate referral code');
-                          }
-                        }}
-                      >
-                        Apply
-                      </Button>
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Shield className="h-6 w-6 text-primary" />
+                    <div>
+                      <h4 className="font-semibold text-lg">20% Deposit Required</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Pay just 20% now to secure your booking. Remaining balance due after service completion.
+                      </p>
                     </div>
-                    
-                    {appliedReferral && (
-                      <div className="p-3 rounded-lg bg-success/10 border border-success/20">
-                        <p className="text-success text-sm font-medium">
-                          ✓ Referral code "{appliedReferral.code}" applied! You saved {appliedReferral.discount}%
-                        </p>
-                      </div>
-                    )}
                   </div>
                   
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">Get your referral code</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-4 p-3 rounded-md bg-background/50">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Service Cost</p>
+                      <p className="text-lg font-bold">${formatPrice(bookingData.totalPrice)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Deposit Due Today</p>
+                      <p className="text-lg font-bold text-primary">${formatPrice(bookingData.totalPrice * 0.2)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-3 border-t">
                     <p className="text-sm text-muted-foreground">
-                      Get your own referral code to share with friends
+                      Remaining balance of <strong>${formatPrice(bookingData.totalPrice * 0.8)}</strong> will be charged after your cleaning is completed.
                     </p>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={async () => {
-                        if (!bookingData.customerEmail || !bookingData.customerName) {
-                          toast.error('Please complete your contact information first');
-                          return;
-                        }
-                        
-                        try {
-                          const { data, error } = await supabase.functions.invoke('send-referral-email', {
-                            body: {
-                              ownerName: bookingData.customerName,
-                              ownerEmail: bookingData.customerEmail,
-                              referralCode: `REF${Date.now().toString().slice(-6).toUpperCase()}`
-                            }
-                          });
-                          
-                          if (error) throw error;
-                          
-                          toast.success('Your referral code has been sent to your email!');
-                        } catch (error) {
-                          console.error('Error generating referral code:', error);
-                          toast.error('Failed to generate referral code. Please try again.');
-                        }
-                      }}
-                    >
-                      <Gift className="h-4 w-4 mr-2" />
-                      Email Me My Referral Code
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Choose Your Payment */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Choose Your Payment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Pay After Service */}
-                <div 
-                  className={cn(
-                    "p-4 border-2 rounded-lg cursor-pointer transition-colors",
-                    selectedPaymentOption === 'pay_after_service' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => setSelectedPaymentOption('pay_after_service')}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <Shield className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">Pay After Service</h3>
-                      <p className="text-muted-foreground text-sm mb-2">
-                        We'll authorize your card but only charge after cleaning is complete
-                      </p>
-                      <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                        Recommended
-                      </Badge>
-                    </div>
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 transition-colors",
-                      selectedPaymentOption === 'pay_after_service'
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground"
-                    )}>
-                      {selectedPaymentOption === 'pay_after_service' && (
-                        <div className="w-full h-full rounded-full bg-white scale-50" />
-                      )}
-                    </div>
                   </div>
                 </div>
 
-                {/* Pay 25% + Get 5% Discount */}
-                <div 
-                  className={cn(
-                    "p-4 border-2 rounded-lg cursor-pointer transition-colors",
-                    selectedPaymentOption === '25_percent_with_discount' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => setSelectedPaymentOption('25_percent_with_discount')}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      <Tag className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">Pay 25% + Get 5% Discount</h3>
-                      <p className="text-muted-foreground text-sm mb-2">
-                        Pay 25% now and save 5% on your total service cost
-                      </p>
-                      <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
-                        Save ${(bookingData.totalPrice * 0.05).toFixed(2)}
-                      </Badge>
-                    </div>
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 transition-colors",
-                      selectedPaymentOption === '25_percent_with_discount'
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground"
-                    )}>
-                      {selectedPaymentOption === '25_percent_with_discount' && (
-                        <div className="w-full h-full rounded-full bg-white scale-50" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Promo Code */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Promo Code</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter promo code"
-                    value={discountCode}
-                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                    className="flex-1"
-                  />
-                  <Button 
-                    variant="outline"
-                    onClick={async () => {
-                      if (!discountCode.trim()) return;
-                      
-                      try {
-                        // Call promo code validation function
-                        const { data, error } = await supabase.functions.invoke('validate-promo-code', {
-                          body: { promoCode: discountCode.trim() }
-                        });
-                        
-                        if (error) throw error;
-                        
-                        if (data.valid) {
-                          toast.success(`Promo code applied! You saved ${data.discount}%`);
-                        } else {
-                          toast.error('Invalid or expired promo code');
-                        }
-                      } catch (error) {
-                        toast.error('Failed to validate promo code');
-                      }
-                    }}
-                  >
-                    Apply
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Book Your Service Button */}
-            <Card>
-              <CardContent className="pt-6">
                 <Button
                   onClick={async () => {
-                    if (!selectedPaymentOption) {
-                      toast.error('Please select a payment option');
-                      return;
-                    }
-
                     setIsProcessingPayment(true);
                     
                     try {
-                      if (selectedPaymentOption === 'pay_after_service') {
-                        // Card authorization only
-                        const { data, error } = await supabase.functions.invoke('create-payment', {
-                          body: {
-                            amount: 0, // Zero amount for authorization
-                            fullAmount: bookingData.totalPrice * 100, // Store full amount in cents
-                            payment_type: 'pay_after_service',
-                            booking_data: bookingData,
-                            customerEmail: bookingData.customerEmail,
-                            customerName: bookingData.customerName
-                          }
-                        });
-
-                        if (error) throw error;
-                        
-                        if (data.url) {
-                          window.location.href = data.url;
+                      console.log("Creating 20% deposit payment...");
+                      
+                      const response = await supabase.functions.invoke('create-payment', {
+                        body: {
+                          payment_type: 'deposit_20',
+                          fullAmount: bookingData.totalPrice, // Send in dollars
+                          booking_data: bookingData,
+                          customerEmail: bookingData.customerEmail,
+                          customerName: bookingData.customerName
                         }
+                      });
+
+                      if (response.error) {
+                        throw response.error;
+                      }
+
+                      if (response.data?.url) {
+                        console.log("Redirecting to Stripe checkout:", response.data.url);
+                        window.location.href = response.data.url;
                       } else {
-                        // 25% upfront payment with 5% discount
-                        const discountedTotal = bookingData.totalPrice * 0.95; // 5% discount
-                        const upfrontAmount = discountedTotal * 0.25; // 25% of discounted total
-                        
-                        const { data, error } = await supabase.functions.invoke('create-payment', {
-                          body: {
-                            amount: upfrontAmount * 100, // Convert to cents
-                            fullAmount: discountedTotal * 100, // Store full amount in cents
-                            payment_type: '25_percent_with_discount',
-                            booking_data: bookingData,
-                            customerEmail: bookingData.customerEmail,
-                            customerName: bookingData.customerName
-                          }
-                        });
-
-                        if (error) throw error;
-                        
-                        if (data.url) {
-                          window.location.href = data.url;
-                        }
+                        throw new Error('No payment URL received');
                       }
                     } catch (error) {
                       console.error('Payment error:', error);
@@ -693,22 +484,30 @@ export function ModernLegacyBooking() {
                       setIsProcessingPayment(false);
                     }
                   }}
-                  disabled={!selectedPaymentOption || isProcessingPayment}
-                  className="w-full bg-primary hover:bg-primary/90 text-lg py-6"
+                  disabled={isProcessingPayment}
+                  className="w-full h-12 text-lg"
+                  size="lg"
                 >
                   {isProcessingPayment ? (
-                    "Processing..."
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Processing...
+                    </div>
                   ) : (
-                    `Book Your Service - ${formatPrice(
-                      selectedPaymentOption === '25_percent_with_discount' 
-                        ? bookingData.totalPrice * 0.95 * 0.25 
-                        : bookingData.totalPrice
-                    )}`
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Pay 20% Deposit - ${formatPrice(bookingData.totalPrice * 0.2)}
+                    </div>
                   )}
-                  <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
+                
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4" />
+                  <span>Secure payment powered by Stripe</span>
+                </div>
               </CardContent>
             </Card>
+
           </div>
 
           {/* Right Column - Pricing Summary */}
