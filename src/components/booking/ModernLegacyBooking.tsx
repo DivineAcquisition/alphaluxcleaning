@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CheckCircle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin, Clock, Sparkles, Star, Shield, Zap, Tag, Gift } from 'lucide-react';
+import { CheckCircle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin, Clock, Sparkles, Star, Shield, Zap, Tag, Gift, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
+import { EmbeddedDepositPaymentForm } from './EmbeddedDepositPaymentForm';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
@@ -251,13 +252,8 @@ export function ModernLegacyBooking() {
   const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  
-  // Payment UI State
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<'pay_after_service' | '25_percent_with_discount' | ''>('');
-  const [referralCode, setReferralCode] = useState('');
-  const [appliedReferral, setAppliedReferral] = useState<{code: string, discount: number} | null>(null);
-  const [discountCode, setDiscountCode] = useState('');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -395,207 +391,139 @@ export function ModernLegacyBooking() {
     updateField('addOns', newAddOns);
   };
 
+  const handleBookService = async () => {
+    try {
+      setIsCreatingPayment(true);
+      
+      console.log("Creating payment with data:", {
+        payment_type: 'deposit_20',
+        fullAmount: bookingData.totalPrice,
+        booking_data: bookingData,
+        customerEmail: bookingData.customerEmail,
+        customerName: bookingData.customerName
+      });
+
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          payment_type: 'deposit_20',
+          fullAmount: bookingData.totalPrice,
+          booking_data: bookingData,
+          customerEmail: bookingData.customerEmail,
+          customerName: bookingData.customerName
+        }
+      });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data?.clientSecret) {
+        console.error('No client secret returned:', data);
+        throw new Error('No client secret received from payment service');
+      }
+
+      console.log("Payment intent created successfully");
+      setClientSecret(data.clientSecret);
+      
+    } catch (error) {
+      console.error('Payment creation failed:', error);
+      toast.error("Failed to process payment. Please try again.");
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
+  // Handle payment success
+  const handlePaymentSuccess = () => {
+    toast.success("Your cleaning service has been booked successfully!");
+    // Reset form or navigate to confirmation page
+    setShowCheckout(false);
+    setClientSecret(null);
+    // You could navigate to a confirmation page here
+  };
+  };
+
+  const handlePaymentCancel = () => {
+    setShowCheckout(false);
+    setClientSecret(null);
+  };
+
   if (showCheckout) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-6">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowCheckout(false)}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Review
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Payment Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Payment Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Payment Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Shield className="h-6 w-6 text-primary" />
-                    <div>
-                      <h4 className="font-semibold text-lg">20% Deposit Required</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Pay just 20% now to secure your booking. Remaining balance due after service completion.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-4 p-3 rounded-md bg-background/50">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Service Cost</p>
-                      <p className="text-lg font-bold">${formatPrice(bookingData.totalPrice)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Deposit Due Today</p>
-                      <p className="text-lg font-bold text-primary">${formatPrice(bookingData.totalPrice * 0.2)}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 pt-3 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Remaining balance of <strong>${formatPrice(bookingData.totalPrice * 0.8)}</strong> will be charged after your cleaning is completed.
-                    </p>
-                  </div>
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-bold mb-2">Complete Your Payment</h1>
+              <p className="text-muted-foreground">
+                You're paying a 20% deposit of <span className="font-semibold">${(bookingData.totalPrice * 0.2).toFixed(2)}</span>
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Remaining balance (${(bookingData.totalPrice * 0.8).toFixed(2)}) will be collected after service completion
+              </p>
+            </div>
+
+            {/* Service Summary */}
+            <Card className="p-6 mb-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Service:</span>
+                  <span>{bookingData.serviceType} cleaning</span>
                 </div>
-
-                <Button
-                  onClick={async () => {
-                    setIsProcessingPayment(true);
-                    
-                    try {
-                      console.log("Creating 20% deposit payment...");
-                      
-                      const response = await supabase.functions.invoke('create-payment', {
-                        body: {
-                          payment_type: 'deposit_20',
-                          fullAmount: bookingData.totalPrice, // Send in dollars
-                          booking_data: bookingData,
-                          customerEmail: bookingData.customerEmail,
-                          customerName: bookingData.customerName
-                        }
-                      });
-
-                      if (response.error) {
-                        throw response.error;
-                      }
-
-                      if (response.data?.url) {
-                        console.log("Redirecting to Stripe checkout:", response.data.url);
-                        window.location.href = response.data.url;
-                      } else {
-                        throw new Error('No payment URL received');
-                      }
-                    } catch (error) {
-                      console.error('Payment error:', error);
-                      toast.error('Failed to process payment. Please try again.');
-                    } finally {
-                      setIsProcessingPayment(false);
-                    }
-                  }}
-                  disabled={isProcessingPayment}
-                  className="w-full h-12 text-lg"
-                  size="lg"
-                >
-                  {isProcessingPayment ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Processing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      Pay 20% Deposit - ${formatPrice(bookingData.totalPrice * 0.2)}
-                    </div>
-                  )}
-                </Button>
-                
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4" />
-                  <span>Secure payment powered by Stripe</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Date & Time:</span>
+                  <span>{bookingData.serviceDate} at {bookingData.serviceTime}</span>
                 </div>
-              </CardContent>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Address:</span>
+                  <span className="text-right">
+                    {bookingData.address.street}<br/>
+                    {bookingData.address.city}, {bookingData.address.state} {bookingData.address.zipCode}
+                  </span>
+                </div>
+              </div>
             </Card>
 
-          </div>
-
-          {/* Right Column - Pricing Summary */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Pricing Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Service Type:</span>
-                    <span className="font-medium capitalize">{bookingData.serviceType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Home Size:</span>
-                    <span className="font-medium">{homeSizes.find(s => s.id === bookingData.homeSize)?.name}</span>
-                  </div>
-                  {bookingData.frequency && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Frequency:</span>
-                      <span className="font-medium">{frequencyOptions.find(f => f.id === bookingData.frequency)?.name}</span>
-                    </div>
-                  )}
-                  {bookingData.addOns.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-muted-foreground">Add-ons:</span>
-                      {bookingData.addOns.map(addOnId => {
-                        const addOn = addOnServices.find(a => a.id === addOnId);
-                        return (
-                          <div key={addOnId} className="flex justify-between text-sm">
-                            <span>• {addOn?.name}</span>
-                            <span>{formatPrice(addOn?.price || 0)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+            {/* Payment Form */}
+            {!clientSecret ? (
+              <Card className="p-6">
+                <div className="text-center">
+                  <Button 
+                    onClick={handleBookService}
+                    disabled={isCreatingPayment}
+                    className="w-full mb-4"
+                    size="lg"
+                  >
+                    {isCreatingPayment ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${(bookingData.totalPrice * 0.2).toFixed(2)} Deposit`
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCheckout(false)}
+                    className="w-full"
+                    disabled={isCreatingPayment}
+                  >
+                    Back to Booking
+                  </Button>
                 </div>
-                <div className="border-t pt-3 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal:</span>
-                    <span>{formatPrice(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
-                      const addOn = addOnServices.find(a => a.id === addOnId);
-                      return total + (addOn?.price || 0);
-                    }, 0))}</span>
-                  </div>
-                  <div className="flex justify-between text-success">
-                    <span>20% Savings Applied:</span>
-                    <span>-{formatPrice(calculateGlobalDiscountAmount(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
-                      const addOn = addOnServices.find(a => a.id === addOnId);
-                      return total + (addOn?.price || 0);
-                    }, 0)))}</span>
-                  </div>
-                  {appliedReferral && (
-                    <div className="flex justify-between text-success">
-                      <span>Referral Discount ({appliedReferral.discount}%):</span>
-                      <span>-{formatPrice(bookingData.totalPrice * (appliedReferral.discount / 100))}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>Total:</span>
-                    <span className="text-primary">{formatPrice(bookingData.totalPrice)}</span>
-                  </div>
-                </div>
-                {selectedPaymentOption === '25_percent_with_discount' && (
-                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Today (25%):</span>
-                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.25)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>After Service:</span>
-                        <span className="font-medium">{formatPrice(bookingData.totalPrice * 0.95 * 0.75)}</span>
-                      </div>
-                      <div className="flex justify-between text-success font-semibold border-t pt-1">
-                        <span>Total Savings:</span>
-                        <span>-{formatPrice(bookingData.totalPrice * 0.05)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              </Card>
+            ) : (
+              <EmbeddedDepositPaymentForm
+                clientSecret={clientSecret}
+                amount={Math.round(bookingData.totalPrice * 0.2 * 100)} // Convert to cents
+                bookingData={bookingData}
+                onSuccess={handlePaymentSuccess}
+                onCancel={handlePaymentCancel}
+              />
+            )}
           </div>
         </div>
       </div>
