@@ -96,9 +96,7 @@ serve(async (req) => {
         customer_name: finalCustomerName,
         customer_email: finalCustomerEmail
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
     });
     
     console.log("20% deposit payment intent created:", paymentIntent.id);
