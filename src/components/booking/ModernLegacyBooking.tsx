@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
+import { EmbeddedDepositPaymentForm } from './EmbeddedDepositPaymentForm';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
 // Original pricing matrix - 20% discount applied automatically in calculations
@@ -259,6 +260,10 @@ export function ModernLegacyBooking() {
   const [discountCode, setDiscountCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
+  // Embedded payment state
+  const [showEmbeddedPayment, setShowEmbeddedPayment] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const updateField = (field: keyof BookingData, value: any) => {
@@ -395,6 +400,44 @@ export function ModernLegacyBooking() {
     updateField('addOns', newAddOns);
   };
 
+  // Handle embedded payment form
+  if (showEmbeddedPayment && clientSecret) {
+    const depositAmount = bookingData.totalPrice * 0.2;
+    
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setShowEmbeddedPayment(false);
+              setClientSecret(null);
+            }}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Review
+          </Button>
+        </div>
+        
+        <EmbeddedDepositPaymentForm
+          totalAmount={bookingData.totalPrice}
+          depositAmount={depositAmount}
+          clientSecret={clientSecret}
+          bookingData={bookingData}
+          onSuccess={() => {
+            console.log('Payment successful, redirecting to confirmation');
+            window.location.href = '/booking-confirmation';
+          }}
+          onCancel={() => {
+            setShowEmbeddedPayment(false);
+            setClientSecret(null);
+          }}
+        />
+      </div>
+    );
+  }
+
   if (showCheckout) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -455,7 +498,7 @@ export function ModernLegacyBooking() {
                     setIsProcessingPayment(true);
                     
                     try {
-                      console.log("Creating 20% deposit payment...");
+                      console.log("Creating 20% deposit payment intent...");
                       
                       const response = await supabase.functions.invoke('create-payment', {
                         body: {
@@ -471,15 +514,16 @@ export function ModernLegacyBooking() {
                         throw response.error;
                       }
 
-                      if (response.data?.url) {
-                        console.log("Redirecting to Stripe checkout:", response.data.url);
-                        window.location.href = response.data.url;
+                      if (response.data?.clientSecret) {
+                        console.log("Payment intent created, showing embedded form");
+                        setClientSecret(response.data.clientSecret);
+                        setShowEmbeddedPayment(true);
                       } else {
-                        throw new Error('No payment URL received');
+                        throw new Error('No client secret received');
                       }
                     } catch (error) {
                       console.error('Payment error:', error);
-                      toast.error('Failed to process payment. Please try again.');
+                      toast.error('Failed to initialize payment. Please try again.');
                     } finally {
                       setIsProcessingPayment(false);
                     }
@@ -491,7 +535,7 @@ export function ModernLegacyBooking() {
                   {isProcessingPayment ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Processing...
+                      Preparing Payment...
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
