@@ -69,14 +69,29 @@ serve(async (req) => {
       console.log("No existing customer found, will create new one");
     }
 
-    console.log("Creating 20% deposit PaymentIntent...");
+    console.log("Creating 20% deposit checkout session...");
     
-    // Create a PaymentIntent for 20% deposit
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: depositAmountCents,
-      currency: "usd",
+    // Create a Stripe checkout session for 20% deposit
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      description: `20% deposit for ${booking_data.serviceType} cleaning service • Full amount: $${(fullAmountCents / 100).toFixed(2)}`,
+      customer_email: customerId ? undefined : finalCustomerEmail,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: { 
+              name: `Bay Area Cleaning Pros - 20% Deposit`,
+              description: `20% deposit for ${booking_data.serviceType} cleaning service • Full amount: $${(fullAmountCents / 100).toFixed(2)}`
+            },
+            unit_amount: depositAmountCents,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${req.headers.get("origin")}/booking-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get("origin")}/`,
       metadata: {
         payment_type: 'deposit_20',
         full_amount_cents: fullAmountCents.toString(),
@@ -84,20 +99,14 @@ serve(async (req) => {
         booking_data: JSON.stringify(booking_data),
         customer_name: finalCustomerName,
         customer_email: finalCustomerEmail
-      },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      }
     });
     
-    console.log("20% deposit PaymentIntent created:", paymentIntent.id);
+    console.log("20% deposit checkout session created:", session.id);
 
-    console.log("Returning client secret");
+    console.log("Returning checkout URL");
 
-    return new Response(JSON.stringify({ 
-      clientSecret: paymentIntent.client_secret,
-      amount: depositAmountCents 
-    }), {
+    return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
