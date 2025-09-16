@@ -131,7 +131,7 @@ serve(async (req) => {
         // Create order record with authorization status
         const orderData = {
           stripe_session_id: setupIntent.id,
-          amount: Math.round(fullAmount || amount), // Store full amount
+          amount: Math.round(fullAmount || amount), // fullAmount is already in cents from client
           customer_name: finalCustomerName,
           customer_email: finalCustomerEmail,
           customer_phone: booking_data?.contactNumber || customerPhone,
@@ -140,7 +140,7 @@ serve(async (req) => {
             cleaningType,
             frequency,
             addOns,
-            totalAmount: (fullAmount || amount) / 100,
+            totalAmount: (fullAmount || amount) / 100, // Convert cents back to dollars for display
             serviceAddress: finalServiceAddress,
             bedrooms,
             bathrooms,
@@ -170,7 +170,7 @@ serve(async (req) => {
       }
       
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // amount should already be in cents
+        amount: Math.round(amount), // amount is already in cents from client
         currency: currency || 'usd',
         customer: customerId,
         metadata: {
@@ -189,7 +189,7 @@ serve(async (req) => {
       // Create order record in database
       const orderData = {
         stripe_session_id: paymentIntent.id,
-        amount: Math.round(amount),
+        amount: Math.round(amount), // amount is already in cents from client
         customer_name: finalCustomerName,
         customer_email: finalCustomerEmail,
         customer_phone: booking_data?.contactNumber || customerPhone,
@@ -198,7 +198,7 @@ serve(async (req) => {
           cleaningType,
           frequency,
           addOns,
-          totalAmount: amount / 100,
+          totalAmount: amount / 100, // Convert cents back to dollars for display
           serviceAddress: finalServiceAddress,
           bedrooms,
           bathrooms,
@@ -238,7 +238,7 @@ serve(async (req) => {
         cancel_url: `${req.headers.get("origin")}/`,
         metadata: {
           payment_type: 'pay_after_service',
-          full_amount: Math.round(fullAmount || amount),
+          full_amount: Math.round(fullAmount || amount), // fullAmount is already in cents from client
           squareFootage: squareFootage?.toString() || "",
           cleaningType: cleaningType || "",  
           frequency: frequency || "",
@@ -293,6 +293,7 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : finalCustomerEmail,
+      payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
@@ -301,7 +302,7 @@ serve(async (req) => {
               name: `Bay Area Cleaning Pros - ${cleaningType?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Cleaning${newClientSpecial ? ' (New Client Special)' : ''}${membershipStatus ? ' (Member)' : ''}`,
               description: `${paymentType === 'half' ? '50% Payment' : paymentType === 'prepayment' ? '$150 Prepayment' : 'Full Payment'} • ${squareFootage} sq ft • ${frequency?.replace(/_/g, ' ')} service${addOns?.length ? ` • Add-ons: ${addOns.join(', ')}` : ''}${newClientSpecial ? ' • $71 Discount Applied' : ''}${addonMemberDiscount > 0 ? ` • $${addonMemberDiscount} Member Addon Discount` : ''}`
             },
-            unit_amount: Math.round(amount * 100), // Convert all amounts to cents
+            unit_amount: Math.round(amount), // Amount is already in cents from client
           },
           quantity: 1,
         },
@@ -324,7 +325,7 @@ serve(async (req) => {
     // Create order record in Supabase
     const orderData = {
       stripe_session_id: session.id,
-      amount: Math.round(amount), // amount should already be in cents
+      amount: Math.round(amount), // amount is already in cents from client
       customer_name: finalCustomerName,
       customer_email: finalCustomerEmail,
       customer_phone: booking_data?.contactNumber || customerPhone,
@@ -337,7 +338,7 @@ serve(async (req) => {
         cleaningType,
         frequency,
         addOns,
-        totalAmount: amount, // Store amount in dollars for display
+        totalAmount: amount / 100, // Convert cents back to dollars for display
         serviceAddress,
         bedrooms,
         bathrooms,
