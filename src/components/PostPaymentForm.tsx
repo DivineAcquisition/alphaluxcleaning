@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Calendar, Clock, MessageSquare, User, Home, CheckCircle, Gift, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+const sb = supabase as any;
 import React from "react";
 
 interface PostPaymentFormProps {
@@ -57,11 +58,11 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     const fetchOrderDetails = async () => {
       if (sessionId) {
         try {
-          const { data, error } = await supabase
+          const { data, error } = await sb
             .from("orders")
             .select("frequency, service_details, customer_name, customer_email, customer_phone")
             .eq("stripe_session_id", sessionId)
-            .single();
+            .maybeSingle();
 
           if (data && !error) {
             console.log("Order data fetched:", data);

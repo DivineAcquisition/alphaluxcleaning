@@ -30,6 +30,7 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const sb = supabase as any;
 
   const discountedAmount = Math.round(service.amount * 0.75); // 25% discount
   const savingsAmount = service.amount - discountedAmount;
@@ -49,7 +50,7 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
     setLoading(true);
     try {
       // Update service with discount
-      const { error } = await supabase
+      const { error } = await sb
         .from('orders')
         .update({
           amount: discountedAmount,
@@ -60,22 +61,22 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
 
       if (error) throw error;
 
-      // Note: Simplified - removed complex modification logging
-
       // Send email notification
-      const { data: user } = await supabase.auth.getUser();
+      const { data: authData } = await supabase.auth.getUser();
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
-        .eq('id', user.user?.id)
-        .single();
+        .select('first_name,last_name')
+        .eq('user_id', authData.user?.id)
+        .maybeSingle();
+
+      const customerName = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'Valued Customer';
 
       await supabase.functions.invoke('send-service-notification', {
         body: {
           orderId: service.id,
           notificationType: 'discount_applied',
-          customerEmail: user.user?.email,
-          customerName: profile?.full_name || 'Valued Customer',
+          customerEmail: authData.user?.email,
+          customerName,
           cleaningType: service.cleaning_type,
           frequency: service.frequency,
           originalAmount: service.amount,
@@ -124,7 +125,7 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
     setLoading(true);
     try {
       // Cancel the service
-      const { error } = await supabase
+      const { error } = await sb
         .from('orders')
         .update({
           service_status: 'cancelled',
@@ -136,22 +137,22 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
 
       if (error) throw error;
 
-      // Note: Simplified - removed complex modification logging
-
       // Send cancellation email
-      const { data: user } = await supabase.auth.getUser();
+      const { data: authData } = await supabase.auth.getUser();
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
-        .eq('id', user.user?.id)
-        .single();
+        .select('first_name,last_name')
+        .eq('user_id', authData.user?.id)
+        .maybeSingle();
+
+      const customerName = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'Valued Customer';
 
       await supabase.functions.invoke('send-service-notification', {
         body: {
           orderId: service.id,
           notificationType: 'cancelled',
-          customerEmail: user.user?.email,
-          customerName: profile?.full_name || 'Valued Customer',
+          customerEmail: authData.user?.email,
+          customerName,
           cleaningType: service.cleaning_type,
           frequency: service.frequency,
           cancellationReason: reason,

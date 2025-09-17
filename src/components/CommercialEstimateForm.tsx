@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+const sb = supabase as any;
 import { trackCommercialEstimateRequest, trackLead } from "@/lib/facebook-pixel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
@@ -266,7 +267,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await sb
         .from('commercial_estimates')
         .insert([{
           user_id: user.id, // Link estimate to authenticated user

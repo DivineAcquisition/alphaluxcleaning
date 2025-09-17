@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Search, Clock, CheckCircle, XCircle, AlertCircle, Package, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+const sb = supabase as any;
 import { toast } from "sonner";
 
 interface OrderStatusLookupProps {
@@ -104,14 +105,14 @@ export const OrderStatusLookup = ({ triggerClassName }: OrderStatusLookupProps) 
       setOrder(foundOrder);
 
       // Fetch status updates for this order
-      const { data: updates, error: updatesError } = await supabase
+      const { data: updates, error: updatesError } = await sb
         .from('order_status_updates')
         .select('*')
         .eq('order_id', foundOrder.id)
         .order('created_at', { ascending: false });
 
       if (!updatesError && updates) {
-        setStatusUpdates(updates);
+        setStatusUpdates(updates as unknown as StatusUpdate[]);
       }
 
       toast.success("Order found!");

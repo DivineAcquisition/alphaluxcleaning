@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, User, Mail, Phone, Gift, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+const sb = supabase as any;
 import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 interface PaymentFormProps {
@@ -73,7 +74,7 @@ export function PaymentForm({
       const {
         data,
         error
-      } = await supabase.rpc('validate_and_use_referral_code', {
+      } = await sb.rpc('validate_and_use_referral_code', {
         p_code: referralCode.trim(),
         p_user_email: customerInfo.email,
         p_user_name: customerInfo.name,
@@ -88,8 +89,8 @@ export function PaymentForm({
         // Get referrer's email and send reward email
         const {
           data: referrerData
-        } = await supabase.from('referral_codes').select('owner_email').eq('code', referralCode.trim()).single();
-        if (referrerData?.owner_email) {
+        } = await sb.from('referral_codes').select('owner_email').eq('code', referralCode.trim()).maybeSingle();
+        if ((referrerData as any)?.owner_email) {
           await supabase.functions.invoke('send-service-notification', {
             body: {
               type: 'referral_reward',

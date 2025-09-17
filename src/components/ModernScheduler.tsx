@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, CheckCircle2, AlertCircle, Zap, Star, ArrowRight, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+const sb = supabase as any;
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -308,7 +309,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
 
       // Update order in database
       if (sessionId) {
-        await supabase
+        await sb
           .from("orders")
           .update({
             scheduled_date: selectedDate,
@@ -326,14 +327,14 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
           .eq("stripe_session_id", sessionId);
 
         if (nextDayUpsell) {
-          const { data: orderData } = await supabase
+          const { data: orderData } = await sb
             .from("orders")
             .select("amount")
             .eq("stripe_session_id", sessionId)
-            .single();
+            .maybeSingle();
 
           if (orderData) {
-            await supabase
+            await sb
               .from("orders")
               .update({ amount: orderData.amount + 5000 })
               .eq("stripe_session_id", sessionId);
