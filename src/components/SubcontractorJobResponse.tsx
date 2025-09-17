@@ -50,7 +50,7 @@ export function SubcontractorJobResponse({ subcontractorId }: SubcontractorJobRe
   const fetchAssignments = async () => {
     try {
       const { data, error } = await supabase
-        .from('subcontractor_job_assignments')
+        .from('subcontractor_job_assignments' as any)
         .select(`
           *,
           bookings (*)
@@ -60,7 +60,7 @@ export function SubcontractorJobResponse({ subcontractorId }: SubcontractorJobRe
         .order('assigned_at', { ascending: false });
 
       if (error) throw error;
-      setAssignments(data || []);
+      setAssignments(data as any || []);
     } catch (error) {
       console.error('Error fetching assignments:', error);
       toast.error('Failed to load job assignments');
@@ -77,7 +77,7 @@ export function SubcontractorJobResponse({ subcontractorId }: SubcontractorJobRe
       
       // Update assignment status in database
       const { error } = await supabase
-        .from('subcontractor_job_assignments')
+        .from('subcontractor_job_assignments' as any)
         .update({
           status: action === 'accept' ? 'accepted' : 'declined',
           response_time: new Date().toISOString()
@@ -88,7 +88,7 @@ export function SubcontractorJobResponse({ subcontractorId }: SubcontractorJobRe
 
       // Create notification for response tracking
       await supabase
-        .from('subcontractor_notifications')
+        .from('subcontractor_notifications' as any)
         .insert({
           subcontractor_id: subcontractorId,
           title: `Job ${action === 'accept' ? 'Accepted' : 'Declined'}`,

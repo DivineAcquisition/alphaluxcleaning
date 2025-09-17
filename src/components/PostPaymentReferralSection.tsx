@@ -22,7 +22,7 @@ export function PostPaymentReferralSection() {
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.rpc('create_referral_code', {
+      const { data, error } = await supabase.rpc('create_referral_code' as any, {
         p_owner_email: email.trim(),
         p_owner_name: name.trim()
       });

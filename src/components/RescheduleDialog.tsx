@@ -57,28 +57,36 @@ export function RescheduleDialog({ open, onOpenChange, service, onSuccess }: Res
 
       // Update the service
       const { error } = await supabase
-        .from('orders')
-        .update(newValues)
+        .from('bookings' as any)
+        .update(newValues as any)
         .eq('id', service.id);
 
       if (error) throw error;
 
       // Note: Simplified - removed complex modification logging
 
-      // Send email notification
       const { data: user } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.user?.id)
-        .single();
+      let userName = 'Valued Customer';
+      
+      if (user?.user?.id) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', user.user?.id)
+          .maybeSingle();
+
+        if (profileData) {
+          const fullName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
+          userName = fullName || 'Valued Customer';
+        }
+      }
 
       await supabase.functions.invoke('send-service-notification', {
         body: {
           orderId: service.id,
           notificationType: 'rescheduled',
-          customerEmail: user.user?.email,
-          customerName: profile?.full_name || 'Valued Customer',
+          customerEmail: user?.user?.email,
+          customerName: userName,
           cleaningType: service.cleaning_type,
           frequency: service.frequency,
           serviceAddress: '',

@@ -39,7 +39,7 @@ export const SubcontractorProfileSettings = ({ subcontractor, onUpdate }: Subcon
 
     try {
       const { error } = await supabase
-        .from('subcontractors')
+        .from('subcontractors' as any)
         .update(formData)
         .eq('id', subcontractor.id);
 

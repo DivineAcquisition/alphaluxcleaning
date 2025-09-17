@@ -33,7 +33,7 @@ export function ReferralCodeDialog({ onCodeGenerated, trigger }: ReferralCodeDia
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.rpc('create_referral_code', {
+      const { data, error } = await supabase.rpc('create_referral_code' as any, {
         p_owner_email: email,
         p_owner_name: name
       });

@@ -59,28 +59,27 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
       if (sessionId) {
         try {
           const { data, error } = await sb
-            .from("orders")
-            .select("frequency, service_details, customer_name, customer_email, customer_phone")
-            .eq("stripe_session_id", sessionId)
+            .from("bookings")
+            .select("frequency, property_details, customer_id")
+            .eq("stripe_checkout_session_id", sessionId)
             .maybeSingle();
 
           if (data && !error) {
             console.log("Order data fetched:", data);
             
-            // Autofill customer info
-            if (data.customer_name) {
-              handleInputChange("customerName", data.customer_name);
-            }
-            if (data.customer_email) {
-              handleInputChange("customerEmail", data.customer_email);
-            }
-            if (data.customer_phone) {
-              handleInputChange("customerPhone", data.customer_phone);
+            // Get customer info
+            if (data.customer_id) {
+              const { data: customer } = await sb.from("customers").select("*").eq("id", data.customer_id).maybeSingle();
+              if (customer) {
+                handleInputChange("customerName", customer.name || "");
+                handleInputChange("customerEmail", customer.email || "");
+                handleInputChange("customerPhone", customer.phone || "");
+              }
             }
             
             // Autofill service address if available
-            if (data.service_details && typeof data.service_details === 'object') {
-              const serviceDetails = data.service_details as any;
+            if (data.property_details && typeof data.property_details === 'object') {
+              const serviceDetails = data.property_details as any;
               
               // Check for service address in the new structure
               if (serviceDetails.serviceAddress) {
@@ -121,52 +120,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
   };
 
   const handleApplyReferralCode = async () => {
-    if (!referralCode.trim()) {
-      toast.error("Please enter a referral code");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
-        p_code: referralCode.trim(),
-        p_user_email: formData.customerEmail,
-        p_user_name: formData.customerName,
-        p_order_id: null // We'll update this after order creation
-      });
-
-      if (error) throw error;
-
-      const result = data as any;
-      if (result?.success) {
-        setAppliedReferral(result);
-        toast.success(`Referral code applied! You get 10% off your service.`);
-        
-        // Get referrer's email from database and send reward email
-        const { data: referrerData } = await supabase
-          .from('referral_codes')
-          .select('owner_email')
-          .eq('code', referralCode.trim())
-          .single();
-
-        if (referrerData?.owner_email) {
-          await supabase.functions.invoke('send-service-notification', {
-            body: {
-              type: 'referral_reward',
-              referrerEmail: referrerData.owner_email,
-              referrerName: result.owner_name,
-              friendName: formData.customerName,
-              rewardCode: `FRIEND50-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
-              rewardAmount: '50%'
-            }
-          });
-        }
-      } else {
-        toast.error(result?.error || "Invalid referral code");
-      }
-    } catch (error) {
-      console.error("Error applying referral code:", error);
-      toast.error("Failed to apply referral code");
-    }
+    toast.error("Referral codes are not available at this time");
   };
 
   const handleApplyDiscountCode = async () => {
@@ -213,27 +167,20 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
     setIsSubmitting(true);
 
     try {
-      // First, get the complete order data
-      const { data: orderData, error: fetchError } = await supabase
-        .from("orders")
+      // First, get the complete booking data
+      const { data: bookingData, error: fetchError } = await supabase
+        .from("bookings")
         .select("*")
-        .eq("stripe_session_id", sessionId)
+        .eq("stripe_checkout_session_id", sessionId)
         .single();
 
       if (fetchError) throw fetchError;
 
-      // Merge new service details with existing ones
-      const existingServiceDetails = (orderData.service_details && typeof orderData.service_details === 'object') ? orderData.service_details : {};
-      const updatedServiceDetails = {
-        ...existingServiceDetails,
+      // Merge new property details with existing ones
+      const existingPropertyDetails = (bookingData.property_details && typeof bookingData.property_details === 'object') ? bookingData.property_details : {};
+      const updatedPropertyDetails = {
+        ...existingPropertyDetails,
         serviceAddress: {
-          street: formData.streetAddress,
-          apartment: formData.apartmentUnit,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.zipCode
-        },
-        address: {
           street: formData.streetAddress,
           apartment: formData.apartmentUnit,
           city: formData.city,
@@ -258,63 +205,60 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
         }
       };
 
-      // Update the order with additional information
+      // Update customer info
+      if (bookingData.customer_id) {
+        await supabase
+          .from("customers")
+          .update({
+            email: formData.customerEmail,
+            name: formData.customerName,
+            phone: formData.customerPhone
+          })
+          .eq("id", bookingData.customer_id);
+      }
+
+      // Update the booking with additional information
       const { error } = await supabase
-        .from("orders")
+        .from("bookings")
         .update({
-          service_details: updatedServiceDetails,
-          customer_email: formData.customerEmail,
-          customer_name: formData.customerName,
-          customer_phone: formData.customerPhone
+          property_details: updatedPropertyDetails
         })
-        .eq("stripe_session_id", sessionId);
+        .eq("stripe_checkout_session_id", sessionId);
 
       if (error) throw error;
 
 
       // Create booking in GoHighLevel if scheduling data exists
       try {
-        const { data: orderData, error: orderFetchError } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-
-        if (!orderFetchError && orderData) {
-          // Check if this order has scheduling data from the visual scheduler
-          const serviceDetails = orderData.service_details as any;
-          const hasSchedulingInfo = serviceDetails?.scheduling;
-          
-          if (hasSchedulingInfo || (formData.streetAddress && formData.customerEmail)) {
-            await supabase.functions.invoke('create-gohighlevel-booking', {
-              body: {
-                customerName: formData.customerName,
-                customerEmail: formData.customerEmail,
-                customerPhone: formData.customerPhone || '',
-                scheduledDate: hasSchedulingInfo?.scheduledDate || '',
-                scheduledTime: hasSchedulingInfo?.scheduledTime || '',
-                serviceType: orderData.cleaning_type,
-                address: {
-                  street: formData.streetAddress,
-                  city: formData.city,
-                  state: formData.state,
-                  zipCode: formData.zipCode
-                },
-                serviceDetails: {
-                  squareFootage: orderData.square_footage,
-                  addOns: orderData.add_ons,
-                  frequency: orderData.frequency,
-                  instructions: {
-                    special: formData.specialRequests,
-                    access: formData.accessInstructions,
-                    parking: formData.parkingInstructions,
-                    pets: formData.petsPresent
-                  }
+        if (formData.streetAddress && formData.customerEmail) {
+          await supabase.functions.invoke('create-gohighlevel-booking', {
+            body: {
+              customerName: formData.customerName,
+              customerEmail: formData.customerEmail,
+              customerPhone: formData.customerPhone || '',
+              scheduledDate: '',
+              scheduledTime: '',
+              serviceType: bookingData.service_type,
+              address: {
+                street: formData.streetAddress,
+                city: formData.city,
+                state: formData.state,
+                zipCode: formData.zipCode
+              },
+              serviceDetails: {
+                squareFootage: bookingData.sqft_or_bedrooms,
+                addOns: bookingData.addons,
+                frequency: bookingData.frequency,
+                instructions: {
+                  special: formData.specialRequests,
+                  access: formData.accessInstructions,
+                  parking: formData.parkingInstructions,
+                  pets: formData.petsPresent
                 }
               }
-            });
-            console.log("Booking created in GoHighLevel successfully");
-          }
+            }
+          });
+          console.log("Booking created in GoHighLevel successfully");
         }
       } catch (ghlError) {
         console.error('Error creating GoHighLevel booking:', ghlError);

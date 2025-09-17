@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+const sb = supabase as any;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,30 +33,30 @@ export const SubcontractorStatusUpdate = ({ orderId, onStatusUpdate }: Subcontra
       if (!user) return;
 
       // Check if current user is a subcontractor assigned to this order
-      const { data: subcontractor } = await supabase
+      const { data: subcontractor } = await sb
         .from('subcontractors')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
       if (subcontractor) {
-        setSubcontractorId(subcontractor.id);
+        setSubcontractorId((subcontractor as any)?.id);
         
         // Check if this subcontractor is assigned to the order
-        const { data: assignment } = await supabase
+        const { data: assignment } = await sb
           .from('subcontractor_job_assignments')
           .select('booking_id')
-          .eq('subcontractor_id', subcontractor.id)
+          .eq('subcontractor_id', (subcontractor as any)?.id)
           .eq('status', 'accepted');
 
         if (assignment && assignment.length > 0) {
           // Check if any of these bookings match the order
           const { data: booking } = await supabase
             .from('bookings')
-            .select('order_id')
-            .eq('order_id', orderId)
-            .in('id', assignment.map(a => a.booking_id))
-            .single();
+            .select('id as booking_id')
+            .eq('id', orderId)
+            .in('id', (assignment as any)?.map((a: any) => a.booking_id) || [])
+            .maybeSingle();
 
           if (booking) {
             setIsSubcontractor(true);
@@ -69,13 +70,13 @@ export const SubcontractorStatusUpdate = ({ orderId, onStatusUpdate }: Subcontra
 
   const fetchLastUpdate = async () => {
     try {
-      const { data } = await supabase
+      const { data } = await sb
         .from('order_status_updates')
         .select('*')
         .eq('order_id', orderId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setLastUpdate(data);
@@ -100,7 +101,7 @@ export const SubcontractorStatusUpdate = ({ orderId, onStatusUpdate }: Subcontra
     try {
       const statusMessage = customMessage || `Estimated arrival: ${estimatedMinutes} minutes`;
       
-      const { error } = await supabase
+      const { error } = await sb
         .from('order_status_updates')
         .insert({
           order_id: orderId,

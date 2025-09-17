@@ -536,7 +536,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       return;
     }
     try {
-      const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+      const { data, error } = await supabase.rpc('validate_and_use_referral_code' as any, {
         p_code: referralCode.trim(),
         p_user_email: customerInfo.email,
         p_user_name: customerInfo.name,
@@ -580,7 +580,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     // Auto-validate if we have customer info and a code
     if (value.trim().length >= 3 && customerInfo.email && customerInfo.name) {
       try {
-        const { data, error } = await supabase.rpc('validate_and_use_referral_code', {
+        const { data, error } = await supabase.rpc('validate_and_use_referral_code' as any, {
           p_code: value.trim(),
           p_user_email: customerInfo.email,
           p_user_name: customerInfo.name,

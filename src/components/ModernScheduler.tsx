@@ -327,16 +327,16 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
           .eq("stripe_session_id", sessionId);
 
         if (nextDayUpsell) {
-          const { data: orderData } = await sb
-            .from("orders")
-            .select("amount")
+          const { data: bookingData } = await sb
+            .from("bookings")
+            .select("est_price")
             .eq("stripe_session_id", sessionId)
             .maybeSingle();
 
           if (orderData) {
             await sb
-              .from("orders")
-              .update({ amount: orderData.amount + 5000 })
+              .from("bookings")
+              .update({ est_price: bookingData.est_price + 5000 })
               .eq("stripe_session_id", sessionId);
           }
         }
