@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { BookingSelectionPage } from './BookingSelectionPage';
+import { NewPricingInterface } from '../pricing/NewPricingInterface';
 import { BookingDetailsPage } from './BookingDetailsPage';
 // BookingCheckoutPage removed - keeping simplified booking flow
 import { BookingSummaryCard } from './BookingSummaryCard';
@@ -93,6 +93,15 @@ export function ModernBookingFlow({
     });
   };
 
+  // Helper function to get a representative zip code for a state
+  const getZipCodeFromState = (stateCode: string): string => {
+    switch (stateCode) {
+      case 'TX': return '77001'; // Houston area
+      case 'CA': return '90210'; // LA area
+      default: return '77001';
+    }
+  };
+
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -129,10 +138,20 @@ export function ModernBookingFlow({
               <Card className="shadow-clean">
                 <CardContent className="p-6">
                   {currentStep === 1 && (
-                    <BookingSelectionPage
-                      bookingData={bookingData}
-                      updateBookingData={updateData}
-                      onNext={handleNext}
+                    <NewPricingInterface
+                      onBookingSelect={(data) => {
+                        updateData({
+                          serviceZipCode: getZipCodeFromState(data.stateCode),
+                          homeSize: data.homeSizeId,
+                          frequency: data.frequencyId,
+                          basePrice: data.pricing.finalPrice,
+                          totalPrice: data.pricing.finalPrice,
+                          addOns: [],
+                          addOnPrices: {},
+                          frequencyDiscount: data.pricing.breakdown.frequencyDiscount || 0
+                        });
+                        handleNext();
+                      }}
                     />
                   )}
 
