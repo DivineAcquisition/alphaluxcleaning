@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 import { supabase } from '@/integrations/supabase/client';
+import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
 
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
@@ -277,30 +278,65 @@ export function ModernLegacyBooking() {
     }));
   };
 
-  // Get exact price from pricing matrix with 20% discount applied
+  // Get price using new pricing system (final price already includes multipliers/discounts)
   const getExactPrice = () => {
     if (!bookingData.homeSize) return 0;
-    
+
     // Handle homes over 5,100 sq ft
     if (bookingData.homeSize === 'over-5100') {
       return 0; // Requires estimate
     }
 
-    const sizePricing = pricingMatrix[bookingData.homeSize as keyof typeof pricingMatrix];
-    if (!sizePricing) return 0;
+    // Map legacy home size to approximate square footage midpoint
+    const sizeMidpoints: Record<string, number> = {
+      'under-1000': 800,
+      '1001-1400': 1200,
+      '1401-1800': 1600,
+      '1801-2400': 2000,
+      '2401-2800': 2600,
+      '2801-3300': 3000,
+      '3301-3900': 3600,
+      '3901-4500': 4200,
+      '4501-5100': 4800,
+    };
 
-    let originalPrice = 0;
-    
-    if (bookingData.serviceType === 'regular' && bookingData.frequency) {
-      originalPrice = sizePricing[bookingData.frequency as keyof typeof sizePricing] || 0;
-    } else if (bookingData.serviceType === 'deep') {
-      originalPrice = sizePricing.deepClean;
-    } else if (bookingData.serviceType === 'moveout') {
-      originalPrice = sizePricing.deepClean; // Move-out uses same pricing as deep clean
+    const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
+    const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
+    if (!homeSizeRange) return 0;
+
+    // Map legacy service type to new system ids
+    let serviceTypeId: 'standard' | 'deep' | 'move_in_out' = 'standard';
+    if (bookingData.serviceType === 'deep') serviceTypeId = 'deep';
+    else if (bookingData.serviceType === 'moveout') serviceTypeId = 'move_in_out';
+
+    // Map legacy frequency to new system ids
+    let frequencyId: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
+    if (bookingData.serviceType === 'regular') {
+      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';
+      else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';
+      else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';
+      else return 0; // Keep behavior: no price until frequency selected for regular
+    } else {
+      frequencyId = 'one_time';
     }
 
-    // Apply 20% global discount
-    return applyGlobalDiscount(originalPrice);
+
+    // Derive state code from ZIP if possible, otherwise use address state or default to TX
+    const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
+    const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
+    let stateCode = (bookingData.address?.state || '').toUpperCase();
+
+    const isTexasZip = (z: number) => z === 73301 || (z >= 75001 && z <= 79999) || (z >= 88510 && z <= 88595);
+    const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
+
+    if ((!stateCode || (stateCode !== 'TX' && stateCode !== 'CA')) && !isNaN(zip)) {
+      if (isTexasZip(zip)) stateCode = 'TX';
+      else if (isCaliforniaZip(zip)) stateCode = 'CA';
+    }
+    if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
+
+    const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
+    return result.finalPrice;
   };
 
   // Calculate pricing whenever relevant fields change with 20% discount applied
@@ -821,8 +857,37 @@ export function ModernLegacyBooking() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {frequencyOptions.map((option) => {
-                      const sizePricing = pricingMatrix[bookingData.homeSize as keyof typeof pricingMatrix];
-                      const price = sizePricing ? sizePricing[option.id as keyof typeof sizePricing] : 0;
+                      // Calculate price using new pricing system for each frequency option
+                      const sizeMidpoints: Record<string, number> = {
+                        'under-1000': 800,
+                        '1001-1400': 1200,
+                        '1401-1800': 1600,
+                        '1801-2400': 2000,
+                        '2401-2800': 2600,
+                        '2801-3300': 3000,
+                        '3301-3900': 3600,
+                        '3901-4500': 4200,
+                        '4501-5100': 4800,
+                      };
+                      const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
+                      const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
+
+                      // Derive state code similar to main calculation
+                      const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
+                      const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
+                      let stateCode = (bookingData.address?.state || '').toUpperCase();
+                      const isTexasZip = (z: number) => z === 73301 || (z >= 75001 && z <= 79999) || (z >= 88510 && z <= 88595);
+                      const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
+                      if ((!stateCode || (stateCode !== 'TX' && stateCode !== 'CA')) && !isNaN(zip)) {
+                        if (isTexasZip(zip)) stateCode = 'TX';
+                        else if (isCaliforniaZip(zip)) stateCode = 'CA';
+                      }
+                      if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
+
+                      // Map frequency id
+                      const freqId = option.id === 'weekly' ? 'weekly' : option.id === 'biweekly' ? 'bi_weekly' : option.id === 'monthly' ? 'monthly' : 'one_time';
+
+                      const price = homeSizeRange ? calculateNewPricing(homeSizeRange.id, 'standard', freqId, stateCode).finalPrice : 0;
                       
                       return (
                         <Card
