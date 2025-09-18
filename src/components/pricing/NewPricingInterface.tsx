@@ -63,7 +63,7 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
           Get Your Cleaning Quote
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Professional cleaning services with transparent, upfront pricing
+          Professional cleaning services throughout Cali & Texas with transparent, upfront pricing
         </p>
       </div>
 
