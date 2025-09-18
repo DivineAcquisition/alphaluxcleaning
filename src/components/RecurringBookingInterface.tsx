@@ -186,17 +186,17 @@ const membershipPerks = [
   { icon: <RotateCcw className="h-4 w-4" />, text: 'Loyalty perks & rewards' }
 ];
 
-// Original square footage pricing tiers from PricingCalculator
+// Updated square footage ranges to match new pricing system
 const squareFootageTiers = [
-  { min: 0, max: 1000, label: "Under 1,000 sq ft" },
-  { min: 1001, max: 1400, label: "1,001 - 1,400 sq ft" },
-  { min: 1401, max: 1800, label: "1,401 - 1,800 sq ft" },
-  { min: 1801, max: 2400, label: "1,801 - 2,400 sq ft" },
-  { min: 2401, max: 2800, label: "2,401 - 2,800 sq ft" },
-  { min: 2801, max: 3300, label: "2,801 - 3,300 sq ft" },
-  { min: 3301, max: 3900, label: "3,301 - 3,900 sq ft" },
-  { min: 3901, max: 4500, label: "3,901 - 4,500 sq ft" },
-  { min: 4501, max: 5100, label: "4,501 - 5,100 sq ft" }
+  { min: 0, max: 999, label: "Under 1,000 sq ft" },
+  { min: 1000, max: 1500, label: "1,000 – 1,500 sq ft" },
+  { min: 1501, max: 2000, label: "1,501 – 2,000 sq ft" },
+  { min: 2001, max: 2500, label: "2,001 – 2,500 sq ft" },
+  { min: 2501, max: 3000, label: "2,501 – 3,000 sq ft" },
+  { min: 3001, max: 3500, label: "3,001 – 3,500 sq ft" },
+  { min: 3501, max: 4000, label: "3,501 – 4,000 sq ft" },
+  { min: 4001, max: 5000, label: "4,001 – 5,000 sq ft" },
+  { min: 5000, max: 999999, label: "5,000+ sq ft" }
 ];
 
 // Embedded Payment Form Component

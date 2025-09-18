@@ -17,7 +17,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "1,001-1,400 sq ft",
+    range: "1,000 – 1,500 sq ft",
     icon: Home,
     description: "Small to medium homes",
     originalPricing: {
@@ -29,7 +29,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "1,401-1,800 sq ft",
+    range: "1,501 – 2,000 sq ft",
     icon: Home,
     description: "Medium sized homes",
     originalPricing: {
@@ -41,7 +41,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "1,801-2,400 sq ft",
+    range: "2,001 – 2,500 sq ft",
     icon: Home,
     description: "Large family homes",
     originalPricing: {
@@ -53,7 +53,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "2,401-2,800 sq ft",
+    range: "2,501 – 3,000 sq ft",
     icon: Home,
     description: "Very large homes",
     originalPricing: {
@@ -65,7 +65,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "2,801-3,300 sq ft",
+    range: "3,001 – 3,500 sq ft",
     icon: Home,
     description: "Extra large homes",
     originalPricing: {
@@ -77,7 +77,7 @@ const originalPricingTiers = [
     }
   },
   {
-    range: "3,301-3,900 sq ft",
+    range: "3,501 – 4,000 sq ft",
     icon: Home,
     description: "Luxury homes",
     originalPricing: {

@@ -147,15 +147,14 @@ const serviceTypes = [
 // Home sizes matching exact pricing tiers
 const homeSizes = [
   { id: 'under-1000', name: 'Under 1,000 sq ft', multiplier: 1, description: 'Studio/1 BR apartments' },
-  { id: '1001-1400', name: '1,001 - 1,400 sq ft', multiplier: 1, description: '1-2 BR condos/homes' },
-  { id: '1401-1800', name: '1,401 - 1,800 sq ft', multiplier: 1, description: '2-3 BR homes' },
-  { id: '1801-2400', name: '1,801 - 2,400 sq ft', multiplier: 1, description: '3 BR homes' },
-  { id: '2401-2800', name: '2,401 - 2,800 sq ft', multiplier: 1, description: '3-4 BR homes' },
-  { id: '2801-3300', name: '2,801 - 3,300 sq ft', multiplier: 1, description: '4 BR homes' },
-  { id: '3301-3900', name: '3,301 - 3,900 sq ft', multiplier: 1, description: '4-5 BR homes' },
-  { id: '3901-4500', name: '3,901 - 4,500 sq ft', multiplier: 1, description: '5 BR homes' },
-  { id: '4501-5100', name: '4,501 - 5,100 sq ft', multiplier: 1, description: '5+ BR homes' },
-  { id: 'over-5100', name: '5,100+ sq ft', multiplier: 1, description: 'Requires in-person estimate' }
+  { id: '1000-1500', name: '1,000 – 1,500 sq ft', multiplier: 1, description: '1-2 BR condos/homes' },
+  { id: '1501-2000', name: '1,501 – 2,000 sq ft', multiplier: 1, description: '2-3 BR homes' },
+  { id: '2001-2500', name: '2,001 – 2,500 sq ft', multiplier: 1, description: '3 BR homes' },
+  { id: '2501-3000', name: '2,501 – 3,000 sq ft', multiplier: 1, description: '3-4 BR homes' },
+  { id: '3001-3500', name: '3,001 – 3,500 sq ft', multiplier: 1, description: '4 BR homes' },
+  { id: '3501-4000', name: '3,501 – 4,000 sq ft', multiplier: 1, description: '4-5 BR homes' },
+  { id: '4001-5000', name: '4,001 – 5,000 sq ft', multiplier: 1, description: '5 BR homes' },
+  { id: '5000-plus', name: '5,000+ sq ft', multiplier: 1, description: 'Requires in-person estimate' }
 ];
 
 // Frequency options for regular cleaning

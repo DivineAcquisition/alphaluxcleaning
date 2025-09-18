@@ -82,14 +82,14 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
 
   const squareFootageOptions = [
     'Under 1,000 sq ft',
-    '1,001 - 1,400 sq ft',
-    '1,401 - 1,800 sq ft',
-    '1,801 - 2,400 sq ft',
-    '2,401 - 2,800 sq ft',
-    '2,801 - 3,300 sq ft',
-    '3,301 - 3,900 sq ft',
-    '3,901 - 4,500 sq ft',
-    '4,501+ sq ft'
+    '1,000 – 1,500 sq ft',
+    '1,501 – 2,000 sq ft',
+    '2,001 – 2,500 sq ft',
+    '2,501 – 3,000 sq ft',
+    '3,001 – 3,500 sq ft',
+    '3,501 – 4,000 sq ft',
+    '4,001 – 5,000 sq ft',
+    '5,000+ sq ft'
   ];
 
   const bedroomOptions = ['1', '2', '3', '4', '5', '6', '7', '8+'];

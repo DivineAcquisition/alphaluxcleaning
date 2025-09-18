@@ -80,8 +80,8 @@ const homeSizes = [
     }
   },
   {
-    value: '1001-1400',
-    label: '1,001-1,400 sq ft',
+    value: '1000-1500',
+    label: '1,000 – 1,500 sq ft',
     icon: Home,
     description: 'Small to medium homes',
     originalPricing: {
@@ -99,8 +99,8 @@ const homeSizes = [
     popular: true
   },
   {
-    value: '1401-1800',
-    label: '1,401-1,800 sq ft',
+    value: '1501-2000',
+    label: '1,501 – 2,000 sq ft',
     icon: Home,
     description: 'Medium sized homes',
     originalPricing: {
@@ -117,8 +117,8 @@ const homeSizes = [
     }
   },
   {
-    value: '1801-2400',
-    label: '1,801-2,400 sq ft',
+    value: '2001-2500',
+    label: '2,001 – 2,500 sq ft',
     icon: Home,
     description: 'Large family homes',
     originalPricing: {
@@ -135,8 +135,8 @@ const homeSizes = [
     }
   },
   {
-    value: '2401-2800',
-    label: '2,401-2,800 sq ft',
+    value: '2501-3000',
+    label: '2,501 – 3,000 sq ft',
     icon: Home,
     description: 'Very large homes',
     originalPricing: {
