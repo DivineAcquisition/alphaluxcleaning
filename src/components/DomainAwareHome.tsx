@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
-import { ModernBookingFlow } from '@/components/booking/ModernBookingFlow';
+import { ModernLegacyBooking } from '@/components/booking/ModernLegacyBooking';
 
 export function DomainAwareHome() {
   // Check if we're on the book subdomain
@@ -18,7 +18,7 @@ export function DomainAwareHome() {
             Experience premium cleaning services with AlphaLux Cleaning. Professional, reliable, and affordable throughout {isBookSubdomain ? 'California & Texas' : 'Cali & Texas'}.
           </p>
         </div>
-        <ModernBookingFlow />
+        <ModernLegacyBooking />
       </div>
     </div>
   );
