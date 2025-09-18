@@ -144,7 +144,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
     { id: 'move_in_out', name: 'Move-In/Out Cleaning', multiplier: 1.5 }
   ],
   frequencies: [
-    { id: 'one_time', name: 'One-time', discount: 0, mrrMultiplier: 0 },
+    { id: 'one_time', name: 'One-time', discount: 0.2, mrrMultiplier: 0 },
     { id: 'weekly', name: 'Weekly', discount: 0.15, mrrMultiplier: 4.3 },
     { id: 'bi_weekly', name: 'Bi-Weekly', discount: 0.10, mrrMultiplier: 2.15 },
     { id: 'monthly', name: 'Monthly', discount: 0.05, mrrMultiplier: 1 }
