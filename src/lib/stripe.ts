@@ -47,53 +47,83 @@ const fetchStripeKey = async (): Promise<string | null> => {
   }
 };
 
-// Create a promise that resolves to the Stripe instance
-const createStripePromise = async (): Promise<Stripe | null> => {
-  try {
-    console.log('🚀 Starting Stripe initialization...');
-    
-    // Try local sources first (for development)
-    let publishableKey = (
-      typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
-    ) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY);
+// Create a cached Stripe promise with retry logic
+let stripeInstancePromise: Promise<Stripe | null> | null = null;
 
-    if (publishableKey) {
-      console.log('🔑 Found local publishable key');
-    }
+const createStripePromise = (): Promise<Stripe | null> => {
+  if (stripeInstancePromise) {
+    return stripeInstancePromise;
+  }
 
-    // If no local key, fetch from Supabase
-    if (!publishableKey || !isValidKey(publishableKey)) {
-      console.log('⬇️ No valid local key, fetching from Supabase...');
-      publishableKey = await fetchStripeKey();
-    }
+  stripeInstancePromise = (async (): Promise<Stripe | null> => {
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    if (!publishableKey || !isValidKey(publishableKey)) {
-      console.error('🔴 No valid Stripe publishable key found');
-      if (typeof window !== 'undefined') {
-        toast.error('Payment system unavailable. Please try again or contact support.', {
-          description: 'Unable to load payment configuration'
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🚀 Starting Stripe initialization (attempt ${attempt}/${maxRetries})...`);
+        
+        // Try local sources first (for development)
+        let publishableKey = (
+          typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
+        ) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY);
+
+        if (publishableKey) {
+          console.log('🔑 Found local publishable key');
+        }
+
+        // If no local key, fetch from Supabase
+        if (!publishableKey || !isValidKey(publishableKey)) {
+          console.log('⬇️ No valid local key, fetching from Supabase...');
+          publishableKey = await fetchStripeKey();
+        }
+
+        if (!publishableKey || !isValidKey(publishableKey)) {
+          throw new Error('No valid Stripe publishable key found');
+        }
+
+        console.log('✅ Initializing Stripe with valid key');
+        
+        // Add a small delay on retries to avoid rapid failures
+        if (attempt > 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+
+        const stripe = await loadStripe(publishableKey, {
+          stripeAccount: undefined, // Ensure we're not passing any undefined values
         });
+
+        if (!stripe) {
+          throw new Error('Stripe failed to load');
+        }
+
+        console.log('🎉 Stripe initialized successfully');
+        return stripe;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(`🔴 Stripe initialization attempt ${attempt} failed:`, lastError);
+        
+        if (attempt === maxRetries) {
+          break;
+        }
       }
-      return null;
     }
 
-    console.log('✅ Initializing Stripe with valid key');
-    const stripe = await loadStripe(publishableKey);
-    console.log('🎉 Stripe initialized successfully:', !!stripe);
-    return stripe;
-  } catch (error) {
-    console.error('🔴 Failed to initialize Stripe:', error);
+    // All attempts failed
+    console.error('🔴 All Stripe initialization attempts failed:', lastError);
     if (typeof window !== 'undefined') {
-      toast.error('Payment system error. Please refresh the page.', {
-        description: 'Failed to initialize payment processing'
+      toast.error('Payment system unavailable. Please refresh the page.', {
+        description: lastError?.message || 'Failed to initialize payment processing'
       });
     }
     return null;
-  }
+  })();
+
+  return stripeInstancePromise;
 };
 
-// Enhanced promise with better error handling
-export const stripePromise: Promise<Stripe | null> = createStripePromise();
+// Export the promise (will be created on first access)
+export const stripePromise = createStripePromise();
 
 // Function to check if we have a Stripe key available
 export const hasStripeKey = async (): Promise<boolean> => {
