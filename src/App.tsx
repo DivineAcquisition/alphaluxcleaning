@@ -12,6 +12,7 @@ import BookingConfirmation from '@/pages/BookingConfirmation';
 import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
+import PricingTest from '@/pages/PricingTest';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -33,7 +34,8 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             
             {/* Webhook testing */}
-            <Route path="/test-webhook" element={<WebhookTest />} />
+          <Route path="/test-webhook" element={<WebhookTest />} />
+           <Route path="/pricing-test" element={<PricingTest />} />
             
             {/* Health Endpoints for monitoring */}
             <Route path="/health/admin" element={<div>✅ Admin OK</div>} />
