@@ -281,22 +281,21 @@ export function ModernLegacyBooking() {
   const getExactPrice = () => {
     if (!bookingData.homeSize) return 0;
 
-    // Handle homes over 5,100 sq ft
-    if (bookingData.homeSize === 'over-5100') {
+    // Handle homes over 5,000 sq ft
+    if (bookingData.homeSize === '5000-plus') {
       return 0; // Requires estimate
     }
 
-    // Map legacy home size to approximate square footage midpoint
+    // Map home size to approximate square footage midpoint
     const sizeMidpoints: Record<string, number> = {
       'under-1000': 800,
-      '1001-1400': 1200,
-      '1401-1800': 1600,
-      '1801-2400': 2000,
-      '2401-2800': 2600,
-      '2801-3300': 3000,
-      '3301-3900': 3600,
-      '3901-4500': 4200,
-      '4501-5100': 4800,
+      '1000-1500': 1250,
+      '1501-2000': 1750,
+      '2001-2500': 2250,
+      '2501-3000': 2750,
+      '3001-3500': 3250,
+      '3501-4000': 3750,
+      '4001-5000': 4500,
     };
 
     const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
@@ -375,8 +374,8 @@ export function ModernLegacyBooking() {
       case 1:
         return zipCodeValid && bookingData.serviceType !== '';
       case 2:
-        // Handle homes over 5,100 sq ft
-        if (bookingData.homeSize === 'over-5100') {
+        // Handle homes over 5,000 sq ft
+        if (bookingData.homeSize === '5000-plus') {
           return false; // Block progression - requires estimate
         }
         // Regular cleaning requires frequency selection and flooring type
@@ -785,24 +784,24 @@ export function ModernLegacyBooking() {
                       key={size.id}
                       className={cn(
                         "cursor-pointer border-2 transition-all hover:shadow-md",
-                        size.id === 'over-5100' && "border-warning bg-warning/5",
+                        size.id === '5000-plus' && "border-warning bg-warning/5",
                         bookingData.homeSize === size.id
                           ? "border-primary bg-primary/5"
-                          : size.id === 'over-5100' 
+                          : size.id === '5000-plus' 
                             ? "border-warning hover:border-warning/70"
                             : "border-border hover:border-primary/50"
                       )}
                       onClick={() => {
                         updateField('homeSize', size.id);
-                        if (size.id === 'over-5100') {
-                          toast.info('Homes over 5,100 sq ft require an in-person estimate. Please call to schedule.');
+                        if (size.id === '5000-plus') {
+                          toast.info('Homes over 5,000 sq ft require an in-person estimate. Please call to schedule.');
                         }
                       }}
                     >
                       <CardContent className="p-4">
                         <h3 className="font-semibold">{size.name}</h3>
                         <p className="text-sm text-muted-foreground">{size.description}</p>
-                        {size.id === 'over-5100' && (
+                        {size.id === '5000-plus' && (
                           <Badge variant="outline" className="mt-2 border-warning text-warning">
                             Call Required
                           </Badge>
@@ -815,7 +814,7 @@ export function ModernLegacyBooking() {
             </Card>
 
             {/* Flooring Type Selection */}
-            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && (
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -845,7 +844,7 @@ export function ModernLegacyBooking() {
             )}
 
             {/* Frequency Selection - Only for Regular Cleaning */}
-            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && bookingData.serviceType === 'regular' && (
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && bookingData.serviceType === 'regular' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -859,14 +858,13 @@ export function ModernLegacyBooking() {
                       // Calculate price using new pricing system for each frequency option
                       const sizeMidpoints: Record<string, number> = {
                         'under-1000': 800,
-                        '1001-1400': 1200,
-                        '1401-1800': 1600,
-                        '1801-2400': 2000,
-                        '2401-2800': 2600,
-                        '2801-3300': 3000,
-                        '3301-3900': 3600,
-                        '3901-4500': 4200,
-                        '4501-5100': 4800,
+                        '1000-1500': 1250,
+                        '1501-2000': 1750,
+                        '2001-2500': 2250,
+                        '2501-3000': 2750,
+                        '3001-3500': 3250,
+                        '3501-4000': 3750,
+                        '4001-5000': 4500,
                       };
                       const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
                       const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
@@ -917,7 +915,7 @@ export function ModernLegacyBooking() {
             )}
 
             {/* Show price for Deep Clean and Move-Out */}
-            {bookingData.homeSize && bookingData.homeSize !== 'over-5100' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && (
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && (
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-6 text-center">
                   <h3 className="text-2xl font-bold text-primary">
@@ -931,15 +929,15 @@ export function ModernLegacyBooking() {
             )}
 
             {/* Large Home Estimate Notice */}
-            {bookingData.homeSize === 'over-5100' && (
+            {bookingData.homeSize === '5000-plus' && (
               <Card className="bg-warning/5 border-warning/20">
                 <CardContent className="p-6 text-center">
                   <h3 className="text-xl font-bold text-warning mb-2">
                     In-Person Estimate Required
                   </h3>
-                  <p className="text-muted-foreground">
-                    Homes over 5,100 sq ft require an in-person estimate. Please call us to schedule your consultation.
-                  </p>
+                   <p className="text-muted-foreground">
+                     Homes over 5,000 sq ft require an in-person estimate. Please call us to schedule your consultation.
+                   </p>
                   <Button className="mt-4" variant="outline">
                     Call for Estimate
                   </Button>
@@ -949,7 +947,7 @@ export function ModernLegacyBooking() {
 
             {/* Add-ons Selection */}
             {((bookingData.serviceType === 'regular' && bookingData.frequency) || 
-              (bookingData.serviceType !== 'regular' && bookingData.homeSize && bookingData.homeSize !== 'over-5100')) && (
+              (bookingData.serviceType !== 'regular' && bookingData.homeSize && bookingData.homeSize !== '5000-plus')) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Optional Add-Ons</CardTitle>
