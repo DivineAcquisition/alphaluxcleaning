@@ -333,7 +333,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
             .eq("stripe_session_id", sessionId)
             .maybeSingle();
 
-          if (orderData) {
+          if (bookingData) {
             await sb
               .from("bookings")
               .update({ est_price: bookingData.est_price + 5000 })

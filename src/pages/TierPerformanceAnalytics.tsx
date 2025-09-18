@@ -111,14 +111,14 @@ export default function TierPerformanceAnalytics() {
         { month: 'Jun', tier_1: 33, tier_2: 37, tier_3: 20 }
       ];
 
-      const revenueByTier = tierDistribution.map(tier => ({
+      const revenueByTier = tierDistribution.map((tier: any) => ({
         tier_name: tier.tier_name,
         revenue: tier.revenue,
         avg_per_subcontractor: tier.count > 0 ? tier.revenue / tier.count : 0
       }));
 
       return {
-        tierDistribution,
+        tierDistribution: tierDistribution as { tier_name: string; count: number; revenue: number; tier_level: number; }[],
         tierProgression,
         revenueByTier,
         performanceMetrics

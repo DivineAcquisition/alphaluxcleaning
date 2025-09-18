@@ -147,8 +147,8 @@ export function useSubcontractorPortal() {
       const fullAvailability = daysOfWeek.map(day => {
         const existing = availabilityMap.get(day);
         return existing ? {
-          ...existing,
-          available: existing.is_available
+          ...(existing as any),
+          available: (existing as any).is_available
         } : {
           day_of_week: day,
           available: false,
