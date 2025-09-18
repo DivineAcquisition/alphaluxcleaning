@@ -14,7 +14,6 @@ import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
 import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
-
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
@@ -89,103 +88,155 @@ const pricingMatrix = {
 };
 
 // Service types based on frequency and type
-const serviceTypes = [
-  {
-    id: 'regular',
-    name: 'Regular Cleaning',
-    description: 'Perfect for regular maintenance cleaning',
-    basePrice: 0, // Using exact pricing matrix
-    icon: Home,
-    popular: true,
-    features: [
-      'All surfaces dusted and wiped',
-      'Floors vacuumed and mopped',
-      'Bathrooms cleaned and sanitized',
-      'Kitchen cleaned',
-      'Trash emptied'
-    ],
-    recurring: true,
-    hasFrequency: true
-  },
-  {
-    id: 'deep',
-    name: 'Deep Cleaning',
-    description: 'Comprehensive top-to-bottom cleaning',
-    basePrice: 0, // Using exact pricing matrix
-    icon: Sparkles,
-    popular: false,
-    features: [
-      'Everything in Regular Clean',
-      'Inside appliances cleaned',
-      'Detailed bathroom sanitization',
-      'Light fixtures dusted',
-      'Window sills cleaned',
-      'Baseboards wiped'
-    ],
-    recurring: false,
-    hasFrequency: false
-  },
-  {
-    id: 'moveout',
-    name: 'Move-Out Cleaning',
-    description: 'Leave your old home spotless',
-    basePrice: 0, // Using exact pricing matrix
-    icon: Zap,
-    popular: false,
-    features: [
-      'Everything in Deep Clean',
-      'Cabinet interiors wiped',
-      'Appliance deep clean',
-      'Final walk-through',
-      'Damage deposit protection'
-    ],
-    recurring: false,
-    hasFrequency: false
-  }
-];
+const serviceTypes = [{
+  id: 'regular',
+  name: 'Regular Cleaning',
+  description: 'Perfect for regular maintenance cleaning',
+  basePrice: 0,
+  // Using exact pricing matrix
+  icon: Home,
+  popular: true,
+  features: ['All surfaces dusted and wiped', 'Floors vacuumed and mopped', 'Bathrooms cleaned and sanitized', 'Kitchen cleaned', 'Trash emptied'],
+  recurring: true,
+  hasFrequency: true
+}, {
+  id: 'deep',
+  name: 'Deep Cleaning',
+  description: 'Comprehensive top-to-bottom cleaning',
+  basePrice: 0,
+  // Using exact pricing matrix
+  icon: Sparkles,
+  popular: false,
+  features: ['Everything in Regular Clean', 'Inside appliances cleaned', 'Detailed bathroom sanitization', 'Light fixtures dusted', 'Window sills cleaned', 'Baseboards wiped'],
+  recurring: false,
+  hasFrequency: false
+}, {
+  id: 'moveout',
+  name: 'Move-Out Cleaning',
+  description: 'Leave your old home spotless',
+  basePrice: 0,
+  // Using exact pricing matrix
+  icon: Zap,
+  popular: false,
+  features: ['Everything in Deep Clean', 'Cabinet interiors wiped', 'Appliance deep clean', 'Final walk-through', 'Damage deposit protection'],
+  recurring: false,
+  hasFrequency: false
+}];
 
 // Home sizes matching exact pricing tiers
-const homeSizes = [
-  { id: 'under-1000', name: 'Under 1,000 sq ft', multiplier: 1, description: 'Studio/1 BR apartments' },
-  { id: '1000-1500', name: '1,000 – 1,500 sq ft', multiplier: 1, description: '1-2 BR condos/homes' },
-  { id: '1501-2000', name: '1,501 – 2,000 sq ft', multiplier: 1, description: '2-3 BR homes' },
-  { id: '2001-2500', name: '2,001 – 2,500 sq ft', multiplier: 1, description: '3 BR homes' },
-  { id: '2501-3000', name: '2,501 – 3,000 sq ft', multiplier: 1, description: '3-4 BR homes' },
-  { id: '3001-3500', name: '3,001 – 3,500 sq ft', multiplier: 1, description: '4 BR homes' },
-  { id: '3501-4000', name: '3,501 – 4,000 sq ft', multiplier: 1, description: '4-5 BR homes' },
-  { id: '4001-5000', name: '4,001 – 5,000 sq ft', multiplier: 1, description: '5 BR homes' },
-  { id: '5000-plus', name: '5,000+ sq ft', multiplier: 1, description: 'Requires in-person estimate' }
-];
+const homeSizes = [{
+  id: 'under-1000',
+  name: 'Under 1,000 sq ft',
+  multiplier: 1,
+  description: 'Studio/1 BR apartments'
+}, {
+  id: '1000-1500',
+  name: '1,000 – 1,500 sq ft',
+  multiplier: 1,
+  description: '1-2 BR condos/homes'
+}, {
+  id: '1501-2000',
+  name: '1,501 – 2,000 sq ft',
+  multiplier: 1,
+  description: '2-3 BR homes'
+}, {
+  id: '2001-2500',
+  name: '2,001 – 2,500 sq ft',
+  multiplier: 1,
+  description: '3 BR homes'
+}, {
+  id: '2501-3000',
+  name: '2,501 – 3,000 sq ft',
+  multiplier: 1,
+  description: '3-4 BR homes'
+}, {
+  id: '3001-3500',
+  name: '3,001 – 3,500 sq ft',
+  multiplier: 1,
+  description: '4 BR homes'
+}, {
+  id: '3501-4000',
+  name: '3,501 – 4,000 sq ft',
+  multiplier: 1,
+  description: '4-5 BR homes'
+}, {
+  id: '4001-5000',
+  name: '4,001 – 5,000 sq ft',
+  multiplier: 1,
+  description: '5 BR homes'
+}, {
+  id: '5000-plus',
+  name: '5,000+ sq ft',
+  multiplier: 1,
+  description: 'Requires in-person estimate'
+}];
 
 // Frequency options for regular cleaning
-const frequencyOptions = [
-  { id: 'weekly', name: 'Weekly', discount: 0, description: 'Every week - Best value!' },
-  { id: 'biweekly', name: 'Bi-Weekly', discount: 0, description: 'Every 2 weeks' },
-  { id: 'monthly', name: 'Monthly', discount: 0, description: 'Once a month' },
-  { id: 'oneTime', name: 'One-Time', discount: 0, description: 'Single cleaning' }
-];
+const frequencyOptions = [{
+  id: 'weekly',
+  name: 'Weekly',
+  discount: 0,
+  description: 'Every week - Best value!'
+}, {
+  id: 'biweekly',
+  name: 'Bi-Weekly',
+  discount: 0,
+  description: 'Every 2 weeks'
+}, {
+  id: 'monthly',
+  name: 'Monthly',
+  discount: 0,
+  description: 'Once a month'
+}, {
+  id: 'oneTime',
+  name: 'One-Time',
+  discount: 0,
+  description: 'Single cleaning'
+}];
 
 // Add-on services with fixed pricing
-const addOnServices = [
-  { id: 'fridge', name: 'Inside Refrigerator', price: 35, description: 'Clean and organize' },
-  { id: 'oven', name: 'Inside Oven', price: 35, description: 'Deep clean interior' },
-  { id: 'baseboards', name: 'Baseboards', price: 50, description: 'Hand-wipe all baseboards' },
-  { id: 'cabinets', name: 'Cabinet Fronts', price: 50, description: 'Clean all exterior surfaces' },
-  { id: 'blinds', name: 'Blind Cleaning', price: 15, description: 'Per blind detailed clean' },
-  { id: 'garage', name: 'Garage Sweep', price: 30, description: 'Complete garage cleaning' }
-];
-
+const addOnServices = [{
+  id: 'fridge',
+  name: 'Inside Refrigerator',
+  price: 35,
+  description: 'Clean and organize'
+}, {
+  id: 'oven',
+  name: 'Inside Oven',
+  price: 35,
+  description: 'Deep clean interior'
+}, {
+  id: 'baseboards',
+  name: 'Baseboards',
+  price: 50,
+  description: 'Hand-wipe all baseboards'
+}, {
+  id: 'cabinets',
+  name: 'Cabinet Fronts',
+  price: 50,
+  description: 'Clean all exterior surfaces'
+}, {
+  id: 'blinds',
+  name: 'Blind Cleaning',
+  price: 15,
+  description: 'Per blind detailed clean'
+}, {
+  id: 'garage',
+  name: 'Garage Sweep',
+  price: 30,
+  description: 'Complete garage cleaning'
+}];
 interface BookingData {
   // Step 1: Service Area & Type
   zipCode: string;
   serviceType: string;
-  
+
   // Step 2: Service Details
   homeSize: string;
   frequency: string;
   addOns: string[];
   flooringType: string;
-  
+
   // Step 3: Scheduling & Details
   serviceDate: string;
   serviceTime: string;
@@ -200,18 +251,17 @@ interface BookingData {
   customerEmail: string;
   contactNumber: string;
   specialInstructions: string;
-  
+
   // Property details
   bedrooms: string;
   bathrooms: string;
   dwellingType: string;
-  
+
   // Pricing
   basePrice: number;
   totalPrice: number;
   savings: number;
 }
-
 const initialBookingData: BookingData = {
   zipCode: '',
   serviceType: '',
@@ -239,41 +289,60 @@ const initialBookingData: BookingData = {
   totalPrice: 0,
   savings: 0
 };
-
-const steps = [
-  { id: 1, title: 'Service Area & Type', icon: MapPin, description: 'Choose your service' },
-  { id: 2, title: 'Service Details', icon: Home, description: 'Size, frequency & add-ons' },
-  { id: 3, title: 'Scheduling & Details', icon: Calendar, description: 'Date, time & information' },
-  { id: 4, title: 'Review & Payment', icon: CreditCard, description: 'Complete booking' }
-];
-
+const steps = [{
+  id: 1,
+  title: 'Service Area & Type',
+  icon: MapPin,
+  description: 'Choose your service'
+}, {
+  id: 2,
+  title: 'Service Details',
+  icon: Home,
+  description: 'Size, frequency & add-ons'
+}, {
+  id: 3,
+  title: 'Scheduling & Details',
+  icon: Calendar,
+  description: 'Date, time & information'
+}, {
+  id: 4,
+  title: 'Review & Payment',
+  icon: CreditCard,
+  description: 'Complete booking'
+}];
 export function ModernLegacyBooking() {
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
   const [zipCodeValid, setZipCodeValid] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  
+
   // Payment UI State
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<'pay_after_service' | '25_percent_with_discount' | ''>('');
   const [referralCode, setReferralCode] = useState('');
-  const [appliedReferral, setAppliedReferral] = useState<{code: string, discount: number} | null>(null);
+  const [appliedReferral, setAppliedReferral] = useState<{
+    code: string;
+    discount: number;
+  } | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  
+
   // Embedded payment state
   const [showEmbeddedPayment, setShowEmbeddedPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  
   const containerRef = React.useRef<HTMLDivElement>(null);
-
   const updateField = (field: keyof BookingData, value: any) => {
-    setBookingData(prev => ({ ...prev, [field]: value }));
+    setBookingData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-
   const updateNestedField = (field: string, nestedField: string, value: any) => {
     setBookingData(prev => ({
       ...prev,
-      [field]: { ...(prev[field as keyof BookingData] as any), [nestedField]: value }
+      [field]: {
+        ...(prev[field as keyof BookingData] as any),
+        [nestedField]: value
+      }
     }));
   };
 
@@ -295,44 +364,34 @@ export function ModernLegacyBooking() {
       '2501-3000': 2750,
       '3001-3500': 3250,
       '3501-4000': 3750,
-      '4001-5000': 4500,
+      '4001-5000': 4500
     };
-
     const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
     const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
     if (!homeSizeRange) return 0;
 
     // Map legacy service type to new system ids
     let serviceTypeId: 'standard' | 'deep' | 'move_in_out' = 'standard';
-    if (bookingData.serviceType === 'deep') serviceTypeId = 'deep';
-    else if (bookingData.serviceType === 'moveout') serviceTypeId = 'move_in_out';
+    if (bookingData.serviceType === 'deep') serviceTypeId = 'deep';else if (bookingData.serviceType === 'moveout') serviceTypeId = 'move_in_out';
 
     // Map legacy frequency to new system ids
     let frequencyId: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
     if (bookingData.serviceType === 'regular') {
-      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';
-      else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';
-      else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';
-      else return 0; // Keep behavior: no price until frequency selected for regular
+      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';else return 0; // Keep behavior: no price until frequency selected for regular
     } else {
       frequencyId = 'one_time';
     }
-
 
     // Derive state code from ZIP if possible, otherwise use address state or default to TX
     const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
     const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
     let stateCode = (bookingData.address?.state || '').toUpperCase();
-
-    const isTexasZip = (z: number) => z === 73301 || (z >= 75001 && z <= 79999) || (z >= 88510 && z <= 88595);
+    const isTexasZip = (z: number) => z === 73301 || z >= 75001 && z <= 79999 || z >= 88510 && z <= 88595;
     const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
-
-    if ((!stateCode || (stateCode !== 'TX' && stateCode !== 'CA')) && !isNaN(zip)) {
-      if (isTexasZip(zip)) stateCode = 'TX';
-      else if (isCaliforniaZip(zip)) stateCode = 'CA';
+    if ((!stateCode || stateCode !== 'TX' && stateCode !== 'CA') && !isNaN(zip)) {
+      if (isTexasZip(zip)) stateCode = 'TX';else if (isCaliforniaZip(zip)) stateCode = 'CA';
     }
     if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
-
     const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
     return result.finalPrice;
   };
@@ -340,7 +399,7 @@ export function ModernLegacyBooking() {
   // Calculate pricing whenever relevant fields change with 20% discount applied
   useEffect(() => {
     const discountedPrice = getExactPrice(); // Already includes 20% discount
-    
+
     // Calculate add-ons total
     const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
       const addOn = addOnServices.find(a => a.id === addOnId);
@@ -350,7 +409,6 @@ export function ModernLegacyBooking() {
     // Calculate discounted add-ons (20% off add-ons too)
     const discountedAddOnsTotal = applyGlobalDiscount(addOnsTotal);
     const totalPrice = discountedPrice + discountedAddOnsTotal;
-
     updateField('basePrice', discountedPrice);
     updateField('totalPrice', totalPrice);
     updateField('savings', 0);
@@ -368,7 +426,6 @@ export function ModernLegacyBooking() {
       setZipCodeValid(false);
     }
   }, [bookingData.zipCode]);
-
   const canProceedToNext = (): boolean => {
     switch (currentStep) {
       case 1:
@@ -385,24 +442,13 @@ export function ModernLegacyBooking() {
         // Deep clean and move-out need home size and flooring type
         return bookingData.homeSize !== '' && bookingData.flooringType !== '';
       case 3:
-        return (
-          (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) &&
-          bookingData.serviceTime !== '' &&
-          bookingData.address.street !== '' &&
-          bookingData.customerName !== '' &&
-          bookingData.customerEmail !== '' &&
-          bookingData.contactNumber !== '' &&
-          bookingData.bedrooms !== '' &&
-          bookingData.bathrooms !== '' &&
-          bookingData.dwellingType !== ''
-        );
+        return (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) && bookingData.serviceTime !== '' && bookingData.address.street !== '' && bookingData.customerName !== '' && bookingData.customerEmail !== '' && bookingData.contactNumber !== '' && bookingData.bedrooms !== '' && bookingData.bathrooms !== '' && bookingData.dwellingType !== '';
       case 4:
         return true;
       default:
         return false;
     }
   };
-
   const handleNext = () => {
     if (canProceedToNext()) {
       if (currentStep === 4) {
@@ -411,106 +457,88 @@ export function ModernLegacyBooking() {
         setCurrentStep(prev => prev + 1);
         // Auto-scroll to top of container
         setTimeout(() => {
-          containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          containerRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
         }, 100);
       }
     }
   };
-
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
       // Auto-scroll to top of container
       setTimeout(() => {
-        containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        containerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
       }, 100);
     }
   };
-
   const toggleAddOn = (addOnId: string) => {
-    const newAddOns = bookingData.addOns.includes(addOnId)
-      ? bookingData.addOns.filter(id => id !== addOnId)
-      : [...bookingData.addOns, addOnId];
+    const newAddOns = bookingData.addOns.includes(addOnId) ? bookingData.addOns.filter(id => id !== addOnId) : [...bookingData.addOns, addOnId];
     updateField('addOns', newAddOns);
   };
 
   // Handle embedded payment form
   if (showEmbeddedPayment && clientSecret) {
     const depositAmount = bookingData.totalPrice * 0.2;
-    
-    return (
-      <div className="max-w-4xl mx-auto p-6">
+    return <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setShowEmbeddedPayment(false);
-              setClientSecret(null);
-            }}
-            className="mb-4"
-          >
+          <Button variant="outline" onClick={() => {
+          setShowEmbeddedPayment(false);
+          setClientSecret(null);
+        }} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Review
           </Button>
         </div>
         
-        <EmbeddedDepositPaymentForm
-          totalAmount={bookingData.totalPrice}
-          depositAmount={depositAmount}
-          clientSecret={clientSecret}
-          bookingData={bookingData}
-          onSuccess={async (paymentIntentId: string) => {
-            console.log('Payment successful, creating order:', paymentIntentId);
-            setIsProcessingPayment(true);
-            
-            try {
-              // Create order record with deposit payment
-              const { data: orderResult, error: orderError } = await supabase.functions.invoke('create-order-with-deposit', {
-                body: {
-                  bookingData,
-                  paymentIntentId,
-                  depositAmount: bookingData.totalPrice * 0.2,
-                  totalAmount: bookingData.totalPrice,
-                  customerEmail: bookingData.customerEmail,
-                  customerName: bookingData.customerName
-                }
-              });
-
-              if (orderError || !orderResult?.orderId) {
-                console.error('Error creating order:', orderError);
-                toast.error('Payment successful but failed to create order. Please contact support.');
-                return;
-              }
-
-              console.log('Order created successfully:', orderResult.orderId);
-              
-              // Redirect to confirmation with order ID
-              window.location.href = `/booking-confirmation?order_id=${orderResult.orderId}`;
-            } catch (error) {
-              console.error('Error in order creation:', error);
-              toast.error('Payment successful but failed to create order. Please contact support.');
-            } finally {
-              setIsProcessingPayment(false);
+        <EmbeddedDepositPaymentForm totalAmount={bookingData.totalPrice} depositAmount={depositAmount} clientSecret={clientSecret} bookingData={bookingData} onSuccess={async (paymentIntentId: string) => {
+        console.log('Payment successful, creating order:', paymentIntentId);
+        setIsProcessingPayment(true);
+        try {
+          // Create order record with deposit payment
+          const {
+            data: orderResult,
+            error: orderError
+          } = await supabase.functions.invoke('create-order-with-deposit', {
+            body: {
+              bookingData,
+              paymentIntentId,
+              depositAmount: bookingData.totalPrice * 0.2,
+              totalAmount: bookingData.totalPrice,
+              customerEmail: bookingData.customerEmail,
+              customerName: bookingData.customerName
             }
-          }}
-          onCancel={() => {
-            setShowEmbeddedPayment(false);
-            setClientSecret(null);
-          }}
-        />
-      </div>
-    );
-  }
+          });
+          if (orderError || !orderResult?.orderId) {
+            console.error('Error creating order:', orderError);
+            toast.error('Payment successful but failed to create order. Please contact support.');
+            return;
+          }
+          console.log('Order created successfully:', orderResult.orderId);
 
+          // Redirect to confirmation with order ID
+          window.location.href = `/booking-confirmation?order_id=${orderResult.orderId}`;
+        } catch (error) {
+          console.error('Error in order creation:', error);
+          toast.error('Payment successful but failed to create order. Please contact support.');
+        } finally {
+          setIsProcessingPayment(false);
+        }
+      }} onCancel={() => {
+        setShowEmbeddedPayment(false);
+        setClientSecret(null);
+      }} />
+      </div>;
+  }
   if (showCheckout) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
+    return <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowCheckout(false)}
-            className="mb-4"
-          >
+          <Button variant="outline" onClick={() => setShowCheckout(false)} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Review
           </Button>
@@ -557,56 +585,44 @@ export function ModernLegacyBooking() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={async () => {
-                    setIsProcessingPayment(true);
-                    
-                    try {
-                      console.log("Creating 20% deposit payment intent...");
-                      
-                      const response = await supabase.functions.invoke('create-payment', {
-                        body: {
-                          payment_type: 'deposit_20',
-                          fullAmount: bookingData.totalPrice, // Send in dollars
-                          booking_data: bookingData,
-                          customerEmail: bookingData.customerEmail,
-                          customerName: bookingData.customerName
-                        }
-                      });
-
-                      if (response.error) {
-                        throw response.error;
-                      }
-
-                      if (response.data?.clientSecret) {
-                        console.log("Payment intent created, showing embedded form");
-                        setClientSecret(response.data.clientSecret);
-                        setShowEmbeddedPayment(true);
-                      } else {
-                        throw new Error('No client secret received');
-                      }
-                    } catch (error) {
-                      console.error('Payment error:', error);
-                      toast.error('Failed to initialize payment. Please try again.');
-                    } finally {
-                      setIsProcessingPayment(false);
+                <Button onClick={async () => {
+                setIsProcessingPayment(true);
+                try {
+                  console.log("Creating 20% deposit payment intent...");
+                  const response = await supabase.functions.invoke('create-payment', {
+                    body: {
+                      payment_type: 'deposit_20',
+                      fullAmount: bookingData.totalPrice,
+                      // Send in dollars
+                      booking_data: bookingData,
+                      customerEmail: bookingData.customerEmail,
+                      customerName: bookingData.customerName
                     }
-                  }}
-                  disabled={isProcessingPayment}
-                  className="w-full h-12 text-lg"
-                  size="lg"
-                >
-                  {isProcessingPayment ? (
-                    <div className="flex items-center gap-2">
+                  });
+                  if (response.error) {
+                    throw response.error;
+                  }
+                  if (response.data?.clientSecret) {
+                    console.log("Payment intent created, showing embedded form");
+                    setClientSecret(response.data.clientSecret);
+                    setShowEmbeddedPayment(true);
+                  } else {
+                    throw new Error('No client secret received');
+                  }
+                } catch (error) {
+                  console.error('Payment error:', error);
+                  toast.error('Failed to initialize payment. Please try again.');
+                } finally {
+                  setIsProcessingPayment(false);
+                }
+              }} disabled={isProcessingPayment} className="w-full h-12 text-lg" size="lg">
+                  {isProcessingPayment ? <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Preparing Payment...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
+                    </div> : <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5" />
                       Pay 20% Deposit - ${formatPrice(bookingData.totalPrice * 0.2)}
-                    </div>
-                  )}
+                    </div>}
                 </Button>
                 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -637,26 +653,20 @@ export function ModernLegacyBooking() {
                     <span className="text-muted-foreground">Home Size:</span>
                     <span className="font-medium">{homeSizes.find(s => s.id === bookingData.homeSize)?.name}</span>
                   </div>
-                  {bookingData.frequency && (
-                    <div className="flex justify-between">
+                  {bookingData.frequency && <div className="flex justify-between">
                       <span className="text-muted-foreground">Frequency:</span>
                       <span className="font-medium">{frequencyOptions.find(f => f.id === bookingData.frequency)?.name}</span>
-                    </div>
-                  )}
-                  {bookingData.addOns.length > 0 && (
-                    <div className="space-y-2">
+                    </div>}
+                  {bookingData.addOns.length > 0 && <div className="space-y-2">
                       <span className="text-muted-foreground">Add-ons:</span>
                       {bookingData.addOns.map(addOnId => {
-                        const addOn = addOnServices.find(a => a.id === addOnId);
-                        return (
-                          <div key={addOnId} className="flex justify-between text-sm">
+                    const addOn = addOnServices.find(a => a.id === addOnId);
+                    return <div key={addOnId} className="flex justify-between text-sm">
                             <span>• {addOn?.name}</span>
                             <span>{formatPrice(addOn?.price || 0)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          </div>;
+                  })}
+                    </div>}
                 </div>
                 <div className="border-t pt-3 space-y-2">
                   <div className="flex justify-between">
@@ -673,19 +683,16 @@ export function ModernLegacyBooking() {
                       return total + (addOn?.price || 0);
                     }, 0)))}</span>
                   </div>
-                  {appliedReferral && (
-                    <div className="flex justify-between text-success">
+                  {appliedReferral && <div className="flex justify-between text-success">
                       <span>Referral Discount ({appliedReferral.discount}%):</span>
                       <span>-{formatPrice(bookingData.totalPrice * (appliedReferral.discount / 100))}</span>
-                    </div>
-                  )}
+                    </div>}
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total:</span>
                     <span className="text-primary">{formatPrice(bookingData.totalPrice)}</span>
                   </div>
                 </div>
-                {selectedPaymentOption === '25_percent_with_discount' && (
-                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                {selectedPaymentOption === '25_percent_with_discount' && <div className="p-3 rounded-lg bg-success/10 border border-success/20">
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Today (25%):</span>
@@ -700,21 +707,17 @@ export function ModernLegacyBooking() {
                         <span>-{formatPrice(bookingData.totalPrice * 0.05)}</span>
                       </div>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-8">
+        return <div className="space-y-8">
             {/* ZIP Code Verification */}
             <Card className="border-primary/20">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -725,50 +728,27 @@ export function ModernLegacyBooking() {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    We serve Cali & Texas.
-                  </p>
+                  <p className="text-muted-foreground">Type your zip code to confirm location</p>
                   <div className="flex gap-3">
-                    <Input
-                      placeholder="Enter ZIP code"
-                      value={bookingData.zipCode}
-                      onChange={(e) => updateField('zipCode', e.target.value)}
-                      maxLength={5}
-                      className="flex-1"  
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
-                    {zipCodeValid && (
-                      <div className="flex items-center text-success">
+                    <Input placeholder="Enter ZIP code" value={bookingData.zipCode} onChange={e => updateField('zipCode', e.target.value)} maxLength={5} className="flex-1" inputMode="numeric" pattern="[0-9]*" />
+                    {zipCodeValid && <div className="flex items-center text-success">
                         <CheckCircle className="h-5 w-5" />
-                      </div>
-                    )}
+                      </div>}
                   </div>
-                  {zipCodeValid && (
-                    <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                  {zipCodeValid && <div className="p-3 rounded-lg bg-success/10 border border-success/20">
                       <p className="text-success text-sm font-medium">
                         Great! We service your area.
                       </p>
-                    </div>
-                  )}
+                    </div>}
                 </div>
               </CardContent>
             </Card>
 
             {/* Service Type Selection */}
-            {zipCodeValid && (
-              <ServiceTypeCards
-                serviceTypes={serviceTypes}
-                selectedType={bookingData.serviceType}
-                onSelect={(typeId) => updateField('serviceType', typeId)}
-              />
-            )}
-          </div>
-        );
-
+            {zipCodeValid && <ServiceTypeCards serviceTypes={serviceTypes} selectedType={bookingData.serviceType} onSelect={typeId => updateField('serviceType', typeId)} />}
+          </div>;
       case 2:
-        return (
-          <div className="space-y-8">
+        return <div className="space-y-8">
             {/* Home Size Selection */}
             <Card>
               <CardHeader>
@@ -779,43 +759,26 @@ export function ModernLegacyBooking() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {homeSizes.map((size) => (
-                    <Card
-                      key={size.id}
-                      className={cn(
-                        "cursor-pointer border-2 transition-all hover:shadow-md",
-                        size.id === '5000-plus' && "border-warning bg-warning/5",
-                        bookingData.homeSize === size.id
-                          ? "border-primary bg-primary/5"
-                          : size.id === '5000-plus' 
-                            ? "border-warning hover:border-warning/70"
-                            : "border-border hover:border-primary/50"
-                      )}
-                      onClick={() => {
-                        updateField('homeSize', size.id);
-                        if (size.id === '5000-plus') {
-                          toast.info('Homes over 5,000 sq ft require an in-person estimate. Please call to schedule.');
-                        }
-                      }}
-                    >
+                  {homeSizes.map(size => <Card key={size.id} className={cn("cursor-pointer border-2 transition-all hover:shadow-md", size.id === '5000-plus' && "border-warning bg-warning/5", bookingData.homeSize === size.id ? "border-primary bg-primary/5" : size.id === '5000-plus' ? "border-warning hover:border-warning/70" : "border-border hover:border-primary/50")} onClick={() => {
+                  updateField('homeSize', size.id);
+                  if (size.id === '5000-plus') {
+                    toast.info('Homes over 5,000 sq ft require an in-person estimate. Please call to schedule.');
+                  }
+                }}>
                       <CardContent className="p-4">
                         <h3 className="font-semibold">{size.name}</h3>
                         <p className="text-sm text-muted-foreground">{size.description}</p>
-                        {size.id === '5000-plus' && (
-                          <Badge variant="outline" className="mt-2 border-warning text-warning">
+                        {size.id === '5000-plus' && <Badge variant="outline" className="mt-2 border-warning text-warning">
                             Call Required
-                          </Badge>
-                        )}
+                          </Badge>}
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
               </CardContent>
             </Card>
 
             {/* Flooring Type Selection */}
-            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (
-              <Card>
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Home className="h-5 w-5 text-primary" />
@@ -823,10 +786,7 @@ export function ModernLegacyBooking() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Select
-                    value={bookingData.flooringType}
-                    onValueChange={(value) => updateField('flooringType', value)}
-                  >
+                  <Select value={bookingData.flooringType} onValueChange={value => updateField('flooringType', value)}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select primary flooring type" />
                     </SelectTrigger>
@@ -840,12 +800,10 @@ export function ModernLegacyBooking() {
                     </SelectContent>
                   </Select>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             {/* Frequency Selection - Only for Regular Cleaning */}
-            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && bookingData.serviceType === 'regular' && (
-              <Card>
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && bookingData.serviceType === 'regular' && <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-primary" />
@@ -854,69 +812,51 @@ export function ModernLegacyBooking() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {frequencyOptions.map((option) => {
-                      // Calculate price using new pricing system for each frequency option
-                      const sizeMidpoints: Record<string, number> = {
-                        'under-1000': 800,
-                        '1000-1500': 1250,
-                        '1501-2000': 1750,
-                        '2001-2500': 2250,
-                        '2501-3000': 2750,
-                        '3001-3500': 3250,
-                        '3501-4000': 3750,
-                        '4001-5000': 4500,
-                      };
-                      const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
-                      const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
+                    {frequencyOptions.map(option => {
+                  // Calculate price using new pricing system for each frequency option
+                  const sizeMidpoints: Record<string, number> = {
+                    'under-1000': 800,
+                    '1000-1500': 1250,
+                    '1501-2000': 1750,
+                    '2001-2500': 2250,
+                    '2501-3000': 2750,
+                    '3001-3500': 3250,
+                    '3501-4000': 3750,
+                    '4001-5000': 4500
+                  };
+                  const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
+                  const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
 
-                      // Derive state code similar to main calculation
-                      const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
-                      const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
-                      let stateCode = (bookingData.address?.state || '').toUpperCase();
-                      const isTexasZip = (z: number) => z === 73301 || (z >= 75001 && z <= 79999) || (z >= 88510 && z <= 88595);
-                      const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
-                      if ((!stateCode || (stateCode !== 'TX' && stateCode !== 'CA')) && !isNaN(zip)) {
-                        if (isTexasZip(zip)) stateCode = 'TX';
-                        else if (isCaliforniaZip(zip)) stateCode = 'CA';
-                      }
-                      if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
+                  // Derive state code similar to main calculation
+                  const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
+                  const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
+                  let stateCode = (bookingData.address?.state || '').toUpperCase();
+                  const isTexasZip = (z: number) => z === 73301 || z >= 75001 && z <= 79999 || z >= 88510 && z <= 88595;
+                  const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
+                  if ((!stateCode || stateCode !== 'TX' && stateCode !== 'CA') && !isNaN(zip)) {
+                    if (isTexasZip(zip)) stateCode = 'TX';else if (isCaliforniaZip(zip)) stateCode = 'CA';
+                  }
+                  if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
 
-                      // Map frequency id
-                      const freqId = option.id === 'weekly' ? 'weekly' : option.id === 'biweekly' ? 'bi_weekly' : option.id === 'monthly' ? 'monthly' : 'one_time';
-
-                      const price = homeSizeRange ? calculateNewPricing(homeSizeRange.id, 'standard', freqId, stateCode).finalPrice : 0;
-                      
-                      return (
-                        <Card
-                          key={option.id}
-                          className={cn(
-                            "cursor-pointer border-2 transition-all hover:shadow-md relative",
-                            bookingData.frequency === option.id
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                          onClick={() => updateField('frequency', option.id)}
-                        >
+                  // Map frequency id
+                  const freqId = option.id === 'weekly' ? 'weekly' : option.id === 'biweekly' ? 'bi_weekly' : option.id === 'monthly' ? 'monthly' : 'one_time';
+                  const price = homeSizeRange ? calculateNewPricing(homeSizeRange.id, 'standard', freqId, stateCode).finalPrice : 0;
+                  return <Card key={option.id} className={cn("cursor-pointer border-2 transition-all hover:shadow-md relative", bookingData.frequency === option.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")} onClick={() => updateField('frequency', option.id)}>
                           <CardContent className="p-4 text-center">
                             <h3 className="font-semibold">{option.name}</h3>
                             <p className="text-sm text-muted-foreground">{option.description}</p>
-                            {price > 0 && (
-                              <p className="text-lg font-bold text-primary mt-2">
+                            {price > 0 && <p className="text-lg font-bold text-primary mt-2">
                                 {formatPrice(price)}
-                              </p>
-                            )}
+                              </p>}
                           </CardContent>
-                        </Card>
-                      );
-                    })}
+                        </Card>;
+                })}
                   </div>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             {/* Show price for Deep Clean and Move-Out */}
-            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && (
-              <Card className="bg-primary/5 border-primary/20">
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-6 text-center">
                   <h3 className="text-2xl font-bold text-primary">
                     {formatPrice(getExactPrice())}
@@ -925,12 +865,10 @@ export function ModernLegacyBooking() {
                     {bookingData.serviceType === 'deep' ? 'Deep Cleaning' : 'Move-Out Cleaning'} Price
                   </p>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             {/* Large Home Estimate Notice */}
-            {bookingData.homeSize === '5000-plus' && (
-              <Card className="bg-warning/5 border-warning/20">
+            {bookingData.homeSize === '5000-plus' && <Card className="bg-warning/5 border-warning/20">
                 <CardContent className="p-6 text-center">
                   <h3 className="text-xl font-bold text-warning mb-2">
                     In-Person Estimate Required
@@ -942,29 +880,16 @@ export function ModernLegacyBooking() {
                     Call for Estimate
                   </Button>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             {/* Add-ons Selection */}
-            {((bookingData.serviceType === 'regular' && bookingData.frequency) || 
-              (bookingData.serviceType !== 'regular' && bookingData.homeSize && bookingData.homeSize !== '5000-plus')) && (
-              <Card>
+            {(bookingData.serviceType === 'regular' && bookingData.frequency || bookingData.serviceType !== 'regular' && bookingData.homeSize && bookingData.homeSize !== '5000-plus') && <Card>
                 <CardHeader>
                   <CardTitle>Optional Add-Ons</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {addOnServices.map((addOn) => (
-                      <Card
-                        key={addOn.id}
-                        className={cn(
-                          "cursor-pointer border transition-all hover:shadow-md",
-                          bookingData.addOns.includes(addOn.id)
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        )}
-                        onClick={() => toggleAddOn(addOn.id)}
-                      >
+                    {addOnServices.map(addOn => <Card key={addOn.id} className={cn("cursor-pointer border transition-all hover:shadow-md", bookingData.addOns.includes(addOn.id) ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")} onClick={() => toggleAddOn(addOn.id)}>
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
@@ -973,40 +898,25 @@ export function ModernLegacyBooking() {
                             </div>
                             <div className="ml-4 text-right">
                               <p className="font-semibold">{formatPrice(addOn.price)}</p>
-                              {bookingData.addOns.includes(addOn.id) && (
-                                <CheckCircle className="h-4 w-4 text-success mt-1 ml-auto" />
-                              )}
+                              {bookingData.addOns.includes(addOn.id) && <CheckCircle className="h-4 w-4 text-success mt-1 ml-auto" />}
                             </div>
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
+                      </Card>)}
                   </div>
                 </CardContent>
-              </Card>
-            )}
-          </div>
-        );
-
+              </Card>}
+          </div>;
       case 3:
-        return (
-          <div className="space-y-8">
+        return <div className="space-y-8">
             {/* Enhanced Scheduling */}
-            <EnhancedSchedulingStep
-              selectedDate={bookingData.serviceDate ? parseLocalDate(bookingData.serviceDate) : undefined}
-              selectedTime={bookingData.serviceTime}
-              nextDayUpsell={bookingData.nextDayUpsell}
-              onDateChange={(date) => updateField('serviceDate', date ? toLocalDate(date) : '')}
-              onTimeChange={(time) => updateField('serviceTime', time)}
-              onNextDayToggle={(enabled) => {
-                updateField('nextDayUpsell', enabled);
-                if (enabled) {
-                  // Clear regular date selection when next-day is enabled
-                  updateField('serviceDate', '');
-                }
-              }}
-              serviceType={bookingData.serviceType}
-            />
+            <EnhancedSchedulingStep selectedDate={bookingData.serviceDate ? parseLocalDate(bookingData.serviceDate) : undefined} selectedTime={bookingData.serviceTime} nextDayUpsell={bookingData.nextDayUpsell} onDateChange={date => updateField('serviceDate', date ? toLocalDate(date) : '')} onTimeChange={time => updateField('serviceTime', time)} onNextDayToggle={enabled => {
+            updateField('nextDayUpsell', enabled);
+            if (enabled) {
+              // Clear regular date selection when next-day is enabled
+              updateField('serviceDate', '');
+            }
+          }} serviceType={bookingData.serviceType} />
 
             {/* Customer Information */}
             <Card>
@@ -1017,31 +927,15 @@ export function ModernLegacyBooking() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="customerName">Full Name *</Label>
-                    <Input
-                      id="customerName"
-                      value={bookingData.customerName}
-                      onChange={(e) => updateField('customerName', e.target.value)}
-                      placeholder="Your full name"
-                    />
+                    <Input id="customerName" value={bookingData.customerName} onChange={e => updateField('customerName', e.target.value)} placeholder="Your full name" />
                   </div>
                   <div>
                     <Label htmlFor="customerEmail">Email Address *</Label>
-                    <Input
-                      id="customerEmail"
-                      type="email"
-                      value={bookingData.customerEmail}
-                      onChange={(e) => updateField('customerEmail', e.target.value)}
-                      placeholder="your@email.com"
-                    />
+                    <Input id="customerEmail" type="email" value={bookingData.customerEmail} onChange={e => updateField('customerEmail', e.target.value)} placeholder="your@email.com" />
                   </div>
                   <div>
                     <Label htmlFor="contactNumber">Phone Number *</Label>
-                    <Input
-                      id="contactNumber"
-                      value={bookingData.contactNumber}
-                      onChange={(e) => updateField('contactNumber', e.target.value)}
-                      placeholder="(555) 123-4567"
-                    />
+                    <Input id="contactNumber" value={bookingData.contactNumber} onChange={e => updateField('contactNumber', e.target.value)} placeholder="(555) 123-4567" />
                   </div>
                 </div>
               </CardContent>
@@ -1055,40 +949,20 @@ export function ModernLegacyBooking() {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="street">Street Address *</Label>
-                  <Input
-                    id="street"
-                    value={bookingData.address.street}
-                    onChange={(e) => updateNestedField('address', 'street', e.target.value)}
-                    placeholder="123 Main Street"
-                  />
+                  <Input id="street" value={bookingData.address.street} onChange={e => updateNestedField('address', 'street', e.target.value)} placeholder="123 Main Street" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      value={bookingData.address.city}
-                      onChange={(e) => updateNestedField('address', 'city', e.target.value)}
-                      placeholder="City"
-                    />
+                    <Input id="city" value={bookingData.address.city} onChange={e => updateNestedField('address', 'city', e.target.value)} placeholder="City" />
                   </div>
                   <div>
                     <Label htmlFor="state">State</Label>
-                    <Input
-                      id="state"
-                      value={bookingData.address.state}
-                      onChange={(e) => updateNestedField('address', 'state', e.target.value)}
-                      placeholder="TX"
-                    />
+                    <Input id="state" value={bookingData.address.state} onChange={e => updateNestedField('address', 'state', e.target.value)} placeholder="TX" />
                   </div>
                   <div>
                     <Label htmlFor="addressZip">ZIP Code</Label>
-                    <Input
-                      id="addressZip"
-                      value={bookingData.address.zipCode}
-                      onChange={(e) => updateNestedField('address', 'zipCode', e.target.value)}
-                      placeholder="77520"
-                    />
+                    <Input id="addressZip" value={bookingData.address.zipCode} onChange={e => updateNestedField('address', 'zipCode', e.target.value)} placeholder="77520" />
                   </div>
                 </div>
               </CardContent>
@@ -1103,37 +977,33 @@ export function ModernLegacyBooking() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="bedrooms">Bedrooms *</Label>
-                    <Select value={bookingData.bedrooms} onValueChange={(value) => updateField('bedrooms', value)}>
+                    <Select value={bookingData.bedrooms} onValueChange={value => updateField('bedrooms', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        {[1, 2, 3, 4, 5, 6].map((num) => (
-                          <SelectItem key={num} value={num.toString()}>
+                        {[1, 2, 3, 4, 5, 6].map(num => <SelectItem key={num} value={num.toString()}>
                             {num} Bedroom{num > 1 ? 's' : ''}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="bathrooms">Bathrooms *</Label>
-                    <Select value={bookingData.bathrooms} onValueChange={(value) => updateField('bathrooms', value)}>
+                    <Select value={bookingData.bathrooms} onValueChange={value => updateField('bathrooms', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        {[1, 1.5, 2, 2.5, 3, 3.5, 4, 5].map((num) => (
-                          <SelectItem key={num} value={num.toString()}>
+                        {[1, 1.5, 2, 2.5, 3, 3.5, 4, 5].map(num => <SelectItem key={num} value={num.toString()}>
                             {num} Bathroom{num > 1 ? 's' : ''}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="dwellingType">Property Type *</Label>
-                    <Select value={bookingData.dwellingType} onValueChange={(value) => updateField('dwellingType', value)}>
+                    <Select value={bookingData.dwellingType} onValueChange={value => updateField('dwellingType', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -1148,22 +1018,13 @@ export function ModernLegacyBooking() {
                 </div>
                 <div>
                   <Label htmlFor="specialInstructions">Special Instructions</Label>
-                  <Textarea
-                    id="specialInstructions"
-                    value={bookingData.specialInstructions}
-                    onChange={(e) => updateField('specialInstructions', e.target.value)}
-                    placeholder="Any special instructions or areas of focus..."
-                    rows={3}
-                  />
+                  <Textarea id="specialInstructions" value={bookingData.specialInstructions} onChange={e => updateField('specialInstructions', e.target.value)} placeholder="Any special instructions or areas of focus..." rows={3} />
                 </div>
               </CardContent>
             </Card>
-          </div>
-        );
-
+          </div>;
       case 4:
-        return (
-          <div className="space-y-8">
+        return <div className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle>Review Your Booking</CardTitle>
@@ -1182,21 +1043,17 @@ export function ModernLegacyBooking() {
                 </div>
 
                 {/* Add-ons */}
-                {bookingData.addOns.length > 0 && (
-                  <div>
+                {bookingData.addOns.length > 0 && <div>
                     <h3 className="font-semibold mb-2">Add-On Services</h3>
                     <div className="space-y-1 text-sm">
                       {bookingData.addOns.map(addOnId => {
-                        const addOn = addOnServices.find(a => a.id === addOnId);
-                        return addOn && (
-                          <p key={addOnId}>
+                    const addOn = addOnServices.find(a => a.id === addOnId);
+                    return addOn && <p key={addOnId}>
                             <span className="font-medium">{addOn.name}:</span> {formatPrice(addOn.price)}
-                          </p>
-                        );
-                      })}
+                          </p>;
+                  })}
                     </div>
-                  </div>
-                )}
+                  </div>}
 
                 {/* Contact Information */}
                 <div>
@@ -1209,16 +1066,12 @@ export function ModernLegacyBooking() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        );
-
+          </div>;
       default:
         return null;
     }
   };
-
-  return (
-    <div ref={containerRef} className="min-h-screen bg-background">
+  return <div ref={containerRef} className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -1231,9 +1084,7 @@ export function ModernLegacyBooking() {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Book Your Cleaning Service
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Professional cleaning services in the Greater Baytown area
-            </p>
+            <p className="text-muted-foreground text-lg">Premium cleaning services in Texas & California</p>
             <p className="text-sm text-success font-semibold mt-2">
               All prices already include 20% discount - Save big today!
             </p>
@@ -1242,37 +1093,19 @@ export function ModernLegacyBooking() {
           {/* Progress Steps */}
           <div className="mb-8">
             <div className="flex items-center justify-between max-w-3xl mx-auto">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
+              {steps.map((step, index) => <div key={step.id} className="flex items-center">
                   <div className="flex items-center">
-                    <div
-                      className={cn(
-                        "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors",
-                        currentStep >= step.id
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-border text-muted-foreground"
-                      )}
-                    >
-                      {currentStep > step.id ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <step.icon className="h-5 w-5" />
-                      )}
+                    <div className={cn("flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors", currentStep >= step.id ? "bg-primary border-primary text-primary-foreground" : "border-border text-muted-foreground")}>
+                      {currentStep > step.id ? <CheckCircle className="h-5 w-5" /> : <step.icon className="h-5 w-5" />}
                     </div>
                     <div className="ml-3 hidden md:block">
-                      <p className={cn(
-                        "text-sm font-medium",
-                        currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                      )}>
+                      <p className={cn("text-sm font-medium", currentStep >= step.id ? "text-primary" : "text-muted-foreground")}>
                         {step.title}
                       </p>
                     </div>
                   </div>
-                  {index < steps.length - 1 && (
-                    <ArrowRight className="h-4 w-4 text-muted-foreground mx-4" />
-                  )}
-                </div>
-              ))}
+                  {index < steps.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground mx-4" />}
+                </div>)}
             </div>
           </div>
 
@@ -1283,19 +1116,11 @@ export function ModernLegacyBooking() {
 
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={currentStep === 1}
-                >
+                <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceedToNext()}
-                  className="bg-primary hover:bg-primary/90"
-                >
+                <Button onClick={handleNext} disabled={!canProceedToNext()} className="bg-primary hover:bg-primary/90">
                   {currentStep === 4 ? 'Book Your Service' : 'Next Step'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -1304,17 +1129,10 @@ export function ModernLegacyBooking() {
 
             {/* Pricing Summary Sidebar */}
             <div className="w-full lg:w-80">
-              <PricingSummarySticky
-                bookingData={bookingData}
-                serviceTypes={serviceTypes}
-                homeSizes={homeSizes}
-                frequencyOptions={frequencyOptions}
-                addOnServices={addOnServices}
-              />
+              <PricingSummarySticky bookingData={bookingData} serviceTypes={serviceTypes} homeSizes={homeSizes} frequencyOptions={frequencyOptions} addOnServices={addOnServices} />
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
