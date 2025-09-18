@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const { trackPurchase, trackCustomPurchase } = useFacebookPixel();
 
   useEffect(() => {
     const handlePaymentSuccess = async () => {
@@ -115,6 +117,44 @@ export default function PaymentSuccess() {
       // Navigate based on what data we found
       if (orderData && orderData.id) {
         console.log('✅ Navigating to order-confirmation with order_id:', orderData.id, 'found via:', foundIdentifier);
+        
+        // Track Facebook Pixel Purchase event as backup
+        const serviceValue = orderData.amount / 100; // Convert cents to dollars
+        const serviceType = orderData.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service';
+        
+        trackPurchase({
+          value: serviceValue,
+          currency: 'USD',
+          content_type: 'service',
+          content_name: serviceType,
+          event_id: orderData.id
+        });
+        
+        // Custom Purchase event with MRR/ARR for recurring services
+        if (orderData.frequency && orderData.frequency !== 'one_time') {
+          let mrrEstimate = 0;
+          let arrEstimate = 0;
+          
+          if (orderData.frequency === 'weekly') {
+            mrrEstimate = serviceValue * 4.3;
+            arrEstimate = mrrEstimate * 12;
+          } else if (orderData.frequency === 'biweekly' || orderData.frequency === 'bi_weekly') {
+            mrrEstimate = serviceValue * 2.15;
+            arrEstimate = mrrEstimate * 12;
+          } else if (orderData.frequency === 'monthly') {
+            mrrEstimate = serviceValue;
+            arrEstimate = serviceValue * 12;
+          }
+          
+          trackCustomPurchase({
+            value: serviceValue,
+            currency: 'USD',
+            mrr_est: mrrEstimate,
+            arr_est: arrEstimate,
+            booking_id: orderData.id
+          });
+        }
+        
         // Clean up localStorage only on success
         localStorage.removeItem('current_order_id');
         navigate(`/order-confirmation?order_id=${orderData.id}`, { replace: true });

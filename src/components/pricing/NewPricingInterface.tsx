@@ -8,6 +8,7 @@ import { FrequencySelector } from './FrequencySelector';
 import { PricingSummaryCard } from './PricingSummaryCard';
 import { calculateNewPricing, DEFAULT_PRICING_CONFIG, type PricingResult } from '@/lib/new-pricing-system';
 import { MapPin, ArrowRight } from 'lucide-react';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 
 interface NewPricingInterfaceProps {
   onBookingSelect?: (data: {
@@ -25,6 +26,15 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
   const [frequencyId, setFrequencyId] = useState<string>('one_time');
   const [stateCode, setStateCode] = useState<string>('TX');
   const [pricingResult, setPricingResult] = useState<PricingResult | null>(null);
+  const { trackViewContent, trackAddToCart } = useFacebookPixel();
+
+  // Track ViewContent when component loads (pricing page view)
+  useEffect(() => {
+    trackViewContent({
+      content_name: 'Pricing Page',
+      content_type: 'service'
+    });
+  }, []);
 
   // Calculate pricing when selections change
   useEffect(() => {
@@ -32,6 +42,15 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
       try {
         const result = calculateNewPricing(homeSizeId, serviceTypeId, frequencyId, stateCode);
         setPricingResult(result);
+        
+        // Track AddToCart when user has made full selection
+        if (result.finalPrice > 0) {
+          const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
+          trackAddToCart({
+            content_name: serviceType?.name || serviceTypeId,
+            value: result.finalPrice
+          });
+        }
       } catch (error) {
         console.error('Pricing calculation error:', error);
         setPricingResult(null);

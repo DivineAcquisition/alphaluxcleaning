@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
 import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
+import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -46,6 +47,7 @@ export function PaymentForm({
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount">("pay_after_service");
+  const { trackInitiateCheckout } = useFacebookPixel();
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
   const getFinalPrice = () => {
@@ -146,6 +148,12 @@ export function PaymentForm({
       return;
     }
     setIsProcessing(true);
+    
+    // Track InitiateCheckout event
+    trackInitiateCheckout({
+      value: getFinalPrice()
+    });
+    
     try {
       // Check if membership is enabled from pricingData
       if (pricingData.membership) {

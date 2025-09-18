@@ -7,6 +7,7 @@ import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 
 const BookingConfirmation = () => {
   const [searchParams] = useSearchParams();
@@ -17,6 +18,7 @@ const BookingConfirmation = () => {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
+  const { trackPurchase, trackCustomPurchase } = useFacebookPixel();
 
   useEffect(() => {
     // Check if admin preview mode
@@ -143,6 +145,47 @@ const BookingConfirmation = () => {
       }
 
       setOrderDetails(data);
+      
+      // Track Facebook Pixel Purchase event
+      if (data) {
+        const serviceValue = data.amount / 100; // Convert cents to dollars
+        const serviceType = data.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service';
+        
+        // Standard Purchase event
+        trackPurchase({
+          value: serviceValue,
+          currency: 'USD',
+          content_type: 'service',
+          content_name: serviceType,
+          event_id: data.id
+        });
+        
+        // Custom Purchase event with MRR/ARR for recurring services
+        if (data.frequency && data.frequency !== 'one_time') {
+          // Calculate estimated MRR/ARR based on frequency
+          let mrrEstimate = 0;
+          let arrEstimate = 0;
+          
+          if (data.frequency === 'weekly') {
+            mrrEstimate = serviceValue * 4.3; // ~4.3 weeks per month
+            arrEstimate = mrrEstimate * 12;
+          } else if (data.frequency === 'biweekly' || data.frequency === 'bi_weekly') {
+            mrrEstimate = serviceValue * 2.15; // ~2.15 bi-weekly per month
+            arrEstimate = mrrEstimate * 12;
+          } else if (data.frequency === 'monthly') {
+            mrrEstimate = serviceValue;
+            arrEstimate = serviceValue * 12;
+          }
+          
+          trackCustomPurchase({
+            value: serviceValue,
+            currency: 'USD',
+            mrr_est: mrrEstimate,
+            arr_est: arrEstimate,
+            booking_id: data.id
+          });
+        }
+      }
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");

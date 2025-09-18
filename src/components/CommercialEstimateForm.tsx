@@ -9,7 +9,7 @@ import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckC
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
-import { trackCommercialEstimateRequest, trackLead } from "@/lib/facebook-pixel";
+import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   validatePhoneNumber, 
@@ -72,6 +72,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
+  const { trackCommercialEstimateRequest, trackLead } = useFacebookPixel();
   const [formData, setFormData] = useState<CommercialEstimateData>({
     businessName: "",
     businessType: "",

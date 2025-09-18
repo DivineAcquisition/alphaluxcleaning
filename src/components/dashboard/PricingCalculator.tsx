@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Home, Building, Star, Clock } from "lucide-react";
-import { trackQuoteCalculated, trackInitiateCheckout } from "@/lib/facebook-pixel";
+import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 
 interface PricingData {
   squareFootage: number;
@@ -71,6 +71,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
 
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
   const [priceBreakdown, setPriceBreakdown] = useState<any>({});
+  const { trackQuoteCalculated } = useFacebookPixel();
 
   const calculatePrice = () => {
     if (!pricingData.serviceType || !pricingData.cleaningType || !pricingData.frequency) {
