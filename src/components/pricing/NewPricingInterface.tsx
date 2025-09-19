@@ -7,6 +7,7 @@ import { ServiceTypeSelector } from './ServiceTypeSelector';
 import { FrequencySelector } from './FrequencySelector';
 import { PricingSummaryCard } from './PricingSummaryCard';
 import { calculateNewPricing, DEFAULT_PRICING_CONFIG, type PricingResult } from '@/lib/new-pricing-system';
+import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 
@@ -41,14 +42,21 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
     if (homeSizeId && serviceTypeId && frequencyId && stateCode) {
       try {
         const result = calculateNewPricing(homeSizeId, serviceTypeId, frequencyId, stateCode);
-        setPricingResult(result);
+        
+        // Apply 20% global discount to the final price
+        const discountedResult = {
+          ...result,
+          finalPrice: applyGlobalDiscount(result.finalPrice)
+        };
+        
+        setPricingResult(discountedResult);
         
         // Track AddToCart when user has made full selection
-        if (result.finalPrice > 0) {
+        if (discountedResult.finalPrice > 0) {
           const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
           trackAddToCart({
             content_name: serviceType?.name || serviceTypeId,
-            value: result.finalPrice
+            value: discountedResult.finalPrice
           });
         }
       } catch (error) {

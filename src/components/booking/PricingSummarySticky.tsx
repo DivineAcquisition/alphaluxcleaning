@@ -57,15 +57,21 @@ export function PricingSummarySticky({
   const selectedSize = homeSizes.find(h => h.id === bookingData.homeSize);
   const selectedFrequency = frequencyOptions.find(f => f.id === bookingData.frequency);
   
-  const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
+  // Calculate original prices without discount
+  // bookingData.basePrice already has 20% discount applied via getExactPrice()
+  // To show the original price, we need to reverse the discount calculation
+  const discountedBasePrice = bookingData.basePrice;
+  const discountedAddOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
     const addOn = addOnServices.find(a => a.id === addOnId);
     return total + (addOn?.price || 0);
   }, 0);
-
-  // Calculate original prices without discount
-  const originalSubtotal = bookingData.basePrice + addOnsTotal;
-  const discountAmount = calculateGlobalDiscountAmount(originalSubtotal);
-  const subtotal = originalSubtotal - discountAmount;
+  
+  // Calculate original prices (before discount)
+  const originalBasePrice = discountedBasePrice / 0.8; // Reverse 20% discount
+  const originalAddOnsTotal = discountedAddOnsTotal / 0.8; // Reverse 20% discount
+  const originalSubtotal = originalBasePrice + originalAddOnsTotal;
+  
+  const discountAmount = originalSubtotal - bookingData.totalPrice;
   const hasDiscount = discountAmount > 0;
 
   if (!selectedService) {
@@ -129,10 +135,14 @@ export function PricingSummarySticky({
                 <p className="text-sm font-medium text-foreground">Add-On Services</p>
                 {bookingData.addOns.map(addOnId => {
                   const addOn = addOnServices.find(a => a.id === addOnId);
-                  return addOn && (
+                  if (!addOn) return null;
+                  
+                  // Apply discount to add-on price for display
+                  const discountedPrice = addOn.price * 0.8; // 20% discount applied
+                  return (
                     <div key={addOnId} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{addOn.name}</span>
-                      <span className="font-medium">{formatPrice(addOn.price)}</span>
+                      <span className="font-medium">{formatPrice(discountedPrice)}</span>
                     </div>
                   );
                 })}

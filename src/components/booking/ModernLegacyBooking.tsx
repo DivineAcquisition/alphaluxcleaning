@@ -346,7 +346,7 @@ export function ModernLegacyBooking() {
     }));
   };
 
-  // Get price using new pricing system (final price already includes multipliers/discounts)
+  // Get price using new pricing system and apply 20% global discount
   const getExactPrice = () => {
     if (!bookingData.homeSize) return 0;
 
@@ -393,12 +393,13 @@ export function ModernLegacyBooking() {
     }
     if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
     const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
-    return result.finalPrice;
+    // Apply 20% global discount to the base price
+    return applyGlobalDiscount(result.finalPrice);
   };
 
   // Calculate pricing whenever relevant fields change with 20% discount applied
   useEffect(() => {
-    const discountedPrice = getExactPrice(); // Already includes 20% discount
+    const discountedPrice = getExactPrice(); // Now includes 20% global discount
 
     // Calculate add-ons total
     const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
@@ -885,7 +886,7 @@ export function ModernLegacyBooking() {
 
                   // Map frequency id
                   const freqId = option.id === 'weekly' ? 'weekly' : option.id === 'biweekly' ? 'bi_weekly' : option.id === 'monthly' ? 'monthly' : 'one_time';
-                  const price = homeSizeRange ? calculateNewPricing(homeSizeRange.id, 'standard', freqId, stateCode).finalPrice : 0;
+                  const price = homeSizeRange ? applyGlobalDiscount(calculateNewPricing(homeSizeRange.id, 'standard', freqId, stateCode).finalPrice) : 0;
                   return <Card key={option.id} className={cn("cursor-pointer border-2 transition-all hover:shadow-md relative", bookingData.frequency === option.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50")} onClick={() => updateField('frequency', option.id)}>
                           <CardContent className="p-4 text-center">
                             <h3 className="font-semibold">{option.name}</h3>

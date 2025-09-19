@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign, Tag } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { PricingResult, HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
 import { cn } from '@/lib/utils';
@@ -131,14 +131,32 @@ export function PricingSummaryCard({
           )}
         </div>
 
+        {/* Global Discount */}
+        <div className="flex justify-between text-sm text-success">
+          <span className="flex items-center gap-1">
+            <Tag className="h-3 w-3" />
+            20% Savings Applied
+          </span>
+          <span className="font-medium">-{formatPrice((result.finalPrice / 0.8) * 0.2)}</span>
+        </div>
+
         {/* Total Price */}
         <Separator className="border-primary/20" />
-        <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold text-foreground">Service Price</span>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-[#ECC98B]">
-              {formatPrice(result.finalPrice)}
-            </p>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Original Price</span>
+            <span className="line-through text-muted-foreground">{formatPrice(result.finalPrice / 0.8)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-foreground">Service Price</span>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-[#ECC98B]">
+                {formatPrice(result.finalPrice)}
+              </p>
+              <p className="text-xs text-success font-medium">
+                You save {formatPrice((result.finalPrice / 0.8) * 0.2)}!
+              </p>
+            </div>
           </div>
         </div>
 
