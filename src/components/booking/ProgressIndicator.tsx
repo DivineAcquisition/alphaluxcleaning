@@ -46,16 +46,16 @@ export function ProgressIndicator({}: ProgressIndicatorProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
               <DropdownMenuItem asChild>
-                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (281) 809-9901
+                  Call +1 857-754-4557
                 </a>
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
               
               <DropdownMenuItem asChild>
-                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                <a href="mailto:info@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
                   <Mail className="h-4 w-4" />
                   Email Support
                 </a>
@@ -83,14 +83,14 @@ export function ProgressIndicator({}: ProgressIndicatorProps) {
               
               {/* Contact Options for Mobile */}
               <DropdownMenuItem asChild>
-                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (281) 809-9901
+                  Call +1 857-754-4557
                 </a>
               </DropdownMenuItem>
               
               <DropdownMenuItem asChild>
-                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                <a href="mailto:info@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
                   <Mail className="h-4 w-4" />
                   Email Support
                 </a>

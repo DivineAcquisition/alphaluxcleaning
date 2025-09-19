@@ -42,12 +42,12 @@ export function Navigation() {
                   Get in touch with us:
                 </div>
                 
-                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12818099901', '_self')}>
+                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+18577544557', '_self')}>
                   <Phone className="h-4 w-4" />
-                  (281) 809-9901
+                  +1 857-754-4557
                 </DropdownMenuItem>
                 
-                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@alphaluxclean.com', '_self')}>
+                <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:info@alphaluxclean.com', '_self')}>
                   <Mail className="h-4 w-4" />
                   Email Support
                 </DropdownMenuItem>
@@ -76,12 +76,12 @@ export function Navigation() {
                     Contact Us:
                   </div>
                   
-                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+12818099901', '_self')}>
+                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('tel:+18577544557', '_self')}>
                     <Phone className="h-4 w-4" />
-                    (281) 809-9901
+                    +1 857-754-4557
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:support@alphaluxclean.com', '_self')}>
+                  <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer" onClick={() => window.open('mailto:info@alphaluxclean.com', '_self')}>
                     <Mail className="h-4 w-4" />
                     Email Support
                   </DropdownMenuItem>
