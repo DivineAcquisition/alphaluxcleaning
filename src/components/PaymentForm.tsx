@@ -10,8 +10,9 @@ const sb = supabase as any;
 import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { useNavigate } from "react-router-dom";
 import { EmbeddedTestPaymentForm } from "@/components/booking/EmbeddedTestPaymentForm";
-import { EmbeddedDepositPaymentForm } from "@/components/booking/EmbeddedDepositPaymentForm";
+import { EmbeddedPaymentForm } from "@/components/booking/EmbeddedPaymentForm";
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -51,7 +52,9 @@ export function PaymentForm({
   const [paymentType, setPaymentType] = useState<"pay_in_full" | "25_percent_with_discount">("pay_in_full");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   const [depositClientSecret, setDepositClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const { trackInitiateCheckout } = useFacebookPixel();
+  const navigate = useNavigate();
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
   const getFinalPrice = () => {
@@ -59,6 +62,12 @@ export function PaymentForm({
     if (schedulingData?.nextDayBooking && schedulingData?.upchargeAmount) {
       finalPrice += schedulingData.upchargeAmount;
     }
+    console.log("PaymentForm - getFinalPrice:", {
+      calculatedPrice,
+      schedulingUpcharge: schedulingData?.upchargeAmount || 0,
+      finalPrice,
+      pricingData
+    });
     return finalPrice;
   };
   const handleInputChange = (field: string, value: string) => {
@@ -267,8 +276,11 @@ export function PaymentForm({
       setIsProcessing(false);
     }
   };
-  if (calculatedPrice <= 0) {
-    return <Card className="shadow-lg">
+  // Don't allow booking with zero or invalid price
+  if (!calculatedPrice || calculatedPrice <= 0) {
+    console.log("PaymentForm: Invalid calculatedPrice:", calculatedPrice);
+    return (
+      <Card className="shadow-lg">
         <CardHeader className="bg-gradient-to-r from-muted to-accent/20 rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
@@ -283,7 +295,8 @@ export function PaymentForm({
             Please complete the pricing form to proceed with booking
           </div>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
   return <Card className="w-full max-w-4xl mx-auto shadow-lg">
       <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
@@ -427,18 +440,73 @@ export function PaymentForm({
                </div>
            </div>
 
-           {/* Show embedded form for deposit/test or continue */}
-           {showEmbeddedForm && depositClientSecret && paymentType === "25_percent_with_discount" ? (
-             <EmbeddedDepositPaymentForm
-               totalAmount={getFinalPrice()}
-               depositAmount={getFinalPrice() * 0.2}
-               clientSecret={depositClientSecret}
-               onSuccess={() => {
-                 toast.success("Deposit paid! We'll email your confirmation.");
-               }}
-               onCancel={() => setShowEmbeddedForm(false)}
-               bookingData={{}}
-             />
+            {/* Show embedded form for payment */}
+            {showEmbeddedForm && depositClientSecret ? (
+              <EmbeddedPaymentForm
+                clientSecret={depositClientSecret}
+                paymentAmount={paymentType === "pay_in_full" ? getFinalPrice() : getFinalPrice() * 0.2}
+                fullAmount={getFinalPrice()}
+                paymentType={paymentType === "pay_in_full" ? "full_payment" : "deposit_20"}
+                onSuccess={async () => {
+                  console.log("Payment successful, creating booking...");
+                  
+                  try {
+                    setIsProcessing(true);
+                    
+                    // Create the booking after successful payment
+                    const bookingData = {
+                      serviceType: pricingData.cleaningType,
+                      frequency: pricingData.frequency,
+                      homeSize: String(pricingData.squareFootage || ''),
+                      zipCode: schedulingData?.scheduledDate ? '75001' : '', // Default for now
+                      state: 'TX', // Default for now
+                      serviceDate: schedulingData?.scheduledDate || '',
+                      serviceTime: schedulingData?.scheduledTime || '',
+                      totalPrice: getFinalPrice(),
+                      customerName: customerInfo.name,
+                      customerEmail: customerInfo.email,
+                      customerPhone: customerInfo.phone,
+                      paymentType: paymentType,
+                      addOns: pricingData.addOns || []
+                    };
+
+                    console.log("Creating booking with data:", bookingData);
+
+                    const { data: bookingResult, error: bookingError } = await supabase.functions.invoke('create-booking', {
+                      body: {
+                        bookingData,
+                        paymentType: paymentType === 'pay_in_full' ? 'full_payment' : 'deposit_20',
+                        customerEmail: customerInfo.email,
+                        customerName: customerInfo.name,
+                      }
+                    });
+
+                    if (bookingError) {
+                      console.error('Booking creation error:', bookingError);
+                      throw new Error(`Failed to create booking: ${bookingError.message}`);
+                    }
+
+                    console.log("Booking created successfully:", bookingResult);
+
+                    toast.success("Booking confirmed! Redirecting to confirmation...");
+
+                    // Navigate to confirmation page
+                    const bookingId = bookingResult?.booking?.id || 'confirmed';
+                    navigate(`/order-confirmation/${bookingId}`);
+                    
+                  } catch (error) {
+                    console.error('Error in payment success handler:', error);
+                    toast.error("Payment succeeded but booking creation failed. Please contact support.");
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+                onCancel={() => {
+                  setShowEmbeddedForm(false);
+                  setDepositClientSecret(null);
+                  setPaymentIntentId(null);
+                }}
+              />
             ) : (
               <>
 

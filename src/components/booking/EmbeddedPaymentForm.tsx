@@ -7,27 +7,28 @@ import { stripePromise } from '@/lib/stripe';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/pricing-utils';
 
-interface EmbeddedDepositPaymentFormProps {
-  totalAmount: number;
-  depositAmount: number;
+export interface EmbeddedPaymentFormProps {
   clientSecret: string;
-  onSuccess: (paymentIntentId: string) => void;
+  paymentAmount: number;
+  fullAmount: number;
+  paymentType: 'full_payment' | 'deposit_20';
+  onSuccess: () => void;
   onCancel: () => void;
-  bookingData: any;
 }
 
 interface PaymentFormProps {
-  totalAmount: number;
-  depositAmount: number;
-  onSuccess: (paymentIntentId: string) => void;
+  paymentAmount: number;
+  fullAmount: number;
+  paymentType: 'full_payment' | 'deposit_20';
+  onSuccess: () => void;
   onCancel: () => void;
 }
 
-function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: PaymentFormProps) {
+const PaymentForm: React.FC<PaymentFormProps> = ({ paymentAmount, fullAmount, paymentType, onSuccess, onCancel }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isElementReady, setIsElementReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -38,7 +39,7 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     setPaymentError(null);
 
     try {
@@ -56,15 +57,15 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
         toast.error(result.error.message || 'Payment failed. Please try again.');
       } else if (result.paymentIntent?.status === 'succeeded') {
         console.log('Payment succeeded:', result.paymentIntent);
-        toast.success('Payment successful! Redirecting to confirmation...');
-        onSuccess(result.paymentIntent?.id || 'payment_succeeded');
+        toast.success('Payment successful! Creating your booking...');
+        onSuccess();
       }
     } catch (error: any) {
       console.error('Payment error:', error);
       setPaymentError(error.message || 'An unexpected error occurred');
       toast.error('Payment failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -73,37 +74,46 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />
-          Secure Payment - 20% Deposit
+          {paymentType === 'full_payment' ? 'Secure Payment - Full Amount' : 'Secure Payment - 20% Deposit'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Deposit Information */}
+        {/* Payment Information */}
         <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
           <div className="flex items-center gap-3 mb-3">
             <Shield className="h-6 w-6 text-primary" />
             <div>
-              <h4 className="font-semibold text-lg">20% Deposit Required</h4>
+              <h4 className="font-semibold text-lg">
+                {paymentType === 'full_payment' ? 'Full Payment' : 'Deposit Payment'}
+              </h4>
               <p className="text-sm text-muted-foreground">
-                Pay just 20% now to secure your booking. Remaining balance due after service completion.
+                {paymentType === 'full_payment' 
+                  ? 'You\'re paying the full amount now.'
+                  : 'You\'re paying a 20% deposit now. The remaining balance will be collected after your service is completed.'
+                }
               </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 mt-4 p-3 rounded-md bg-background/50">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Service Cost</p>
-              <p className="text-lg font-bold">${formatPrice(totalAmount)}</p>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center py-2 border-t">
+              <span className="font-medium">
+                {paymentType === 'full_payment' ? 'Total Amount:' : 'Deposit Amount:'}
+              </span>
+              <span className="font-bold text-lg">${paymentAmount.toFixed(2)}</span>
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Deposit Due Today</p>
-              <p className="text-lg font-bold text-primary">${formatPrice(depositAmount)}</p>
-            </div>
-          </div>
-          
-          <div className="mt-4 pt-3 border-t">
-            <p className="text-sm text-muted-foreground">
-              Remaining balance of <strong>${formatPrice(totalAmount - depositAmount)}</strong> will be charged after your cleaning is completed.
-            </p>
+            {paymentType === 'deposit_20' && (
+              <>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Full Service Amount:</span>
+                  <span>${fullAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Remaining Balance:</span>
+                  <span>${(fullAmount - paymentAmount).toFixed(2)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -112,7 +122,7 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
           <div className="flex items-center justify-between mb-4">
             <div>
               <h5 className="font-semibold">Payment Amount</h5>
-              <p className="text-2xl font-bold text-primary">${formatPrice(depositAmount)}</p>
+              <p className="text-2xl font-bold text-primary">${paymentAmount.toFixed(2)}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Shield className="h-4 w-4" />
@@ -123,7 +133,7 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
           <PaymentElement 
             onReady={() => {
               console.log('PaymentElement is ready!');
-              setIsElementReady(true);
+              setIsPaymentElementReady(true);
               setPaymentError(null);
             }}
             onLoadError={(errorEvent) => {
@@ -155,7 +165,7 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
             </div>
           )}
           
-          {!isElementReady && !paymentError && (
+          {!isPaymentElementReady && !paymentError && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Loading secure payment form...</span>
@@ -167,44 +177,33 @@ function PaymentForm({ totalAmount, depositAmount, onSuccess, onCancel }: Paymen
               type="button"
               variant="outline"
               onClick={onCancel}
-              disabled={isLoading}
+              disabled={loading}
               className="flex-1"
             >
               Back to Review
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !stripe || !elements || !isElementReady}
-              className="flex-1"
-              size="lg"
+              disabled={loading || !stripe || !elements || !isPaymentElementReady}
+              className="w-full"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Lock className="h-4 w-4 mr-2" />
-                  Pay ${formatPrice(depositAmount)} Deposit
-                </>
-              )}
+              {loading ? "Processing..." : paymentType === 'full_payment' ? "Pay Full Amount" : "Pay Deposit"}
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
   );
-}
+};
 
-export function EmbeddedDepositPaymentForm({ 
-  totalAmount, 
-  depositAmount, 
-  clientSecret, 
-  onSuccess, 
-  onCancel,
-  bookingData 
-}: EmbeddedDepositPaymentFormProps) {
+export const EmbeddedPaymentForm: React.FC<EmbeddedPaymentFormProps> = ({
+  clientSecret,
+  paymentAmount,
+  fullAmount,
+  paymentType,
+  onSuccess,
+  onCancel
+}) => {
   const appearance = {
     theme: 'stripe' as const,
     variables: {
@@ -238,12 +237,13 @@ export function EmbeddedDepositPaymentForm({
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <PaymentForm 
-        totalAmount={totalAmount}
-        depositAmount={depositAmount}
-        onSuccess={(paymentIntentId: string) => onSuccess(paymentIntentId)}
+      <PaymentForm
+        paymentAmount={paymentAmount}
+        fullAmount={fullAmount}
+        paymentType={paymentType}
+        onSuccess={onSuccess}
         onCancel={onCancel}
       />
     </Elements>
   );
-}
+};

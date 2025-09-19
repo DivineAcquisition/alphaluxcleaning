@@ -17,7 +17,7 @@ import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-prici
 import { ServiceTypeCards } from './ServiceTypeCards';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
-import { EmbeddedDepositPaymentForm } from './EmbeddedDepositPaymentForm';
+import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 
 // Original pricing matrix - 20% discount applied automatically in calculations
@@ -557,8 +557,13 @@ export function ModernLegacyBooking() {
           </Button>
         </div>
         
-        <EmbeddedDepositPaymentForm totalAmount={bookingData.totalPrice} depositAmount={depositAmount} clientSecret={clientSecret} bookingData={bookingData} onSuccess={async (paymentIntentId: string) => {
-        console.log('Payment successful, creating order:', paymentIntentId);
+        <EmbeddedPaymentForm 
+          clientSecret={clientSecret} 
+          paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice}
+          fullAmount={bookingData.totalPrice}
+          paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit_20" : "full_payment"}
+          onSuccess={async () => {
+        console.log('Payment successful, creating order');
         setIsProcessingPayment(true);
         try {
           // Create order record with deposit payment
@@ -568,7 +573,6 @@ export function ModernLegacyBooking() {
           } = await supabase.functions.invoke('create-order-with-deposit', {
             body: {
               bookingData,
-              paymentIntentId,
               depositAmount: bookingData.totalPrice * 0.2,
               totalAmount: bookingData.totalPrice,
               customerEmail: bookingData.customerEmail,
