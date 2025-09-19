@@ -33,9 +33,13 @@ serve(async (req) => {
 
     console.log("Validating required fields...");
     
-    if (!fullAmount || !finalCustomerEmail || !booking_data) {
-      console.error("Missing required fields:", { fullAmount, finalCustomerEmail, booking_data });
+    if (fullAmount === undefined || fullAmount === null || isNaN(Number(fullAmount)) || !finalCustomerEmail || !booking_data) {
+      console.error("Missing required fields:", { fullAmount, finalCustomerEmail, hasBookingData: !!booking_data });
       throw new Error("Missing required fields: fullAmount, customerEmail, and booking_data");
+    }
+    if (Number(fullAmount) <= 0) {
+      console.error("Invalid fullAmount <= 0. fullAmount:", fullAmount);
+      throw new Error("Invalid amount: Calculated price is 0. Please complete selections to get a valid price.");
     }
 
     // Normalize amount handling - assume fullAmount comes in dollars, convert to cents

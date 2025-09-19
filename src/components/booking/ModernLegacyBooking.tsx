@@ -329,6 +329,7 @@ export function ModernLegacyBooking() {
   // Embedded payment state
   const [showEmbeddedPayment, setShowEmbeddedPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const updateField = (field: keyof BookingData, value: any) => {
     setBookingData(prev => ({
@@ -377,7 +378,11 @@ export function ModernLegacyBooking() {
     // Map legacy frequency to new system ids
     let frequencyId: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
     if (bookingData.serviceType === 'regular') {
-      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';else return 0; // Keep behavior: no price until frequency selected for regular
+      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';
+      else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';
+      else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';
+      else if (bookingData.frequency === 'oneTime') frequencyId = 'one_time';
+      else return 0; // Require frequency selection for regular
     } else {
       frequencyId = 'one_time';
     }
@@ -473,6 +478,11 @@ export function ModernLegacyBooking() {
       toast.error('Please select a payment option');
       return;
     }
+    if (!bookingData.totalPrice || bookingData.totalPrice <= 0) {
+      console.warn('Aborting booking: invalid totalPrice', bookingData.totalPrice);
+      toast.error('Please complete your selections to get a valid price before booking.');
+      return;
+    }
 
     setIsProcessingPayment(true);
 
@@ -496,6 +506,7 @@ export function ModernLegacyBooking() {
       if (response.data?.clientSecret) {
         console.log('Payment intent created, showing embedded form');
         setClientSecret(response.data.clientSecret);
+        setPaymentIntentId(response.data.paymentIntentId || null);
         setShowEmbeddedPayment(true);
       } else {
         throw new Error('No client secret received');
@@ -554,6 +565,7 @@ export function ModernLegacyBooking() {
           } = await supabase.functions.invoke('create-order-with-deposit', {
             body: {
               bookingData,
+              paymentIntentId: paymentIntentId || '',
               depositAmount: bookingData.totalPrice * 0.2,
               totalAmount: bookingData.totalPrice,
               customerEmail: bookingData.customerEmail,
