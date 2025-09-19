@@ -1,65 +1,103 @@
 import React from 'react';
-import { CheckCircle, Circle } from 'lucide-react';
-interface Step {
-  id: number;
-  title: string;
-  description: string;
-}
-interface ProgressIndicatorProps {
-  currentStep: number;
-  steps: Step[];
-}
-export function ProgressIndicator({
-  currentStep,
-  steps
-}: ProgressIndicatorProps) {
-  const progress = currentStep / steps.length * 100;
-  
-  return (
-    <div className="flex items-center justify-center py-8">
-      <div className="flex items-center space-x-4 md:space-x-8">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <div className={`flex items-center space-x-3 ${
-              index < steps.length - 1 ? 'pr-4 md:pr-8' : ''
-            }`}>
-              <div className="flex flex-col items-center space-y-2">
-                <div className={`
-                  w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                  ${step.id <= currentStep 
-                    ? 'border-primary bg-primary text-primary-foreground' 
-                    : 'border-muted-foreground text-muted-foreground'
-                  }
-                `}>
-                  {step.id <= currentStep ? (
-                    <CheckCircle className="h-6 w-6" />
-                  ) : (
-                    <Circle className="h-6 w-6" />
-                  )}
-                </div>
-                
-                <div className="text-center">
-                  <div className={`text-sm font-medium transition-colors ${
-                    step.id <= currentStep 
-                      ? 'text-primary' 
-                      : 'text-muted-foreground'
-                  }`}>
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-muted-foreground max-w-[100px] hidden md:block">
-                    {step.description}
-                  </div>
-                </div>
-              </div>
-            </div>
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Phone, Mail, HelpCircle, Menu } from 'lucide-react';
 
-            {index < steps.length - 1 && (
-              <div className={`h-px w-8 transition-colors ${
-                step.id < currentStep ? 'bg-primary' : 'bg-muted-foreground'
-              }`} />
-            )}
-          </div>
-        ))}
+interface ProgressIndicatorProps {
+  currentStep?: number;
+  steps?: any[];
+}
+
+export function ProgressIndicator({}: ProgressIndicatorProps) {
+  const handleTroubleBooking = () => {
+    window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
+  };
+
+  return (
+    <div className="flex items-center justify-between py-4 px-4 border-b bg-background">
+      <div className="flex items-center">
+        {/* Logo placeholder */}
+        <div className="text-xl font-bold text-primary">
+          AlphaLux Clean
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-3">
+        {/* Having Trouble Booking Button - Desktop */}
+        <div className="hidden md:flex">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={handleTroubleBooking}
+          >
+            <HelpCircle className="h-4 w-4" />
+            Having Trouble Booking?
+          </Button>
+        </div>
+
+        {/* Contact Dropdown - Desktop */}
+        <div className="hidden md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Contact
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
+              <DropdownMenuItem asChild>
+                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                  <Phone className="h-4 w-4" />
+                  Call (281) 809-9901
+                </a>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem asChild>
+                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                  <Mail className="h-4 w-4" />
+                  Email Support
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 bg-background border shadow-lg z-[100]">
+              {/* Having Trouble Booking for Mobile */}
+              <DropdownMenuItem className="flex items-center gap-3 py-3 cursor-pointer" onClick={handleTroubleBooking}>
+                <HelpCircle className="h-4 w-4" />
+                Having Trouble Booking?
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Contact Options for Mobile */}
+              <DropdownMenuItem asChild>
+                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                  <Phone className="h-4 w-4" />
+                  Call (281) 809-9901
+                </a>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem asChild>
+                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                  <Mail className="h-4 w-4" />
+                  Email Support
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

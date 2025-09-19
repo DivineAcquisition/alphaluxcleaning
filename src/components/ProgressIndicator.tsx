@@ -1,79 +1,103 @@
-import { CheckCircle, Circle, ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
-interface ProgressStep {
-  id: number;
-  title: string;
-  description: string;
-  status: 'upcoming' | 'current' | 'completed';
-}
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Phone, Mail, HelpCircle, Menu } from "lucide-react";
 
 interface ProgressIndicatorProps {
-  steps: ProgressStep[];
-  currentStep: number;
+  steps?: any[];
+  currentStep?: number;
   className?: string;
 }
 
-export default function ProgressIndicator({ steps, currentStep, className = "" }: ProgressIndicatorProps) {
+export default function ProgressIndicator({ className = "" }: ProgressIndicatorProps) {
+  const handleTroubleBooking = () => {
+    window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
+  };
+
   return (
-    <div className={`flex items-center justify-center py-8 ${className}`}>
-      <div className="flex items-center space-x-4 md:space-x-8">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            {/* Step Circle */}
-            <div className={`flex items-center space-x-3 ${
-              index < steps.length - 1 ? 'pr-4 md:pr-8' : ''
-            }`}>
-              <div className="flex flex-col items-center space-y-2">
-                <div className={`
-                  w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                  ${step.status === 'completed' 
-                    ? 'border-success bg-success text-success-foreground animate-scale-in' 
-                    : step.status === 'current' 
-                      ? 'border-primary bg-primary text-primary-foreground scale-110 shadow-lg shadow-primary/25' 
-                      : 'border-muted-foreground text-muted-foreground'
-                  }
-                `}>
-                  {step.status === 'completed' ? (
-                    <CheckCircle className="h-6 w-6" />
-                  ) : (
-                    <span className="text-sm font-semibold">{step.id}</span>
-                  )}
-                </div>
-                
-                {/* Step Label */}
-                <div className="text-center">
-                  <div className={`text-sm font-medium transition-colors ${
-                    step.status === 'current' 
-                      ? 'text-primary' 
-                      : step.status === 'completed' 
-                        ? 'text-success' 
-                        : 'text-muted-foreground'
-                  }`}>
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-muted-foreground max-w-[100px] hidden md:block">
-                    {step.description}
-                  </div>
-                </div>
+    <div className={`flex items-center justify-between py-4 px-4 border-b bg-background ${className}`}>
+      <div className="flex items-center">
+        {/* Logo placeholder */}
+        <div className="text-xl font-bold text-primary">
+          AlphaLux Clean
+        </div>
+      </div>
 
-                {/* Current Step Badge */}
-                {step.status === 'current' && (
-                  <Badge variant="outline" className="animate-fade-in bg-primary/10 border-primary/20 text-primary">
-                    Active
-                  </Badge>
-                )}
-              </div>
-            </div>
+      <div className="flex items-center space-x-3">
+        {/* Having Trouble Booking Button - Desktop */}
+        <div className="hidden md:flex">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={handleTroubleBooking}
+          >
+            <HelpCircle className="h-4 w-4" />
+            Having Trouble Booking?
+          </Button>
+        </div>
 
-            {/* Arrow Connector */}
-            {index < steps.length - 1 && (
-              <ArrowRight className={`h-4 w-4 transition-colors hidden md:block ${
-                step.status === 'completed' ? 'text-success' : 'text-muted-foreground'
-              }`} />
-            )}
-          </div>
-        ))}
+        {/* Contact Dropdown - Desktop */}
+        <div className="hidden md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Contact
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
+              <DropdownMenuItem asChild>
+                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                  <Phone className="h-4 w-4" />
+                  Call (281) 809-9901
+                </a>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem asChild>
+                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                  <Mail className="h-4 w-4" />
+                  Email Support
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 bg-background border shadow-lg z-[100]">
+              {/* Having Trouble Booking for Mobile */}
+              <DropdownMenuItem className="flex items-center gap-3 py-3 cursor-pointer" onClick={handleTroubleBooking}>
+                <HelpCircle className="h-4 w-4" />
+                Having Trouble Booking?
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Contact Options for Mobile */}
+              <DropdownMenuItem asChild>
+                <a href="tel:+12818099901" className="flex items-center gap-3 w-full py-2">
+                  <Phone className="h-4 w-4" />
+                  Call (281) 809-9901
+                </a>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem asChild>
+                <a href="mailto:support@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                  <Mail className="h-4 w-4" />
+                  Email Support
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
