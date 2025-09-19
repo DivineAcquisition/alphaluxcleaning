@@ -12,11 +12,8 @@ declare global {
 
 const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_test_') || k.startsWith('pk_live_'));
 
-// Initialize Supabase client
-const supabase = createClient(
-  "https://yltvknkqnzdeiqckqjha.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsdHZrbmtxbnpkZWlxY2txamhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2OTk5MjAsImV4cCI6MjA3MzI3NTkyMH0.t1q4kcz8iu2I0UNStsU3Be4_vuqZ0LFQksdmwTpxIZ8"
-);
+// Use the existing Supabase client to avoid multiple instances
+import { supabase } from '@/integrations/supabase/client';
 
 // Function to fetch Stripe publishable key from Supabase
 const fetchStripeKey = async (): Promise<string | null> => {

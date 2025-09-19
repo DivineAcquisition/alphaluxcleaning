@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Calculator, Tag, Sparkles } from 'lucide-react';
-import { formatPrice } from '@/lib/pricing-utils';
+import { formatPrice, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 
 interface BookingData {
   serviceType: string;
@@ -62,8 +62,11 @@ export function PricingSummarySticky({
     return total + (addOn?.price || 0);
   }, 0);
 
-  const subtotal = bookingData.basePrice + addOnsTotal;
-  const hasDiscount = bookingData.savings > 0;
+  // Calculate original prices without discount
+  const originalSubtotal = bookingData.basePrice + addOnsTotal;
+  const discountAmount = calculateGlobalDiscountAmount(originalSubtotal);
+  const subtotal = originalSubtotal - discountAmount;
+  const hasDiscount = discountAmount > 0;
 
   if (!selectedService) {
     return (
@@ -142,8 +145,17 @@ export function PricingSummarySticky({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium">{formatPrice(subtotal)}</span>
+              <span className="font-medium">{formatPrice(originalSubtotal)}</span>
             </div>
+            {hasDiscount && (
+              <div className="flex justify-between text-sm">
+                <span className="text-success flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  20% Savings Applied
+                </span>
+                <span className="font-medium text-success">-{formatPrice(discountAmount)}</span>
+              </div>
+            )}
           </div>
 
           {/* Total */}
@@ -154,6 +166,11 @@ export function PricingSummarySticky({
               <p className="text-2xl font-bold text-primary">
                 {formatPrice(bookingData.totalPrice)}
               </p>
+              {hasDiscount && (
+                <p className="text-xs text-success font-medium">
+                  You save ${formatPrice(discountAmount)}!
+                </p>
+              )}
             </div>
           </div>
 
