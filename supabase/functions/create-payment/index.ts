@@ -23,7 +23,8 @@ serve(async (req) => {
       fullAmount,
       booking_data,
       customerName,
-      customerEmail
+      customerEmail,
+      payment_type = 'deposit_20'
     } = requestBody;
 
     // Extract customer info
@@ -39,12 +40,24 @@ serve(async (req) => {
 
     // Normalize amount handling - assume fullAmount comes in dollars, convert to cents
     const fullAmountCents = fullAmount >= 1000 ? fullAmount : Math.round(fullAmount * 100);
-    const depositAmountCents = Math.round(fullAmountCents * 0.2); // 20% deposit
+    
+    // Calculate payment amount based on payment type
+    let paymentAmountCents;
+    let paymentDescription;
+    
+    if (payment_type === 'full_payment') {
+      paymentAmountCents = fullAmountCents;
+      paymentDescription = `Full payment for ${booking_data.serviceType} cleaning service`;
+    } else {
+      paymentAmountCents = Math.round(fullAmountCents * 0.2); // 20% deposit
+      paymentDescription = `20% deposit for ${booking_data.serviceType} cleaning service • Full amount: $${(fullAmountCents / 100).toFixed(2)}`;
+    }
     
     console.log("Payment calculation:", {
       originalFullAmount: fullAmount,
       fullAmountCents,
-      depositAmountCents: depositAmountCents
+      paymentAmountCents,
+      paymentType: payment_type
     });
 
     console.log("Initializing Stripe...");
@@ -69,7 +82,7 @@ serve(async (req) => {
       console.log("No existing customer found, will create new one");
     }
 
-    console.log("Creating 20% deposit payment intent...");
+    console.log(`Creating ${payment_type} payment intent...`);
     
     // Create or retrieve customer
     if (!customerId) {
@@ -82,7 +95,7 @@ serve(async (req) => {
       console.log("Created new customer:", customerId);
     }
     
-    // Create a PaymentIntent for 20% deposit (embedded payment form)
+    // Create a PaymentIntent (embedded payment form)
     // Compact metadata to stay under 500 char limit
     const compactBookingData = {
       serviceType: booking_data.serviceType,
@@ -94,14 +107,14 @@ serve(async (req) => {
     };
     
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: depositAmountCents,
+      amount: paymentAmountCents,
       currency: "usd",
       customer: customerId,
-      description: `20% deposit for ${booking_data.serviceType} cleaning service • Full amount: $${(fullAmountCents / 100).toFixed(2)}`,
+      description: paymentDescription,
       metadata: {
-        payment_type: 'deposit_20',
+        payment_type: payment_type,
         full_amount_cents: fullAmountCents.toString(),
-        deposit_amount_cents: depositAmountCents.toString(),
+        payment_amount_cents: paymentAmountCents.toString(),
         booking_data: JSON.stringify(compactBookingData),
         customer_name: finalCustomerName,
         customer_email: finalCustomerEmail
@@ -109,7 +122,7 @@ serve(async (req) => {
       payment_method_types: ['card'],
     });
     
-    console.log("20% deposit payment intent created:", paymentIntent.id);
+    console.log(`${payment_type} payment intent created:`, paymentIntent.id);
 
     console.log("Returning client secret for embedded payment");
 

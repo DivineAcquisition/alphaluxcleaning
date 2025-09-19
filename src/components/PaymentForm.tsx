@@ -48,7 +48,7 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount" | "test_embedded_form">("pay_after_service");
+  const [paymentType, setPaymentType] = useState<"pay_in_full" | "25_percent_with_discount">("pay_in_full");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   const [depositClientSecret, setDepositClientSecret] = useState<string | null>(null);
   const { trackInitiateCheckout } = useFacebookPixel();
@@ -229,9 +229,35 @@ export function PaymentForm({
           } else {
             throw new Error('Failed to initialize payment.');
           }
-        } else if (paymentType === "pay_after_service") {
-          toast.info('Pay after service will be available soon. Please choose the 20% deposit option to continue.');
-          return;
+        } else if (paymentType === "pay_in_full") {
+          const { data, error } = await supabase.functions.invoke('create-payment', {
+            body: {
+              fullAmount: finalPrice,
+              booking_data: {
+                serviceType: pricingData.cleaningType,
+                homeSize: String(pricingData.squareFootage || ''),
+                frequency: pricingData.frequency,
+                addOns: pricingData.addOns,
+                serviceDate: schedulingData?.scheduledDate || '',
+                serviceTime: schedulingData?.scheduledTime || '',
+                totalPrice: finalPrice,
+                customerName: customerInfo.name,
+                customerEmail: customerInfo.email,
+              },
+              customerEmail: customerInfo.email,
+              customerName: customerInfo.name,
+              payment_type: 'full_payment'
+            }
+          });
+          if (error) throw error;
+
+          if (data?.clientSecret) {
+            setDepositClientSecret(data.clientSecret);
+            setShowEmbeddedForm(true);
+            toast.success("Secure payment form is ready. Complete your payment to confirm your booking.");
+          } else {
+            throw new Error('Failed to initialize payment.');
+          }
         }
       }
     } catch (error) {
@@ -278,36 +304,36 @@ export function PaymentForm({
               <p className="text-muted-foreground">Select your preferred payment option</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl mx-auto">
-              {/* Pay After Service Option */}
-              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "pay_after_service" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("pay_after_service")}>
-                {paymentType === "pay_after_service" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+              {/* Pay in Full Option */}
+              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "pay_in_full" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("pay_in_full")}>
+                {paymentType === "pay_in_full" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <Badge variant="secondary" className="bg-secondary text-secondary-foreground px-3 py-1">
                       Most Popular
                     </Badge>
                   </div>}
                 <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "pay_after_service" ? "border-primary bg-primary" : "border-border"}`}>
-                    {paymentType === "pay_after_service" && <div className="w-3 h-3 bg-white rounded-full"></div>}
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "pay_in_full" ? "border-primary bg-primary" : "border-border"}`}>
+                    {paymentType === "pay_in_full" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold mb-2">Pay After Service</h4>
+                    <h4 className="text-xl font-bold mb-2">Pay in Full</h4>
                     <div className="text-3xl font-bold text-primary mb-2">
-                      $0.00
+                      ${getFinalPrice().toFixed(2)}
                     </div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      now, then ${getFinalPrice().toFixed(2)} after service
+                      Complete payment now
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      We'll securely store your card and charge after completion
+                      🔒 Secure your booking with full upfront payment
                     </p>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-center text-green-600">
-                      🔒 Your card details are secure and encrypted
+                      ✓ No remaining balance
                     </div>
                     <div className="flex items-center justify-center text-green-600">
-                      ⚡ Only charged after your cleaning is complete
+                      ✓ Service fully paid for
                     </div>
                   </div>
                 </div>
@@ -342,40 +368,6 @@ export function PaymentForm({
                     </div>
                     <div className="flex items-center justify-center text-green-600">
                       ✓ Charged after service completion
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Test Embedded Form Option */}
-              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "test_embedded_form" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("test_embedded_form")}>
-                {paymentType === "test_embedded_form" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-blue-600 text-white px-3 py-1">
-                      Test Mode
-                    </Badge>
-                  </div>}
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "test_embedded_form" ? "border-primary bg-primary" : "border-border"}`}>
-                    {paymentType === "test_embedded_form" && <div className="w-3 h-3 bg-white rounded-full"></div>}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Test Embedded Form</h4>
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      $0.00
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Test Stripe form integration
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Shows embedded Stripe form for testing
-                    </p>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-blue-600">
-                      🧪 Test mode only - no charges
-                    </div>
-                    <div className="flex items-center justify-center text-blue-600">
-                      ⚡ Embedded Stripe form
                     </div>
                   </div>
                 </div>
@@ -447,19 +439,8 @@ export function PaymentForm({
                onCancel={() => setShowEmbeddedForm(false)}
                bookingData={{}}
              />
-           ) : paymentType === "test_embedded_form" && customerInfo.name && customerInfo.email && customerInfo.phone ? (
-             <EmbeddedTestPaymentForm
-               customerInfo={customerInfo}
-               pricingData={pricingData}
-               calculatedPrice={getFinalPrice()}
-               onSuccess={() => {
-                 toast.success("Test payment setup completed successfully!");
-                 setShowEmbeddedForm(false);
-               }}
-               onCancel={() => setPaymentType("pay_after_service")}
-             />
-           ) : paymentType !== "test_embedded_form" ? (
-             <>
+            ) : (
+              <>
 
            {/* Referral and Discount Codes Section */}
             <div className="space-y-6">
@@ -550,23 +531,19 @@ export function PaymentForm({
                  onClick={handleBookService} 
                  disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}
                >
-                 {isProcessing ? "Processing..." : 
-                  paymentType === "25_percent_with_discount" ? `Pay 20% Now - $${(getFinalPrice() * 0.2).toFixed(2)}` : 
-                  `Authorize Card - $0.00 Now`}
+                  {isProcessing ? "Processing..." : 
+                   paymentType === "25_percent_with_discount" ? `Pay 20% Now - $${(getFinalPrice() * 0.2).toFixed(2)}` : 
+                   `Pay in Full - $${getFinalPrice().toFixed(2)}`}
                </Button>
 
-               <div className="text-xs text-muted-foreground text-center">
-                 {paymentType === "25_percent_with_discount" ? 
-                   `Remaining $${(getFinalPrice() * 0.8).toFixed(2)} charged after service.` : 
-                   `Your card will be securely stored and charged $${getFinalPrice().toFixed(2)} after service completion.`}
-               </div>
-             </>
-           ) : (
-             <div className="text-center py-8 text-muted-foreground">
-               Please fill in your contact information above to see the test payment form.
-             </div>
-           )}
-        </div>
-      </CardContent>
-    </Card>;
+                <div className="text-xs text-muted-foreground text-center">
+                  {paymentType === "25_percent_with_discount" ? 
+                    `Remaining $${(getFinalPrice() * 0.8).toFixed(2)} charged after service.` : 
+                    `Service fully paid - no additional charges.`}
+                </div>
+              </>
+            )}
+         </div>
+       </CardContent>
+     </Card>;
 }

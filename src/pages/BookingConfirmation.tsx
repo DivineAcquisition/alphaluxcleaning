@@ -388,24 +388,44 @@ Questions? Call (281) 809-9901
                 </div>
                 <h1 className="text-3xl font-bold text-green-800">Booking Confirmed!</h1>
                 <p className="text-green-600 text-lg">
-                  Your cleaning service has been successfully scheduled and your 20% deposit has been received.
+                  Your cleaning service has been successfully scheduled and payment has been received.
                 </p>
+                
+                {/* Team Contact Notice */}
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mt-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-5 w-5 text-yellow-600" />
+                    <span className="font-semibold text-yellow-800">What's Next?</span>
+                  </div>
+                  <div className="text-sm text-yellow-700 space-y-1">
+                    <p className="font-medium">🤝 One of our team members will reach out for confirmation</p>
+                    <p>📧 Check your email for booking confirmation details</p>
+                    <p>📱 Check your text messages for updates</p>
+                  </div>
+                </div>
                 
                 {/* Payment Status */}
                 <div className="bg-blue-50 p-4 rounded-lg mt-4">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="h-5 w-5 text-blue-600" />
-                    <span className="font-semibold text-blue-800">20% Deposit Paid</span>
+                    <span className="font-semibold text-blue-800">
+                      {orderDetails.balance_due > 0 ? 'Deposit Paid' : 'Payment Complete'}
+                    </span>
                   </div>
                   <div className="text-sm text-blue-700 space-y-1">
                     <p><strong>Total Service Cost:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
                     {orderDetails.deposit_amount && (
-                      <p><strong>Deposit Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
+                      <p><strong>Amount Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
                     )}
-                    {orderDetails.balance_due && (
-                      <p><strong>Remaining Balance:</strong> ${(orderDetails.balance_due / 100).toFixed(2)}</p>
+                    {orderDetails.balance_due && orderDetails.balance_due > 0 && (
+                      <>
+                        <p><strong>Remaining Balance:</strong> ${(orderDetails.balance_due / 100).toFixed(2)}</p>
+                        <p className="text-xs italic mt-2">Remaining balance will be collected after service completion.</p>
+                      </>
                     )}
-                    <p className="text-xs italic mt-2">Remaining balance will be collected after service completion.</p>
+                    {(!orderDetails.balance_due || orderDetails.balance_due === 0) && (
+                      <p className="text-xs italic mt-2 font-medium text-green-700">✓ Service is fully paid for!</p>
+                    )}
                   </div>
                 </div>
               </div>
