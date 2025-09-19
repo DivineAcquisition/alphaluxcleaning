@@ -230,6 +230,7 @@ interface BookingData {
   // Step 1: Service Area & Type
   zipCode: string;
   serviceType: string;
+  customerEmail: string; // Move email to step 1
 
   // Step 2: Service Details
   homeSize: string;
@@ -248,7 +249,6 @@ interface BookingData {
     zipCode: string;
   };
   customerName: string;
-  customerEmail: string;
   contactNumber: string;
   specialInstructions: string;
 
@@ -265,6 +265,7 @@ interface BookingData {
 const initialBookingData: BookingData = {
   zipCode: '',
   serviceType: '',
+  customerEmail: '',
   homeSize: '',
   frequency: '',
   addOns: [],
@@ -279,7 +280,6 @@ const initialBookingData: BookingData = {
     zipCode: ''
   },
   customerName: '',
-  customerEmail: '',
   contactNumber: '',
   specialInstructions: '',
   bedrooms: '',
@@ -432,28 +432,44 @@ export function ModernLegacyBooking() {
       setZipCodeValid(false);
     }
   }, [bookingData.zipCode]);
-  const canProceedToNext = (): boolean => {
-    switch (currentStep) {
+  // Basic email validation
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Validation for step progression
+  const getStepValidationMessage = (step: number): string => {
+    switch (step) {
       case 1:
-        return zipCodeValid && bookingData.serviceType !== '';
+        if (!zipCodeValid) return "Please enter a valid ZIP code in our service area";
+        if (!bookingData.customerEmail) return "Please enter your email address";
+        if (!isValidEmail(bookingData.customerEmail)) return "Please enter a valid email address";
+        if (!bookingData.serviceType) return "Please select a service type";
+        return "";
       case 2:
-        // Handle homes over 5,000 sq ft
-        if (bookingData.homeSize === '5000-plus') {
-          return false; // Block progression - requires estimate
-        }
-        // Regular cleaning requires frequency selection and flooring type
-        if (bookingData.serviceType === 'regular') {
-          return bookingData.homeSize !== '' && bookingData.frequency !== '' && bookingData.flooringType !== '';
-        }
-        // Deep clean and move-out need home size and flooring type
-        return bookingData.homeSize !== '' && bookingData.flooringType !== '';
+        if (bookingData.homeSize === '5000-plus') return "Homes over 5,000 sq ft require a phone consultation";
+        if (!bookingData.homeSize) return "Please select your home size";
+        if (!bookingData.flooringType) return "Please select your primary flooring type";
+        if (bookingData.serviceType === 'regular' && !bookingData.frequency) return "Please select a cleaning frequency";
+        return "";
       case 3:
-        return (bookingData.serviceDate !== '' || bookingData.nextDayUpsell) && bookingData.serviceTime !== '' && bookingData.address.street !== '' && bookingData.customerName !== '' && bookingData.customerEmail !== '' && bookingData.contactNumber !== '' && bookingData.bedrooms !== '' && bookingData.bathrooms !== '' && bookingData.dwellingType !== '';
-      case 4:
-        return selectedPaymentOption ? true : false;
+        if (!bookingData.serviceDate && !bookingData.nextDayUpsell) return "Please select a service date";
+        if (!bookingData.serviceTime) return "Please select a service time";
+        if (!bookingData.address.street) return "Please enter your address";
+        if (!bookingData.customerName) return "Please enter your name";
+        if (!bookingData.contactNumber) return "Please enter your phone number";
+        if (!bookingData.bedrooms) return "Please specify number of bedrooms";
+        if (!bookingData.bathrooms) return "Please specify number of bathrooms";
+        if (!bookingData.dwellingType) return "Please specify dwelling type";
+        return "";
       default:
-        return false;
+        return "";
     }
+  };
+
+  const canProceedToNext = (): boolean => {
+    return getStepValidationMessage(currentStep) === "";
   };
   const handleNext = () => {
     if (canProceedToNext()) {
@@ -776,34 +792,48 @@ export function ModernLegacyBooking() {
     switch (currentStep) {
       case 1:
         return <div className="space-y-8">
-            {/* ZIP Code Verification */}
             <Card className="border-primary/20">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
-                  Service Area
+                  Service Area & Contact
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">Type your zip code to confirm location</p>
-                  <div className="flex gap-3">
-                    <Input placeholder="Enter ZIP code" value={bookingData.zipCode} onChange={e => updateField('zipCode', e.target.value)} maxLength={5} className="flex-1" inputMode="numeric" pattern="[0-9]*" />
-                    {zipCodeValid && <div className="flex items-center text-success">
-                        <CheckCircle className="h-5 w-5" />
+                  <div>
+                    <p className="text-muted-foreground mb-2">Type your zip code to confirm location</p>
+                    <div className="flex gap-3">
+                      <Input placeholder="Enter ZIP code" value={bookingData.zipCode} onChange={e => updateField('zipCode', e.target.value)} maxLength={5} className="flex-1" inputMode="numeric" pattern="[0-9]*" />
+                      {zipCodeValid && <div className="flex items-center text-success">
+                          <CheckCircle className="h-5 w-5" />
+                        </div>}
+                    </div>
+                    {zipCodeValid && <div className="p-3 rounded-lg bg-success/10 border border-success/20 mt-2">
+                        <p className="text-success text-sm font-medium">
+                          Great! We service your area.
+                        </p>
                       </div>}
                   </div>
-                  {zipCodeValid && <div className="p-3 rounded-lg bg-success/10 border border-success/20">
-                      <p className="text-success text-sm font-medium">
-                        Great! We service your area.
-                      </p>
-                    </div>}
+                  
+                  {zipCodeValid && (
+                    <div>
+                      <p className="text-muted-foreground mb-2">Enter your email address for booking confirmation</p>
+                      <Input 
+                        type="email" 
+                        placeholder="your@email.com" 
+                        value={bookingData.customerEmail} 
+                        onChange={e => updateField('customerEmail', e.target.value)} 
+                        className="flex-1" 
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Service Type Selection */}
-            {zipCodeValid && <ServiceTypeCards serviceTypes={serviceTypes} selectedType={bookingData.serviceType} onSelect={typeId => updateField('serviceType', typeId)} />}
+            {zipCodeValid && bookingData.customerEmail && <ServiceTypeCards serviceTypes={serviceTypes} selectedType={bookingData.serviceType} onSelect={typeId => updateField('serviceType', typeId)} />}
           </div>;
       case 2:
         return <div className="space-y-8">
@@ -988,8 +1018,15 @@ export function ModernLegacyBooking() {
                     <Input id="customerName" value={bookingData.customerName} onChange={e => updateField('customerName', e.target.value)} placeholder="Your full name" />
                   </div>
                   <div>
-                    <Label htmlFor="customerEmail">Email Address *</Label>
-                    <Input id="customerEmail" type="email" value={bookingData.customerEmail} onChange={e => updateField('customerEmail', e.target.value)} placeholder="your@email.com" />
+                    <Label htmlFor="customerEmailDisplay">Email Address</Label>
+                    <Input 
+                      id="customerEmailDisplay" 
+                      type="email" 
+                      value={bookingData.customerEmail} 
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Email was entered in step 1</p>
                   </div>
                   <div>
                     <Label htmlFor="contactNumber">Phone Number *</Label>

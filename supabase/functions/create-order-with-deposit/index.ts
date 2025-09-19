@@ -64,65 +64,79 @@ serve(async (req) => {
       throw new Error('Failed to create customer record');
     }
 
-    // Create order record
-    const orderData = {
+    // Create booking record using the correct table
+    const bookingData = {
       id: orderId,
       customer_id: customerData.id,
-      customer_name: request.customerName,
-      customer_email: request.customerEmail,
-      customer_phone: request.bookingData.contactNumber,
-      amount: Math.round(request.totalAmount * 100), // Convert to cents
-      cleaning_type: request.bookingData.serviceType === 'regular' ? 'regular_clean' : 
-                   request.bookingData.serviceType === 'deep' ? 'deep_clean' : 'move_out_clean',
-      frequency: request.bookingData.frequency || 'one_time',
-      square_footage: parseInt(request.bookingData.homeSize.split('-')[1]) || 2000,
-      service_details: {
-        serviceAddress: request.bookingData.address,
-        property: {
-          dwellingType: request.bookingData.dwellingType,
-          bedrooms: request.bookingData.bedrooms,
-          bathrooms: request.bookingData.bathrooms,
-          primaryFlooringType: request.bookingData.flooringType,
-        },
-        instructions: {
-          special: request.bookingData.specialInstructions,
-        },
-        pricing: {
-          basePrice: request.bookingData.basePrice,
-          totalPrice: request.totalAmount,
-          depositAmount: request.depositAmount,
-          remainingBalance: remainingBalance
-        }
-      },
-      add_ons: request.bookingData.addOns || [],
-      scheduled_date: request.bookingData.serviceDate,
-      scheduled_time: request.bookingData.serviceTime,
+      est_price: Math.round(request.totalAmount * 100), // Convert to cents
+      service_type: request.bookingData.serviceType === 'regular' ? 'regular' :
+                   request.bookingData.serviceType === 'deep' ? 'deep' : 'moveout',
+      frequency: request.bookingData.frequency || 'oneTime',
+      sqft_or_bedrooms: request.bookingData.homeSize,
+      service_date: request.bookingData.serviceDate,
+      time_slot: request.bookingData.serviceTime,
+      zip_code: request.bookingData.zipCode || request.bookingData.address?.zipCode,
       stripe_payment_intent_id: request.paymentIntentId,
-      payment_status: 'deposit_paid',
       status: 'confirmed',
       deposit_amount: Math.round(request.depositAmount * 100), // Convert to cents
       balance_due: Math.round(remainingBalance * 100), // Convert to cents
-      booking_source: 'website',
-      created_at: new Date().toISOString(),
+      special_instructions: request.bookingData.specialInstructions,
+      addons: request.bookingData.addOns || [],
+      property_details: {
+        dwellingType: request.bookingData.dwellingType,
+        bedrooms: request.bookingData.bedrooms,
+        bathrooms: request.bookingData.bathrooms,
+        flooringType: request.bookingData.flooringType,
+        address: request.bookingData.address
+      },
+      pricing_breakdown: {
+        basePrice: request.bookingData.basePrice,
+        totalPrice: request.totalAmount,
+        depositAmount: request.depositAmount,
+        remainingBalance: remainingBalance,
+        addOns: request.bookingData.addOns || []
+      }
     };
 
-    const { data: orderResult, error: orderError } = await supabase
-      .from('orders')
-      .insert(orderData)
+    const { data: bookingResult, error: bookingError } = await supabase
+      .from('bookings')
+      .insert(bookingData)
       .select()
       .single();
 
-    if (orderError) {
-      console.error('Error creating order:', orderError);
-      throw new Error('Failed to create order record');
+    if (bookingError) {
+      console.error('Error creating booking:', bookingError);
+      throw new Error('Failed to create booking record');
     }
 
-    console.log('Order created successfully:', {
-      orderId: orderResult.id,
-      status: orderResult.status,
-      paymentStatus: orderResult.payment_status,
-      depositAmount: orderResult.deposit_amount,
-      balanceDue: orderResult.balance_due
+    // Create payment record
+    const paymentData = {
+      booking_id: bookingResult.id,
+      stripe_payment_id: request.paymentIntentId,
+      amount: Math.round(request.totalAmount * 100), // Convert to cents
+      deposit_amount: Math.round(request.depositAmount * 100), // Convert to cents
+      balance_due: Math.round(remainingBalance * 100), // Convert to cents
+      status: 'completed',
+      charge_type: 'deposit'
+    };
+
+    const { data: paymentResult, error: paymentError } = await supabase
+      .from('payments')
+      .insert(paymentData)
+      .select()
+      .single();
+
+    if (paymentError) {
+      console.error('Error creating payment record:', paymentError);
+      // Don't fail the booking creation if payment record fails
+    }
+
+    console.log('Booking created successfully:', {
+      bookingId: bookingResult.id,
+      status: bookingResult.status,
+      depositAmount: bookingResult.deposit_amount,
+      balanceDue: bookingResult.balance_due,
+      paymentRecorded: !!paymentResult
     });
 
     // Send booking confirmation email
@@ -148,9 +162,10 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      orderId: orderResult.id,
-      order: orderResult,
-      message: 'Order created successfully with deposit payment'
+      bookingId: bookingResult.id,
+      booking: bookingResult,
+      payment: paymentResult,
+      message: 'Booking created successfully with deposit payment'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
