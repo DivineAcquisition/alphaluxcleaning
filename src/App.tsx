@@ -10,6 +10,9 @@ import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
+import AdminLogin from '@/pages/AdminLogin';
+import AdminDashboard from '@/pages/AdminDashboard';
+import { AdminRoute } from '@/components/AdminRoute';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -38,6 +41,14 @@ function App() {
             
             {/* Webhook testing */}
             <Route path="/test-webhook" element={<WebhookTest />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-dashboard" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
             
             {/* Dev Test Routes */}
             <Route path="/dev-test" element={<DevTest />} />

@@ -140,8 +140,9 @@ export function DevTestPayments() {
       // Call create-payment edge function
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          bookingData,
-          paymentType: testData.paymentType === 'deposit' ? 'deposit_20' : 'pay_full',
+          fullAmount: testData.amount,
+          booking_data: bookingData,
+          payment_type: testData.paymentType === 'deposit' ? 'deposit_20' : 'full_payment',
           customerEmail: bookingData.customerEmail,
           customerName: bookingData.customerName,
           testCard: testData.testCardNumber

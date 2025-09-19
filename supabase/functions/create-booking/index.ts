@@ -75,6 +75,28 @@ serve(async (req) => {
     // Calculate pricing
     const basePrice = bookingData.basePrice || bookingData.totalPrice || 0;
     const totalPrice = bookingData.totalPrice || basePrice;
+    
+    // Calculate MRR/ARR based on frequency
+    let mrr = 0;
+    let arr = 0;
+    
+    if (bookingData.frequency && bookingData.frequency !== 'oneTime' && bookingData.frequency !== 'one_time') {
+      switch (bookingData.frequency) {
+        case 'weekly':
+          mrr = totalPrice * 4.33; // 52 weeks / 12 months
+          arr = totalPrice * 52;
+          break;
+        case 'biweekly':
+        case 'bi_weekly':
+          mrr = totalPrice * 2.17; // 26 times / 12 months
+          arr = totalPrice * 26;
+          break;
+        case 'monthly':
+          mrr = totalPrice;
+          arr = totalPrice * 12;
+          break;
+      }
+    }
 
     // Create booking
     console.log("Creating booking");
@@ -100,7 +122,9 @@ serve(async (req) => {
           flooringType: bookingData.flooringType || ''
         },
         deposit_amount: paymentType === 'deposit_20' ? totalPrice * 0.2 : 0,
-        balance_due: paymentType === 'deposit_20' ? totalPrice * 0.8 : totalPrice
+        balance_due: paymentType === 'deposit_20' ? totalPrice * 0.8 : totalPrice,
+        mrr: mrr,
+        arr: arr
       })
       .select()
       .single();

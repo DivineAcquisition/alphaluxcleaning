@@ -493,7 +493,7 @@ export function ModernLegacyBooking() {
         }
 
         // Redirect to confirmation
-        window.location.href = `/booking-confirmation?booking_id=${data.bookingId}`;
+        window.location.href = `/order-confirmation/${data.booking.id}`;
       } else if (selectedPaymentOption === '25_percent_with_discount') {
         // Handle 20% deposit payment
         console.log('Creating 20% deposit payment intent');
@@ -587,7 +587,7 @@ export function ModernLegacyBooking() {
           console.log('Order created successfully:', orderResult.orderId);
 
           // Redirect to confirmation with order ID
-          window.location.href = `/booking-confirmation?order_id=${orderResult.orderId}`;
+          window.location.href = `/order-confirmation/${orderResult.orderId}`;
         } catch (error) {
           console.error('Error in order creation:', error);
           toast.error('Payment successful but failed to create order. Please contact support.');
