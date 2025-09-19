@@ -78,12 +78,38 @@ export function EnhancedWebhookTester() {
     }
   };
 
+  // Sample recurring booking data with weekly frequency for MRR/ARR testing
+  const sampleRecurringData = {
+    ...sampleLeadData,
+    serviceDetails: {
+      ...sampleLeadData.serviceDetails,
+      frequency: "Weekly" // This will generate significant MRR/ARR
+    },
+    schedulingInfo: {
+      selectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      selectedTimeSlot: "10:00 AM - 12:00 PM"
+    },
+    pricing: {
+      subtotal: 240,
+      taxAmount: 24,
+      totalAmount: 264
+    },
+    paymentInfo: {
+      subscriptionId: `sub_test_${Date.now()}`,
+      sessionId: `cs_test_${Date.now()}`
+    }
+  };
+
   const testLeadCreated = async () => {
     await testWebhook('LEAD_CREATED', sampleLeadData);
   };
 
   const testBookingConfirmed = async () => {
     await testWebhook('BOOKING_CONFIRMED', sampleBookingData);
+  };
+
+  const testRecurringBooking = async () => {
+    await testWebhook('BOOKING_CONFIRMED', sampleRecurringData);
   };
 
   const testWebhook = async (type: 'LEAD_CREATED' | 'BOOKING_CONFIRMED', bookingData: any) => {
@@ -150,7 +176,7 @@ export function EnhancedWebhookTester() {
       
       const payload = createWebhookPayload(
         'BOOKING_CONFIRMED',
-        sampleBookingData,
+        sampleRecurringData, // Use recurring data to show MRR/ARR estimates
         `custom-test-${Date.now()}`,
         `booking_${Date.now()}`
       );
@@ -183,10 +209,23 @@ export function EnhancedWebhookTester() {
     }
   };
 
-  const copyPayload = async (type: 'LEAD_CREATED' | 'BOOKING_CONFIRMED') => {
+  const copyPayload = async (type: 'LEAD_CREATED' | 'BOOKING_CONFIRMED' | 'RECURRING') => {
     try {
-      const data = type === 'LEAD_CREATED' ? sampleLeadData : sampleBookingData;
-      const payload = createWebhookPayload(type, data, `sample-${Date.now()}`, `booking_${Date.now()}`);
+      let data;
+      let webhookType: 'LEAD_CREATED' | 'BOOKING_CONFIRMED';
+      
+      if (type === 'LEAD_CREATED') {
+        data = sampleLeadData;
+        webhookType = 'LEAD_CREATED';
+      } else if (type === 'RECURRING') {
+        data = sampleRecurringData;
+        webhookType = 'BOOKING_CONFIRMED';
+      } else {
+        data = sampleBookingData;
+        webhookType = 'BOOKING_CONFIRMED';
+      }
+      
+      const payload = createWebhookPayload(webhookType, data, `sample-${Date.now()}`, `booking_${Date.now()}`);
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       toast.success(`${type} payload copied to clipboard!`);
     } catch (error) {
@@ -218,26 +257,39 @@ export function EnhancedWebhookTester() {
                     Send realistic webhook payloads to your configured Zapier endpoint
                   </p>
                   
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Button
-                      onClick={testLeadCreated}
-                      disabled={isLoading}
-                      className="flex items-center gap-2"
-                    >
-                      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <Send className="h-4 w-4" />
-                      Test LEAD_CREATED
-                    </Button>
+                  <div className="grid gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Button
+                        onClick={testLeadCreated}
+                        disabled={isLoading}
+                        className="flex items-center gap-2"
+                      >
+                        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        <Send className="h-4 w-4" />
+                        Test LEAD_CREATED
+                      </Button>
+                      
+                      <Button
+                        onClick={testBookingConfirmed}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        <CheckCircle className="h-4 w-4" />
+                        Test BOOKING_CONFIRMED
+                      </Button>
+                    </div>
                     
                     <Button
-                      onClick={testBookingConfirmed}
+                      onClick={testRecurringBooking}
                       disabled={isLoading}
-                      variant="outline"
+                      variant="secondary"
                       className="flex items-center gap-2"
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                       <CheckCircle className="h-4 w-4" />
-                      Test BOOKING_CONFIRMED
+                      Test RECURRING Booking (Weekly - High MRR/ARR)
                     </Button>
                   </div>
                 </div>
@@ -302,6 +354,10 @@ export function EnhancedWebhookTester() {
                   <Copy className="h-4 w-4 mr-2" />
                   Copy Booking
                 </Button>
+                <Button onClick={() => copyPayload('RECURRING')} variant="outline" size="sm">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Recurring
+                </Button>
                 <Button 
                   onClick={() => setShowPayload(!showPayload)} 
                   variant="outline" 
@@ -325,16 +381,23 @@ export function EnhancedWebhookTester() {
             {showPayload && (
               <div className="space-y-4">
                 <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">LEAD_CREATED Payload:</h4>
+                  <h4 className="font-medium mb-2">LEAD_CREATED Payload (MRR/ARR: $0):</h4>
                   <pre className="text-xs overflow-x-auto">
                     {JSON.stringify(createWebhookPayload('LEAD_CREATED', sampleLeadData, 'sample-lead', 'booking_sample'), null, 2)}
                   </pre>
                 </div>
                 
                 <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">BOOKING_CONFIRMED Payload:</h4>
+                  <h4 className="font-medium mb-2">BOOKING_CONFIRMED One-time (MRR/ARR: $0):</h4>
                   <pre className="text-xs overflow-x-auto">
                     {JSON.stringify(createWebhookPayload('BOOKING_CONFIRMED', sampleBookingData, 'sample-booking', 'booking_sample'), null, 2)}
+                  </pre>
+                </div>
+                
+                <div className="bg-muted p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">BOOKING_CONFIRMED Recurring Weekly (MRR: ~$1,143, ARR: ~$13,728):</h4>
+                  <pre className="text-xs overflow-x-auto">
+                    {JSON.stringify(createWebhookPayload('BOOKING_CONFIRMED', sampleRecurringData, 'sample-recurring', 'booking_sample'), null, 2)}
                   </pre>
                 </div>
               </div>

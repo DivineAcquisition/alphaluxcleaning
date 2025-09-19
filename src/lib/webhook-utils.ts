@@ -55,6 +55,12 @@ export interface WebhookPayload {
     payment_intent_id?: string;
     subscription_id?: string;
   };
+  revenue_estimates?: {
+    estimated_mrr: number;
+    estimated_arr: number;
+    revenue_model: "one-time" | "recurring";
+    frequency_multiplier: number;
+  };
   metadata?: {
     booking_id?: string;
     manage_link?: string;
@@ -170,6 +176,50 @@ function determineSourceChannel(utms: any): "META" | "UI_DIRECT" | "REENGAGE" | 
   return "UI_DIRECT";
 }
 
+// Helper function to calculate revenue estimates
+function calculateRevenueEstimates(
+  frequency: "One-time" | "Weekly" | "Bi-Weekly" | "Monthly",
+  totalAmount: number
+): {
+  estimated_mrr: number;
+  estimated_arr: number;
+  revenue_model: "one-time" | "recurring";
+  frequency_multiplier: number;
+} {
+  if (frequency === "One-time") {
+    return {
+      estimated_mrr: 0,
+      estimated_arr: 0,
+      revenue_model: "one-time",
+      frequency_multiplier: 0,
+    };
+  }
+
+  let monthlyMultiplier = 0;
+  
+  switch (frequency) {
+    case "Weekly":
+      monthlyMultiplier = 4.33; // ~52 weeks / 12 months
+      break;
+    case "Bi-Weekly":
+      monthlyMultiplier = 2.17; // ~26 bi-weeks / 12 months
+      break;
+    case "Monthly":
+      monthlyMultiplier = 1;
+      break;
+  }
+
+  const estimatedMRR = totalAmount * monthlyMultiplier;
+  const estimatedARR = estimatedMRR * 12;
+
+  return {
+    estimated_mrr: Math.round(estimatedMRR * 100) / 100, // Round to 2 decimal places
+    estimated_arr: Math.round(estimatedARR * 100) / 100,
+    revenue_model: "recurring",
+    frequency_multiplier: monthlyMultiplier,
+  };
+}
+
 export function createWebhookPayload(
   type: "LEAD_CREATED" | "BOOKING_CONFIRMED",
   bookingData: BookingData,
@@ -255,6 +305,23 @@ export function createWebhookPayload(
     };
   } else {
     payload.stripe = {};
+  }
+
+  // Add revenue estimates for BOOKING_CONFIRMED
+  if (type === "BOOKING_CONFIRMED" && bookingData.pricing) {
+    const revenueEstimates = calculateRevenueEstimates(
+      normalizeFrequency(bookingData.serviceDetails.frequency),
+      bookingData.pricing.totalAmount
+    );
+    payload.revenue_estimates = revenueEstimates;
+  } else {
+    // For LEAD_CREATED, estimate potential recurring value based on base pricing
+    const estimatedTotal = bookingData.pricing?.totalAmount || 350; // Default estimate
+    const revenueEstimates = calculateRevenueEstimates(
+      normalizeFrequency(bookingData.serviceDetails.frequency),
+      estimatedTotal
+    );
+    payload.revenue_estimates = revenueEstimates;
   }
 
   // Add metadata
