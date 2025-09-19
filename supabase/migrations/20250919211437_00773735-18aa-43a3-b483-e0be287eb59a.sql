@@ -1,0 +1,3 @@
+-- Seed admin user function call (one-time setup)
+-- This will create the admin user with email: info@alphaluxclean.com
+-- No user action needed - this runs once automatically
