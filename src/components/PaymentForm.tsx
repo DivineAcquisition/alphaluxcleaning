@@ -492,7 +492,7 @@ export function PaymentForm({
 
                     // Navigate to confirmation page
                     const bookingId = bookingResult?.booking?.id || 'confirmed';
-                    navigate(`/order-confirmation/${bookingId}`);
+                    navigate(`/order-confirmation?order_id=${bookingId}`);
                     
                   } catch (error) {
                     console.error('Error in payment success handler:', error);
