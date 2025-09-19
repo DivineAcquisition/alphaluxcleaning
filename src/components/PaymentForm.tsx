@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { EmbeddedTestPaymentForm } from "@/components/booking/EmbeddedTestPaymentForm";
+import { EmbeddedDepositPaymentForm } from "@/components/booking/EmbeddedDepositPaymentForm";
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -49,6 +50,7 @@ export function PaymentForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount" | "test_embedded_form">("pay_after_service");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
+  const [depositClientSecret, setDepositClientSecret] = useState<string | null>(null);
   const { trackInitiateCheckout } = useFacebookPixel();
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
@@ -195,56 +197,41 @@ export function PaymentForm({
           throw new Error('No checkout URL received');
         }
       } else {
-        // Handle regular service booking (existing flow)
+        // Handle regular service booking with embedded 20% deposit flow
         const finalPrice = getFinalPrice();
-        let paymentAmount = finalPrice;
-        if (paymentType === "25_percent_with_discount") {
-          // Apply 5% discount to total, then pay 25% now
-          const discountedTotal = finalPrice * 0.95;
-          paymentAmount = discountedTotal * 0.25;
-        } else if (paymentType === "pay_after_service") {
-          paymentAmount = 0; // Card authorization only
-        }
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('create-payment', {
-          body: {
-            amount: paymentAmount,
-            fullAmount: finalPrice,
-            paymentType: paymentType,
-            squareFootage: pricingData.squareFootage,
-            cleaningType: pricingData.cleaningType,
-            frequency: pricingData.frequency,
-            addOns: pricingData.addOns,
-            customerName: customerInfo.name,
-            customerEmail: customerInfo.email,
-            customerPhone: customerInfo.phone,
-            bedrooms: pricingData.bedrooms,
-            bathrooms: pricingData.bathrooms,
-            scheduledDate: schedulingData?.scheduledDate || "",
-            scheduledTime: schedulingData?.scheduledTime || "",
-            nextDayUpcharge: schedulingData?.upchargeAmount || 0,
-            newClientSpecial: priceBreakdown?.basePrice === 349 && pricingData.hours === 4,
-            membershipStatus: priceBreakdown?.existingMember || priceBreakdown?.addMembership || false,
-            addonMemberDiscount: priceBreakdown?.addonMemberDiscount || 0
-          }
-        });
-        if (error) throw error;
 
-        // Redirect to Stripe checkout in new tab for better UX
-        if (data.url) {
-          window.open(data.url, '_blank');
-          // Enhanced success messaging with clear next steps
-          if (paymentType === "25_percent_with_discount") {
-            toast.success("Opening secure checkout in new tab. Complete your 25% payment to get 5% discount. Remaining balance will be charged after service completion.");
-          } else if (paymentType === "pay_after_service") {
-            toast.success("Opening secure checkout in new tab. We'll securely store your card details and charge after service completion.");
+        if (paymentType === "25_percent_with_discount") {
+          const { data, error } = await supabase.functions.invoke('create-payment', {
+            body: {
+              fullAmount: finalPrice,
+              booking_data: {
+                serviceType: pricingData.cleaningType,
+                homeSize: String(pricingData.squareFootage || ''),
+                frequency: pricingData.frequency,
+                addOns: pricingData.addOns,
+                serviceDate: schedulingData?.scheduledDate || '',
+                serviceTime: schedulingData?.scheduledTime || '',
+                totalPrice: finalPrice,
+                customerName: customerInfo.name,
+                customerEmail: customerInfo.email,
+              },
+              customerEmail: customerInfo.email,
+              customerName: customerInfo.name,
+              payment_type: 'deposit_20'
+            }
+          });
+          if (error) throw error;
+
+          if (data?.clientSecret) {
+            setDepositClientSecret(data.clientSecret);
+            setShowEmbeddedForm(true);
+            toast.success("Secure deposit form is ready. Complete your 20% deposit to confirm your booking.");
           } else {
-            toast.success("Opening secure checkout in new tab. Complete payment to confirm your booking and schedule your cleaning service.");
+            throw new Error('Failed to initialize payment.');
           }
-        } else {
-          throw new Error('No checkout URL received');
+        } else if (paymentType === "pay_after_service") {
+          toast.info('Pay after service will be available soon. Please choose the 20% deposit option to continue.');
+          return;
         }
       }
     } catch (error) {
@@ -326,11 +313,11 @@ export function PaymentForm({
                 </div>
               </div>
               
-              {/* Pay 25% Now + Get 5% Discount Option */}
+              {/* Pay 20% Deposit Now Option */}
               <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "25_percent_with_discount" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("25_percent_with_discount")}>
                 {paymentType === "25_percent_with_discount" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-green-600 text-white px-3 py-1">
-                      Save 5%
+                    <Badge variant="secondary" className="px-3 py-1">
+                      Deposit
                     </Badge>
                   </div>}
                 <div className="text-center space-y-4">
@@ -338,23 +325,23 @@ export function PaymentForm({
                     {paymentType === "25_percent_with_discount" && <div className="w-3 h-3 bg-white rounded-full"></div>}
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold mb-2">Pay 25% Now + Get 5% Discount</h4>
+                    <h4 className="text-xl font-bold mb-2">Pay 20% Deposit Now</h4>
                     <div className="text-3xl font-bold text-primary mb-1">
-                      ${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}
+                      ${(getFinalPrice() * 0.2).toFixed(2)}
                     </div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      now, then ${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} after service
+                      now, then ${(getFinalPrice() * 0.8).toFixed(2)} after service
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      💰 Save ${(getFinalPrice() * 0.05).toFixed(2)} with upfront payment
+                      🔒 Secure your booking with a small deposit
                     </p>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-center text-green-600">
-                      ✓ 5% discount on total bill
+                      ✓ Lower remaining balance
                     </div>
                     <div className="flex items-center justify-center text-green-600">
-                      ✓ Lower remaining balance
+                      ✓ Charged after service completion
                     </div>
                   </div>
                 </div>
@@ -448,8 +435,19 @@ export function PaymentForm({
                </div>
            </div>
 
-           {/* Show embedded form for test mode or continue with regular flow */}
-           {paymentType === "test_embedded_form" && customerInfo.name && customerInfo.email && customerInfo.phone ? (
+           {/* Show embedded form for deposit/test or continue */}
+           {showEmbeddedForm && depositClientSecret && paymentType === "25_percent_with_discount" ? (
+             <EmbeddedDepositPaymentForm
+               totalAmount={getFinalPrice()}
+               depositAmount={getFinalPrice() * 0.2}
+               clientSecret={depositClientSecret}
+               onSuccess={() => {
+                 toast.success("Deposit paid! We'll email your confirmation.");
+               }}
+               onCancel={() => setShowEmbeddedForm(false)}
+               bookingData={{}}
+             />
+           ) : paymentType === "test_embedded_form" && customerInfo.name && customerInfo.email && customerInfo.phone ? (
              <EmbeddedTestPaymentForm
                customerInfo={customerInfo}
                pricingData={pricingData}
@@ -553,13 +551,13 @@ export function PaymentForm({
                  disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}
                >
                  {isProcessing ? "Processing..." : 
-                  paymentType === "25_percent_with_discount" ? `Pay 25% Now - $${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}` : 
+                  paymentType === "25_percent_with_discount" ? `Pay 20% Now - $${(getFinalPrice() * 0.2).toFixed(2)}` : 
                   `Authorize Card - $0.00 Now`}
                </Button>
 
                <div className="text-xs text-muted-foreground text-center">
                  {paymentType === "25_percent_with_discount" ? 
-                   `Save $${(getFinalPrice() * 0.05).toFixed(2)} with 5% discount! Remaining $${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} charged after service.` : 
+                   `Remaining $${(getFinalPrice() * 0.8).toFixed(2)} charged after service.` : 
                    `Your card will be securely stored and charged $${getFinalPrice().toFixed(2)} after service completion.`}
                </div>
              </>
