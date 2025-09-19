@@ -83,6 +83,16 @@ serve(async (req) => {
     }
     
     // Create a PaymentIntent for 20% deposit (embedded payment form)
+    // Compact metadata to stay under 500 char limit
+    const compactBookingData = {
+      serviceType: booking_data.serviceType,
+      homeSize: booking_data.homeSize,
+      serviceDate: booking_data.serviceDate,
+      serviceTime: booking_data.serviceTime,
+      zipCode: booking_data.zipCode,
+      totalPrice: booking_data.totalPrice
+    };
+    
     const paymentIntent = await stripe.paymentIntents.create({
       amount: depositAmountCents,
       currency: "usd",
@@ -92,7 +102,7 @@ serve(async (req) => {
         payment_type: 'deposit_20',
         full_amount_cents: fullAmountCents.toString(),
         deposit_amount_cents: depositAmountCents.toString(),
-        booking_data: JSON.stringify(booking_data),
+        booking_data: JSON.stringify(compactBookingData),
         customer_name: finalCustomerName,
         customer_email: finalCustomerEmail
       },

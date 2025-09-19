@@ -11,6 +11,9 @@ verify_jwt = false
 [functions.create-payment]
 verify_jwt = false
 
+[functions.create-booking]
+verify_jwt = false
+
 [functions.create-order-with-deposit]
 verify_jwt = false
 
