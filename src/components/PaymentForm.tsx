@@ -10,6 +10,7 @@ const sb = supabase as any;
 import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { EmbeddedTestPaymentForm } from "@/components/booking/EmbeddedTestPaymentForm";
 interface PaymentFormProps {
   pricingData: {
     squareFootage: number;
@@ -46,7 +47,8 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount">("pay_after_service");
+  const [paymentType, setPaymentType] = useState<"pay_after_service" | "25_percent_with_discount" | "test_embedded_form">("pay_after_service");
+  const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   const { trackInitiateCheckout } = useFacebookPixel();
 
   // Calculate final price with scheduling upcharge (for legacy next-day booking)
@@ -289,7 +291,7 @@ export function PaymentForm({
               <p className="text-muted-foreground">Select your preferred payment option</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl mx-auto">
               {/* Pay After Service Option */}
               <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "pay_after_service" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("pay_after_service")}>
                 {paymentType === "pay_after_service" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -357,6 +359,40 @@ export function PaymentForm({
                   </div>
                 </div>
               </div>
+              
+              {/* Test Embedded Form Option */}
+              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "test_embedded_form" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("test_embedded_form")}>
+                {paymentType === "test_embedded_form" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-blue-600 text-white px-3 py-1">
+                      Test Mode
+                    </Badge>
+                  </div>}
+                <div className="text-center space-y-4">
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "test_embedded_form" ? "border-primary bg-primary" : "border-border"}`}>
+                    {paymentType === "test_embedded_form" && <div className="w-3 h-3 bg-white rounded-full"></div>}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold mb-2">Test Embedded Form</h4>
+                    <div className="text-3xl font-bold text-primary mb-2">
+                      $0.00
+                    </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Test Stripe form integration
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Shows embedded Stripe form for testing
+                    </p>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center text-blue-600">
+                      🧪 Test mode only - no charges
+                    </div>
+                    <div className="flex items-center justify-center text-blue-600">
+                      ⚡ Embedded Stripe form
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -370,7 +406,7 @@ export function PaymentForm({
               
             </div>
 
-          {/* Customer Information */}
+            {/* Customer Information */}
              <div className="space-y-6 w-full max-w-2xl mx-auto">
                 <div className="space-y-2 text-center">
                   <div className="flex items-center justify-center gap-2">
@@ -410,98 +446,128 @@ export function PaymentForm({
                    </div>
                  </div>
                </div>
-            </div>
+           </div>
 
-            {/* Referral and Discount Codes Section */}
-             <div className="space-y-6">
-               <div className="space-y-2">
-                 <div className="flex items-start gap-2">
-                   <Gift className="h-5 w-5 text-primary mt-0.5" />
-                   <div className="text-left">
-                     <h4 className="text-lg font-semibold text-primary text-left">Promo Codes</h4>
-                     <p className="text-sm text-muted-foreground text-left">Have a referral or discount code? Apply it here to save money</p>
-                   </div>
-                 </div>
-               </div>
-               
-               {/* Referral Code */}
-               <div className="space-y-4">
-                 <div className="space-y-1 text-left">
-                   <h5 className="font-medium text-foreground text-left">Referral Code</h5>
-                   <p className="text-sm text-muted-foreground text-left">Got referred by a friend? Use their code for instant savings</p>
-                 </div>
-                 <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                   {appliedReferral && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
-                       <p className="text-green-800 font-medium text-sm text-left">✓ Referral code applied!</p>
-                       <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
-                     </div>}
-                   
-                    {!appliedReferral && <div className="text-left">
-                        <div className="flex gap-2">
-                          <Input value={referralCode} onChange={e => setReferralCode(e.target.value)} placeholder="Enter your friend's referral code" className="flex-1 text-left" />
-                          <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name} variant="outline" size="sm">
-                            Apply
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-left mt-2">
-                          Get 10% off your service with a friend's referral code
-                        </p>
-                        <div className="flex items-center justify-between mt-3">
-                          {(!customerInfo.email || !customerInfo.name) && <p className="text-xs text-orange-600 text-left">
-                              Please fill in your name and email first
-                            </p>}
-                          <ReferralCodeDialog 
-                            onCodeGenerated={(code) => setReferralCode(code)}
-                            trigger={
-                              <Button variant="link" className="p-0 h-auto text-sm text-primary">
-                                Don't have a referral code? Generate one here!
-                              </Button>
-                            }
-                          />
-                        </div>
-                      </div>}
-                 </div>
-               </div>
+           {/* Show embedded form for test mode or continue with regular flow */}
+           {paymentType === "test_embedded_form" && customerInfo.name && customerInfo.email && customerInfo.phone ? (
+             <EmbeddedTestPaymentForm
+               customerInfo={customerInfo}
+               pricingData={pricingData}
+               calculatedPrice={getFinalPrice()}
+               onSuccess={() => {
+                 toast.success("Test payment setup completed successfully!");
+                 setShowEmbeddedForm(false);
+               }}
+               onCancel={() => setPaymentType("pay_after_service")}
+             />
+           ) : paymentType !== "test_embedded_form" ? (
+             <>
 
-               {/* Discount Code */}
-               <div className="space-y-4">
-                 <div className="space-y-1 text-left">
-                   <h5 className="font-medium text-foreground text-left">Discount Code</h5>
-                   <p className="text-sm text-muted-foreground text-left">Have a special promotion code? Enter it for additional discounts</p>
-                 </div>
-                 <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                   {appliedDiscount && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
-                       <p className="text-green-800 font-medium text-sm text-left">✓ Discount code applied!</p>
-                       <p className="text-green-600 text-xs text-left">{appliedDiscount.description}</p>
-                     </div>}
-                   
-                   {!appliedDiscount && !appliedReferral && <div className="text-left">
+           {/* Referral and Discount Codes Section */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Gift className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="text-left">
+                    <h4 className="text-lg font-semibold text-primary text-left">Promo Codes</h4>
+                    <p className="text-sm text-muted-foreground text-left">Have a referral or discount code? Apply it here to save money</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Referral Code */}
+              <div className="space-y-4">
+                <div className="space-y-1 text-left">
+                  <h5 className="font-medium text-foreground text-left">Referral Code</h5>
+                  <p className="text-sm text-muted-foreground text-left">Got referred by a friend? Use their code for instant savings</p>
+                </div>
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                  {appliedReferral && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                      <p className="text-green-800 font-medium text-sm text-left">✓ Referral code applied!</p>
+                      <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
+                    </div>}
+                  
+                   {!appliedReferral && <div className="text-left">
                        <div className="flex gap-2">
-                         <Input value={discountCode} onChange={e => setDiscountCode(e.target.value)} placeholder="Enter discount code (e.g., FRIEND50-ABC123)" className="flex-1 text-left" />
-                         <Button onClick={handleApplyDiscountCode} disabled={!discountCode.trim()} variant="outline" size="sm">
+                         <Input value={referralCode} onChange={e => setReferralCode(e.target.value)} placeholder="Enter your friend's referral code" className="flex-1 text-left" />
+                         <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || !customerInfo.email || !customerInfo.name} variant="outline" size="sm">
                            Apply
                          </Button>
                        </div>
                        <p className="text-xs text-muted-foreground text-left mt-2">
-                         Have a discount code from a referral reward? Get 50% off deep cleaning
+                         Get 10% off your service with a friend's referral code
                        </p>
+                       <div className="flex items-center justify-between mt-3">
+                         {(!customerInfo.email || !customerInfo.name) && <p className="text-xs text-orange-600 text-left">
+                             Please fill in your name and email first
+                           </p>}
+                         <ReferralCodeDialog 
+                           onCodeGenerated={(code) => setReferralCode(code)}
+                           trigger={
+                             <Button variant="link" className="p-0 h-auto text-sm text-primary">
+                               Don't have a referral code? Generate one here!
+                             </Button>
+                           }
+                         />
+                       </div>
                      </div>}
-                   
-                   {appliedReferral && <p className="text-xs text-muted-foreground text-orange-600 text-left">
-                       Cannot apply discount code when referral code is already applied
-                     </p>}
-                 </div>
+                </div>
+              </div>
+
+              {/* Discount Code */}
+              <div className="space-y-4">
+                <div className="space-y-1 text-left">
+                  <h5 className="font-medium text-foreground text-left">Discount Code</h5>
+                  <p className="text-sm text-muted-foreground text-left">Have a special promotion code? Enter it for additional discounts</p>
+                </div>
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+                  {appliedDiscount && <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
+                      <p className="text-green-800 font-medium text-sm text-left">✓ Discount code applied!</p>
+                      <p className="text-green-600 text-xs text-left">{appliedDiscount.description}</p>
+                    </div>}
+                  
+                  {!appliedDiscount && !appliedReferral && <div className="text-left">
+                      <div className="flex gap-2">
+                        <Input value={discountCode} onChange={e => setDiscountCode(e.target.value)} placeholder="Enter discount code (e.g., FRIEND50-ABC123)" className="flex-1 text-left" />
+                        <Button onClick={handleApplyDiscountCode} disabled={!discountCode.trim()} variant="outline" size="sm">
+                          Apply
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground text-left mt-2">
+                        Have a discount code from a referral reward? Get 50% off deep cleaning
+                      </p>
+                    </div>}
+                  
+                  {appliedReferral && <p className="text-xs text-muted-foreground text-orange-600 text-left">
+                      Cannot apply discount code when referral code is already applied
+                    </p>}
+                </div>
+              </div>
+          </div>
+
+               {/* Book Service Button */}
+               <Button 
+                 className="w-full" 
+                 size="lg" 
+                 onClick={handleBookService} 
+                 disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}
+               >
+                 {isProcessing ? "Processing..." : 
+                  paymentType === "25_percent_with_discount" ? `Pay 25% Now - $${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}` : 
+                  `Authorize Card - $0.00 Now`}
+               </Button>
+
+               <div className="text-xs text-muted-foreground text-center">
+                 {paymentType === "25_percent_with_discount" ? 
+                   `Save $${(getFinalPrice() * 0.05).toFixed(2)} with 5% discount! Remaining $${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} charged after service.` : 
+                   `Your card will be securely stored and charged $${getFinalPrice().toFixed(2)} after service completion.`}
                </div>
-            </div>
-
-            {/* Book Service Button */}
-            <Button className="w-full" size="lg" onClick={handleBookService} disabled={isProcessing || !customerInfo.name || !customerInfo.email || !customerInfo.phone || !pricingData.cleaningType}>
-              {isProcessing ? "Processing..." : paymentType === "25_percent_with_discount" ? `Pay 25% Now - $${(getFinalPrice() * 0.95 * 0.25).toFixed(2)}` : `Authorize Card - $0.00 Now`}
-            </Button>
-
-            <div className="text-xs text-muted-foreground text-center">
-              {paymentType === "25_percent_with_discount" ? `Save $${(getFinalPrice() * 0.05).toFixed(2)} with 5% discount! Remaining $${(getFinalPrice() * 0.95 * 0.75).toFixed(2)} charged after service.` : `Your card will be securely stored and charged $${getFinalPrice().toFixed(2)} after service completion.`}
-            </div>
+             </>
+           ) : (
+             <div className="text-center py-8 text-muted-foreground">
+               Please fill in your contact information above to see the test payment form.
+             </div>
+           )}
         </div>
       </CardContent>
     </Card>;
