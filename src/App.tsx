@@ -13,6 +13,13 @@ import PaymentConfirmation from '@/pages/PaymentConfirmation';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
 
+// Dev Test Pages
+import { DevTest } from '@/pages/DevTest';
+import { DevTestScenarios } from '@/pages/DevTestScenarios';
+import { DevTestDatabase } from '@/pages/DevTestDatabase';
+import { DevTestPayments } from '@/pages/DevTestPayments';
+import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
+
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -34,8 +41,14 @@ function App() {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             
             {/* Webhook testing */}
-          <Route path="/test-webhook" element={<WebhookTest />} />
-           
+            <Route path="/test-webhook" element={<WebhookTest />} />
+            
+            {/* Dev Test Routes */}
+            <Route path="/dev-test" element={<DevTest />} />
+            <Route path="/dev-test/scenarios" element={<DevTestScenarios />} />
+            <Route path="/dev-test/database" element={<DevTestDatabase />} />
+            <Route path="/dev-test/payments" element={<DevTestPayments />} />
+            <Route path="/dev-test/webhooks" element={<DevTestWebhooks />} />
             
             {/* Health Endpoints for monitoring */}
             <Route path="/health/admin" element={<div>✅ Admin OK</div>} />
