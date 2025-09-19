@@ -317,7 +317,7 @@ export function ModernLegacyBooking() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   // Payment UI State
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<'pay_after_service' | '25_percent_with_discount' | ''>('');
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<'25_percent_with_discount' | ''>('25_percent_with_discount');
   const [referralCode, setReferralCode] = useState('');
   const [appliedReferral, setAppliedReferral] = useState<{
     code: string;
@@ -476,48 +476,28 @@ export function ModernLegacyBooking() {
     setIsProcessingPayment(true);
 
     try {
-      if (selectedPaymentOption === 'pay_after_service') {
-        // Create booking without payment
-        console.log('Creating booking with pay after service option');
-        const { data, error } = await supabase.functions.invoke('create-booking', {
-          body: {
-            bookingData,
-            paymentType: 'pay_after_service',
-            customerEmail: bookingData.customerEmail,
-            customerName: bookingData.customerName
-          }
-        });
-
-        if (error) {
-          throw error;
+      // Handle 20% deposit payment (only available option)
+      console.log('Creating 20% deposit payment intent');
+      const response = await supabase.functions.invoke('create-payment', {
+        body: {
+          payment_type: 'deposit_20',
+          fullAmount: bookingData.totalPrice,
+          booking_data: bookingData,
+          customerEmail: bookingData.customerEmail,
+          customerName: bookingData.customerName
         }
+      });
 
-        // Redirect to confirmation
-        window.location.href = `/order-confirmation/${data.booking.id}`;
-      } else if (selectedPaymentOption === '25_percent_with_discount') {
-        // Handle 20% deposit payment
-        console.log('Creating 20% deposit payment intent');
-        const response = await supabase.functions.invoke('create-payment', {
-          body: {
-            payment_type: 'deposit_20',
-            fullAmount: bookingData.totalPrice,
-            booking_data: bookingData,
-            customerEmail: bookingData.customerEmail,
-            customerName: bookingData.customerName
-          }
-        });
+      if (response.error) {
+        throw response.error;
+      }
 
-        if (response.error) {
-          throw response.error;
-        }
-
-        if (response.data?.clientSecret) {
-          console.log('Payment intent created, showing embedded form');
-          setClientSecret(response.data.clientSecret);
-          setShowEmbeddedPayment(true);
-        } else {
-          throw new Error('No client secret received');
-        }
+      if (response.data?.clientSecret) {
+        console.log('Payment intent created, showing embedded form');
+        setClientSecret(response.data.clientSecret);
+        setShowEmbeddedPayment(true);
+      } else {
+        throw new Error('No client secret received');
       }
     } catch (error) {
       console.error('Booking error:', error);
@@ -1142,43 +1122,9 @@ export function ModernLegacyBooking() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Pay After Service Option */}
+                {/* 20% Deposit Option - Only Available Option */}
                 <Card 
-                  className={cn(
-                    "cursor-pointer border-2 transition-all hover:shadow-md",
-                    selectedPaymentOption === 'pay_after_service' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => setSelectedPaymentOption('pay_after_service')}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Shield className="h-6 w-6 text-primary" />
-                        <div>
-                          <h4 className="font-semibold">Pay After Service</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Book now, pay when the job is complete
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-primary">${formatPrice(bookingData.totalPrice)}</p>
-                        <p className="text-xs text-muted-foreground">Full payment after</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 20% Deposit Option */}
-                <Card 
-                  className={cn(
-                    "cursor-pointer border-2 transition-all hover:shadow-md",
-                    selectedPaymentOption === '25_percent_with_discount' 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                  )}
-                  onClick={() => setSelectedPaymentOption('25_percent_with_discount')}
+                  className="cursor-pointer border-2 transition-all border-primary bg-primary/5 shadow-md"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

@@ -24,7 +24,7 @@ interface BookingData {
   nextDayFee: number;
   promoDiscount: number;
   totalPrice: number;
-  paymentType: 'pay_after_service' | '25_percent_with_discount';
+  paymentType: '25_percent_with_discount';
   customerName?: string;
   customerEmail?: string;
 }
@@ -203,24 +203,12 @@ export function BookingSummaryCard({ bookingData }: BookingSummaryCardProps) {
                 <Separator />
                 <div className="space-y-1 text-sm bg-muted/50 p-3 rounded-lg">
                   <div className="flex justify-between font-medium">
-                    <span>Due now (25%)</span>
-                    <span>${nowDue.toFixed(2)}</span>
+                    <span>Due now (20%)</span>
+                    <span>${(totalPrice * 0.2).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Due after service</span>
-                    <span>${laterDue.toFixed(2)}</span>
-                  </div>
-                </div>
-              </>
-            )}
-            
-            {paymentType === 'pay_after_service' && (
-              <>
-                <Separator />
-                <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                  <div className="font-medium text-blue-800">Pay After Service</div>
-                  <div className="text-blue-600">
-                    We'll securely store your payment method and charge ${totalPrice.toFixed(2)} after your service is complete.
+                    <span>${(totalPrice * 0.8).toFixed(2)}</span>
                   </div>
                 </div>
               </>

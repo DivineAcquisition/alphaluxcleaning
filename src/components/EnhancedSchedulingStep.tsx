@@ -51,7 +51,7 @@ interface BookingData {
   membershipDiscount: number;
   membershipFee: number;
   totalPrice: number;
-  paymentType: 'pay_after_service' | '25_percent_with_discount';
+  paymentType: '25_percent_with_discount';
   promoDiscount: number;
 }
 

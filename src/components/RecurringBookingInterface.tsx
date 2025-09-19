@@ -394,7 +394,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   
   // Payment flow state
   const [showPaymentOptions, setShowPaymentOptions] = useState<boolean>(false);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<string>('pay_after_service');
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<string>('25_percent_with_discount');
   const [showCompleteBooking, setShowCompleteBooking] = useState<boolean>(false);
   
   // Customer information state
@@ -409,7 +409,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   });
   
   // Payment type state
-  const [paymentType, setPaymentType] = useState<string>('pay_after_service');
+  const [paymentType, setPaymentType] = useState<string>('25_percent_with_discount');
   const [referralCode, setReferralCode] = useState("");
   const [discountCode, setDiscountCode] = useState("");
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
@@ -1238,46 +1238,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                 </p>
               </CardHeader>
                <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
                   <Card 
-                    className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
-                      selectedPaymentOption === 'pay_after_service' 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                    onClick={() => handlePaymentOptionSelect('pay_after_service')}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex flex-col items-center text-center space-y-3">
-                        <div className="p-3 rounded-full bg-blue-100">
-                          <Shield className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold">Pay After Service</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            We'll securely save your card and charge after completion
-                          </p>
-                        </div>
-                        <div className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-2 text-blue-700 text-sm">
-                            <Lock className="h-4 w-4" />
-                            <span className="font-medium">Card authorization only</span>
-                          </div>
-                          <p className="text-xs text-blue-600 mt-1">
-                            No charge until service is complete
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card 
-                    className={`cursor-pointer border-2 transition-all duration-200 hover:shadow-lg ${
-                      selectedPaymentOption === '25_percent_with_discount' 
-                        ? 'border-green-500 bg-green-50' 
-                        : 'border-border hover:border-green-500/50'
-                    }`}
-                    onClick={() => handlePaymentOptionSelect('25_percent_with_discount')}
+                    className="cursor-pointer border-2 transition-all duration-200 border-green-500 bg-green-50 shadow-lg"
                   >
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center text-center space-y-3">
@@ -1285,23 +1248,23 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                           <Tag className="h-6 w-6 text-green-600" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-green-700">Pay 25% Now + Get 5% Discount</h3>
+                          <h3 className="text-lg font-semibold text-green-700">Pay 20% Deposit Now</h3>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Save money by paying a portion upfront
+                            Secure your booking with a small deposit
                           </p>
                         </div>
                         <div className="w-full space-y-2">
                           <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                             <div className="text-green-700 text-sm font-medium">
-                              Pay Now: ${Math.round(pricing.total * 0.25)}
+                              Pay Now: ${Math.round(pricing.total * 0.2)}
                             </div>
                             <div className="text-green-600 text-xs">
-                              Remaining: ${Math.round(pricing.total * 0.95 - pricing.total * 0.25)} after service
+                              Remaining: ${Math.round(pricing.total * 0.8)} after service
                             </div>
                           </div>
                           <div className="flex items-center justify-center gap-1 text-green-600 text-sm font-medium">
                             <Sparkles className="h-4 w-4" />
-                            Save ${Math.round(pricing.total * 0.05)} total!
+                            Secure your booking!
                           </div>
                         </div>
                       </div>
@@ -1449,13 +1412,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                        <div><strong>Square Footage:</strong> {squareFootageTiers.find(tier => Math.floor((tier.min + tier.max) / 2) === squareFootage)?.label || squareFootage + ' sq ft'}</div>
                        <div><strong>Bedrooms:</strong> {bedrooms}</div>
                        <div><strong>Bathrooms:</strong> {bathrooms}</div>
-                        <div><strong>Payment:</strong> {
-                          selectedPaymentOption === 'pay_after_service' 
-                            ? 'Pay After Service (Card authorized for $' + pricing.total + ')' 
-                            : selectedPaymentOption === '25_percent_with_discount' 
-                            ? 'Pay 25% Now + 5% Discount ($' + Math.round(pricing.total * 0.25) + ' now, $' + Math.round(pricing.total * 0.95 - pricing.total * 0.25) + ' after)'
-                            : 'Payment method not selected'
-                        }</div>
+                        <div><strong>Payment:</strong> Pay 20% Deposit Now ($${Math.round(pricing.total * 0.2)} now, $${Math.round(pricing.total * 0.8)} after service)</div>
                        {customerInfo.name && <div><strong>Customer:</strong> {customerInfo.name}</div>}
                        {customerInfo.email && <div><strong>Email:</strong> {customerInfo.email}</div>}
                        {customerInfo.phone && <div><strong>Phone:</strong> {customerInfo.phone}</div>}

@@ -585,7 +585,7 @@ export function SinglePageBooking() {
                       membershipDiscount: 0,
                       membershipFee: 0,
                       totalPrice: bookingData.totalPrice,
-                      paymentType: 'pay_after_service' as const,
+                      paymentType: '25_percent_with_discount' as const,
                       promoDiscount: 0
                     }}
                     updateBookingData={(updates) => {

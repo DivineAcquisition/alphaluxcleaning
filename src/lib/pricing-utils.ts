@@ -63,12 +63,9 @@ export function formatPriceFromCents(cents: number, options: PriceDisplayOptions
 /**
  * Calculate payment amount based on type and total
  */
-export function calculatePaymentAmount(totalDollars: number, paymentType: 'full' | 'deposit' | 'pay_after_service' | '25_percent_with_discount'): number {
+export function calculatePaymentAmount(totalDollars: number, paymentType: 'full' | 'deposit' | '25_percent_with_discount'): number {
   if (paymentType === 'deposit') {
     return Math.round(totalDollars * 0.3 * 100) / 100; // Round to nearest cent
-  }
-  if (paymentType === 'pay_after_service') {
-    return 0; // No charge now, authorize only
   }
   if (paymentType === '25_percent_with_discount') {
     // Apply 5% discount to total, then calculate 25% of discounted amount

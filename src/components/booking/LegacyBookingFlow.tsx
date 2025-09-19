@@ -54,7 +54,7 @@ interface BookingData {
   specialInstructions: string;
   
   // Payment
-  paymentType: 'pay_after_service' | '25_percent_with_discount';
+  paymentType: '25_percent_with_discount';
   promoDiscount: number;
 }
 

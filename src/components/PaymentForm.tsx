@@ -49,7 +49,7 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"pay_in_full" | "25_percent_with_discount">("pay_in_full");
+  const [paymentType, setPaymentType] = useState<"25_percent_with_discount">("25_percent_with_discount");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   const [depositClientSecret, setDepositClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
@@ -209,7 +209,8 @@ export function PaymentForm({
         // Handle regular service booking with embedded 20% deposit flow
         const finalPrice = getFinalPrice();
 
-        if (paymentType === "25_percent_with_discount") {
+        // Handle deposit payment (only option available)
+        {
           const { data, error } = await supabase.functions.invoke('create-payment', {
             body: {
               fullAmount: finalPrice,
@@ -235,35 +236,6 @@ export function PaymentForm({
             setDepositClientSecret(data.clientSecret);
             setShowEmbeddedForm(true);
             toast.success("Secure deposit form is ready. Complete your 20% deposit to confirm your booking.");
-          } else {
-            throw new Error('Failed to initialize payment.');
-          }
-        } else if (paymentType === "pay_in_full") {
-          const { data, error } = await supabase.functions.invoke('create-payment', {
-            body: {
-              fullAmount: finalPrice,
-              booking_data: {
-                serviceType: pricingData.cleaningType,
-                homeSize: String(pricingData.squareFootage || ''),
-                frequency: pricingData.frequency,
-                addOns: pricingData.addOns,
-                serviceDate: schedulingData?.scheduledDate || '',
-                serviceTime: schedulingData?.scheduledTime || '',
-                totalPrice: finalPrice,
-                customerName: customerInfo.name,
-                customerEmail: customerInfo.email,
-              },
-              customerEmail: customerInfo.email,
-              customerName: customerInfo.name,
-              payment_type: 'full_payment'
-            }
-          });
-          if (error) throw error;
-
-          if (data?.clientSecret) {
-            setDepositClientSecret(data.clientSecret);
-            setShowEmbeddedForm(true);
-            toast.success("Secure payment form is ready. Complete your payment to confirm your booking.");
           } else {
             throw new Error('Failed to initialize payment.');
           }
@@ -317,51 +289,17 @@ export function PaymentForm({
               <p className="text-muted-foreground">Select your preferred payment option</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
-              {/* Pay in Full Option */}
-              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "pay_in_full" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("pay_in_full")}>
-                {paymentType === "pay_in_full" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge variant="secondary" className="bg-secondary text-secondary-foreground px-3 py-1">
-                      Most Popular
-                    </Badge>
-                  </div>}
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "pay_in_full" ? "border-primary bg-primary" : "border-border"}`}>
-                    {paymentType === "pay_in_full" && <div className="w-3 h-3 bg-white rounded-full"></div>}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Pay in Full</h4>
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      ${getFinalPrice().toFixed(2)}
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Complete payment now
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      🔒 Secure your booking with full upfront payment
-                    </p>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ No remaining balance
-                    </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Service fully paid for
-                    </div>
-                  </div>
+            <div className="grid grid-cols-1 gap-6 w-full max-w-2xl mx-auto">
+              {/* Pay 20% Deposit Now Option - Only Option */}
+              <div className="relative border-2 rounded-xl p-6 border-primary bg-primary/5 shadow-lg">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge variant="secondary" className="px-3 py-1">
+                    Secure Deposit
+                  </Badge>
                 </div>
-              </div>
-              
-              {/* Pay 20% Deposit Now Option */}
-              <div className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentType === "25_percent_with_discount" ? "border-primary bg-primary/5 shadow-lg scale-105" : "border-border hover:border-primary/50"}`} onClick={() => setPaymentType("25_percent_with_discount")}>
-                {paymentType === "25_percent_with_discount" && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge variant="secondary" className="px-3 py-1">
-                      Deposit
-                    </Badge>
-                  </div>}
                 <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 flex items-center justify-center ${paymentType === "25_percent_with_discount" ? "border-primary bg-primary" : "border-border"}`}>
-                    {paymentType === "25_percent_with_discount" && <div className="w-3 h-3 bg-white rounded-full"></div>}
+                  <div className="w-8 h-8 rounded-full mx-auto border-2 border-primary bg-primary flex items-center justify-center">
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
                   </div>
                   <div>
                     <h4 className="text-xl font-bold mb-2">Pay 20% Deposit Now</h4>
@@ -377,10 +315,13 @@ export function PaymentForm({
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-center text-green-600">
-                      ✓ Lower remaining balance
+                      ✓ Lower upfront payment
                     </div>
                     <div className="flex items-center justify-center text-green-600">
-                      ✓ Charged after service completion
+                      ✓ Remaining balance charged after service
+                    </div>
+                    <div className="flex items-center justify-center text-green-600">
+                      ✓ Secure booking guarantee
                     </div>
                   </div>
                 </div>
@@ -444,9 +385,9 @@ export function PaymentForm({
             {showEmbeddedForm && depositClientSecret ? (
               <EmbeddedPaymentForm
                 clientSecret={depositClientSecret}
-                paymentAmount={paymentType === "pay_in_full" ? getFinalPrice() : getFinalPrice() * 0.2}
+                paymentAmount={getFinalPrice() * 0.2}
                 fullAmount={getFinalPrice()}
-                paymentType={paymentType === "pay_in_full" ? "full_payment" : "deposit_20"}
+                paymentType="deposit_20"
                 onSuccess={async () => {
                   console.log("Payment successful, creating booking...");
                   
@@ -475,7 +416,7 @@ export function PaymentForm({
                     const { data: bookingResult, error: bookingError } = await supabase.functions.invoke('create-booking', {
                       body: {
                         bookingData,
-                        paymentType: paymentType === 'pay_in_full' ? 'full_payment' : 'deposit_20',
+                        paymentType: 'deposit_20',
                         customerEmail: customerInfo.email,
                         customerName: customerInfo.name,
                       }

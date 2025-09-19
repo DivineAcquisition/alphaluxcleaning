@@ -34,7 +34,7 @@ interface BookingData {
   nextDayFee: number;
   promoDiscount: number;
   totalPrice: number;
-  paymentType: 'pay_after_service' | '25_percent_with_discount';
+  paymentType: '25_percent_with_discount';
   stripeSessionId?: string;
   customerName?: string;
   customerEmail?: string;
