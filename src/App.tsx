@@ -8,6 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { DomainAwareHome } from '@/components/DomainAwareHome';
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
+import ConfirmationPreview from '@/pages/ConfirmationPreview';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
 import AdminLogin from '@/pages/AdminLogin';
@@ -37,6 +38,7 @@ function App() {
             {/* Essential booking confirmation and status pages */}
             <Route path="/order-status" element={<OrderStatus />} />
             <Route path="/order-confirmation/:bookingId?" element={<OrderConfirmation />} />
+            <Route path="/confirmation-preview" element={<ConfirmationPreview />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             
             {/* Webhook testing */}
