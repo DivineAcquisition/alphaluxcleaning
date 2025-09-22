@@ -211,6 +211,13 @@ export function PaymentForm({
 
         // Handle deposit payment (only option available)
         {
+          console.log('💳 Creating payment intent with data:', {
+            fullAmount: finalPrice,
+            payment_type: 'deposit_20',
+            customerEmail: customerInfo.email,
+            customerName: customerInfo.name
+          });
+
           const { data, error } = await supabase.functions.invoke('create-payment', {
             body: {
               fullAmount: finalPrice,
@@ -230,14 +237,28 @@ export function PaymentForm({
               payment_type: 'deposit_20'
             }
           });
-          if (error) throw error;
+
+          console.log('💳 Payment intent response:', { data, error });
+
+          if (error) {
+            console.error('❌ Payment intent creation failed:', error);
+            throw new Error(`Payment initialization failed: ${error.message}`);
+          }
+
+          if (!data) {
+            console.error('❌ No data returned from create-payment');
+            throw new Error('No response received from payment service');
+          }
 
           if (data?.clientSecret) {
+            console.log('✅ Payment intent created successfully');
             setDepositClientSecret(data.clientSecret);
+            setPaymentIntentId(data.paymentIntentId || null);
             setShowEmbeddedForm(true);
             toast.success("Secure deposit form is ready. Complete your 20% deposit to confirm your booking.");
           } else {
-            throw new Error('Failed to initialize payment.');
+            console.error('❌ No client secret in response:', data);
+            throw new Error('Failed to initialize payment - no client secret received.');
           }
         }
       }

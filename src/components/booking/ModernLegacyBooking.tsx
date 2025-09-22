@@ -595,8 +595,8 @@ export function ModernLegacyBooking() {
           }
           console.log('Order created successfully:', orderResult.orderId);
 
-          // Redirect to confirmation with order ID
-          window.location.href = `/order-confirmation/${orderResult.orderId}`;
+          // Redirect to confirmation with order ID using query parameter format
+          window.location.href = `/order-confirmation?order_id=${orderResult.orderId}`;
         } catch (error) {
           console.error('Error in order creation:', error);
           toast.error('Payment successful but failed to create order. Please contact support.');

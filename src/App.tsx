@@ -21,6 +21,7 @@ import { DevTestScenarios } from '@/pages/DevTestScenarios';
 import { DevTestDatabase } from '@/pages/DevTestDatabase';
 import { DevTestPayments } from '@/pages/DevTestPayments';
 import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
+import BookingDebug from '@/pages/BookingDebug';
 
 import NotFound from '@/pages/NotFound';
 
@@ -58,6 +59,7 @@ function App() {
             <Route path="/dev-test/database" element={<DevTestDatabase />} />
             <Route path="/dev-test/payments" element={<DevTestPayments />} />
             <Route path="/dev-test/webhooks" element={<DevTestWebhooks />} />
+            <Route path="/booking-debug" element={<BookingDebug />} />
             
             {/* Health Endpoints for monitoring */}
             <Route path="/health/admin" element={<div>✅ Admin OK</div>} />
