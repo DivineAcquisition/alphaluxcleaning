@@ -68,13 +68,13 @@ serve(async (req) => {
       try {
         const { error: emailError } = await supabase.functions.invoke('send-email-system', {
           body: {
-            companyId: '550e8400-e29b-41d4-a716-446655440000',
+            template: 'admin_otp',
             to: email,
-            templateKey: 'admin_otp',
-            variables: {
+            data: {
               code,
               adminEmail: email
-            }
+            },
+            category: 'transactional'
           }
         });
         

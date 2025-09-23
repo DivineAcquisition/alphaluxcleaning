@@ -18,6 +18,7 @@ import { AbandonedCheckoutEmail } from "./_templates/abandoned-checkout.tsx";
 import { RecurringUpsellEmail } from "./_templates/recurring-upsell.tsx";
 import { ReferralRewardEarnedEmail } from "./_templates/referral-reward-earned.tsx";
 import { ReferralWelcomeCreditEmail } from "./_templates/referral-welcome-credit.tsx";
+import { ReferralInviteEmail } from "./_templates/referral-invite.tsx";
 import { AdminOTPEmail } from "../_shared/email-templates/admin-otp-template.tsx";
 
 const corsHeaders = {
@@ -74,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if email is bounced
-    if (data.email_bounced_at) {
+    if (data && data.email_bounced_at) {
       console.log(`Email suppressed for ${to} - previously bounced`);
       return new Response(JSON.stringify({ success: true, message: "Email bounced, suppressed" }), {
         status: 200,
