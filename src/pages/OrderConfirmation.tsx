@@ -106,9 +106,9 @@ export default function OrderConfirmation() {
       // Try to fetch by session_id first (existing flow)
       if (sessionId) {
         const result = await supabase
-          .from("orders")
+          .from("bookings")
           .select("*")
-          .eq("stripe_session_id", sessionId)
+          .eq("stripe_checkout_session_id", sessionId)
           .maybeSingle();
         data = result.data;
         error = result.error;
@@ -117,7 +117,7 @@ export default function OrderConfirmation() {
       // If no data found and we have orderId, try fetching by order ID (new flow)
       if ((!data || error) && orderId) {
         const result = await supabase
-          .from("orders")
+          .from("bookings")
           .select("*")
           .eq("id", orderId)
           .maybeSingle();
@@ -137,7 +137,7 @@ export default function OrderConfirmation() {
       }
 
       // Check if scheduling is complete
-      if (!data.scheduled_date) {
+      if (!data.service_date) {
         toast.error("Please schedule your service first");
         if (sessionId) {
           navigate(`/schedule-service?session_id=${sessionId}`);
@@ -149,10 +149,10 @@ export default function OrderConfirmation() {
 
       setOrderDetails(data);
       
-      // Track Facebook Pixel Purchase event
-      if (data) {
-        const serviceValue = data.amount / 100; // Convert cents to dollars
-        const serviceType = data.cleaning_type?.replace(/_/g, ' ') || 'Cleaning Service';
+        // Track Facebook Pixel Purchase event
+        if (data) {
+          const serviceValue = data.est_price / 100; // Convert cents to dollars
+          const serviceType = data.service_type?.replace(/_/g, ' ') || 'Cleaning Service';
         
         // Standard Purchase event
         trackPurchase({
@@ -302,19 +302,19 @@ export default function OrderConfirmation() {
     const details = `
 Bay Area Cleaning Pros - Booking Confirmed
 
-📅 Service Date: ${new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
+📅 Service Date: ${new Date(orderDetails.service_date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })}
-⏰ Service Time: ${orderDetails.scheduled_time}
+⏰ Service Time: ${orderDetails.time_slot}
 📋 Order ID: ${orderDetails.id}
-💰 Amount Paid: $${(orderDetails.amount / 100).toFixed(2)}
+💰 Amount Paid: $${(orderDetails.est_price / 100).toFixed(2)}
 
-Customer: ${orderDetails.customer_name}
-Email: ${orderDetails.customer_email}
-${orderDetails.customer_phone ? `Phone: ${orderDetails.customer_phone}` : ''}
+Customer: ${orderDetails.customers?.name || 'N/A'}
+Email: ${orderDetails.customers?.email || 'N/A'}
+${orderDetails.customers?.phone ? `Phone: ${orderDetails.customers.phone}` : ''}
 
 Questions? Call (281) 809-9901
     `.trim();
@@ -334,7 +334,7 @@ Questions? Call (281) 809-9901
       try {
         await navigator.share({
           title: 'Bay Area Cleaning Pros - Booking Confirmed',
-          text: `Service scheduled for ${new Date(orderDetails.scheduled_date).toLocaleDateString()} at ${orderDetails.scheduled_time}`,
+          text: `Service scheduled for ${new Date(orderDetails.service_date).toLocaleDateString()} at ${orderDetails.time_slot}`,
           url: window.location.href
         });
       } catch (error) {
@@ -417,7 +417,7 @@ Questions? Call (281) 809-9901
                       </span>
                     </div>
                     <div className="text-sm text-blue-700 space-y-1">
-                      <p><strong>Total Service Cost:</strong> ${(orderDetails.amount / 100).toFixed(2)}</p>
+                      <p><strong>Total Service Cost:</strong> ${(orderDetails.est_price / 100).toFixed(2)}</p>
                       {orderDetails.deposit_amount && (
                         <p><strong>Amount Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
                       )}
@@ -451,8 +451,8 @@ Questions? Call (281) 809-9901
                   <div className="bg-blue-50 p-6 rounded-lg space-y-4">
                     <div className="flex items-center gap-3">
                       <Calendar className="h-5 w-5 text-blue-600" />
-                      <span className="text-lg font-semibold text-blue-800">
-                        {new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
+                       <span className="text-lg font-semibold text-blue-800">
+                        {new Date(orderDetails.service_date).toLocaleDateString('en-US', {
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',
