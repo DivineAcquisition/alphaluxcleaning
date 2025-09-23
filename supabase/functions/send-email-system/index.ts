@@ -18,7 +18,7 @@ import { AbandonedCheckoutEmail } from "./_templates/abandoned-checkout.tsx";
 import { RecurringUpsellEmail } from "./_templates/recurring-upsell.tsx";
 import { ReferralRewardEarnedEmail } from "./_templates/referral-reward-earned.tsx";
 import { ReferralWelcomeCreditEmail } from "./_templates/referral-welcome-credit.tsx";
-import { AdminOTPEmail } from "./_shared/email-templates/admin-otp-template.tsx";
+import { AdminOTPEmail } from "../_shared/email-templates/admin-otp-template.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
