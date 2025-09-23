@@ -18,6 +18,7 @@ import { AbandonedCheckoutEmail } from "./_templates/abandoned-checkout.tsx";
 import { RecurringUpsellEmail } from "./_templates/recurring-upsell.tsx";
 import { ReferralRewardEarnedEmail } from "./_templates/referral-reward-earned.tsx";
 import { ReferralWelcomeCreditEmail } from "./_templates/referral-welcome-credit.tsx";
+import { AdminOTPEmail } from "./_shared/email-templates/admin-otp-template.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -247,6 +248,11 @@ async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 
     case 'referral_welcome_credit':
       subject = `Welcome! ${data.amount} credit applied to your account`;
       emailComponent = React.createElement(ReferralWelcomeCreditEmail, templateProps);
+      break;
+
+    case 'admin_otp':
+      subject = `Admin Portal Access Code: ${data.code}`;
+      emailComponent = React.createElement(AdminOTPEmail, templateProps);
       break;
 
     default:
