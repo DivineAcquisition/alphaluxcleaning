@@ -994,6 +994,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_referral_code: {
+        Args: { customer_email: string; customer_id: string }
+        Returns: string
+      }
       get_pricing_config: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1014,6 +1018,10 @@ export type Database = {
       is_admin: {
         Args: { _user_id?: string }
         Returns: boolean
+      }
+      issue_referral_code: {
+        Args: { input_customer_id: string }
+        Returns: string
       }
       save_pricing_config: {
         Args: { config_data: Json }

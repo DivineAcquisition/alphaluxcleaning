@@ -16,7 +16,8 @@ import { PaymentSucceededEmail } from "./_templates/payment-succeeded.tsx";
 import { PaymentFailedEmail } from "./_templates/payment-failed.tsx";
 import { AbandonedCheckoutEmail } from "./_templates/abandoned-checkout.tsx";
 import { RecurringUpsellEmail } from "./_templates/recurring-upsell.tsx";
-import { ReferralInviteEmail } from "./_templates/referral-invite.tsx";
+import { ReferralRewardEarnedEmail } from "./_templates/referral-reward-earned.tsx";
+import { ReferralWelcomeCreditEmail } from "./_templates/referral-welcome-credit.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,6 +237,16 @@ async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 
     case 'referral_invite':
       subject = `Give $25, get $25 — share your code ${data.referral_code}`;
       emailComponent = React.createElement(ReferralInviteEmail, templateProps);
+      break;
+
+    case 'referral_reward_earned':
+      subject = `You earned ${data.amount} credit!`;
+      emailComponent = React.createElement(ReferralRewardEarnedEmail, templateProps);
+      break;
+
+    case 'referral_welcome_credit':
+      subject = `Welcome! ${data.amount} credit applied to your account`;
+      emailComponent = React.createElement(ReferralWelcomeCreditEmail, templateProps);
       break;
 
     default:

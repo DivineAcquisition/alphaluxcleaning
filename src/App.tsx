@@ -15,6 +15,8 @@ import AdminLogin from '@/pages/AdminLogin';
 import AdminOTPLogin from '@/pages/AdminOTPLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import { AdminRoute } from '@/components/AdminRoute';
+import { ReferralLanding } from '@/pages/ReferralLanding';
+import { Referrals } from '@/pages/Referrals';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -45,6 +47,11 @@ function App() {
             
             {/* Webhook testing */}
             <Route path="/test-webhook" element={<WebhookTest />} />
+            
+            {/* Referral Routes */}
+            <Route path="/ref/:code" element={<ReferralLanding />} />
+            <Route path="/referrals" element={<Referrals />} />
+            <Route path="/account/referrals" element={<Referrals />} />
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
