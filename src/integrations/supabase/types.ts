@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_otp_codes: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          verified: boolean
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          verified?: boolean
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       availability_schedule: {
         Row: {
           active: boolean
@@ -994,6 +1027,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_admin_otp_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_referral_code: {
         Args: { customer_email: string; customer_id: string }
         Returns: string
