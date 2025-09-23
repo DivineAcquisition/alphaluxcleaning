@@ -107,7 +107,10 @@ export default function OrderConfirmation() {
       if (sessionId) {
         const result = await supabase
           .from("bookings")
-          .select("*")
+          .select(`
+            *,
+            customers(*)
+          `)
           .eq("stripe_checkout_session_id", sessionId)
           .maybeSingle();
         data = result.data;
@@ -118,7 +121,10 @@ export default function OrderConfirmation() {
       if ((!data || error) && orderId) {
         const result = await supabase
           .from("bookings")
-          .select("*")
+          .select(`
+            *,
+            customers(*)
+          `)
           .eq("id", orderId)
           .maybeSingle();
         data = result.data;
