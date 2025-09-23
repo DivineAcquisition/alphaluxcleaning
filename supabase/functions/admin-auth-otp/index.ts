@@ -66,11 +66,11 @@ serve(async (req) => {
       
       // Send email via send-email-system
       try {
-        const { error: emailError } = await supabase.functions.invoke('send-email-system', {
+        const { error: emailError } = await supabase.functions.invoke('emails-queue', {
           body: {
-            template: 'admin_otp',
             to: email,
-            data: {
+            template: 'admin_otp',
+            payload: {
               code,
               adminEmail: email
             },

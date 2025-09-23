@@ -324,8 +324,9 @@ export type Database = {
           event: string
           id: string
           message_id: string | null
-          metadata_json: Json | null
+          meta: Json | null
           provider: string
+          recipient: string | null
           template: string
           to_email: string
         }
@@ -334,8 +335,9 @@ export type Database = {
           event: string
           id?: string
           message_id?: string | null
-          metadata_json?: Json | null
+          meta?: Json | null
           provider?: string
+          recipient?: string | null
           template: string
           to_email: string
         }
@@ -344,8 +346,9 @@ export type Database = {
           event?: string
           id?: string
           message_id?: string | null
-          metadata_json?: Json | null
+          meta?: Json | null
           provider?: string
+          recipient?: string | null
           template?: string
           to_email?: string
         }
@@ -359,11 +362,13 @@ export type Database = {
           event_id: string | null
           id: string
           last_error: string | null
-          payload_json: Json
+          payload: Json
+          provider_message_id: string | null
           sent_at: string | null
           status: string
-          template: string
+          template_name: string
           to_email: string
+          to_name: string | null
           updated_at: string
         }
         Insert: {
@@ -373,11 +378,13 @@ export type Database = {
           event_id?: string | null
           id?: string
           last_error?: string | null
-          payload_json?: Json
+          payload?: Json
+          provider_message_id?: string | null
           sent_at?: string | null
           status?: string
-          template: string
+          template_name?: string
           to_email: string
+          to_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -387,12 +394,59 @@ export type Database = {
           event_id?: string | null
           id?: string
           last_error?: string | null
-          payload_json?: Json
+          payload?: Json
+          provider_message_id?: string | null
           sent_at?: string | null
           status?: string
-          template?: string
+          template_name?: string
           to_email?: string
+          to_name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_suppressions: {
+        Row: {
+          created_at: string | null
+          email: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          created_at: string | null
+          html: string
+          id: string
+          name: string
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          html: string
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          html?: string
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
