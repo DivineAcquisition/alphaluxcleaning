@@ -452,9 +452,9 @@ export function PaymentForm({
 
                     toast.success("Booking confirmed! Redirecting to confirmation...");
 
-                    // Navigate to confirmation page
+                    // Navigate to confirmation page using URL parameter
                     const bookingId = bookingResult?.booking?.id || 'confirmed';
-                    navigate(`/order-confirmation?order_id=${bookingId}`);
+                    navigate(`/order-confirmation/${bookingId}`);
                     
                   } catch (error) {
                     console.error('Error in payment success handler:', error);

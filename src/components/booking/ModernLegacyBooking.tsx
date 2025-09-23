@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -311,6 +312,7 @@ const steps = [{
   description: 'Complete booking'
 }];
 export function ModernLegacyBooking() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>(initialBookingData);
   const [zipCodeValid, setZipCodeValid] = useState(false);
@@ -595,8 +597,8 @@ export function ModernLegacyBooking() {
           }
           console.log('Order created successfully:', orderResult.orderId);
 
-          // Redirect to confirmation with order ID using query parameter format
-          window.location.href = `/order-confirmation?order_id=${orderResult.orderId}`;
+          // Redirect to confirmation with order ID using React Router
+          navigate(`/order-confirmation/${orderResult.orderId}`);
         } catch (error) {
           console.error('Error in order creation:', error);
           toast.error('Payment successful but failed to create order. Please contact support.');

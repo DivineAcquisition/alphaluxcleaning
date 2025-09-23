@@ -119,8 +119,16 @@ const createStripePromise = (): Promise<Stripe | null> => {
   return stripeInstancePromise;
 };
 
-// Export the promise (will be created on first access)
+// Export the promise (created immediately for preloading)
 export const stripePromise = createStripePromise();
+
+// Preload Stripe early in the application lifecycle
+if (typeof window !== 'undefined') {
+  // Start loading Stripe in the background
+  stripePromise.catch(() => {
+    // Silently catch preload errors, actual usage will handle them
+  });
+}
 
 // Function to check if we have a Stripe key available
 export const hasStripeKey = async (): Promise<boolean> => {

@@ -6,6 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { stripePromise } from '@/lib/stripe';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/pricing-utils';
+import { PaymentFormSkeleton } from '@/components/ui/loading-skeleton';
 
 export interface EmbeddedPaymentFormProps {
   clientSecret: string;
@@ -46,7 +47,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentAmount, fullAmount, pa
       const result = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/booking-confirmation`,
+          return_url: `${window.location.origin}/payment-success`,
         },
         redirect: 'if_required',
       });
@@ -225,11 +226,14 @@ export const EmbeddedPaymentForm: React.FC<EmbeddedPaymentFormProps> = ({
   if (!clientSecret) {
     return (
       <Card className="w-full">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Preparing payment form...</span>
-          </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-5 w-5 bg-muted rounded animate-pulse" />
+            Preparing payment form...
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PaymentFormSkeleton />
         </CardContent>
       </Card>
     );
