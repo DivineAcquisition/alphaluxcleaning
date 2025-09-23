@@ -78,19 +78,21 @@ serve(async (req) => {
         });
       }
 
-      // Check if user is a company user (admin/staff)
+      // Check if user has admin role in profiles table
       if (data.user) {
-        const { data: companyUser } = await supabase
-          .from('company_users')
-          .select('role, company_id')
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
           .eq('user_id', data.user.id)
           .single();
+
+        const isAdmin = profile?.role === 'admin';
 
         return new Response(JSON.stringify({ 
           user: data.user,
           session: data.session,
-          isAdmin: !!companyUser,
-          role: companyUser?.role || null
+          isAdmin,
+          role: profile?.role || null
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,

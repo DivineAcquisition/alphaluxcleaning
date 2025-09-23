@@ -175,12 +175,48 @@ export type Database = {
           },
         ]
       }
+      customer_portal_sessions: {
+        Row: {
+          created_at: string
+          customer_id: string
+          expires_at: string
+          id: string
+          last_accessed: string | null
+          session_token: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          expires_at?: string
+          id?: string
+          last_accessed?: string | null
+          session_token: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          expires_at?: string
+          id?: string
+          last_accessed?: string | null
+          session_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_sessions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string
           address_line1: string | null
           address_line2: string | null
           city: string | null
+          company_id: string | null
           created_at: string
           email: string
           first_name: string | null
@@ -193,12 +229,14 @@ export type Database = {
           postal_code: string | null
           state: string
           stripe_customer_id: string | null
+          user_id: string | null
         }
         Insert: {
           address: string
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
+          company_id?: string | null
           created_at?: string
           email: string
           first_name?: string | null
@@ -211,12 +249,14 @@ export type Database = {
           postal_code?: string | null
           state: string
           stripe_customer_id?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
+          company_id?: string | null
           created_at?: string
           email?: string
           first_name?: string | null
@@ -229,6 +269,7 @@ export type Database = {
           postal_code?: string | null
           state?: string
           stripe_customer_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

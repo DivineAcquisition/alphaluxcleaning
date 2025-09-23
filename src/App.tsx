@@ -12,6 +12,7 @@ import ConfirmationPreview from '@/pages/ConfirmationPreview';
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
 import AdminLogin from '@/pages/AdminLogin';
+import AdminOTPLogin from '@/pages/AdminOTPLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import { AdminRoute } from '@/components/AdminRoute';
 
@@ -47,6 +48,7 @@ function App() {
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-otp-login" element={<AdminOTPLogin />} />
             <Route path="/admin-dashboard" element={
               <AdminRoute>
                 <AdminDashboard />

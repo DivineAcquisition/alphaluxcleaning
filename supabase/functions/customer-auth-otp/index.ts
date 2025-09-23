@@ -84,14 +84,17 @@ serve(async (req) => {
           .single();
 
         if (!customer && !customerError) {
-          // Create new customer record
+          // Create new customer record with required fields
           const { data: newCustomer, error: createError } = await supabase
             .from('customers')
             .insert({
               company_id: targetCompanyId,
               user_id: data.user.id,
               email: email,
-              name: name || data.user.email?.split('@')[0] || 'Customer'
+              name: name || data.user.email?.split('@')[0] || 'Customer',
+              phone: '',
+              address: '',
+              state: ''
             })
             .select()
             .single();
@@ -119,7 +122,6 @@ serve(async (req) => {
           .from('customer_portal_sessions')
           .insert({
             customer_id: customer.id,
-            company_id: targetCompanyId,
             session_token: sessionToken,
             expires_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() // 8 hours
           });
