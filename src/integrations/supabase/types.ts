@@ -62,6 +62,7 @@ export type Database = {
           created_at: string
           customer_id: string
           deposit_amount: number | null
+          email_bounced_at: string | null
           est_price: number
           frequency: string
           ghl_contact_id: string | null
@@ -69,11 +70,13 @@ export type Database = {
           id: string
           manage_token: string | null
           manage_token_expires_at: string | null
+          marketing_opt_in: boolean | null
           membership_plan_id: string | null
           mrr: number | null
           payment_option_id: string | null
           pricing_breakdown: Json | null
           property_details: Json | null
+          receipt_url: string | null
           recurring_active: boolean | null
           service_date: string | null
           service_time_window: string | null
@@ -86,6 +89,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           stripe_subscription_id: string | null
           time_slot: string | null
+          timezone: string | null
           utms: Json | null
           zip_code: string | null
         }
@@ -100,6 +104,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           deposit_amount?: number | null
+          email_bounced_at?: string | null
           est_price: number
           frequency: string
           ghl_contact_id?: string | null
@@ -107,11 +112,13 @@ export type Database = {
           id?: string
           manage_token?: string | null
           manage_token_expires_at?: string | null
+          marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           property_details?: Json | null
+          receipt_url?: string | null
           recurring_active?: boolean | null
           service_date?: string | null
           service_time_window?: string | null
@@ -124,6 +131,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           stripe_subscription_id?: string | null
           time_slot?: string | null
+          timezone?: string | null
           utms?: Json | null
           zip_code?: string | null
         }
@@ -138,6 +146,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           deposit_amount?: number | null
+          email_bounced_at?: string | null
           est_price?: number
           frequency?: string
           ghl_contact_id?: string | null
@@ -145,11 +154,13 @@ export type Database = {
           id?: string
           manage_token?: string | null
           manage_token_expires_at?: string | null
+          marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           property_details?: Json | null
+          receipt_url?: string | null
           recurring_active?: boolean | null
           service_date?: string | null
           service_time_window?: string | null
@@ -162,6 +173,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           stripe_subscription_id?: string | null
           time_slot?: string | null
+          timezone?: string | null
           utms?: Json | null
           zip_code?: string | null
         }
@@ -270,6 +282,84 @@ export type Database = {
           state?: string
           stripe_customer_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      email_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          message_id: string | null
+          metadata_json: Json | null
+          provider: string
+          template: string
+          to_email: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          message_id?: string | null
+          metadata_json?: Json | null
+          provider?: string
+          template: string
+          to_email: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          message_id?: string | null
+          metadata_json?: Json | null
+          provider?: string
+          template?: string
+          to_email?: string
+        }
+        Relationships: []
+      }
+      email_jobs: {
+        Row: {
+          attempts: number
+          category: string
+          created_at: string
+          event_id: string | null
+          id: string
+          last_error: string | null
+          payload_json: Json
+          sent_at: string | null
+          status: string
+          template: string
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          last_error?: string | null
+          payload_json?: Json
+          sent_at?: string | null
+          status?: string
+          template: string
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          last_error?: string | null
+          payload_json?: Json
+          sent_at?: string | null
+          status?: string
+          template?: string
+          to_email?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -600,6 +690,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          credits_earned: number | null
+          credits_used: number | null
+          customer_id: string
+          id: string
+          link: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          credits_earned?: number | null
+          credits_used?: number | null
+          customer_id: string
+          id?: string
+          link: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          credits_earned?: number | null
+          credits_used?: number | null
+          customer_id?: string
+          id?: string
+          link?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_areas: {
         Row: {
