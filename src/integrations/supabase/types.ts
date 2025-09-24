@@ -1154,6 +1154,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_admin_user: {
+        Args: { p_email: string; p_role?: string }
+        Returns: string
+      }
       generate_referral_code: {
         Args: { customer_email: string; customer_id: string }
         Returns: string
