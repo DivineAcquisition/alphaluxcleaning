@@ -15,6 +15,11 @@ import PaymentSuccess from '@/pages/PaymentSuccess';
 import { WebhookTest } from '@/pages/WebhookTest';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminOTPLogin from '@/pages/AdminOTPLogin';
+import AdminAuthLogin from '@/pages/AdminAuthLogin';
+import AdminEmailTemplates from '@/pages/AdminEmailTemplates';
+import AdminEmailLogs from '@/pages/AdminEmailLogs';
+import AdminEmailEvents from '@/pages/AdminEmailEvents';
+import AdminUsers from '@/pages/AdminUsers';
 import AdminDashboard from '@/pages/AdminDashboard';
 import { AdminRoute } from '@/components/AdminRoute';
 import { ReferralLanding } from '@/pages/ReferralLanding';
@@ -60,8 +65,13 @@ function App() {
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/admin-otp-login" element={<AdminOTPLogin />} />
-            <Route path="/admin-dashboard" element={
+          <Route path="/admin-otp-login" element={<AdminOTPLogin />} />
+          <Route path="/admin-auth-login" element={<AdminAuthLogin />} />
+          <Route path="/admin/email/templates" element={<AdminEmailTemplates />} />
+          <Route path="/admin/email/logs" element={<AdminEmailLogs />} />
+          <Route path="/admin/email/events" element={<AdminEmailEvents />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>

@@ -56,6 +56,30 @@ const adminItems = [
     description: "Overview & metrics"
   },
   {
+    label: "Email Templates",
+    path: "/admin/email/templates",
+    icon: Mail,
+    description: "Manage email templates"
+  },
+  {
+    label: "Email Logs",
+    path: "/admin/email/logs",
+    icon: FileText,
+    description: "Email delivery logs"
+  },
+  {
+    label: "Email Events",
+    path: "/admin/email/events",
+    icon: Activity,
+    description: "Email engagement tracking"
+  },
+  {
+    label: "Admin Users",
+    path: "/admin/users",
+    icon: Shield,
+    description: "Manage admin access"
+  },
+  {
     label: "Customers",
     path: "/admin/customers",
     icon: Users,
@@ -66,30 +90,6 @@ const adminItems = [
     path: "/admin/subcontractors",
     icon: UserCheck,
     description: "Team management"
-  },
-  {
-    label: "Applications",
-    path: "/application-manager",
-    icon: FileText,
-    description: "Review applications"
-  },
-  {
-    label: "Commercial Estimates",
-    path: "/commercial-estimates",
-    icon: Building2,
-    description: "Business quotes"
-  },
-  {
-    label: "Tier Management",
-    path: "/tier-management",
-    icon: Crown,
-    description: "Performance tiers"
-  },
-  {
-    label: "Reviews",
-    path: "/reviews-portal",
-    icon: MessageSquare,
-    description: "Customer feedback"
   }
 ];
 

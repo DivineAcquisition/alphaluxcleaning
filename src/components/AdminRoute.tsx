@@ -5,12 +5,20 @@ import { Loader2 } from 'lucide-react';
 
 interface AdminRouteProps {
   children: React.ReactNode;
+  requiredRole?: 'admin' | 'ops' | 'viewer';
 }
 
-export function AdminRoute({ children }: AdminRouteProps) {
+export function AdminRoute({ children, requiredRole = 'viewer' }: AdminRouteProps) {
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const roleHierarchy = { admin: 3, ops: 2, viewer: 1 };
+
+  const hasRequiredRole = (userRole: string, requiredRole: string) => {
+    return roleHierarchy[userRole as keyof typeof roleHierarchy] >= 
+           roleHierarchy[requiredRole as keyof typeof roleHierarchy];
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -26,19 +34,19 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
         setIsAuthenticated(true);
 
-        // Check if user is admin
-        const { data: adminCheck, error } = await supabase.rpc('is_admin');
+        // Check admin role via the guard function
+        const { data, error } = await supabase.functions.invoke('admin-auth-guard');
         
-        if (error) {
+        if (error || !data?.role) {
           console.error('Error checking admin status:', error);
-          setIsAdmin(false);
+          setUserRole(null);
         } else {
-          setIsAdmin(adminCheck || false);
+          setUserRole(data.role);
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
         setIsAuthenticated(false);
-        setIsAdmin(false);
+        setUserRole(null);
       } finally {
         setLoading(false);
       }
@@ -50,7 +58,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         setIsAuthenticated(false);
-        setIsAdmin(false);
+        setUserRole(null);
         setLoading(false);
       } else if (event === 'SIGNED_IN') {
         checkAuth();
@@ -75,7 +83,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     return <Navigate to="/admin-login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!userRole || !hasRequiredRole(userRole, requiredRole)) {
     return <Navigate to="/admin-login" replace />;
   }
 

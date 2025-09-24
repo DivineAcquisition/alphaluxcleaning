@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_allowlist: {
+        Row: {
+          domain: string | null
+          email: string | null
+          id: number
+        }
+        Insert: {
+          domain?: string | null
+          email?: string | null
+          id?: number
+        }
+        Update: {
+          domain?: string | null
+          email?: string | null
+          id?: number
+        }
+        Relationships: []
+      }
+      admin_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          email: string | null
+          id: number
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          email?: string | null
+          id?: number
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          email?: string | null
+          id?: number
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_otp_codes: {
         Row: {
           attempts: number
@@ -44,6 +89,30 @@ export type Database = {
           id?: string
           verified?: boolean
           verified_at?: string | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          role: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          role?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1087,6 +1156,10 @@ export type Database = {
       }
       generate_referral_code: {
         Args: { customer_email: string; customer_id: string }
+        Returns: string
+      }
+      get_admin_role: {
+        Args: { _user_id?: string }
         Returns: string
       }
       get_pricing_config: {
