@@ -38,6 +38,7 @@ import {
   Terminal,
   Globe,
   Mail,
+  Activity,
   Zap,
   Users2,
   Webhook,
