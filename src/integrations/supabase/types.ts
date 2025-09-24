@@ -168,6 +168,8 @@ export type Database = {
           est_price: number
           frequency: string
           ghl_contact_id: string | null
+          hcp_customer_id: string | null
+          hcp_job_id: string | null
           housecall_job_id: string | null
           id: string
           manage_token: string | null
@@ -210,6 +212,8 @@ export type Database = {
           est_price: number
           frequency: string
           ghl_contact_id?: string | null
+          hcp_customer_id?: string | null
+          hcp_job_id?: string | null
           housecall_job_id?: string | null
           id?: string
           manage_token?: string | null
@@ -252,6 +256,8 @@ export type Database = {
           est_price?: number
           frequency?: string
           ghl_contact_id?: string | null
+          hcp_customer_id?: string | null
+          hcp_job_id?: string | null
           housecall_job_id?: string | null
           id?: string
           manage_token?: string | null
@@ -557,6 +563,50 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hcp_sync_log: {
+        Row: {
+          attempts: number
+          booking_id: string
+          created_at: string
+          hcp_customer_id: string | null
+          hcp_job_id: string | null
+          id: string
+          last_error: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          booking_id: string
+          created_at?: string
+          hcp_customer_id?: string | null
+          hcp_job_id?: string | null
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          booking_id?: string
+          created_at?: string
+          hcp_customer_id?: string | null
+          hcp_job_id?: string | null
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hcp_sync_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
         ]
