@@ -77,3 +77,20 @@ verify_jwt = false
 
 [functions.seed-admin-user]
 verify_jwt = false
+
+# Housecall Pro Integration Functions
+
+[functions.sync-booking-to-hcp]
+verify_jwt = false
+
+[functions.retry-hcp-sync]
+verify_jwt = false
+
+[functions.get-hcp-config]
+verify_jwt = false
+
+[functions.update-hcp-config]
+verify_jwt = false
+
+[functions.trigger-hcp-sync]
+verify_jwt = false

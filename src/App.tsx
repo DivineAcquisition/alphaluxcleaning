@@ -74,6 +74,8 @@ function App() {
           <Route path="/admin/email/logs" element={<AdminEmailLogs />} />
           <Route path="/admin/email/events" element={<AdminEmailEvents />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/integrations/housecall-pro" element={<HousecallProSettings />} />
+          <Route path="/admin/integrations/housecall-pro/logs" element={<HousecallProLogs />} />
             <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />
