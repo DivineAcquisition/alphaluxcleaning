@@ -35,6 +35,7 @@ import BookingDebug from '@/pages/BookingDebug';
 import EmailTools from '@/pages/EmailTools';
 import HousecallProSettings from '@/pages/admin/HousecallProSettings';
 import HousecallProLogs from '@/pages/admin/HousecallProLogs';
+import HCPTestSuite from '@/pages/admin/HCPTestSuite';
 
 import NotFound from '@/pages/NotFound';
 
@@ -76,6 +77,7 @@ function App() {
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/integrations/housecall-pro" element={<HousecallProSettings />} />
           <Route path="/admin/integrations/housecall-pro/logs" element={<HousecallProLogs />} />
+          <Route path="/admin/integrations/housecall-pro/test" element={<HCPTestSuite />} />
             <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />

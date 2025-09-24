@@ -5,48 +5,102 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const TestBooking = () => {
   const [testSessionId, setTestSessionId] = useState('test_session_123');
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const createTestOrder = async () => {
+  const createTestBooking = async () => {
     setCreating(true);
     try {
-      // Generate a unique session ID
-      const uniqueSessionId = `test_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const { data, error } = await supabase
-        .from('orders')
+      // First create a test customer
+      const customerId = crypto.randomUUID();
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
         .insert({
-          stripe_session_id: uniqueSessionId,
-          amount: 9999, // $99.99 in cents
-          status: 'paid',
-          customer_name: 'Test Customer',
-          customer_email: 'test@example.com',
-          customer_phone: '(555) 123-4567',
-          currency: 'usd',
-          service_details: null, // Will be filled in by form
-          scheduled_date: null,
-          scheduled_time: null
+          id: customerId,
+          name: 'Test Customer',
+          first_name: 'Test',
+          last_name: 'Customer',
+          email: 'test@example.com',
+          phone: '(555) 123-4567',
+          address: '123 Test Street',
+          address_line1: '123 Test Street',
+          city: 'San Francisco',
+          state: 'CA',
+          postal_code: '94102'
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('Error creating test order:', error);
-        alert('Error creating test order: ' + error.message);
+      if (customerError) {
+        console.error('Error creating test customer:', customerError);
+        toast({
+          title: 'Error',
+          description: 'Error creating test customer: ' + customerError.message,
+          variant: 'destructive'
+        });
         return;
       }
 
-      console.log('Test order created:', data);
+      // Generate a unique session ID
+      const uniqueSessionId = `test_session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create a confirmed booking to trigger HCP sync
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          customer_id: customerId,
+          service_type: 'standard',
+          frequency: 'one-time',
+          sqft_or_bedrooms: '1000-1500sqft',
+          est_price: 150.00,
+          status: 'confirmed', // This will trigger the HCP sync
+          service_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
+          time_slot: '09:00-12:00',
+          zip_code: '94102',
+          stripe_checkout_session_id: uniqueSessionId,
+          special_instructions: 'Test booking created for HCP integration testing',
+          source_channel: 'TEST_BOOKING',
+          property_details: {
+            bedrooms: 2,
+            bathrooms: 2,
+            pets: false,
+            parking: 'street'
+          }
+        })
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error('Error creating test booking:', bookingError);
+        toast({
+          title: 'Error',
+          description: 'Error creating test booking: ' + bookingError.message,
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      console.log('Test booking created:', booking);
+      toast({
+        title: 'Success',
+        description: `Test booking created with ID: ${booking.id}. Check HCP Logs to see sync status.`
+      });
+
       setTestSessionId(uniqueSessionId);
-      // Navigate to payment confirmation with the test session ID
-      navigate(`/payment-confirmation?session_id=${uniqueSessionId}`);
+      // Navigate to HCP logs to see the sync result
+      navigate('/admin/integrations/housecall-pro/logs');
     } catch (error) {
       console.error('Error:', error);
-      alert('Error creating test order');
+      toast({
+        title: 'Error',
+        description: 'Error creating test booking',
+        variant: 'destructive'
+      });
     } finally {
       setCreating(false);
     }
@@ -75,19 +129,27 @@ const TestBooking = () => {
           
           <div className="space-y-3">
             <Button 
-              onClick={createTestOrder}
+              onClick={createTestBooking}
               disabled={creating}
               className="w-full"
             >
-              {creating ? 'Creating...' : 'Create New Test Order'}
+              {creating ? 'Creating Test Booking...' : 'Create Test Booking & Trigger HCP Sync'}
             </Button>
             
             <Button 
               variant="outline"
-              onClick={navigateToExisting}
+              onClick={() => navigate('/admin/integrations/housecall-pro')}
               className="w-full"
             >
-              Use Existing Session ID
+              HCP Settings
+            </Button>
+
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/admin/integrations/housecall-pro/logs')}
+              className="w-full"
+            >
+              View HCP Sync Logs
             </Button>
 
             <Button 
@@ -99,14 +161,17 @@ const TestBooking = () => {
             </Button>
           </div>
 
-          <div className="text-sm text-gray-600 space-y-2">
-            <p><strong>Test Flow:</strong></p>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p><strong>HCP Integration Test:</strong></p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Create or use existing test order</li>
-              <li>Fill in service details form</li>
-              <li>Schedule your service</li>
-              <li>See confirmation</li>
+              <li>Creates a test customer and confirmed booking</li>
+              <li>Triggers the HCP sync via database trigger</li>
+              <li>Creates customer and job in Housecall Pro</li>
+              <li>View results in HCP Sync Logs</li>
             </ol>
+            <p className="text-xs text-muted-foreground mt-2">
+              Note: Ensure HCP API key is configured in settings first.
+            </p>
           </div>
         </CardContent>
       </Card>
