@@ -32,7 +32,7 @@ import { DevTestDatabase } from '@/pages/DevTestDatabase';
 import { DevTestPayments } from '@/pages/DevTestPayments';
 import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
 import BookingDebug from '@/pages/BookingDebug';
-import { EmailTools } from '@/pages/EmailTools';
+import EmailTools from '@/pages/EmailTools';
 
 import NotFound from '@/pages/NotFound';
 
