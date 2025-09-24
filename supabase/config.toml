@@ -55,6 +55,9 @@ verify_jwt = false
 [functions.send-admin-invite]
 verify_jwt = false
 
+[functions.dev-create-admin-user]
+verify_jwt = false
+
 # Email Infrastructure Functions
 
 [functions.admin-auth-otp]

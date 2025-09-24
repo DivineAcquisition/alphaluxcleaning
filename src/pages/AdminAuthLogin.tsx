@@ -14,6 +14,7 @@ export default function AdminAuthLogin() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [devMode, setDevMode] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,21 +94,53 @@ export default function AdminAuthLogin() {
 
     setLoading(true);
     try {
-      // Use the create_admin_user function for development
-      const { data, error } = await supabase.rpc('create_admin_user', {
-        p_email: email,
-        p_role: 'admin'
+      // Use the new dev-create-admin-user edge function
+      const { data, error } = await supabase.functions.invoke('dev-create-admin-user', {
+        body: {
+          email: email,
+          role: 'admin'
+        }
       });
 
       if (error) throw error;
 
-      toast.success('Development admin user created. You can now sign in with any password.');
+      if (data.existing) {
+        toast.success('Admin user already exists. You can now sign in with your password.');
+      } else {
+        toast.success('Development admin user created with confirmed email. You can now sign in with any password.');
+      }
       setDevMode(false);
     } catch (error: any) {
       console.error('Dev mode error:', error);
       toast.error(error.message || 'Failed to create development user');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast.error('Please enter your email first');
+      return;
+    }
+
+    setResendingEmail(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`
+        }
+      });
+
+      if (error) throw error;
+      toast.success('Verification email sent! Check your inbox.');
+    } catch (error: any) {
+      console.error('Resend error:', error);
+      toast.error(error.message || 'Failed to resend verification email');
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -239,10 +272,32 @@ export default function AdminAuthLogin() {
                         <Mail className="w-4 h-4 mr-2" />
                         {isSignUp ? 'Create Account' : 'Sign In'}
                       </>
-                    )}
-                  </Button>
+                     )}
+                   </Button>
 
-                  <div className="relative">
+                   {/* Resend verification button */}
+                   <Button 
+                     type="button" 
+                     variant="outline" 
+                     size="sm"
+                     className="w-full"
+                     onClick={handleResendVerification}
+                     disabled={resendingEmail || !email}
+                   >
+                     {resendingEmail ? (
+                       <>
+                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                         Sending...
+                       </>
+                     ) : (
+                       <>
+                         <Mail className="w-4 h-4 mr-2" />
+                         Resend Verification Email
+                       </>
+                     )}
+                   </Button>
+
+                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t" />
                     </div>
