@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
         console.log('Sending customer welcome email via Resend...')
         const resend = new Resend(resendApiKey)
         const emailResponse = await resend.emails.send({
-          from: 'Bay Area Cleaning Professionals <welcome@notify.bayareacleaningpros.com>',
+          from: 'Bay Area Cleaning Professionals <onboarding@resend.dev>',
           to: [user.email],
           subject: 'Welcome to Bay Area Cleaning Professionals! 🏠✨',
           html: emailHtml,

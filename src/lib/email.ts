@@ -9,7 +9,7 @@ export interface SendEmailRequest {
 
 export const sendEmail = async (request: SendEmailRequest) => {
   try {
-    const { data, error } = await supabase.functions.invoke('send-email', {
+    const { data, error } = await supabase.functions.invoke('send-system-email', {
       body: request
     });
 

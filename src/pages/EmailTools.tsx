@@ -3,58 +3,73 @@ import { EmailTestButton } from '@/components/EmailTestButton';
 
 export const EmailTools = () => {
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Email Testing Tools</h1>
-          <p className="text-muted-foreground">
-            Test email functionality and debug email delivery issues
-          </p>
-        </div>
-        
-        <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-card-foreground">Test Email Function</h2>
-          <EmailTestButton />
-        </div>
-        
-        <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-card-foreground">Debug Information</h2>
-          <div className="space-y-2 text-sm">
-            <p><strong>Test Email Function:</strong> Uses onboarding@resend.dev sender (verified by default)</p>
-            <p><strong>Production Emails:</strong> Will use notifications@bayareacleaningpros.com (verify domain in Resend)</p>
-            <p><strong>Configuration:</strong> No authentication required for testing</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-4">
+              📧 Email Testing Tools
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Test and debug email functionality for the Bay Area Cleaning Pros system.
+            </p>
           </div>
-          
-          <div className="mt-4">
-            <a 
-              href="https://supabase.com/dashboard/project/kqoezqzogleaaupjzxch/functions/test-email/logs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            >
-              View Function Logs
-            </a>
-          </div>
-        </div>
-        
-        <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-card-foreground">Resend Setup Checklist</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="resend-account" />
-              <label htmlFor="resend-account">Create Resend account at resend.com</label>
+
+          <div className="grid gap-6">
+            {/* Email Test Section */}
+            <div className="bg-card rounded-lg border p-6">
+              <h2 className="text-xl font-semibold mb-4">Test Email Delivery</h2>
+              <EmailTestButton />
             </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="api-key" />
-              <label htmlFor="api-key">Create API key and add to Supabase secrets</label>
+
+            {/* Debug Information */}
+            <div className="bg-card rounded-lg border p-6">
+              <h2 className="text-xl font-semibold mb-4">Debug Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-2">Email Sender Details</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Test emails sent from: <code className="bg-muted px-2 py-1 rounded">onboarding@resend.dev</code></li>
+                    <li>• Production emails sent from: <code className="bg-muted px-2 py-1 rounded">noreply@notify.bayareacleaningpros.com</code></li>
+                    <li>• Admin emails sent from: <code className="bg-muted px-2 py-1 rounded">admin@bayareacleaningpros.com</code></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-2">Supabase Function Logs</h3>
+                  <a 
+                    href="https://supabase.com/dashboard/project/yltvknkqnzdeiqckqjha/functions" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-sm"
+                  >
+                    View Edge Function Logs →
+                  </a>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="domain-verify" />
-              <label htmlFor="domain-verify">Verify domain bayareacleaningpros.com in Resend</label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="test-success" />
-              <label htmlFor="test-success">Test email sends successfully</label>
+
+            {/* Setup Checklist */}
+            <div className="bg-card rounded-lg border p-6">
+              <h2 className="text-xl font-semibold mb-4">Resend Setup Checklist</h2>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-3">
+                  <input type="checkbox" className="h-4 w-4" />
+                  <span className="text-sm">Resend API key configured in Supabase secrets</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input type="checkbox" className="h-4 w-4" />
+                  <span className="text-sm">Domain verified in Resend dashboard</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input type="checkbox" className="h-4 w-4" />
+                  <span className="text-sm">Auth email hook configured in Supabase</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input type="checkbox" className="h-4 w-4" />
+                  <span className="text-sm">Email templates rendering correctly</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -62,3 +77,5 @@ export const EmailTools = () => {
     </div>
   );
 };
+
+export default EmailTools;

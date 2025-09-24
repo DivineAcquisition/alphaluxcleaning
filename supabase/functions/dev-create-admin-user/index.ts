@@ -70,15 +70,22 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Add to admin tables
-      await Promise.all([
-        supabase.from('admin_allowlist').insert({ email }).on('conflict', () => {}),
-        supabase.from('admin_users').insert({ 
+      const { error: allowlistError } = await supabase
+        .from('admin_allowlist')
+        .upsert({ email }, { onConflict: 'email' });
+      
+      const { error: adminUserError } = await supabase
+        .from('admin_users')
+        .insert({ 
           user_id: existingUser.user.id, 
           email: email,
           role: role,
           status: 'active'
-        })
-      ]);
+        });
+
+      if (adminUserError) {
+        console.error('Error adding to admin_users:', adminUserError);
+      }
 
       return new Response(
         JSON.stringify({ 
@@ -94,10 +101,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Add to allowlist first
-    await supabase
+    const { error: allowlistError } = await supabase
       .from('admin_allowlist')
-      .insert({ email })
-      .on('conflict', () => {});
+      .upsert({ email }, { onConflict: 'email' });
 
     // Create new user with confirmed email (dev mode)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
