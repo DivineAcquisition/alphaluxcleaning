@@ -33,6 +33,8 @@ import { DevTestPayments } from '@/pages/DevTestPayments';
 import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
 import BookingDebug from '@/pages/BookingDebug';
 import EmailTools from '@/pages/EmailTools';
+import HousecallProSettings from '@/pages/admin/HousecallProSettings';
+import HousecallProLogs from '@/pages/admin/HousecallProLogs';
 
 import NotFound from '@/pages/NotFound';
 
