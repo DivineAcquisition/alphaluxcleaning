@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CalendarIcon, Clock, MapPin, Phone, MessageSquare, ArrowLeft, ArrowRight, Star, Sparkles, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { US_STATES } from '@/lib/states';
+import { US_STATES, STATE_ABBREVIATIONS } from '@/lib/states';
 import { toLocalDate } from '@/lib/date-helpers';
 
 interface BookingData {
@@ -68,6 +68,19 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
   );
   const [nextDayBooking, setNextDayBooking] = useState(false);
 
+  // Initialize default values for state and zipCode
+  React.useEffect(() => {
+    if (!bookingData.address?.state || !bookingData.address?.zipCode) {
+      updateBookingData({
+        address: {
+          ...bookingData.address,
+          state: bookingData.address?.state || 'TX',
+          zipCode: '78704'
+        }
+      });
+    }
+  }, []);
+
   const timeSlots = [
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM' },
     { value: '9:00 AM', label: '9:00 AM', range: '9:00 - 11:00 AM' },
@@ -124,7 +137,8 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
       const nextDayFee = isNextDay(date) && nextDayBooking ? 50 : 0;
       updateBookingData({ 
         serviceDate: toLocalDate(date),
-        nextDayFee
+        nextDayFee,
+        address: { ...bookingData.address, zipCode: '78704' }
       });
     }
   };
@@ -444,28 +458,33 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    placeholder="CA"
-                    value={bookingData.address.state}
-                    onChange={(e) => updateBookingData({
-                      address: { ...bookingData.address, state: e.target.value }
+                  <Label htmlFor="state">State *</Label>
+                  <Select 
+                    value={bookingData.address?.state || 'TX'} 
+                    onValueChange={(value) => updateBookingData({
+                      address: { ...bookingData.address, state: value }
                     })}
-                    className="border-border focus:border-primary"
-                  />
+                  >
+                    <SelectTrigger className="border-border focus:border-primary">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATE_ABBREVIATIONS.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
                     id="zipCode"
-                    placeholder="94102"
-                    value={bookingData.address.zipCode}
-                    onChange={(e) => updateBookingData({
-                      address: { ...bookingData.address, zipCode: e.target.value }
-                    })}
-                    className="border-border focus:border-primary"
+                    value="78704"
+                    disabled
+                    className="bg-muted text-muted-foreground cursor-not-allowed"
                   />
                 </div>
               </div>

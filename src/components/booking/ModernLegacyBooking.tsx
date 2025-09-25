@@ -590,11 +590,11 @@ export function ModernLegacyBooking() {
               customerName: bookingData.customerName
             }
           });
-          if (orderError || !orderResult?.orderId) {
-            console.error('Error creating order:', orderError);
-            toast.error('Payment successful but failed to create order. Please contact support.');
-            return;
-          }
+        if (orderError || !orderResult?.orderId) {
+          console.error('Error creating order:', orderError);
+          navigate(`/order-status?session_id=${paymentIntentId}`);
+          return;
+        }
           console.log('Order created successfully:', orderResult.orderId);
 
           // Redirect to confirmation with order ID using React Router
