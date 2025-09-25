@@ -352,9 +352,20 @@ Questions? Call 8577544557
   };
 
   const handleViewOrderStatus = () => {
-    const identifier = sessionId || orderId;
-    if (identifier) {
-      navigate(`/order-status?${sessionId ? 'session_id' : 'order_id'}=${identifier}`);
+    // Prefer session_id or payment_intent for reliable lookup
+    const sessionIdFromUrl = searchParams.get('session_id');
+    const sessionIdFromOrder = orderDetails?.stripe_checkout_session_id || orderDetails?.stripe_session_id;
+    const paymentIntent = orderDetails?.stripe_payment_intent_id;
+    const customerEmail = orderDetails?.customers?.email || orderDetails?.email;
+
+    if (sessionIdFromUrl) {
+      navigate(`/order-status?session_id=${sessionIdFromUrl}`);
+    } else if (sessionIdFromOrder) {
+      navigate(`/order-status?session_id=${sessionIdFromOrder}`);
+    } else if (paymentIntent) {
+      navigate(`/order-status?payment_intent=${paymentIntent}`);
+    } else if (customerEmail) {
+      navigate(`/order-status?email=${customerEmail}`);
     } else {
       navigate('/order-status');
     }

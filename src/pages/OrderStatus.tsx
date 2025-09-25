@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,7 @@ interface Order {
 
 export default function OrderStatus() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
   
@@ -77,29 +78,36 @@ export default function OrderStatus() {
 
   // Auto-search if sessionId or orderId is provided
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const sessionId = searchParams.get('session_id');
+    const orderId = searchParams.get('order_id');
+    const email = searchParams.get('email');
+    const paymentIntent = searchParams.get('payment_intent');
+    const setupIntent = searchParams.get('setup_intent');
+    const searchQuery = searchParams.get('search');
+
     if (sessionId) {
       setSearchValue(sessionId);
       handleSearch(sessionId);
+    } else if (paymentIntent) {
+      setSearchValue(paymentIntent);
+      handleSearch(paymentIntent);
+    } else if (setupIntent) {
+      setSearchValue(setupIntent);
+      handleSearch(setupIntent);
     } else if (orderId) {
       setFromPayment(true);
       setSearchValue(orderId);
       handleSearch(orderId);
-    }
-  }, [sessionId, orderId]);
-
-  // Check for additional URL parameters for pre-populated search
-  useEffect(() => {
-    const email = searchParams.get("email");
-    const search = searchParams.get("search");
-    
-    if (email) {
+    } else if (email) {
       setSearchValue(email);
       handleSearchByEmail();
-    } else if (search) {
-      setSearchValue(search);
-      handleSearch(search);
+    } else if (searchQuery) {
+      setSearchValue(searchQuery);
+      handleSearch(searchQuery);
     }
   }, [searchParams]);
+
 
   const handleSearch = async (searchTerm?: string) => {
     const term = searchTerm || searchValue;
@@ -112,14 +120,26 @@ export default function OrderStatus() {
     try {
       console.log("Searching for term:", term);
       
-      // Use the get-order-details edge function instead of direct database queries
+      // Determine search type based on term pattern
+      let searchBody: any = {};
+      
+      if (term.includes('@')) {
+        searchBody.email = term;
+      } else if (term.startsWith('cs_')) {
+        searchBody.session_id = term;
+      } else if (term.startsWith('pi_')) {
+        searchBody.payment_intent = term;
+      } else if (term.startsWith('seti_')) {
+        searchBody.setup_intent = term;
+      } else {
+        // Default to order_id and code for other formats
+        searchBody.order_id = term;
+        searchBody.code = term;
+      }
+
+      // Use the get-order-details edge function
       const { data: result, error } = await supabase.functions.invoke('get-order-details', {
-        body: { 
-          session_id: term.includes('cs_') ? term : null,
-          order_id: !term.includes('cs_') && !term.includes('@') ? term : null,
-          email: term.includes('@') ? term : null,
-          code: !term.includes('cs_') && !term.includes('@') ? term : null
-        }
+        body: searchBody
       });
 
       if (error) {
@@ -127,13 +147,13 @@ export default function OrderStatus() {
         throw new Error(error.message || "Failed to search for order");
       }
 
-      if (!result?.order) {
+      if (!result) {
         throw new Error("Order not found");
       }
 
-      setOrder(result.order);
-      setOrders([result.order]);
-      console.log("Order found:", result.order);
+      setOrder(result);
+      setOrders([result]);
+      console.log("Order found:", result);
       
       if (fromPayment) {
         toast.success("🎉 Payment Successful! Your booking has been confirmed.");
@@ -142,7 +162,8 @@ export default function OrderStatus() {
       }
     } catch (error) {
       console.error("Error searching for order:", error);
-      toast.error("Order not found. Please check your Session ID or Order ID.");
+      const errorMessage = error instanceof Error ? error.message : "Order not found. Please check your Session ID or Order ID.";
+      toast.error(errorMessage);
       setOrder(null);
       setOrders([]);
     } finally {
