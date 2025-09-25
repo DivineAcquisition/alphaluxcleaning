@@ -139,6 +139,31 @@ serve(async (req) => {
       paymentRecorded: !!paymentResult
     });
 
+    // Trigger external webhooks (non-blocking)
+    try {
+      console.log('Triggering external webhooks for booking:', bookingResult.id);
+      
+      const { data: webhookResult, error: webhookError } = await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+        body: {
+          order_id: bookingResult.id,
+          trigger_event: 'booking_confirmed',
+          source: 'create_order_with_deposit',
+          booking_data: request.bookingData,
+          customer_data: customerData,
+          payment_data: paymentResult
+        }
+      });
+
+      if (webhookError) {
+        console.error('Webhook delivery failed:', webhookError);
+      } else {
+        console.log('External webhooks triggered successfully:', webhookResult);
+      }
+    } catch (webhookError) {
+      console.error('Error triggering webhooks:', webhookError);
+      // Don't fail the booking creation if webhooks fail
+    }
+
     // Send booking confirmation email
     try {
       await supabase.functions.invoke('send-order-confirmation', {
