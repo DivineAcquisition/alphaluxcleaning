@@ -12,6 +12,7 @@ import { CheckCircle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin,
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
+import { STATE_ABBREVIATIONS } from '@/lib/states';
 import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
@@ -278,7 +279,7 @@ const initialBookingData: BookingData = {
     street: '',
     city: '',
     state: 'TX',
-    zipCode: ''
+    zipCode: '78704'
   },
   customerName: '',
   contactNumber: '',
@@ -1055,11 +1056,25 @@ export function ModernLegacyBooking() {
                   </div>
                   <div>
                     <Label htmlFor="state">State</Label>
-                    <Input id="state" value={bookingData.address.state} onChange={e => updateNestedField('address', 'state', e.target.value)} placeholder="TX" />
+                    <Select value={bookingData.address.state} onValueChange={value => updateNestedField('address', 'state', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATE_ABBREVIATIONS.map(state => (
+                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="addressZip">ZIP Code</Label>
-                    <Input id="addressZip" value={bookingData.address.zipCode} onChange={e => updateNestedField('address', 'zipCode', e.target.value)} placeholder="77520" />
+                    <Input 
+                      id="addressZip" 
+                      value="78704" 
+                      disabled 
+                      className="bg-gray-50 text-gray-500" 
+                    />
                   </div>
                 </div>
               </CardContent>
