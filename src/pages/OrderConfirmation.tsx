@@ -306,7 +306,7 @@ export default function OrderConfirmation() {
 
   const handleCopyDetails = async () => {
     const details = `
-Bay Area Cleaning Pros - Booking Confirmed
+Cleaning Service - Booking Confirmed
 
 📅 Service Date: ${new Date(orderDetails.service_date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -318,11 +318,11 @@ Bay Area Cleaning Pros - Booking Confirmed
 📋 Order ID: ${orderDetails.id}
 💰 Amount Paid: $${(orderDetails.est_price / 100).toFixed(2)}
 
-Customer: ${orderDetails.customers?.name || 'N/A'}
-Email: ${orderDetails.customers?.email || 'N/A'}
-${orderDetails.customers?.phone ? `Phone: ${orderDetails.customers.phone}` : ''}
+Customer: ${orderDetails.customers?.name || orderDetails.name || 'N/A'}
+Email: ${orderDetails.customers?.email || orderDetails.email || 'N/A'}
+${(orderDetails.customers?.phone || orderDetails.phone) ? `Phone: ${orderDetails.customers?.phone || orderDetails.phone}` : ''}
 
-Questions? Call (281) 809-9901
+Questions? Call 8577544557
     `.trim();
 
     try {
@@ -377,7 +377,7 @@ Questions? Call (281) 809-9901
   }
 
   const serviceDetails = orderDetails?.service_details as any;
-  const address = serviceDetails?.serviceAddress || serviceDetails?.address;
+  const address = orderDetails?.property_details?.address || serviceDetails?.serviceAddress || serviceDetails?.address;
   const property = serviceDetails?.property;
   const instructions = serviceDetails?.instructions;
 
@@ -469,7 +469,7 @@ Questions? Call (281) 809-9901
                     <div className="flex items-center gap-3">
                       <Clock className="h-5 w-5 text-blue-600" />
                       <span className="text-lg font-semibold text-blue-800">
-                        {orderDetails.scheduled_time}
+                        {orderDetails.time_slot}
                       </span>
                     </div>
                   </div>
@@ -492,15 +492,19 @@ Questions? Call (281) 809-9901
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Service Type:</span>
-                            <span className="font-medium capitalize">{orderDetails.cleaning_type?.replace(/_/g, ' ')}</span>
+                            <span className="font-medium capitalize">
+                              {orderDetails.service_type === 'regular' ? 'Regular Cleaning' : orderDetails.service_type?.replace(/_/g, ' ')}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Frequency:</span>
-                            <span className="font-medium capitalize">{orderDetails.frequency?.replace(/_/g, ' ')}</span>
+                            <span className="font-medium capitalize">
+                              {orderDetails.frequency === 'oneTime' ? 'One Time' : orderDetails.frequency?.replace(/_/g, ' ')}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Square Footage:</span>
-                            <span className="font-medium">{orderDetails.square_footage} sq ft</span>
+                            <span className="font-medium">{orderDetails.sqft_or_bedrooms} sq ft</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Order ID:</span>
@@ -516,16 +520,16 @@ Questions? Call (281) 809-9901
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Name:</span>
-                            <span className="font-medium">{orderDetails.customer_name}</span>
+                            <span className="font-medium">{orderDetails.customers?.name || orderDetails.name}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Email:</span>
-                            <span className="font-medium">{orderDetails.customer_email}</span>
+                            <span className="font-medium">{orderDetails.customers?.email || orderDetails.email}</span>
                           </div>
-                          {orderDetails.customer_phone && (
+                          {(orderDetails.customers?.phone || orderDetails.phone) && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Phone:</span>
-                              <span className="font-medium">{orderDetails.customer_phone}</span>
+                              <span className="font-medium">{orderDetails.customers?.phone || orderDetails.phone}</span>
                             </div>
                           )}
                         </div>
@@ -592,10 +596,6 @@ Questions? Call (281) 809-9901
                         {isCopied ? 'Copied!' : 'Copy Details'}
                       </Button>
                       
-                      <Button onClick={handleShare} variant="outline" className="flex items-center gap-2">
-                        <Share2 className="h-4 w-4" />
-                        Share Booking
-                      </Button>
                       
                       <Button onClick={handleViewOrderStatus} variant="outline" className="flex items-center gap-2">
                         <FileText className="h-4 w-4" />
@@ -609,10 +609,6 @@ Questions? Call (281) 809-9901
                         Book Again
                       </Button>
                       
-                      <Button onClick={() => navigate('/customer-dashboard')} className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Customer Portal
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
