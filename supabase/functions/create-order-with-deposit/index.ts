@@ -49,7 +49,6 @@ serve(async (req) => {
         address: `${request.bookingData.address.street}, ${request.bookingData.address.city}, ${request.bookingData.address.state} ${request.bookingData.address.zipCode}`,
         address_line1: request.bookingData.address.street,
         city: request.bookingData.address.city,
-        state: request.bookingData.address.state,
         postal_code: request.bookingData.address.zipCode,
         first_name: request.customerName.split(' ')[0] || request.customerName,
         last_name: request.customerName.split(' ').slice(1).join(' ') || '',
@@ -162,6 +161,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
+      orderId: bookingResult.id, // Frontend expects orderId
       bookingId: bookingResult.id,
       booking: bookingResult,
       payment: paymentResult,
