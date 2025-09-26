@@ -94,3 +94,6 @@ verify_jwt = false
 
 [functions.trigger-hcp-sync]
 verify_jwt = false
+
+[functions.webhook-delivery-test]
+verify_jwt = false

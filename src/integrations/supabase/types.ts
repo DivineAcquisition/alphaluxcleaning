@@ -1138,6 +1138,96 @@ export type Database = {
           },
         ]
       }
+      webhook_configurations: {
+        Row: {
+          active: boolean
+          created_at: string
+          event_types: string[]
+          headers: Json | null
+          id: string
+          name: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          event_types?: string[]
+          headers?: Json | null
+          id?: string
+          name: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          event_types?: string[]
+          headers?: Json | null
+          id?: string
+          name?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      webhook_delivery_logs: {
+        Row: {
+          attempts: number
+          booking_id: string | null
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          payload: Json
+          response_body: string | null
+          response_headers: Json | null
+          response_status: number | null
+          webhook_config_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          payload: Json
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+          webhook_config_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+          webhook_config_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_delivery_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_delivery_logs_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           created_at: string
