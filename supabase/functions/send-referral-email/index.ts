@@ -27,28 +27,30 @@ serve(async (req: Request) => {
     const baseUrl = "https://alphaluxclean.com";
     const defaultReferralLink = referralLink || `${baseUrl}?referral=${referralCode}&discount=50`;
 
-    // Send email using Supabase email system instead
-    const { error: emailError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`, {
+    // Send email using Supabase email system
+    const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email-system`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
       },
       body: JSON.stringify({
-        companyId: '550e8400-e29b-41d4-a716-446655440000',
+        template: 'referral_invite',
         to: ownerEmail,
-        templateKey: 'referral_code',
-        variables: {
-          owner_name: ownerName,
+        data: {
+          first_name: ownerName,
           referral_code: referralCode,
           referral_link: defaultReferralLink
-        }
+        },
+        category: 'transactional'
       })
     });
 
-    if (emailError) {
-      console.error("❌ Error sending referral email:", emailError);
-      throw new Error("Failed to send referral email");
+    const emailResult = await response.json();
+    
+    if (!response.ok || !emailResult.success) {
+      console.error("❌ Error sending referral email:", emailResult.error);
+      throw new Error(`Failed to send referral email: ${emailResult.error || 'Unknown error'}`);
     }
 
     console.log("✅ Referral email sent successfully");
