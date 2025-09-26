@@ -347,6 +347,8 @@ export type Database = {
           name: string
           phone: string
           postal_code: string | null
+          referral_code: string | null
+          referral_link: string | null
           state: string
           stripe_customer_id: string | null
           user_id: string | null
@@ -367,6 +369,8 @@ export type Database = {
           name: string
           phone: string
           postal_code?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
           state: string
           stripe_customer_id?: string | null
           user_id?: string | null
@@ -387,6 +391,8 @@ export type Database = {
           name?: string
           phone?: string
           postal_code?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
           state?: string
           stripe_customer_id?: string | null
           user_id?: string | null

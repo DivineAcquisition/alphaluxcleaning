@@ -164,24 +164,61 @@ serve(async (req) => {
       // Don't fail the booking creation if webhooks fail
     }
 
-    // Send booking confirmation email
+    // Send booking confirmation email using the email system
     try {
-      await supabase.functions.invoke('send-order-confirmation', {
-        body: {
-          customerEmail: request.customerEmail,
-          customerName: request.customerName,
-          serviceDate: request.bookingData.serviceDate,
-          serviceTime: request.bookingData.serviceTime,
-          totalAmount: request.totalAmount,
-          depositAmount: request.depositAmount,
-          remainingBalance: remainingBalance,
-          orderId: orderId,
-          serviceType: request.bookingData.serviceType
-        }
-      });
-      console.log('Booking confirmation email sent');
+      console.log('Queuing booking confirmation email...');
+      
+      // Insert email job into the email_jobs table
+      const { error: emailJobError } = await supabase
+        .from('email_jobs')
+        .insert({
+          to_email: request.customerEmail,
+          to_name: request.customerName,
+          template_name: 'booking_confirmed',
+          category: 'transactional',
+          status: 'queued',
+          payload: {
+            customer_name: request.customerName,
+            booking_id: bookingResult.id,
+            service_type: request.bookingData.serviceType,
+            service_date: request.bookingData.serviceDate,
+            service_time: request.bookingData.serviceTime,
+            total_amount: request.totalAmount,
+            deposit_amount: request.depositAmount,
+            remaining_balance: remainingBalance,
+            order_id: orderId,
+            service_address: `${request.bookingData.address.street}, ${request.bookingData.address.city}, ${request.bookingData.address.state} ${request.bookingData.address.zipCode}`,
+            manage_booking_link: `https://app.alphaluxclean.com/manage/${bookingResult.manage_token || bookingResult.id}`,
+            view_receipt_link: `https://app.alphaluxclean.com/receipt/${bookingResult.id}`
+          }
+        });
+
+      if (emailJobError) {
+        console.error('Error queuing email job:', emailJobError);
+        
+        // Fallback to direct email system call
+        await supabase.functions.invoke('send-email-system', {
+          body: {
+            template: 'booking-confirmed',
+            to_email: request.customerEmail,
+            to_name: request.customerName,
+            template_data: {
+              customer_name: request.customerName,
+              booking_id: bookingResult.id,
+              service_type: request.bookingData.serviceType,
+              service_date: request.bookingData.serviceDate,
+              service_time: request.bookingData.serviceTime,
+              total_amount: request.totalAmount,
+              deposit_amount: request.depositAmount,
+              remaining_balance: remainingBalance
+            }
+          }
+        });
+      } else {
+        console.log('Email job queued successfully');
+      }
     } catch (emailError) {
-      console.error('Error sending confirmation email:', emailError);
+      console.error('Error with email system:', emailError);
       // Don't fail the order creation if email fails
     }
 

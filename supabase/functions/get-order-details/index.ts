@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -29,16 +28,6 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Select only columns that actually exist in the orders table
-    const selectFields = `
-      id, stripe_session_id, stripe_payment_intent_id, stripe_setup_intent_id, amount, currency, 
-      status,
-      created_at, updated_at, scheduled_date, scheduled_time, 
-      cleaning_type, frequency, square_footage, 
-      customer_name, customer_email, customer_phone,
-      service_details, add_ons, user_id
-    `;
-
     let data = null;
     let error = null;
 
@@ -47,114 +36,302 @@ serve(async (req) => {
       console.log("Searching by order_id:", order_id);
       
       // Try exact UUID match first
-      const { data: exactMatch, error: exactError } = await supabase
-        .from("orders")
-        .select(selectFields)
+      const { data: bookingMatch, error: bookingError } = await supabase
+        .from("bookings")
+        .select(`
+          id, 
+          stripe_payment_intent_id, 
+          stripe_checkout_session_id,
+          stripe_subscription_id,
+          est_price, 
+          status,
+          created_at, 
+          updated_at, 
+          service_date, 
+          time_slot, 
+          service_type, 
+          frequency, 
+          sqft_or_bedrooms,
+          special_instructions,
+          addons,
+          property_details,
+          deposit_amount,
+          balance_due,
+          customer_id
+        `)
         .eq("id", order_id)
-        .maybeSingle();
+        .single();
       
-      if (exactMatch) {
+      if (bookingMatch) {
+        // Get customer data separately
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name, email, phone, address, city, state, postal_code")
+          .eq("id", bookingMatch.customer_id)
+          .single();
+        
+        data = { ...bookingMatch, customer_data: customerData };
         console.log("Found exact UUID match");
-        data = exactMatch;
       } else {
         console.log("No exact UUID match, trying partial match for:", order_id);
-        // Always try partial ID match if exact fails (for short order IDs)
+        // Try partial ID match if exact fails
         const { data: partialMatch, error: partialError } = await supabase
-          .from("orders")
-          .select(selectFields)
+          .from("bookings")
+          .select(`
+            id, 
+            stripe_payment_intent_id, 
+            stripe_checkout_session_id,
+            stripe_subscription_id,
+            est_price, 
+            status,
+            created_at, 
+            updated_at, 
+            service_date, 
+            time_slot, 
+            service_type, 
+            frequency, 
+            sqft_or_bedrooms,
+            special_instructions,
+            addons,
+            property_details,
+            deposit_amount,
+            balance_due,
+            customer_id
+          `)
           .ilike("id", `%${order_id}%`)
-          .maybeSingle();
+          .single();
         
         if (partialMatch) {
+          const { data: customerData } = await supabase
+            .from("customers")
+            .select("name, email, phone, address, city, state, postal_code")
+            .eq("id", partialMatch.customer_id)
+            .single();
+          
+          data = { ...partialMatch, customer_data: customerData };
           console.log("Found partial UUID match");
-          data = partialMatch;
         } else {
           console.log("No partial match found");
-          error = partialError || exactError;
+          error = partialError || bookingError;
         }
       }
     } else if (session_id) {
       console.log("Searching by session_id:", session_id);
-      // Try session_id, then payment_intent_id, then setup_intent_id
       const { data: sessionMatch, error: sessionError } = await supabase
-        .from("orders")
-        .select(selectFields)
-        .or(`stripe_session_id.eq.${session_id},stripe_payment_intent_id.eq.${session_id},stripe_setup_intent_id.eq.${session_id}`)
-        .maybeSingle();
+        .from("bookings")
+        .select(`
+          id, 
+          stripe_payment_intent_id, 
+          stripe_checkout_session_id,
+          stripe_subscription_id,
+          est_price, 
+          status,
+          created_at, 
+          updated_at, 
+          service_date, 
+          time_slot, 
+          service_type, 
+          frequency, 
+          sqft_or_bedrooms,
+          special_instructions,
+          addons,
+          property_details,
+          deposit_amount,
+          balance_due,
+          customer_id
+        `)
+        .or(`stripe_checkout_session_id.eq.${session_id},stripe_payment_intent_id.eq.${session_id},stripe_subscription_id.eq.${session_id}`)
+        .single();
       
       if (sessionMatch) {
-        console.log("Found order by session_id/intent_id:", sessionMatch.id);
-        data = sessionMatch;
-        error = sessionError;
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name, email, phone, address, city, state, postal_code")
+          .eq("id", sessionMatch.customer_id)
+          .single();
+        
+        data = { ...sessionMatch, customer_data: customerData };
+        console.log("Found booking by session_id/intent_id:", sessionMatch.id);
       } else {
         console.log("No match found for session_id:", session_id);
-        data = sessionMatch;
-        error = sessionError;
       }
+      error = sessionError;
     } else if (payment_intent) {
       console.log("Searching by payment_intent:", payment_intent);
       const { data: intentMatch, error: intentError } = await supabase
-        .from("orders")
-        .select(selectFields)
+        .from("bookings")
+        .select(`
+          id, 
+          stripe_payment_intent_id, 
+          stripe_checkout_session_id,
+          stripe_subscription_id,
+          est_price, 
+          status,
+          created_at, 
+          updated_at, 
+          service_date, 
+          time_slot, 
+          service_type, 
+          frequency, 
+          sqft_or_bedrooms,
+          special_instructions,
+          addons,
+          property_details,
+          deposit_amount,
+          balance_due,
+          customer_id
+        `)
         .eq("stripe_payment_intent_id", payment_intent)
-        .maybeSingle();
+        .single();
       
       if (intentMatch) {
-        console.log("Found order by payment_intent:", intentMatch.id);
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name, email, phone, address, city, state, postal_code")
+          .eq("id", intentMatch.customer_id)
+          .single();
+        
+        data = { ...intentMatch, customer_data: customerData };
+        console.log("Found booking by payment_intent:", intentMatch.id);
       } else {
         console.log("No match found for payment_intent:", payment_intent);
       }
-      data = intentMatch;
       error = intentError;
     } else if (setup_intent) {
       console.log("Searching by setup_intent:", setup_intent);
       const { data: setupMatch, error: setupError } = await supabase
-        .from("orders")
-        .select(selectFields)
-        .eq("stripe_setup_intent_id", setup_intent)
-        .maybeSingle();
+        .from("bookings")
+        .select(`
+          id, 
+          stripe_payment_intent_id, 
+          stripe_checkout_session_id,
+          stripe_subscription_id,
+          est_price, 
+          status,
+          created_at, 
+          updated_at, 
+          service_date, 
+          time_slot, 
+          service_type, 
+          frequency, 
+          sqft_or_bedrooms,
+          special_instructions,
+          addons,
+          property_details,
+          deposit_amount,
+          balance_due,
+          customer_id
+        `)
+        .eq("stripe_subscription_id", setup_intent)
+        .single();
       
       if (setupMatch) {
-        console.log("Found order by setup_intent:", setupMatch.id);
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name, email, phone, address, city, state, postal_code")
+          .eq("id", setupMatch.customer_id)
+          .single();
+        
+        data = { ...setupMatch, customer_data: customerData };
+        console.log("Found booking by setup_intent:", setupMatch.id);
       } else {
         console.log("No match found for setup_intent:", setup_intent);
       }
-      data = setupMatch;
       error = setupError;
     } else if (code) {
       console.log("Searching by code:", code);
-      // Search by partial order ID or session ID
       const { data: codeMatch, error: codeError } = await supabase
-        .from("orders")
-        .select(selectFields)
-        .or(`id.ilike.%${code}%,stripe_session_id.ilike.%${code}%`)
-        .maybeSingle();
+        .from("bookings")
+        .select(`
+          id, 
+          stripe_payment_intent_id, 
+          stripe_checkout_session_id,
+          stripe_subscription_id,
+          est_price, 
+          status,
+          created_at, 
+          updated_at, 
+          service_date, 
+          time_slot, 
+          service_type, 
+          frequency, 
+          sqft_or_bedrooms,
+          special_instructions,
+          addons,
+          property_details,
+          deposit_amount,
+          balance_due,
+          customer_id
+        `)
+        .or(`id.ilike.%${code}%,stripe_checkout_session_id.ilike.%${code}%`)
+        .single();
       
-      data = codeMatch;
+      if (codeMatch) {
+        const { data: customerData } = await supabase
+          .from("customers")
+          .select("name, email, phone, address, city, state, postal_code")
+          .eq("id", codeMatch.customer_id)
+          .single();
+        
+        data = { ...codeMatch, customer_data: customerData };
+      }
       error = codeError;
     } else if (email) {
       console.log("Searching by email:", email);
-      // Search by customer email
-      const { data: emailMatch, error: emailError } = await supabase
-        .from("orders")
-        .select(selectFields)
-        .ilike("customer_email", `%${email}%`)
-        .order("created_at", { ascending: false })
-        .maybeSingle();
+      // First find customer by email
+      const { data: customerData, error: customerError } = await supabase
+        .from("customers")
+        .select("id, name, email, phone, address, city, state, postal_code")
+        .ilike("email", `%${email}%`)
+        .single();
       
-      data = emailMatch;
-      error = emailError;
+      if (customerData) {
+        // Then find their most recent booking
+        const { data: emailMatch, error: emailError } = await supabase
+          .from("bookings")
+          .select(`
+            id, 
+            stripe_payment_intent_id, 
+            stripe_checkout_session_id,
+            stripe_subscription_id,
+            est_price, 
+            status,
+            created_at, 
+            updated_at, 
+            service_date, 
+            time_slot, 
+            service_type, 
+            frequency, 
+            sqft_or_bedrooms,
+            special_instructions,
+            addons,
+            property_details,
+            deposit_amount,
+            balance_due,
+            customer_id
+          `)
+          .eq("customer_id", customerData.id)
+          .order("created_at", { ascending: false })
+          .single();
+        
+        if (emailMatch) {
+          data = { ...emailMatch, customer_data: customerData };
+        }
+        error = emailError;
+      } else {
+        error = customerError;
+      }
     }
 
     if (error || !data) {
-      console.log("Order not found:", { error: error?.message, data });
+      console.log("Booking not found:", { error: error?.message, data });
       return new Response(JSON.stringify({ error: error?.message || "Order not found. Please check your Order ID, Session ID, or email address." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       });
     }
 
-    console.log("Order found successfully:", data.id);
+    console.log("Booking found successfully:", data.id);
     
     // Helper function to map square footage to cleaning type
     const mapSquareFootageToCleaningType = (sqft: string | number): string => {
@@ -170,7 +347,7 @@ serve(async (req) => {
     };
 
     // Helper function to format service address
-    const formatServiceAddress = (serviceDetails: any): string => {
+    const formatServiceAddress = (serviceDetails: any, customerData: any): string => {
       if (serviceDetails?.serviceAddress && typeof serviceDetails.serviceAddress === 'string') {
         return serviceDetails.serviceAddress;
       }
@@ -181,53 +358,71 @@ serve(async (req) => {
       if (serviceDetails?.state) parts.push(serviceDetails.state);
       if (serviceDetails?.zip_code) parts.push(serviceDetails.zip_code);
       
+      // Fall back to customer address
+      if (parts.length === 0 && customerData) {
+        if (customerData.address) parts.push(customerData.address);
+        if (customerData.city) parts.push(customerData.city);
+        if (customerData.state) parts.push(customerData.state);
+        if (customerData.postal_code) parts.push(customerData.postal_code);
+      }
+      
       return parts.length > 0 ? parts.join(', ') : 'Address on file';
     };
 
     // Helper function to extract correct amount
     const extractAmount = (data: any): number => {
-      // Try multiple possible locations for the amount
-      if (data.service_details?.totalPrice) return parseFloat(data.service_details.totalPrice);
-      if (data.service_details?.finalTotal) return parseFloat(data.service_details.finalTotal);
-      if (data.service_details?.final_total) return parseFloat(data.service_details.final_total);
-      if (data.service_details?.total_price) return parseFloat(data.service_details.total_price);
-      if (data.amount && data.amount > 0) return parseFloat(data.amount);
+      // Amount is stored in cents in bookings.est_price
+      if (data.est_price && data.est_price > 0) {
+        // Convert from cents to dollars
+        return parseFloat(data.est_price) / 100;
+      }
       
-      // If amount is in cents, convert to dollars
-      if (data.service_details?.amount_in_cents) return data.service_details.amount_in_cents / 100;
+      // Try other possible locations for the amount
+      if (data.property_details?.totalPrice) return parseFloat(data.property_details.totalPrice);
+      if (data.property_details?.finalTotal) return parseFloat(data.property_details.finalTotal);
+      if (data.property_details?.final_total) return parseFloat(data.property_details.final_total);
+      if (data.property_details?.total_price) return parseFloat(data.property_details.total_price);
       
       return 0;
     };
 
-    // Enhance order data with proper structure and fallbacks
+    // Enhance booking data with proper structure and fallbacks
     const enhancedOrder = {
-      ...data,
-      // Ensure service_details has proper structure
-      service_details: data.service_details || {},
-      // Extract and map cleaning type properly
+      id: data.id,
+      stripe_session_id: data.stripe_checkout_session_id,
+      stripe_payment_intent_id: data.stripe_payment_intent_id,
+      stripe_setup_intent_id: data.stripe_subscription_id,
+      amount: extractAmount(data),
+      currency: 'usd',
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      scheduled_date: data.service_date,
+      scheduled_time: data.time_slot,
       cleaning_type: (() => {
-        if (data.cleaning_type && data.cleaning_type !== data.service_details?.homeSize) {
-          return data.cleaning_type;
+        if (data.service_type && data.service_type !== data.property_details?.homeSize) {
+          return data.service_type;
         }
-        if (data.service_details?.cleaningType && data.service_details.cleaningType !== data.service_details?.homeSize) {
-          return data.service_details.cleaningType;
+        if (data.property_details?.cleaningType && data.property_details.cleaningType !== data.property_details?.homeSize) {
+          return data.property_details.cleaningType;
         }
         // Map square footage to cleaning type
-        const homeSize = data.service_details?.homeSize || data.square_footage;
+        const homeSize = data.property_details?.homeSize || data.sqft_or_bedrooms;
         return mapSquareFootageToCleaningType(homeSize);
       })(),
-      // Extract frequency with better fallbacks
-      frequency: data.frequency || data.service_details?.frequency || (data.service_details?.serviceType === 'recurring' ? 'Weekly' : 'One-Time'),
-      // Extract scheduled date/time from service_details if not in main fields
-      scheduled_date: data.scheduled_date || data.service_details?.service_date || data.service_details?.serviceDateSeparate,
-      scheduled_time: data.scheduled_time || data.service_details?.service_time || data.service_details?.serviceTimeSeparate,
-      // Extract correct amount
-      amount: extractAmount(data),
-      // Format service address properly
-      service_address: formatServiceAddress(data.service_details),
-      // Add payment info for post-service payment display
-      payment_type: data.service_details?.payment_type || 'pay_after_service',
-      final_total: extractAmount(data)
+      frequency: data.frequency || data.property_details?.frequency || 'One-Time',
+      square_footage: data.sqft_or_bedrooms,
+      customer_name: data.customer_data?.name || 'Customer',
+      customer_email: data.customer_data?.email || '',
+      customer_phone: data.customer_data?.phone || '',
+      service_details: data.property_details || {},
+      add_ons: data.addons || [],
+      user_id: data.customer_id,
+      service_address: formatServiceAddress(data.property_details, data.customer_data),
+      payment_type: data.property_details?.payment_type || 'pay_after_service',
+      final_total: extractAmount(data),
+      deposit_amount: data.deposit_amount ? data.deposit_amount / 100 : 0,
+      balance_due: data.balance_due ? data.balance_due / 100 : 0
     };
     
     return new Response(JSON.stringify({ order: enhancedOrder }), {
