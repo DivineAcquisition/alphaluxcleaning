@@ -1,5 +1,6 @@
 import React from 'react';
 import { EmailTestButton } from '@/components/EmailTestButton';
+import { EmailSystemTest } from '@/components/EmailSystemTest';
 
 export const EmailTools = () => {
   return (
@@ -16,9 +17,15 @@ export const EmailTools = () => {
           </div>
 
           <div className="grid gap-6">
-            {/* Email Test Section */}
+            {/* New Email System Test */}
             <div className="bg-card rounded-lg border p-6">
-              <h2 className="text-xl font-semibold mb-4">Test Email Delivery</h2>
+              <h2 className="text-xl font-semibold mb-4">📧 Email System Test</h2>
+              <EmailSystemTest />
+            </div>
+
+            {/* Legacy Email Test Section */}
+            <div className="bg-card rounded-lg border p-6">
+              <h2 className="text-xl font-semibold mb-4">🧪 Legacy Test Email</h2>
               <EmailTestButton />
             </div>
 
