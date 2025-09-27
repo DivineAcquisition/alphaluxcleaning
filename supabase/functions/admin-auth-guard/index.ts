@@ -38,11 +38,20 @@ serve(async (req) => {
       const { data: { user }, error: userError } = await userClient.auth.getUser();
       if (userError || !user) {
         console.error('User verification failed:', userError);
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { 
+        console.error('JWT token:', jwt?.substring(0, 20) + '...');
+        return new Response(JSON.stringify({ 
+          error: "Unauthorized", 
+          details: userError?.message 
+        }), { 
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
+
+      console.log('User authenticated:', { 
+        id: user.id, 
+        email: user.email 
+      });
 
       // Use service role to check admin status
       const svc = createClient(
@@ -59,14 +68,27 @@ serve(async (req) => {
 
       if (adminError) {
         console.error('Admin check failed:', adminError);
-        return new Response(JSON.stringify({ error: "Internal server error" }), { 
+        return new Response(JSON.stringify({ 
+          error: "Internal server error", 
+          details: adminError.message 
+        }), { 
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
+      console.log('Admin query result:', { 
+        admin, 
+        userId: user.id,
+        queryUsed: `user_id = ${user.id}, status = active`
+      });
+
       if (!admin || admin.status !== "active") {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { 
+        return new Response(JSON.stringify({ 
+          error: "Forbidden", 
+          reason: !admin ? "No admin record found" : "Admin status not active",
+          userId: user.id 
+        }), { 
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -199,7 +221,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Admin auth guard error:', error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    console.error('Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name
+    });
+    return new Response(JSON.stringify({ 
+      error: "Internal server error", 
+      details: error?.message 
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
