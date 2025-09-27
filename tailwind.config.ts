@@ -64,6 +64,14 @@ export default {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))'
 				},
+				service: {
+					regular: 'hsl(var(--service-regular))',
+					'regular-foreground': 'hsl(var(--service-regular-foreground))',
+					deep: 'hsl(var(--service-deep))',
+					'deep-foreground': 'hsl(var(--service-deep-foreground))',
+					moveout: 'hsl(var(--service-moveout))',
+					'moveout-foreground': 'hsl(var(--service-moveout-foreground))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

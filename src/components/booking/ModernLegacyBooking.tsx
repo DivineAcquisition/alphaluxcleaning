@@ -18,6 +18,8 @@ import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from 
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
 import { ServiceTypeCards } from './ServiceTypeCards';
+import { EnhancedServiceTypeCards } from './EnhancedServiceTypeCards';
+import { PropertyDetailsSelector } from './PropertyDetailsSelector';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
@@ -837,21 +839,29 @@ export function ModernLegacyBooking() {
             </Card>
 
             {/* Service Type Selection */}
-            {zipCodeValid && bookingData.customerEmail && <ServiceTypeCards serviceTypes={serviceTypes} selectedType={bookingData.serviceType} onSelect={typeId => updateField('serviceType', typeId)} />}
+            {zipCodeValid && bookingData.customerEmail && <EnhancedServiceTypeCards 
+              serviceTypes={serviceTypes} 
+              selectedType={bookingData.serviceType} 
+              onSelect={typeId => updateField('serviceType', typeId)}
+              currentPrice={getExactPrice()}
+            />}
           </div>;
       case 2:
         return <div className="space-y-8">
             {/* Home Size Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="h-5 w-5 text-primary" />
-                  Home Size
+            <Card className="border-primary/20 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Home className="w-5 h-5 text-primary" />
+                  </div>
+                  Home Size & Details
                 </CardTitle>
+                <p className="text-muted-foreground mt-2">Help us provide accurate pricing for your space</p>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {homeSizes.map(size => <Card key={size.id} className={cn("cursor-pointer border-2 transition-all hover:shadow-md", size.id === '5000-plus' && "border-warning bg-warning/5", bookingData.homeSize === size.id ? "border-primary bg-primary/5" : size.id === '5000-plus' ? "border-warning hover:border-warning/70" : "border-border hover:border-primary/50")} onClick={() => {
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {homeSizes.map(size => <Card key={size.id} className={cn("cursor-pointer border-2 transition-all hover:shadow-md mobile-touch-target", size.id === '5000-plus' && "border-warning bg-warning/5", bookingData.homeSize === size.id ? "border-primary bg-primary/5 shadow-md" : size.id === '5000-plus' ? "border-warning hover:border-warning/70" : "border-border hover:border-primary/50")} onClick={() => {
                   updateField('homeSize', size.id);
                   if (size.id === '5000-plus') {
                     toast.info('Homes over 5,000 sq ft require an in-person estimate. Please call to schedule.');
@@ -863,36 +873,42 @@ export function ModernLegacyBooking() {
                         {size.id === '5000-plus' && <Badge variant="outline" className="mt-2 border-warning text-warning">
                             Call Required
                           </Badge>}
+                        {bookingData.homeSize === size.id && (
+                          <Badge className="mt-2 bg-primary/20 text-primary border-primary/30" variant="outline">
+                            Selected
+                          </Badge>
+                        )}
                       </CardContent>
                     </Card>)}
                 </div>
+
+                {/* Real-time pricing display */}
+                {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && getExactPrice() > 0 && (
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center mb-6">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {formatPrice(getExactPrice())}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Current pricing based on your selections
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Flooring Type Selection */}
-            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Home className="h-5 w-5 text-primary" />
-                    Flooring Type
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={bookingData.flooringType} onValueChange={value => updateField('flooringType', value)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select primary flooring type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hardwood">Hardwood</SelectItem>
-                      <SelectItem value="carpet">Carpet</SelectItem>
-                      <SelectItem value="tile">Tile</SelectItem>
-                      <SelectItem value="laminate">Laminate</SelectItem>
-                      <SelectItem value="mixed">Mixed Flooring</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>}
+            {/* Property Details - New consolidated section */}
+            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (
+              <PropertyDetailsSelector
+                bedrooms={bookingData.bedrooms}
+                bathrooms={bookingData.bathrooms}
+                dwellingType={bookingData.dwellingType}
+                flooringType={bookingData.flooringType}
+                onBedroomsChange={(value) => updateField('bedrooms', value)}
+                onBathroomsChange={(value) => updateField('bathrooms', value)}
+                onDwellingTypeChange={(value) => updateField('dwellingType', value)}
+                onFlooringTypeChange={(value) => updateField('flooringType', value)}
+              />
+            )}
 
             {/* Frequency Selection - Only for Regular Cleaning */}
             {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && bookingData.serviceType === 'regular' && <Card>
