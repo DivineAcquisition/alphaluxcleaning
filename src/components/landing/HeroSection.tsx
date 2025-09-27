@@ -1,94 +1,82 @@
 import React from 'react';
-import { Shield, Award, Clock, MapPin } from 'lucide-react';
+import { Shield, Award, Clock, MapPin, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export function HeroSection() {
   return (
-    <div className="bg-gradient-to-br from-background to-secondary/30 py-8 lg:py-12">
+    <div className="bg-gradient-to-br from-background to-secondary/20 py-6 lg:py-8">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Main Headline */}
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
-            Professional Home Cleaning
-            <span className="block text-primary mt-2">Starting at $118/visit</span>
-          </h1>
+          {/* Mobile-First Headline - 60px height target */}
+          <div className="mb-4">
+            <h1 className="mobile-headline text-foreground mb-2 leading-tight">
+              Dallas Professional Cleaning Service
+            </h1>
+          </div>
           
-          {/* Pricing Transparency */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 max-w-md mx-auto">
-            <p className="text-sm text-muted-foreground mb-1">Transparent Pricing</p>
-            <p className="font-semibold text-primary text-lg">$118-$200/month for bi-weekly service</p>
+          {/* Mobile-First Pricing Banner - 40px height target */}
+          <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-2 mb-4 inline-block">
+            <p className="font-semibold text-primary text-base lg:text-lg">
+              Starting at $280/month • Bi-weekly service
+            </p>
           </div>
 
-          {/* Local Social Proof */}
-          <div className="flex items-center justify-center gap-2 mb-8">
+          {/* Value Proposition Bullets - 120px height target, Single Column Mobile */}
+          <div className="mb-4 space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 max-w-2xl mx-auto">
+            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 text-primary" />
+              </div>
+              <span className="mobile-body font-medium text-foreground">Same professional team every visit</span>
+            </div>
+            
+            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Award className="w-4 h-4 text-primary" />
+              </div>
+              <span className="mobile-body font-medium text-foreground">All cleaning supplies included</span>
+            </div>
+            
+            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-4 h-4 text-primary" />
+              </div>
+              <span className="mobile-body font-medium text-foreground">Satisfaction guaranteed</span>
+            </div>
+            
+            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-4 h-4 text-primary" />
+              </div>
+              <span className="mobile-body font-medium text-foreground">Flexible scheduling options</span>
+            </div>
+          </div>
+
+          {/* Trust Signal - 30px height target */}
+          <div className="flex items-center justify-center gap-2 mb-6">
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <div key={star} className="w-4 h-4 bg-warning rounded-full flex items-center justify-center">
-                  <span className="text-xs text-warning-foreground">★</span>
-                </div>
+                <Star key={star} className="w-4 h-4 fill-warning text-warning" />
               ))}
             </div>
-            <span className="text-muted-foreground text-sm">
-              Trusted by 150+ Texas & California families since 2020
+            <span className="text-muted-foreground text-sm font-medium">
+              Trusted by 150+ Dallas families served
             </span>
           </div>
 
-          {/* Value Proposition Bullets */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-sm">Same Team</p>
-                <p className="text-xs text-muted-foreground">Every visit</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Award className="w-4 h-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-sm">Supplies Included</p>
-                <p className="text-xs text-muted-foreground">All equipment</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-4 h-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-sm">Satisfaction</p>
-                <p className="text-xs text-muted-foreground">Guaranteed</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-card border">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-4 h-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-sm">Flexible</p>
-                <p className="text-xs text-muted-foreground">Scheduling</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Trust Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-            <Badge variant="secondary" className="gap-1">
+          {/* Trust Badges - Mobile Optimized */}
+          <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-4">
+            <Badge variant="secondary" className="mobile-touch-target gap-2 px-3 py-1">
               <Shield className="w-3 h-3" />
-              Bonded & Insured
+              <span className="text-xs">Bonded & Insured</span>
             </Badge>
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="mobile-touch-target gap-2 px-3 py-1">
               <Award className="w-3 h-3" />
-              Local Business
+              <span className="text-xs">Local Business</span>
             </Badge>
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="mobile-touch-target gap-2 px-3 py-1">
               <Clock className="w-3 h-3" />
-              Satisfaction Guaranteed
+              <span className="text-xs">Satisfaction Guaranteed</span>
             </Badge>
           </div>
         </div>

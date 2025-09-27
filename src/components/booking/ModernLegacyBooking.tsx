@@ -808,67 +808,54 @@ export function ModernLegacyBooking() {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-6">
-                  {/* Enhanced ZIP Code Input */}
+                  {/* Mobile-Optimized ZIP Code Input */}
                   <div className="relative">
-                    <Label htmlFor="zipCode" className="text-sm font-semibold mb-3 block flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      Enter Your ZIP Code *
+                    <Label htmlFor="zipCode" className="text-base font-medium text-foreground mb-3 block">
+                      ZIP Code *
                     </Label>
-                    <div className="relative">
-                      <Input
-                        id="zipCode"
-                        type="text"
-                        placeholder="12345"
-                        value={bookingData.zipCode}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-                          updateField('zipCode', value);
-                        }}
-                        className={cn(
-                          "text-xl py-4 px-4 h-14 text-center font-semibold transition-all duration-300 border-2",
-                          "focus:ring-4 focus:ring-primary/20 focus:border-primary",
-                          zipCodeValid 
-                            ? "border-success bg-success/5 text-success" 
-                            : bookingData.zipCode.length === 5 
-                              ? "border-destructive bg-destructive/5" 
-                              : "border-border hover:border-primary/50"
-                        )}
-                        maxLength={5}
-                        inputMode="numeric" 
-                        pattern="[0-9]*"
-                      />
-                      {zipCodeValid && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <CheckCircle className="w-6 h-6 text-success animate-scale-in" />
-                        </div>
+                    <Input
+                      id="zipCode"
+                      type="text"
+                      placeholder="Enter your ZIP code"
+                      value={bookingData.zipCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                        updateField('zipCode', value);
+                      }}
+                      className={cn(
+                        "mobile-input text-lg lg:text-base transition-all duration-200 border-2",
+                        zipCodeValid && bookingData.zipCode ? "ring-2 ring-success border-success" : "",
+                        bookingData.zipCode && !zipCodeValid ? "ring-2 ring-destructive border-destructive" : "",
+                        "focus:ring-2 focus:ring-primary focus:border-primary"
                       )}
-                    </div>
+                      maxLength={5}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                    />
+                    <p className="mobile-body text-muted-foreground mt-2 text-center">
+                      Check availability and exact pricing for your area
+                    </p>
                     <div className="mt-3 min-h-[2rem]">
                       {zipCodeValid ? (
                         <div className="p-3 rounded-lg bg-success/10 border border-success/20">
-                          <p className="text-success text-sm font-medium flex items-center gap-2">
+                          <p className="text-success text-sm font-medium flex items-center gap-2 justify-center">
                             <CheckCircle className="w-4 h-4" />
                             Perfect! We provide excellent service in your area
                           </p>
                         </div>
                       ) : bookingData.zipCode.length === 5 ? (
-                        <p className="text-destructive text-sm flex items-center gap-2">
+                        <p className="text-destructive text-sm flex items-center gap-2 justify-center">
                           <span className="w-4 h-4 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs">!</span>
                           Sorry, we currently service Texas & California only
                         </p>
-                      ) : (
-                        <p className="text-muted-foreground text-sm">
-                          Check availability and exact pricing for your area
-                        </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   
-                  {/* Enhanced Email Input */}
+                  {/* Mobile-Optimized Email Input */}
                   {zipCodeValid && (
                     <div>
-                      <Label htmlFor="email" className="text-sm font-semibold mb-3 block flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-xs">@</span>
+                      <Label htmlFor="email" className="text-base font-medium text-foreground mb-3 block">
                         Email Address *
                       </Label>
                       <Input
@@ -878,17 +865,26 @@ export function ModernLegacyBooking() {
                         value={bookingData.customerEmail}
                         onChange={(e) => updateField('customerEmail', e.target.value)}
                         className={cn(
-                          "text-lg py-4 h-12 transition-all duration-300 border-2",
-                          "focus:ring-4 focus:ring-primary/20 focus:border-primary",
+                          "mobile-input text-lg lg:text-base transition-all duration-200 border-2",
                           isValidEmail(bookingData.customerEmail) && bookingData.customerEmail
-                            ? "border-success bg-success/5"
-                            : "border-border hover:border-primary/50"
+                            ? "ring-2 ring-success border-success"
+                            : bookingData.customerEmail && !isValidEmail(bookingData.customerEmail)
+                              ? "ring-2 ring-destructive border-destructive" 
+                              : "focus:ring-2 focus:ring-primary focus:border-primary"
                         )}
                       />
-                      <p className="text-muted-foreground text-sm mt-2 flex items-center gap-2">
+                      <p className="mobile-body text-muted-foreground mt-2 text-center flex items-center gap-2 justify-center">
                         <Shield className="w-4 h-4" />
                         We'll send your booking confirmation and service updates here
                       </p>
+                      {bookingData.customerEmail && (
+                        <p className={cn(
+                          "text-sm mt-2 text-center font-medium",
+                          isValidEmail(bookingData.customerEmail) ? "text-success" : "text-destructive"
+                        )}>
+                          {isValidEmail(bookingData.customerEmail) ? "✓ Valid email address" : "Please enter a valid email address"}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1315,7 +1311,16 @@ export function ModernLegacyBooking() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button onClick={handleNext} disabled={!canProceedToNext() || isProcessingPayment} className="bg-primary hover:bg-primary/90">
+                <Button 
+                  onClick={handleNext} 
+                  disabled={!canProceedToNext() || isProcessingPayment} 
+                  className={cn(
+                    "mobile-touch-target text-lg lg:text-base font-medium transition-all duration-200",
+                    canProceedToNext() ? "animate-pulse" : "",
+                    currentStep === 4 ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"
+                  )}
+                  size="lg"
+                >
                   {isProcessingPayment ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

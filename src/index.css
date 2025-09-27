@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -130,6 +132,67 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  }
+  
+  /* Mobile-First Typography System */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  
+  /* Mobile Typography Scales */
+  .mobile-headline {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  .mobile-subheadline {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  
+  .mobile-body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Touch-Friendly Targets */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .mobile-input {
+    min-height: 48px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* High Contrast for Mobile */
+  .mobile-high-contrast {
+    --foreground: 210 40% 2%;
+    --background: 0 0% 100%;
+  }
+  
+  @media (min-width: 768px) {
+    .mobile-headline {
+      font-size: 36px;
+    }
+    
+    .mobile-subheadline {
+      font-size: 20px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mobile-headline {
+      font-size: 42px;
+    }
+    
+    .mobile-subheadline {
+      font-size: 24px;
+    }
   }
 }
 
