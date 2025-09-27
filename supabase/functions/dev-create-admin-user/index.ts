@@ -42,16 +42,17 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if user already exists
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
+    const { data: users } = await supabase.auth.admin.listUsers();
+    const existingUser = users?.users.find(user => user.email === email);
     
-    if (existingUser?.user) {
+    if (existingUser) {
       console.log('User already exists, checking admin status');
       
       // Check if they're in admin_users
       const { data: adminUser } = await supabase
         .from('admin_users')
         .select('*')
-        .eq('user_id', existingUser.user.id)
+        .eq('user_id', existingUser.id)
         .single();
 
       if (adminUser) {
@@ -59,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
           JSON.stringify({ 
             success: true, 
             message: 'User already exists with admin access',
-            userId: existingUser.user.id,
+            userId: existingUser.id,
             existing: true
           }),
           {
@@ -77,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: adminUserError } = await supabase
         .from('admin_users')
         .insert({ 
-          user_id: existingUser.user.id, 
+          user_id: existingUser.id, 
           email: email,
           role: role,
           status: 'active'
@@ -91,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ 
           success: true, 
           message: 'Existing user granted admin access',
-          userId: existingUser.user.id
+          userId: existingUser.id
         }),
         {
           status: 200,
