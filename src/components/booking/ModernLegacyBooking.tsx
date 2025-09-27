@@ -1084,57 +1084,18 @@ export function ModernLegacyBooking() {
               </CardContent>
             </Card>
 
-            {/* Property Details */}
+            {/* Special Instructions */}
             <Card>
               <CardHeader>
-                <CardTitle>Property Details</CardTitle>
+                <CardTitle>Special Instructions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="bedrooms">Bedrooms *</Label>
-                    <Select value={bookingData.bedrooms} onValueChange={value => updateField('bedrooms', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 4, 5, 6].map(num => <SelectItem key={num} value={num.toString()}>
-                            {num} Bedroom{num > 1 ? 's' : ''}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="bathrooms">Bathrooms *</Label>
-                    <Select value={bookingData.bathrooms} onValueChange={value => updateField('bathrooms', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 1.5, 2, 2.5, 3, 3.5, 4, 5].map(num => <SelectItem key={num} value={num.toString()}>
-                            {num} Bathroom{num > 1 ? 's' : ''}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="dwellingType">Property Type *</Label>
-                    <Select value={bookingData.dwellingType} onValueChange={value => updateField('dwellingType', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="house">House</SelectItem>
-                        <SelectItem value="apartment">Apartment</SelectItem>
-                        <SelectItem value="condo">Condo</SelectItem>
-                        <SelectItem value="townhouse">Townhouse</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <CardContent>
                 <div>
                   <Label htmlFor="specialInstructions">Special Instructions</Label>
                   <Textarea id="specialInstructions" value={bookingData.specialInstructions} onChange={e => updateField('specialInstructions', e.target.value)} placeholder="Any special instructions or areas of focus..." rows={3} />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Let us know about any specific areas you'd like us to focus on or avoid
+                  </p>
                 </div>
               </CardContent>
             </Card>
