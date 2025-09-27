@@ -21,21 +21,24 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface WebhookConfig {
   id: string;
-  organization_name: string;
-  webhook_url: string;
-  is_active: boolean;
-  webhook_events: string[];
+  name: string;
+  url: string;
+  active: boolean;
+  event_types: string[];
+  headers: any;
   created_at: string;
   updated_at: string;
 }
 
 interface WebhookLog {
   id: string;
-  webhook_url: string;
-  event_type: string;
+  webhook_config_id: string | null;
+  payload: any;
   response_status: number | null;
-  is_success: boolean;
+  response_body: string | null;
   error_message: string | null;
+  delivered_at: string | null;
+  attempts: number;
   created_at: string;
 }
 
@@ -43,7 +46,7 @@ export function WebhookConfigurationPanel() {
   const [config, setConfig] = useState<WebhookConfig | null>(null);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(['booking_created', 'booking_updated', 'payment_confirmed']);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(['booking_created', 'booking_confirmed', 'payment_processed', 'lead_created']);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -51,9 +54,10 @@ export function WebhookConfigurationPanel() {
   const [showLogs, setShowLogs] = useState(false);
 
   const availableEvents = [
-    { id: 'booking_created', label: 'Booking Created', description: 'When a new booking is confirmed' },
-    { id: 'booking_updated', label: 'Booking Updated', description: 'When booking details are modified' },
-    { id: 'payment_confirmed', label: 'Payment Confirmed', description: 'When payment is processed' }
+    { id: 'booking_created', label: 'Booking Created', description: 'When a new booking is created' },
+    { id: 'booking_confirmed', label: 'Booking Confirmed', description: 'When a booking is confirmed with payment' },
+    { id: 'payment_processed', label: 'Payment Processed', description: 'When payment is processed' },
+    { id: 'lead_created', label: 'Lead Created', description: 'When a new lead is generated' }
   ];
 
   useEffect(() => {
@@ -78,9 +82,9 @@ export function WebhookConfigurationPanel() {
 
       if (data) {
         setConfig(data);
-        setWebhookUrl(data.webhook_url);
-        setIsActive(data.is_active);
-        setSelectedEvents(data.webhook_events);
+        setWebhookUrl(data.url);
+        setIsActive(data.active);
+        setSelectedEvents(data.event_types);
       }
     } catch (error) {
       console.error('Error loading webhook config:', error);
@@ -123,9 +127,11 @@ export function WebhookConfigurationPanel() {
     setIsSaving(true);
     try {
       const configData = {
-        webhook_url: webhookUrl.trim(),
-        is_active: isActive,
-        webhook_events: selectedEvents,
+        name: config?.name || 'Zapier Integration',
+        url: webhookUrl.trim(),
+        active: isActive,
+        event_types: selectedEvents,
+        headers: config?.headers || {},
         updated_at: new Date().toISOString()
       };
 
@@ -141,10 +147,7 @@ export function WebhookConfigurationPanel() {
         // Create new configuration
         const { error } = await supabase
           .from('webhook_configurations')
-          .insert({
-            ...configData,
-            organization_name: 'Bay Area Cleaning Pros'
-          });
+          .insert(configData);
 
         if (error) throw error;
       }
@@ -167,42 +170,19 @@ export function WebhookConfigurationPanel() {
 
     setIsTesting(true);
     try {
-      const testPayload = {
-        bookingStep: 'confirmation',
-        serviceType: 'deep_clean',
-        frequency: 'one_time',
-        addOns: ['inside_oven', 'inside_fridge'],
-        serviceDate: '2025-08-25',
-        serviceTime: '10:00 AM - 12:00 PM',
-        customerInfo: {
-          name: 'Test Customer',
-          email: 'test@example.com',
-          phone: '(555) 123-4567',
-          address: '123 Test Street',
-          city: 'San Francisco',
-          state: 'CA',
-          zipCode: '94102'
-        },
-        totalPrice: 399,
-        paymentAmount: 399,
-        paymentType: 'full' as const,
-        webhookUrl: webhookUrl.trim()
-      };
-
-      const { data, error } = await supabase.functions.invoke('send-booking-webhook', {
-        body: testPayload
+      const { data, error } = await supabase.functions.invoke('webhook-delivery-test', {
+        body: { test: true }
       });
 
       if (error) throw error;
 
       if (data.success) {
-        toast.success('Webhook test successful! Check your endpoint for the test data.');
+        toast.success('Webhook test successful! Check the delivery logs below.');
+        // Refresh logs after test
+        setTimeout(() => loadRecentLogs(), 2000);
       } else {
         toast.error(`Webhook test failed: ${data.error || 'Unknown error'}`);
       }
-
-      // Refresh logs after test
-      setTimeout(() => loadRecentLogs(), 1000);
     } catch (error) {
       console.error('Error testing webhook:', error);
       toast.error('Failed to test webhook');
@@ -340,22 +320,32 @@ export function WebhookConfigurationPanel() {
                   <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        {log.is_success ? (
+                        {log.delivered_at ? (
                           <CheckCircle className="h-4 w-4 text-success" />
                         ) : (
                           <AlertCircle className="h-4 w-4 text-destructive" />
                         )}
-                        <span className="font-medium">{log.event_type}</span>
-                        <Badge variant={log.is_success ? 'default' : 'destructive'}>
+                        <span className="font-medium">
+                          {log.payload?.event_type || 'Webhook Test'}
+                        </span>
+                        <Badge variant={log.delivered_at ? 'default' : 'destructive'}>
                           {log.response_status || 'No Response'}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Attempts: {log.attempts}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {log.webhook_url}
+                        Config ID: {log.webhook_config_id || 'Direct Test'}
                       </p>
                       {log.error_message && (
                         <p className="text-sm text-destructive mt-1">
                           Error: {log.error_message}
+                        </p>
+                      )}
+                      {log.response_body && log.response_body !== 'Webhook not found.' && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Response: {log.response_body.slice(0, 100)}...
                         </p>
                       )}
                     </div>

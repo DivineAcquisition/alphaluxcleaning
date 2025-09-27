@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Webhook } from 'lucide-react';
 import { EnhancedWebhookTester } from '@/components/admin/EnhancedWebhookTester';
+import { WebhookConfigurationPanel } from '@/components/admin/WebhookConfigurationPanel';
+import { WebhookHealthMonitor } from '@/components/admin/WebhookHealthMonitor';
 import { GHLWebhookTest } from '@/components/GHLWebhookTest';
 import { BulkZapierSender } from '@/components/BulkZapierSender';
 
@@ -39,14 +41,24 @@ export function DevTestWebhooks() {
           </div>
         </div>
 
-        {/* Bulk Zapier Sender */}
+        {/* Webhook Health Monitor */}
         <div className="mb-8">
-          <BulkZapierSender />
+          <WebhookHealthMonitor />
+        </div>
+
+        {/* Webhook Configuration */}
+        <div className="mb-8">
+          <WebhookConfigurationPanel />
         </div>
 
         {/* Enhanced Webhook Tester */}
         <div className="mb-8">
           <EnhancedWebhookTester />
+        </div>
+
+        {/* Bulk Zapier Sender */}
+        <div className="mb-8">
+          <BulkZapierSender />
         </div>
 
         {/* GHL Webhook Test */}
