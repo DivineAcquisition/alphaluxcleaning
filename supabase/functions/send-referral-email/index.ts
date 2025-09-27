@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
         template: "referral_reward_earned", 
         payload: {
           first_name: "Test Customer",
-          amount: "$25.00",
+          amount: "$50.00",
           referred_name: "Jane Smith",
           app_url: "https://app.alphaluxclean.com"
         },

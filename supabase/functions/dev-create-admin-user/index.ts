@@ -141,12 +141,12 @@ const handler = async (req: Request): Promise<Response> => {
       // Add to admin_users with error handling
       const { error: adminUserError } = await supabase
         .from('admin_users')
-        .insert({ 
+        .upsert({ 
           user_id: existingUser.id, 
           email: email,
           role: role,
           status: 'active'
-        });
+        }, { onConflict: 'user_id' });
 
       if (adminUserError) {
         console.error('Error adding to admin_users:', adminUserError);
@@ -239,12 +239,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (authData.user) {
       const { error: adminError } = await supabase
         .from('admin_users')
-        .insert({ 
+        .upsert({ 
           user_id: authData.user.id, 
           email: email,
           role: role,
           status: 'active'
-        });
+        }, { onConflict: 'user_id' });
 
       if (adminError) {
         console.error('Error adding to admin_users:', adminError);
