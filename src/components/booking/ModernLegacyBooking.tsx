@@ -454,6 +454,9 @@ export function ModernLegacyBooking() {
         if (!bookingData.homeSize) return "Please select your home size";
         if (!bookingData.flooringType) return "Please select your primary flooring type";
         if (bookingData.serviceType === 'regular' && !bookingData.frequency) return "Please select a cleaning frequency";
+        if (!bookingData.bedrooms) return "Please specify number of bedrooms";
+        if (!bookingData.bathrooms) return "Please specify number of bathrooms";
+        if (!bookingData.dwellingType) return "Please specify dwelling type";
         return "";
       case 3:
         if (!bookingData.serviceDate && !bookingData.nextDayUpsell) return "Please select a service date";
@@ -461,9 +464,6 @@ export function ModernLegacyBooking() {
         if (!bookingData.address.street) return "Please enter your address";
         if (!bookingData.customerName) return "Please enter your name";
         if (!bookingData.contactNumber) return "Please enter your phone number";
-        if (!bookingData.bedrooms) return "Please specify number of bedrooms";
-        if (!bookingData.bathrooms) return "Please specify number of bathrooms";
-        if (!bookingData.dwellingType) return "Please specify dwelling type";
         return "";
       default:
         return "";
