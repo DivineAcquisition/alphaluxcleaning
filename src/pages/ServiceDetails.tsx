@@ -314,288 +314,357 @@ const ServiceDetails = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          
-          {/* Header */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
-              <CardTitle className="flex items-center gap-2">
-                <Home className="h-5 w-5" />
-                Complete Your Service Details
-              </CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Help us provide the best cleaning service by sharing a few more details
-              </CardDescription>
-              
-              {/* Progress Bar */}
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Form Completion</span>
-                  <span className="flex items-center gap-1">
-                    {calculateCompletion() === 100 && <CheckCircle className="h-4 w-4" />}
-                    {calculateCompletion()}%
-                  </span>
-                </div>
-                <div className="w-full bg-primary-foreground/20 rounded-full h-2">
-                  <div 
-                    className="bg-white h-2 rounded-full transition-all duration-300" 
-                    style={{ width: `${calculateCompletion()}%` }}
-                  />
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
+      <div className="container mx-auto px-4 py-6 lg:py-8 xl:py-12 2xl:py-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 xl:gap-12 2xl:gap-16">
+            
+            {/* Desktop Sidebar - Progress & Summary */}
+            <div className="xl:col-span-3 space-y-6">
+              <Card className="border-0 shadow-lg sticky top-6">
+                <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
+                  <CardTitle className="flex items-center gap-2 text-lg xl:text-xl">
+                    <CheckCircle className="h-5 w-5 xl:h-6 xl:w-6" />
+                    Progress
+                  </CardTitle>
+                  <CardDescription className="text-primary-foreground/80">
+                    {calculateCompletion()}% Complete
+                  </CardDescription>
+                  
+                  {/* Enhanced Progress Bar */}
+                  <div className="mt-4 space-y-3">
+                    <div className="w-full bg-primary-foreground/20 rounded-full h-3">
+                      <div 
+                        className="bg-white h-3 rounded-full transition-all duration-500 ease-out" 
+                        style={{ width: `${calculateCompletion()}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-primary-foreground/90">
+                      <span>Keep going!</span>
+                      <span className="flex items-center gap-1 font-medium">
+                        {calculateCompletion() === 100 && <CheckCircle className="h-4 w-4" />}
+                        {calculateCompletion()}%
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 lg:p-6 space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Customer Info</span>
+                      <span className={formData.customerName && formData.customerEmail ? "text-success" : "text-muted-foreground"}>
+                        {formData.customerName && formData.customerEmail ? "✓" : "○"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Service Address</span>
+                      <span className={formData.streetAddress && formData.city && formData.zipCode ? "text-success" : "text-muted-foreground"}>
+                        {formData.streetAddress && formData.city && formData.zipCode ? "✓" : "○"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Property Details</span>
+                      <span className={formData.dwellingType && formData.flooringTypes.length > 0 ? "text-success" : "text-muted-foreground"}>
+                        {formData.dwellingType && formData.flooringTypes.length > 0 ? "✓" : "○"}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Form */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6 space-y-8">
-              
-              {/* Customer Information */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-semibold">
-                  <User className="h-5 w-5 text-primary" />
-                  Customer Information
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Full Name *</Label>
-                    <Input
-                      id="customerName"
-                      value={formData.customerName}
-                      onChange={(e) => handleInputChange("customerName", e.target.value)}
-                      placeholder="John Doe"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerEmail">Email Address *</Label>
-                    <Input
-                      id="customerEmail"
-                      type="email"
-                      value={formData.customerEmail}
-                      onChange={(e) => handleInputChange("customerEmail", e.target.value)}
-                      placeholder="john@example.com"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerPhone">Phone Number</Label>
-                    <Input
-                      id="customerPhone"
-                      type="tel"
-                      value={formData.customerPhone}
-                      onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Desktop Tips Card */}
+              <Card className="border-0 shadow-lg hidden xl:block">
+                <CardHeader>
+                  <CardTitle className="text-lg">💡 Quick Tips</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-3 text-sm text-muted-foreground">
+                  <p>• More details help us provide better service</p>
+                  <p>• All information is kept secure and private</p>
+                  <p>• You can always update details later</p>
+                </CardContent>
+              </Card>
+            </div>
 
-              {/* Service Address */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-semibold">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Service Address
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="streetAddress">Street Address *</Label>
-                    <Input
-                      id="streetAddress"
-                      value={formData.streetAddress}
-                      onChange={(e) => handleInputChange("streetAddress", e.target.value)}
-                      placeholder="123 Main Street"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="apartmentUnit">Apartment/Unit</Label>
-                    <Input
-                      id="apartmentUnit"
-                      value={formData.apartmentUnit}
-                      onChange={(e) => handleInputChange("apartmentUnit", e.target.value)}
-                      placeholder="Apt 4B"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange("city", e.target.value)}
-                      placeholder="San Francisco"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Select value={formData.state} onValueChange={(value) => handleInputChange("state", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {US_STATES.map(state => (
-                          <SelectItem key={state.abbreviation} value={state.abbreviation}>
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP Code *</Label>
-                    <Input
-                      id="zipCode"
-                      value={formData.zipCode}
-                      onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                      placeholder="94102"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Main Form Content */}
+            <div className="xl:col-span-9">
+              {/* Desktop Header */}
+              <Card className="border-0 shadow-lg mb-6 xl:mb-8">
+                <CardHeader className="bg-gradient-to-r from-primary to-accent text-white p-6 lg:p-8">
+                  <CardTitle className="flex items-center gap-3 text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl">
+                    <Home className="h-6 w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 2xl:h-10 2xl:w-10" />
+                    Complete Your Service Details
+                  </CardTitle>
+                  <CardDescription className="text-primary-foreground/80 text-base lg:text-lg xl:text-xl 2xl:text-2xl">
+                    Help us provide the best cleaning service by sharing a few more details
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-              {/* Property Details */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-semibold">
-                  <Home className="h-5 w-5 text-primary" />
-                  Property Details
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dwellingType">Dwelling Type</Label>
-                    <Select value={formData.dwellingType} onValueChange={(value) => handleInputChange("dwellingType", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select dwelling type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="apartment">Apartment</SelectItem>
-                        <SelectItem value="house">House</SelectItem>
-                        <SelectItem value="condo">Condo</SelectItem>
-                        <SelectItem value="townhouse">Townhouse</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* Enhanced Form */}
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-6 lg:p-8 xl:p-10 2xl:p-12 space-y-8 lg:space-y-10 xl:space-y-12 2xl:space-y-16">
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryFlooringType">Primary Flooring Type</Label>
-                    <Select value={formData.primaryFlooringType} onValueChange={(value) => handleInputChange("primaryFlooringType", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select primary flooring" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {flooringOptions.map((option) => (
-                          <SelectItem key={option} value={option.toLowerCase()}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Flooring Types Checkboxes */}
-                <div className="space-y-3">
-                  <Label>All Flooring Types Present *</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {flooringOptions.map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`flooring-${option}`}
-                          checked={formData.flooringTypes.includes(option.toLowerCase())}
-                          onCheckedChange={(checked) => 
-                            handleFlooringTypeChange(option.toLowerCase(), checked as boolean)
-                          }
+                  {/* Enhanced Customer Information */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-semibold border-b pb-3">
+                      <User className="h-6 w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 2xl:h-10 2xl:w-10 text-primary" />
+                      Customer Information
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6 xl:gap-8">
+                      <div className="space-y-3">
+                        <Label htmlFor="customerName" className="text-base font-medium">Full Name *</Label>
+                        <Input
+                          id="customerName"
+                          value={formData.customerName}
+                          onChange={(e) => handleInputChange("customerName", e.target.value)}
+                          placeholder="John Doe"
+                          required
+                          className="h-12 text-base"
                         />
-                        <Label 
-                          htmlFor={`flooring-${option}`} 
-                          className="text-sm font-normal cursor-pointer"
-                        >
-                          {option}
-                        </Label>
                       </div>
-                    ))}
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="customerEmail" className="text-base font-medium">Email Address *</Label>
+                        <Input
+                          id="customerEmail"
+                          type="email"
+                          value={formData.customerEmail}
+                          onChange={(e) => handleInputChange("customerEmail", e.target.value)}
+                          placeholder="john@example.com"
+                          required
+                          className="h-12 text-base"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="customerPhone" className="text-base font-medium">Phone Number</Label>
+                        <Input
+                          id="customerPhone"
+                          type="tel"
+                          value={formData.customerPhone}
+                          onChange={(e) => handleInputChange("customerPhone", e.target.value)}
+                          placeholder="(555) 123-4567"
+                          className="h-12 text-base"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Additional Information */}
-              <div className="space-y-4">
-                <div className="text-lg font-semibold">Additional Information</div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="accessInstructions">Access Instructions</Label>
-                    <Textarea
-                      id="accessInstructions"
-                      value={formData.accessInstructions}
-                      onChange={(e) => handleInputChange("accessInstructions", e.target.value)}
-                      placeholder="How should our team access your home?"
-                      rows={3}
-                    />
+                  {/* Enhanced Service Address */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-semibold border-b pb-3">
+                      <MapPin className="h-6 w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 2xl:h-10 2xl:w-10 text-primary" />
+                      Service Address
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6 xl:gap-8">
+                      <div className="md:col-span-2 xl:col-span-3 2xl:col-span-4 space-y-3">
+                        <Label htmlFor="streetAddress" className="text-base font-medium">Street Address *</Label>
+                        <Input
+                          id="streetAddress"
+                          value={formData.streetAddress}
+                          onChange={(e) => handleInputChange("streetAddress", e.target.value)}
+                          placeholder="123 Main Street"
+                          required
+                          className="h-12 text-base"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="apartmentUnit" className="text-base font-medium">Apartment/Unit</Label>
+                        <Input
+                          id="apartmentUnit"
+                          value={formData.apartmentUnit}
+                          onChange={(e) => handleInputChange("apartmentUnit", e.target.value)}
+                          placeholder="Apt 4B"
+                          className="h-12 text-base"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="city" className="text-base font-medium">City *</Label>
+                        <Input
+                          id="city"
+                          value={formData.city}
+                          onChange={(e) => handleInputChange("city", e.target.value)}
+                          placeholder="San Francisco"
+                          required
+                          className="h-12 text-base"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="state" className="text-base font-medium">State</Label>
+                        <Select value={formData.state} onValueChange={(value) => handleInputChange("state", value)}>
+                          <SelectTrigger className="h-12 text-base">
+                            <SelectValue placeholder="Select state" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {US_STATES.map(state => (
+                              <SelectItem key={state.abbreviation} value={state.abbreviation} className="text-base">
+                                {state.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="zipCode" className="text-base font-medium">ZIP Code *</Label>
+                        <Input
+                          id="zipCode"
+                          value={formData.zipCode}
+                          onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                          placeholder="94102"
+                          required
+                          className="h-12 text-base"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="specialRequests">Special Requests</Label>
-                    <Textarea
-                      id="specialRequests"
-                      value={formData.specialRequests}
-                      onChange={(e) => handleInputChange("specialRequests", e.target.value)}
-                      placeholder="Any special cleaning requests or areas to focus on?"
-                      rows={3}
-                    />
+
+                  {/* Enhanced Property Details */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-semibold border-b pb-3">
+                      <Home className="h-6 w-6 lg:h-7 lg:w-7 xl:h-8 xl:w-8 2xl:h-10 2xl:w-10 text-primary" />
+                      Property Details
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6 xl:gap-8">
+                      <div className="space-y-3">
+                        <Label htmlFor="dwellingType" className="text-base font-medium">Dwelling Type</Label>
+                        <Select value={formData.dwellingType} onValueChange={(value) => handleInputChange("dwellingType", value)}>
+                          <SelectTrigger className="h-12 text-base">
+                            <SelectValue placeholder="Select dwelling type" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            <SelectItem value="apartment" className="text-base">Apartment</SelectItem>
+                            <SelectItem value="house" className="text-base">House</SelectItem>
+                            <SelectItem value="condo" className="text-base">Condo</SelectItem>
+                            <SelectItem value="townhouse" className="text-base">Townhouse</SelectItem>
+                            <SelectItem value="other" className="text-base">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="primaryFlooringType" className="text-base font-medium">Primary Flooring Type</Label>
+                        <Select value={formData.primaryFlooringType} onValueChange={(value) => handleInputChange("primaryFlooringType", value)}>
+                          <SelectTrigger className="h-12 text-base">
+                            <SelectValue placeholder="Select primary flooring" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {flooringOptions.map((option) => (
+                              <SelectItem key={option} value={option.toLowerCase()} className="text-base">
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Flooring Types Checkboxes */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-medium">All Flooring Types Present *</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 lg:gap-4">
+                        {flooringOptions.map((option) => (
+                          <div key={option} className="flex items-center space-x-3">
+                            <Checkbox
+                              id={`flooring-${option}`}
+                              checked={formData.flooringTypes.includes(option.toLowerCase())}
+                              onCheckedChange={(checked) => 
+                                handleFlooringTypeChange(option.toLowerCase(), checked as boolean)
+                              }
+                              className="h-5 w-5"
+                            />
+                            <Label 
+                              htmlFor={`flooring-${option}`} 
+                              className="text-base font-normal cursor-pointer hover:text-primary transition-colors"
+                            >
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="petsPresent"
-                    checked={formData.petsPresent}
-                    onCheckedChange={(checked) => handleInputChange("petsPresent", checked as boolean)}
-                  />
-                  <Label htmlFor="petsPresent">Pets will be present during cleaning</Label>
-                </div>
-              </div>
+                  {/* Enhanced Additional Information */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl font-semibold border-b pb-3">
+                      Additional Information
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6 lg:gap-8">
+                      <div className="space-y-3">
+                        <Label htmlFor="accessInstructions" className="text-base font-medium">Access Instructions</Label>
+                        <Textarea
+                          id="accessInstructions"
+                          value={formData.accessInstructions}
+                          onChange={(e) => handleInputChange("accessInstructions", e.target.value)}
+                          placeholder="How should our team access your home?"
+                          rows={4}
+                          className="text-base resize-none"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label htmlFor="specialRequests" className="text-base font-medium">Special Requests</Label>
+                        <Textarea
+                          id="specialRequests"
+                          value={formData.specialRequests}
+                          onChange={(e) => handleInputChange("specialRequests", e.target.value)}
+                          placeholder="Any special cleaning requests or areas to focus on?"
+                          rows={4}
+                          className="text-base resize-none"
+                        />
+                      </div>
+                    </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-between pt-6 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate(`/payment-confirmation?session_id=${sessionId}`)}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Payment
-                </Button>
-                
-                <Button 
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || calculateCompletion() < 80}
-                  className="flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  ) : (
-                    <>
-                      Continue to Scheduling
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex items-center space-x-3 p-4 bg-muted/30 rounded-lg">
+                      <Checkbox
+                        id="petsPresent"
+                        checked={formData.petsPresent}
+                        onCheckedChange={(checked) => handleInputChange("petsPresent", checked as boolean)}
+                        className="h-5 w-5"
+                      />
+                      <Label htmlFor="petsPresent" className="text-base cursor-pointer">
+                        Pets will be present during cleaning
+                      </Label>
+                    </div>
+                  </div>
+
+                  {/* Enhanced Navigation Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-between pt-8 border-t">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/payment-confirmation?session_id=${sessionId}`)}
+                      className="flex items-center gap-2 h-12 lg:h-14 px-6 lg:px-8 text-base lg:text-lg hover:bg-muted/50 transition-all duration-200"
+                    >
+                      <ArrowLeft className="h-5 w-5 lg:h-6 lg:w-6" />
+                      Back to Payment
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || calculateCompletion() < 80}
+                      className="flex items-center gap-2 h-12 lg:h-14 px-8 lg:px-10 text-base lg:text-lg bg-primary hover:bg-primary/90 transition-all duration-200"
+                    >
+                      {isSubmitting ? (
+                        <div className="animate-spin rounded-full h-5 w-5 lg:h-6 lg:w-6 border-b-2 border-white" />
+                      ) : (
+                        <>
+                          Continue to Scheduling
+                          <ArrowRight className="h-5 w-5 lg:h-6 lg:w-6" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
