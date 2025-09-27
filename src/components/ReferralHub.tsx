@@ -124,13 +124,13 @@ export const ReferralHub: React.FC = () => {
   const shareViaEmail = () => {
     if (!referralData?.referral_link) return;
     
-    const subject = encodeURIComponent('Get $25 off your first AlphaLuxClean service!');
+    const subject = encodeURIComponent('Get $50 off your first AlphaLuxClean service!');
     const body = encodeURIComponent(`I love using AlphaLuxClean for my house cleaning and thought you might too! 
 
-Use my referral link to get $25 off your first cleaning:
+Use my referral link to get $50 off your first cleaning:
 ${referralData.referral_link}
 
-They're professional, reliable, and do an amazing job. Plus, when you book, I'll get $25 credit toward my next cleaning too!
+They're professional, reliable, and do an amazing job. Plus, when you book, I'll get $50 credit toward my next cleaning too!
 
 Let me know what you think after you try them out.`);
     
@@ -140,7 +140,7 @@ Let me know what you think after you try them out.`);
   const shareViaSMS = () => {
     if (!referralData?.referral_link) return;
     
-    const message = encodeURIComponent(`Hey! Get $25 off your first AlphaLuxClean service with my link: ${referralData.referral_link}`);
+    const message = encodeURIComponent(`Hey! Get $50 off your first AlphaLuxClean service with my link: ${referralData.referral_link}`);
     window.open(`sms:?body=${message}`);
   };
 
@@ -184,14 +184,14 @@ Let me know what you think after you try them out.`);
               Set Up Your Referral Program
             </CardTitle>
             <CardDescription>
-              Start earning $25 for every friend you refer to AlphaLuxClean
+              Start earning $50 for every friend you refer to AlphaLuxClean
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <div className="mb-6">
-              <div className="text-4xl font-bold text-primary mb-2">Give $25, Get $25</div>
+              <div className="text-4xl font-bold text-primary mb-2">Give $50, Get $50</div>
               <p className="text-muted-foreground">
-                Your friends get $25 off their first cleaning, and you earn $25 credit for each referral
+                Your friends get $50 off their first cleaning, and you earn $50 credit for each referral
               </p>
             </div>
             <Button onClick={generateReferralCode} size="lg" className="w-full">

@@ -28,12 +28,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, role = 'admin', password }: DevUserRequest = await req.json();
+    const requestBody = await req.json().catch(e => {
+      console.error('Failed to parse JSON:', e);
+      throw new Error('Invalid JSON in request body');
+    });
+
+    const { email, role = 'admin', password }: DevUserRequest = requestBody;
     
     console.log('Creating dev admin user:', { email, role, hasPassword: !!password });
 
     // Validate inputs
     if (!email || typeof email !== 'string' || !email.includes('@')) {
+      console.error('Invalid email provided:', email);
       return new Response(
         JSON.stringify({ error: 'Valid email is required' }),
         {
@@ -128,14 +134,8 @@ const handler = async (req: Request): Promise<Response> => {
         .upsert({ email }, { onConflict: 'email' });
       
       if (allowlistError) {
-        console.error('Error adding to allowlist:', allowlistError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to add to admin allowlist' }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
+        console.error('Error adding to allowlist:', allowlistError.message, allowlistError);
+        // Continue anyway - this is not critical for admin access
       }
       
       // Add to admin_users with error handling

@@ -303,7 +303,7 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
       to: referrerCustomer?.email,
       data: {
         first_name: referrerCustomer?.first_name,
-        amount: '$25.00',
+        amount: '$50.00',
         referred_name: referredCustomer?.first_name
       },
       category: 'transactional'
@@ -317,7 +317,7 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
       to: referredCustomer?.email,
       data: {
         first_name: referredCustomer?.first_name,
-        amount: '$25.00',
+        amount: '$50.00',
         referrer_name: referrerCustomer?.first_name
       },
       category: 'transactional'
