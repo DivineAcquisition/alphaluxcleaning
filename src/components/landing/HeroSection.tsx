@@ -16,35 +16,7 @@ export function HeroSection() {
           </div>
 
           {/* Value Proposition Bullets - 120px height target, Single Column Mobile */}
-          <div className="mb-4 space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 max-w-2xl mx-auto">
-            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 text-primary" />
-              </div>
-              <span className="mobile-body font-medium text-foreground">Same professional team every visit</span>
-            </div>
-            
-            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Award className="w-4 h-4 text-primary" />
-              </div>
-              <span className="mobile-body font-medium text-foreground">All cleaning supplies included</span>
-            </div>
-            
-            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-4 h-4 text-primary" />
-              </div>
-              <span className="mobile-body font-medium text-foreground">Satisfaction guaranteed</span>
-            </div>
-            
-            <div className="flex items-center justify-center lg:justify-start gap-3 py-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-4 h-4 text-primary" />
-              </div>
-              <span className="mobile-body font-medium text-foreground">Flexible scheduling options</span>
-            </div>
-          </div>
+          
 
           {/* Trust Signal - 30px height target */}
           <div className="flex items-center justify-center gap-2 mb-6">
