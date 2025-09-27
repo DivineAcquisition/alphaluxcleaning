@@ -93,35 +93,35 @@ const pricingMatrix = {
 // Service types based on frequency and type
 const serviceTypes = [{
   id: 'regular',
-  name: 'Regular',
-  description: 'Weekly upkeep',
+  name: 'Regular Clean',
+  description: 'Weekly maintenance',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Home,
   popular: true,
-  features: ['Standard cleaning', 'All rooms'],
+  features: ['All surfaces cleaned', 'Floors & bathrooms', 'Kitchen & trash'],
   recurring: true,
   hasFrequency: true
 }, {
   id: 'deep',
-  name: 'Deep',
-  description: 'Detailed service',
+  name: 'Deep Clean',
+  description: 'Thorough cleaning',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Sparkles,
   popular: false,
-  features: ['Extra thorough', 'Appliances included'],
+  features: ['Everything + appliances', 'Light fixtures', 'Baseboards & sills'],
   recurring: false,
   hasFrequency: false
 }, {
   id: 'moveout',
-  name: 'Move-Out',
-  description: 'Complete clean',
+  name: 'Move-Out Clean',
+  description: 'Complete cleanout',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Zap,
   popular: false,
-  features: ['Everything included', 'Move-ready'],
+  features: ['Deep clean + cabinets', 'Appliance interiors', 'Final walkthrough'],
   recurring: false,
   hasFrequency: false
 }];
