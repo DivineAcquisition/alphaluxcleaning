@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Shield, Lock, Loader2, CreditCard } from 'lucide-react';
@@ -7,6 +7,7 @@ import { stripePromise } from '@/lib/stripe';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/pricing-utils';
 import { PaymentFormSkeleton } from '@/components/ui/loading-skeleton';
+import { scrollToPaymentForm } from '@/lib/scroll-utils';
 
 export interface EmbeddedPaymentFormProps {
   clientSecret: string;
@@ -31,6 +32,24 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentAmount, fullAmount, pa
   const [loading, setLoading] = useState(false);
   const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to payment form when component mounts
+  useEffect(() => {
+    scrollToPaymentForm(200);
+  }, []);
+
+  // Auto-scroll when PaymentElement becomes ready
+  useEffect(() => {
+    if (isPaymentElementReady && formRef.current) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 300);
+    }
+  }, [isPaymentElementReady]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,7 +90,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ paymentAmount, fullAmount, pa
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full" ref={formRef} role="main">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="h-5 w-5 text-primary" />

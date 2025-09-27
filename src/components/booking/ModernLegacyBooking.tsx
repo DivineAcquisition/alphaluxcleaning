@@ -24,6 +24,7 @@ import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
+import { scrollToStepContent } from '@/lib/scroll-utils';
 
 // Original pricing matrix - 20% discount applied automatically in calculations
 const pricingMatrix = {
@@ -479,13 +480,8 @@ export function ModernLegacyBooking() {
         handleBooking();
       } else {
         setCurrentStep(prev => prev + 1);
-        // Auto-scroll to top of container
-        setTimeout(() => {
-          containerRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 100);
+        // Enhanced auto-scroll to step content
+        scrollToStepContent(containerRef, 150);
       }
     }
   };

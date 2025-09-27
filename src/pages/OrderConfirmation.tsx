@@ -7,6 +7,7 @@ import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSect
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { scrollToConfirmation } from "@/lib/scroll-utils";
 
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
@@ -159,6 +160,9 @@ export default function OrderConfirmation() {
       }
 
       setOrderDetails(data);
+      
+      // Auto-scroll to confirmation section after order loads
+      scrollToConfirmation(400);
       
       // Track Facebook Pixel Purchase event
       if (data) {
@@ -457,7 +461,7 @@ Questions? Call (857) 754-4557
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Hero Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 confirmation-hero" data-testid="booking-confirmed">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-6">
             <CheckCircle className="h-8 w-8 text-primary-foreground" />
           </div>
