@@ -194,6 +194,7 @@ export type Database = {
           stripe_subscription_id: string | null
           time_slot: string | null
           timezone: string | null
+          updated_at: string | null
           utms: Json | null
           zip_code: string | null
         }
@@ -238,6 +239,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           time_slot?: string | null
           timezone?: string | null
+          updated_at?: string | null
           utms?: Json | null
           zip_code?: string | null
         }
@@ -282,6 +284,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           time_slot?: string | null
           timezone?: string | null
+          updated_at?: string | null
           utms?: Json | null
           zip_code?: string | null
         }

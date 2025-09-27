@@ -97,3 +97,9 @@ verify_jwt = false
 
 [functions.webhook-delivery-test]
 verify_jwt = false
+
+[functions.test-email-webhook-system]
+verify_jwt = false
+
+[functions.trigger-email-processing]
+verify_jwt = false

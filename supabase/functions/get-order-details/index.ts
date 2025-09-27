@@ -60,7 +60,7 @@ serve(async (req) => {
           customer_id
         `)
         .eq("id", order_id)
-        .single();
+        .maybeSingle();
       
       if (bookingMatch) {
         // Get customer data separately
@@ -68,7 +68,7 @@ serve(async (req) => {
           .from("customers")
           .select("name, email, phone, address, city, state, postal_code")
           .eq("id", bookingMatch.customer_id)
-          .single();
+          .maybeSingle();
         
         data = { ...bookingMatch, customer_data: customerData };
         console.log("Found exact UUID match");
@@ -99,14 +99,14 @@ serve(async (req) => {
             customer_id
           `)
           .ilike("id", `%${order_id}%`)
-          .single();
+          .maybeSingle();
         
         if (partialMatch) {
           const { data: customerData } = await supabase
             .from("customers")
             .select("name, email, phone, address, city, state, postal_code")
             .eq("id", partialMatch.customer_id)
-            .single();
+            .maybeSingle();
           
           data = { ...partialMatch, customer_data: customerData };
           console.log("Found partial UUID match");
@@ -141,14 +141,14 @@ serve(async (req) => {
           customer_id
         `)
         .or(`stripe_checkout_session_id.eq.${session_id},stripe_payment_intent_id.eq.${session_id},stripe_subscription_id.eq.${session_id}`)
-        .single();
+        .maybeSingle();
       
       if (sessionMatch) {
         const { data: customerData } = await supabase
           .from("customers")
           .select("name, email, phone, address, city, state, postal_code")
           .eq("id", sessionMatch.customer_id)
-          .single();
+          .maybeSingle();
         
         data = { ...sessionMatch, customer_data: customerData };
         console.log("Found booking by session_id/intent_id:", sessionMatch.id);
@@ -182,14 +182,14 @@ serve(async (req) => {
           customer_id
         `)
         .eq("stripe_payment_intent_id", payment_intent)
-        .single();
+        .maybeSingle();
       
       if (intentMatch) {
         const { data: customerData } = await supabase
           .from("customers")
           .select("name, email, phone, address, city, state, postal_code")
           .eq("id", intentMatch.customer_id)
-          .single();
+          .maybeSingle();
         
         data = { ...intentMatch, customer_data: customerData };
         console.log("Found booking by payment_intent:", intentMatch.id);
@@ -223,14 +223,14 @@ serve(async (req) => {
           customer_id
         `)
         .eq("stripe_subscription_id", setup_intent)
-        .single();
+        .maybeSingle();
       
       if (setupMatch) {
         const { data: customerData } = await supabase
           .from("customers")
           .select("name, email, phone, address, city, state, postal_code")
           .eq("id", setupMatch.customer_id)
-          .single();
+          .maybeSingle();
         
         data = { ...setupMatch, customer_data: customerData };
         console.log("Found booking by setup_intent:", setupMatch.id);
@@ -264,14 +264,14 @@ serve(async (req) => {
           customer_id
         `)
         .or(`id.ilike.%${code}%,stripe_checkout_session_id.ilike.%${code}%`)
-        .single();
+        .maybeSingle();
       
       if (codeMatch) {
         const { data: customerData } = await supabase
           .from("customers")
           .select("name, email, phone, address, city, state, postal_code")
           .eq("id", codeMatch.customer_id)
-          .single();
+          .maybeSingle();
         
         data = { ...codeMatch, customer_data: customerData };
       }
@@ -283,7 +283,7 @@ serve(async (req) => {
         .from("customers")
         .select("id, name, email, phone, address, city, state, postal_code")
         .ilike("email", `%${email}%`)
-        .single();
+        .maybeSingle();
       
       if (customerData) {
         // Then find their most recent booking
@@ -312,7 +312,7 @@ serve(async (req) => {
           `)
           .eq("customer_id", customerData.id)
           .order("created_at", { ascending: false })
-          .single();
+          .maybeSingle();
         
         if (emailMatch) {
           data = { ...emailMatch, customer_data: customerData };
