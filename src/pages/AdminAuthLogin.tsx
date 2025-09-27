@@ -87,8 +87,8 @@ export default function AdminAuthLogin() {
   };
 
   const handleDevModeSignIn = async () => {
-    if (!email) {
-      toast.error('Please enter your email for development mode');
+    if (!email || !password) {
+      toast.error('Please enter both email and password for development mode');
       return;
     }
 
@@ -98,18 +98,41 @@ export default function AdminAuthLogin() {
       const { data, error } = await supabase.functions.invoke('dev-create-admin-user', {
         body: {
           email: email,
-          role: 'admin'
+          role: 'admin',
+          password: password
         }
       });
 
       if (error) throw error;
 
-      if (data.existing) {
-        toast.success('Admin user already exists. You can now sign in with your password.');
-      } else {
-        toast.success('Development admin user created with confirmed email. You can now sign in with any password.');
+      // Automatically sign in after user creation
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        toast.error('User created but sign-in failed. Please try signing in manually.');
+        setDevMode(false);
+        return;
       }
-      setDevMode(false);
+
+      // Check admin access after successful login
+      const { data: guardData, error: guardError } = await supabase.functions.invoke('admin-auth-guard');
+      
+      if (guardError || !guardData?.role) {
+        await supabase.auth.signOut();
+        toast.error('User created but admin access verification failed.');
+        return;
+      }
+
+      if (data.existing) {
+        toast.success('Admin user updated and signed in successfully!');
+      } else {
+        toast.success('Development admin user created and signed in successfully!');
+      }
+      
+      navigate('/admin', { replace: true });
     } catch (error: any) {
       console.error('Dev mode error:', error);
       toast.error(error.message || 'Failed to create development user');
@@ -192,7 +215,7 @@ export default function AdminAuthLogin() {
             <CardContent className="space-y-4">
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Development Mode:</strong> This will create an admin user without email confirmation.
+                  <strong>Development Mode:</strong> This will create an admin user and set a password.
                   Use this only for development/testing purposes.
                 </p>
               </div>
@@ -205,6 +228,18 @@ export default function AdminAuthLogin() {
                   placeholder="your-email@domain.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="dev-password" className="text-sm font-medium">Password</label>
+                <Input
+                  id="dev-password"
+                  type="password"
+                  placeholder="Create a secure password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>

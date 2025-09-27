@@ -71,6 +71,9 @@ backend = "postgres"
 [functions.admin-auth-otp]
 verify_jwt = false
 
+[functions.dev-create-admin-user]
+verify_jwt = false
+
 [functions.emails-queue]
 verify_jwt = false
 

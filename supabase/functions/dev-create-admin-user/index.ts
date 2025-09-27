@@ -13,6 +13,7 @@ const corsHeaders = {
 interface DevUserRequest {
   email: string;
   role?: 'admin' | 'ops' | 'viewer';
+  password?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -27,13 +28,24 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, role = 'admin' }: DevUserRequest = await req.json();
+    const { email, role = 'admin', password }: DevUserRequest = await req.json();
     
-    console.log('Creating dev admin user:', { email, role });
+    console.log('Creating dev admin user:', { email, role, hasPassword: !!password });
 
-    if (!email) {
+    // Validate inputs
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
       return new Response(
-        JSON.stringify({ error: 'Email is required' }),
+        JSON.stringify({ error: 'Valid email is required' }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (role && !['admin', 'ops', 'viewer'].includes(role)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid role. Must be admin, ops, or viewer' }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -42,20 +54,60 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if user already exists
-    const { data: users } = await supabase.auth.admin.listUsers();
+    const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) {
+      console.error('Error listing users:', listError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to check existing users' }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
     const existingUser = users?.users?.find(user => user.email === email);
     
     if (existingUser) {
       console.log('User already exists, checking admin status');
       
       // Check if they're in admin_users
-      const { data: adminUser } = await supabase
+      const { data: adminUser, error: adminCheckError } = await supabase
         .from('admin_users')
         .select('*')
         .eq('user_id', existingUser.id)
         .single();
 
+      if (adminCheckError && adminCheckError.code !== 'PGRST116') {
+        console.error('Error checking admin status:', adminCheckError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify admin status' }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
       if (adminUser) {
+        // Update password if provided
+        if (password) {
+          const { error: passwordError } = await supabase.auth.admin.updateUserById(
+            existingUser.id, 
+            { password }
+          );
+          if (passwordError) {
+            console.error('Error updating password:', passwordError);
+            return new Response(
+              JSON.stringify({ error: 'Failed to update password' }),
+              {
+                status: 500,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              }
+            );
+          }
+        }
+
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -70,11 +122,23 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Add to admin tables
+      // Add to admin_allowlist with error handling
       const { error: allowlistError } = await supabase
         .from('admin_allowlist')
         .upsert({ email }, { onConflict: 'email' });
       
+      if (allowlistError) {
+        console.error('Error adding to allowlist:', allowlistError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to add to admin allowlist' }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      // Add to admin_users with error handling
       const { error: adminUserError } = await supabase
         .from('admin_users')
         .insert({ 
@@ -86,6 +150,39 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (adminUserError) {
         console.error('Error adding to admin_users:', adminUserError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to grant admin access' }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      // Update password if provided
+      if (password) {
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(
+          existingUser.id, 
+          { password }
+        );
+        if (passwordError) {
+          console.error('Error updating password:', passwordError);
+          // Don't fail the whole request for password update errors
+        }
+      }
+
+      // Log the action (soft error - don't fail request)
+      const { error: auditError } = await supabase
+        .from('admin_audit_logs')
+        .insert({
+          user_id: existingUser.id,
+          email: email,
+          action: 'dev_admin_access_granted',
+          metadata: { role: role, dev_mode: true }
+        });
+
+      if (auditError) {
+        console.error('Error logging audit:', auditError);
       }
 
       return new Response(
@@ -101,14 +198,27 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Add to allowlist first
+    // Add to allowlist first with error handling
     const { error: allowlistError } = await supabase
       .from('admin_allowlist')
       .upsert({ email }, { onConflict: 'email' });
 
-    // Create new user with confirmed email (dev mode)
+    if (allowlistError) {
+      console.error('Error adding to allowlist:', allowlistError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to add to admin allowlist' }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Create new user with confirmed email and password (dev mode)
+    const userPassword = password || 'DevAdmin123!';
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
+      password: userPassword,
       email_confirm: true, // Auto-confirm for dev mode
     });
 
@@ -141,14 +251,14 @@ const handler = async (req: Request): Promise<Response> => {
         return new Response(
           JSON.stringify({ error: `Failed to add admin role: ${adminError.message}` }),
           {
-            status: 400,
+            status: 500,
             headers: { "Content-Type": "application/json", ...corsHeaders },
           }
         );
       }
 
-      // Log the action
-      await supabase
+      // Log the action (soft error - don't fail request)
+      const { error: auditError } = await supabase
         .from('admin_audit_logs')
         .insert({
           user_id: authData.user.id,
@@ -156,6 +266,10 @@ const handler = async (req: Request): Promise<Response> => {
           action: 'dev_admin_user_created',
           metadata: { role: role, dev_mode: true }
         });
+
+      if (auditError) {
+        console.error('Error logging audit:', auditError);
+      }
     }
 
     console.log('Dev admin user created successfully');
@@ -164,7 +278,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: "Dev admin user created successfully (email confirmed)",
-        userId: authData.user?.id
+        userId: authData.user?.id,
+        password: password ? 'Custom password set' : 'Default password: DevAdmin123!'
       }),
       {
         status: 200,
