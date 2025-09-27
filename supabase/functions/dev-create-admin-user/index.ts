@@ -43,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Check if user already exists
     const { data: users } = await supabase.auth.admin.listUsers();
-    const existingUser = users?.users.find(user => user.email === email);
+    const existingUser = users?.users?.find(user => user.email === email);
     
     if (existingUser) {
       console.log('User already exists, checking admin status');
