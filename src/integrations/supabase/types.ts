@@ -906,6 +906,33 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_config: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          id: string
+          reward_amount: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          reward_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          reward_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           code: string
