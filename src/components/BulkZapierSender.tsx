@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { createWebhookPayload, emitWebhook, type BookingData } from '@/lib/webhook-utils';
 
 export const BulkZapierSender = () => {
   const [loading, setLoading] = useState(false);
@@ -108,6 +108,62 @@ export const BulkZapierSender = () => {
     }
   ];
 
+  // Transform booking record to comprehensive BookingData format
+  const transformBookingToComprehensiveData = (booking: any): BookingData => {
+    const [firstName, ...lastNameParts] = booking.customer_name.split(' ');
+    const lastName = lastNameParts.join(' ') || '';
+    
+    // Parse address
+    const addressParts = booking.address.split(', ');
+    const [line1, city, stateZip] = addressParts;
+    const [state] = stateZip?.split(' ') || ['TX'];
+    
+    // Extract square footage from sqft_or_bedrooms field
+    const sqftMatch = booking.sqft_or_bedrooms.match(/(\d+)/);
+    const squareFootage = sqftMatch ? parseInt(sqftMatch[1]) : 
+      booking.sqft_or_bedrooms === 'under-1000' ? 900 :
+      booking.sqft_or_bedrooms === '1000-1500' ? 1250 :
+      booking.sqft_or_bedrooms === '1500-2000' ? 1750 : 
+      parseInt(booking.sqft_or_bedrooms) || 1500;
+
+    return {
+      customerInfo: {
+        firstName,
+        lastName,
+        email: booking.customer_email,
+        phone: booking.customer_phone,
+        address: {
+          line1: line1 || booking.address,
+          city: city || 'Houston',
+          state: state || 'TX',
+          postalCode: booking.zip_code,
+        }
+      },
+      serviceDetails: {
+        serviceType: booking.service_type,
+        frequency: booking.frequency,
+        squareFootage,
+        bedrooms: squareFootage < 1000 ? 2 : squareFootage < 1500 ? 3 : 4,
+        bathrooms: squareFootage < 1000 ? 1 : squareFootage < 1500 ? 2 : 3,
+        addOns: [],
+        specialInstructions: '',
+      },
+      schedulingInfo: {
+        selectedDate: booking.service_date,
+        selectedTimeSlot: '10:00 AM - 12:00 PM',
+      },
+      pricing: {
+        subtotal: booking.total_amount * 0.91, // Estimate before tax
+        taxAmount: booking.total_amount * 0.09,
+        totalAmount: booking.total_amount,
+      },
+      paymentInfo: {
+        paymentIntentId: `pi_${booking.booking_id.replace(/-/g, '').slice(0, 24)}`,
+        sessionId: `cs_${booking.booking_id.replace(/-/g, '').slice(0, 24)}`,
+      }
+    };
+  };
+
   const sendAllBookings = async () => {
     setLoading(true);
     setResults([]);
@@ -116,23 +172,32 @@ export const BulkZapierSender = () => {
 
     for (const booking of recentBookings) {
       try {
-        const { data, error } = await supabase.functions.invoke('send-transaction-to-zapier', {
-          body: {
-            transactionData: booking,
-            type: 'booking_confirmed'
-          }
-        });
-
-        if (error) throw error;
+        // Transform booking to comprehensive format
+        const comprehensiveData = transformBookingToComprehensiveData(booking);
+        
+        // Create comprehensive webhook payload
+        const payload = createWebhookPayload(
+          'BOOKING_CONFIRMED',
+          comprehensiveData,
+          `bulk_${booking.booking_id}_${Date.now()}`,
+          booking.booking_id
+        );
+        
+        // Send via comprehensive webhook emitter
+        const result = await emitWebhook(payload);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Unknown error');
+        }
 
         sendResults.push({
           booking_id: booking.booking_id,
           customer_name: booking.customer_name,
           status: 'success',
-          response: data
+          response: { success: true, payload_type: 'comprehensive' }
         });
         
-        console.log(`✅ Sent booking ${booking.booking_id} to Zapier:`, data);
+        console.log(`✅ Sent comprehensive booking ${booking.booking_id} to Zapier`);
         
       } catch (error: any) {
         console.error(`❌ Failed to send booking ${booking.booking_id}:`, error);
@@ -155,8 +220,8 @@ export const BulkZapierSender = () => {
     const errorCount = sendResults.filter(r => r.status === 'error').length;
 
     toast({
-      title: "Bulk Send Complete",
-      description: `✅ ${successCount} sent successfully, ❌ ${errorCount} failed`,
+      title: "Comprehensive Bulk Send Complete",
+      description: `✅ ${successCount} comprehensive bookings sent, ❌ ${errorCount} failed`,
     });
   };
 
