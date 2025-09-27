@@ -7,9 +7,19 @@ import { Gift, Copy, CheckCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function PostPaymentReferralSection() {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+interface PostPaymentReferralSectionProps {
+  customerEmail?: string;
+  customerName?: string;
+  onReferralGenerated?: (code: string) => void;
+}
+
+export function PostPaymentReferralSection({ 
+  customerEmail = '', 
+  customerName = '',
+  onReferralGenerated 
+}: PostPaymentReferralSectionProps) {
+  const [email, setEmail] = useState(customerEmail);
+  const [name, setName] = useState(customerName);
   const [generatedCode, setGeneratedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -22,16 +32,15 @@ export function PostPaymentReferralSection() {
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.rpc('create_referral_code' as any, {
-        p_owner_email: email.trim(),
-        p_owner_name: name.trim()
+      const { data, error } = await supabase.rpc('generate_referral_code', {
+        customer_email: email.trim(),
+        customer_id: crypto.randomUUID() // Generate a temporary UUID for the customer
       });
 
       if (error) throw error;
 
-      const result = data as any;
-      if (result?.success) {
-        setGeneratedCode(result.code);
+      if (data) {
+        setGeneratedCode(data);
         
         // Send referral email
         try {
@@ -39,7 +48,7 @@ export function PostPaymentReferralSection() {
             body: {
               ownerName: name,
               ownerEmail: email,
-              referralCode: result.code
+              referralCode: data
             }
           });
           
@@ -55,9 +64,10 @@ export function PostPaymentReferralSection() {
         }
         
         // Automatically copy to clipboard
-        await copyToClipboard(result.code);
+        await copyToClipboard(data);
+        onReferralGenerated?.(data);
       } else {
-        toast.error(result?.error || "Failed to generate referral code");
+        toast.error("Failed to generate referral code");
       }
     } catch (error) {
       console.error("Error generating referral code:", error);
