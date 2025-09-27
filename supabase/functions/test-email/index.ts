@@ -9,8 +9,6 @@ const corsHeaders = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("🧪 Test email function called");
-  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,63 +16,46 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { testEmail } = await req.json();
-    
+
     if (!testEmail) {
-      throw new Error("Test email address is required");
+      return new Response(JSON.stringify({ error: "testEmail is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
-    console.log("📧 Sending test email to:", testEmail);
-    console.log("🔑 RESEND_API_KEY configured:", !!Deno.env.get("RESEND_API_KEY"));
-
-    // Send simple test email with guaranteed sender
     const emailResponse = await resend.emails.send({
-      from: "Lovable <onboarding@resend.dev>",
+      from: "Bay Area Cleaning Pros <noreply@resend.dev>",
       to: [testEmail],
-      subject: "🧪 Test Email - System Check",
+      subject: "Test Email - Bay Area Cleaning Pros",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">Email System Test</h1>
-          <p>This is a test email to verify that the email system is working correctly.</p>
-          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
-          <p><strong>Status:</strong> ✅ Email system is operational</p>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-          <p style="color: #666; font-size: 14px;">
-            This email was sent from the Bay Area Cleaning Pros booking system.
-          </p>
-        </div>
+        <h1>Test Email Successful! ✅</h1>
+        <p>This is a test email from Bay Area Cleaning Pros.</p>
+        <p>If you received this, your email configuration is working correctly.</p>
+        <p>Sent at: ${new Date().toISOString()}</p>
       `,
     });
 
-    console.log("✅ Test email sent successfully:", emailResponse);
+    console.log("Test email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailResponse,
-      message: `Test email sent successfully to ${testEmail}`
+      messageId: emailResponse.data?.id,
+      email: testEmail 
     }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
+
   } catch (error: any) {
-    console.error("❌ Error in test email function:", error);
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message,
-        details: {
-          hasApiKey: !!Deno.env.get("RESEND_API_KEY"),
-          timestamp: new Date().toISOString()
-        }
-      }),
-      {
-        status: 500, // Return proper error status
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    console.error("Error sending test email:", error);
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message 
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 
