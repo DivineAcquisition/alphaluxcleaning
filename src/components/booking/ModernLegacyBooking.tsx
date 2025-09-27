@@ -93,35 +93,35 @@ const pricingMatrix = {
 // Service types based on frequency and type
 const serviceTypes = [{
   id: 'regular',
-  name: 'Regular Cleaning',
-  description: 'Perfect for regular maintenance cleaning',
+  name: 'Regular Clean',
+  description: 'Weekly maintenance',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Home,
   popular: true,
-  features: ['All surfaces dusted and wiped', 'Floors vacuumed and mopped', 'Bathrooms cleaned and sanitized', 'Kitchen cleaned', 'Trash emptied'],
+  features: ['All surfaces cleaned', 'Floors & bathrooms', 'Kitchen & trash'],
   recurring: true,
   hasFrequency: true
 }, {
   id: 'deep',
-  name: 'Deep Cleaning',
-  description: 'Comprehensive top-to-bottom cleaning',
+  name: 'Deep Clean',
+  description: 'Thorough cleaning',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Sparkles,
   popular: false,
-  features: ['Everything in Regular Clean', 'Inside appliances cleaned', 'Detailed bathroom sanitization', 'Light fixtures dusted', 'Window sills cleaned', 'Baseboards wiped'],
+  features: ['Everything + appliances', 'Light fixtures', 'Baseboards & sills'],
   recurring: false,
   hasFrequency: false
 }, {
   id: 'moveout',
-  name: 'Move-Out Cleaning',
-  description: 'Leave your old home spotless',
+  name: 'Move-Out Clean',
+  description: 'Complete cleanout',
   basePrice: 0,
   // Using exact pricing matrix
   icon: Zap,
   popular: false,
-  features: ['Everything in Deep Clean', 'Cabinet interiors wiped', 'Appliance deep clean', 'Final walk-through', 'Damage deposit protection'],
+  features: ['Deep clean + cabinets', 'Appliance interiors', 'Final walkthrough'],
   recurring: false,
   hasFrequency: false
 }];

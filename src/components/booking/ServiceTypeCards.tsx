@@ -89,17 +89,12 @@ export function ServiceTypeCards({ serviceTypes, selectedType, onSelect }: Servi
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm text-foreground">What's included:</h4>
                       <ul className="space-y-1">
-                        {service.features.slice(0, 4).map((feature, index) => (
+                        {service.features.map((feature, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
                             <CheckCircle className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
                             {feature}
                           </li>
                         ))}
-                        {service.features.length > 4 && (
-                          <li className="text-sm text-muted-foreground italic">
-                            + {service.features.length - 4} more features
-                          </li>
-                        )}
                       </ul>
                     </div>
 
