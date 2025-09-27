@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Webhook } from 'lucide-react';
 import { EnhancedWebhookTester } from '@/components/admin/EnhancedWebhookTester';
 import { GHLWebhookTest } from '@/components/GHLWebhookTest';
+import { BulkZapierSender } from '@/components/BulkZapierSender';
 
 export function DevTestWebhooks() {
   const navigate = useNavigate();
@@ -36,6 +37,11 @@ export function DevTestWebhooks() {
               Test webhook integrations with GoHighLevel, Zapier, and other external services
             </p>
           </div>
+        </div>
+
+        {/* Bulk Zapier Sender */}
+        <div className="mb-8">
+          <BulkZapierSender />
         </div>
 
         {/* Enhanced Webhook Tester */}
