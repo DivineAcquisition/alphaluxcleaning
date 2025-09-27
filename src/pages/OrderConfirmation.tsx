@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/Navigation";
 import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink } from "lucide-react";
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
-import { FacebookPixelDebugPanel } from "@/components/FacebookPixelDebugPanel";
-import { FacebookPixelEventIndicator } from "@/components/FacebookPixelEventIndicator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
@@ -23,14 +21,6 @@ export default function OrderConfirmation() {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
-  const [pixelEvents, setPixelEvents] = useState<any[]>([]);
-  const [trackedEvents, setTrackedEvents] = useState({
-    viewContent: 'pending' as 'success' | 'pending' | 'error',
-    purchase: 'pending' as 'success' | 'pending' | 'error',
-    customPurchase: 'pending' as 'success' | 'pending' | 'error',
-    completeRegistration: 'pending' as 'success' | 'pending' | 'error',
-    highValuePurchase: 'pending' as 'success' | 'pending' | 'error'
-  });
   const { 
     trackPurchase, 
     trackCustomPurchase, 
@@ -38,21 +28,6 @@ export default function OrderConfirmation() {
     trackLead 
   } = useFacebookPixel();
 
-  const addPixelEvent = (eventName: string, parameters: any, value?: number) => {
-    const event = {
-      eventName,
-      parameters,
-      timestamp: new Date(),
-      status: 'success' as const,
-      value
-    };
-    setPixelEvents(prev => [...prev, event]);
-    return event;
-  };
-
-  const updateEventStatus = (eventType: keyof typeof trackedEvents, status: 'success' | 'pending' | 'error') => {
-    setTrackedEvents(prev => ({ ...prev, [eventType]: status }));
-  };
 
   useEffect(() => {
     // Check if admin preview mode
@@ -186,115 +161,77 @@ export default function OrderConfirmation() {
 
       setOrderDetails(data);
       
-        // Track Facebook Pixel Purchase event
-        if (data) {
-          const serviceValue = data.est_price / 100; // Convert cents to dollars
-          const serviceType = data.service_type?.replace(/_/g, ' ') || 'Cleaning Service';
-        
-          // Track ViewContent event
-          updateEventStatus('viewContent', 'pending');
-          trackViewContent({
-            content_name: `Order Confirmation - ${serviceType}`,
-            content_type: 'order_confirmation',
-            value: serviceValue,
-            currency: 'USD'
-          });
-          addPixelEvent('ViewContent', {
-            content_name: `Order Confirmation - ${serviceType}`,
-            content_type: 'order_confirmation',
-            customer_location: `${data.customer?.city}, ${data.customer?.state}`,
-            service_frequency: data.frequency
-          }, serviceValue);
-          updateEventStatus('viewContent', 'success');
+      // Track Facebook Pixel Purchase event
+      if (data) {
+        const serviceValue = data.est_price / 100; // Convert cents to dollars
+        const serviceType = data.service_type?.replace(/_/g, ' ') || 'Cleaning Service';
+      
+        // Track ViewContent event
+        trackViewContent({
+          content_name: `Order Confirmation - ${serviceType}`,
+          content_type: 'order_confirmation',
+          value: serviceValue,
+          currency: 'USD'
+        });
 
-          // Standard Purchase event
-          updateEventStatus('purchase', 'pending');
-          trackPurchase({
+        // Standard Purchase event
+        trackPurchase({
+          value: serviceValue,
+          currency: 'USD',
+          content_type: 'service',
+          content_name: serviceType,
+          event_id: data.id
+        });
+        
+        // Custom Purchase event with MRR/ARR for recurring services
+        if (data.frequency && data.frequency !== 'one_time') {
+          // Calculate estimated MRR/ARR based on frequency
+          let mrrEstimate = 0;
+          let arrEstimate = 0;
+          
+          if (data.frequency === 'weekly') {
+            mrrEstimate = serviceValue * 4.3; // ~4.3 weeks per month
+            arrEstimate = mrrEstimate * 12;
+          } else if (data.frequency === 'biweekly' || data.frequency === 'bi_weekly') {
+            mrrEstimate = serviceValue * 2.15; // ~2.15 bi-weekly per month
+            arrEstimate = mrrEstimate * 12;
+          } else if (data.frequency === 'monthly') {
+            mrrEstimate = serviceValue;
+            arrEstimate = serviceValue * 12;
+          }
+          
+          trackCustomPurchase({
             value: serviceValue,
             currency: 'USD',
-            content_type: 'service',
-            content_name: serviceType,
-            event_id: data.id
+            mrr_est: mrrEstimate,
+            arr_est: arrEstimate,
+            booking_id: data.id
           });
-          addPixelEvent('Purchase', {
-            content_name: serviceType,
-            content_type: 'cleaning_service',
-            customer_location: `${data.customer?.city}, ${data.customer?.state}`,
-            service_frequency: data.frequency,
-            recurring_revenue: data.frequency !== 'one_time'
-          }, serviceValue);
-          updateEventStatus('purchase', 'success');
-          
-          // Custom Purchase event with MRR/ARR for recurring services
-          updateEventStatus('customPurchase', 'pending');
-          if (data.frequency && data.frequency !== 'one_time') {
-            // Calculate estimated MRR/ARR based on frequency
-            let mrrEstimate = 0;
-            let arrEstimate = 0;
-            
-            if (data.frequency === 'weekly') {
-              mrrEstimate = serviceValue * 4.3; // ~4.3 weeks per month
-              arrEstimate = mrrEstimate * 12;
-            } else if (data.frequency === 'biweekly' || data.frequency === 'bi_weekly') {
-              mrrEstimate = serviceValue * 2.15; // ~2.15 bi-weekly per month
-              arrEstimate = mrrEstimate * 12;
-            } else if (data.frequency === 'monthly') {
-              mrrEstimate = serviceValue;
-              arrEstimate = serviceValue * 12;
-            }
-            
-            trackCustomPurchase({
-              value: serviceValue,
-              currency: 'USD',
-              mrr_est: mrrEstimate,
-              arr_est: arrEstimate,
-              booking_id: data.id
-            });
-            addPixelEvent('PurchaseWithRecurring', {
-              mrr_estimate: mrrEstimate,
-              arr_estimate: arrEstimate,
-              customer_ltv_tier: mrrEstimate > 200 ? 'high' : mrrEstimate > 100 ? 'medium' : 'standard',
-              booking_id: data.id
-            }, serviceValue);
-          }
-          updateEventStatus('customPurchase', 'success');
+        }
 
-          // Track CompleteRegistration event (for customer account creation)
-          updateEventStatus('completeRegistration', 'pending');
+        // Track CompleteRegistration event (for customer account creation)
+        if (window.fbq) {
+          window.fbq('track', 'CompleteRegistration', {
+            content_name: 'Customer Account Created',
+            value: serviceValue,
+            currency: 'USD',
+            registration_method: 'post_purchase_auto'
+          });
+        }
+
+        // Track High Value Purchase custom event (for orders > $200)
+        if (serviceValue > 200) {
           if (window.fbq) {
-            window.fbq('track', 'CompleteRegistration', {
-              content_name: 'Customer Account Created',
+            window.fbq('trackCustom', 'HighValuePurchase', {
               value: serviceValue,
               currency: 'USD',
-              registration_method: 'post_purchase_auto'
+              service_category: data.service_type,
+              customer_segment: 'premium',
+              geographic_market: data.customer?.state
             });
-            addPixelEvent('CompleteRegistration', {
-              registration_method: 'post_purchase_auto',
-              customer_segment: 'paying_customer'
-            });
-            updateEventStatus('completeRegistration', 'success');
-          }
-
-          // Track High Value Purchase custom event (for orders > $200)
-          if (serviceValue > 200) {
-            updateEventStatus('highValuePurchase', 'pending');
-            if (window.fbq) {
-              window.fbq('trackCustom', 'HighValuePurchase', {
-                value: serviceValue,
-                currency: 'USD',
-                service_category: data.service_type,
-                customer_segment: 'premium',
-                geographic_market: data.customer?.state
-              });
-              addPixelEvent('HighValuePurchase', {
-                service_category: data.service_type,
-                customer_segment: 'premium',
-                geographic_market: data.customer?.state
-              }, serviceValue);
-              updateEventStatus('highValuePurchase', 'success');
-            }
           }
         }
+      }
     } catch (error) {
       console.error("Error fetching order details:", error);
       toast.error("Failed to load order details");
@@ -511,35 +448,6 @@ Questions? Call 8577544557
             <p className="text-white/90 font-medium drop-shadow-sm">
               Your cleaning is booked! 🧽✨
             </p>
-            
-            {/* Facebook Pixel Event Indicators - Compact Mobile View */}
-            <div className="flex flex-wrap justify-center gap-1 mt-4">
-              <FacebookPixelEventIndicator 
-                eventName="ViewContent" 
-                status={trackedEvents.viewContent}
-                value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-              />
-              <FacebookPixelEventIndicator 
-                eventName="Purchase" 
-                status={trackedEvents.purchase}
-                value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-              />
-              <FacebookPixelEventIndicator 
-                eventName="CustomPurchase" 
-                status={trackedEvents.customPurchase}
-              />
-              <FacebookPixelEventIndicator 
-                eventName="CompleteRegistration" 
-                status={trackedEvents.completeRegistration}
-              />
-              {orderDetails?.est_price > 20000 && (
-                <FacebookPixelEventIndicator 
-                  eventName="HighValuePurchase" 
-                  status={trackedEvents.highValuePurchase}
-                  value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-                />
-              )}
-            </div>
           </div>
         </div>
 
@@ -762,20 +670,7 @@ Questions? Call 8577544557
           customerName={orderDetails?.customer_name}
           onReferralGenerated={(code: string) => {
             trackLead('Referral Code Generated', orderDetails?.est_price ? orderDetails.est_price / 100 : 0);
-            addPixelEvent('Lead', {
-              content_name: 'Referral Code Generated',
-              referral_code: code,
-              lead_source: 'post_purchase'
-            });
           }}
-        />
-      </div>
-
-      {/* Facebook Pixel Debug Panel - Fixed position for mobile */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <FacebookPixelDebugPanel 
-          events={pixelEvents}
-          onClear={() => setPixelEvents([])}
         />
       </div>
     </div>
