@@ -645,21 +645,52 @@ Questions? Call (857) 754-4557
               <h2 className="text-lg font-semibold text-foreground">Service Address</h2>
             </div>
             <div>
-              {orderDetails.service_details?.serviceAddress ? (
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">
-                    {orderDetails.service_details.serviceAddress.street}
-                    {orderDetails.service_details.serviceAddress.apartment && 
-                      `, ${orderDetails.service_details.serviceAddress.apartment}`
-                    }
-                  </p>
-                  <p className="text-muted-foreground">
-                    {orderDetails.service_details.serviceAddress.city}, {orderDetails.service_details.serviceAddress.state} {orderDetails.service_details.serviceAddress.zipCode}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">Address not available</p>
-              )}
+              {(() => {
+                // Check multiple data sources for address
+                const propertyAddress = orderDetails.property_details?.address;
+                const serviceAddress = orderDetails.service_details?.serviceAddress;
+                const customerAddress = orderDetails.customers;
+                
+                if (propertyAddress) {
+                  return (
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        {propertyAddress.street || propertyAddress}
+                        {propertyAddress.apartment && `, ${propertyAddress.apartment}`}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {propertyAddress.city}, {propertyAddress.state} {propertyAddress.zipCode}
+                      </p>
+                    </div>
+                  );
+                } else if (serviceAddress) {
+                  return (
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        {serviceAddress.street}
+                        {serviceAddress.apartment && `, ${serviceAddress.apartment}`}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {serviceAddress.city}, {serviceAddress.state} {serviceAddress.zipCode}
+                      </p>
+                    </div>
+                  );
+                } else if (customerAddress?.address) {
+                  return (
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        {customerAddress.address}
+                        {customerAddress.address_line2 && `, ${customerAddress.address_line2}`}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {customerAddress.city}, {customerAddress.state} {customerAddress.postal_code}
+                      </p>
+                    </div>
+                  );
+                } else {
+                  return <p className="text-muted-foreground">Address not available</p>;
+                }
+              })()}
             </div>
           </div>
 
