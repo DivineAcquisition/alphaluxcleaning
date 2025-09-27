@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { CheckCircle, ArrowRight, ArrowLeft, Calendar, CreditCard, Home, MapPin, Clock, Sparkles, Star, Shield, Zap, Tag, Gift } from 'lucide-react';
+import { EnhancedProgressIndicator } from '@/components/landing/EnhancedProgressIndicator';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { validateServiceAreaZipCode } from '@/lib/service-area-validation';
@@ -795,40 +796,99 @@ export function ModernLegacyBooking() {
     switch (currentStep) {
       case 1:
         return <div className="space-y-8">
-            <Card className="border-primary/20">
+            <Card className="border-primary/20 shadow-lg bg-gradient-to-br from-card to-secondary/10">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
                   Service Area & Contact
                 </CardTitle>
+                <p className="text-muted-foreground mt-2">Let's start by checking if we service your area</p>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-muted-foreground mb-2">Type your zip code to confirm location</p>
-                    <div className="flex gap-3">
-                      <Input placeholder="Enter ZIP code" value={bookingData.zipCode} onChange={e => updateField('zipCode', e.target.value)} maxLength={5} className="flex-1" inputMode="numeric" pattern="[0-9]*" />
-                      {zipCodeValid && <div className="flex items-center text-success">
-                          <CheckCircle className="h-5 w-5" />
-                        </div>}
+                <div className="space-y-6">
+                  {/* Enhanced ZIP Code Input */}
+                  <div className="relative">
+                    <Label htmlFor="zipCode" className="text-sm font-semibold mb-3 block flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Enter Your ZIP Code *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="zipCode"
+                        type="text"
+                        placeholder="12345"
+                        value={bookingData.zipCode}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                          updateField('zipCode', value);
+                        }}
+                        className={cn(
+                          "text-xl py-4 px-4 h-14 text-center font-semibold transition-all duration-300 border-2",
+                          "focus:ring-4 focus:ring-primary/20 focus:border-primary",
+                          zipCodeValid 
+                            ? "border-success bg-success/5 text-success" 
+                            : bookingData.zipCode.length === 5 
+                              ? "border-destructive bg-destructive/5" 
+                              : "border-border hover:border-primary/50"
+                        )}
+                        maxLength={5}
+                        inputMode="numeric" 
+                        pattern="[0-9]*"
+                      />
+                      {zipCodeValid && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <CheckCircle className="w-6 h-6 text-success animate-scale-in" />
+                        </div>
+                      )}
                     </div>
-                    {zipCodeValid && <div className="p-3 rounded-lg bg-success/10 border border-success/20 mt-2">
-                        <p className="text-success text-sm font-medium">
-                          Great! We service your area.
+                    <div className="mt-3 min-h-[2rem]">
+                      {zipCodeValid ? (
+                        <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                          <p className="text-success text-sm font-medium flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Perfect! We provide excellent service in your area
+                          </p>
+                        </div>
+                      ) : bookingData.zipCode.length === 5 ? (
+                        <p className="text-destructive text-sm flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs">!</span>
+                          Sorry, we currently service Texas & California only
                         </p>
-                      </div>}
+                      ) : (
+                        <p className="text-muted-foreground text-sm">
+                          Check availability and exact pricing for your area
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
+                  {/* Enhanced Email Input */}
                   {zipCodeValid && (
                     <div>
-                      <p className="text-muted-foreground mb-2">Enter your email address for booking confirmation</p>
-                      <Input 
-                        type="email" 
-                        placeholder="your@email.com" 
-                        value={bookingData.customerEmail} 
-                        onChange={e => updateField('customerEmail', e.target.value)} 
-                        className="flex-1" 
+                      <Label htmlFor="email" className="text-sm font-semibold mb-3 block flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-xs">@</span>
+                        Email Address *
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={bookingData.customerEmail}
+                        onChange={(e) => updateField('customerEmail', e.target.value)}
+                        className={cn(
+                          "text-lg py-4 h-12 transition-all duration-300 border-2",
+                          "focus:ring-4 focus:ring-primary/20 focus:border-primary",
+                          isValidEmail(bookingData.customerEmail) && bookingData.customerEmail
+                            ? "border-success bg-success/5"
+                            : "border-border hover:border-primary/50"
+                        )}
                       />
+                      <p className="text-muted-foreground text-sm mt-2 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        We'll send your booking confirmation and service updates here
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1237,24 +1297,12 @@ export function ModernLegacyBooking() {
             </p>
           </div>
 
-          {/* Progress Steps */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between max-w-3xl mx-auto">
-              {steps.map((step, index) => <div key={step.id} className="flex items-center">
-                  <div className="flex items-center">
-                    <div className={cn("flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors", currentStep >= step.id ? "bg-primary border-primary text-primary-foreground" : "border-border text-muted-foreground")}>
-                      {currentStep > step.id ? <CheckCircle className="h-5 w-5" /> : <step.icon className="h-5 w-5" />}
-                    </div>
-                    <div className="ml-3 hidden md:block">
-                      <p className={cn("text-sm font-medium", currentStep >= step.id ? "text-primary" : "text-muted-foreground")}>
-                        {step.title}
-                      </p>
-                    </div>
-                  </div>
-                  {index < steps.length - 1 && <ArrowRight className="h-4 w-4 text-muted-foreground mx-4" />}
-                </div>)}
-            </div>
-          </div>
+          {/* Enhanced Progress Steps */}
+          <EnhancedProgressIndicator 
+            steps={steps} 
+            currentStep={currentStep} 
+            className="mb-8"
+          />
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main Content */}
