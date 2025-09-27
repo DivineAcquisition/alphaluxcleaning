@@ -4,12 +4,11 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Section,
   Text,
-  Button,
+  Img,
 } from "npm:@react-email/components@0.0.22";
 import * as React from "npm:react@18.3.1";
 
@@ -29,16 +28,16 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
         <Section style={header}>
           <Link href="https://app.alphaluxclean.com">
             <Img
-              src="/brand/alphaluxclean-logo.png"
-              width="180"
-              height="60"
+              src="https://app.alphaluxclean.com/logo.png"
+              width="120"
+              height="40"
               alt="AlphaLuxClean"
               style={logo}
             />
           </Link>
         </Section>
 
-        {/* Content */}
+        {/* Main Content */}
         <Section style={content}>
           {children}
         </Section>
@@ -46,37 +45,44 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
         {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>
-            AlphaLuxClean<br />
-            123 Main Street, Suite 100<br />
-            Dallas, TX 75201<br />
-            Phone: (555) 123-4567
+            <Link href="https://app.alphaluxclean.com" style={footerLink}>
+              AlphaLuxClean
+            </Link>
+            <br />
+            Premium cleaning services in Texas and California
           </Text>
           
-          <Text style={footerLinks}>
-            <Link href="https://app.alphaluxclean.com/contact" style={link}>
-              Contact Support
+          <Text style={footerText}>
+            <Link href="tel:+15551234567" style={footerLink}>
+              (555) 123-4567
             </Link>
-            {" | "}
-            <Link href="https://app.alphaluxclean.com/privacy" style={link}>
-              Privacy Policy
+            {" • "}
+            <Link href="mailto:support@alphaluxclean.com" style={footerLink}>
+              support@alphaluxclean.com
             </Link>
-            {isMarketing && (
-              <>
-                {" | "}
-                <Link href="https://app.alphaluxclean.com/email-preferences" style={link}>
-                  Email Preferences
-                </Link>
-                {" | "}
-                <Link href="https://app.alphaluxclean.com/unsubscribe" style={link}>
-                  Unsubscribe
-                </Link>
-              </>
-            )}
           </Text>
+
+          {isMarketing && (
+            <Text style={footerText}>
+              <Link href="{{UnsubscribeURL}}" style={footerLink}>
+                Unsubscribe
+              </Link>
+              {" • "}
+              <Link href="https://app.alphaluxclean.com/privacy" style={footerLink}>
+                Privacy Policy
+              </Link>
+            </Text>
+          )}
         </Section>
       </Container>
     </Body>
   </Html>
+);
+
+export const ActionButton = ({ href, children, style: customStyle }: { href: string; children: React.ReactNode; style?: any }) => (
+  <Link href={href} style={{ ...buttonStyle, ...customStyle }}>
+    {children}
+  </Link>
 );
 
 // Shared component for order summary table
@@ -123,113 +129,102 @@ export const OrderSummary = ({ booking }: { booking: any }) => (
   </Section>
 );
 
-// Shared button component
-export const ActionButton = ({ href, children, style: customStyle }: { href: string; children: React.ReactNode; style?: any }) => (
-  <Button href={href} style={{ ...button, ...customStyle }}>
-    {children}
-  </Button>
-);
-
 // Styles
 const main = {
-  backgroundColor: "#ffffff",
-  fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif",
+  backgroundColor: '#ffffff',
+  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 };
 
 const container = {
-  maxWidth: "600px",
-  margin: "0 auto",
-  padding: "20px",
+  margin: '0 auto',
+  padding: '20px 0 48px',
+  maxWidth: '600px',
 };
 
 const header = {
-  padding: "20px 0",
-  borderBottom: "1px solid #eee",
-  textAlign: "center" as const,
+  borderBottom: '1px solid #eaeaea',
+  paddingBottom: '20px',
+  marginBottom: '20px',
+  textAlign: 'center' as const,
 };
 
 const logo = {
-  display: "block",
-  margin: "0 auto",
+  margin: '0 auto',
 };
 
 const content = {
-  padding: "40px 20px",
+  padding: '0 20px',
 };
 
 const footer = {
-  borderTop: "1px solid #eee",
-  paddingTop: "20px",
-  textAlign: "center" as const,
+  borderTop: '1px solid #eaeaea',
+  paddingTop: '20px',
+  marginTop: '40px',
+  textAlign: 'center' as const,
 };
 
 const footerText = {
-  margin: "0 0 16px 0",
-  fontSize: "14px",
-  lineHeight: "1.4",
-  color: "#666",
+  color: '#666666',
+  fontSize: '12px',
+  lineHeight: '16px',
+  margin: '4px 0',
 };
 
-const footerLinks = {
-  margin: "0",
-  fontSize: "12px",
-  color: "#999",
+const footerLink = {
+  color: '#666666',
+  textDecoration: 'underline',
 };
 
-const link = {
-  color: "#ECC98B",
-  textDecoration: "none",
+const buttonStyle = {
+  backgroundColor: '#1A1A1A',
+  borderRadius: '6px',
+  color: '#ffffff !important',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  display: 'inline-block',
+  padding: '16px 32px',
+  margin: '16px 0',
+};
+
+// OrderSummary component styles
+const orderSummary = {
+  backgroundColor: '#f8f9fa',
+  padding: '24px',
+  borderRadius: '8px',
+  margin: '24px 0',
 };
 
 const h2 = {
-  fontSize: "24px",
-  fontWeight: "bold",
-  color: "#1A1A1A",
-  margin: "0 0 20px 0",
-};
-
-const orderSummary = {
-  backgroundColor: "#f8f9fa",
-  padding: "20px",
-  borderRadius: "8px",
-  margin: "20px 0",
+  color: '#1A1A1A',
+  fontSize: '20px',
+  fontWeight: 'bold',
+  margin: '0 0 16px 0',
 };
 
 const table = {
-  width: "100%",
-  borderCollapse: "collapse" as const,
+  width: '100%',
+  borderCollapse: 'collapse' as const,
 };
 
 const tableCell = {
-  padding: "8px 0",
-  fontSize: "14px",
-  color: "#666",
-  verticalAlign: "top" as const,
-  width: "40%",
+  padding: '8px 0',
+  fontSize: '14px',
+  color: '#666',
+  borderBottom: '1px solid #eee',
+  verticalAlign: 'top',
+  width: '40%',
 };
 
 const tableCellValue = {
-  padding: "8px 0",
-  fontSize: "14px",
-  color: "#1A1A1A",
-  verticalAlign: "top" as const,
-  fontWeight: "500",
+  padding: '8px 0',
+  fontSize: '14px',
+  color: '#1A1A1A',
+  borderBottom: '1px solid #eee',
+  fontWeight: '500',
 };
 
 const totalRow = {
-  borderTop: "1px solid #ddd",
-  paddingTop: "12px",
-};
-
-const button = {
-  backgroundColor: "#ECC98B",
-  borderRadius: "8px",
-  color: "#1A1A1A",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 32px",
-  margin: "16px 0",
+  borderTop: '2px solid #1A1A1A',
 };
