@@ -382,11 +382,7 @@ export function ModernLegacyBooking() {
     // Map legacy frequency to new system ids
     let frequencyId: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
     if (bookingData.serviceType === 'regular') {
-      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';
-      else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';
-      else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';
-      else if (bookingData.frequency === 'oneTime') frequencyId = 'one_time';
-      else return 0; // Require frequency selection for regular
+      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';else if (bookingData.frequency === 'oneTime') frequencyId = 'one_time';else return 0; // Require frequency selection for regular
     } else {
       frequencyId = 'one_time';
     }
@@ -471,7 +467,6 @@ export function ModernLegacyBooking() {
         return "";
     }
   };
-
   const canProceedToNext = (): boolean => {
     return getStepValidationMessage(currentStep) === "";
   };
@@ -492,7 +487,6 @@ export function ModernLegacyBooking() {
       }
     }
   };
-
   const handleBooking = async () => {
     if (!selectedPaymentOption) {
       toast.error('Please select a payment option');
@@ -503,9 +497,7 @@ export function ModernLegacyBooking() {
       toast.error('Please complete your selections to get a valid price before booking.');
       return;
     }
-
     setIsProcessingPayment(true);
-
     try {
       // Handle 20% deposit payment (only available option)
       console.log('Creating 20% deposit payment intent');
@@ -518,11 +510,9 @@ export function ModernLegacyBooking() {
           customerName: bookingData.customerName
         }
       });
-
       if (response.error) {
         throw response.error;
       }
-
       if (response.data?.clientSecret) {
         console.log('Payment intent created, showing embedded form');
         setClientSecret(response.data.clientSecret);
@@ -569,12 +559,7 @@ export function ModernLegacyBooking() {
           </Button>
         </div>
         
-        <EmbeddedPaymentForm 
-          clientSecret={clientSecret} 
-          paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice}
-          fullAmount={bookingData.totalPrice}
-          paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit_20" : "full_payment"}
-          onSuccess={async () => {
+        <EmbeddedPaymentForm clientSecret={clientSecret} paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice} fullAmount={bookingData.totalPrice} paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit_20" : "full_payment"} onSuccess={async () => {
         console.log('Payment successful, creating order');
         setIsProcessingPayment(true);
         try {
@@ -592,11 +577,11 @@ export function ModernLegacyBooking() {
               customerName: bookingData.customerName
             }
           });
-        if (orderError || !orderResult?.orderId) {
-          console.error('Error creating order:', orderError);
-          navigate(`/order-status?session_id=${paymentIntentId}`);
-          return;
-        }
+          if (orderError || !orderResult?.orderId) {
+            console.error('Error creating order:', orderError);
+            navigate(`/order-status?session_id=${paymentIntentId}`);
+            return;
+          }
           console.log('Order created successfully:', orderResult.orderId);
 
           // Redirect to confirmation with order ID using React Router
@@ -813,80 +798,40 @@ export function ModernLegacyBooking() {
                     <Label htmlFor="zipCode" className="text-base font-medium text-foreground mb-3 block">
                       ZIP Code *
                     </Label>
-                    <Input
-                      id="zipCode"
-                      type="text"
-                      placeholder="Enter your ZIP code"
-                      value={bookingData.zipCode}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-                        updateField('zipCode', value);
-                      }}
-                      className={cn(
-                        "mobile-input text-lg lg:text-base transition-all duration-200 border-2",
-                        zipCodeValid && bookingData.zipCode ? "ring-2 ring-success border-success" : "",
-                        bookingData.zipCode && !zipCodeValid ? "ring-2 ring-destructive border-destructive" : "",
-                        "focus:ring-2 focus:ring-primary focus:border-primary"
-                      )}
-                      maxLength={5}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                    />
+                    <Input id="zipCode" type="text" placeholder="Enter your ZIP code" value={bookingData.zipCode} onChange={e => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                    updateField('zipCode', value);
+                  }} className={cn("mobile-input text-lg lg:text-base transition-all duration-200 border-2", zipCodeValid && bookingData.zipCode ? "ring-2 ring-success border-success" : "", bookingData.zipCode && !zipCodeValid ? "ring-2 ring-destructive border-destructive" : "", "focus:ring-2 focus:ring-primary focus:border-primary")} maxLength={5} inputMode="numeric" pattern="[0-9]*" />
                     <p className="mobile-body text-muted-foreground mt-2 text-center">
                       Check availability and exact pricing for your area
                     </p>
                     <div className="mt-3 min-h-[2rem]">
-                      {zipCodeValid ? (
-                        <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                      {zipCodeValid ? <div className="p-3 rounded-lg bg-success/10 border border-success/20">
                           <p className="text-success text-sm font-medium flex items-center gap-2 justify-center">
                             <CheckCircle className="w-4 h-4" />
                             Perfect! We provide excellent service in your area
                           </p>
-                        </div>
-                      ) : bookingData.zipCode.length === 5 ? (
-                        <p className="text-destructive text-sm flex items-center gap-2 justify-center">
+                        </div> : bookingData.zipCode.length === 5 ? <p className="text-destructive text-sm flex items-center gap-2 justify-center">
                           <span className="w-4 h-4 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs">!</span>
                           Sorry, we currently service Texas & California only
-                        </p>
-                      ) : null}
+                        </p> : null}
                     </div>
                   </div>
                   
                   {/* Mobile-Optimized Email Input */}
-                  {zipCodeValid && (
-                    <div>
+                  {zipCodeValid && <div>
                       <Label htmlFor="email" className="text-base font-medium text-foreground mb-3 block">
                         Email Address *
                       </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={bookingData.customerEmail}
-                        onChange={(e) => updateField('customerEmail', e.target.value)}
-                        className={cn(
-                          "mobile-input text-lg lg:text-base transition-all duration-200 border-2",
-                          isValidEmail(bookingData.customerEmail) && bookingData.customerEmail
-                            ? "ring-2 ring-success border-success"
-                            : bookingData.customerEmail && !isValidEmail(bookingData.customerEmail)
-                              ? "ring-2 ring-destructive border-destructive" 
-                              : "focus:ring-2 focus:ring-primary focus:border-primary"
-                        )}
-                      />
+                      <Input id="email" type="email" placeholder="your@email.com" value={bookingData.customerEmail} onChange={e => updateField('customerEmail', e.target.value)} className={cn("mobile-input text-lg lg:text-base transition-all duration-200 border-2", isValidEmail(bookingData.customerEmail) && bookingData.customerEmail ? "ring-2 ring-success border-success" : bookingData.customerEmail && !isValidEmail(bookingData.customerEmail) ? "ring-2 ring-destructive border-destructive" : "focus:ring-2 focus:ring-primary focus:border-primary")} />
                       <p className="mobile-body text-muted-foreground mt-2 text-center flex items-center gap-2 justify-center">
                         <Shield className="w-4 h-4" />
                         We'll send your booking confirmation and service updates here
                       </p>
-                      {bookingData.customerEmail && (
-                        <p className={cn(
-                          "text-sm mt-2 text-center font-medium",
-                          isValidEmail(bookingData.customerEmail) ? "text-success" : "text-destructive"
-                        )}>
+                      {bookingData.customerEmail && <p className={cn("text-sm mt-2 text-center font-medium", isValidEmail(bookingData.customerEmail) ? "text-success" : "text-destructive")}>
                           {isValidEmail(bookingData.customerEmail) ? "✓ Valid email address" : "Please enter a valid email address"}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                        </p>}
+                    </div>}
                 </div>
               </CardContent>
             </Card>
@@ -1078,13 +1023,7 @@ export function ModernLegacyBooking() {
                   </div>
                   <div>
                     <Label htmlFor="customerEmailDisplay">Email Address</Label>
-                    <Input 
-                      id="customerEmailDisplay" 
-                      type="email" 
-                      value={bookingData.customerEmail} 
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Input id="customerEmailDisplay" type="email" value={bookingData.customerEmail} disabled className="bg-muted" />
                     <p className="text-xs text-muted-foreground mt-1">Email was entered in step 1</p>
                   </div>
                   <div>
@@ -1117,20 +1056,13 @@ export function ModernLegacyBooking() {
                         <SelectValue placeholder="Select State" />
                       </SelectTrigger>
                       <SelectContent>
-                        {STATE_ABBREVIATIONS.map(state => (
-                          <SelectItem key={state} value={state}>{state}</SelectItem>
-                        ))}
+                        {STATE_ABBREVIATIONS.map(state => <SelectItem key={state} value={state}>{state}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="addressZip">ZIP Code</Label>
-                    <Input 
-                      id="addressZip" 
-                      value="78704" 
-                      disabled 
-                      className="bg-gray-50 text-gray-500" 
-                    />
+                    <Input id="addressZip" value="78704" disabled className="bg-gray-50 text-gray-500" />
                   </div>
                 </div>
               </CardContent>
@@ -1215,11 +1147,11 @@ export function ModernLegacyBooking() {
                     <h3 className="font-semibold mb-2">Add-On Services</h3>
                     <div className="space-y-1 text-sm">
                       {bookingData.addOns.map(addOnId => {
-                        const addOn = addOnServices.find(a => a.id === addOnId);
-                        return addOn && <p key={addOnId}>
+                    const addOn = addOnServices.find(a => a.id === addOnId);
+                    return addOn && <p key={addOnId}>
                             <span className="font-medium">{addOn.name}:</span> {formatPrice(addOn.price)}
                           </p>;
-                      })}
+                  })}
                     </div>
                   </div>}
 
@@ -1246,9 +1178,7 @@ export function ModernLegacyBooking() {
               <CardContent className="space-y-4">
                 {/* Pay After Service Option */}
                 {/* 20% Deposit Option - Only Available Option */}
-                <Card 
-                  className="cursor-pointer border-2 transition-all border-primary bg-primary/5 shadow-md"
-                >
+                <Card className="cursor-pointer border-2 transition-all border-primary bg-primary/5 shadow-md">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -1280,9 +1210,7 @@ export function ModernLegacyBooking() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4">
-              <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-lg px-4 py-2 animate-pulse">
-                🔥 LIMITED TIME: 20% OFF ALL SERVICES! 🔥
-              </Badge>
+              <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-lg px-4 py-2 animate-pulse">GET 20% OFF ALL SERVICES!</Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Book Your Cleaning Service
@@ -1294,11 +1222,7 @@ export function ModernLegacyBooking() {
           </div>
 
           {/* Enhanced Progress Steps */}
-          <EnhancedProgressIndicator 
-            steps={steps} 
-            currentStep={currentStep} 
-            className="mb-8"
-          />
+          <EnhancedProgressIndicator steps={steps} currentStep={currentStep} className="mb-8" />
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main Content */}
@@ -1311,22 +1235,11 @@ export function ModernLegacyBooking() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button 
-                  onClick={handleNext} 
-                  disabled={!canProceedToNext() || isProcessingPayment} 
-                  className={cn(
-                    "mobile-touch-target text-lg lg:text-base font-medium transition-all duration-200",
-                    canProceedToNext() ? "animate-pulse" : "",
-                    currentStep === 4 ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"
-                  )}
-                  size="lg"
-                >
-                  {isProcessingPayment ? (
-                    <div className="flex items-center gap-2">
+                <Button onClick={handleNext} disabled={!canProceedToNext() || isProcessingPayment} className={cn("mobile-touch-target text-lg lg:text-base font-medium transition-all duration-200", canProceedToNext() ? "animate-pulse" : "", currentStep === 4 ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90")} size="lg">
+                  {isProcessingPayment ? <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       Processing...
-                    </div>
-                  ) : currentStep === 4 ? 'Complete Booking' : 'Next Step'}
+                    </div> : currentStep === 4 ? 'Complete Booking' : 'Next Step'}
                   {!isProcessingPayment && <ArrowRight className="h-4 w-4 ml-2" />}
                 </Button>
               </div>
