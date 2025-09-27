@@ -493,285 +493,286 @@ Questions? Call 8577544557
   const instructions = serviceDetails?.instructions;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 dark:from-purple-950 dark:via-pink-950 dark:to-orange-950">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          
-          {/* Success Header */}
-          <Card className="border-0 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50">
-            <CardContent className="p-8">
-              <div className="text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-                  <CheckCircle className="h-10 w-10 text-green-600" />
+      <div className="max-w-sm mx-auto px-4 py-6 space-y-4">
+        
+        {/* Hero Success Card */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-500 p-8 text-center shadow-2xl animate-fade-in">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 via-teal-500/20 to-blue-500/20 backdrop-blur-sm"></div>
+          <div className="relative z-10">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4 backdrop-blur-sm animate-scale-in">
+              <CheckCircle className="w-10 h-10 text-white drop-shadow-lg" />
+            </div>
+            <h1 className="text-2xl font-black text-white mb-2 drop-shadow-lg">
+              ✨ Booking Confirmed! 🎉
+            </h1>
+            <p className="text-white/90 font-medium drop-shadow-sm">
+              Your cleaning is booked! 🧽✨
+            </p>
+            
+            {/* Facebook Pixel Event Indicators - Compact Mobile View */}
+            <div className="flex flex-wrap justify-center gap-1 mt-4">
+              <FacebookPixelEventIndicator 
+                eventName="ViewContent" 
+                status={trackedEvents.viewContent}
+                value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
+              />
+              <FacebookPixelEventIndicator 
+                eventName="Purchase" 
+                status={trackedEvents.purchase}
+                value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
+              />
+              <FacebookPixelEventIndicator 
+                eventName="CustomPurchase" 
+                status={trackedEvents.customPurchase}
+              />
+              <FacebookPixelEventIndicator 
+                eventName="CompleteRegistration" 
+                status={trackedEvents.completeRegistration}
+              />
+              {orderDetails?.est_price > 20000 && (
+                <FacebookPixelEventIndicator 
+                  eventName="HighValuePurchase" 
+                  status={trackedEvents.highValuePurchase}
+                  value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* What's Next Card */}
+        <div className="rounded-3xl bg-gradient-to-r from-orange-400 to-pink-400 p-6 shadow-xl">
+          <div className="text-center text-white">
+            <div className="text-2xl mb-2">📞</div>
+            <h3 className="font-bold text-lg mb-2">What's Next?</h3>
+            <div className="space-y-1 text-sm">
+              <p className="font-medium">🤝 We'll call you for confirmation</p>
+              <p>📧 Check your email for details</p>
+              <p>📱 Watch for text updates</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Status Card */}
+        {orderDetails && (
+          <div className="rounded-3xl bg-gradient-to-r from-green-400 to-blue-500 p-6 shadow-xl">
+            <div className="text-center text-white">
+              <div className="text-2xl mb-2">💳</div>
+              <h3 className="font-bold text-lg mb-2">
+                {orderDetails.balance_due > 0 ? '💰 Deposit Paid' : '✅ Payment Complete'}
+              </h3>
+              <div className="space-y-1 text-sm">
+                <p><strong>Total:</strong> ${(orderDetails.est_price / 100).toFixed(2)}</p>
+                {orderDetails.deposit_amount && (
+                  <p><strong>Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
+                )}
+                {orderDetails.balance_due && orderDetails.balance_due > 0 && (
+                  <p><strong>Balance:</strong> ${(orderDetails.balance_due / 100).toFixed(2)}</p>
+                )}
+                {(!orderDetails.balance_due || orderDetails.balance_due === 0) && (
+                  <p className="font-bold">🎊 Fully Paid!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Service Date & Time Card */}
+        {orderDetails && (
+          <div className="rounded-3xl bg-gradient-to-r from-purple-400 to-indigo-500 p-6 shadow-xl">
+            <div className="text-center text-white">
+              <div className="text-2xl mb-2">📅</div>
+              <h3 className="font-bold text-lg mb-3">Scheduled Service</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-semibold">
+                    {new Date(orderDetails.service_date).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
                 </div>
-                <h1 className="text-3xl font-bold text-green-800">Booking Confirmed!</h1>
-                <p className="text-green-600 text-lg">
-                  Your cleaning service has been successfully scheduled and payment has been received.
-                </p>
-                
-                {/* Facebook Pixel Event Indicators */}
-                <div className="flex flex-wrap justify-center gap-2 mt-4">
-                  <FacebookPixelEventIndicator 
-                    eventName="ViewContent" 
-                    status={trackedEvents.viewContent}
-                    value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-                  />
-                  <FacebookPixelEventIndicator 
-                    eventName="Purchase" 
-                    status={trackedEvents.purchase}
-                    value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-                  />
-                  <FacebookPixelEventIndicator 
-                    eventName="CustomPurchase" 
-                    status={trackedEvents.customPurchase}
-                  />
-                  <FacebookPixelEventIndicator 
-                    eventName="CompleteRegistration" 
-                    status={trackedEvents.completeRegistration}
-                  />
-                  {orderDetails?.est_price > 20000 && (
-                    <FacebookPixelEventIndicator 
-                      eventName="HighValuePurchase" 
-                      status={trackedEvents.highValuePurchase}
-                      value={orderDetails?.est_price ? orderDetails.est_price / 100 : 0}
-                    />
-                  )}
+                <div className="flex items-center justify-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-semibold">{orderDetails.time_slot}</span>
                 </div>
-                
-                {/* Team Contact Notice */}
-                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="h-5 w-5 text-yellow-600" />
-                    <span className="font-semibold text-yellow-800">What's Next?</span>
-                  </div>
-                  <div className="text-sm text-yellow-700 space-y-1">
-                    <p className="font-medium">🤝 One of our team members will reach out for confirmation</p>
-                    <p>📧 Check your email for booking confirmation details</p>
-                    <p>📱 Check your text messages for updates</p>
-                  </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Service Details Card */}
+        {orderDetails && (
+          <div className="rounded-3xl bg-gradient-to-r from-cyan-400 to-blue-500 p-6 shadow-xl">
+            <div className="text-white">
+              <div className="text-center mb-4">
+                <div className="text-2xl mb-2">🏠</div>
+                <h3 className="font-bold text-lg">Service Details</h3>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span>Service:</span>
+                  <span className="font-bold">
+                    {orderDetails.service_type === 'regular' ? 'Regular Cleaning' : orderDetails.service_type?.replace(/_/g, ' ')}
+                  </span>
                 </div>
-                
-                {/* Payment Status */}
-                {orderDetails && (
-                  <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-5 w-5 text-blue-600" />
-                      <span className="font-semibold text-blue-800">
-                        {orderDetails.balance_due > 0 ? 'Deposit Paid' : 'Payment Complete'}
-                      </span>
-                    </div>
-                    <div className="text-sm text-blue-700 space-y-1">
-                      <p><strong>Total Service Cost:</strong> ${(orderDetails.est_price / 100).toFixed(2)}</p>
-                      {orderDetails.deposit_amount && (
-                        <p><strong>Amount Paid:</strong> ${(orderDetails.deposit_amount / 100).toFixed(2)}</p>
-                      )}
-                      {orderDetails.balance_due && orderDetails.balance_due > 0 && (
-                        <>
-                          <p><strong>Remaining Balance:</strong> ${(orderDetails.balance_due / 100).toFixed(2)}</p>
-                          <p className="text-xs italic mt-2">Remaining balance will be collected after service completion.</p>
-                        </>
-                      )}
-                      {(!orderDetails.balance_due || orderDetails.balance_due === 0) && (
-                        <p className="text-xs italic mt-2 font-medium text-green-700">✓ Service is fully paid for!</p>
-                      )}
-                    </div>
+                <div className="flex justify-between items-center">
+                  <span>Frequency:</span>
+                  <span className="font-bold">
+                    {orderDetails.frequency === 'oneTime' ? 'One Time' : orderDetails.frequency?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Size:</span>
+                  <span className="font-bold">{orderDetails.sqft_or_bedrooms} sq ft</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Order ID:</span>
+                  <span className="font-mono text-xs bg-white/20 px-2 py-1 rounded">{orderDetails.id.slice(-8)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Customer Info Card */}
+        {orderDetails && (
+          <div className="rounded-3xl bg-gradient-to-r from-pink-400 to-rose-500 p-6 shadow-xl">
+            <div className="text-white">
+              <div className="text-center mb-4">
+                <div className="text-2xl mb-2">👤</div>
+                <h3 className="font-bold text-lg">Your Info</h3>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span>Name:</span>
+                  <span className="font-bold">{orderDetails.customers?.name || orderDetails.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Email:</span>
+                  <span className="font-bold text-xs">{orderDetails.customers?.email || orderDetails.email}</span>
+                </div>
+                {(orderDetails.customers?.phone || orderDetails.phone) && (
+                  <div className="flex justify-between items-center">
+                    <span>Phone:</span>
+                    <span className="font-bold">{orderDetails.customers?.phone || orderDetails.phone}</span>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        )}
 
-          {/* Service Date & Time */}
-          {orderDetails && (
-            <>
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Calendar className="h-6 w-6 text-primary" />
-                    Scheduled Service
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-blue-50 p-6 rounded-lg space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-blue-600" />
-                       <span className="text-lg font-semibold text-blue-800">
-                        {new Date(orderDetails.service_date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-5 w-5 text-blue-600" />
-                      <span className="text-lg font-semibold text-blue-800">
-                        {orderDetails.time_slot}
-                      </span>
-                    </div>
+        {/* Service Address Card */}
+        {address && (
+          <div className="rounded-3xl bg-gradient-to-r from-amber-400 to-orange-500 p-6 shadow-xl">
+            <div className="text-white">
+              <div className="text-center mb-4">
+                <div className="text-2xl mb-2">📍</div>
+                <h3 className="font-bold text-lg">Service Address</h3>
+              </div>
+              <div className="text-center space-y-1 text-sm">
+                <p className="font-bold">{address.street}</p>
+                {address.apartment && <p>{address.apartment}</p>}
+                <p>{address.city}, {address.state} {address.zipCode}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Special Instructions Card */}
+        {instructions && (
+          <div className="rounded-3xl bg-gradient-to-r from-emerald-400 to-teal-500 p-6 shadow-xl">
+            <div className="text-white">
+              <div className="text-center mb-4">
+                <div className="text-2xl mb-2">📝</div>
+                <h3 className="font-bold text-lg">Special Notes</h3>
+              </div>
+              <div className="space-y-2 text-sm">
+                {instructions.access && (
+                  <div>
+                    <span className="font-bold">Access: </span>
+                    <span>{instructions.access}</span>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Order Summary */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Order Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-3 text-muted-foreground uppercase text-sm tracking-wide">Service Details</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Service Type:</span>
-                            <span className="font-medium capitalize">
-                              {orderDetails.service_type === 'regular' ? 'Regular Cleaning' : orderDetails.service_type?.replace(/_/g, ' ')}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Frequency:</span>
-                            <span className="font-medium capitalize">
-                              {orderDetails.frequency === 'oneTime' ? 'One Time' : orderDetails.frequency?.replace(/_/g, ' ')}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Square Footage:</span>
-                            <span className="font-medium">{orderDetails.sqft_or_bedrooms} sq ft</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Order ID:</span>
-                            <span className="font-mono text-sm">{orderDetails.id}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-3 text-muted-foreground uppercase text-sm tracking-wide">Customer Information</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Name:</span>
-                            <span className="font-medium">{orderDetails.customers?.name || orderDetails.name}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Email:</span>
-                            <span className="font-medium">{orderDetails.customers?.email || orderDetails.email}</span>
-                          </div>
-                          {(orderDetails.customers?.phone || orderDetails.phone) && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Phone:</span>
-                              <span className="font-medium">{orderDetails.customers?.phone || orderDetails.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                )}
+                {instructions.parking && (
+                  <div>
+                    <span className="font-bold">Parking: </span>
+                    <span>{instructions.parking}</span>
                   </div>
-
-                  {/* Service Address */}
-                  {address && (
-                    <div className="border-t pt-4">
-                      <h4 className="font-semibold mb-3 text-muted-foreground uppercase text-sm tracking-wide flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Service Address
-                      </h4>
-                      <div className="bg-muted/30 p-4 rounded-lg">
-                        <p className="font-medium">{address.street}</p>
-                        {address.apartment && <p className="text-muted-foreground">{address.apartment}</p>}
-                        <p className="text-muted-foreground">{address.city}, {address.state} {address.zipCode}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Special Instructions */}
-                  {instructions && (
-                    <div className="border-t pt-4">
-                      <h4 className="font-semibold mb-3 text-muted-foreground uppercase text-sm tracking-wide">Special Instructions</h4>
-                      <div className="bg-muted/30 p-4 rounded-lg space-y-2">
-                        {instructions.access && (
-                          <div>
-                            <span className="font-medium">Access: </span>
-                            <span className="text-muted-foreground">{instructions.access}</span>
-                          </div>
-                        )}
-                        {instructions.parking && (
-                          <div>
-                            <span className="font-medium">Parking: </span>
-                            <span className="text-muted-foreground">{instructions.parking}</span>
-                          </div>
-                        )}
-                        {instructions.special && (
-                          <div>
-                            <span className="font-medium">Special Notes: </span>
-                            <span className="text-muted-foreground">{instructions.special}</span>
-                          </div>
-                        )}
-                        {instructions.pets && (
-                          <div>
-                            <span className="font-medium text-orange-600">🐾 Pets Present</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button onClick={handleCopyDetails} variant="outline" className="flex items-center gap-2">
-                        {isCopied ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        {isCopied ? 'Copied!' : 'Copy Details'}
-                      </Button>
-                      
-                      
-                      <Button onClick={handleViewOrderStatus} variant="outline" className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        View Status
-                      </Button>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button onClick={() => navigate('/')} variant="outline" className="flex items-center gap-2">
-                        <Home className="h-4 w-4" />
-                        Book Again
-                      </Button>
-                      
-                    </div>
+                )}
+                {instructions.special && (
+                  <div>
+                    <span className="font-bold">Notes: </span>
+                    <span>{instructions.special}</span>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+                {instructions.pets && (
+                  <div className="text-center">
+                    <span className="font-bold">🐾 Pets Present</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
-              {/* Referral Section */}
-              <PostPaymentReferralSection 
-                customerEmail={orderDetails?.customer_email}
-                customerName={orderDetails?.customer_name}
-                onReferralGenerated={(code: string) => {
-                  trackLead('Referral Code Generated', orderDetails?.est_price ? orderDetails.est_price / 100 : 0);
-                  addPixelEvent('Lead', {
-                    content_name: 'Referral Code Generated',
-                    referral_code: code,
-                    lead_source: 'post_purchase'
-                  });
-                }}
-              />
-            </>
-          )}
+        {/* Action Buttons Card */}
+        <div className="rounded-3xl bg-gradient-to-r from-slate-600 to-slate-700 p-6 shadow-xl">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                onClick={handleCopyDetails} 
+                variant="outline" 
+                className="bg-white/20 border-white/30 text-white font-bold hover:bg-white/30 rounded-2xl"
+              >
+                {isCopied ? <CheckCheck className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                {isCopied ? 'Copied!' : 'Copy'}
+              </Button>
+              
+              <Button 
+                onClick={handleViewOrderStatus} 
+                variant="outline" 
+                className="bg-white/20 border-white/30 text-white font-bold hover:bg-white/30 rounded-2xl"
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Status
+              </Button>
+            </div>
+            
+            <Button 
+              onClick={() => navigate('/')} 
+              variant="outline" 
+              className="w-full bg-white/20 border-white/30 text-white font-bold hover:bg-white/30 rounded-2xl"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Book Again 🎉
+            </Button>
+          </div>
         </div>
 
-        {/* Facebook Pixel Debug Panel */}
+        {/* Referral Section */}
+        <PostPaymentReferralSection 
+          customerEmail={orderDetails?.customer_email}
+          customerName={orderDetails?.customer_name}
+          onReferralGenerated={(code: string) => {
+            trackLead('Referral Code Generated', orderDetails?.est_price ? orderDetails.est_price / 100 : 0);
+            addPixelEvent('Lead', {
+              content_name: 'Referral Code Generated',
+              referral_code: code,
+              lead_source: 'post_purchase'
+            });
+          }}
+        />
+      </div>
+
+      {/* Facebook Pixel Debug Panel - Fixed position for mobile */}
+      <div className="fixed bottom-4 right-4 z-50">
         <FacebookPixelDebugPanel 
           events={pixelEvents}
           onClear={() => setPixelEvents([])}
