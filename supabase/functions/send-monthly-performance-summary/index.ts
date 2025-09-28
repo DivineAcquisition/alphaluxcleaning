@@ -1,9 +1,163 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.1';
 import { Resend } from "npm:resend@2.0.0";
-import { renderAsync } from 'npm:@react-email/components@0.0.22';
-import React from 'npm:react@18.3.1';
-import { MonthlyPerformanceSummary } from '../_shared/email-templates/monthly-performance-summary.tsx';
+
+// Simple HTML email template function
+const generateMonthlyPerformanceSummaryHtml = ({
+  subcontractorName,
+  month,
+  year,
+  stats,
+  achievements,
+  dashboardUrl
+}: {
+  subcontractorName: string;
+  month: string;
+  year: string;
+  stats: {
+    jobsCompleted: number;
+    totalEarnings: string;
+    averageRating: number;
+    onTimePercentage: number;
+    customerSatisfaction: number;
+  };
+  achievements: string[];
+  improvementAreas?: string[];
+  dashboardUrl: string;
+}) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Monthly Performance Summary</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f6f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px 20px;">
+          
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 40px; border-bottom: 1px solid #eaeaea; padding-bottom: 20px;">
+            <img src="https://app.alphaluxclean.com/logo.png" alt="AlphaLuxClean" style="width: 120px; height: 40px;">
+          </div>
+          
+          <!-- Main Content -->
+          <div style="padding: 0 20px;">
+            <h1 style="color: #1a1a1a; font-size: 28px; font-weight: bold; margin: 0 0 24px 0;">
+              🎉 Your ${month} ${year} Performance Summary
+            </h1>
+            
+            <p style="color: #1a1a1a; font-size: 18px; font-weight: 600; margin: 0 0 8px 0;">
+              Hi ${subcontractorName},
+            </p>
+            
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
+              Here's how you performed this month with Bay Area Cleaning!
+            </p>
+            
+            <!-- Stats Section -->
+            <div style="margin: 32px 0; padding: 24px 0; border-top: 1px solid #e5e7eb;">
+              <h2 style="color: #1a1a1a; font-size: 22px; font-weight: bold; margin: 0 0 20px 0;">
+                📊 Your Monthly Stats
+              </h2>
+              
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0;">
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center;">
+                  <div style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0 0 8px 0;">
+                    ${stats.jobsCompleted}
+                  </div>
+                  <div style="color: #6b7280; font-size: 14px; font-weight: 500;">
+                    Jobs Completed
+                  </div>
+                </div>
+                
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center;">
+                  <div style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0 0 8px 0;">
+                    ${stats.totalEarnings}
+                  </div>
+                  <div style="color: #6b7280; font-size: 14px; font-weight: 500;">
+                    Total Earnings
+                  </div>
+                </div>
+                
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center;">
+                  <div style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0 0 8px 0;">
+                    ${stats.averageRating.toFixed(1)}⭐
+                  </div>
+                  <div style="color: #6b7280; font-size: 14px; font-weight: 500;">
+                    Average Rating
+                  </div>
+                </div>
+                
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center;">
+                  <div style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0 0 8px 0;">
+                    ${stats.onTimePercentage}%
+                  </div>
+                  <div style="color: #6b7280; font-size: 14px; font-weight: 500;">
+                    On-Time Rate
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            ${achievements.length > 0 ? `
+            <!-- Achievements Section -->
+            <div style="margin: 32px 0; padding: 24px 0; border-top: 1px solid #e5e7eb;">
+              <h2 style="color: #1a1a1a; font-size: 22px; font-weight: bold; margin: 0 0 20px 0;">
+                🏆 Achievements This Month
+              </h2>
+              ${achievements.map(achievement => `
+                <p style="color: #059669; font-size: 16px; margin: 0 0 8px 0; font-weight: 500;">
+                  ✅ ${achievement}
+                </p>
+              `).join('')}
+            </div>
+            ` : ''}
+            
+            <!-- CTA Section -->
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${dashboardUrl}" 
+                 style="background-color: #3b82f6; color: #ffffff !important; padding: 16px 32px; 
+                        border-radius: 6px; text-decoration: none; font-weight: 600; 
+                        display: inline-block; font-size: 16px;">
+                View Full Dashboard
+              </a>
+            </div>
+            
+            <!-- Footer Messages -->
+            <div style="margin: 32px 0;">
+              <p style="color: #6b7280; font-size: 14px; margin: 8px 0;">
+                Keep up the great work! Questions? Reply to this email.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin: 8px 0;">
+                - The Bay Area Cleaning Team
+              </p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="border-top: 1px solid #eaeaea; padding-top: 20px; margin-top: 40px; text-align: center;">
+            <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
+              <a href="https://app.alphaluxclean.com" style="color: #666666; text-decoration: underline;">
+                AlphaLuxClean
+              </a><br>
+              Premium cleaning services in Texas and California
+            </p>
+            <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
+              <a href="tel:+15551234567" style="color: #666666; text-decoration: underline;">
+                (555) 123-4567
+              </a> • 
+              <a href="mailto:support@alphaluxclean.com" style="color: #666666; text-decoration: underline;">
+                support@alphaluxclean.com
+              </a>
+            </p>
+          </div>
+          
+        </div>
+      </body>
+    </html>
+  `;
+};
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -119,24 +273,22 @@ const handler = async (req: Request): Promise<Response> => {
         if (averageRating < 4.0) improvementAreas.push("Focus on improving customer satisfaction");
         if (completedJobs.length < 10) improvementAreas.push("Take on more jobs to increase earnings");
 
-        // Render email using React Email
-        const emailHtml = await renderAsync(
-          React.createElement(MonthlyPerformanceSummary, {
-            subcontractorName: subcontractor.full_name,
-            month: monthName,
-            year: targetYear.toString(),
-            stats: {
-              jobsCompleted: completedJobs.length,
-              totalEarnings: `$${totalEarnings.toFixed(2)}`,
-              averageRating: averageRating,
-              onTimePercentage: onTimePercentage,
-              customerSatisfaction: Math.round(averageRating * 20), // Convert to percentage
-            },
-            achievements: achievements,
-            improvementAreas: improvementAreas.length > 0 ? improvementAreas : undefined,
-            dashboardUrl: `${supabaseUrl.replace('.supabase.co', '')}.com/subcontractor-portal`,
-          })
-        );
+        // Render email using simple HTML template
+        const emailHtml = generateMonthlyPerformanceSummaryHtml({
+          subcontractorName: subcontractor.full_name,
+          month: monthName,
+          year: targetYear.toString(),
+          stats: {
+            jobsCompleted: completedJobs.length,
+            totalEarnings: `$${totalEarnings.toFixed(2)}`,
+            averageRating: averageRating,
+            onTimePercentage: onTimePercentage,
+            customerSatisfaction: Math.round(averageRating * 20), // Convert to percentage
+          },
+          achievements: achievements,
+          improvementAreas: improvementAreas.length > 0 ? improvementAreas : undefined,
+          dashboardUrl: `${supabaseUrl.replace('.supabase.co', '')}.com/subcontractor-portal`,
+        });
 
         // Send email
         const emailResponse = await resend.emails.send({
