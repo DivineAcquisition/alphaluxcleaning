@@ -1192,6 +1192,14 @@ export function ModernLegacyBooking() {
             <p className="text-sm text-success font-semibold mt-2">
               All prices already include 20% discount - Save big today!
             </p>
+            
+            {/* Trust Signal */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-4 h-4 fill-warning text-warning" />)}
+              </div>
+              <span className="text-muted-foreground text-sm font-medium">Trusted by 150+ TX & CA families served</span>
+            </div>
           </div>
 
           {/* Enhanced Progress Steps */}

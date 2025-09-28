@@ -14,13 +14,6 @@ export function HeroSection() {
           {/* Value Proposition Bullets - 120px height target, Single Column Mobile */}
           
 
-          {/* Trust Signal - 30px height target */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-4 h-4 fill-warning text-warning" />)}
-            </div>
-            <span className="text-muted-foreground text-sm font-medium">Trusted by 150+ TX & CA families served</span>
-          </div>
 
           {/* Trust Badges - Mobile Optimized */}
           <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-4">
