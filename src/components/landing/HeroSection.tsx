@@ -5,10 +5,6 @@ export function HeroSection() {
   return <div className="bg-gradient-to-br from-background to-secondary/20 py-6 lg:py-8">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Mobile-First Headline - 60px height target */}
-          <div className="mb-4">
-            <h1 className="mobile-headline text-foreground mb-2 leading-tight">Texas & California Premium Cleaning Service</h1>
-          </div>
           
           {/* Mobile-First Pricing Banner - 40px height target */}
           <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-2 mb-4 inline-block">
