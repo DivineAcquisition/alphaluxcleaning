@@ -121,3 +121,6 @@ verify_jwt = false
 
 [functions.get-stripe-config]
 verify_jwt = false
+
+[functions.delete-test-data]
+verify_jwt = false

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { DeleteTestData } from '@/components/DeleteTestData';
 import { 
   Database, 
   ArrowLeft,
@@ -251,6 +252,11 @@ export function DevTestDatabase() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Enhanced Test Data Cleanup */}
+        <div className="mb-8">
+          <DeleteTestData />
         </div>
 
         {/* Database Tables */}
