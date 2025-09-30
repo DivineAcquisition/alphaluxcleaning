@@ -108,7 +108,7 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: "Bay Area Cleaning Professionals <notifications@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [email],
       subject: `🎉 Tier Upgrade: Welcome to ${tierNames[newTier]} Status!`,
       html: emailContent,

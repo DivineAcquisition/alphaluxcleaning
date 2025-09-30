@@ -94,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { error } = await resend.emails.send({
-      from: "Bay Area Cleaning Professionals <admin@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [user.email],
       subject: emailContent.subject,
       html: emailContent.html,

@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <notifications@alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [to],
       subject,
       html,

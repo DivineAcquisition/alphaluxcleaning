@@ -3,8 +3,8 @@ import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const FROM = Deno.env.get("EMAIL_FROM") || "AlphaLuxClean <notifications@alphaluxclean.com>";
-const REPLY_TO = Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxclean.com";
+const FROM = Deno.env.get("EMAIL_FROM") || "AlphaLuxClean <noreply@info.alphaluxclean.com>";
+const REPLY_TO = Deno.env.get("EMAIL_REPLY_TO") || "support@info.alphaluxclean.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

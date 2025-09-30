@@ -317,7 +317,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       const { error: emailError } = await resend.emails.send({
-        from: "Bay Area Cleaning Pros <onboarding@resend.dev>",
+        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [application.email],
         subject: "Welcome to Bay Area Cleaning Professionals - Account Activated!",
         html: emailHtml,

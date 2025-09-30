@@ -90,7 +90,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Pros <notify@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [application.email],
       subject: subject,
       html: emailContent,

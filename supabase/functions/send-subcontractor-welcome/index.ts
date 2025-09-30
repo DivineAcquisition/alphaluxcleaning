@@ -104,7 +104,7 @@ Welcome to the team!`;
 
     // Send welcome email
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Professionals <welcome@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [email],
       subject: welcomeTitle,
       html: emailContent,

@@ -457,7 +457,7 @@ serve(async (req) => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "Bay Area Cleaning <notifications@bayareacleaningpros.com>",
+          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
           to: [booking.customer_email],
           subject: "🎉 Your Cleaning Service is Complete!",
           html: emailHtml,

@@ -115,7 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning <jobs@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [subcontractor.email],
       subject: `New Job Assignment - ${booking.customer_name} on ${new Date(booking.service_date).toLocaleDateString()}`,
       html: emailHtml,

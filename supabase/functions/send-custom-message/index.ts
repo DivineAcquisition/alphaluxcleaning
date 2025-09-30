@@ -50,7 +50,7 @@ serve(async (req) => {
       const emailPromises = body.recipients.map(async (recipient) => {
         try {
           const emailResponse = await resend.emails.send({
-            from: 'Bay Area Cleaning <noreply@bayareacleaningpros.com>',
+            from: 'AlphaLuxClean <noreply@info.alphaluxclean.com>',
             to: [recipient],
             subject: body.subject || 'Message from Bay Area Cleaning',
             html: `

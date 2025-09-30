@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send emails to both admin addresses
     const emailPromises = adminEmails.map(email => 
       resend.emails.send({
-        from: "Bay Area Cleaning Pros <admin@bayareacleaningpros.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [email],
         subject: `🔔 Job Assignment Required - ${booking.customer_name}`,
         html: emailHTML

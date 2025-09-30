@@ -192,7 +192,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Bay Area Cleaning Professionals <onboarding@bayareacleaningpros.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [requestData.email],
       subject: `Welcome to Bay Area Cleaning Pros - ${tierConfig.tier_name} Subcontractor`,
       html: onboardingEmail,

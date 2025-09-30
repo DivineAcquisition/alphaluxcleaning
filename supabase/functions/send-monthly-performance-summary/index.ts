@@ -292,7 +292,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send email
         const emailResponse = await resend.emails.send({
-          from: "Bay Area Cleaning <reports@bayareacleaningpros.com>",
+          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
           to: [subcontractor.email],
           subject: `Your ${monthName} ${targetYear} Performance Summary - ${completedJobs.length} Jobs Completed`,
           html: emailHtml,

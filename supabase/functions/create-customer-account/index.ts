@@ -113,7 +113,7 @@ serve(async (req) => {
       const portalUrl = 'https://portal.bayareacleaningpros.com';
       
       const emailResponse = await resend.emails.send({
-        from: "Bay Area Cleaning Pros <noreply@bayareacleaningpros.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [customerEmail],
         subject: "Welcome to Bay Area Cleaning Pros - Your Account is Ready!",
         html: `
