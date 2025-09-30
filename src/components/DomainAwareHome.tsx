@@ -4,7 +4,6 @@ import { ModernLegacyBooking } from '@/components/booking/ModernLegacyBooking';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { TestimonialSection } from '@/components/landing/TestimonialSection';
 import { WhyChooseUsSection } from '@/components/landing/WhyChooseUsSection';
-import { BookingNotification } from '@/components/landing/BookingNotification';
 export function DomainAwareHome() {
   // Check if we're on the book subdomain
   const isBookSubdomain = window.location.hostname === 'book.alphaluxclean.com';
@@ -27,8 +26,5 @@ export function DomainAwareHome() {
       {/* Trust & Social Proof Sections */}
       <TestimonialSection />
       <WhyChooseUsSection />
-      
-      {/* Live Booking Notifications */}
-      <BookingNotification />
     </div>;
 }
