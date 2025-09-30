@@ -18,11 +18,12 @@ import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from 
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
 import { ServiceTypeCards } from './ServiceTypeCards';
-import { EnhancedServiceTypeCards } from './EnhancedServiceTypeCards';
+import { CVRServiceTypeCards } from './CVRServiceTypeCards';
 import { PropertyDetailsSelector } from './PropertyDetailsSelector';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
+import { ProgressCelebration } from './ProgressCelebration';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
 
@@ -835,7 +836,7 @@ export function ModernLegacyBooking() {
             </Card>
 
             {/* Service Type Selection */}
-            {zipCodeValid && bookingData.customerEmail && <EnhancedServiceTypeCards 
+            {zipCodeValid && bookingData.customerEmail && <CVRServiceTypeCards 
               serviceTypes={serviceTypes} 
               selectedType={bookingData.serviceType} 
               onSelect={typeId => updateField('serviceType', typeId)}
@@ -1202,7 +1203,12 @@ export function ModernLegacyBooking() {
             </div>
           </div>
 
-          {/* Enhanced Progress Steps */}
+          {/* Enhanced Progress Steps with Celebration */}
+          <ProgressCelebration 
+            currentStep={currentStep} 
+            totalSteps={steps.length}
+            savings={calculateGlobalDiscountAmount(bookingData.totalPrice / 0.8)}
+          />
           <EnhancedProgressIndicator steps={steps} currentStep={currentStep} className="mb-8" />
 
           <div className="flex flex-col lg:flex-row gap-8">
