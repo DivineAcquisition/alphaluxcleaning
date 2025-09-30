@@ -125,3 +125,11 @@ verify_jwt = false
 # Make dev-ensure-admin public for dev setup
 [functions.dev-ensure-admin]
 verify_jwt = false
+
+# Admin bootstrap for development setup
+[functions.admin-bootstrap]
+verify_jwt = false
+
+# Edge health check
+[functions.edge-health]
+verify_jwt = false

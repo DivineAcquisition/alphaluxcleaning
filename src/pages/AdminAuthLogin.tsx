@@ -118,39 +118,72 @@ const AdminAuthLogin = () => {
       const devEmail = email || 'admin@alphaluxclean.com';
       const devPassword = password || 'Admin123!';
 
-      const { data, error } = await supabase.functions.invoke('dev-ensure-admin', {
-        body: { email: devEmail, password: devPassword, role: 'admin' }
+      console.log('🔧 Setting up admin account via admin-bootstrap...');
+
+      const { data, error } = await supabase.functions.invoke('admin-bootstrap', {
+        body: { 
+          email: devEmail,
+          password: devPassword 
+        }
       });
 
-      if (error) throw error;
-
-      if (data.error) {
+      if (error) {
+        console.error('❌ Admin bootstrap error:', error);
         toast({
           variant: "destructive",
           title: "Setup Failed",
-          description: data.error,
+          description: error.message || 'Could not set up admin account'
+        });
+        return;
+      }
+
+      console.log('✅ Admin bootstrap response:', data);
+
+      if (!data?.success) {
+        toast({
+          variant: "destructive",
+          title: "Setup Failed",
+          description: data?.error || 'Unknown error during setup'
         });
         return;
       }
 
       toast({
-        title: "Admin Setup Complete",
-        description: `Admin account created/updated. Email: ${devEmail}`,
+        title: "Admin Account Ready!",
+        description: data.message || 'Logging you in...'
       });
 
-      const { error: loginError } = await supabase.auth.signInWithPassword({
+      // Small delay to let the user creation settle
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Now attempt to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: devEmail,
         password: devPassword,
       });
 
-      if (!loginError) {
-        navigate('/admin', { replace: true });
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: 'Account created but could not sign in. Try logging in manually.'
+        });
+        return;
       }
+
+      toast({
+        title: "Success!",
+        description: 'Redirecting to admin panel...'
+      });
+
+      navigate('/admin', { replace: true });
     } catch (error: any) {
+      console.error('Unexpected error:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to set up admin account.",
+        title: "Setup Error",
+        description: error.message || 'An unexpected error occurred'
       });
     } finally {
       setLoading(false);
