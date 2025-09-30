@@ -119,8 +119,9 @@ verify_jwt = false
 [functions.get-order-details]
 verify_jwt = false
 
-[functions.get-stripe-config]
+[functions.delete-test-data]
 verify_jwt = false
 
-[functions.delete-test-data]
+# Make dev-ensure-admin public for dev setup
+[functions.dev-ensure-admin]
 verify_jwt = false
