@@ -85,7 +85,7 @@ const templateConfig = {
 export default function EmailSettings() {
   const [settings, setSettings] = useState<EmailSettings>({
     company_id: '550e8400-e29b-41d4-a716-446655440000',
-    from_name: 'Bay Area Cleaning Pros',
+    from_name: 'AlphaLux Clean',
     from_email: 'notifications@bayareacleaningpros.com',
     reply_to: '',
     brand: {
@@ -304,7 +304,7 @@ export default function EmailSettings() {
                     id="from-name"
                     value={settings.from_name}
                     onChange={(e) => setSettings({...settings, from_name: e.target.value})}
-                    placeholder="Bay Area Cleaning Pros"
+                    placeholder="AlphaLux Clean"
                   />
                 </div>
                 <div className="space-y-2">

@@ -56,7 +56,7 @@ export function MobileAppPromo() {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl">
             <Smartphone className="h-6 w-6 text-primary" />
-            Bay Area Cleaning Mobile Apps
+            AlphaLux Clean Mobile Apps
           </CardTitle>
           <CardDescription className="text-lg">
             Enhanced mobile experience for customers and subcontractors

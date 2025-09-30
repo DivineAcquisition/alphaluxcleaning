@@ -49,7 +49,7 @@ export function ReferralSystemV2() {
   };
 
   const shareToSocial = (platform: string) => {
-    const message = `Get 50% off your first deep clean with Bay Area Cleaning Pros! Use my referral code: ${referralData.code}`;
+    const message = `Get 50% off your first deep clean with AlphaLux Clean! Use my referral code: ${referralData.code}`;
     const encodedMessage = encodeURIComponent(message);
     const encodedUrl = encodeURIComponent(shareUrl);
     

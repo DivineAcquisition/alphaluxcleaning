@@ -12,14 +12,14 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
   const getErrorConfig = () => {
     const configs = {
       admin: {
-        title: 'Bay Area Cleaning Pros Admin',
+        title: 'AlphaLux Clean Admin',
         subtitle: 'Administrative Portal',
         ctaText: 'Go to Login',
         ctaAction: () => window.location.href = '/auth',
         icon: LogIn
       },
       book: {
-        title: 'Bay Area Cleaning Pros',
+        title: 'AlphaLux Clean',
         subtitle: 'Book Your Cleaning Service',
         ctaText: 'Back to Booking',
         ctaAction: () => window.location.href = '/',
@@ -145,7 +145,7 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
         </Button>
 
         <p className="text-xs text-muted-foreground mt-6">
-          © 2025 Bay Area Cleaning Pros. All rights reserved.
+          © 2025 AlphaLux Clean. All rights reserved.
         </p>
       </div>
     </div>

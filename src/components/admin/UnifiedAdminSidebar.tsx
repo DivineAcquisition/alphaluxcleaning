@@ -163,7 +163,7 @@ export function UnifiedAdminSidebar() {
           {open && (
             <div>
               <h1 className="text-sm font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                Bay Area Cleaning Pros
+                AlphaLux Clean
               </h1>
               <p className="text-xs text-muted-foreground font-medium">Admin Control Center</p>
             </div>

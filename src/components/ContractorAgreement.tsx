@@ -35,7 +35,7 @@ export default function ContractorAgreement({
                 <h3 className="text-lg font-semibold mb-3 text-primary">1. PARTIES</h3>
                 <p>
                   This Independent Contractor Agreement ("Agreement") is entered into between 
-                  Bay Area Cleaning Professionals ("Company") and {contractorName} ("Contractor").
+                  AlphaLux Clean ("Company") and {contractorName} ("Contractor").
                 </p>
               </section>
 

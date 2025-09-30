@@ -13,7 +13,7 @@ export const EmailTools = () => {
               📧 Email Testing Tools
             </h1>
             <p className="text-muted-foreground text-lg">
-              Test and debug email functionality for the Bay Area Cleaning Pros system.
+              Test and debug email functionality for the AlphaLux Clean system.
             </p>
           </div>
 
@@ -41,7 +41,7 @@ export const EmailTools = () => {
                 <div>
                   <h3 className="font-medium mb-2">Email Sender Details</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Test emails sent from: <code className="bg-muted px-2 py-1 rounded">onboarding@resend.dev</code></li>
+                    <li>• Test emails sent from: <code className="bg-muted px-2 py-1 rounded">info@alphaluxclean.com</code></li>
                     <li>• Production emails sent from: <code className="bg-muted px-2 py-1 rounded">noreply@notify.bayareacleaningpros.com</code></li>
                     <li>• Admin emails sent from: <code className="bg-muted px-2 py-1 rounded">admin@bayareacleaningpros.com</code></li>
                   </ul>

@@ -57,7 +57,7 @@ const SchedulingSuccessFlow: React.FC<SchedulingSuccessFlowProps> = ({
 
   const handleCopyDetails = async () => {
     const details = `
-Bay Area Cleaning Pros - Service Scheduled
+AlphaLux Clean - Service Scheduled
 
 📅 Date: ${formatDate(scheduledDate)}
 ⏰ Time: ${scheduledTime}
@@ -82,7 +82,7 @@ Questions? Call (281) 809-9901
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Bay Area Cleaning Pros - Service Scheduled',
+          title: 'AlphaLux Clean - Service Scheduled',
           text: `Service scheduled for ${formatDate(scheduledDate)} at ${scheduledTime}`,
           url: window.location.href
         });

@@ -306,7 +306,7 @@ export function PaymentForm({
           Book Your Service
         </CardTitle>
         <CardDescription className="text-primary-foreground/80 text-center">
-          Secure booking with Bay Area Cleaning Pros
+          Secure booking with AlphaLux Clean
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
