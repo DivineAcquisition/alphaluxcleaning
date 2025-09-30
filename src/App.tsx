@@ -16,6 +16,7 @@ import { WebhookTest } from '@/pages/WebhookTest';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminOTPLogin from '@/pages/AdminOTPLogin';
 import AdminAuthLogin from '@/pages/AdminAuthLogin';
+import AdminStatus from '@/pages/AdminStatus';
 import AdminEmailTemplates from '@/pages/AdminEmailTemplates';
 import AdminEmailLogs from '@/pages/AdminEmailLogs';
 import AdminEmailEvents from '@/pages/AdminEmailEvents';
@@ -71,6 +72,7 @@ function App() {
             <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin-otp-login" element={<AdminOTPLogin />} />
           <Route path="/admin-auth-login" element={<AdminAuthLogin />} />
+          <Route path="/admin-status" element={<AdminStatus />} />
           <Route path="/admin/email/templates" element={<AdminEmailTemplates />} />
           <Route path="/admin/email/logs" element={<AdminEmailLogs />} />
           <Route path="/admin/email/events" element={<AdminEmailEvents />} />
