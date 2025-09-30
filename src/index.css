@@ -70,6 +70,19 @@ All colors MUST be HSL.
     /* Enhanced animations for payment UI */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* CVR Funnel Colors */
+    --funnel-success: 142 76% 36%;
+    --funnel-success-light: 142 76% 92%;
+    --funnel-urgency: 25 95% 53%;
+    --funnel-urgency-light: 25 95% 95%;
+    --funnel-premium: 45 100% 51%;
+    --funnel-premium-light: 45 100% 95%;
+    
+    /* CVR Shadows */
+    --shadow-funnel-card: 0 4px 20px -2px hsl(var(--primary) / 0.1);
+    --shadow-funnel-hover: 0 8px 30px -4px hsl(var(--primary) / 0.2);
+    --shadow-funnel-active: 0 2px 10px -1px hsl(var(--primary) / 0.15);
 
     --sidebar-background: 0 0% 98%;
 
@@ -251,6 +264,18 @@ All colors MUST be HSL.
     animation: scaleIn 0.2s ease-out;
   }
   
+  .animate-slide-in-up {
+    animation: slideInUp 0.4s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-out infinite;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s ease-in-out infinite;
+  }
+  
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -264,6 +289,44 @@ All colors MUST be HSL.
   @keyframes scaleIn {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); }
+    50% { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+  }
+
+  @keyframes bounceSubtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  /* Funnel Card Styles */
+  .funnel-card {
+    box-shadow: var(--shadow-funnel-card);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .funnel-card:hover {
+    box-shadow: var(--shadow-funnel-hover);
+    transform: translateY(-2px);
+  }
+
+  .funnel-card-active {
+    box-shadow: var(--shadow-funnel-active);
+  }
+  
+  /* Grid pattern */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
   
   /* Loading shimmer effect */
