@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MapPin, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { validateServiceAreaZipCode } from "@/lib/service-area-validation";
 
 interface UpdateAddressDialogProps {
   open: boolean;
@@ -50,6 +51,13 @@ export const UpdateAddressDialog = ({
   const handleSubmit = async () => {
     if (!newAddress.street || !newAddress.city || !newAddress.state || !newAddress.zipCode) {
       toast.error("Please fill in all required address fields");
+      return;
+    }
+
+    // Validate service area
+    const zipValidation = validateServiceAreaZipCode(newAddress.zipCode);
+    if (!zipValidation.isValid) {
+      toast.error(zipValidation.message || "ZIP code is outside our service area");
       return;
     }
 

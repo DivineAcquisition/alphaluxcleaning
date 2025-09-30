@@ -2,13 +2,20 @@
 // Covers all of Texas and California
 
 function isTexasZip(zipCode: number): boolean {
-  return zipCode === 73301 || // Austin PO Box
-         (zipCode >= 75001 && zipCode <= 79999) || // Main Texas range
-         (zipCode >= 88510 && zipCode <= 88595); // El Paso area
+  // Comprehensive Texas ZIP code ranges covering all major cities and regions
+  return (zipCode >= 73301 && zipCode <= 73301) ||  // Austin PO Box
+         (zipCode >= 75000 && zipCode <= 75999) ||  // Dallas area
+         (zipCode >= 76000 && zipCode <= 76999) ||  // Fort Worth area
+         (zipCode >= 77000 && zipCode <= 77999) ||  // Houston area (includes 77521)
+         (zipCode >= 78000 && zipCode <= 78999) ||  // San Antonio/Austin area
+         (zipCode >= 79000 && zipCode <= 79999) ||  // West Texas (El Paso, Lubbock, etc.)
+         (zipCode >= 73000 && zipCode <= 73999) ||  // Central/North Texas
+         (zipCode >= 88500 && zipCode <= 88599);    // El Paso extended range
 }
 
 function isCaliforniaZip(zipCode: number): boolean {
-  return zipCode >= 90001 && zipCode <= 96162;
+  // California ZIP code ranges covering entire state
+  return (zipCode >= 90000 && zipCode <= 96199);
 }
 
 export interface ServiceAreaValidation {
@@ -42,9 +49,11 @@ export function validateServiceAreaZipCode(zipCode: string): ServiceAreaValidati
     };
   }
 
+  console.log(`❌ ZIP code ${cleanZip} rejected - outside service area`);
+  
   return {
     isValid: false,
-    message: `Sorry, we currently service Cali & Texas only. ${cleanZip} is outside our service area.`
+    message: `Sorry, we currently service California & Texas only. ZIP code ${cleanZip} is outside our service area.`
   };
 }
 

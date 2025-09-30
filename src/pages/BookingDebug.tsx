@@ -1,5 +1,6 @@
 import { Navigation } from '@/components/Navigation';
 import { BookingFlowDebugger } from '@/components/debug/BookingFlowDebugger';
+import { ZipCodeTester } from '@/components/admin/ZipCodeTester';
 
 export default function BookingDebug() {
   return (
@@ -12,7 +13,10 @@ export default function BookingDebug() {
             Test the booking flow components and edge functions
           </p>
         </div>
-        <BookingFlowDebugger />
+        <div className="space-y-6">
+          <ZipCodeTester />
+          <BookingFlowDebugger />
+        </div>
       </div>
     </div>
   );
