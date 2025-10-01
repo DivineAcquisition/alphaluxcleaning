@@ -90,7 +90,8 @@ async function issueReferralCode(customerId: string) {
           data: {
             first_name: customer.first_name,
             referral_code: customer.referral_code,
-            referral_link: customer.referral_link
+            referral_link: customer.referral_link,
+            app_url: 'https://app.alphaluxclean.com'
           },
           category: 'marketing',
           event_id: `referral_invite_${customerId}`
@@ -304,7 +305,8 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
       data: {
         first_name: referrerCustomer?.first_name,
         amount: '$50.00',
-        referred_name: referredCustomer?.first_name
+        referred_name: referredCustomer?.first_name,
+        app_url: 'https://app.alphaluxclean.com'
       },
       category: 'transactional'
     }
@@ -318,7 +320,8 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
       data: {
         first_name: referredCustomer?.first_name,
         amount: '$50.00',
-        referrer_name: referrerCustomer?.first_name
+        referrer_name: referrerCustomer?.first_name,
+        app_url: 'https://app.alphaluxclean.com'
       },
       category: 'transactional'
     }

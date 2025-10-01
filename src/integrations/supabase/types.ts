@@ -116,6 +116,27 @@ export type Database = {
         }
         Relationships: []
       }
+      attribution_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       availability_schedule: {
         Row: {
           active: boolean
@@ -157,6 +178,7 @@ export type Database = {
           addons: Json | null
           arr: number | null
           at_risk: boolean | null
+          attribution_method: string | null
           balance_due: number | null
           conversion_status:
             | Database["public"]["Enums"]["conversion_status"]
@@ -166,6 +188,7 @@ export type Database = {
           deposit_amount: number | null
           email_bounced_at: string | null
           est_price: number
+          first_booking: boolean | null
           frequency: string
           ghl_contact_id: string | null
           hcp_customer_id: string | null
@@ -177,11 +200,14 @@ export type Database = {
           marketing_opt_in: boolean | null
           membership_plan_id: string | null
           mrr: number | null
+          paid_at: string | null
           payment_option_id: string | null
           pricing_breakdown: Json | null
           property_details: Json | null
           receipt_url: string | null
           recurring_active: boolean | null
+          referrer_code: string | null
+          referrer_customer_id: string | null
           service_date: string | null
           service_time_window: string | null
           service_type: string
@@ -202,6 +228,7 @@ export type Database = {
           addons?: Json | null
           arr?: number | null
           at_risk?: boolean | null
+          attribution_method?: string | null
           balance_due?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
@@ -211,6 +238,7 @@ export type Database = {
           deposit_amount?: number | null
           email_bounced_at?: string | null
           est_price: number
+          first_booking?: boolean | null
           frequency: string
           ghl_contact_id?: string | null
           hcp_customer_id?: string | null
@@ -222,11 +250,14 @@ export type Database = {
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
+          paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           property_details?: Json | null
           receipt_url?: string | null
           recurring_active?: boolean | null
+          referrer_code?: string | null
+          referrer_customer_id?: string | null
           service_date?: string | null
           service_time_window?: string | null
           service_type: string
@@ -247,6 +278,7 @@ export type Database = {
           addons?: Json | null
           arr?: number | null
           at_risk?: boolean | null
+          attribution_method?: string | null
           balance_due?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
@@ -256,6 +288,7 @@ export type Database = {
           deposit_amount?: number | null
           email_bounced_at?: string | null
           est_price?: number
+          first_booking?: boolean | null
           frequency?: string
           ghl_contact_id?: string | null
           hcp_customer_id?: string | null
@@ -267,11 +300,14 @@ export type Database = {
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
+          paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           property_details?: Json | null
           receipt_url?: string | null
           recurring_active?: boolean | null
+          referrer_code?: string | null
+          referrer_customer_id?: string | null
           service_date?: string | null
           service_time_window?: string | null
           service_type?: string
@@ -292,6 +328,13 @@ export type Database = {
           {
             foreignKeyName: "bookings_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_referrer_customer_id_fkey"
+            columns: ["referrer_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
@@ -909,68 +952,138 @@ export type Database = {
       referral_config: {
         Row: {
           active: boolean
+          cookie_days: number | null
           created_at: string
           currency: string
+          get_amount: number | null
+          give_amount: number | null
           id: string
+          last_click_days: number | null
+          referral_seed: string | null
           reward_amount: number
           updated_at: string
         }
         Insert: {
           active?: boolean
+          cookie_days?: number | null
           created_at?: string
           currency?: string
+          get_amount?: number | null
+          give_amount?: number | null
           id?: string
+          last_click_days?: number | null
+          referral_seed?: string | null
           reward_amount?: number
           updated_at?: string
         }
         Update: {
           active?: boolean
+          cookie_days?: number | null
           created_at?: string
           currency?: string
+          get_amount?: number | null
+          give_amount?: number | null
           id?: string
+          last_click_days?: number | null
+          referral_seed?: string | null
           reward_amount?: number
           updated_at?: string
         }
         Relationships: []
       }
-      referrals: {
+      referral_rewards: {
         Row: {
-          code: string
+          amount_cents: number
+          booking_id: string | null
           created_at: string
-          credits_earned: number | null
-          credits_used: number | null
           customer_id: string
           id: string
-          link: string
-          status: string | null
-          updated_at: string
+          notes: string | null
+          redeemed_at: string | null
+          status: string
+          type: string
         }
         Insert: {
-          code: string
+          amount_cents: number
+          booking_id?: string | null
           created_at?: string
-          credits_earned?: number | null
-          credits_used?: number | null
           customer_id: string
           id?: string
-          link: string
-          status?: string | null
-          updated_at?: string
+          notes?: string | null
+          redeemed_at?: string | null
+          status?: string
+          type: string
         }
         Update: {
-          code?: string
+          amount_cents?: number
+          booking_id?: string | null
           created_at?: string
-          credits_earned?: number | null
-          credits_used?: number | null
           customer_id?: string
           id?: string
-          link?: string
-          status?: string | null
-          updated_at?: string
+          notes?: string | null
+          redeemed_at?: string | null
+          status?: string
+          type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "referrals_customer_id_fkey"
+            foreignKeyName: "referral_rewards_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          attributed_at: string | null
+          created_at: string
+          id: string
+          referred_customer_id: string | null
+          referred_email: string
+          referrer_customer_id: string
+          status: string
+          utms: Json | null
+        }
+        Insert: {
+          attributed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_customer_id?: string | null
+          referred_email: string
+          referrer_customer_id: string
+          status?: string
+          utms?: Json | null
+        }
+        Update: {
+          attributed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_customer_id?: string | null
+          referred_email?: string
+          referrer_customer_id?: string
+          status?: string
+          utms?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_customer_id_fkey"
+            columns: ["referred_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_customer_id_fkey"
+            columns: ["referrer_customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
