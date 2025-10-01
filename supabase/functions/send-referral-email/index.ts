@@ -12,10 +12,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { testEmail } = await req.json();
+    const { ownerEmail, email, testEmail, referralCode } = await req.json();
 
-    if (!testEmail) {
-      return new Response(JSON.stringify({ error: "testEmail is required" }), {
+    const recipientEmail = ownerEmail || email || testEmail;
+
+    if (!recipientEmail) {
+      return new Response(JSON.stringify({ error: "Recipient email is required" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -29,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Queue email for referral
     const { error: queueError } = await supabase.functions.invoke('emails-queue', {
       body: {
-        to: testEmail,
+        to: recipientEmail,
         name: "Test Customer",
         template: "referral_reward_earned", 
         payload: {
@@ -46,9 +48,19 @@ const handler = async (req: Request): Promise<Response> => {
       throw queueError;
     }
 
+    // Immediately invoke emails-worker to process the queue
+    const { error: workerError } = await supabase.functions.invoke('emails-worker', {
+      body: {}
+    });
+
+    if (workerError) {
+      console.error("Error invoking emails-worker:", workerError);
+      // Don't throw - email is queued, worker will eventually process it
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
-      message: "Referral email queued successfully" 
+      message: "Referral email queued and worker triggered" 
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
