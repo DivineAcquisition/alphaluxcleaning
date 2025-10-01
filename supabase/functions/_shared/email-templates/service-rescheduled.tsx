@@ -13,19 +13,23 @@ import * as React from 'npm:react@18.3.1';
 import { EmailBase, ActionButton } from './email-base.tsx';
 
 interface ServiceRescheduledEmailProps {
-  customerName: string;
-  originalDate: string;
-  newDate: string;
-  serviceType: string;
-  rescheduleReason?: string;
+  customerName?: string;
+  cleaningType?: string;
+  oldDate?: string;
+  oldTime?: string;
+  newDate?: string;
+  newTime?: string;
+  serviceAddress?: string;
 }
 
 export const ServiceRescheduledEmail = ({
-  customerName,
-  originalDate,
+  customerName = 'Customer',
+  cleaningType = 'Cleaning Service',
+  oldDate,
+  oldTime,
   newDate,
-  serviceType,
-  rescheduleReason,
+  newTime,
+  serviceAddress,
 }: ServiceRescheduledEmailProps) => {
   return (
     <EmailBase preview="Your service has been rescheduled">
@@ -39,47 +43,40 @@ export const ServiceRescheduledEmail = ({
         </Text>
 
         <Text style={text}>
-          We wanted to let you know that your {serviceType} service has been rescheduled.
+          We wanted to let you know that your {cleaningType} service has been rescheduled.
         </Text>
 
         <Section style={detailsSection}>
           <Text style={detailsText}>
-            <strong>Original Date:</strong> {originalDate}
+            <strong>Previous Date:</strong> {oldDate}
+          </Text>
+          <Text style={detailsText}>
+            <strong>Previous Time:</strong> {oldTime}
           </Text>
           <Text style={detailsText}>
             <strong>New Date:</strong> {newDate}
           </Text>
           <Text style={detailsText}>
-            <strong>Service:</strong> {serviceType}
+            <strong>New Time:</strong> {newTime}
           </Text>
+          {serviceAddress && (
+            <Text style={detailsText}>
+              <strong>Address:</strong> {serviceAddress}
+            </Text>
+          )}
         </Section>
 
-        {rescheduleReason && (
-          <>
-            <Text style={text}>
-              <strong>Reason for reschedule:</strong>
-            </Text>
-            <Text style={reasonText}>
-              {rescheduleReason}
-            </Text>
-          </>
-        )}
-
         <Text style={text}>
-          We apologize for any inconvenience this may cause and appreciate your understanding.
+          If you have any questions or need to make further changes, please contact us.
         </Text>
 
         <Text style={text}>
-          If you have any questions or need to make further changes to your appointment, please don't hesitate to contact us.
-        </Text>
-
-        <Text style={text}>
-          Thank you for choosing our services!
+          Thank you for choosing AlphaLuxClean!
         </Text>
 
         <Text style={text}>
           Best regards,<br />
-          The Cleaning Team
+          The AlphaLuxClean Team
         </Text>
       </Section>
     </EmailBase>

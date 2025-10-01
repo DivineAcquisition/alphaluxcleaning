@@ -123,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
             rewardAmount,
           })
         );
-        subject = "🎉 Referral Reward Earned! - Bay Area Cleaning Pros";
+        subject = "🎉 Referral Reward Earned! - AlphaLuxClean";
         break;
       case 'rescheduled':
         if (!oldDate || !oldTime || !newDate || !newTime) {
@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
             serviceAddress,
           })
         );
-        subject = "Service Rescheduled - Bay Area Cleaning Pros";
+        subject = "Service Rescheduled - AlphaLuxClean";
         break;
 
       case 'paused':
@@ -158,7 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
             lastServiceDate,
           })
         );
-        subject = "Service Paused - Bay Area Cleaning Pros";
+        subject = "Service Paused - AlphaLuxClean";
         break;
 
       case 'resumed':
@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
             serviceAddress,
           })
         );
-        subject = "Welcome Back! Service Resumed - Bay Area Cleaning Pros";
+        subject = "Welcome Back! Service Resumed - AlphaLuxClean";
         break;
 
       case 'cancelled':
@@ -190,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
             discountAccepted: discountAccepted || false,
           })
         );
-        subject = "Service Cancelled - Bay Area Cleaning Pros";
+        subject = "Service Cancelled - AlphaLuxClean";
         break;
 
       case 'discount_applied':
@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
             nextServiceTime,
           })
         );
-        subject = "🎉 Your 25% Discount is Active! - Bay Area Cleaning Pros";
+        subject = "🎉 Your 25% Discount is Active! - AlphaLuxClean";
         break;
 
       default:
