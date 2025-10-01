@@ -58,12 +58,6 @@ All colors MUST be HSL.
     --shadow-clean: 0 4px 20px -4px hsl(45 93% 47% / 0.15);
     --shadow-soft: 0 2px 10px -2px hsl(210 40% 8% / 0.1);
     --shadow-glow: 0 0 30px hsl(45 93% 47% / 0.2);
-    --shadow-premium: 0 20px 60px -15px rgba(0, 0, 0, 0.3);
-    
-    /* CVR-focused colors */
-    --cvr-urgency: 220 90% 56%;
-    --cvr-trust: 142 76% 36%;
-    --cvr-premium: 43 74% 66%;
     
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
@@ -282,61 +276,5 @@ All colors MUST be HSL.
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
-  }
-  
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 20px rgba(236, 201, 139, 0.3);
-    }
-    50% {
-      box-shadow: 0 0 40px rgba(236, 201, 139, 0.6);
-    }
-  }
-  
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-4px);
-    }
-  }
-  
-  /* CVR Enhancement Classes */
-  .shadow-premium {
-    box-shadow: var(--shadow-premium);
-  }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-  
-  .animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
-  }
-  
-  .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .hover-lift:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-premium);
-  }
-  
-  .gradient-premium {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--cvr-premium)));
-  }
-  
-  .gradient-urgency {
-    background: linear-gradient(135deg, hsl(var(--cvr-urgency)), hsl(var(--primary)));
-  }
-  
-  .gradient-trust {
-    background: linear-gradient(135deg, hsl(var(--cvr-trust)), hsl(var(--success)));
-  }
-  
-  .hover-scale-102:hover {
-    transform: scale(1.02);
   }
 }
