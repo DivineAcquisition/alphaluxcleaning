@@ -1179,7 +1179,7 @@ export function ModernLegacyBooking() {
   };
   return <div ref={containerRef} className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto w-full">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4">
