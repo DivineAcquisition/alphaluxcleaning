@@ -17,12 +17,13 @@ import { STATE_ABBREVIATIONS } from '@/lib/states';
 import { formatPrice, applyGlobalDiscount, calculateGlobalDiscountAmount } from '@/lib/pricing-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateNewPricing, getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
-import { FunnelServiceTypeCards } from './FunnelServiceTypeCards';
+import { ServiceTypeCards } from './ServiceTypeCards';
+import { CVRServiceTypeCards } from './CVRServiceTypeCards';
 import { PropertyDetailsSelector } from './PropertyDetailsSelector';
-import { FunnelPricingSummary } from '@/components/pricing/FunnelPricingSummary';
-import { FunnelProgressBar } from './FunnelProgressBar';
+import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
+import { ProgressCelebration } from './ProgressCelebration';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
 
@@ -834,7 +835,13 @@ export function ModernLegacyBooking() {
               </CardContent>
             </Card>
 
-            {/* Service Type Already shown above, remove duplicate */}
+            {/* Service Type Selection */}
+            {zipCodeValid && bookingData.customerEmail && <CVRServiceTypeCards 
+              serviceTypes={serviceTypes} 
+              selectedType={bookingData.serviceType} 
+              onSelect={typeId => updateField('serviceType', typeId)}
+              currentPrice={getExactPrice()}
+            />}
           </div>;
       case 2:
         return <div className="space-y-8">
@@ -1196,13 +1203,13 @@ export function ModernLegacyBooking() {
             </div>
           </div>
 
-          {/* Funnel Progress Bar */}
-          <FunnelProgressBar 
-            currentStep={currentStep - 1} 
-            totalSteps={steps.length} 
-            stepLabels={steps.map(s => s.title)}
-            savingsAmount={bookingData.savings}
+          {/* Enhanced Progress Steps with Celebration */}
+          <ProgressCelebration 
+            currentStep={currentStep} 
+            totalSteps={steps.length}
+            savings={calculateGlobalDiscountAmount(bookingData.totalPrice / 0.8)}
           />
+          <EnhancedProgressIndicator steps={steps} currentStep={currentStep} className="mb-8" />
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main Content */}
@@ -1227,18 +1234,7 @@ export function ModernLegacyBooking() {
 
             {/* Pricing Summary Sidebar */}
             <div className="w-full lg:w-80">
-              <FunnelPricingSummary 
-                serviceName={serviceTypes.find(s => s.id === bookingData.serviceType)?.name}
-                homeSize={homeSizes.find(h => h.id === bookingData.homeSize)?.name}
-                frequency={frequencyOptions.find(f => f.id === bookingData.frequency)?.name}
-                addOnsCount={bookingData.addOns.length}
-                subtotal={bookingData.basePrice}
-                discount={bookingData.savings}
-                total={bookingData.totalPrice}
-                savings={bookingData.savings}
-                recurringService={bookingData.frequency !== 'oneTime'}
-                monthlyEstimate={bookingData.frequency === 'monthly' ? bookingData.totalPrice : bookingData.frequency === 'biweekly' ? bookingData.totalPrice * 2 : bookingData.frequency === 'weekly' ? bookingData.totalPrice * 4 : undefined}
-              />
+              <PricingSummarySticky bookingData={bookingData} serviceTypes={serviceTypes} homeSizes={homeSizes} frequencyOptions={frequencyOptions} addOnServices={addOnServices} />
             </div>
           </div>
         </div>
