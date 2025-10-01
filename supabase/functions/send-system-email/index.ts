@@ -175,6 +175,77 @@ const handler = async (req: Request): Promise<Response> => {
         fromAddress = "AlphaLux Clean <info@alphaluxclean.com>";
         break;
 
+      case 'promo_applied':
+        subject = `🎉 Your $${variables.discount_amount} promo has been applied!`;
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9fafb;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="margin: 0; font-size: 28px;">🎉 Promo Code Applied!</h1>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">Your discount has been successfully applied</p>
+            </div>
+            
+            <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+              <p>Hi ${variables.customer_name || 'there'},</p>
+              
+              <p>Great news! We've successfully applied your promo code to your booking:</p>
+              
+              <div style="text-align: center; margin: 20px 0;">
+                <div style="background: #10b981; color: white; display: inline-block; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 18px;">
+                  ${variables.promo_code}
+                </div>
+                <p style="font-size: 24px; color: #10b981; font-weight: bold; margin: 10px 0;">
+                  -$${variables.discount_amount} OFF
+                </p>
+              </div>
+              
+              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #374151;">Updated Booking Summary</h3>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span>Service Date:</span>
+                  <strong>${variables.service_date}</strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span>Service Time:</span>
+                  <strong>${variables.service_time}</strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span>Original Total:</span>
+                  <span style="text-decoration: line-through; color: #6b7280;">$${variables.original_total}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span>Promo Discount:</span>
+                  <span style="color: #10b981; font-weight: bold;">-$${variables.discount_amount}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 15px 0 0 0; margin-top: 10px; border-top: 2px solid #e5e7eb;">
+                  <span style="font-size: 18px; font-weight: bold;">New Total:</span>
+                  <span style="font-size: 20px; font-weight: bold; color: #10b981;">$${variables.new_total}</span>
+                </div>
+              </div>
+              
+              <p>Your savings have been applied to your booking. We can't wait to provide you with our premium cleaning service!</p>
+              
+              <div style="text-align: center; margin: 20px 0;">
+                <a href="https://app.alphaluxclean.com/order-status" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px;">View Your Booking</a>
+              </div>
+              
+              <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                Questions? Reply to this email or call us at (555) 123-4567
+              </p>
+            </div>
+            
+            <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 14px;">
+              <p>AlphaLux Clean - Premium Cleaning Services</p>
+              <p>Texas & California</p>
+            </div>
+          </div>
+        `;
+        break;
+
       default:
         throw new Error(`Unknown template: ${templateKey}`);
     }

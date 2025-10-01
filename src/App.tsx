@@ -37,6 +37,7 @@ import EmailTools from '@/pages/EmailTools';
 import HousecallProSettings from '@/pages/admin/HousecallProSettings';
 import HousecallProLogs from '@/pages/admin/HousecallProLogs';
 import HCPTestSuite from '@/pages/admin/HCPTestSuite';
+import PromoCodes from '@/pages/admin/PromoCodes';
 
 import NotFound from '@/pages/NotFound';
 
@@ -80,6 +81,7 @@ function App() {
           <Route path="/admin/integrations/housecall-pro" element={<HousecallProSettings />} />
           <Route path="/admin/integrations/housecall-pro/logs" element={<HousecallProLogs />} />
           <Route path="/admin/integrations/housecall-pro/test" element={<HCPTestSuite />} />
+          <Route path="/admin/promos" element={<PromoCodes />} />
             <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />

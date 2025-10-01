@@ -203,6 +203,8 @@ export type Database = {
           paid_at: string | null
           payment_option_id: string | null
           pricing_breakdown: Json | null
+          promo_code: string | null
+          promo_discount_cents: number | null
           property_details: Json | null
           receipt_url: string | null
           recurring_active: boolean | null
@@ -253,6 +255,8 @@ export type Database = {
           paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
+          promo_code?: string | null
+          promo_discount_cents?: number | null
           property_details?: Json | null
           receipt_url?: string | null
           recurring_active?: boolean | null
@@ -303,6 +307,8 @@ export type Database = {
           paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
+          promo_code?: string | null
+          promo_discount_cents?: number | null
           property_details?: Json | null
           receipt_url?: string | null
           recurring_active?: boolean | null
@@ -948,6 +954,102 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          amount_cents: number
+          applies_to: string
+          code: string
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          max_redemptions: number
+          metadata: Json | null
+          min_subtotal_cents: number
+          redemptions: number
+          starts_at: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount_cents: number
+          applies_to?: string
+          code: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number
+          metadata?: Json | null
+          min_subtotal_cents?: number
+          redemptions?: number
+          starts_at?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount_cents?: number
+          applies_to?: string
+          code?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          max_redemptions?: number
+          metadata?: Json | null
+          min_subtotal_cents?: number
+          redemptions?: number
+          starts_at?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          booking_id: string | null
+          code: string
+          created_at: string
+          customer_id: string | null
+          discount_cents: number
+          id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          code: string
+          created_at?: string
+          customer_id?: string | null
+          discount_cents: number
+          id?: string
+        }
+        Update: {
+          booking_id?: string | null
+          code?: string
+          created_at?: string
+          customer_id?: string | null
+          discount_cents?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_config: {
         Row: {

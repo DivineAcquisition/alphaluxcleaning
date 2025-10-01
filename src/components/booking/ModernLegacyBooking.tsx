@@ -23,6 +23,7 @@ import { PropertyDetailsSelector } from './PropertyDetailsSelector';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
 import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
+import { PromoCodeInput } from './PromoCodeInput';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
 
@@ -332,6 +333,10 @@ export function ModernLegacyBooking() {
   } | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Promo code state
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoDiscountCents, setPromoDiscountCents] = useState<number>(0);
 
   // Embedded payment state
   const [showEmbeddedPayment, setShowEmbeddedPayment] = useState(false);
@@ -1140,6 +1145,32 @@ export function ModernLegacyBooking() {
               </CardContent>
             </Card>
 
+            {/* Promo Code Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-primary" />
+                  Promo Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PromoCodeInput
+                  subtotalCents={Math.round(bookingData.totalPrice * 100)}
+                  bookingType="ONE_TIME"
+                  onApply={(code, discountCents) => {
+                    setAppliedPromoCode(code);
+                    setPromoDiscountCents(discountCents);
+                  }}
+                  onRemove={() => {
+                    setAppliedPromoCode(null);
+                    setPromoDiscountCents(0);
+                  }}
+                  appliedCode={appliedPromoCode || undefined}
+                  appliedDiscount={promoDiscountCents}
+                />
+              </CardContent>
+            </Card>
+
             {/* Payment Options */}
             <Card>
               <CardHeader>
@@ -1149,7 +1180,26 @@ export function ModernLegacyBooking() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Pay After Service Option */}
+                {/* Price Summary with Promo */}
+                {promoDiscountCents > 0 && (
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>${formatPrice(bookingData.totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
+                      <span>Promo Discount:</span>
+                      <span>-${(promoDiscountCents / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-green-200 dark:border-green-800 pt-2 flex justify-between font-bold">
+                      <span>New Total:</span>
+                      <span className="text-green-600 dark:text-green-400">
+                        ${formatPrice(Math.max(0, bookingData.totalPrice - (promoDiscountCents / 100)))}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 {/* 20% Deposit Option - Only Available Option */}
                 <Card className="cursor-pointer border-2 transition-all border-primary bg-primary/5 shadow-md">
                   <CardContent className="p-4">
@@ -1164,7 +1214,9 @@ export function ModernLegacyBooking() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-primary">${formatPrice(bookingData.totalPrice * 0.2)}</p>
+                        <p className="text-lg font-bold text-primary">
+                          ${formatPrice(Math.max(0, bookingData.totalPrice - (promoDiscountCents / 100)) * 0.2)}
+                        </p>
                         <p className="text-xs text-muted-foreground">Today only</p>
                       </div>
                     </div>
