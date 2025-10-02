@@ -109,35 +109,12 @@ export function PricingSummaryCard({
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
         <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-primary" />
-              Summary
-            </CardTitle>
-            <Badge className="bg-success text-success-foreground flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              {Math.round(DISCOUNT_RATE * 100)}% Off!
-            </Badge>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5 text-primary" />
+            Summary
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-6 space-y-3">
-          {/* Original Price */}
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Original Price</span>
-            <span className="text-sm text-muted-foreground line-through">
-              ${statePricing.originalPrice.toFixed(0)}
-            </span>
-          </div>
-
-          {/* Discount */}
-          <div className="flex justify-between items-center text-success">
-            <span className="text-sm font-medium">
-              You Save {Math.round(DISCOUNT_RATE * 100)}%
-            </span>
-            <span className="font-medium">-${statePricing.savings.toFixed(0)}</span>
-          </div>
-
-          <Separator className="border-primary/20" />
 
           {/* Final Price */}
           <div className="flex justify-between items-center pt-2">
@@ -213,8 +190,6 @@ export function PricingSummaryCard({
   // Calculate pricing breakdown
   const basePrice = result.breakdown.baseCalculation;
   const subtotal = basePrice; // Will include add-ons when implemented
-  const discountRate = 0.20; // 20% global discount
-  const discountAmount = (result.finalPrice / 0.8) * 0.2;
   
   // Calculate per-clean breakdown for recurring services
   const isRecurring = frequency.id !== 'one-time';
@@ -243,21 +218,6 @@ export function PricingSummaryCard({
 
         {/* Add-ons section - placeholder for future implementation */}
         {/* When add-ons are added, they'll appear here as individual line items */}
-
-        {/* Subtotal */}
-        <Separator />
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-foreground">Subtotal</span>
-          <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
-        </div>
-
-        {/* Discount */}
-        <div className="flex justify-between items-center text-success">
-          <span className="text-sm">
-            {isRecurring ? 'Recurring Plan' : 'First-Time'} Discount ({Math.round(discountRate * 100)}%)
-          </span>
-          <span className="font-medium">-{formatPrice(discountAmount)}</span>
-        </div>
 
         {/* Total */}
         <Separator className="border-primary/20" />

@@ -82,19 +82,13 @@ export function FloatingPricingSummary({
                   <span className="font-semibold">Total:</span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-primary">
-                      ${statePricing.discountedPrice.toFixed(0)}
-                    </span>
-                    <Badge variant="secondary" className="bg-success/10 text-success border-success/20 flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      {Math.round(DISCOUNT_RATE * 100)}% Off
-                    </Badge>
-                  </div>
+                  <span className="text-2xl font-bold text-primary">
+                    ${statePricing.discountedPrice.toFixed(0)}
+                  </span>
                   <p className="text-xs text-muted-foreground">
                     {isRecurring && cleansPerMonth > 0 
                       ? `$${statePricing.recurringDetails!.perClean.toFixed(0)} per clean × ${cleansPerMonth}/month`
-                      : `Was $${statePricing.originalPrice.toFixed(0)}`
+                      : `${isRecurring ? 'Monthly' : 'Service'} Total`
                     }
                   </p>
                 </div>
@@ -126,24 +120,6 @@ export function FloatingPricingSummary({
             <div className="border-t border-border">
               <Card className="rounded-none border-0 shadow-none">
                 <CardContent className="p-4 space-y-3">
-                  {/* Original Price */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Original Price</span>
-                    <span className="text-sm text-muted-foreground line-through">
-                      ${statePricing.originalPrice.toFixed(0)}
-                    </span>
-                  </div>
-
-                  {/* Discount */}
-                  <div className="flex justify-between items-center text-success">
-                    <span className="text-sm font-medium">
-                      You Save {Math.round(DISCOUNT_RATE * 100)}%
-                    </span>
-                    <span className="font-medium">-${statePricing.savings.toFixed(0)}</span>
-                  </div>
-
-                  <Separator className="border-primary/20" />
-
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-base font-bold text-foreground">
@@ -186,8 +162,6 @@ export function FloatingPricingSummary({
   // Calculate pricing breakdown (legacy fallback)
   const basePrice = result?.breakdown.baseCalculation || 0;
   const subtotal = basePrice;
-  const discountRate = 0.20;
-  const discountAmount = result ? (result.finalPrice / 0.8) * 0.2 : 0;
   
   const isRecurring = frequency?.id !== 'one-time';
   let cleansPerMonth = 0;
@@ -210,20 +184,15 @@ export function FloatingPricingSummary({
                 <span className="font-semibold">Total:</span>
               </div>
               <div>
-                <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-primary">
                     {formatPrice(result?.finalPrice || 0)}
                   </span>
-                  <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                    20% Off
-                  </Badge>
-                </div>
                   <p className="text-xs text-muted-foreground">
                     {isRecurring && cleansPerMonth > 0 
                       ? `${formatPrice(perCleanPrice)} per clean × ${cleansPerMonth}/month`
-                      : `Was ${formatPrice((result?.finalPrice || 0) / 0.8)}`
+                      : `${isRecurring ? 'Monthly' : 'Service'} Total`
                     }
-                </p>
+                  </p>
               </div>
             </div>
 
@@ -257,24 +226,6 @@ export function FloatingPricingSummary({
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Base Price ({homeSize.label})</span>
                   <span className="font-medium text-foreground">{formatPrice(basePrice)}</span>
-                </div>
-
-                {/* Add-ons section - placeholder for future implementation */}
-                {/* When add-ons are added, they'll appear here as individual line items */}
-
-                {/* Subtotal */}
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-foreground">Subtotal</span>
-                  <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
-                </div>
-
-                {/* Discount */}
-                <div className="flex justify-between items-center text-success">
-                  <span className="text-sm">
-                    {isRecurring ? 'Recurring Plan' : 'First-Time'} Discount ({Math.round(discountRate * 100)}%)
-                  </span>
-                  <span className="font-medium">-{formatPrice(discountAmount)}</span>
                 </div>
 
                 {/* Total */}

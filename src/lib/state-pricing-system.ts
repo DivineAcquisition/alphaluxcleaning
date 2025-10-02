@@ -49,44 +49,44 @@ export interface PricingResult {
   };
 }
 
-export const DISCOUNT_RATE = 0.15; // 15% discount
+export const DISCOUNT_RATE = 0; // No discount
 
 // Texas pricing tiers (baseline: $120)
 const TEXAS_TIERS: PricingTier[] = [
-  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 120, deep: 162, moveInOut: 180 },
-  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 155, deep: 209, moveInOut: 233 },
-  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 190, deep: 257, moveInOut: 285 },
-  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 225, deep: 304, moveInOut: 338 },
-  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 260, deep: 351, moveInOut: 390 },
-  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 295, deep: 398, moveInOut: 443 },
-  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 330, deep: 446, moveInOut: 495 },
-  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 365, deep: 493, moveInOut: 548 },
+  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 120, deep: 162, moveInOut: 275 },
+  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 155, deep: 209, moveInOut: 310 },
+  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 190, deep: 257, moveInOut: 345 },
+  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 225, deep: 304, moveInOut: 380 },
+  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 260, deep: 351, moveInOut: 415 },
+  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 295, deep: 398, moveInOut: 450 },
+  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 330, deep: 446, moveInOut: 485 },
+  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 365, deep: 493, moveInOut: 520 },
   { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5000, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
 ];
 
 // California (LA) pricing tiers (baseline: $150)
 const CALIFORNIA_TIERS: PricingTier[] = [
-  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 150, deep: 203, moveInOut: 225 },
-  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 185, deep: 250, moveInOut: 278 },
-  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 220, deep: 297, moveInOut: 330 },
-  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 255, deep: 344, moveInOut: 383 },
-  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 290, deep: 392, moveInOut: 435 },
-  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 325, deep: 439, moveInOut: 488 },
-  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 360, deep: 486, moveInOut: 540 },
-  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 395, deep: 533, moveInOut: 593 },
+  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 150, deep: 203, moveInOut: 344 },
+  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 185, deep: 250, moveInOut: 388 },
+  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 220, deep: 297, moveInOut: 431 },
+  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 255, deep: 344, moveInOut: 475 },
+  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 290, deep: 392, moveInOut: 519 },
+  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 325, deep: 439, moveInOut: 563 },
+  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 360, deep: 486, moveInOut: 606 },
+  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 395, deep: 533, moveInOut: 650 },
   { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5000, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
 ];
 
 // New York pricing tiers (baseline: $160)
 const NEW_YORK_TIERS: PricingTier[] = [
-  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 160, deep: 216, moveInOut: 240 },
-  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 195, deep: 263, moveInOut: 293 },
-  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 230, deep: 311, moveInOut: 345 },
-  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 265, deep: 358, moveInOut: 398 },
-  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 300, deep: 405, moveInOut: 450 },
-  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 335, deep: 452, moveInOut: 503 },
-  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 370, deep: 500, moveInOut: 555 },
-  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 405, deep: 547, moveInOut: 608 },
+  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 160, deep: 216, moveInOut: 366 },
+  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 195, deep: 263, moveInOut: 412 },
+  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 230, deep: 311, moveInOut: 459 },
+  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 265, deep: 358, moveInOut: 505 },
+  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 300, deep: 405, moveInOut: 552 },
+  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 335, deep: 452, moveInOut: 599 },
+  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 370, deep: 500, moveInOut: 645 },
+  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 405, deep: 547, moveInOut: 692 },
   { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5000, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
 ];
 
@@ -136,20 +136,17 @@ export function calculateRecurringPricing(oneTimePrice: number): RecurringPricin
 }
 
 /**
- * Apply 15% discount to price
+ * Apply discount to price (no discount currently applied)
  */
 export function applyDiscount(price: number): {
   original: number;
   discounted: number;
   savings: number;
 } {
-  const discounted = Math.round(price * (1 - DISCOUNT_RATE) * 100) / 100;
-  const savings = Math.round((price - discounted) * 100) / 100;
-  
   return {
     original: price,
-    discounted,
-    savings
+    discounted: price,
+    savings: 0
   };
 }
 
@@ -234,7 +231,7 @@ export function calculatePricing(
     }
   }
 
-  // Apply 15% discount
+  // Apply discount (currently 0%)
   const { original, discounted, savings } = applyDiscount(finalPrice);
 
   return {

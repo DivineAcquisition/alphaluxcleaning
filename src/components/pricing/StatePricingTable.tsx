@@ -25,16 +25,10 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
   return (
     <Card className={cn("shadow-lg", className)}>
       <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            {state.displayName} Pricing
-          </CardTitle>
-          <Badge className="bg-success text-success-foreground flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
-            Save {Math.round(DISCOUNT_RATE * 100)}% Today!
-          </Badge>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <MapPin className="h-5 w-5 text-primary" />
+          {state.displayName} Pricing
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-6">
@@ -51,10 +45,6 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
               </thead>
               <tbody>
                 {state.tiers.filter(tier => tier.id !== '5000_plus').map((tier, index) => {
-                  const regularDiscount = applyDiscount(tier.regular);
-                  const deepDiscount = applyDiscount(tier.deep);
-                  const moveDiscount = applyDiscount(tier.moveInOut);
-
                   return (
                     <React.Fragment key={tier.id}>
                       <tr className={cn(
@@ -63,34 +53,19 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
                       )}>
                         <td className="py-4 px-2 font-medium text-sm">{tier.label}</td>
                         <td className="text-center py-4 px-2">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs text-muted-foreground line-through">
-                              ${tier.regular}
-                            </span>
-                            <span className="text-lg font-bold text-primary">
-                              ${regularDiscount.discounted}
-                            </span>
-                          </div>
+                          <span className="text-lg font-bold text-primary">
+                            ${tier.regular}
+                          </span>
                         </td>
                         <td className="text-center py-4 px-2">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs text-muted-foreground line-through">
-                              ${tier.deep}
-                            </span>
-                            <span className="text-lg font-bold text-primary">
-                              ${deepDiscount.discounted}
-                            </span>
-                          </div>
+                          <span className="text-lg font-bold text-primary">
+                            ${tier.deep}
+                          </span>
                         </td>
                         <td className="text-center py-4 px-2">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs text-muted-foreground line-through">
-                              ${tier.moveInOut}
-                            </span>
-                            <span className="text-lg font-bold text-primary">
-                              ${moveDiscount.discounted}
-                            </span>
-                          </div>
+                          <span className="text-lg font-bold text-primary">
+                            ${tier.moveInOut}
+                          </span>
                         </td>
                       </tr>
                     </React.Fragment>
@@ -121,9 +96,6 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
             <div className="grid gap-3">
               {state.tiers.filter(tier => tier.id !== '5000_plus').slice(0, 3).map((tier) => {
                 const recurring = calculateRecurringPricing(tier.regular);
-                const weeklyDiscount = applyDiscount(recurring.weeklyMonthly);
-                const biWeeklyDiscount = applyDiscount(recurring.biWeeklyMonthly);
-                const monthlyDiscount = applyDiscount(recurring.monthlyMonthly);
 
                 return (
                   <details key={tier.id} className="group">
@@ -137,39 +109,30 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
                       <div className="flex justify-between items-center py-2">
                         <span className="text-muted-foreground">Weekly (4× / month)</span>
                         <div className="text-right">
-                          <div className="text-xs text-muted-foreground line-through">
+                          <div className="font-bold text-primary">
                             ${recurring.weeklyMonthly}/mo
                           </div>
-                          <div className="font-bold text-success">
-                            ${weeklyDiscount.discounted}/mo
-                          </div>
                           <div className="text-xs text-muted-foreground">
-                            ${applyDiscount(recurring.weeklyPerClean).discounted}/clean
+                            ${recurring.weeklyPerClean}/clean
                           </div>
                         </div>
                       </div>
                       <div className="flex justify-between items-center py-2">
                         <span className="text-muted-foreground">Bi-Weekly (2× / month)</span>
                         <div className="text-right">
-                          <div className="text-xs text-muted-foreground line-through">
+                          <div className="font-bold text-primary">
                             ${recurring.biWeeklyMonthly}/mo
                           </div>
-                          <div className="font-bold text-success">
-                            ${biWeeklyDiscount.discounted}/mo
-                          </div>
                           <div className="text-xs text-muted-foreground">
-                            ${applyDiscount(recurring.biWeeklyPerClean).discounted}/clean
+                            ${recurring.biWeeklyPerClean}/clean
                           </div>
                         </div>
                       </div>
                       <div className="flex justify-between items-center py-2">
                         <span className="text-muted-foreground">Monthly (1× / month)</span>
                         <div className="text-right">
-                          <div className="text-xs text-muted-foreground line-through">
+                          <div className="font-bold text-primary">
                             ${recurring.monthlyMonthly}/mo
-                          </div>
-                          <div className="font-bold text-success">
-                            ${monthlyDiscount.discounted}/mo
                           </div>
                         </div>
                       </div>
@@ -195,10 +158,6 @@ export function StatePricingTable({ stateCode, className }: StatePricingTablePro
             <p className="flex items-start gap-2">
               <Check className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
               <span><strong>Move-In/Out:</strong> One-time service only (~50% more comprehensive)</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <Sparkles className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
-              <span className="text-success font-semibold">All prices shown include automatic 15% discount!</span>
             </p>
           </div>
         </div>
