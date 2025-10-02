@@ -10,7 +10,7 @@ import { MapPin, Home, Sparkles, Calendar, MapPinned, Phone, FileText, CreditCar
 import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
-import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
+import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { calculateNewPricing } from '@/lib/new-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
@@ -585,6 +585,11 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
           serviceTypeId={bookingData.serviceTypeId}
           frequencyId={bookingData.frequencyId}
           stateCode={bookingData.stateCode}
+          squareFootage={(() => {
+            const homeSize = HOME_SIZE_RANGES.find(h => h.id === bookingData.homeSizeId);
+            return homeSize ? (homeSize.minSqft + homeSize.maxSqft) / 2 : undefined;
+          })()}
+          useDallasPricing={bookingData.stateCode === 'TX'}
         />
       )}
     </div>
