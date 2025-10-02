@@ -116,7 +116,6 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
               {week.map((date) => {
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
                 const availableSlots = getAvailableSlots(date);
-                const isPopular = availableSlots >= 6;
 
                 return (
                   <Card
@@ -129,16 +128,6 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
                     )}
                     onClick={() => onSelectDate(date)}
                   >
-                    {/* Popular Badge */}
-                    {isPopular && !isSelected && (
-                      <div className="absolute -top-2 -right-2">
-                        <div className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          Popular
-                        </div>
-                      </div>
-                    )}
-
                     {/* Selected Checkmark */}
                     {isSelected && (
                       <div className="absolute -top-2 -right-2">

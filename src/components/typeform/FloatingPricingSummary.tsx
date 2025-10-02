@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ChevronUp, ChevronDown, Tag, TrendingUp, Calculator } from 'lucide-react';
+import { ChevronUp, ChevronDown, Calculator } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { PricingResult, HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,21 @@ export function FloatingPricingSummary({
     );
   }
 
-  const hasRecurring = result.mrrEstimate > 0;
+  // Calculate pricing breakdown
+  const basePrice = result.breakdown.baseCalculation;
+  const subtotal = basePrice; // Will include add-ons when implemented
+  const discountRate = 0.20; // 20% global discount
+  const discountAmount = (result.finalPrice / 0.8) * 0.2;
+  
+  // Calculate per-clean breakdown for recurring services
+  const isRecurring = frequency.id !== 'one-time';
+  let cleansPerMonth = 0;
+  if (isRecurring) {
+    if (frequency.id === 'weekly') cleansPerMonth = 4;
+    else if (frequency.id === 'bi-weekly') cleansPerMonth = 2;
+    else if (frequency.id === 'monthly') cleansPerMonth = 1;
+  }
+  const perCleanPrice = isRecurring && cleansPerMonth > 0 ? result.finalPrice / cleansPerMonth : 0;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
@@ -68,12 +82,14 @@ export function FloatingPricingSummary({
                     {formatPrice(result.finalPrice)}
                   </span>
                   <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                    <Tag className="h-3 w-3 mr-1" />
                     20% Off
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Was {formatPrice(result.finalPrice / 0.8)}
+                  {isRecurring && cleansPerMonth > 0 
+                    ? `${formatPrice(perCleanPrice)} per clean × ${cleansPerMonth}/month`
+                    : `Was ${formatPrice(result.finalPrice / 0.8)}`
+                  }
                 </p>
               </div>
             </div>
@@ -86,12 +102,12 @@ export function FloatingPricingSummary({
             >
               {isExpanded ? (
                 <>
-                  Hide Details
+                  Hide
                   <ChevronDown className="h-4 w-4" />
                 </>
               ) : (
                 <>
-                  View Details
+                  Details
                   <ChevronUp className="h-4 w-4" />
                 </>
               )}
@@ -103,87 +119,57 @@ export function FloatingPricingSummary({
         {isExpanded && (
           <div className="border-t border-border">
             <Card className="rounded-none border-0 shadow-none">
-              <CardContent className="p-4 space-y-4">
-                {/* Service Details */}
-                <div className="space-y-1">
-                  <p className="font-semibold text-foreground">{serviceType.name}</p>
-                  <p className="text-sm text-muted-foreground">{homeSize.label}</p>
-                  <p className="text-sm text-muted-foreground">{frequency.name} • {state.name}</p>
+              <CardContent className="p-4 space-y-3">
+                {/* Base Price */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Base Price ({homeSize.label})</span>
+                  <span className="font-medium text-foreground">{formatPrice(basePrice)}</span>
                 </div>
 
-                {/* Pricing Breakdown */}
-                <Separator />
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Base ({homeSize.estimatedHours}h × 2 cleaners)</span>
-                    <span className="font-medium">{formatPrice(result.breakdown.baseCalculation)}</span>
-                  </div>
-                  
-                  {result.breakdown.stateMultiplier !== 1 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{state.name} adjustment</span>
-                      <span className="font-medium">×{result.breakdown.stateMultiplier}</span>
-                    </div>
-                  )}
-                  
-                  {result.breakdown.serviceMultiplier !== 1 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Service type</span>
-                      <span className="font-medium">×{result.breakdown.serviceMultiplier}</span>
-                    </div>
-                  )}
-                  
-                  {result.breakdown.frequencyDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Frequency discount</span>
-                      <span className="font-medium">-{Math.round(result.breakdown.frequencyDiscount * 100)}%</span>
-                    </div>
-                  )}
-                </div>
+                {/* Add-ons section - placeholder for future implementation */}
+                {/* When add-ons are added, they'll appear here as individual line items */}
 
-                {/* Global Discount */}
-                <div className="flex justify-between text-sm text-success">
-                  <span className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" />
-                    20% Savings Applied
-                  </span>
-                  <span className="font-medium">-{formatPrice((result.finalPrice / 0.8) * 0.2)}</span>
-                </div>
-
-                {/* Total Price */}
+                {/* Subtotal */}
                 <Separator />
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-foreground">Service Price</span>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">
-                      {formatPrice(result.finalPrice)}
-                    </p>
-                    <p className="text-xs text-success font-medium">
-                      You save {formatPrice((result.finalPrice / 0.8) * 0.2)}!
-                    </p>
-                  </div>
+                  <span className="text-sm font-medium text-foreground">Subtotal</span>
+                  <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
                 </div>
 
-                {/* Recurring Revenue */}
-                {hasRecurring && (
-                  <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                        <TrendingUp className="h-4 w-4" />
-                        Recurring Service
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Est. Monthly</span>
-                        <span className="font-medium text-primary">{formatPrice(result.mrrEstimate)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Est. Annual</span>
-                        <span className="font-medium text-primary">{formatPrice(result.arrEstimate)}</span>
-                      </div>
-                    </div>
-                  </>
+                {/* Discount */}
+                <div className="flex justify-between items-center text-success">
+                  <span className="text-sm">
+                    {isRecurring ? 'Recurring Plan' : 'First-Time'} Discount ({Math.round(discountRate * 100)}%)
+                  </span>
+                  <span className="font-medium">-{formatPrice(discountAmount)}</span>
+                </div>
+
+                {/* Total */}
+                <Separator className="border-primary/20" />
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-base font-bold text-foreground">
+                    {isRecurring ? 'Monthly' : 'Service'} Total
+                  </span>
+                  <p className="text-xl font-bold text-primary">
+                    {formatPrice(result.finalPrice)}
+                  </p>
+                </div>
+
+                {/* Per-clean breakdown for recurring */}
+                {isRecurring && cleansPerMonth > 0 && (
+                  <div className="text-center pt-1">
+                    <p className="text-xs text-muted-foreground">
+                      {formatPrice(perCleanPrice)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
+                    </p>
+                  </div>
                 )}
+
+                {/* Service details */}
+                <Separator className="mt-3" />
+                <div className="space-y-1 pt-1">
+                  <p className="text-xs text-muted-foreground">{serviceType.name}</p>
+                  <p className="text-xs text-muted-foreground">{frequency.name} • {state.name}</p>
+                </div>
               </CardContent>
             </Card>
           </div>

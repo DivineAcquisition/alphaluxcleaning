@@ -1,4 +1,4 @@
-import { Clock, Star } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
@@ -8,12 +8,12 @@ interface TimeSlotSelectorProps {
 }
 
 const TIME_SLOTS = [
-  { time: '8:00 AM', range: '8:00 AM - 10:00 AM', popular: false },
-  { time: '10:00 AM', range: '10:00 AM - 12:00 PM', popular: true },
-  { time: '12:00 PM', range: '12:00 PM - 2:00 PM', popular: true },
-  { time: '2:00 PM', range: '2:00 PM - 4:00 PM', popular: true },
-  { time: '4:00 PM', range: '4:00 PM - 6:00 PM', popular: false },
-  { time: '6:00 PM', range: '6:00 PM - 8:00 PM', popular: false },
+  { time: '8:00 AM', range: '8:00 AM - 10:00 AM' },
+  { time: '10:00 AM', range: '10:00 AM - 12:00 PM' },
+  { time: '12:00 PM', range: '12:00 PM - 2:00 PM' },
+  { time: '2:00 PM', range: '2:00 PM - 4:00 PM' },
+  { time: '4:00 PM', range: '4:00 PM - 6:00 PM' },
+  { time: '6:00 PM', range: '6:00 PM - 8:00 PM' },
 ];
 
 export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelectorProps) {
@@ -40,16 +40,6 @@ export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelecto
               )}
               onClick={() => onSelectTime(slot.time)}
             >
-              {/* Popular Badge */}
-              {slot.popular && !isSelected && (
-                <div className="absolute -top-2 -right-2">
-                  <div className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-current" />
-                    Popular
-                  </div>
-                </div>
-              )}
-
               {/* Selected Checkmark */}
               {isSelected && (
                 <div className="absolute -top-2 -right-2">
