@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { MapPin, Phone, Mail, Home, Calendar, Clock, DollarSign } from 'lucide-react';
 
@@ -59,7 +61,14 @@ export function BookingSummaryCard({ bookingData }: BookingSummaryCardProps) {
   const laterDue = paymentType === '25_percent_with_discount' ? totalPrice * 0.75 : totalPrice;
 
   return (
-    <div className="w-full space-y-4">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Home className="h-5 w-5" />
+          Booking Summary
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         {/* Customer Details */}
         {(customerName || customerEmail || contactNumber) && (
           <div className="space-y-2">
@@ -206,6 +215,7 @@ export function BookingSummaryCard({ bookingData }: BookingSummaryCardProps) {
             )}
           </div>
         </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

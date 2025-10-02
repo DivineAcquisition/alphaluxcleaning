@@ -100,13 +100,10 @@ const serviceTypes = [{
   name: 'Regular Clean',
   description: 'Weekly maintenance',
   basePrice: 0,
-  icon: '🏠',
+  // Using exact pricing matrix
+  icon: Home,
   popular: true,
-  features: [
-    { text: 'All surfaces cleaned', included: true },
-    { text: 'Floors & bathrooms', included: true },
-    { text: 'Kitchen & trash', included: true }
-  ],
+  features: ['All surfaces cleaned', 'Floors & bathrooms', 'Kitchen & trash'],
   recurring: true,
   hasFrequency: true
 }, {
@@ -114,13 +111,10 @@ const serviceTypes = [{
   name: 'Deep Clean',
   description: 'Thorough cleaning',
   basePrice: 0,
-  icon: '⭐',
+  // Using exact pricing matrix
+  icon: Sparkles,
   popular: false,
-  features: [
-    { text: 'Everything + appliances', included: true },
-    { text: 'Light fixtures', included: true },
-    { text: 'Baseboards & sills', included: true }
-  ],
+  features: ['Everything + appliances', 'Light fixtures', 'Baseboards & sills'],
   recurring: false,
   hasFrequency: false
 }, {
@@ -128,13 +122,10 @@ const serviceTypes = [{
   name: 'Move-Out Clean',
   description: 'Complete cleanout',
   basePrice: 0,
-  icon: '📦',
+  // Using exact pricing matrix
+  icon: Zap,
   popular: false,
-  features: [
-    { text: 'Deep clean + cabinets', included: true },
-    { text: 'Appliance interiors', included: true },
-    { text: 'Final walkthrough', included: true }
-  ],
+  features: ['Deep clean + cabinets', 'Appliance interiors', 'Final walkthrough'],
   recurring: false,
   hasFrequency: false
 }];
@@ -242,7 +233,6 @@ const addOnServices = [{
   price: 30,
   description: 'Complete garage cleaning'
 }];
-
 interface BookingData {
   // Step 1: Service Area & Type
   zipCode: string;
