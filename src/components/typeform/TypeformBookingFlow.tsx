@@ -4,7 +4,9 @@ import { ConversationalQuestion } from './ConversationalQuestion';
 import { AnswerOption } from './AnswerOption';
 import { TypeformProgress } from './TypeformProgress';
 import { FloatingPricingSummary } from './FloatingPricingSummary';
-import { MapPin, Home, Sparkles, Calendar, Clock, MapPinned, Phone, FileText, CreditCard, Mail, Hash, Bed, Bath, Building } from 'lucide-react';
+import { WeeklyDateGrid } from './WeeklyDateGrid';
+import { TimeSlotSelector } from './TimeSlotSelector';
+import { MapPin, Home, Sparkles, Calendar, MapPinned, Phone, FileText, CreditCard, Mail, Hash, Building } from 'lucide-react';
 import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
@@ -16,11 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 
@@ -30,7 +28,7 @@ interface TypeformBookingFlowProps {
 
 export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 13; // Added property details step
+  const totalSteps = 12; // Combined date/time into single step
 
   // Use form persistence hook
   const { data: bookingData, updateField, updateData, isLoading } = useFormPersistence(
@@ -127,19 +125,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       toast.error('Please select a frequency');
       return;
     }
-    if (currentStep === 8 && !bookingData.serviceDate) {
-      toast.error('Please select a date');
+    if (currentStep === 8 && (!bookingData.serviceDate || !bookingData.serviceTime)) {
+      toast.error('Please select both a date and time');
       return;
     }
-    if (currentStep === 9 && !bookingData.serviceTime) {
-      toast.error('Please select a time');
-      return;
-    }
-    if (currentStep === 10 && (!bookingData.address.street || !bookingData.address.city || !bookingData.address.zipCode)) {
+    if (currentStep === 9 && (!bookingData.address.street || !bookingData.address.city || !bookingData.address.zipCode)) {
       toast.error('Please fill in your address');
       return;
     }
-    if (currentStep === 11 && (!bookingData.contactInfo.name || !bookingData.contactInfo.email || !bookingData.contactInfo.phone)) {
+    if (currentStep === 10 && (!bookingData.contactInfo.name || !bookingData.contactInfo.email || !bookingData.contactInfo.phone)) {
       toast.error('Please fill in your contact information');
       return;
     }
@@ -164,12 +158,11 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       case 5: return !!(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType);
       case 6: return !!bookingData.serviceTypeId;
       case 7: return !!bookingData.frequencyId;
-      case 8: return !!bookingData.serviceDate;
-      case 9: return !!bookingData.serviceTime;
-      case 10: return !!(bookingData.address.street && bookingData.address.city && bookingData.address.zipCode);
-      case 11: return !!(bookingData.contactInfo.name && bookingData.contactInfo.email && bookingData.contactInfo.phone);
-      case 12: return true; // Special instructions are optional
-      case 13: return !!pricing;
+      case 8: return !!(bookingData.serviceDate && bookingData.serviceTime);
+      case 9: return !!(bookingData.address.street && bookingData.address.city && bookingData.address.zipCode);
+      case 10: return !!(bookingData.contactInfo.name && bookingData.contactInfo.email && bookingData.contactInfo.phone);
+      case 11: return true; // Special instructions are optional
+      case 12: return !!pricing;
       default: return false;
     }
   };
@@ -321,63 +314,35 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 8: Date Selection */}
+      {/* Step 8: Combined Date & Time Selection */}
       <TypeformStep questionNumber={8} totalSteps={totalSteps} isActive={currentStep === 8}>
         <ConversationalQuestion
           question="When would you like your first cleaning?"
-          description="Choose a date that works best for you"
+          description="Choose your preferred date and time"
           icon={<Calendar className="w-8 h-8" />}
         >
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-center text-center font-normal text-lg p-6 h-auto",
-                  !bookingData.serviceDate && "text-muted-foreground"
-                )}
-              >
-                <Calendar className="mr-2 h-5 w-5" />
-                {bookingData.serviceDate ? format(new Date(bookingData.serviceDate), "MMM d, yyyy") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
-              <CalendarComponent
-                mode="single"
-                selected={bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined}
-                onSelect={(date) => updateField('serviceDate', date)}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </ConversationalQuestion>
-      </TypeformStep>
+          <div className="space-y-8">
+            {/* Date Selection */}
+            <WeeklyDateGrid
+              selectedDate={bookingData.serviceDate ? new Date(bookingData.serviceDate) : null}
+              onSelectDate={(date) => updateField('serviceDate', date)}
+            />
 
-      {/* Step 9: Time Selection */}
-      <TypeformStep questionNumber={9} totalSteps={totalSteps} isActive={currentStep === 9}>
-        <ConversationalQuestion
-          question="What time works best?"
-          description="Select your preferred time slot"
-          icon={<Clock className="w-8 h-8" />}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '6:00 PM'].map((time) => (
-              <AnswerOption
-                key={time}
-                label={time}
-                icon={<Clock className="w-6 h-6" />}
-                isSelected={bookingData.serviceTime === time}
-                onClick={() => updateField('serviceTime', time)}
-              />
-            ))}
+            {/* Time Selection - Shows after date is selected */}
+            {bookingData.serviceDate && (
+              <div className="pt-6 border-t">
+                <TimeSlotSelector
+                  selectedTime={bookingData.serviceTime}
+                  onSelectTime={(time) => updateField('serviceTime', time)}
+                />
+              </div>
+            )}
           </div>
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 10: Address */}
-      <TypeformStep questionNumber={10} totalSteps={totalSteps} isActive={currentStep === 10}>
+      {/* Step 9: Address */}
+      <TypeformStep questionNumber={9} totalSteps={totalSteps} isActive={currentStep === 9}>
         <ConversationalQuestion
           question="What's the service address?"
           description="Where should our team arrive?"
@@ -420,8 +385,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 11: Contact Info */}
-      <TypeformStep questionNumber={11} totalSteps={totalSteps} isActive={currentStep === 11}>
+      {/* Step 10: Contact Info */}
+      <TypeformStep questionNumber={10} totalSteps={totalSteps} isActive={currentStep === 10}>
         <ConversationalQuestion
           question="How can we reach you?"
           description="We'll send your booking confirmation here"
@@ -464,8 +429,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 12: Special Instructions */}
-      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12}>
+      {/* Step 11: Special Instructions */}
+      <TypeformStep questionNumber={11} totalSteps={totalSteps} isActive={currentStep === 11}>
         <ConversationalQuestion
           question="Any special instructions?"
           description="Let us know about pets, access codes, or specific requests (optional)"
@@ -481,8 +446,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 13: Payment */}
-      <TypeformStep questionNumber={13} totalSteps={totalSteps} isActive={currentStep === 13}>
+      {/* Step 12: Payment */}
+      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12}>
         <ConversationalQuestion
           question="Ready to book?"
           description={pricing ? `Total: $${pricing.finalPrice.toFixed(2)}` : 'Calculating price...'}
