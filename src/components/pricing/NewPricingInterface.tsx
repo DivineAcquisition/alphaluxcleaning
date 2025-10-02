@@ -6,7 +6,7 @@ import { HomeSizeGrid } from './HomeSizeGrid';
 import { ServiceTypeSelector } from './ServiceTypeSelector';
 import { FrequencySelector } from './FrequencySelector';
 import { PricingSummaryCard } from './PricingSummaryCard';
-import { calculateNewPricing, DEFAULT_PRICING_CONFIG, type PricingResult } from '@/lib/new-pricing-system';
+import { calculateNewPricing, DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES, type PricingResult } from '@/lib/new-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { useFacebookPixel } from '@/hooks/useFacebookPixel';
@@ -177,6 +177,11 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
             serviceTypeId={serviceTypeId}
             frequencyId={frequencyId}
             stateCode={stateCode}
+            squareFootage={homeSizeId ? (() => {
+              const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
+              return homeSize ? (homeSize.minSqft + homeSize.maxSqft) / 2 : undefined;
+            })() : undefined}
+            useStatePricing={['TX', 'CA', 'NY'].includes(stateCode)}
             className="mb-4"
           />
           

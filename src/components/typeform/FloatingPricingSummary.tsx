@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { ChevronUp, ChevronDown, Calculator, Sparkles } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { PricingResult, HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculateDallasPricing, DALLAS_DISCOUNT_RATE } from '@/lib/dallas-pricing-system';
+import { calculatePricing, DISCOUNT_RATE, StateCode } from '@/lib/state-pricing-system';
 import { cn } from '@/lib/utils';
 
 interface FloatingPricingSummaryProps {
@@ -16,7 +16,7 @@ interface FloatingPricingSummaryProps {
   frequencyId?: string;
   stateCode?: string;
   squareFootage?: number;
-  useDallasPricing?: boolean;
+  useStatePricing?: boolean;
 }
 
 export function FloatingPricingSummary({
@@ -26,7 +26,7 @@ export function FloatingPricingSummary({
   frequencyId,
   stateCode,
   squareFootage,
-  useDallasPricing = true
+  useStatePricing = true
 }: FloatingPricingSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -35,9 +35,10 @@ export function FloatingPricingSummary({
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
   const state = DEFAULT_PRICING_CONFIG.states.find(s => s.code === stateCode);
 
-  // Use Dallas pricing if enabled
-  const dallasPricing = useDallasPricing && squareFootage && serviceTypeId && frequencyId ? 
-    calculateDallasPricing(
+  // Use state-level pricing if enabled
+  const statePricing = useStatePricing && squareFootage && serviceTypeId && frequencyId && stateCode ? 
+    calculatePricing(
+      stateCode as StateCode,
       squareFootage,
       serviceTypeId === 'standard' ? 'regular' : serviceTypeId === 'deep' ? 'deep' : 'move_in_out',
       frequencyId === 'one_time' ? 'one_time' : 
@@ -46,12 +47,12 @@ export function FloatingPricingSummary({
     ) : null;
 
   // Don't show if no pricing available
-  if ((!result || !homeSize || !serviceType || !frequency || !state) && !dallasPricing) {
+  if ((!result || !homeSize || !serviceType || !frequency || !state) && !statePricing) {
     return null;
   }
 
   // Don't show for homes requiring estimate
-  if ((homeSize?.requiresEstimate) || (dallasPricing && dallasPricing.tier.id === '5000_plus')) {
+  if ((homeSize?.requiresEstimate) || (statePricing && statePricing.tier.id === '5000_plus')) {
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
         <div className="max-w-4xl mx-auto p-4">
@@ -64,10 +65,10 @@ export function FloatingPricingSummary({
     );
   }
 
-  // Dallas pricing display
-  if (dallasPricing) {
-    const isRecurring = dallasPricing.frequency !== 'one_time';
-    const cleansPerMonth = dallasPricing.recurringDetails?.cleansPerMonth || 0;
+  // State pricing display
+  if (statePricing) {
+    const isRecurring = statePricing.frequency !== 'one_time';
+    const cleansPerMonth = statePricing.recurringDetails?.cleansPerMonth || 0;
 
     return (
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg">
@@ -83,17 +84,17 @@ export function FloatingPricingSummary({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold text-primary">
-                      ${dallasPricing.discountedPrice.toFixed(0)}
+                      ${statePricing.discountedPrice.toFixed(0)}
                     </span>
                     <Badge variant="secondary" className="bg-success/10 text-success border-success/20 flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
-                      {Math.round(DALLAS_DISCOUNT_RATE * 100)}% Off
+                      {Math.round(DISCOUNT_RATE * 100)}% Off
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {isRecurring && cleansPerMonth > 0 
-                      ? `$${dallasPricing.recurringDetails!.perClean.toFixed(0)} per clean × ${cleansPerMonth}/month`
-                      : `Was $${dallasPricing.originalPrice.toFixed(0)}`
+                      ? `$${statePricing.recurringDetails!.perClean.toFixed(0)} per clean × ${cleansPerMonth}/month`
+                      : `Was $${statePricing.originalPrice.toFixed(0)}`
                     }
                   </p>
                 </div>
@@ -129,16 +130,16 @@ export function FloatingPricingSummary({
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Original Price</span>
                     <span className="text-sm text-muted-foreground line-through">
-                      ${dallasPricing.originalPrice.toFixed(0)}
+                      ${statePricing.originalPrice.toFixed(0)}
                     </span>
                   </div>
 
                   {/* Discount */}
                   <div className="flex justify-between items-center text-success">
                     <span className="text-sm font-medium">
-                      You Save {Math.round(DALLAS_DISCOUNT_RATE * 100)}%
+                      You Save {Math.round(DISCOUNT_RATE * 100)}%
                     </span>
-                    <span className="font-medium">-${dallasPricing.savings.toFixed(0)}</span>
+                    <span className="font-medium">-${statePricing.savings.toFixed(0)}</span>
                   </div>
 
                   <Separator className="border-primary/20" />
@@ -149,7 +150,7 @@ export function FloatingPricingSummary({
                       {isRecurring ? 'Monthly' : 'Service'} Total
                     </span>
                     <p className="text-xl font-bold text-primary">
-                      ${dallasPricing.discountedPrice.toFixed(0)}
+                      ${statePricing.discountedPrice.toFixed(0)}
                     </p>
                   </div>
 
@@ -157,7 +158,7 @@ export function FloatingPricingSummary({
                   {isRecurring && cleansPerMonth > 0 && (
                     <div className="text-center pt-1">
                       <p className="text-xs text-muted-foreground">
-                        ${dallasPricing.recurringDetails!.perClean.toFixed(0)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
+                        ${statePricing.recurringDetails!.perClean.toFixed(0)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
                       </p>
                     </div>
                   )}
@@ -166,11 +167,11 @@ export function FloatingPricingSummary({
                   <Separator className="mt-3" />
                   <div className="space-y-1 pt-1">
                     <p className="text-xs text-muted-foreground">
-                      {dallasPricing.serviceType === 'regular' ? 'Regular Clean' : 
-                       dallasPricing.serviceType === 'deep' ? 'Deep Clean' : 'Move-In/Out Clean'}
+                      {statePricing.serviceType === 'regular' ? 'Regular Clean' : 
+                       statePricing.serviceType === 'deep' ? 'Deep Clean' : 'Move-In/Out Clean'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {dallasPricing.tier.label} • Dallas, TX
+                      {statePricing.tier.label} • {statePricing.state.displayName}
                     </p>
                   </div>
                 </CardContent>

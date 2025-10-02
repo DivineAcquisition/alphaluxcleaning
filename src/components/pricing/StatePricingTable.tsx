@@ -2,30 +2,37 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, MapPin } from 'lucide-react';
 import { 
-  DALLAS_PRICING_TIERS, 
-  applyDallasDiscount,
-  calculateDallasRecurringPricing,
-  DALLAS_DISCOUNT_RATE 
-} from '@/lib/dallas-pricing-system';
+  StateCode,
+  getStateConfig,
+  applyDiscount,
+  calculateRecurringPricing,
+  DISCOUNT_RATE 
+} from '@/lib/state-pricing-system';
 import { cn } from '@/lib/utils';
 
-interface DallasPricingTableProps {
+interface StatePricingTableProps {
+  stateCode: StateCode;
   className?: string;
 }
 
-export function DallasPricingTable({ className }: DallasPricingTableProps) {
+export function StatePricingTable({ stateCode, className }: StatePricingTableProps) {
+  const state = getStateConfig(stateCode);
+  
+  if (!state) return null;
+
   return (
     <Card className={cn("shadow-lg", className)}>
       <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Dallas Pricing
+            <MapPin className="h-5 w-5 text-primary" />
+            {state.displayName} Pricing
           </CardTitle>
-          <Badge className="bg-success text-success-foreground">
-            Save {Math.round(DALLAS_DISCOUNT_RATE * 100)}% Today!
+          <Badge className="bg-success text-success-foreground flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            Save {Math.round(DISCOUNT_RATE * 100)}% Today!
           </Badge>
         </div>
       </CardHeader>
@@ -43,10 +50,10 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {DALLAS_PRICING_TIERS.filter(tier => tier.id !== '5000_plus').map((tier, index) => {
-                  const regularDiscount = applyDallasDiscount(tier.regularOneTime);
-                  const deepDiscount = applyDallasDiscount(tier.deepClean);
-                  const moveDiscount = applyDallasDiscount(tier.moveInOut);
+                {state.tiers.filter(tier => tier.id !== '5000_plus').map((tier, index) => {
+                  const regularDiscount = applyDiscount(tier.regular);
+                  const deepDiscount = applyDiscount(tier.deep);
+                  const moveDiscount = applyDiscount(tier.moveInOut);
 
                   return (
                     <React.Fragment key={tier.id}>
@@ -58,7 +65,7 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
                         <td className="text-center py-4 px-2">
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-xs text-muted-foreground line-through">
-                              ${tier.regularOneTime}
+                              ${tier.regular}
                             </span>
                             <span className="text-lg font-bold text-primary">
                               ${regularDiscount.discounted}
@@ -68,7 +75,7 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
                         <td className="text-center py-4 px-2">
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-xs text-muted-foreground line-through">
-                              ${tier.deepClean}
+                              ${tier.deep}
                             </span>
                             <span className="text-lg font-bold text-primary">
                               ${deepDiscount.discounted}
@@ -112,11 +119,11 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
             </h3>
             
             <div className="grid gap-3">
-              {DALLAS_PRICING_TIERS.filter(tier => tier.id !== '5000_plus').slice(0, 3).map((tier) => {
-                const recurring = calculateDallasRecurringPricing(tier.regularOneTime);
-                const weeklyDiscount = applyDallasDiscount(recurring.weeklyMonthly);
-                const biWeeklyDiscount = applyDallasDiscount(recurring.biWeeklyMonthly);
-                const monthlyDiscount = applyDallasDiscount(recurring.monthlyMonthly);
+              {state.tiers.filter(tier => tier.id !== '5000_plus').slice(0, 3).map((tier) => {
+                const recurring = calculateRecurringPricing(tier.regular);
+                const weeklyDiscount = applyDiscount(recurring.weeklyMonthly);
+                const biWeeklyDiscount = applyDiscount(recurring.biWeeklyMonthly);
+                const monthlyDiscount = applyDiscount(recurring.monthlyMonthly);
 
                 return (
                   <details key={tier.id} className="group">
@@ -137,7 +144,7 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
                             ${weeklyDiscount.discounted}/mo
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            ${applyDallasDiscount(recurring.weeklyPerClean).discounted}/clean
+                            ${applyDiscount(recurring.weeklyPerClean).discounted}/clean
                           </div>
                         </div>
                       </div>
@@ -151,7 +158,7 @@ export function DallasPricingTable({ className }: DallasPricingTableProps) {
                             ${biWeeklyDiscount.discounted}/mo
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            ${applyDallasDiscount(recurring.biWeeklyPerClean).discounted}/clean
+                            ${applyDiscount(recurring.biWeeklyPerClean).discounted}/clean
                           </div>
                         </div>
                       </div>

@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Calculator, DollarSign, Sparkles } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { PricingResult, HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculateDallasPricing, DALLAS_DISCOUNT_RATE } from '@/lib/dallas-pricing-system';
+import { calculatePricing, DISCOUNT_RATE, StateCode } from '@/lib/state-pricing-system';
 import { cn } from '@/lib/utils';
 
 interface PricingSummaryCardProps {
@@ -15,7 +15,7 @@ interface PricingSummaryCardProps {
   frequencyId?: string;
   stateCode?: string;
   squareFootage?: number;
-  useDallasPricing?: boolean;
+  useStatePricing?: boolean;
   className?: string;
 }
 
@@ -26,7 +26,7 @@ export function PricingSummaryCard({
   frequencyId, 
   stateCode,
   squareFootage,
-  useDallasPricing = true,
+  useStatePricing = true,
   className 
 }: PricingSummaryCardProps) {
   const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
@@ -34,9 +34,10 @@ export function PricingSummaryCard({
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
   const state = DEFAULT_PRICING_CONFIG.states.find(s => s.code === stateCode);
 
-  // Use Dallas pricing if enabled and we have square footage
-  const dallasPricing = useDallasPricing && squareFootage && serviceTypeId && frequencyId ? 
-    calculateDallasPricing(
+  // Use state-level pricing if enabled and we have square footage and state
+  const statePricing = useStatePricing && squareFootage && serviceTypeId && frequencyId && stateCode ? 
+    calculatePricing(
+      stateCode as StateCode,
       squareFootage,
       serviceTypeId === 'standard' ? 'regular' : serviceTypeId === 'deep' ? 'deep' : 'move_in_out',
       frequencyId === 'one_time' ? 'one_time' : 
@@ -44,7 +45,7 @@ export function PricingSummaryCard({
       frequencyId === 'bi_weekly' ? 'bi_weekly' : 'monthly'
     ) : null;
 
-  if (dallasPricing && dallasPricing.tier.id === '5000_plus') {
+  if (statePricing && statePricing.tier.id === '5000_plus') {
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
         <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -96,14 +97,14 @@ export function PricingSummaryCard({
     );
   }
 
-  // Dallas pricing display
-  if (dallasPricing) {
-    const isRecurring = dallasPricing.frequency !== 'one_time';
-    const serviceTypeName = dallasPricing.serviceType === 'regular' ? 'Regular Clean' :
-                           dallasPricing.serviceType === 'deep' ? 'Deep Clean' : 'Move-In/Out Clean';
-    const frequencyName = dallasPricing.frequency === 'one_time' ? 'One-Time' :
-                         dallasPricing.frequency === 'weekly' ? 'Weekly' :
-                         dallasPricing.frequency === 'bi_weekly' ? 'Bi-Weekly' : 'Monthly';
+  // State pricing display
+  if (statePricing) {
+    const isRecurring = statePricing.frequency !== 'one_time';
+    const serviceTypeName = statePricing.serviceType === 'regular' ? 'Regular Clean' :
+                           statePricing.serviceType === 'deep' ? 'Deep Clean' : 'Move-In/Out Clean';
+    const frequencyName = statePricing.frequency === 'one_time' ? 'One-Time' :
+                         statePricing.frequency === 'weekly' ? 'Weekly' :
+                         statePricing.frequency === 'bi_weekly' ? 'Bi-Weekly' : 'Monthly';
 
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
@@ -115,7 +116,7 @@ export function PricingSummaryCard({
             </CardTitle>
             <Badge className="bg-success text-success-foreground flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
-              {Math.round(DALLAS_DISCOUNT_RATE * 100)}% Off!
+              {Math.round(DISCOUNT_RATE * 100)}% Off!
             </Badge>
           </div>
         </CardHeader>
@@ -124,16 +125,16 @@ export function PricingSummaryCard({
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Original Price</span>
             <span className="text-sm text-muted-foreground line-through">
-              ${dallasPricing.originalPrice.toFixed(0)}
+              ${statePricing.originalPrice.toFixed(0)}
             </span>
           </div>
 
           {/* Discount */}
           <div className="flex justify-between items-center text-success">
             <span className="text-sm font-medium">
-              You Save {Math.round(DALLAS_DISCOUNT_RATE * 100)}%
+              You Save {Math.round(DISCOUNT_RATE * 100)}%
             </span>
-            <span className="font-medium">-${dallasPricing.savings.toFixed(0)}</span>
+            <span className="font-medium">-${statePricing.savings.toFixed(0)}</span>
           </div>
 
           <Separator className="border-primary/20" />
@@ -145,16 +146,16 @@ export function PricingSummaryCard({
             </span>
             <div className="text-right">
               <p className="text-2xl font-bold text-primary">
-                ${dallasPricing.discountedPrice.toFixed(0)}
+                ${statePricing.discountedPrice.toFixed(0)}
               </p>
             </div>
           </div>
 
           {/* Per-clean breakdown for recurring */}
-          {isRecurring && dallasPricing.recurringDetails && (
+          {isRecurring && statePricing.recurringDetails && (
             <div className="text-center pt-2">
               <p className="text-sm text-muted-foreground">
-                ${dallasPricing.recurringDetails.perClean.toFixed(0)} per clean × {dallasPricing.recurringDetails.cleansPerMonth} clean{dallasPricing.recurringDetails.cleansPerMonth > 1 ? 's' : ''}/month
+                ${statePricing.recurringDetails.perClean.toFixed(0)} per clean × {statePricing.recurringDetails.cleansPerMonth} clean{statePricing.recurringDetails.cleansPerMonth > 1 ? 's' : ''}/month
               </p>
             </div>
           )}
@@ -163,7 +164,7 @@ export function PricingSummaryCard({
           <Separator className="my-4" />
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground">{serviceTypeName} • {frequencyName}</p>
-            <p className="text-xs text-muted-foreground">{dallasPricing.tier.label} • Dallas, TX</p>
+            <p className="text-xs text-muted-foreground">{statePricing.tier.label} • {statePricing.state.displayName}</p>
           </div>
 
           {/* Payment Note */}

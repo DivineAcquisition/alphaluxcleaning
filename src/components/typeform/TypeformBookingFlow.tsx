@@ -589,7 +589,7 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
             const homeSize = HOME_SIZE_RANGES.find(h => h.id === bookingData.homeSizeId);
             return homeSize ? (homeSize.minSqft + homeSize.maxSqft) / 2 : undefined;
           })()}
-          useDallasPricing={bookingData.stateCode === 'TX'}
+          useStatePricing={['TX', 'CA', 'NY'].includes(bookingData.stateCode || '')}
         />
       )}
     </div>
