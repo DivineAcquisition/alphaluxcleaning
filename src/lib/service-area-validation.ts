@@ -18,6 +18,11 @@ function isCaliforniaZip(zipCode: number): boolean {
   return (zipCode >= 90000 && zipCode <= 96199);
 }
 
+function isNewYorkZip(zipCode: number): boolean {
+  // New York state ZIP codes
+  return (zipCode >= 10000 && zipCode <= 14999);
+}
+
 export interface ServiceAreaValidation {
   isValid: boolean;
   message?: string;
@@ -43,7 +48,7 @@ export function validateServiceAreaZipCode(zipCode: string): ServiceAreaValidati
 
   const zipNumber = parseInt(cleanZip, 10);
   
-  if (isTexasZip(zipNumber) || isCaliforniaZip(zipNumber)) {
+  if (isTexasZip(zipNumber) || isCaliforniaZip(zipNumber) || isNewYorkZip(zipNumber)) {
     return {
       isValid: true
     };
@@ -53,7 +58,7 @@ export function validateServiceAreaZipCode(zipCode: string): ServiceAreaValidati
   
   return {
     isValid: false,
-    message: `Sorry, we currently service California & Texas only. ZIP code ${cleanZip} is outside our service area.`
+    message: `Sorry, we only service Texas, California & New York. ZIP code ${cleanZip} is outside our service area.`
   };
 }
 
@@ -71,7 +76,7 @@ export function getNearestServiceableZipCodes(zipCode: string): string[] {
 }
 
 export const SERVICE_AREA_INFO = {
-  centerCity: 'Cali & Texas',
+  centerCity: 'Texas, California & New York',
   radiusMiles: 0,
   contactPhone: '(281) 809-9901',
   contactEmail: 'support@alphaluxclean.com'

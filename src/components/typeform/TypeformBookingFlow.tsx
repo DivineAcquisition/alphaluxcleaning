@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { validateServiceAreaZipCode, ServiceAreaValidation } from '@/lib/service-area-validation';
 
 interface TypeformBookingFlowProps {
   onComplete?: () => void;
@@ -54,6 +55,9 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
 
   // Calculate pricing
   const [pricing, setPricing] = useState<any>(null);
+  
+  // ZIP code validation state
+  const [zipValidation, setZipValidation] = useState<ServiceAreaValidation | null>(null);
 
   // Pre-fill address and contact info from earlier steps
   useEffect(() => {
@@ -101,9 +105,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       toast.error('Please select a state');
       return;
     }
-    if (currentStep === 2 && !bookingData.zipCode) {
-      toast.error('Please enter your zip code');
-      return;
+    if (currentStep === 2) {
+      if (!bookingData.zipCode) {
+        toast.error('Please enter your zip code');
+        return;
+      }
+      if (!zipValidation?.isValid) {
+        toast.error('Please enter a valid ZIP code in TX, CA, or NY');
+        return;
+      }
     }
     if (currentStep === 3 && !bookingData.email) {
       toast.error('Please enter your email');
@@ -152,7 +162,7 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
   const canGoNext = () => {
     switch (currentStep) {
       case 1: return !!bookingData.stateCode;
-      case 2: return !!bookingData.zipCode && bookingData.zipCode.length === 5;
+      case 2: return !!bookingData.zipCode && bookingData.zipCode.length === 5 && zipValidation?.isValid === true;
       case 3: return !!bookingData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.email);
       case 4: return !!bookingData.homeSizeId;
       case 5: return !!(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType);
@@ -219,18 +229,48 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
           description="We'll use this to check service availability and provide accurate pricing"
           icon={<Hash className="w-8 h-8" />}
         >
-          <Input
-            type="text"
-            value={bookingData.zipCode}
-            onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-              updateField('zipCode', value);
-            }}
-            placeholder="12345"
-            maxLength={5}
-            className="text-lg p-6 text-center text-2xl tracking-widest"
-            autoFocus
-          />
+          <div className="space-y-4">
+            <Input
+              type="text"
+              value={bookingData.zipCode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                updateField('zipCode', value);
+                
+                // Validate ZIP code when 5 digits are entered
+                if (value.length === 5) {
+                  const validation = validateServiceAreaZipCode(value);
+                  setZipValidation(validation);
+                } else {
+                  setZipValidation(null);
+                }
+              }}
+              placeholder="12345"
+              maxLength={5}
+              className={`text-lg p-6 text-center text-2xl tracking-widest ${
+                zipValidation?.isValid === false ? 'border-destructive' : ''
+              }`}
+              autoFocus
+            />
+            
+            {/* Validation message */}
+            {zipValidation?.isValid === false && (
+              <div className="flex items-start gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="text-destructive text-sm">
+                  {zipValidation.message}
+                </div>
+              </div>
+            )}
+            
+            {zipValidation?.isValid === true && (
+              <div className="flex items-center justify-center gap-2 text-green-600 text-sm">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Service available in your area!</span>
+              </div>
+            )}
+          </div>
         </ConversationalQuestion>
       </TypeformStep>
 
