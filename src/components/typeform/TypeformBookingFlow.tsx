@@ -3,9 +3,11 @@ import { TypeformStep } from './TypeformStep';
 import { ConversationalQuestion } from './ConversationalQuestion';
 import { AnswerOption } from './AnswerOption';
 import { TypeformProgress } from './TypeformProgress';
-import { MapPin, Home, Sparkles, Calendar, Clock, MapPinned, Phone, FileText, CreditCard, Mail, Hash } from 'lucide-react';
+import { FloatingPricingSummary } from './FloatingPricingSummary';
+import { MapPin, Home, Sparkles, Calendar, Clock, MapPinned, Phone, FileText, CreditCard, Mail, Hash, Bed, Bath, Building } from 'lucide-react';
 import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
+import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
 import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
 import { calculateNewPricing } from '@/lib/new-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
@@ -20,6 +22,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 
 interface TypeformBookingFlowProps {
   onComplete?: () => void;
@@ -27,95 +30,62 @@ interface TypeformBookingFlowProps {
 
 export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 12;
+  const totalSteps = 13; // Added property details step
 
-  // Booking data with localStorage persistence
-  const [stateCode, setStateCode] = useState(() => localStorage.getItem('booking_state') || '');
-  const [zipCode, setZipCode] = useState(() => localStorage.getItem('booking_zipCode') || '');
-  const [email, setEmail] = useState(() => localStorage.getItem('booking_email') || '');
-  const [homeSizeId, setHomeSizeId] = useState(() => localStorage.getItem('booking_homeSizeId') || '');
-  const [serviceTypeId, setServiceTypeId] = useState(() => localStorage.getItem('booking_serviceTypeId') || '');
-  const [frequencyId, setFrequencyId] = useState(() => localStorage.getItem('booking_frequencyId') || '');
-  const [serviceDate, setServiceDate] = useState<Date | undefined>(() => {
-    const saved = localStorage.getItem('booking_serviceDate');
-    return saved ? new Date(saved) : undefined;
-  });
-  const [serviceTime, setServiceTime] = useState(() => localStorage.getItem('booking_serviceTime') || '');
-  const [address, setAddress] = useState(() => {
-    const saved = localStorage.getItem('booking_address');
-    return saved ? JSON.parse(saved) : { street: '', city: '', state: '', zipCode: '' };
-  });
-  const [contactInfo, setContactInfo] = useState(() => {
-    const saved = localStorage.getItem('booking_contactInfo');
-    return saved ? JSON.parse(saved) : { name: '', email: '', phone: '' };
-  });
-  const [specialInstructions, setSpecialInstructions] = useState(() => localStorage.getItem('booking_specialInstructions') || '');
+  // Use form persistence hook
+  const { data: bookingData, updateField, updateData, isLoading } = useFormPersistence(
+    {
+      stateCode: '',
+      zipCode: '',
+      email: '',
+      homeSizeId: '',
+      bedrooms: '2',
+      bathrooms: '2',
+      dwellingType: '',
+      flooringType: '',
+      serviceTypeId: '',
+      frequencyId: '',
+      serviceDate: null as Date | null,
+      serviceTime: '',
+      address: { street: '', city: '', state: '', zipCode: '' },
+      contactInfo: { name: '', email: '', phone: '' },
+      specialInstructions: ''
+    },
+    { storageKey: 'typeform-booking', debounceMs: 500 }
+  );
 
   // Calculate pricing
   const [pricing, setPricing] = useState<any>(null);
 
-  // Persist data to localStorage
+  // Pre-fill address and contact info from earlier steps
   useEffect(() => {
-    if (stateCode) localStorage.setItem('booking_state', stateCode);
-  }, [stateCode]);
-
-  useEffect(() => {
-    if (zipCode) localStorage.setItem('booking_zipCode', zipCode);
-  }, [zipCode]);
-
-  useEffect(() => {
-    if (email) localStorage.setItem('booking_email', email);
-  }, [email]);
-
-  useEffect(() => {
-    if (homeSizeId) localStorage.setItem('booking_homeSizeId', homeSizeId);
-  }, [homeSizeId]);
-
-  useEffect(() => {
-    if (serviceTypeId) localStorage.setItem('booking_serviceTypeId', serviceTypeId);
-  }, [serviceTypeId]);
-
-  useEffect(() => {
-    if (frequencyId) localStorage.setItem('booking_frequencyId', frequencyId);
-  }, [frequencyId]);
-
-  useEffect(() => {
-    if (serviceDate) localStorage.setItem('booking_serviceDate', serviceDate.toISOString());
-  }, [serviceDate]);
-
-  useEffect(() => {
-    if (serviceTime) localStorage.setItem('booking_serviceTime', serviceTime);
-  }, [serviceTime]);
-
-  useEffect(() => {
-    localStorage.setItem('booking_address', JSON.stringify(address));
-  }, [address]);
-
-  useEffect(() => {
-    localStorage.setItem('booking_contactInfo', JSON.stringify(contactInfo));
-  }, [contactInfo]);
-
-  useEffect(() => {
-    if (specialInstructions) localStorage.setItem('booking_specialInstructions', specialInstructions);
-  }, [specialInstructions]);
-
-  // Pre-fill address and contact info
-  useEffect(() => {
-    if (stateCode && zipCode) {
-      setAddress(prev => ({ ...prev, state: stateCode, zipCode: zipCode }));
+    if (bookingData.stateCode && bookingData.zipCode) {
+      updateField('address', { 
+        ...bookingData.address, 
+        state: bookingData.stateCode, 
+        zipCode: bookingData.zipCode 
+      });
     }
-  }, [stateCode, zipCode]);
+  }, [bookingData.stateCode, bookingData.zipCode]);
 
   useEffect(() => {
-    if (email) {
-      setContactInfo(prev => ({ ...prev, email: email }));
+    if (bookingData.email) {
+      updateField('contactInfo', { 
+        ...bookingData.contactInfo, 
+        email: bookingData.email 
+      });
     }
-  }, [email]);
+  }, [bookingData.email]);
 
   useEffect(() => {
-    if (homeSizeId && serviceTypeId && frequencyId && stateCode) {
+    if (bookingData.homeSizeId && bookingData.serviceTypeId && bookingData.frequencyId && bookingData.stateCode) {
       try {
-        const result = calculateNewPricing(homeSizeId, serviceTypeId, frequencyId, stateCode);
+        const result = calculateNewPricing(
+          bookingData.homeSizeId, 
+          bookingData.serviceTypeId, 
+          bookingData.frequencyId, 
+          bookingData.stateCode
+        );
         const discountedResult = {
           ...result,
           finalPrice: applyGlobalDiscount(result.finalPrice)
@@ -125,47 +95,51 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         console.error('Pricing calculation error:', error);
       }
     }
-  }, [homeSizeId, serviceTypeId, frequencyId, stateCode]);
+  }, [bookingData.homeSizeId, bookingData.serviceTypeId, bookingData.frequencyId, bookingData.stateCode]);
 
   const handleNext = () => {
     // Validation for each step
-    if (currentStep === 1 && !stateCode) {
+    if (currentStep === 1 && !bookingData.stateCode) {
       toast.error('Please select a state');
       return;
     }
-    if (currentStep === 2 && !zipCode) {
+    if (currentStep === 2 && !bookingData.zipCode) {
       toast.error('Please enter your zip code');
       return;
     }
-    if (currentStep === 3 && !email) {
+    if (currentStep === 3 && !bookingData.email) {
       toast.error('Please enter your email');
       return;
     }
-    if (currentStep === 4 && !homeSizeId) {
+    if (currentStep === 4 && !bookingData.homeSizeId) {
       toast.error('Please select your home size');
       return;
     }
-    if (currentStep === 5 && !serviceTypeId) {
+    if (currentStep === 5 && (!bookingData.bedrooms || !bookingData.bathrooms || !bookingData.dwellingType)) {
+      toast.error('Please complete property details');
+      return;
+    }
+    if (currentStep === 6 && !bookingData.serviceTypeId) {
       toast.error('Please select a service type');
       return;
     }
-    if (currentStep === 6 && !frequencyId) {
+    if (currentStep === 7 && !bookingData.frequencyId) {
       toast.error('Please select a frequency');
       return;
     }
-    if (currentStep === 7 && !serviceDate) {
+    if (currentStep === 8 && !bookingData.serviceDate) {
       toast.error('Please select a date');
       return;
     }
-    if (currentStep === 8 && !serviceTime) {
+    if (currentStep === 9 && !bookingData.serviceTime) {
       toast.error('Please select a time');
       return;
     }
-    if (currentStep === 9 && (!address.street || !address.city || !address.zipCode)) {
+    if (currentStep === 10 && (!bookingData.address.street || !bookingData.address.city || !bookingData.address.zipCode)) {
       toast.error('Please fill in your address');
       return;
     }
-    if (currentStep === 10 && (!contactInfo.name || !contactInfo.email || !contactInfo.phone)) {
+    if (currentStep === 11 && (!bookingData.contactInfo.name || !bookingData.contactInfo.email || !bookingData.contactInfo.phone)) {
       toast.error('Please fill in your contact information');
       return;
     }
@@ -183,21 +157,28 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
 
   const canGoNext = () => {
     switch (currentStep) {
-      case 1: return !!stateCode;
-      case 2: return !!zipCode && zipCode.length === 5;
-      case 3: return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      case 4: return !!homeSizeId;
-      case 5: return !!serviceTypeId;
-      case 6: return !!frequencyId;
-      case 7: return !!serviceDate;
-      case 8: return !!serviceTime;
-      case 9: return !!(address.street && address.city && address.zipCode);
-      case 10: return !!(contactInfo.name && contactInfo.email && contactInfo.phone);
-      case 11: return true; // Special instructions are optional
-      case 12: return !!pricing;
+      case 1: return !!bookingData.stateCode;
+      case 2: return !!bookingData.zipCode && bookingData.zipCode.length === 5;
+      case 3: return !!bookingData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.email);
+      case 4: return !!bookingData.homeSizeId;
+      case 5: return !!(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType);
+      case 6: return !!bookingData.serviceTypeId;
+      case 7: return !!bookingData.frequencyId;
+      case 8: return !!bookingData.serviceDate;
+      case 9: return !!bookingData.serviceTime;
+      case 10: return !!(bookingData.address.street && bookingData.address.city && bookingData.address.zipCode);
+      case 11: return !!(bookingData.contactInfo.name && bookingData.contactInfo.email && bookingData.contactInfo.phone);
+      case 12: return true; // Special instructions are optional
+      case 13: return !!pricing;
       default: return false;
     }
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+      <p className="text-muted-foreground">Loading...</p>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -214,8 +195,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                 key={state.code}
                 label={state.name}
                 icon={<MapPin className="w-6 h-6" />}
-                isSelected={stateCode === state.code}
-                onClick={() => setStateCode(state.code)}
+                isSelected={bookingData.stateCode === state.code}
+                onClick={() => updateField('stateCode', state.code)}
               />
             ))}
           </div>
@@ -231,10 +212,10 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         >
           <Input
             type="text"
-            value={zipCode}
+            value={bookingData.zipCode}
             onChange={(e) => {
               const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-              setZipCode(value);
+              updateField('zipCode', value);
             }}
             placeholder="12345"
             maxLength={5}
@@ -253,8 +234,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         >
           <Input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={bookingData.email}
+            onChange={(e) => updateField('email', e.target.value)}
             placeholder="you@example.com"
             className="text-lg p-6"
             autoFocus
@@ -270,14 +251,34 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
           icon={<Home className="w-8 h-8" />}
         >
           <HomeSizeGrid
-            selectedId={homeSizeId}
-            onSelect={setHomeSizeId}
+            selectedId={bookingData.homeSizeId}
+            onSelect={(id) => updateField('homeSizeId', id)}
           />
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 5: Service Type */}
+      {/* Step 5: Property Details */}
       <TypeformStep questionNumber={5} totalSteps={totalSteps} isActive={currentStep === 5}>
+        <ConversationalQuestion
+          question="Tell us about your property"
+          description="This helps us provide the best service"
+          icon={<Building className="w-8 h-8" />}
+        >
+          <PropertyDetailsSelector
+            bedrooms={bookingData.bedrooms}
+            bathrooms={bookingData.bathrooms}
+            dwellingType={bookingData.dwellingType}
+            flooringType={bookingData.flooringType}
+            onBedroomsChange={(value) => updateField('bedrooms', value)}
+            onBathroomsChange={(value) => updateField('bathrooms', value)}
+            onDwellingTypeChange={(value) => updateField('dwellingType', value)}
+            onFlooringTypeChange={(value) => updateField('flooringType', value)}
+          />
+        </ConversationalQuestion>
+      </TypeformStep>
+
+      {/* Step 6: Service Type */}
+      <TypeformStep questionNumber={6} totalSteps={totalSteps} isActive={currentStep === 6}>
         <ConversationalQuestion
           question="What type of cleaning do you need?"
           description="Choose the service that best fits your needs"
@@ -297,8 +298,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                   label={service.name}
                   description={descriptions[service.id]}
                   icon={<Sparkles className="w-6 h-6" />}
-                  isSelected={serviceTypeId === service.id}
-                  onClick={() => setServiceTypeId(service.id)}
+                  isSelected={bookingData.serviceTypeId === service.id}
+                  onClick={() => updateField('serviceTypeId', service.id)}
                 />
               );
             })}
@@ -306,22 +307,22 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 6: Frequency */}
-      <TypeformStep questionNumber={6} totalSteps={totalSteps} isActive={currentStep === 6}>
+      {/* Step 7: Frequency */}
+      <TypeformStep questionNumber={7} totalSteps={totalSteps} isActive={currentStep === 7}>
         <ConversationalQuestion
           question="How often would you like service?"
           description="Regular service gets better rates and priority scheduling"
           icon={<Calendar className="w-8 h-8" />}
         >
           <FrequencySelector
-            selectedId={frequencyId}
-            onSelect={setFrequencyId}
+            selectedId={bookingData.frequencyId}
+            onSelect={(id) => updateField('frequencyId', id)}
           />
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 7: Date Selection */}
-      <TypeformStep questionNumber={7} totalSteps={totalSteps} isActive={currentStep === 7}>
+      {/* Step 8: Date Selection */}
+      <TypeformStep questionNumber={8} totalSteps={totalSteps} isActive={currentStep === 8}>
         <ConversationalQuestion
           question="When would you like your first cleaning?"
           description="Choose a date that works best for you"
@@ -332,29 +333,30 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal text-lg p-6 h-auto",
-                  !serviceDate && "text-muted-foreground"
+                  "w-full justify-center text-center font-normal text-lg p-6 h-auto",
+                  !bookingData.serviceDate && "text-muted-foreground"
                 )}
               >
                 <Calendar className="mr-2 h-5 w-5" />
-                {serviceDate ? format(serviceDate, "PPPP") : <span>Pick a date</span>}
+                {bookingData.serviceDate ? format(new Date(bookingData.serviceDate), "MMM d, yyyy") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="center">
               <CalendarComponent
                 mode="single"
-                selected={serviceDate}
-                onSelect={setServiceDate}
+                selected={bookingData.serviceDate ? new Date(bookingData.serviceDate) : undefined}
+                onSelect={(date) => updateField('serviceDate', date)}
                 disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                 initialFocus
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 8: Time Selection */}
-      <TypeformStep questionNumber={8} totalSteps={totalSteps} isActive={currentStep === 8}>
+      {/* Step 9: Time Selection */}
+      <TypeformStep questionNumber={9} totalSteps={totalSteps} isActive={currentStep === 9}>
         <ConversationalQuestion
           question="What time works best?"
           description="Select your preferred time slot"
@@ -366,16 +368,16 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                 key={time}
                 label={time}
                 icon={<Clock className="w-6 h-6" />}
-                isSelected={serviceTime === time}
-                onClick={() => setServiceTime(time)}
+                isSelected={bookingData.serviceTime === time}
+                onClick={() => updateField('serviceTime', time)}
               />
             ))}
           </div>
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 9: Address */}
-      <TypeformStep questionNumber={9} totalSteps={totalSteps} isActive={currentStep === 9}>
+      {/* Step 10: Address */}
+      <TypeformStep questionNumber={10} totalSteps={totalSteps} isActive={currentStep === 10}>
         <ConversationalQuestion
           question="What's the service address?"
           description="Where should our team arrive?"
@@ -386,8 +388,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
               <Label htmlFor="street">Street Address</Label>
               <Input
                 id="street"
-                value={address.street}
-                onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                value={bookingData.address.street}
+                onChange={(e) => updateField('address', { ...bookingData.address, street: e.target.value })}
                 placeholder="123 Main St"
                 className="mt-2"
               />
@@ -397,8 +399,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                 <Label htmlFor="city">City</Label>
                 <Input
                   id="city"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                  value={bookingData.address.city}
+                  onChange={(e) => updateField('address', { ...bookingData.address, city: e.target.value })}
                   placeholder="Austin"
                   className="mt-2"
                 />
@@ -407,8 +409,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                 <Label htmlFor="zipCode">ZIP Code</Label>
                 <Input
                   id="zipCode"
-                  value={address.zipCode}
-                  onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
+                  value={bookingData.address.zipCode}
+                  onChange={(e) => updateField('address', { ...bookingData.address, zipCode: e.target.value })}
                   placeholder="78701"
                   className="mt-2"
                 />
@@ -418,8 +420,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 10: Contact Info */}
-      <TypeformStep questionNumber={10} totalSteps={totalSteps} isActive={currentStep === 10}>
+      {/* Step 11: Contact Info */}
+      <TypeformStep questionNumber={11} totalSteps={totalSteps} isActive={currentStep === 11}>
         <ConversationalQuestion
           question="How can we reach you?"
           description="We'll send your booking confirmation here"
@@ -430,8 +432,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                value={contactInfo.name}
-                onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
+                value={bookingData.contactInfo.name}
+                onChange={(e) => updateField('contactInfo', { ...bookingData.contactInfo, name: e.target.value })}
                 placeholder="John Doe"
                 className="mt-2"
               />
@@ -441,8 +443,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
               <Input
                 id="email"
                 type="email"
-                value={contactInfo.email}
-                onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+                value={bookingData.contactInfo.email}
+                onChange={(e) => updateField('contactInfo', { ...bookingData.contactInfo, email: e.target.value })}
                 placeholder="john@example.com"
                 className="mt-2"
               />
@@ -452,8 +454,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
               <Input
                 id="phone"
                 type="tel"
-                value={contactInfo.phone}
-                onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
+                value={bookingData.contactInfo.phone}
+                onChange={(e) => updateField('contactInfo', { ...bookingData.contactInfo, phone: e.target.value })}
                 placeholder="(555) 123-4567"
                 className="mt-2"
               />
@@ -462,16 +464,16 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 11: Special Instructions */}
-      <TypeformStep questionNumber={11} totalSteps={totalSteps} isActive={currentStep === 11}>
+      {/* Step 12: Special Instructions */}
+      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12}>
         <ConversationalQuestion
           question="Any special instructions?"
           description="Let us know about pets, access codes, or specific requests (optional)"
           icon={<FileText className="w-8 h-8" />}
         >
           <Textarea
-            value={specialInstructions}
-            onChange={(e) => setSpecialInstructions(e.target.value)}
+            value={bookingData.specialInstructions}
+            onChange={(e) => updateField('specialInstructions', e.target.value)}
             placeholder="e.g., Please focus on the kitchen, we have a friendly dog..."
             rows={6}
             className="text-lg"
@@ -479,8 +481,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Step 12: Payment */}
-      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12}>
+      {/* Step 13: Payment */}
+      <TypeformStep questionNumber={13} totalSteps={totalSteps} isActive={currentStep === 13}>
         <ConversationalQuestion
           question="Ready to book?"
           description={pricing ? `Total: $${pricing.finalPrice.toFixed(2)}` : 'Calculating price...'}
@@ -490,24 +492,40 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
             <Card className="p-6">
               <PaymentForm
                 pricingData={{
-                  squareFootage: parseInt(homeSizeId.split('_')[0]) || 1500,
-                  cleaningType: serviceTypeId,
-                  frequency: frequencyId,
+                  squareFootage: parseInt(bookingData.homeSizeId.split('_')[0]) || 1500,
+                  cleaningType: bookingData.serviceTypeId,
+                  frequency: bookingData.frequencyId,
                   addOns: [],
-                  bedrooms: 2,
-                  bathrooms: 2,
+                  bedrooms: parseInt(bookingData.bedrooms) || 2,
+                  bathrooms: parseInt(bookingData.bathrooms) || 2,
                 }}
                 calculatedPrice={pricing.finalPrice}
                 priceBreakdown={pricing.breakdown}
                 schedulingData={{
-                  scheduledDate: serviceDate ? format(serviceDate, 'yyyy-MM-dd') : '',
-                  scheduledTime: serviceTime,
+                  scheduledDate: bookingData.serviceDate ? format(new Date(bookingData.serviceDate), 'yyyy-MM-dd') : '',
+                  scheduledTime: bookingData.serviceTime,
+                }}
+                customerInfo={{
+                  name: bookingData.contactInfo.name,
+                  email: bookingData.contactInfo.email,
+                  phone: bookingData.contactInfo.phone,
                 }}
               />
             </Card>
           )}
         </ConversationalQuestion>
       </TypeformStep>
+
+      {/* Floating Pricing Summary - Show from Step 4 onwards */}
+      {currentStep >= 4 && (
+        <FloatingPricingSummary
+          result={pricing}
+          homeSizeId={bookingData.homeSizeId}
+          serviceTypeId={bookingData.serviceTypeId}
+          frequencyId={bookingData.frequencyId}
+          stateCode={bookingData.stateCode}
+        />
+      )}
 
       {/* Progress Bar */}
       <TypeformProgress
