@@ -176,7 +176,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Step 1: State Selection */}
-      <TypeformStep questionNumber={1} totalSteps={totalSteps} isActive={currentStep === 1}>
+      <TypeformStep 
+        questionNumber={1} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 1}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="Where do you need cleaning?"
           description="Select your state to get accurate pricing"
@@ -197,7 +205,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 2: Zip Code */}
-      <TypeformStep questionNumber={2} totalSteps={totalSteps} isActive={currentStep === 2}>
+      <TypeformStep 
+        questionNumber={2} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 2}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="What's your zip code?"
           description="We'll use this to check service availability and provide accurate pricing"
@@ -219,7 +235,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 3: Email */}
-      <TypeformStep questionNumber={3} totalSteps={totalSteps} isActive={currentStep === 3}>
+      <TypeformStep 
+        questionNumber={3} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 3}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="What's your email?"
           description="We'll send your booking confirmation and updates here"
@@ -237,7 +261,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 4: Home Size */}
-      <TypeformStep questionNumber={4} totalSteps={totalSteps} isActive={currentStep === 4}>
+      <TypeformStep 
+        questionNumber={4} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 4}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="What size is your home?"
           description="This helps us provide accurate pricing and timing"
@@ -251,7 +283,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 5: Property Details */}
-      <TypeformStep questionNumber={5} totalSteps={totalSteps} isActive={currentStep === 5}>
+      <TypeformStep 
+        questionNumber={5} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 5}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="Tell us about your property"
           description="This helps us provide the best service"
@@ -271,7 +311,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 6: Service Type */}
-      <TypeformStep questionNumber={6} totalSteps={totalSteps} isActive={currentStep === 6}>
+      <TypeformStep 
+        questionNumber={6} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 6}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="What type of cleaning do you need?"
           description="Choose the service that best fits your needs"
@@ -301,7 +349,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 7: Frequency */}
-      <TypeformStep questionNumber={7} totalSteps={totalSteps} isActive={currentStep === 7}>
+      <TypeformStep 
+        questionNumber={7} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 7}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="How often would you like service?"
           description="Regular service gets better rates and priority scheduling"
@@ -315,7 +371,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 8: Combined Date & Time Selection */}
-      <TypeformStep questionNumber={8} totalSteps={totalSteps} isActive={currentStep === 8}>
+      <TypeformStep 
+        questionNumber={8} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 8}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="When would you like your first cleaning?"
           description="Choose your preferred date and time"
@@ -342,7 +406,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 9: Address */}
-      <TypeformStep questionNumber={9} totalSteps={totalSteps} isActive={currentStep === 9}>
+      <TypeformStep 
+        questionNumber={9} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 9}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="What's the service address?"
           description="Where should our team arrive?"
@@ -386,7 +458,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 10: Contact Info */}
-      <TypeformStep questionNumber={10} totalSteps={totalSteps} isActive={currentStep === 10}>
+      <TypeformStep 
+        questionNumber={10} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 10}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="How can we reach you?"
           description="We'll send your booking confirmation here"
@@ -430,7 +510,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 11: Special Instructions */}
-      <TypeformStep questionNumber={11} totalSteps={totalSteps} isActive={currentStep === 11}>
+      <TypeformStep 
+        questionNumber={11} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 11}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Continue"
+      >
         <ConversationalQuestion
           question="Any special instructions?"
           description="Let us know about pets, access codes, or specific requests (optional)"
@@ -447,7 +535,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       </TypeformStep>
 
       {/* Step 12: Payment */}
-      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12}>
+      <TypeformStep 
+        questionNumber={12} 
+        totalSteps={totalSteps} 
+        isActive={currentStep === 12}
+        onBack={handleBack}
+        onNext={handleNext}
+        canGoNext={canGoNext()}
+        nextLabel="Complete Booking"
+      >
         <ConversationalQuestion
           question="Ready to book?"
           description={pricing ? `Total: $${pricing.finalPrice.toFixed(2)}` : 'Calculating price...'}
@@ -491,16 +587,6 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
           stateCode={bookingData.stateCode}
         />
       )}
-
-      {/* Progress Bar */}
-      <TypeformProgress
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        onBack={handleBack}
-        onNext={handleNext}
-        canGoNext={canGoNext()}
-        nextLabel={currentStep === totalSteps ? 'Complete Booking' : 'Continue'}
-      />
     </div>
   );
 }

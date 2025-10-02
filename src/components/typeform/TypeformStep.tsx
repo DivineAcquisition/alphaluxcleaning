@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { TypeformProgress } from './TypeformProgress';
 
 interface TypeformStepProps {
   children: React.ReactNode;
@@ -7,6 +8,11 @@ interface TypeformStepProps {
   totalSteps: number;
   isActive: boolean;
   className?: string;
+  onBack?: () => void;
+  onNext?: () => void;
+  canGoBack?: boolean;
+  canGoNext?: boolean;
+  nextLabel?: string;
 }
 
 export function TypeformStep({ 
@@ -14,7 +20,12 @@ export function TypeformStep({
   questionNumber, 
   totalSteps,
   isActive,
-  className 
+  className,
+  onBack,
+  onNext,
+  canGoBack = true,
+  canGoNext = true,
+  nextLabel = 'Continue'
 }: TypeformStepProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -31,7 +42,7 @@ export function TypeformStep({
   return (
     <div 
       className={cn(
-        "min-h-screen w-full flex items-center justify-center p-4 md:p-8",
+        "min-h-screen w-full flex items-center justify-center p-4 md:p-8 pb-32",
         "transition-all duration-500",
         mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className
@@ -56,6 +67,17 @@ export function TypeformStep({
         <div className="space-y-6">
           {children}
         </div>
+
+        {/* Navigation */}
+        <TypeformProgress
+          currentStep={questionNumber}
+          totalSteps={totalSteps}
+          onBack={onBack}
+          onNext={onNext}
+          canGoBack={canGoBack}
+          canGoNext={canGoNext}
+          nextLabel={nextLabel}
+        />
       </div>
     </div>
   );
