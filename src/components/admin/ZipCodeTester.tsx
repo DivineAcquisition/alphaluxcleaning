@@ -42,7 +42,7 @@ export const ZipCodeTester = () => {
     console.log("=== ZIP Code Validation Test Results ===");
     commonZips.forEach(({ zip, name }) => {
       const validation = validateServiceAreaZipCode(zip);
-      console.log(`${validation.isValid ? '✅' : '❌'} ${zip} (${name}): ${validation.isValid ? 'VALID' : validation.message}`);
+      console.log(validation.isValid ? 'VALID' : 'INVALID', zip, '(', name, '):', validation.isValid ? 'VALID' : validation.message);
     });
     console.log("===========================================");
   };

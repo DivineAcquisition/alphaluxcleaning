@@ -242,7 +242,7 @@ export function PaymentForm({
         
         // If payment is already preloaded and ready, show form instantly
         if (paymentReady && preloadedClientSecret) {
-          console.log('✅ Using preloaded payment intent - instant form display');
+          console.log('Using preloaded payment intent - instant form display');
           setShowEmbeddedForm(true);
           toast.success("Secure deposit form is ready. Complete your 20% deposit to confirm your booking.");
           return;
@@ -256,14 +256,14 @@ export function PaymentForm({
           await createPaymentIntent();
           
           if (preloadedClientSecret) {
-            console.log('✅ Payment intent created - showing form');
+            console.log('Payment intent created - showing form');
             setShowEmbeddedForm(true);
             toast.success("Secure deposit form is ready. Complete your 20% deposit to confirm your booking.");
           } else {
             throw new Error('Failed to create payment intent');
           }
         } catch (fallbackError) {
-          console.error('❌ Fallback payment creation failed:', fallbackError);
+          console.error('Fallback payment creation failed:', fallbackError);
           throw fallbackError;
         }
       }
@@ -434,7 +434,7 @@ export function PaymentForm({
               fullAmount={getFinalPrice()}
               paymentType="deposit_20"
               onSuccess={async () => {
-                console.log('🎉 Payment successful, creating booking...');
+                console.log('Payment successful, creating booking...');
                 
                 const finalPrice = getFinalPrice();
                 
@@ -462,18 +462,18 @@ export function PaymentForm({
                     .single();
 
                   if (bookingError) {
-                    console.error('❌ Booking creation failed:', bookingError);
+                    console.error('Booking creation failed:', bookingError);
                     toast.error('Payment successful but booking creation failed. Please contact support.');
                     return;
                   }
 
-                  console.log('✅ Booking created successfully:', bookingData);
+                  console.log('Booking created successfully:', bookingData);
                   toast.success('Booking confirmed! Redirecting to confirmation page...');
                   
                   // Navigate to confirmation page
                   navigateToOrderConfirmation(navigate, bookingData.id);
                 } catch (error) {
-                  console.error('❌ Booking creation error:', error);
+                  console.error('Booking creation error:', error);
                   toast.error('Payment successful but booking creation failed. Please contact support.');
                 }
               }}

@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Users,
-  Send
+  Send,
+  Star
 } from 'lucide-react';
 
 interface Booking {
@@ -418,8 +419,8 @@ export function EnhancedJobAssignmentManager() {
                                     {getTierName(sub.tier_level)}
                                   </Badge>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  ⭐ {sub.rating} • {sub.city}, {sub.state}
+                                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Star className="h-3 w-3" /> {sub.rating} • {sub.city}, {sub.state}
                                 </div>
                               </div>
                             </div>

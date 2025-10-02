@@ -250,7 +250,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
       });
       setIsSuccess(true);
     } catch (error) {
-      console.error('❌ Scheduling error:', error);
+      console.error('Scheduling error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit scheduling request';
       setSubmitError(errorMessage);
       

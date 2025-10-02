@@ -33,7 +33,7 @@ const getServiceTheme = (serviceId: string) => {
         textClass: 'text-service-regular-foreground',
         iconBg: 'bg-service-regular-foreground/10',
         iconColor: 'text-service-regular-foreground',
-        emoji: '🏠'
+        icon: Home
       };
     case 'deep':
       return {
@@ -42,7 +42,7 @@ const getServiceTheme = (serviceId: string) => {
         textClass: 'text-service-deep-foreground',
         iconBg: 'bg-service-deep-foreground/10',
         iconColor: 'text-service-deep-foreground',
-        emoji: '⭐'
+        icon: Sparkles
       };
     case 'moveout':
       return {
@@ -51,7 +51,7 @@ const getServiceTheme = (serviceId: string) => {
         textClass: 'text-service-moveout-foreground',
         iconBg: 'bg-service-moveout-foreground/10',
         iconColor: 'text-service-moveout-foreground',
-        emoji: '📦'
+        icon: Zap
       };
     default:
       return {
@@ -60,7 +60,7 @@ const getServiceTheme = (serviceId: string) => {
         textClass: 'text-foreground',
         iconBg: 'bg-muted',
         iconColor: 'text-muted-foreground',
-        emoji: '🏠'
+        icon: Home
       };
   }
 };
@@ -107,12 +107,12 @@ export function EnhancedServiceTypeCards({
                 
                 <CardHeader className="pb-4">
                   <div className="flex flex-col items-center text-center gap-4">
-                    {/* Service Icon with Emoji */}
+                    {/* Service Icon */}
                     <div className={cn(
-                      "w-16 h-16 rounded-full flex items-center justify-center text-3xl transition-colors shadow-md",
+                      "w-16 h-16 rounded-full flex items-center justify-center transition-colors shadow-md",
                       isSelected ? theme.iconBg : "bg-muted"
                     )}>
-                      {theme.emoji}
+                      <theme.icon className={cn("w-8 h-8", isSelected ? theme.iconColor : "text-muted-foreground")} />
                     </div>
                     
                     <div>

@@ -87,7 +87,7 @@ export function EnhancedSchedulingStep({
     const today = new Date();
     const startDate = addDays(today, 5); // Start 5 days from now
     
-    console.log('🗓️ Date Debug Info:', {
+    console.log('Date Debug Info:', {
       today: format(today, 'yyyy-MM-dd'),
       startDate: format(startDate, 'yyyy-MM-dd'),
       selectedDate: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null

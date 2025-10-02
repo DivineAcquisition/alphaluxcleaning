@@ -54,12 +54,12 @@ export function BookingFlowDebugger() {
       if (response.error) {
         toast.error(`Test failed: ${response.error.message}`);
       } else if (response.data?.clientSecret) {
-        toast.success('✅ Payment intent created successfully!');
+        toast.success('Payment intent created successfully!');
       } else {
-        toast.error('❌ No client secret received');
+        toast.error('No client secret received');
       }
     } catch (error) {
-      console.error('❌ Test error:', error);
+      console.error('Test error:', error);
       setResult({
         success: false,
         error: error.message || 'Unknown error',
@@ -119,7 +119,7 @@ export function BookingFlowDebugger() {
           <div className="mt-4 p-4 border rounded-lg">
             <h4 className="font-semibold mb-2">Test Result:</h4>
             <div className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
-              <strong>Status:</strong> {result.success ? '✅ Success' : '❌ Failed'}
+              <strong>Status:</strong> {result.success ? 'Success' : 'Failed'}
             </div>
             <div className="text-sm text-gray-600 mt-2">
               <strong>Timestamp:</strong> {result.timestamp}

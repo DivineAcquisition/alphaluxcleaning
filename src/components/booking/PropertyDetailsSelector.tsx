@@ -17,18 +17,18 @@ interface PropertyDetailsSelectorProps {
 }
 
 const flooringOptions = [
-  { id: 'hardwood', name: 'Hardwood', icon: '🪵' },
-  { id: 'carpet', name: 'Carpet', icon: '🪣' },
-  { id: 'tile', name: 'Tile', icon: '🏺' },
-  { id: 'laminate', name: 'Laminate', icon: '📋' },
-  { id: 'mixed', name: 'Mixed', icon: '🔄' }
+  { id: 'hardwood', name: 'Hardwood' },
+  { id: 'carpet', name: 'Carpet' },
+  { id: 'tile', name: 'Tile' },
+  { id: 'laminate', name: 'Laminate' },
+  { id: 'mixed', name: 'Mixed' }
 ];
 
 const dwellingOptions = [
-  { id: 'house', name: 'House', icon: '🏠' },
-  { id: 'apartment', name: 'Apartment', icon: '🏢' },
-  { id: 'condo', name: 'Condo', icon: '🏛️' },
-  { id: 'townhouse', name: 'Townhouse', icon: '🏘️' }
+  { id: 'house', name: 'House' },
+  { id: 'apartment', name: 'Apartment' },
+  { id: 'condo', name: 'Condo' },
+  { id: 'townhouse', name: 'Townhouse' }
 ];
 
 interface CountSelectorProps {
@@ -141,7 +141,7 @@ export function PropertyDetailsSelector({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="w-5 h-5 text-primary">🏠</div>
+            <Home className="w-5 h-5 text-primary" />
             Flooring Type
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -174,7 +174,6 @@ export function PropertyDetailsSelector({
                   }}
                 >
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl mb-2">{option.icon}</div>
                     <div className={cn(
                       "font-medium text-sm",
                       isSelected ? "text-primary" : "text-foreground"
@@ -222,7 +221,6 @@ export function PropertyDetailsSelector({
                   onClick={() => onDwellingTypeChange(option.id)}
                 >
                   <CardContent className="p-4 text-center">
-                    <div className="text-3xl mb-2">{option.icon}</div>
                     <div className={cn(
                       "font-medium",
                       isSelected ? "text-primary" : "text-foreground"

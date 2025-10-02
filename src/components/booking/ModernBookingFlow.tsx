@@ -147,7 +147,7 @@ export function ModernBookingFlow({
   };
 
   const handleBookingComplete = (paymentData: any) => {
-    console.log('🎉 Booking completed:', paymentData);
+    console.log('Booking completed:', paymentData);
     onComplete?.();
     
     // Clear any stored data

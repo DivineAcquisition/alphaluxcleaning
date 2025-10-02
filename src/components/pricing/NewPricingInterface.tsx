@@ -183,7 +183,7 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
           {canProceed && (
             <Button
               onClick={handleProceedToBook}
-              className="w-full bg-[#ECC98B] hover:bg-[#ECC98B]/80 text-[#ECC98B]-foreground"
+              className="w-full"
               size="lg"
             >
               Proceed to Book

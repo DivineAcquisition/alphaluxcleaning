@@ -198,10 +198,10 @@ export const BulkZapierSender = () => {
           response: { success: true, payload_type: 'comprehensive' }
         });
         
-        console.log(`✅ Sent comprehensive booking ${booking.booking_id} to Zapier`);
+        console.log('Sent comprehensive booking', booking.booking_id, 'to Zapier');
         
       } catch (error: any) {
-        console.error(`❌ Failed to send booking ${booking.booking_id}:`, error);
+        console.error('Failed to send booking', booking.booking_id, ':', error);
         sendResults.push({
           booking_id: booking.booking_id,
           customer_name: booking.customer_name,
