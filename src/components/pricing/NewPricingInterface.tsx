@@ -172,16 +172,8 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
         {/* Sticky Pricing Summary */}
         <div className="lg:sticky lg:top-8 lg:self-start">
           <PricingSummaryCard
-            result={pricingResult}
-            homeSizeId={homeSizeId}
             serviceTypeId={serviceTypeId}
             frequencyId={frequencyId}
-            stateCode={stateCode}
-            squareFootage={homeSizeId ? (() => {
-              const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
-              return homeSize ? (homeSize.minSqft + homeSize.maxSqft) / 2 : undefined;
-            })() : undefined}
-            useStatePricing={['TX', 'CA', 'NY'].includes(stateCode)}
             className="mb-4"
           />
           

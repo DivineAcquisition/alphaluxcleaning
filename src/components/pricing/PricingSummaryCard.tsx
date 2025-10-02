@@ -1,80 +1,28 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, DollarSign, Sparkles } from 'lucide-react';
+import { Calculator, DollarSign } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
-import { PricingResult, HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculatePricing, DISCOUNT_RATE, StateCode } from '@/lib/state-pricing-system';
+import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
+import { calculateFixedPricing, SERVICE_TYPE_NAMES, FREQUENCY_NAMES } from '@/lib/fixed-pricing-system';
 import { cn } from '@/lib/utils';
 
 interface PricingSummaryCardProps {
-  result: PricingResult | null;
-  homeSizeId?: string;
+  result?: any;
   serviceTypeId?: string;
   frequencyId?: string;
-  stateCode?: string;
-  squareFootage?: number;
-  useStatePricing?: boolean;
   className?: string;
 }
 
 export function PricingSummaryCard({ 
-  result, 
-  homeSizeId, 
   serviceTypeId, 
   frequencyId, 
-  stateCode,
-  squareFootage,
-  useStatePricing = true,
   className 
 }: PricingSummaryCardProps) {
-  const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
   const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
-  const state = DEFAULT_PRICING_CONFIG.states.find(s => s.code === stateCode);
 
-  // Use state-level pricing if enabled and we have square footage and state
-  const statePricing = useStatePricing && squareFootage && serviceTypeId && frequencyId && stateCode ? 
-    calculatePricing(
-      stateCode as StateCode,
-      squareFootage,
-      serviceTypeId === 'standard' ? 'regular' : serviceTypeId === 'deep' ? 'deep' : 'move_in_out',
-      frequencyId === 'one_time' ? 'one_time' : 
-      frequencyId === 'weekly' ? 'weekly' : 
-      frequencyId === 'bi_weekly' ? 'bi_weekly' : 'monthly'
-    ) : null;
-
-  if (statePricing && statePricing.tier.id === '5000_plus') {
-    return (
-      <Card className={cn("shadow-lg border-primary/20", className)}>
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-primary" />
-            Custom Estimate Required
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="text-center py-8 space-y-4">
-            <div className="text-6xl font-bold text-primary">
-              Call
-            </div>
-            <div className="space-y-2">
-              <p className="text-lg font-medium">Large Home Estimate</p>
-              <p className="text-muted-foreground">
-                Homes over 5,000 sq ft require personalized pricing
-              </p>
-            </div>
-            <Badge className="bg-primary text-primary-foreground hover:bg-primary/80">
-              Contact Required
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!result || !homeSize || !serviceType || !frequency || !state) {
+  if (!serviceTypeId || !frequencyId) {
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
         <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -97,109 +45,11 @@ export function PricingSummaryCard({
     );
   }
 
-  // State pricing display
-  if (statePricing) {
-    const isRecurring = statePricing.frequency !== 'one_time';
-    const serviceTypeName = statePricing.serviceType === 'regular' ? 'Regular Clean' :
-                           statePricing.serviceType === 'deep' ? 'Deep Clean' : 'Move-In/Out Clean';
-    const frequencyName = statePricing.frequency === 'one_time' ? 'One-Time' :
-                         statePricing.frequency === 'weekly' ? 'Weekly' :
-                         statePricing.frequency === 'bi_weekly' ? 'Bi-Weekly' : 'Monthly';
-
-    return (
-      <Card className={cn("shadow-lg border-primary/20", className)}>
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-primary" />
-            Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6 space-y-3">
-
-          {/* Final Price */}
-          <div className="flex justify-between items-center pt-2">
-            <span className="text-lg font-bold text-foreground">
-              {isRecurring ? 'Monthly' : 'Service'} Total
-            </span>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-primary">
-                ${statePricing.discountedPrice.toFixed(0)}
-              </p>
-            </div>
-          </div>
-
-          {/* Per-clean breakdown for recurring */}
-          {isRecurring && statePricing.recurringDetails && (
-            <div className="text-center pt-2">
-              <p className="text-sm text-muted-foreground">
-                ${statePricing.recurringDetails.perClean.toFixed(0)} per clean × {statePricing.recurringDetails.cleansPerMonth} clean{statePricing.recurringDetails.cleansPerMonth > 1 ? 's' : ''}/month
-              </p>
-            </div>
-          )}
-
-          {/* Service details */}
-          <Separator className="my-4" />
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">{serviceTypeName} • {frequencyName}</p>
-            <p className="text-xs text-muted-foreground">{statePricing.tier.label} • {statePricing.state.displayName}</p>
-          </div>
-
-          {/* Payment Note */}
-          <div className="pt-4 border-t border-border/50">
-            <div className="text-center space-y-2">
-              <p className="text-sm font-medium text-success">Pay After Service</p>
-              <p className="text-xs text-muted-foreground">
-                No payment required now. You'll be charged only after completion.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (homeSize.requiresEstimate) {
-    return (
-      <Card className={cn("shadow-lg border-primary/20", className)}>
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-primary" />
-            Custom Estimate Required
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="text-center py-8 space-y-4">
-            <div className="text-6xl font-bold text-primary">
-              Call
-            </div>
-            <div className="space-y-2">
-              <p className="text-lg font-medium">Large Home Estimate</p>
-              <p className="text-muted-foreground">
-                Homes over 5,000 sq ft require personalized pricing
-              </p>
-            </div>
-            <Badge className="bg-primary text-primary-foreground hover:bg-primary/80">
-              Contact Required
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Calculate pricing breakdown
-  const basePrice = result.breakdown.baseCalculation;
-  const subtotal = basePrice; // Will include add-ons when implemented
-  
-  // Calculate per-clean breakdown for recurring services
-  const isRecurring = frequency.id !== 'one-time';
-  let cleansPerMonth = 0;
-  if (isRecurring) {
-    if (frequency.id === 'weekly') cleansPerMonth = 4;
-    else if (frequency.id === 'bi-weekly') cleansPerMonth = 2;
-    else if (frequency.id === 'monthly') cleansPerMonth = 1;
-  }
-  const perCleanPrice = isRecurring && cleansPerMonth > 0 ? result.finalPrice / cleansPerMonth : 0;
+  // Calculate fixed pricing
+  const pricing = calculateFixedPricing(serviceTypeId, frequencyId);
+  const isRecurring = pricing.isRecurring;
+  const serviceTypeName = SERVICE_TYPE_NAMES[pricing.serviceType as keyof typeof SERVICE_TYPE_NAMES];
+  const frequencyName = FREQUENCY_NAMES[pricing.frequency as keyof typeof FREQUENCY_NAMES];
 
   return (
     <Card className={cn("shadow-lg border-primary/20", className)}>
@@ -210,33 +60,24 @@ export function PricingSummaryCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 space-y-3">
-        {/* Base Price */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Base Price ({homeSize.label})</span>
-          <span className="font-medium text-foreground">{formatPrice(basePrice)}</span>
-        </div>
 
-        {/* Add-ons section - placeholder for future implementation */}
-        {/* When add-ons are added, they'll appear here as individual line items */}
-
-        {/* Total */}
-        <Separator className="border-primary/20" />
+        {/* Final Price */}
         <div className="flex justify-between items-center pt-2">
           <span className="text-lg font-bold text-foreground">
             {isRecurring ? 'Monthly' : 'Service'} Total
           </span>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">
-              {formatPrice(result.finalPrice)}
+              {formatPrice(pricing.finalPrice)}
             </p>
           </div>
         </div>
 
         {/* Per-clean breakdown for recurring */}
-        {isRecurring && cleansPerMonth > 0 && (
+        {isRecurring && pricing.cleansPerMonth && (
           <div className="text-center pt-2">
             <p className="text-sm text-muted-foreground">
-              {formatPrice(perCleanPrice)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
+              {formatPrice(pricing.perCleanPrice || 0)} per clean × {pricing.cleansPerMonth} clean{pricing.cleansPerMonth > 1 ? 's' : ''}/month
             </p>
           </div>
         )}
@@ -244,8 +85,9 @@ export function PricingSummaryCard({
         {/* Service details */}
         <Separator className="my-4" />
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">{serviceType.name}</p>
-          <p className="text-xs text-muted-foreground">{frequency.name} • {state.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {serviceType?.name || serviceTypeName} • {frequency?.name || frequencyName}
+          </p>
         </div>
 
         {/* Payment Note */}

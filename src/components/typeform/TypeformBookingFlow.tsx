@@ -11,7 +11,7 @@ import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
 import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { calculateNewPricing } from '@/lib/new-pricing-system';
+import { calculateFixedPricing } from '@/lib/fixed-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
 import { Input } from '@/components/ui/input';
@@ -80,24 +80,18 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
   }, [bookingData.email]);
 
   useEffect(() => {
-    if (bookingData.homeSizeId && bookingData.serviceTypeId && bookingData.frequencyId && bookingData.stateCode) {
+    if (bookingData.serviceTypeId && bookingData.frequencyId) {
       try {
-        const result = calculateNewPricing(
-          bookingData.homeSizeId, 
+        const result = calculateFixedPricing(
           bookingData.serviceTypeId, 
-          bookingData.frequencyId, 
-          bookingData.stateCode
+          bookingData.frequencyId
         );
-        const discountedResult = {
-          ...result,
-          finalPrice: applyGlobalDiscount(result.finalPrice)
-        };
-        setPricing(discountedResult);
+        setPricing(result as any); // Type compatibility with existing PricingResult
       } catch (error) {
         console.error('Pricing calculation error:', error);
       }
     }
-  }, [bookingData.homeSizeId, bookingData.serviceTypeId, bookingData.frequencyId, bookingData.stateCode]);
+  }, [bookingData.serviceTypeId, bookingData.frequencyId]);
 
   const handleNext = () => {
     // Validation for each step
@@ -628,16 +622,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       {/* Floating Pricing Summary - Show from Step 4 onwards */}
       {currentStep >= 4 && (
         <FloatingPricingSummary
-          result={pricing}
-          homeSizeId={bookingData.homeSizeId}
           serviceTypeId={bookingData.serviceTypeId}
           frequencyId={bookingData.frequencyId}
-          stateCode={bookingData.stateCode}
-          squareFootage={(() => {
-            const homeSize = HOME_SIZE_RANGES.find(h => h.id === bookingData.homeSizeId);
-            return homeSize ? (homeSize.minSqft + homeSize.maxSqft) / 2 : undefined;
-          })()}
-          useStatePricing={['TX', 'CA', 'NY'].includes(bookingData.stateCode || '')}
         />
       )}
     </div>
