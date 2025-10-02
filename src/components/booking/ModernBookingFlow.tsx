@@ -5,9 +5,13 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { NewPricingInterface } from '../pricing/NewPricingInterface';
 import { BookingDetailsPage } from './BookingDetailsPage';
-// BookingCheckoutPage removed - keeping simplified booking flow
 import { BookingSummaryCard } from './BookingSummaryCard';
 import { ProgressIndicator } from './ProgressIndicator';
+import { PromotionalBanner } from './PromotionalBanner';
+import { DeepCleanPromptModal } from './DeepCleanPromptModal';
+import { RewardSummaryCard } from './RewardSummaryCard';
+import { supabase } from '@/integrations/supabase/client';
+import { addDays } from 'date-fns';
 
 // Define the structure for address
 interface Address {
@@ -58,6 +62,14 @@ export function ModernBookingFlow({
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<Partial<BookingData>>(initialData);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Promotional state
+  const [showDeepCleanModal, setShowDeepCleanModal] = useState(false);
+  const [promoChoice, setPromoChoice] = useState<'FIRST20' | 'BUNDLE' | null>(null);
+  const [rewardCode, setRewardCode] = useState<string | null>(null);
+  const [rewardExpiry, setRewardExpiry] = useState<Date | null>(null);
+  const [deepCleanAnswer, setDeepCleanAnswer] = useState<string | null>(null);
+  const [commitmentMonths, setCommitmentMonths] = useState<number>(0);
 
   useEffect(() => {
     onStepChange?.(currentStep);
@@ -79,6 +91,59 @@ export function ModernBookingFlow({
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  // Check if frequency qualifies for deep clean prompt
+  useEffect(() => {
+    if (bookingData.frequency && ['weekly', 'bi_weekly', 'biweekly'].includes(bookingData.frequency.toLowerCase())) {
+      // Only show modal if we haven't made a choice yet
+      if (!promoChoice && !deepCleanAnswer) {
+        setShowDeepCleanModal(true);
+      }
+    }
+  }, [bookingData.frequency, promoChoice, deepCleanAnswer]);
+
+  const handleSelectBundle = async () => {
+    setShowDeepCleanModal(false);
+    setPromoChoice('BUNDLE');
+    setCommitmentMonths(2);
+    
+    // Generate reward code immediately
+    const code = `ALC-DC30-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const expiry = addDays(new Date(), 90);
+    
+    setRewardCode(code);
+    setRewardExpiry(expiry);
+    
+    toast.success('Bundle selected!', {
+      description: `Your 30% Deep Clean reward code: ${code}`
+    });
+
+    // Track analytics
+    try {
+      await supabase.functions.invoke('track-promo-analytics', {
+        body: {
+          eventType: 'REWARD_ISSUED',
+          bookingId: bookingData.customerEmail,
+          data: {
+            code,
+            frequency: bookingData.frequency,
+            commitment_months: 2
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Analytics tracking failed:', error);
+    }
+  };
+
+  const handleSelect20Percent = () => {
+    setShowDeepCleanModal(false);
+    setPromoChoice('FIRST20');
+    
+    toast.success('20% discount applied!', {
+      description: 'Your first clean discount has been activated'
+    });
   };
 
   const handleBookingComplete = (paymentData: any) => {
@@ -120,6 +185,9 @@ export function ModernBookingFlow({
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
+          {/* Promotional Banner */}
+          {currentStep === 1 && <PromotionalBanner />}
+
           {/* Progress Indicator */}
           <div className="mb-8">
             <ProgressIndicator 
@@ -131,6 +199,15 @@ export function ModernBookingFlow({
               ]} 
             />
           </div>
+          
+          {/* Deep Clean Prompt Modal */}
+          <DeepCleanPromptModal
+            open={showDeepCleanModal}
+            onClose={() => setShowDeepCleanModal(false)}
+            onSelectBundle={handleSelectBundle}
+            onSelect20Percent={handleSelect20Percent}
+            frequency={bookingData.frequency || 'weekly'}
+          />
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
@@ -165,11 +242,36 @@ export function ModernBookingFlow({
                   )}
 
                   {currentStep === 3 && (
-                    <div className="max-w-4xl mx-auto p-6">
+                    <div className="max-w-4xl mx-auto p-6 space-y-6">
+                      {/* Reward Summary - Show if bundle was selected */}
+                      {promoChoice === 'BUNDLE' && rewardCode && rewardExpiry && (
+                        <RewardSummaryCard 
+                          rewardCode={rewardCode} 
+                          expiryDate={rewardExpiry}
+                        />
+                      )}
+
+                      {/* 20% Discount Summary */}
+                      {promoChoice === 'FIRST20' && (
+                        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+                          <CardContent className="pt-6">
+                            <div className="text-center space-y-2">
+                              <h3 className="text-lg font-bold">20% Discount Applied</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Your first clean discount has been applied to this booking
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
                       <div className="text-center">
                         <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
                         <p className="text-muted-foreground mb-6">
-                          Your booking details have been saved. You'll receive payment information via email.
+                          {promoChoice === 'BUNDLE' 
+                            ? 'Your reward code has been saved. Continue to finalize your booking.'
+                            : 'Your booking details have been saved. Continue to complete your booking.'
+                          }
                         </p>
                         <div className="flex gap-4 justify-center">
                           <Button 

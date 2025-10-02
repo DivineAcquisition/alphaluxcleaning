@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
-import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink } from "lucide-react";
+import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink, Sparkles } from "lucide-react";
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -486,18 +487,63 @@ Questions? Call (857) 754-4557
       <Navigation />
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Hero Section */}
-        <div className="text-center mb-12 confirmation-hero" data-testid="booking-confirmed">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-6">
-            <CheckCircle className="h-8 w-8 text-primary-foreground" />
+          {/* Hero Section */}
+          <div className="text-center mb-12 confirmation-hero" data-testid="booking-confirmed">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-6">
+              <CheckCircle className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Booking Confirmed
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Thank you for choosing Bay Area Cleaning Pros! Your cleaning service has been successfully booked.
+            </p>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Booking Confirmed
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Thank you for choosing Bay Area Cleaning Pros! Your cleaning service has been successfully booked.
-          </p>
-        </div>
+
+          {/* Reward Code Display - Show if booking has reward */}
+          {orderDetails.reward_code_issued && (
+            <div className="mb-8">
+              <Card className="border-[#ECC98B]/30 bg-gradient-to-br from-[#ECC98B]/10 to-transparent shadow-lg max-w-2xl mx-auto">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-[#ECC98B]" />
+                    <CardTitle>🎉 Reward Unlocked!</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center space-y-3">
+                    <p className="text-muted-foreground">
+                      Your 30% OFF Deep Clean Reward Code
+                    </p>
+                    <div className="bg-background border-2 border-[#ECC98B]/50 rounded-lg px-6 py-4">
+                      <p className="text-2xl font-mono font-bold tracking-wider text-[#ECC98B]">
+                        {orderDetails.reward_code_issued}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Save this code or check your email. Valid for 90 days.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(orderDetails.reward_code_issued);
+                          toast.success('Reward code copied!');
+                        } catch {
+                          toast.error('Failed to copy code');
+                        }
+                      }}
+                      className="border-[#ECC98B]/50"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Code
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
         {/* Card Grid Layout */}
         <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3 mb-12">

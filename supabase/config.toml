@@ -122,14 +122,21 @@ verify_jwt = false
 [functions.delete-test-data]
 verify_jwt = false
 
-# Make dev-ensure-admin public for dev setup
 [functions.dev-ensure-admin]
 verify_jwt = false
 
-# Admin bootstrap for development setup
 [functions.admin-bootstrap]
 verify_jwt = false
 
-# Edge health check
 [functions.edge-health]
+verify_jwt = false
+
+# New promotional system edge functions
+[functions.create-stripe-customer]
+verify_jwt = false
+
+[functions.send-reward-email]
+verify_jwt = false
+
+[functions.track-promo-analytics]
 verify_jwt = false

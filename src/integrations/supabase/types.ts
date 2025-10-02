@@ -180,11 +180,14 @@ export type Database = {
           at_risk: boolean | null
           attribution_method: string | null
           balance_due: number | null
+          commitment_months: number | null
           conversion_status:
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at: string
           customer_id: string
+          deep_clean_last_answer: string | null
+          deep_clean_recommendation_shown: boolean | null
           deposit_amount: number | null
           email_bounced_at: string | null
           est_price: number
@@ -203,6 +206,7 @@ export type Database = {
           paid_at: string | null
           payment_option_id: string | null
           pricing_breakdown: Json | null
+          promo_applied: string | null
           promo_code: string | null
           promo_discount_cents: number | null
           property_details: Json | null
@@ -210,6 +214,7 @@ export type Database = {
           recurring_active: boolean | null
           referrer_code: string | null
           referrer_customer_id: string | null
+          reward_code_issued: string | null
           service_date: string | null
           service_time_window: string | null
           service_type: string
@@ -232,11 +237,14 @@ export type Database = {
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          commitment_months?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at?: string
           customer_id: string
+          deep_clean_last_answer?: string | null
+          deep_clean_recommendation_shown?: boolean | null
           deposit_amount?: number | null
           email_bounced_at?: string | null
           est_price: number
@@ -255,6 +263,7 @@ export type Database = {
           paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
+          promo_applied?: string | null
           promo_code?: string | null
           promo_discount_cents?: number | null
           property_details?: Json | null
@@ -262,6 +271,7 @@ export type Database = {
           recurring_active?: boolean | null
           referrer_code?: string | null
           referrer_customer_id?: string | null
+          reward_code_issued?: string | null
           service_date?: string | null
           service_time_window?: string | null
           service_type: string
@@ -284,11 +294,14 @@ export type Database = {
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          commitment_months?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at?: string
           customer_id?: string
+          deep_clean_last_answer?: string | null
+          deep_clean_recommendation_shown?: boolean | null
           deposit_amount?: number | null
           email_bounced_at?: string | null
           est_price?: number
@@ -307,6 +320,7 @@ export type Database = {
           paid_at?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
+          promo_applied?: string | null
           promo_code?: string | null
           promo_discount_cents?: number | null
           property_details?: Json | null
@@ -314,6 +328,7 @@ export type Database = {
           recurring_active?: boolean | null
           referrer_code?: string | null
           referrer_customer_id?: string | null
+          reward_code_issued?: string | null
           service_date?: string | null
           service_time_window?: string | null
           service_type?: string
@@ -390,15 +405,21 @@ export type Database = {
           city: string | null
           company_id: string | null
           created_at: string
+          deep_clean_reward_code: string | null
+          deep_clean_reward_expires: string | null
           email: string
+          first_clean_discount_used: boolean | null
           first_name: string | null
           id: string
+          last_deep_clean_answer: string | null
           last_name: string | null
           lat: number | null
           lng: number | null
+          metadata: Json | null
           name: string
           phone: string
           postal_code: string | null
+          recurrence_plan: string | null
           referral_code: string | null
           referral_link: string | null
           state: string
@@ -412,15 +433,21 @@ export type Database = {
           city?: string | null
           company_id?: string | null
           created_at?: string
+          deep_clean_reward_code?: string | null
+          deep_clean_reward_expires?: string | null
           email: string
+          first_clean_discount_used?: boolean | null
           first_name?: string | null
           id?: string
+          last_deep_clean_answer?: string | null
           last_name?: string | null
           lat?: number | null
           lng?: number | null
+          metadata?: Json | null
           name: string
           phone: string
           postal_code?: string | null
+          recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
           state: string
@@ -434,15 +461,21 @@ export type Database = {
           city?: string | null
           company_id?: string | null
           created_at?: string
+          deep_clean_reward_code?: string | null
+          deep_clean_reward_expires?: string | null
           email?: string
+          first_clean_discount_used?: boolean | null
           first_name?: string | null
           id?: string
+          last_deep_clean_answer?: string | null
           last_name?: string | null
           lat?: number | null
           lng?: number | null
+          metadata?: Json | null
           name?: string
           phone?: string
           postal_code?: string | null
+          recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
           state?: string
@@ -965,10 +998,13 @@ export type Database = {
           currency: string
           expires_at: string | null
           id: string
+          issued_to_customer_id: string | null
           max_redemptions: number
           metadata: Json | null
           min_subtotal_cents: number
           redemptions: number
+          reward_type: string | null
+          service_type_restriction: string | null
           starts_at: string | null
           type: string
           updated_at: string
@@ -982,10 +1018,13 @@ export type Database = {
           currency?: string
           expires_at?: string | null
           id?: string
+          issued_to_customer_id?: string | null
           max_redemptions?: number
           metadata?: Json | null
           min_subtotal_cents?: number
           redemptions?: number
+          reward_type?: string | null
+          service_type_restriction?: string | null
           starts_at?: string | null
           type: string
           updated_at?: string
@@ -999,15 +1038,26 @@ export type Database = {
           currency?: string
           expires_at?: string | null
           id?: string
+          issued_to_customer_id?: string | null
           max_redemptions?: number
           metadata?: Json | null
           min_subtotal_cents?: number
           redemptions?: number
+          reward_type?: string | null
+          service_type_restriction?: string | null
           starts_at?: string | null
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_issued_to_customer_id_fkey"
+            columns: ["issued_to_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promo_redemptions: {
         Row: {
