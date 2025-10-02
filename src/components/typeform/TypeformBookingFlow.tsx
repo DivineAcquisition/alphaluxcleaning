@@ -150,12 +150,20 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
 
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      // Scroll to top smoothly when advancing to next step
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top smoothly when going back
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -368,7 +376,7 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {DEFAULT_PRICING_CONFIG.serviceTypes.map((service) => {
               const descriptions: Record<string, string> = {
-                standard: 'Regular maintenance cleaning',
+                regular: 'Regular maintenance cleaning',
                 deep: 'Thorough deep cleaning',
                 move_in_out: 'Move-in or move-out cleaning'
               };

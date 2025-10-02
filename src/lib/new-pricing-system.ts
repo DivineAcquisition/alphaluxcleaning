@@ -139,7 +139,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
     { code: 'TX', name: 'Texas', multiplier: 1.43 }
   ],
   serviceTypes: [
-    { id: 'standard', name: 'Standard Cleaning', multiplier: 1.0 },
+    { id: 'regular', name: 'Regular Clean', multiplier: 1.0 },
     { id: 'deep', name: 'Deep Cleaning', multiplier: 1.4 },
     { id: 'move_in_out', name: 'Move-In/Out Cleaning', multiplier: 1.5 }
   ],

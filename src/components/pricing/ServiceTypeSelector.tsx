@@ -12,7 +12,7 @@ interface ServiceTypeSelectorProps {
 }
 
 const serviceIcons = {
-  standard: Home,
+  regular: Home,
   deep: Sparkles,
   move_in_out: ArrowRightLeft
 };
