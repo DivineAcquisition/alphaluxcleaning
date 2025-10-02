@@ -97,8 +97,6 @@ const pricingMatrix = {
 // Service types based on frequency and type
 const serviceTypes = [{
   id: 'regular',
-const serviceTypes = [{
-  id: 'regular',
   name: 'Regular Clean',
   description: 'Weekly maintenance',
   basePrice: 0,
@@ -244,6 +242,7 @@ const addOnServices = [{
   price: 30,
   description: 'Complete garage cleaning'
 }];
+
 interface BookingData {
   // Step 1: Service Area & Type
   zipCode: string;

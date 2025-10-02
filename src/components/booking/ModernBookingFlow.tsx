@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { GradientButton } from '@/components/ui/gradient-button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { NewPricingInterface } from '../pricing/NewPricingInterface';
 import { BookingDetailsPage } from './BookingDetailsPage';
-// BookingCheckoutPage removed - keeping simplified booking flow
 import { BookingSummaryCard } from './BookingSummaryCard';
-import { ProgressIndicator } from './ProgressIndicator';
+import { InteractiveTimeline } from './InteractiveTimeline';
+import { FloatingPanel } from './FloatingPanel';
 
 // Define the structure for address
 interface Address {
@@ -119,119 +116,122 @@ export function ModernBookingFlow({
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-teal-50 to-purple-50 dark:from-blue-950 dark:via-teal-950 dark:to-purple-950 animate-gradient" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(20,184,166,0.1),transparent_50%)]" />
-      
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Progress Indicator */}
-          <div className="mb-8 animate-fade-in">
-            <ProgressIndicator 
-              currentStep={currentStep} 
-              steps={[
-                { id: 1, title: 'Service Selection', description: 'Choose your cleaning service' },
-                { id: 2, title: 'Details & Scheduling', description: 'Schedule and location info' },
-                { id: 3, title: 'Payment', description: 'Complete your booking' }
-              ]} 
-            />
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
+        {/* Interactive Timeline Progress */}
+        <div className="mb-8">
+          <InteractiveTimeline 
+            steps={[
+              { id: 1, title: 'Service Selection', description: 'Choose your cleaning service' },
+              { id: 2, title: 'Details & Scheduling', description: 'Schedule and location info' },
+              { id: 3, title: 'Payment', description: 'Complete your booking' }
+            ]}
+            currentStep={currentStep}
+          />
+        </div>
+        
+        {/* Main Content Area with Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Left: Main booking content (takes 2 columns on large screens) */}
+          <div className="lg:col-span-2 space-y-6">
+            <FloatingPanel 
+              variant="elevated"
+              className="animate-fade-in"
+            >
+              {currentStep === 1 && (
+                <NewPricingInterface
+                  onBookingSelect={(data) => {
+                    updateData({
+                      serviceZipCode: getZipCodeFromState(data.stateCode),
+                      homeSize: data.homeSizeId,
+                      frequency: data.frequencyId,
+                      basePrice: data.pricing.finalPrice,
+                      totalPrice: data.pricing.finalPrice,
+                      addOns: [],
+                      addOnPrices: {},
+                      frequencyDiscount: data.pricing.breakdown.frequencyDiscount || 0
+                    });
+                    handleNext();
+                  }}
+                />
+              )}
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 animate-scale-in">
-              <GlassCard className="shadow-2xl">
-                <CardContent className="p-8">
-                  {currentStep === 1 && (
-                    <NewPricingInterface
-                      onBookingSelect={(data) => {
-                        updateData({
-                          serviceZipCode: getZipCodeFromState(data.stateCode),
-                          homeSize: data.homeSizeId,
-                          frequency: data.frequencyId,
-                          basePrice: data.pricing.finalPrice,
-                          totalPrice: data.pricing.finalPrice,
-                          addOns: [],
-                          addOnPrices: {},
-                          frequencyDiscount: data.pricing.breakdown.frequencyDiscount || 0
-                        });
-                        handleNext();
-                      }}
-                    />
-                  )}
+              {currentStep === 2 && (
+                <BookingDetailsPage
+                  bookingData={bookingData}
+                  updateBookingData={updateData}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                />
+              )}
 
-                  {currentStep === 2 && (
-                    <BookingDetailsPage
-                      bookingData={bookingData}
-                      updateBookingData={updateData}
-                      onNext={handleNext}
-                      onBack={handleBack}
-                    />
-                  )}
-
-                  {currentStep === 3 && (
-                    <div className="max-w-4xl mx-auto p-6">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold mb-4">Complete Your Booking</h2>
-                        <p className="text-muted-foreground mb-6">
-                          Your booking details have been saved. You'll receive payment information via email.
-                        </p>
-                        <div className="flex gap-4 justify-center">
-                          <Button 
-                            variant="outline" 
-                            onClick={handleBack}
-                          >
-                            Back
-                          </Button>
-                          <Button 
-                            onClick={() => window.location.href = '/booking-confirmation'}
-                            className="w-full max-w-sm"
-                          >
-                            Confirm Booking
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Navigation Buttons - only show for steps 1 & 2 */}
-                  {currentStep < 3 && (
-                    <div className="flex justify-between mt-8 pt-6 border-t">
-                      <Button
-                        variant="outline"
-                        onClick={handleBack}
-                        disabled={currentStep === 1}
-                        className="flex items-center gap-2 rounded-xl"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                      </Button>
-
-                      <GradientButton
-                        onClick={handleNext}
-                        disabled={!canProceed() || isLoading}
-                        className="flex items-center gap-2"
-                      >
-                        {isLoading ? 'Processing...' : 'Continue'}
-                        <ArrowRight className="h-4 w-4" />
-                      </GradientButton>
-                    </div>
-                  )}
-                </CardContent>
-              </GlassCard>
-            </div>
-
-            {/* Sidebar with Summary - only show after step 1 */}
-            {currentStep > 1 && (
-              <div className="lg:col-span-1 animate-slide-in">
-                <div className="sticky top-8">
-                  <BookingSummaryCard bookingData={bookingData} />
+              {currentStep === 3 && (
+                <div className="text-center py-8">
+                  <h2 className="text-3xl font-bold mb-4">Complete Your Booking</h2>
+                  <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                    Your booking details have been saved. You'll receive payment information via email.
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleBack}
+                      size="lg"
+                    >
+                      ← Back
+                    </Button>
+                    <GradientButton 
+                      onClick={() => window.location.href = '/booking-confirmation'}
+                      size="lg"
+                    >
+                      Confirm Booking →
+                    </GradientButton>
+                  </div>
                 </div>
-              </div>
+              )}
+            </FloatingPanel>
+            
+            {/* Navigation - Bottom Action Bar Style */}
+            {currentStep < 3 && (
+              <FloatingPanel className="flex items-center justify-between gap-4">
+                {currentStep > 1 ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    className="px-6 h-12"
+                  >
+                    ← Back
+                  </Button>
+                ) : (
+                  <div />
+                )}
+                
+                <GradientButton
+                  onClick={handleNext}
+                  disabled={!canProceed() || isLoading}
+                  className="ml-auto px-8"
+                  size="lg"
+                >
+                  {isLoading ? 'Processing...' : 'Continue →'}
+                </GradientButton>
+              </FloatingPanel>
             )}
           </div>
+          
+          {/* Right: Sticky Summary Panel (visible from step 2) */}
+          {currentStep >= 2 && (
+            <div className="lg:col-span-1">
+              <FloatingPanel 
+                variant="sticky"
+                title="Booking Summary"
+                subtitle="Review your selections"
+                className="animate-fade-in"
+              >
+                <BookingSummaryCard 
+                  bookingData={bookingData}
+                />
+              </FloatingPanel>
+            </div>
+          )}
         </div>
       </div>
     </div>
