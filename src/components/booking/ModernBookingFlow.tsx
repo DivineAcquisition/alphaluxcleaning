@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
+import { GradientButton } from '@/components/ui/gradient-button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { NewPricingInterface } from '../pricing/NewPricingInterface';
@@ -117,11 +119,16 @@ export function ModernBookingFlow({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-teal-50 to-purple-50 dark:from-blue-950 dark:via-teal-950 dark:to-purple-950 animate-gradient" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(20,184,166,0.1),transparent_50%)]" />
+      
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Progress Indicator */}
-          <div className="mb-8">
+          <div className="mb-8 animate-fade-in">
             <ProgressIndicator 
               currentStep={currentStep} 
               steps={[
@@ -134,9 +141,9 @@ export function ModernBookingFlow({
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2">
-              <Card className="shadow-clean">
-                <CardContent className="p-6">
+            <div className="lg:col-span-2 animate-scale-in">
+              <GlassCard className="shadow-2xl">
+                <CardContent className="p-8">
                   {currentStep === 1 && (
                     <NewPricingInterface
                       onBookingSelect={(data) => {
@@ -196,29 +203,29 @@ export function ModernBookingFlow({
                         variant="outline"
                         onClick={handleBack}
                         disabled={currentStep === 1}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl"
                       >
                         <ArrowLeft className="h-4 w-4" />
                         Back
                       </Button>
 
-                      <Button
+                      <GradientButton
                         onClick={handleNext}
                         disabled={!canProceed() || isLoading}
                         className="flex items-center gap-2"
                       >
                         {isLoading ? 'Processing...' : 'Continue'}
                         <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      </GradientButton>
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </GlassCard>
             </div>
 
             {/* Sidebar with Summary - only show after step 1 */}
             {currentStep > 1 && (
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-1 animate-slide-in">
                 <div className="sticky top-8">
                   <BookingSummaryCard bookingData={bookingData} />
                 </div>
