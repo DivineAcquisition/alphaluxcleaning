@@ -189,7 +189,10 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
         {/* Regular Scheduling Section */}
         <div className="space-y-4">
           <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-            <h4 className="font-semibold text-blue-800 mb-2">📅 Regular Scheduling</h4>
+            <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Regular Scheduling
+            </h4>
             <p className="text-sm text-blue-600 mb-3">
               Book your cleaning service for any available date within business hours.
             </p>
@@ -221,7 +224,10 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
             <div className="flex-1">
-              <h4 className="font-semibold text-orange-800">⚡ Next Day Priority Booking</h4>
+              <h4 className="font-semibold text-orange-800 flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Next Day Priority Booking
+              </h4>
               <p className="text-sm text-orange-600 mt-1">
                 Get your home cleaned tomorrow! Perfect for urgent cleaning needs.
               </p>
@@ -284,8 +290,9 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
               </Select>
               
               {!schedulingData.nextDayBooking && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  ✓ Multiple customers can book the same time slot
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Multiple customers can book the same time slot
                 </p>
               )}
             </div>
@@ -294,8 +301,8 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
             {schedulingData.scheduledTime && schedulingData.scheduledDate && (
               <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg">
                 <h5 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  📅 Booking Summary
+                  <Calendar className="h-4 w-4" />
+                  Booking Summary
                 </h5>
                 <div className="space-y-1 text-sm text-green-700">
                   <p><strong>Date:</strong> {schedulingData.nextDayBooking ? `Tomorrow (${new Date(getTomorrowDate()).toLocaleDateString()})` : new Date(schedulingData.scheduledDate).toLocaleDateString()}</p>
@@ -305,7 +312,7 @@ export function BookingScheduler({ onSchedulingUpdate }: BookingSchedulerProps) 
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
                   <CheckCircle className="h-3 w-3" />
-                  <span>✓ Scheduling completed successfully</span>
+                  <span>Scheduling completed successfully</span>
                 </div>
               </div>
             )}

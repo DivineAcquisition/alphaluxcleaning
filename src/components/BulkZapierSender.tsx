@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { createWebhookPayload, emitWebhook, type BookingData } from '@/lib/webhook-utils';
+import { Send, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 export const BulkZapierSender = () => {
   const [loading, setLoading] = useState(false);
@@ -221,14 +222,17 @@ export const BulkZapierSender = () => {
 
     toast({
       title: "Comprehensive Bulk Send Complete",
-      description: `✅ ${successCount} comprehensive bookings sent, ❌ ${errorCount} failed`,
+      description: `${successCount} comprehensive bookings sent, ${errorCount} failed`,
     });
   };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>📤 Send Recent Bookings to Zapier</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Send className="h-5 w-5" />
+          Send Recent Bookings to Zapier
+        </CardTitle>
         <p className="text-muted-foreground">
           Send all {recentBookings.length} recent bookings to your Zapier webhook
         </p>
@@ -239,7 +243,17 @@ export const BulkZapierSender = () => {
           disabled={loading}
           className="w-full"
         >
-          {loading ? '⏳ Sending...' : `📤 Send ${recentBookings.length} Bookings to Zapier`}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" />
+              Send {recentBookings.length} Bookings to Zapier
+            </>
+          )}
         </Button>
 
         {results.length > 0 && (
@@ -255,7 +269,12 @@ export const BulkZapierSender = () => {
                 }`}
               >
                 <div className="font-medium">
-                  {result.status === 'success' ? '✅' : '❌'} {result.customer_name}
+                  {result.status === 'success' ? (
+                    <CheckCircle className="inline h-4 w-4 mr-1 text-green-600" />
+                  ) : (
+                    <XCircle className="inline h-4 w-4 mr-1 text-red-600" />
+                  )}
+                  {result.customer_name}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   ID: {result.booking_id}

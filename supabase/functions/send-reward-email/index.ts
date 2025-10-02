@@ -41,7 +41,7 @@ serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: 'AlphaLuxClean <no-reply@info.alphaluxclean.com>',
       to: [customerEmail],
-      subject: 'Your 30% Deep Clean Reward 🎁',
+      subject: 'Your 30% Deep Clean Reward',
       html: `
         <!DOCTYPE html>
         <html>
@@ -54,7 +54,7 @@ serve(async (req) => {
             
             <!-- Header -->
             <div style="text-align: center; padding: 30px 0; border-bottom: 3px solid #ECC98B;">
-              <h1 style="color: #ECC98B; margin: 0; font-size: 28px;">🎉 Reward Unlocked!</h1>
+              <h1 style="color: #ECC98B; margin: 0; font-size: 28px;">Reward Unlocked!</h1>
             </div>
 
             <!-- Main Content -->

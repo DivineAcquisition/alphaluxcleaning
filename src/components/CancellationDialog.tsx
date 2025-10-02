@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import { Percent, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -203,9 +204,12 @@ export function CancellationDialog({ open, onOpenChange, service, onSuccess }: C
             <div className="space-y-4">
               {/* 24-Hour Cancellation Policy Warning */}
               {isWithin24Hours && (
-                <Alert className="border-amber-200 bg-amber-50">
+                 <Alert className="border-amber-200 bg-amber-50">
                   <AlertDescription className="text-amber-800">
-                    <div className="font-semibold">⚠️ 24-Hour Cancellation Policy</div>
+                    <div className="font-semibold flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      24-Hour Cancellation Policy
+                    </div>
                     <div className="mt-1">
                       Your cleaning is scheduled within the next {hoursUntilService} hours. 
                       Cancelling now may result in a cancellation fee.

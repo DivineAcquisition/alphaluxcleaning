@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, Star, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, Star, Zap, CheckCircle2, ArrowRight, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -317,7 +317,10 @@ const VisualScheduler: React.FC<VisualSchedulerProps> = ({
           Select your preferred date and time for your {serviceType} cleaning service
         </CardDescription>
         <div className="text-xs text-primary-foreground/60 mt-1 flex items-center justify-center gap-3">
-          <span>✓ Instant confirmation</span>
+          <span className="flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Instant confirmation
+          </span>
           <span>• Service duration: {getServiceDuration(serviceType)}h</span>
           <span className="flex items-center gap-1">
             <div className={`w-2 h-2 rounded-full ${isCheckingAvailability ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`} />

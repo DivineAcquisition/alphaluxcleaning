@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X, LogIn } from "lucide-react";
+import { Building, Calendar, MapPin, Clock, Users, Phone, Mail, FileText, CheckCircle, X, LogIn, Gift } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
@@ -333,8 +333,9 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
         <CardDescription className="text-primary-foreground/80">
           Request a walkthrough and custom quote for your {serviceType} space
         </CardDescription>
-        <div className="mt-4 p-3 bg-white/10 rounded-lg">
-          <p className="text-sm font-medium">🎉 Special Offer: 15% off the first 3 months with 1-year commitment!</p>
+        <div className="mt-4 p-3 bg-white/10 rounded-lg flex items-center gap-2">
+          <Gift className="h-4 w-4" />
+          <p className="text-sm font-medium">Special Offer: 15% off the first 3 months with 1-year commitment!</p>
         </div>
       </CardHeader>
       <CardContent className="p-6">

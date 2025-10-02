@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Mail, Phone, Gift, Tag, AlertCircle } from "lucide-react";
+import { CreditCard, User, Mail, Phone, Gift, Tag, AlertCircle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
 import { toast } from "sonner";
@@ -339,18 +339,21 @@ export function PaymentForm({
                       now, then ${(getFinalPrice() * 0.8).toFixed(2)} after service
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      🔒 Secure your booking with a small deposit
+                      Secure your booking with a small deposit
                     </p>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Lower upfront payment
+                   <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Lower upfront payment
                     </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Remaining balance charged after service
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Remaining balance charged after service
                     </div>
-                    <div className="flex items-center justify-center text-green-600">
-                      ✓ Secure booking guarantee
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Secure booking guarantee
                     </div>
                   </div>
                 </div>
@@ -533,7 +536,10 @@ export function PaymentForm({
                 <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
                   {appliedReferral && (
                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
-                      <p className="text-green-800 font-medium text-sm text-left">✓ Referral code applied!</p>
+                       <p className="text-green-800 font-medium text-sm text-left flex items-center gap-2">
+                         <CheckCircle className="h-4 w-4" />
+                         Referral code applied!
+                       </p>
                       <p className="text-green-600 text-xs text-left">You get 10% off your service.</p>
                     </div>
                   )}
@@ -588,7 +594,10 @@ export function PaymentForm({
                 <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
                   {appliedDiscount && (
                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg text-left">
-                      <p className="text-green-800 font-medium text-sm text-left">✓ Discount code applied!</p>
+                       <p className="text-green-800 font-medium text-sm text-left flex items-center gap-2">
+                         <CheckCircle className="h-4 w-4" />
+                         Discount code applied!
+                       </p>
                       <p className="text-green-600 text-xs text-left">{appliedDiscount.description}</p>
                     </div>
                   )}

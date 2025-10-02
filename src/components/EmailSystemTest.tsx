@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Mail } from 'lucide-react';
 
 const EMAIL_TEMPLATES = [
   {
@@ -147,7 +148,7 @@ export const EmailSystemTest = () => {
 
       if (data.success || data.ok) {
         toast({
-          title: "✅ Email Sent!",
+          title: "Email Sent!",
           description: `${template.name} queued successfully to ${testEmail}`,
         });
       } else {
@@ -156,7 +157,7 @@ export const EmailSystemTest = () => {
     } catch (error: any) {
       console.error('Email test error:', error);
       toast({
-        title: "❌ Email Test Failed",
+        title: "Email Test Failed",
         description: error.message || 'Failed to send test email',
         variant: "destructive"
       });
@@ -223,7 +224,17 @@ export const EmailSystemTest = () => {
             disabled={loading || !selectedTemplate || !testEmail}
             className="w-full"
           >
-            {loading ? '📧 Sending Email...' : '🧪 Send Test Email'}
+            {loading ? (
+              <>
+                <Mail className="mr-2 h-4 w-4 animate-pulse" />
+                Sending Email...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                Send Test Email
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

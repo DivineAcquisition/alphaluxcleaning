@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
 import { useStripePreloader } from '@/hooks/useStripePreloader';
+import { CheckCircle } from 'lucide-react';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
@@ -98,10 +99,10 @@ function App() {
             <Route path="/email-tools" element={<EmailTools />} />
             
             {/* Health Endpoints for monitoring */}
-            <Route path="/health/admin" element={<div>✅ Admin OK</div>} />
-            <Route path="/health/book" element={<div>✅ Book OK</div>} />
-            <Route path="/health/sub" element={<div>✅ Sub OK</div>} />
-            <Route path="/health/portal" element={<div>✅ Portal OK</div>} />
+            <Route path="/health/admin" element={<div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /> Admin OK</div>} />
+            <Route path="/health/book" element={<div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /> Book OK</div>} />
+            <Route path="/health/sub" element={<div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /> Sub OK</div>} />
+            <Route path="/health/portal" element={<div className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /> Portal OK</div>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

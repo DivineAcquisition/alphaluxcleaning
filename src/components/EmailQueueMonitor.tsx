@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { RefreshCw, Zap, Loader2 } from 'lucide-react';
 
 interface EmailJob {
   id: string;
@@ -53,7 +54,7 @@ export const EmailQueueMonitor = () => {
       if (error) throw error;
 
       toast({
-        title: "✅ Queue Processing Started",
+        title: "Queue Processing Started",
         description: `Processing ${data.processed || 0} email jobs`,
       });
       
@@ -64,7 +65,7 @@ export const EmailQueueMonitor = () => {
     } catch (error: any) {
       console.error('Error processing email queue:', error);
       toast({
-        title: "❌ Queue Processing Failed",
+        title: "Queue Processing Failed",
         description: error.message || 'Failed to process email queue',
         variant: "destructive"
       });
@@ -115,10 +116,30 @@ export const EmailQueueMonitor = () => {
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Button onClick={loadEmailJobs} disabled={loading} variant="outline">
-            {loading ? '🔄 Loading...' : '🔄 Refresh'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </>
+            )}
           </Button>
           <Button onClick={processEmailQueue} disabled={processing} variant="default">
-            {processing ? '⚡ Processing...' : '⚡ Process Queue'}
+            {processing ? (
+              <>
+                <Zap className="mr-2 h-4 w-4 animate-pulse" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Zap className="mr-2 h-4 w-4" />
+                Process Queue
+              </>
+            )}
           </Button>
         </div>
 

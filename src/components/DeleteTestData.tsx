@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CleanupResult {
@@ -21,7 +21,7 @@ export const DeleteTestData = () => {
   const { toast } = useToast();
 
   const handleDeleteTestData = async () => {
-    if (!confirm("⚠️ Are you sure you want to delete ALL test data? This action cannot be undone!")) {
+    if (!confirm("Are you sure you want to delete ALL test data? This action cannot be undone!")) {
       return;
     }
 
@@ -40,7 +40,7 @@ export const DeleteTestData = () => {
       if (data?.success) {
         setResult(data.result);
         toast({
-          title: "✅ Test Data Cleaned",
+          title: "Test Data Cleaned",
           description: `Successfully deleted ${data.result.total_deleted} test records`,
         });
       } else {
@@ -50,7 +50,7 @@ export const DeleteTestData = () => {
       console.error('Error cleaning test data:', error);
       toast({
         variant: "destructive",
-        title: "❌ Cleanup Failed",
+        title: "Cleanup Failed",
         description: error instanceof Error ? error.message : 'Failed to clean test data',
       });
     } finally {
@@ -74,7 +74,10 @@ export const DeleteTestData = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
-          <h4 className="font-medium text-destructive mb-2">⚠️ Warning: This Action is Irreversible</h4>
+          <h4 className="font-medium text-destructive mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Warning: This Action is Irreversible
+          </h4>
           <p className="text-sm text-muted-foreground">
             This will permanently delete:
           </p>
@@ -93,12 +96,25 @@ export const DeleteTestData = () => {
           variant="destructive"
           className="w-full"
         >
-          {isDeleting ? "🗑️ Deleting Test Data..." : "🗑️ Delete All Test Data"}
+          {isDeleting ? (
+            <>
+              <Trash2 className="mr-2 h-4 w-4 animate-pulse" />
+              Deleting Test Data...
+            </>
+          ) : (
+            <>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete All Test Data
+            </>
+          )}
         </Button>
 
         {result && (
           <div className="bg-muted p-4 rounded-lg space-y-2">
-            <h4 className="font-medium text-green-600">✅ Cleanup Completed</h4>
+            <h4 className="font-medium text-green-600 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Cleanup Completed
+            </h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>Payments: {result.payments_deleted}</div>
               <div>Bookings: {result.bookings_deleted}</div>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Mail } from 'lucide-react';
 
 export const EmailTestButton = () => {
   const [testEmail, setTestEmail] = useState('');
@@ -29,7 +30,7 @@ export const EmailTestButton = () => {
 
       if (data.success) {
         toast({
-          title: "✅ Test Email Sent!",
+          title: "Test Email Sent!",
           description: `Email sent successfully to ${testEmail}`,
         });
       } else {
@@ -38,7 +39,7 @@ export const EmailTestButton = () => {
     } catch (error: any) {
       console.error('Test email error:', error);
       toast({
-        title: "❌ Email Test Failed",
+        title: "Email Test Failed",
         description: error.message || 'Failed to send test email',
         variant: "destructive"
       });
@@ -61,7 +62,17 @@ export const EmailTestButton = () => {
         disabled={loading}
         variant="outline"
       >
-        {loading ? '📧 Sending...' : '🧪 Test Email'}
+        {loading ? (
+          <>
+            <Mail className="mr-2 h-4 w-4 animate-pulse" />
+            Sending...
+          </>
+        ) : (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Test Email
+          </>
+        )}
       </Button>
     </div>
   );
