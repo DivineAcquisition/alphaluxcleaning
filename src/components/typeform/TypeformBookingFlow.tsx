@@ -11,7 +11,7 @@ import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
 import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { calculateFixedPricing } from '@/lib/fixed-pricing-system';
+import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
 import { Input } from '@/components/ui/input';
@@ -79,19 +79,38 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
     }
   }, [bookingData.email]);
 
+  // Helper to convert homeSizeId to square footage
+  const getSquareFootageFromHomeSizeId = (homeSizeId: string): number => {
+    const sizeMap: Record<string, number> = {
+      '1000_1500': 1250,
+      '1501_2000': 1750,
+      '2001_2500': 2250,
+      '2501_3000': 2750,
+      '3001_3500': 3250,
+      '3501_4000': 3750,
+      '4001_4500': 4250,
+      '4501_5000': 4750,
+      '5000_plus': 5500
+    };
+    return sizeMap[homeSizeId] || 1250;
+  };
+
   useEffect(() => {
-    if (bookingData.serviceTypeId && bookingData.frequencyId) {
+    if (bookingData.serviceTypeId && bookingData.frequencyId && bookingData.homeSizeId && bookingData.stateCode) {
       try {
-        const result = calculateFixedPricing(
-          bookingData.serviceTypeId, 
-          bookingData.frequencyId
+        const sqft = getSquareFootageFromHomeSizeId(bookingData.homeSizeId);
+        const result = calculatePricing(
+          bookingData.stateCode as StateCode,
+          sqft,
+          bookingData.serviceTypeId as ServiceType,
+          bookingData.frequencyId as FrequencyType
         );
-        setPricing(result as any); // Type compatibility with existing PricingResult
+        setPricing(result);
       } catch (error) {
         console.error('Pricing calculation error:', error);
       }
     }
-  }, [bookingData.serviceTypeId, bookingData.frequencyId]);
+  }, [bookingData.serviceTypeId, bookingData.frequencyId, bookingData.homeSizeId, bookingData.stateCode]);
 
   const handleNext = () => {
     // Validation for each step
@@ -624,6 +643,8 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
         <FloatingPricingSummary
           serviceTypeId={bookingData.serviceTypeId}
           frequencyId={bookingData.frequencyId}
+          homeSizeId={bookingData.homeSizeId}
+          stateCode={bookingData.stateCode}
         />
       )}
     </div>

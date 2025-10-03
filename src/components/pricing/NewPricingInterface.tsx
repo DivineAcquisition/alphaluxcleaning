@@ -174,6 +174,8 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
           <PricingSummaryCard
             serviceTypeId={serviceTypeId}
             frequencyId={frequencyId}
+            homeSizeId={homeSizeId}
+            stateCode={stateCode}
             className="mb-4"
           />
           

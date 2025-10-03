@@ -4,25 +4,29 @@ import { Separator } from '@/components/ui/separator';
 import { Calculator, DollarSign } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculateFixedPricing, SERVICE_TYPE_NAMES, FREQUENCY_NAMES } from '@/lib/fixed-pricing-system';
+import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
 import { cn } from '@/lib/utils';
 
 interface PricingSummaryCardProps {
   result?: any;
   serviceTypeId?: string;
   frequencyId?: string;
+  homeSizeId?: string;
+  stateCode?: string;
   className?: string;
 }
 
 export function PricingSummaryCard({ 
   serviceTypeId, 
-  frequencyId, 
+  frequencyId,
+  homeSizeId,
+  stateCode,
   className 
 }: PricingSummaryCardProps) {
   const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
 
-  if (!serviceTypeId || !frequencyId) {
+  if (!serviceTypeId || !frequencyId || !homeSizeId || !stateCode) {
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
         <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -45,11 +49,56 @@ export function PricingSummaryCard({
     );
   }
 
-  // Calculate fixed pricing
-  const pricing = calculateFixedPricing(serviceTypeId, frequencyId);
-  const isRecurring = pricing.isRecurring;
-  const serviceTypeName = SERVICE_TYPE_NAMES[pricing.serviceType as keyof typeof SERVICE_TYPE_NAMES];
-  const frequencyName = FREQUENCY_NAMES[pricing.frequency as keyof typeof FREQUENCY_NAMES];
+  // Convert homeSizeId to square footage
+  const getSquareFootageFromHomeSizeId = (homeSizeId: string): number => {
+    const sizeMap: Record<string, number> = {
+      '1000_1500': 1250,
+      '1501_2000': 1750,
+      '2001_2500': 2250,
+      '2501_3000': 2750,
+      '3001_3500': 3250,
+      '3501_4000': 3750,
+      '4001_4500': 4250,
+      '4501_5000': 4750,
+      '5000_plus': 5500
+    };
+    return sizeMap[homeSizeId] || 1250;
+  };
+
+  const sqft = getSquareFootageFromHomeSizeId(homeSizeId);
+  
+  // Calculate state-based pricing
+  const pricingResult = calculatePricing(
+    stateCode as StateCode,
+    sqft,
+    serviceTypeId as ServiceType,
+    frequencyId as FrequencyType
+  );
+
+  if (!pricingResult) {
+    return (
+      <Card className={cn("shadow-lg border-primary/20", className)}>
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5 text-primary" />
+            Pricing Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Unable to calculate pricing. Please check your selections.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const isRecurring = pricingResult.recurringDetails !== undefined;
+  const perCleanPrice = pricingResult.recurringDetails?.perClean || 0;
+  const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
+  const finalPrice = pricingResult.discountedPrice;
 
   return (
     <Card className={cn("shadow-lg border-primary/20", className)}>
@@ -68,16 +117,16 @@ export function PricingSummaryCard({
           </span>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">
-              {formatPrice(pricing.finalPrice)}
+              {formatPrice(finalPrice)}
             </p>
           </div>
         </div>
 
         {/* Per-clean breakdown for recurring */}
-        {isRecurring && pricing.cleansPerMonth && (
+        {isRecurring && cleansPerMonth > 0 && (
           <div className="text-center pt-2">
             <p className="text-sm text-muted-foreground">
-              {formatPrice(pricing.perCleanPrice || 0)} per clean × {pricing.cleansPerMonth} clean{pricing.cleansPerMonth > 1 ? 's' : ''}/month
+              {formatPrice(perCleanPrice)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
             </p>
           </div>
         )}
@@ -86,7 +135,10 @@ export function PricingSummaryCard({
         <Separator className="my-4" />
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">
-            {serviceType?.name || serviceTypeName} • {frequency?.name || frequencyName}
+            {serviceType?.name} • {pricingResult.tier.label}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {frequency?.name}
           </p>
         </div>
 
