@@ -383,14 +383,14 @@ export function LegacyBookingFlow() {
 
   // Validate ZIP code using Texas and California service areas
   const validateZipCode = (zipCode: string) => {
-    const validation = validateServiceAreaZipCode(zipCode);
+    const validation = validateServiceAreaZipCode(zipCode, bookingData.address.state);
     return validation.isValid;
   };
 
   // Check existing ZIP code on mount
   useEffect(() => {
     if (bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5) {
-      const validation = validateServiceAreaZipCode(bookingData.serviceZipCode);
+      const validation = validateServiceAreaZipCode(bookingData.serviceZipCode, bookingData.address.state);
       setZipCodeValid(validation.isValid);
       if (!validation.isValid) {
         setZipCodeError(validation.message || '');
@@ -403,7 +403,7 @@ export function LegacyBookingFlow() {
     setZipCodeError('');
     
     if (zipCode.length === 5) {
-      const validation = validateServiceAreaZipCode(zipCode);
+      const validation = validateServiceAreaZipCode(zipCode, bookingData.address.state);
       setZipCodeValid(validation.isValid);
       
       if (validation.isValid) {

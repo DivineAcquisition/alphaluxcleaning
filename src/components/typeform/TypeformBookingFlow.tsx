@@ -267,7 +267,7 @@ export function TypeformBookingFlow({
 
             // Validate ZIP code when 5 digits are entered
             if (value.length === 5) {
-              const validation = validateServiceAreaZipCode(value);
+              const validation = validateServiceAreaZipCode(value, bookingData.stateCode);
               setZipValidation(validation);
             } else {
               setZipValidation(null);

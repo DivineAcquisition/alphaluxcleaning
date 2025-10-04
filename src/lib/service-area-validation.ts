@@ -28,7 +28,7 @@ export interface ServiceAreaValidation {
   message?: string;
 }
 
-export function validateServiceAreaZipCode(zipCode: string): ServiceAreaValidation {
+export function validateServiceAreaZipCode(zipCode: string, selectedState?: string): ServiceAreaValidation {
   if (!zipCode || zipCode.trim() === '') {
     return {
       isValid: false,
@@ -48,6 +48,37 @@ export function validateServiceAreaZipCode(zipCode: string): ServiceAreaValidati
 
   const zipNumber = parseInt(cleanZip, 10);
   
+  // If a specific state is selected, validate against only that state
+  if (selectedState) {
+    const normalizedState = selectedState.trim().toUpperCase();
+    let isValidForState = false;
+    let stateName = '';
+    
+    if (normalizedState === 'TX' || normalizedState === 'TEXAS') {
+      isValidForState = isTexasZip(zipNumber);
+      stateName = 'Texas';
+    } else if (normalizedState === 'CA' || normalizedState === 'CALIFORNIA') {
+      isValidForState = isCaliforniaZip(zipNumber);
+      stateName = 'California';
+    } else if (normalizedState === 'NY' || normalizedState === 'NEW YORK') {
+      isValidForState = isNewYorkZip(zipNumber);
+      stateName = 'New York';
+    }
+    
+    if (isValidForState) {
+      return {
+        isValid: true
+      };
+    }
+    
+    console.log(`❌ ZIP code ${cleanZip} rejected - not valid for ${stateName}`);
+    return {
+      isValid: false,
+      message: `ZIP code ${cleanZip} is not valid for ${stateName}. Please enter a valid ${stateName} ZIP code.`
+    };
+  }
+  
+  // If no state specified, validate against any of our service states
   if (isTexasZip(zipNumber) || isCaliforniaZip(zipNumber) || isNewYorkZip(zipNumber)) {
     return {
       isValid: true

@@ -54,8 +54,8 @@ export const UpdateAddressDialog = ({
       return;
     }
 
-    // Validate service area
-    const zipValidation = validateServiceAreaZipCode(newAddress.zipCode);
+    // Validate service area with selected state
+    const zipValidation = validateServiceAreaZipCode(newAddress.zipCode, newAddress.state);
     if (!zipValidation.isValid) {
       toast.error(zipValidation.message || "ZIP code is outside our service area");
       return;

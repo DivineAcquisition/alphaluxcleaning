@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { validateServiceAreaZipCode, getNearestServiceableZipCodes } from "@/lib/service-area-validation";
 import { CheckCircle2, XCircle, MapPin } from "lucide-react";
 
 export const ZipCodeTester = () => {
   const [zipCode, setZipCode] = useState("");
+  const [selectedState, setSelectedState] = useState<string>("");
   const [result, setResult] = useState<{
     isValid: boolean;
     message?: string;
@@ -15,7 +17,7 @@ export const ZipCodeTester = () => {
   } | null>(null);
 
   const testZipCode = () => {
-    const validation = validateServiceAreaZipCode(zipCode);
+    const validation = validateServiceAreaZipCode(zipCode, selectedState || undefined);
     const suggestions = !validation.isValid ? getNearestServiceableZipCodes(zipCode) : [];
     
     setResult({
@@ -41,8 +43,8 @@ export const ZipCodeTester = () => {
 
     console.log("=== ZIP Code Validation Test Results ===");
     commonZips.forEach(({ zip, name }) => {
-      const validation = validateServiceAreaZipCode(zip);
-      console.log(validation.isValid ? 'VALID' : 'INVALID', zip, '(', name, '):', validation.isValid ? 'VALID' : validation.message);
+      const validation = validateServiceAreaZipCode(zip, selectedState || undefined);
+      console.log(validation.isValid ? '✅ VALID' : '❌ INVALID', zip, '(', name, '):', validation.isValid ? 'VALID' : validation.message);
     });
     console.log("===========================================");
   };
@@ -61,15 +63,32 @@ export const ZipCodeTester = () => {
       <CardContent className="space-y-4">
         {/* Single ZIP Test */}
         <div className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter ZIP code (e.g., 77521)"
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
-              maxLength={10}
-            />
-            <Button onClick={testZipCode}>Test</Button>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label className="block text-sm font-medium mb-1">State (Optional)</label>
+              <Select value={selectedState} onValueChange={setSelectedState}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Any State" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any State</SelectItem>
+                  <SelectItem value="TX">Texas</SelectItem>
+                  <SelectItem value="CA">California</SelectItem>
+                  <SelectItem value="NY">New York</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">ZIP Code</label>
+              <Input
+                placeholder="Enter ZIP code"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                maxLength={10}
+              />
+            </div>
           </div>
+          <Button onClick={testZipCode} className="w-full">Test ZIP Code</Button>
 
           {result && (
             <div className={`p-4 rounded-lg border ${result.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>

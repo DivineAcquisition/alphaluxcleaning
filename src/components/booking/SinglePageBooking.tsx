@@ -243,7 +243,7 @@ export function SinglePageBooking() {
   // Validate ZIP code
   useEffect(() => {
     if (bookingData.zipCode && bookingData.zipCode.length === 5) {
-      const validation = validateServiceAreaZipCode(bookingData.zipCode);
+      const validation = validateServiceAreaZipCode(bookingData.zipCode, bookingData.address.state);
       setZipCodeValid(validation.isValid);
     } else {
       setZipCodeValid(false);
