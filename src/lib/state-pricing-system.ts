@@ -153,7 +153,10 @@ export function applyDiscount(price: number): {
 /**
  * Format price as currency
  */
-export function formatPrice(price: number, showOriginal: boolean = true): string {
+export function formatPrice(price: number | undefined | null, showOriginal: boolean = true): string {
+  if (price === undefined || price === null || isNaN(price)) {
+    return '$0';
+  }
   return `$${price.toFixed(0)}`;
 }
 
