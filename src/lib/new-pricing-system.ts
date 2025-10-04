@@ -135,7 +135,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   baseHourlyRate: 25,
   cleanersPerTeam: 2,
   states: [
-    { code: 'CA', name: 'Cali', multiplier: 1.5 },
+    { code: 'CA', name: 'California', multiplier: 1.5 },
     { code: 'TX', name: 'Texas', multiplier: 1.43 }
   ],
   serviceTypes: [
