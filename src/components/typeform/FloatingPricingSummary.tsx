@@ -73,6 +73,8 @@ export function FloatingPricingSummary({
     ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
     : pricingResult.discountedPrice;
 
+  const showDiscount = pricingResult.discountedPrice > 0;
+
   return (
     <div className={cn("fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg", className)}>
       <div className="max-w-4xl mx-auto">
@@ -94,6 +96,11 @@ export function FloatingPricingSummary({
                     : `${isRecurring ? 'Monthly' : 'Service'} Total`
                   }
                 </p>
+                {showDiscount && (
+                  <p className="text-xs font-semibold text-green-600">
+                    ✨ 15% off included!
+                  </p>
+                )}
               </div>
             </div>
 
@@ -123,6 +130,15 @@ export function FloatingPricingSummary({
           <div className="border-t border-border">
             <Card className="rounded-none border-0 shadow-none">
               <CardContent className="p-4 space-y-3">
+                {/* Discount Banner */}
+                {showDiscount && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
+                    <p className="text-xs font-semibold text-green-600">
+                      ✨ 15% discount applied! ✨
+                    </p>
+                  </div>
+                )}
+
                 {/* Total */}
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-base font-bold text-foreground">

@@ -225,7 +225,7 @@ export function ModernBookingFlow({
                           totalPrice: data.pricing.finalPrice,
                           addOns: [],
                           addOnPrices: {},
-                          frequencyDiscount: data.pricing.breakdown.frequencyDiscount || 0
+                          frequencyDiscount: 0
                         });
                         handleNext();
                       }}

@@ -41,9 +41,11 @@ interface FrequencyCardProps {
 
 function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) {
   const Icon = frequencyIcons[frequency.id as keyof typeof frequencyIcons] || Timer;
-  const discountText = frequency.discount === 0 
-    ? 'No Discount' 
-    : `Save ${Math.round(frequency.discount * 100)}%`;
+  
+  // Display recurring info for recurring frequencies
+  const frequencyInfo = frequency.cleansPerMonth 
+    ? `${frequency.cleansPerMonth}x per month`
+    : 'Single service';
 
   return (
     <Card 
@@ -77,14 +79,10 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
             </h3>
             
             <Badge 
-              variant={frequency.discount > 0 ? "default" : "secondary"}
-              className={cn(
-                "text-xs",
-                frequency.discount > 0 && isSelected && "bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80",
-                frequency.discount > 0 && !isSelected && "bg-green-500 text-white"
-              )}
+              variant="secondary"
+              className="text-xs"
             >
-              {discountText}
+              {frequencyInfo}
             </Badge>
           </div>
         </div>

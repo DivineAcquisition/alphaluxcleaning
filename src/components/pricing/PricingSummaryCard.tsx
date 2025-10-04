@@ -104,6 +104,9 @@ export function PricingSummaryCard({
     ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
     : pricingResult.discountedPrice;
 
+  // Get base price and discount info from the new pricing result
+  const showDiscount = pricingResult.discountedPrice > 0;
+
   return (
     <Card className={cn("shadow-lg border-primary/20", className)}>
       <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -113,6 +116,15 @@ export function PricingSummaryCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 space-y-3">
+
+        {/* Discount Savings Banner */}
+        {showDiscount && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+            <p className="text-sm font-semibold text-green-600">
+              ✨ You save 15% today! ✨
+            </p>
+          </div>
+        )}
 
         {/* Final Price */}
         <div className="flex justify-between items-center pt-2">

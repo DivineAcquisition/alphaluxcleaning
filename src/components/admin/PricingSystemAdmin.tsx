@@ -6,85 +6,21 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { DEFAULT_PRICING_CONFIG, type PricingConfig } from '@/lib/new-pricing-system';
-import { Save, RefreshCw, DollarSign, Settings } from 'lucide-react';
+import { HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
+import { Save, RefreshCw, DollarSign, Home, Sparkles } from 'lucide-react';
 
-interface PricingSystemAdminProps {
-  onConfigUpdate?: (config: PricingConfig) => void;
-}
-
-export function PricingSystemAdmin({ onConfigUpdate }: PricingSystemAdminProps) {
-  const [config, setConfig] = useState<PricingConfig>(DEFAULT_PRICING_CONFIG);
+export function PricingSystemAdmin() {
+  const [discount, setDiscount] = useState(DEFAULT_PRICING_CONFIG.universalDiscount * 100);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadCurrentConfig();
-  }, []);
-
-  const loadCurrentConfig = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('pricing_config')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-        throw error;
-      }
-
-      if (data) {
-        // Map database values to our config structure
-        const loadedConfig: PricingConfig = {
-          baseHourlyRate: data.base_hourly_rate || DEFAULT_PRICING_CONFIG.baseHourlyRate,
-          cleanersPerTeam: data.cleaners_per_team || DEFAULT_PRICING_CONFIG.cleanersPerTeam,
-          states: [
-            { code: 'CA', name: 'California', multiplier: data.ca_multiplier || 1.5 },
-            { code: 'TX', name: 'Texas', multiplier: data.tx_multiplier || 1.43 }
-          ],
-          serviceTypes: [
-            { id: 'standard', name: 'Standard Cleaning', multiplier: 1.0 },
-            { id: 'deep', name: 'Deep Cleaning', multiplier: data.deep_cleaning_multiplier || 1.4 },
-            { id: 'move_in_out', name: 'Move-In/Out Cleaning', multiplier: data.move_in_out_multiplier || 1.5 }
-          ],
-          frequencies: [
-            { id: 'one_time', name: 'One-time', discount: 0, mrrMultiplier: 0 },
-            { id: 'weekly', name: 'Weekly', discount: data.weekly_discount || 0.15, mrrMultiplier: 4.3 },
-            { id: 'bi_weekly', name: 'Bi-Weekly', discount: data.biweekly_discount || 0.10, mrrMultiplier: 2.15 },
-            { id: 'monthly', name: 'Monthly', discount: data.monthly_discount || 0.05, mrrMultiplier: 1 }
-          ]
-        };
-        setConfig(loadedConfig);
-      }
-    } catch (error) {
-      console.error('Error loading pricing config:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load pricing configuration",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveConfig = async () => {
     setSaving(true);
     try {
+      // Save the universal discount to database
       const configData = {
-        base_hourly_rate: config.baseHourlyRate,
-        cleaners_per_team: config.cleanersPerTeam,
-        ca_multiplier: config.states.find(s => s.code === 'CA')?.multiplier || 1.5,
-        tx_multiplier: config.states.find(s => s.code === 'TX')?.multiplier || 1.43,
-        deep_cleaning_multiplier: config.serviceTypes.find(s => s.id === 'deep')?.multiplier || 1.4,
-        move_in_out_multiplier: config.serviceTypes.find(s => s.id === 'move_in_out')?.multiplier || 1.5,
-        weekly_discount: config.frequencies.find(f => f.id === 'weekly')?.discount || 0.15,
-        biweekly_discount: config.frequencies.find(f => f.id === 'bi_weekly')?.discount || 0.10,
-        monthly_discount: config.frequencies.find(f => f.id === 'monthly')?.discount || 0.05
+        universal_discount: discount / 100
       };
 
       const { error } = await supabase.rpc('save_pricing_config', {
@@ -97,8 +33,6 @@ export function PricingSystemAdmin({ onConfigUpdate }: PricingSystemAdminProps) 
         title: "Success",
         description: "Pricing configuration updated successfully"
       });
-
-      onConfigUpdate?.(config);
     } catch (error) {
       console.error('Error saving pricing config:', error);
       toast({
@@ -109,37 +43,6 @@ export function PricingSystemAdmin({ onConfigUpdate }: PricingSystemAdminProps) 
     } finally {
       setSaving(false);
     }
-  };
-
-  const updateConfig = (updates: Partial<PricingConfig>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
-  };
-
-  const updateStateMultiplier = (stateCode: string, multiplier: number) => {
-    setConfig(prev => ({
-      ...prev,
-      states: prev.states.map(state =>
-        state.code === stateCode ? { ...state, multiplier } : state
-      )
-    }));
-  };
-
-  const updateServiceMultiplier = (serviceId: string, multiplier: number) => {
-    setConfig(prev => ({
-      ...prev,
-      serviceTypes: prev.serviceTypes.map(service =>
-        service.id === serviceId ? { ...service, multiplier } : service
-      )
-    }));
-  };
-
-  const updateFrequencyDiscount = (frequencyId: string, discount: number) => {
-    setConfig(prev => ({
-      ...prev,
-      frequencies: prev.frequencies.map(freq =>
-        freq.id === frequencyId ? { ...freq, discount } : freq
-      )
-    }));
   };
 
   if (loading) {
@@ -156,9 +59,9 @@ export function PricingSystemAdmin({ onConfigUpdate }: PricingSystemAdminProps) 
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Pricing System Configuration</h2>
+          <h2 className="text-2xl font-bold text-foreground">Universal Hybrid Pricing Model</h2>
           <p className="text-muted-foreground">
-            Configure base rates, multipliers, and discounts for the pricing system
+            AlphaLuxClean fixed pricing with automatic 15% discount
           </p>
         </div>
         <Button onClick={saveConfig} disabled={saving} className="gap-2">
@@ -167,116 +70,145 @@ export function PricingSystemAdmin({ onConfigUpdate }: PricingSystemAdminProps) 
         </Button>
       </div>
 
-      {/* Base Configuration */}
+      {/* Universal Discount */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Base Configuration
+            Universal Discount
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hourly-rate">Base Hourly Rate ($)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="discount">Automatic Discount (%)</Label>
+            <div className="flex items-center gap-2">
               <Input
-                id="hourly-rate"
+                id="discount"
                 type="number"
-                value={config.baseHourlyRate}
-                onChange={(e) => updateConfig({ baseHourlyRate: Number(e.target.value) })}
+                value={discount}
+                onChange={(e) => setDiscount(Number(e.target.value))}
                 min="0"
-                step="0.01"
+                max="50"
+                step="1"
+                className="w-32"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cleaners-count">Cleaners per Team</Label>
-              <Input
-                id="cleaners-count"
-                type="number"
-                value={config.cleanersPerTeam}
-                onChange={(e) => updateConfig({ cleanersPerTeam: Number(e.target.value) })}
-                min="1"
-                max="10"
-              />
+              <span className="text-sm text-muted-foreground">
+                Applied to all services
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* State Multipliers */}
+      {/* Pricing Tables */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            State Multipliers
+            <Home className="h-5 w-5" />
+            Base Pricing by Square Footage
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {config.states.map((state) => (
-            <div key={state.code} className="flex items-center justify-between">
-              <Label className="font-medium">{state.name} ({state.code})</Label>
-              <div className="w-32">
-                <Input
-                  type="number"
-                  value={state.multiplier}
-                  onChange={(e) => updateStateMultiplier(state.code, Number(e.target.value))}
-                  min="0.1"
-                  max="5"
-                  step="0.01"
-                />
+        <CardContent className="space-y-6">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-3 font-semibold">Square Footage</th>
+                  <th className="text-right p-3 font-semibold">Regular Clean</th>
+                  <th className="text-right p-3 font-semibold">Deep Clean</th>
+                  <th className="text-right p-3 font-semibold">Move-In/Out</th>
+                </tr>
+              </thead>
+              <tbody>
+                {HOME_SIZE_RANGES.map((range) => (
+                  <tr key={range.id} className="border-b">
+                    <td className="p-3">
+                      <div>
+                        <div className="font-medium">{range.label}</div>
+                        <div className="text-xs text-muted-foreground">{range.bedroomRange}</div>
+                      </div>
+                    </td>
+                    <td className="text-right p-3">
+                      {range.requiresEstimate ? (
+                        <span className="text-xs text-muted-foreground">Custom Quote</span>
+                      ) : (
+                        <span className="font-medium">${range.regularPrice}</span>
+                      )}
+                    </td>
+                    <td className="text-right p-3">
+                      {range.requiresEstimate ? (
+                        <span className="text-xs text-muted-foreground">Custom Quote</span>
+                      ) : (
+                        <span className="font-medium">${range.deepPrice}</span>
+                      )}
+                    </td>
+                    <td className="text-right p-3">
+                      {range.requiresEstimate ? (
+                        <span className="text-xs text-muted-foreground">Custom Quote</span>
+                      ) : (
+                        <span className="font-medium">${range.moveInOutPrice}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <h4 className="font-semibold flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Recurring Pricing Formula (Regular Clean Only)
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg space-y-2">
+                <div className="font-medium">Weekly</div>
+                <div className="text-sm text-muted-foreground">
+                  Base × 0.40 × 4 cleans/month
+                </div>
+                <div className="text-xs text-green-600">
+                  Example: $255 → $408/month
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg space-y-2">
+                <div className="font-medium">Bi-Weekly</div>
+                <div className="text-sm text-muted-foreground">
+                  Base × 0.55 × 2 cleans/month
+                </div>
+                <div className="text-xs text-green-600">
+                  Example: $255 → $281/month
+                </div>
+              </div>
+              <div className="p-4 border rounded-lg space-y-2">
+                <div className="font-medium">Monthly</div>
+                <div className="text-sm text-muted-foreground">
+                  Base × 0.75 × 1 clean/month
+                </div>
+                <div className="text-xs text-green-600">
+                  Example: $255 → $191/month
+                </div>
               </div>
             </div>
-          ))}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Service Type Multipliers */}
+      {/* Supported States */}
       <Card>
         <CardHeader>
-          <CardTitle>Service Type Multipliers</CardTitle>
+          <CardTitle>Supported States</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {config.serviceTypes.filter(s => s.id !== 'standard').map((service) => (
-            <div key={service.id} className="flex items-center justify-between">
-              <Label className="font-medium">{service.name}</Label>
-              <div className="w-32">
-                <Input
-                  type="number"
-                  value={service.multiplier}
-                  onChange={(e) => updateServiceMultiplier(service.id, Number(e.target.value))}
-                  min="0.1"
-                  max="5"
-                  step="0.01"
-                />
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {DEFAULT_PRICING_CONFIG.states.map((state) => (
+              <div key={state.code} className="p-4 border rounded-lg">
+                <div className="font-medium">{state.name}</div>
+                <div className="text-sm text-muted-foreground">Code: {state.code}</div>
               </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Frequency Discounts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Frequency Discounts</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {config.frequencies.filter(f => f.id !== 'one_time').map((frequency) => (
-            <div key={frequency.id} className="flex items-center justify-between">
-              <Label className="font-medium">{frequency.name}</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={Math.round(frequency.discount * 100)}
-                  onChange={(e) => updateFrequencyDiscount(frequency.id, Number(e.target.value) / 100)}
-                  min="0"
-                  max="50"
-                  step="1"
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">%</span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

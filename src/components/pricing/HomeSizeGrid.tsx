@@ -90,16 +90,7 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
             </p>
           </div>
           
-          <div className="flex items-center justify-between">
-            <Badge 
-              variant={isSelected ? "default" : "secondary"}
-              className={cn(
-                isSelected && "bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80"
-              )}
-            >
-              ~{range.estimatedHours}h
-            </Badge>
-            
+          <div className="flex items-center justify-end">
             {isSelected && (
               <div className="w-2 h-2 rounded-full bg-[#ECC98B]" />
             )}

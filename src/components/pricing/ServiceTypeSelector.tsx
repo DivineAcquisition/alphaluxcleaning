@@ -40,9 +40,7 @@ interface ServiceTypeCardProps {
 
 function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardProps) {
   const Icon = serviceIcons[serviceType.id as keyof typeof serviceIcons] || Home;
-  const multiplierText = serviceType.multiplier === 1.0 
-    ? 'Base Price' 
-    : `+${Math.round((serviceType.multiplier - 1) * 100)}%`;
+  const recurringText = serviceType.allowsRecurring ? 'One-time & Recurring' : 'One-time only';
 
   return (
     <Card 
@@ -82,7 +80,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
                 isSelected && "bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80"
               )}
             >
-              {multiplierText}
+              {recurringText}
             </Badge>
           </div>
         </div>
