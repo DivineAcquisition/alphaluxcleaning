@@ -607,7 +607,7 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
       >
         <ConversationalQuestion
           question="Ready to book?"
-          description={pricing ? `Total: $${pricing.finalPrice.toFixed(2)}` : 'Calculating price...'}
+          description={pricing ? `Total: $${pricing.discountedPrice?.toFixed(0) || '0'}` : 'Calculating price...'}
           icon={<CreditCard className="w-8 h-8" />}
         >
           {pricing && (
@@ -621,7 +621,7 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
                   bedrooms: parseInt(bookingData.bedrooms) || 2,
                   bathrooms: parseInt(bookingData.bathrooms) || 2,
                 }}
-                calculatedPrice={pricing.finalPrice}
+                calculatedPrice={pricing.discountedPrice || 0}
                 priceBreakdown={pricing.breakdown}
                 schedulingData={{
                   scheduledDate: bookingData.serviceDate ? format(new Date(bookingData.serviceDate), 'yyyy-MM-dd') : '',
