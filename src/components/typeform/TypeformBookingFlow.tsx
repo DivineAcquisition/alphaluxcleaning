@@ -11,7 +11,7 @@ import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
 import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
+import { getPriceQuote } from '@/lib/pricing-adapter';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
 import { PromotionalBanner } from '../booking/PromotionalBanner';
@@ -112,8 +112,22 @@ export function TypeformBookingFlow({
     if (bookingData.serviceTypeId && bookingData.frequencyId && bookingData.homeSizeId && bookingData.stateCode) {
       try {
         const sqft = getSquareFootageFromHomeSizeId(bookingData.homeSizeId);
-        const result = calculatePricing(bookingData.stateCode as StateCode, sqft, bookingData.serviceTypeId as ServiceType, bookingData.frequencyId as FrequencyType);
-        setPricing(result);
+        const result = getPriceQuote({
+          stateCode: bookingData.stateCode,
+          sqft,
+          homeSizeId: bookingData.homeSizeId,
+          serviceTypeId: bookingData.serviceTypeId,
+          frequencyId: bookingData.frequencyId
+        });
+        
+        if (result) {
+          // Convert to format expected by payment form
+          setPricing({
+            discountedPrice: result.discountedPrice,
+            recurringDetails: result.recurringDetails,
+            tierLabel: result.tierLabel
+          });
+        }
       } catch (error) {
         console.error('Pricing calculation error:', error);
       }
@@ -228,7 +242,11 @@ export function TypeformBookingFlow({
   }
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Promotional Banner - Show on first step */}
-      {currentStep === 1}
+      {currentStep === 1 && (
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <PromotionalBanner />
+        </div>
+      )}
 
       {/* Step 1: State Selection */}
       <TypeformStep questionNumber={1} totalSteps={totalSteps} isActive={currentStep === 1} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Continue">

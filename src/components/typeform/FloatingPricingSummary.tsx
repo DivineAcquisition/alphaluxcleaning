@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ChevronUp, ChevronDown, Calculator } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
+import { getPriceQuote } from '@/lib/pricing-adapter';
 import { cn } from '@/lib/utils';
 
 interface FloatingPricingSummaryProps {
@@ -49,13 +49,14 @@ export function FloatingPricingSummary({
 
   const sqft = getSquareFootageFromHomeSizeId(homeSizeId);
   
-  // Calculate state-based pricing
-  const pricingResult = calculatePricing(
-    stateCode as StateCode,
+  // Calculate pricing using adapter
+  const pricingResult = getPriceQuote({
+    stateCode,
     sqft,
-    serviceTypeId as ServiceType,
-    frequencyId as FrequencyType
-  );
+    homeSizeId,
+    serviceTypeId,
+    frequencyId
+  });
 
   if (!pricingResult) {
     return null;
@@ -142,7 +143,7 @@ export function FloatingPricingSummary({
                 <Separator className="mt-3" />
                 <div className="space-y-1 pt-1">
                   <p className="text-xs text-muted-foreground">
-                    {serviceType?.name} • {pricingResult.tier.label}
+                    {serviceType?.name} • {pricingResult.tierLabel}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {frequency?.name}

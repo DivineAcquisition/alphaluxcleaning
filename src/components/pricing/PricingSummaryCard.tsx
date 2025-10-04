@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { Calculator, DollarSign } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
-import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
+import { getPriceQuote } from '@/lib/pricing-adapter';
 import { cn } from '@/lib/utils';
 
 interface PricingSummaryCardProps {
@@ -67,13 +67,14 @@ export function PricingSummaryCard({
 
   const sqft = getSquareFootageFromHomeSizeId(homeSizeId);
   
-  // Calculate state-based pricing
-  const pricingResult = calculatePricing(
-    stateCode as StateCode,
+  // Calculate pricing using adapter
+  const pricingResult = getPriceQuote({
+    stateCode,
     sqft,
-    serviceTypeId as ServiceType,
-    frequencyId as FrequencyType
-  );
+    homeSizeId,
+    serviceTypeId,
+    frequencyId
+  });
 
   if (!pricingResult) {
     return (
@@ -135,7 +136,7 @@ export function PricingSummaryCard({
         <Separator className="my-4" />
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">
-            {serviceType?.name} • {pricingResult.tier.label}
+            {serviceType?.name} • {pricingResult.tierLabel}
           </p>
           <p className="text-xs text-muted-foreground">
             {frequency?.name}
