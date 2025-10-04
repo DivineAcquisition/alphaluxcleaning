@@ -34,6 +34,7 @@ export function FloatingPricingSummary({
   // Convert homeSizeId to square footage
   const getSquareFootageFromHomeSizeId = (homeSizeId: string): number => {
     const sizeMap: Record<string, number> = {
+      'under_1000': 750,
       '1000_1500': 1250,
       '1501_2000': 1750,
       '2001_2500': 2250,
@@ -68,7 +69,9 @@ export function FloatingPricingSummary({
   const isRecurring = pricingResult.recurringDetails !== undefined;
   const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
   const perCleanPrice = pricingResult.recurringDetails?.perClean || 0;
-  const finalPrice = pricingResult.discountedPrice;
+  const finalPrice = isRecurring 
+    ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
+    : pricingResult.discountedPrice;
 
   return (
     <div className={cn("fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg", className)}>

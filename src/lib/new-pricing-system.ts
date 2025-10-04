@@ -136,7 +136,8 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   cleanersPerTeam: 2,
   states: [
     { code: 'CA', name: 'California', multiplier: 1.5 },
-    { code: 'TX', name: 'Texas', multiplier: 1.43 }
+    { code: 'TX', name: 'Texas', multiplier: 1.43 },
+    { code: 'NY', name: 'New York', multiplier: 1.65 }
   ],
   serviceTypes: [
     { id: 'regular', name: 'Regular Clean', multiplier: 1.0 },
@@ -145,9 +146,9 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   ],
   frequencies: [
     { id: 'one_time', name: 'One-time', discount: 0.2, mrrMultiplier: 0 },
-    { id: 'weekly', name: 'Weekly', discount: 0.15, mrrMultiplier: 4.3 },
-    { id: 'bi_weekly', name: 'Bi-Weekly', discount: 0.10, mrrMultiplier: 2.15 },
-    { id: 'monthly', name: 'Monthly', discount: 0.05, mrrMultiplier: 1 }
+    { id: 'weekly', name: 'Weekly', discount: 0, mrrMultiplier: 4.3 },
+    { id: 'bi_weekly', name: 'Bi-Weekly', discount: 0, mrrMultiplier: 2.15 },
+    { id: 'monthly', name: 'Monthly', discount: 0, mrrMultiplier: 1 }
   ]
 };
 

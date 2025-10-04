@@ -40,8 +40,6 @@ export function calculateFixedPricing(
   serviceTypeId: string,
   frequencyId: string
 ): FixedPricingResult {
-  console.log('🔍 calculateFixedPricing called with:', { serviceTypeId, frequencyId });
-  
   // Normalize service type ID
   const normalizedServiceType = serviceTypeId === 'moveInOut' ? 'move_in_out' : serviceTypeId;
   
@@ -57,8 +55,6 @@ export function calculateFixedPricing(
     console.warn(`Unknown service type: ${serviceTypeId}, defaulting to regular`);
     basePrice = FLAT_PRICING.regular;
   }
-
-  console.log('💰 Base price for', normalizedServiceType, '=', basePrice);
 
   // Get frequency multiplier
   const multiplier = FREQUENCY_MULTIPLIERS[frequencyId as FrequencyId] || FREQUENCY_MULTIPLIERS.one_time;
@@ -81,8 +77,6 @@ export function calculateFixedPricing(
       perCleanPrice = finalPrice / cleansPerMonth;
     }
   }
-
-  console.log('✅ Final pricing result:', { basePrice, monthlyTotal, finalPrice, isRecurring });
 
   return {
     basePrice,

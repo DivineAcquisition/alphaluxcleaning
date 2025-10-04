@@ -11,4 +11,4 @@ export type PricingMode = 'fixed' | 'state' | 'new';
  * - 'state': State-based tiered pricing by square footage
  * - 'new': New hourly-based pricing system
  */
-export const PRICING_MODE: PricingMode = 'fixed';
+export const PRICING_MODE: PricingMode = 'new';

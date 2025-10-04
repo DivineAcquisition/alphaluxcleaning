@@ -52,6 +52,7 @@ export function PricingSummaryCard({
   // Convert homeSizeId to square footage
   const getSquareFootageFromHomeSizeId = (homeSizeId: string): number => {
     const sizeMap: Record<string, number> = {
+      'under_1000': 750,
       '1000_1500': 1250,
       '1501_2000': 1750,
       '2001_2500': 2250,
@@ -99,7 +100,9 @@ export function PricingSummaryCard({
   const isRecurring = pricingResult.recurringDetails !== undefined;
   const perCleanPrice = pricingResult.recurringDetails?.perClean || 0;
   const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
-  const finalPrice = pricingResult.discountedPrice;
+  const finalPrice = isRecurring 
+    ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
+    : pricingResult.discountedPrice;
 
   return (
     <Card className={cn("shadow-lg border-primary/20", className)}>
