@@ -151,16 +151,10 @@ export function applyDiscount(price: number): {
 }
 
 /**
- * Format price with discount display
+ * Format price as currency
  */
 export function formatPrice(price: number, showOriginal: boolean = true): string {
-  const { original, discounted } = applyDiscount(price);
-  
-  if (showOriginal) {
-    return `$${original.toFixed(0)} → $${discounted.toFixed(0)}`;
-  }
-  
-  return `$${discounted.toFixed(0)}`;
+  return `$${price.toFixed(0)}`;
 }
 
 /**
