@@ -14,6 +14,7 @@ import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-syst
 import { calculatePricing, type StateCode, type ServiceType, type FrequencyType } from '@/lib/state-pricing-system';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
+import { PromotionalBanner } from '../booking/PromotionalBanner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -206,8 +207,15 @@ export function TypeformBookingFlow({ onComplete }: TypeformBookingFlowProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Promotional Banner - Show on first step */}
+      {currentStep === 1 && (
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <PromotionalBanner />
+        </div>
+      )}
+
       {/* Step 1: State Selection */}
-      <TypeformStep 
+      <TypeformStep
         questionNumber={1} 
         totalSteps={totalSteps} 
         isActive={currentStep === 1}
