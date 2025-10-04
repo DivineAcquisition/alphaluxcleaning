@@ -26,7 +26,7 @@ export function PricingSummaryCard({
   const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
 
-  if (!serviceTypeId || !frequencyId || !homeSizeId || !stateCode) {
+  if (!serviceTypeId) {
     return (
       <Card className={cn("shadow-lg border-primary/20", className)}>
         <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -100,9 +100,24 @@ export function PricingSummaryCard({
   const isRecurring = pricingResult.recurringDetails !== undefined;
   const perCleanPrice = pricingResult.recurringDetails?.perClean || 0;
   const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
-  const finalPrice = isRecurring 
-    ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
-    : pricingResult.discountedPrice;
+  const monthlyTotal = pricingResult.recurringDetails?.monthlyTotal || 0;
+  
+  // Determine display price and label based on frequency
+  let finalPrice = pricingResult.discountedPrice;
+  let priceLabel = 'Service Total';
+  
+  if (isRecurring) {
+    if (frequencyId === 'weekly') {
+      finalPrice = perCleanPrice;
+      priceLabel = 'Per Week';
+    } else if (frequencyId === 'bi_weekly') {
+      finalPrice = perCleanPrice;
+      priceLabel = 'Every Other Week';
+    } else if (frequencyId === 'monthly') {
+      finalPrice = monthlyTotal;
+      priceLabel = 'Per Month';
+    }
+  }
 
   // Get base price and discount info from the new pricing result
   const showDiscount = pricingResult.discountedPrice > 0;
@@ -129,7 +144,7 @@ export function PricingSummaryCard({
         {/* Final Price */}
         <div className="flex justify-between items-center pt-2">
           <span className="text-lg font-bold text-foreground">
-            {isRecurring ? 'Monthly' : 'Service'} Total
+            {priceLabel}
           </span>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">
@@ -142,7 +157,7 @@ export function PricingSummaryCard({
         {isRecurring && cleansPerMonth > 0 && (
           <div className="text-center pt-2">
             <p className="text-sm text-muted-foreground">
-              {formatPrice(perCleanPrice)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
+              {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''} per month
             </p>
           </div>
         )}

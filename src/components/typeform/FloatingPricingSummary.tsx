@@ -26,8 +26,8 @@ export function FloatingPricingSummary({
 }: FloatingPricingSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Don't show if no pricing data available
-  if (!serviceTypeId || !frequencyId || !homeSizeId || !stateCode) {
+  // Don't show if no service selected
+  if (!serviceTypeId) {
     return null;
   }
 
@@ -69,9 +69,24 @@ export function FloatingPricingSummary({
   const isRecurring = pricingResult.recurringDetails !== undefined;
   const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
   const perCleanPrice = pricingResult.recurringDetails?.perClean || 0;
-  const finalPrice = isRecurring 
-    ? (pricingResult.recurringDetails?.monthlyTotal ?? pricingResult.discountedPrice)
-    : pricingResult.discountedPrice;
+  const monthlyTotal = pricingResult.recurringDetails?.monthlyTotal || 0;
+  
+  // Determine display price and label based on frequency
+  let finalPrice = pricingResult.discountedPrice;
+  let priceLabel = 'Service Total';
+  
+  if (isRecurring) {
+    if (frequencyId === 'weekly') {
+      finalPrice = perCleanPrice;
+      priceLabel = 'Per Week';
+    } else if (frequencyId === 'bi_weekly') {
+      finalPrice = perCleanPrice;
+      priceLabel = 'Every Other Week';
+    } else if (frequencyId === 'monthly') {
+      finalPrice = monthlyTotal;
+      priceLabel = 'Per Month';
+    }
+  }
 
   const showDiscount = pricingResult.discountedPrice > 0;
 
@@ -92,8 +107,8 @@ export function FloatingPricingSummary({
                 </span>
                 <p className="text-xs text-muted-foreground">
                   {isRecurring && cleansPerMonth > 0 
-                    ? `${formatPrice(perCleanPrice)} per clean × ${cleansPerMonth}/month`
-                    : `${isRecurring ? 'Monthly' : 'Service'} Total`
+                    ? `${cleansPerMonth} clean${cleansPerMonth > 1 ? 's' : ''} per month`
+                    : priceLabel
                   }
                 </p>
                 {showDiscount && (
@@ -142,7 +157,7 @@ export function FloatingPricingSummary({
                 {/* Total */}
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-base font-bold text-foreground">
-                    {isRecurring ? 'Monthly' : 'Service'} Total
+                    {priceLabel}
                   </span>
                   <p className="text-xl font-bold text-primary">
                     {formatPrice(finalPrice)}
@@ -153,7 +168,7 @@ export function FloatingPricingSummary({
                 {isRecurring && cleansPerMonth > 0 && (
                   <div className="text-center pt-1">
                     <p className="text-xs text-muted-foreground">
-                      {formatPrice(perCleanPrice)} per clean × {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''}/month
+                      {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''} per month
                     </p>
                   </div>
                 )}
