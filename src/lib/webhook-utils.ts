@@ -205,6 +205,21 @@ function calculateEstimatedDuration(sqft: number, serviceType: string): number {
   return Math.round((baseHours * (isDeep ? 1.5 : 1)) * 10) / 10;
 }
 
+// Helper function to parse time slot to 24-hour format
+function parseTimeSlot(timeSlot: string): string {
+  const match = timeSlot.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return '09:00';
+  
+  let hours = parseInt(match[1]);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+  
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
+
 // Helper function to generate referral code
 function generateReferralCode(firstName: string, zip: string): string {
   const cleanFirst = firstName.toUpperCase().replace(/[^A-Z]/g, '');
@@ -271,11 +286,11 @@ export function createWebhookPayload(
       notes: bookingData.serviceDetails.specialInstructions || "",
       preferred_date: bookingData.schedulingInfo?.selectedDate || "",
       preferred_time_window: bookingData.schedulingInfo?.selectedTimeSlot || "",
-      service_start_datetime: bookingData.schedulingInfo?.selectedDate 
-        ? `${bookingData.schedulingInfo.selectedDate}T${bookingData.schedulingInfo.selectedTimeSlot?.split('-')[0]?.trim() || '09:00'}:00` 
+      service_start_datetime: bookingData.schedulingInfo?.selectedDate && bookingData.schedulingInfo?.selectedTimeSlot
+        ? `${bookingData.schedulingInfo.selectedDate}T${parseTimeSlot(bookingData.schedulingInfo.selectedTimeSlot)}:00`
         : "",
-      service_end_datetime: bookingData.schedulingInfo?.selectedDate 
-        ? new Date(new Date(`${bookingData.schedulingInfo.selectedDate}T${bookingData.schedulingInfo.selectedTimeSlot?.split('-')[0]?.trim() || '09:00'}:00`).getTime() + (estDurationHours * 60 * 60 * 1000)).toISOString()
+      service_end_datetime: bookingData.schedulingInfo?.selectedDate && bookingData.schedulingInfo?.selectedTimeSlot
+        ? new Date(new Date(`${bookingData.schedulingInfo.selectedDate}T${parseTimeSlot(bookingData.schedulingInfo.selectedTimeSlot)}:00`).getTime() + (estDurationHours * 60 * 60 * 1000)).toISOString()
         : "",
       est_duration_hours: estDurationHours,
       labor_rate_per_hour: laborRatePerHour,
