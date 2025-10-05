@@ -210,9 +210,7 @@ function generateReferralCode(firstName: string, zip: string): string {
 }
 
 export function createWebhookPayload(
-  type: "LEAD_CREATED" | "BOOKING_CONFIRMED",
   bookingData: BookingData,
-  idempotencyKey: string,
   bookingId?: string
 ): WebhookPayload {
   const utms = extractUtmParams();

@@ -23,7 +23,6 @@ import { WebhookPayload, createWebhookPayload, emitWebhook } from '@/lib/webhook
 interface TestResult {
   success: boolean;
   message: string;
-  idempotency_key?: string;
   response?: any;
   error?: string;
 }
@@ -35,123 +34,134 @@ export function EnhancedWebhookTester() {
   const [customWebhookUrl, setCustomWebhookUrl] = useState('');
   const [activeTab, setActiveTab] = useState('configured');
 
-  // Sample booking data for both lead and confirmed booking scenarios
-  const sampleLeadData = {
+  // Sample booking data with complete required fields
+  const sampleBookingData = {
     customerInfo: {
-      firstName: "John",
-      lastName: "Smith", 
-      email: "john.smith@example.com",
-      phone: "(555) 123-4567",
+      firstName: "Maria",
+      lastName: "Lopez", 
+      email: "maria.lopez@example.com",
+      phone: "+1 832-555-0182",
       address: {
-        line1: "123 Test Street",
-        line2: "Apt 2B",
-        city: "San Francisco",
-        state: "CA",
-        postalCode: "94102"
+        line1: "1245 Elmwood Drive",
+        line2: "",
+        city: "Baytown",
+        state: "TX",
+        postalCode: "77520"
       }
     },
     serviceDetails: {
-      serviceType: "Deep",
-      frequency: "One-time",
-      squareFootage: 1500,
-      bedrooms: 2,
+      serviceType: "Deep Clean",
+      frequency: "One-Time",
+      squareFootage: 2200,
+      bedrooms: 3,
       bathrooms: 2,
       addOns: ["inside_oven", "inside_fridge"],
-      specialInstructions: "Focus on kitchen deep cleaning"
-    }
-  };
-
-  const sampleBookingData = {
-    ...sampleLeadData,
+      specialInstructions: "Focus on kitchen and baseboards"
+    },
     schedulingInfo: {
-      selectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      selectedTimeSlot: "10:00 AM - 12:00 PM"
+      selectedDate: "2025-10-06",
+      selectedTimeSlot: "9:00 AM - 12:00 PM"
     },
     pricing: {
-      subtotal: 349,
-      taxAmount: 35,
-      totalAmount: 384
+      subtotal: 335,
+      discountAmount: 50,
+      discountRate: 15,
+      taxAmount: 0,
+      totalAmount: 285
     },
     paymentInfo: {
-      paymentIntentId: `pi_test_${Date.now()}`,
-      sessionId: `cs_test_${Date.now()}`
+      paymentIntentId: `pi_3NEZr7E22`,
+      paymentMethod: "Stripe",
+      paymentStatus: "Authorized"
     }
   };
 
-  // Sample recurring booking data with weekly frequency for MRR/ARR testing
+  // Sample recurring booking data with weekly frequency
   const sampleRecurringData = {
-    ...sampleLeadData,
+    customerInfo: {
+      firstName: "Sarah",
+      lastName: "Johnson", 
+      email: "sarah.johnson@example.com",
+      phone: "+1 713-555-9876",
+      address: {
+        line1: "456 Oak Avenue",
+        line2: "Suite 100",
+        city: "Houston",
+        state: "TX",
+        postalCode: "77002"
+      }
+    },
     serviceDetails: {
-      ...sampleLeadData.serviceDetails,
-      frequency: "Weekly" // This will generate significant MRR/ARR
+      serviceType: "Standard Clean",
+      frequency: "Bi-Weekly",
+      squareFootage: 1800,
+      bedrooms: 3,
+      bathrooms: 2,
+      addOns: [],
+      specialInstructions: "Please use eco-friendly products"
     },
     schedulingInfo: {
       selectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       selectedTimeSlot: "10:00 AM - 12:00 PM"
     },
     pricing: {
-      subtotal: 240,
-      taxAmount: 24,
-      totalAmount: 264
+      subtotal: 200,
+      discountAmount: 0,
+      discountRate: 0,
+      taxAmount: 0,
+      totalAmount: 200
     },
     paymentInfo: {
       subscriptionId: `sub_test_${Date.now()}`,
-      sessionId: `cs_test_${Date.now()}`
+      paymentMethod: "Stripe",
+      paymentStatus: "Active"
     }
   };
 
-  const testLeadCreated = async () => {
-    await testWebhook('LEAD_CREATED', sampleLeadData);
-  };
-
-  const testBookingConfirmed = async () => {
-    await testWebhook('BOOKING_CONFIRMED', sampleBookingData);
+  const testOneTimeBooking = async () => {
+    await testWebhook('One-Time Booking', sampleBookingData);
   };
 
   const testRecurringBooking = async () => {
-    await testWebhook('BOOKING_CONFIRMED', sampleRecurringData);
+    await testWebhook('Recurring Booking', sampleRecurringData);
   };
 
-  const testWebhook = async (type: 'LEAD_CREATED' | 'BOOKING_CONFIRMED', bookingData: any) => {
+  const testWebhook = async (label: string, bookingData: any) => {
     setIsLoading(true);
     setTestResult(null);
     
     try {
-      const idempotencyKey = `test-${type.toLowerCase()}-${Date.now()}`;
-      const bookingId = `booking_${Date.now()}`;
+      const bookingId = `BK-${Math.floor(10000 + Math.random() * 90000)}`;
       
       const payload: WebhookPayload = createWebhookPayload(
-        type,
         bookingData,
-        idempotencyKey,
         bookingId
       );
 
-      console.log(`Testing ${type} webhook with payload:`, payload);
+      console.log(`Testing ${label} webhook with payload:`, payload);
       
       const result = await emitWebhook(payload);
       
       setTestResult({
         success: result.success,
         message: result.success 
-          ? `${type} webhook sent successfully!` 
-          : `${type} webhook failed: ${result.error}`,
-        idempotency_key: idempotencyKey,
+          ? `${label} webhook sent successfully to Zapier!` 
+          : `${label} webhook failed: ${result.error}`,
         error: result.error
       });
 
       if (result.success) {
-        toast.success(`${type} webhook test successful!`);
+        toast.success(`${label} webhook test successful!`);
       } else {
-        toast.error(`${type} webhook test failed: ${result.error}`);
+        toast.error(`${label} webhook test failed: ${result.error}`);
       }
     } catch (error) {
-      console.error(`Error testing ${type} webhook:`, error);
+      console.error(`Error testing ${label} webhook:`, error);
       setTestResult({
         success: false,
-        message: `${type} webhook test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `${label} webhook test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
-      toast.error(`${type} webhook test failed`);
+      toast.error(`${label} webhook test failed`);
     } finally {
       setIsLoading(false);
     }
@@ -174,11 +184,10 @@ export function EnhancedWebhookTester() {
     try {
       console.log('Testing custom webhook:', customWebhookUrl);
       
+      const bookingId = `BK-${Math.floor(10000 + Math.random() * 90000)}`;
       const payload = createWebhookPayload(
-        'BOOKING_CONFIRMED',
-        sampleRecurringData, // Use recurring data to show MRR/ARR estimates
-        `custom-test-${Date.now()}`,
-        `booking_${Date.now()}`
+        sampleRecurringData,
+        bookingId
       );
 
       // Send directly to custom webhook URL
@@ -209,25 +218,14 @@ export function EnhancedWebhookTester() {
     }
   };
 
-  const copyPayload = async (type: 'LEAD_CREATED' | 'BOOKING_CONFIRMED' | 'RECURRING') => {
+  const copyPayload = async (type: 'ONE_TIME' | 'RECURRING') => {
     try {
-      let data;
-      let webhookType: 'LEAD_CREATED' | 'BOOKING_CONFIRMED';
+      const data = type === 'RECURRING' ? sampleRecurringData : sampleBookingData;
+      const bookingId = `BK-${Math.floor(10000 + Math.random() * 90000)}`;
+      const payload = createWebhookPayload(data, bookingId);
       
-      if (type === 'LEAD_CREATED') {
-        data = sampleLeadData;
-        webhookType = 'LEAD_CREATED';
-      } else if (type === 'RECURRING') {
-        data = sampleRecurringData;
-        webhookType = 'BOOKING_CONFIRMED';
-      } else {
-        data = sampleBookingData;
-        webhookType = 'BOOKING_CONFIRMED';
-      }
-      
-      const payload = createWebhookPayload(webhookType, data, `sample-${Date.now()}`, `booking_${Date.now()}`);
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-      toast.success(`${type} payload copied to clipboard!`);
+      toast.success(`${type === 'RECURRING' ? 'Recurring' : 'One-Time'} booking payload copied to clipboard!`);
     } catch (error) {
       toast.error('Failed to copy payload');
     }
@@ -258,28 +256,15 @@ export function EnhancedWebhookTester() {
                   </p>
                   
                   <div className="grid gap-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Button
-                        onClick={testLeadCreated}
-                        disabled={isLoading}
-                        className="flex items-center gap-2"
-                      >
-                        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                        <Send className="h-4 w-4" />
-                        Test LEAD_CREATED
-                      </Button>
-                      
-                      <Button
-                        onClick={testBookingConfirmed}
-                        disabled={isLoading}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                        <CheckCircle className="h-4 w-4" />
-                        Test BOOKING_CONFIRMED
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={testOneTimeBooking}
+                      disabled={isLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <Send className="h-4 w-4" />
+                      Test One-Time Booking
+                    </Button>
                     
                     <Button
                       onClick={testRecurringBooking}
@@ -289,7 +274,7 @@ export function EnhancedWebhookTester() {
                     >
                       {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                       <CheckCircle className="h-4 w-4" />
-                      Test RECURRING Booking (Weekly - High MRR/ARR)
+                      Test Recurring Booking (Bi-Weekly)
                     </Button>
                   </div>
                 </div>
@@ -346,13 +331,9 @@ export function EnhancedWebhookTester() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Sample Payloads</h3>
               <div className="flex gap-2">
-                <Button onClick={() => copyPayload('LEAD_CREATED')} variant="outline" size="sm">
+                <Button onClick={() => copyPayload('ONE_TIME')} variant="outline" size="sm">
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy Lead
-                </Button>
-                <Button onClick={() => copyPayload('BOOKING_CONFIRMED')} variant="outline" size="sm">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Booking
+                  Copy One-Time
                 </Button>
                 <Button onClick={() => copyPayload('RECURRING')} variant="outline" size="sm">
                   <Copy className="h-4 w-4 mr-2" />
@@ -381,23 +362,16 @@ export function EnhancedWebhookTester() {
             {showPayload && (
               <div className="space-y-4">
                 <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">LEAD_CREATED Payload (MRR/ARR: $0):</h4>
+                  <h4 className="font-medium mb-2">One-Time Booking Payload:</h4>
                   <pre className="text-xs overflow-x-auto">
-                    {JSON.stringify(createWebhookPayload('LEAD_CREATED', sampleLeadData, 'sample-lead', 'booking_sample'), null, 2)}
+                    {JSON.stringify(createWebhookPayload(sampleBookingData, 'BK-12345'), null, 2)}
                   </pre>
                 </div>
                 
                 <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">BOOKING_CONFIRMED One-time (MRR/ARR: $0):</h4>
+                  <h4 className="font-medium mb-2">Recurring Bi-Weekly Booking Payload:</h4>
                   <pre className="text-xs overflow-x-auto">
-                    {JSON.stringify(createWebhookPayload('BOOKING_CONFIRMED', sampleBookingData, 'sample-booking', 'booking_sample'), null, 2)}
-                  </pre>
-                </div>
-                
-                <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">BOOKING_CONFIRMED Recurring Weekly (MRR: ~$1,143, ARR: ~$13,728):</h4>
-                  <pre className="text-xs overflow-x-auto">
-                    {JSON.stringify(createWebhookPayload('BOOKING_CONFIRMED', sampleRecurringData, 'sample-recurring', 'booking_sample'), null, 2)}
+                    {JSON.stringify(createWebhookPayload(sampleRecurringData, 'BK-67890'), null, 2)}
                   </pre>
                 </div>
               </div>
@@ -422,11 +396,6 @@ export function EnhancedWebhookTester() {
                       <Badge variant={testResult.success ? 'default' : 'destructive'}>
                         {testResult.success ? 'Success' : 'Failed'}
                       </Badge>
-                      {testResult.idempotency_key && (
-                        <Badge variant="outline" className="text-xs">
-                          {testResult.idempotency_key}
-                        </Badge>
-                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {testResult.message}
@@ -444,8 +413,8 @@ export function EnhancedWebhookTester() {
           )}
 
           <div className="text-xs text-muted-foreground mt-6 p-4 bg-muted/50 rounded-lg">
-            <p><strong>Current Webhook URL:</strong> {'{ZAPIER_CATCH_HOOK_URL from environment}'}</p>
-            <p className="mt-1">These tests use the same webhook infrastructure as your live booking system, including idempotency checks and retry logic.</p>
+            <p><strong>Current Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/24603039/um6me4v/</p>
+            <p className="mt-1">These tests send webhooks to Zapier with the complete booking payload structure including customer info, job details, payment data, marketing attribution, and LTV metrics.</p>
           </div>
         </CardContent>
       </Card>

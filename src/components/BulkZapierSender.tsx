@@ -178,9 +178,7 @@ export const BulkZapierSender = () => {
         
         // Create comprehensive webhook payload
         const payload = createWebhookPayload(
-          'BOOKING_CONFIRMED',
           comprehensiveData,
-          `bulk_${booking.booking_id}_${Date.now()}`,
           booking.booking_id
         );
         
