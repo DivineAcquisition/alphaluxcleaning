@@ -297,7 +297,7 @@ export function createWebhookPayload(
     
     referral_program: {
       referral_code: referralCode,
-      referral_link: `https://alphaluxclean.com/referral?code=${referralCode}`,
+      referral_link: `https://book.alphaluxclean.com/referral?code=${referralCode}`,
       referral_incentive: "$50 off next cleaning per referral",
       referral_tracking_id: `REF-${Date.now().toString().slice(-5)}`,
     },
