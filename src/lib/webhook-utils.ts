@@ -287,7 +287,7 @@ export function createWebhookPayload(
       preferred_date: bookingData.schedulingInfo?.selectedDate || "",
       preferred_time_window: bookingData.schedulingInfo?.selectedTimeSlot || "",
       service_start_datetime: bookingData.schedulingInfo?.selectedDate && bookingData.schedulingInfo?.selectedTimeSlot
-        ? `${bookingData.schedulingInfo.selectedDate}T${parseTimeSlot(bookingData.schedulingInfo.selectedTimeSlot)}:00`
+        ? new Date(`${bookingData.schedulingInfo.selectedDate}T${parseTimeSlot(bookingData.schedulingInfo.selectedTimeSlot)}:00`).toISOString()
         : "",
       service_end_datetime: bookingData.schedulingInfo?.selectedDate && bookingData.schedulingInfo?.selectedTimeSlot
         ? new Date(new Date(`${bookingData.schedulingInfo.selectedDate}T${parseTimeSlot(bookingData.schedulingInfo.selectedTimeSlot)}:00`).getTime() + (estDurationHours * 60 * 60 * 1000)).toISOString()
