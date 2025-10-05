@@ -23,8 +23,8 @@ interface NewPricingInterfaceProps {
 
 export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProps) {
   const [homeSizeId, setHomeSizeId] = useState<string>('');
-  const [serviceTypeId, setServiceTypeId] = useState<string>('standard');
-  const [frequencyId, setFrequencyId] = useState<string>('one_time');
+  const [serviceTypeId, setServiceTypeId] = useState<string>('');
+  const [frequencyId, setFrequencyId] = useState<string>('');
   const [stateCode, setStateCode] = useState<string>('TX');
   const [pricingResult, setPricingResult] = useState<PricingResult | null>(null);
   const { trackViewContent, trackAddToCart } = useFacebookPixel();
