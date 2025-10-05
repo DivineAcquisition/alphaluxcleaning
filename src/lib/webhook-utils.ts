@@ -30,6 +30,8 @@ export interface WebhookPayload {
     notes: string;
     preferred_date: string;
     preferred_time_window: string;
+    service_start_datetime: string;
+    service_end_datetime: string;
     est_duration_hours: number;
     labor_rate_per_hour: number;
     labor_cost_total: number;
@@ -269,6 +271,12 @@ export function createWebhookPayload(
       notes: bookingData.serviceDetails.specialInstructions || "",
       preferred_date: bookingData.schedulingInfo?.selectedDate || "",
       preferred_time_window: bookingData.schedulingInfo?.selectedTimeSlot || "",
+      service_start_datetime: bookingData.schedulingInfo?.selectedDate 
+        ? `${bookingData.schedulingInfo.selectedDate}T${bookingData.schedulingInfo.selectedTimeSlot?.split('-')[0]?.trim() || '09:00'}:00` 
+        : "",
+      service_end_datetime: bookingData.schedulingInfo?.selectedDate 
+        ? new Date(new Date(`${bookingData.schedulingInfo.selectedDate}T${bookingData.schedulingInfo.selectedTimeSlot?.split('-')[0]?.trim() || '09:00'}:00`).getTime() + (estDurationHours * 60 * 60 * 1000)).toISOString()
+        : "",
       est_duration_hours: estDurationHours,
       labor_rate_per_hour: laborRatePerHour,
       labor_cost_total: laborCostTotal,
