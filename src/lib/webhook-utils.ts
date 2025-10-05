@@ -1,20 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface WebhookPayload {
-  type: "LEAD_CREATED" | "BOOKING_CONFIRMED";
-  idempotency_key: string;
-  emitted_at: string;
-  env: "prod" | "dev";
-  source: {
-    channel: "META" | "UI_DIRECT" | "REENGAGE" | "GG_LOCAL";
-    utms: {
-      utm_source?: string;
-      utm_medium?: string;
-      utm_campaign?: string;
-      utm_term?: string;
-      utm_content?: string;
-    };
-  };
+  booking_id: string;
+  timestamp: string;
+  source: string;
+  state: "CA" | "TX" | "NY";
+  service_type: string;
+  sq_ft_range: string;
+  frequency: string;
+  discount_applied: boolean;
+  discount_rate: number;
+  price_before_discount: number;
+  price_after_discount: number;
   customer: {
     first_name: string;
     last_name: string;
@@ -22,51 +19,49 @@ export interface WebhookPayload {
     phone: string;
   };
   address: {
-    line1: string;
-    line2?: string | null;
+    street: string;
     city: string;
-    state: "CA" | "TX" | "NY";
-    postal_code: string;
+    state: string;
+    zip: string;
   };
-  service: {
-    service_type: "Standard" | "Deep" | "Move-In/Out" | "Commercial";
-    frequency: "One-time" | "Weekly" | "Bi-Weekly" | "Monthly";
-    sqft_tier: "1000-1500" | "1501-2500" | "2501-3500" | "3501-4500" | "4501+";
-    sqft_exact: number;
+  job_details: {
     bedrooms: number;
     bathrooms: number;
-    addons: string[];
     notes: string;
+    preferred_date: string;
+    preferred_time_window: string;
+    est_duration_hours: number;
+    labor_rate_per_hour: number;
+    labor_cost_total: number;
   };
-  schedule?: {
-    service_date: string;
-    time_window: string;
+  payment: {
+    payment_method: string;
+    payment_status: string;
+    transaction_id: string;
+    amount_paid: number;
   };
-  pricing?: {
-    currency: "USD";
-    labor_basis_per_hr_team: number;
-    subtotal: number;
-    tax: number;
-    total: number;
+  marketing: {
+    campaign: string;
+    ad_id: string;
+    utm_source: string;
+    utm_campaign: string;
   };
-  stripe?: {
-    checkout_mode?: "payment" | "subscription";
-    checkout_session_id?: string;
-    payment_intent_id?: string;
-    subscription_id?: string;
+  ltv_metrics: {
+    expected_ltv: number;
+    expected_recurring_frequency: string;
+    customer_segment: string;
+    ltv_score: string;
   };
-  revenue_estimates?: {
-    estimated_mrr: number;
-    estimated_arr: number;
-    revenue_model: "one-time" | "recurring";
-    frequency_multiplier: number;
+  referral_program: {
+    referral_code: string;
+    referral_link: string;
+    referral_incentive: string;
+    referral_tracking_id: string;
   };
-  metadata?: {
-    booking_id?: string;
-    manage_link?: string;
-    ghl_contact_id?: string;
-    hcp_customer_id?: string;
-    hcp_job_id?: string;
+  system_meta: {
+    origin: string;
+    environment: string;
+    version: string;
   };
 }
 
@@ -101,6 +96,8 @@ export interface BookingData {
     subtotal: number;
     taxAmount: number;
     totalAmount: number;
+    discountAmount?: number;
+    discountRate?: number;
   };
   paymentInfo?: {
     paymentIntentId?: string;
@@ -109,13 +106,17 @@ export interface BookingData {
   };
 }
 
-// Helper function to determine square footage tier
-function getSquareFootageTier(sqft: number): "1000-1500" | "1501-2500" | "2501-3500" | "3501-4500" | "4501+" {
-  if (sqft <= 1500) return "1000-1500";
-  if (sqft <= 2500) return "1501-2500";
-  if (sqft <= 3500) return "2501-3500";
-  if (sqft <= 4500) return "3501-4500";
-  return "4501+";
+// Helper function to determine square footage range
+function getSquareFootageRange(sqft: number): string {
+  if (sqft <= 1000) return "Under 1,000";
+  if (sqft <= 1500) return "1,001–1,500";
+  if (sqft <= 2000) return "1,501–2,000";
+  if (sqft <= 2500) return "2,001–2,500";
+  if (sqft <= 3000) return "2,501–3,000";
+  if (sqft <= 3500) return "3,001–3,500";
+  if (sqft <= 4000) return "3,501–4,000";
+  if (sqft <= 4500) return "4,001–4,500";
+  return "4,501+";
 }
 
 // Helper function to format phone number to E.164
@@ -131,21 +132,21 @@ function formatPhoneToE164(phone: string): string {
 }
 
 // Helper function to normalize service type
-function normalizeServiceType(serviceType: string): "Standard" | "Deep" | "Move-In/Out" | "Commercial" {
+function normalizeServiceType(serviceType: string): string {
   const normalized = serviceType.toLowerCase();
-  if (normalized.includes('deep')) return "Deep";
+  if (normalized.includes('deep')) return "Deep Clean";
   if (normalized.includes('move')) return "Move-In/Out";
   if (normalized.includes('commercial')) return "Commercial";
-  return "Standard";
+  return "Standard Clean";
 }
 
 // Helper function to normalize frequency
-function normalizeFrequency(frequency: string): "One-time" | "Weekly" | "Bi-Weekly" | "Monthly" {
+function normalizeFrequency(frequency: string): string {
   const normalized = frequency.toLowerCase();
   if (normalized.includes('week') && normalized.includes('bi')) return "Bi-Weekly";
   if (normalized.includes('week')) return "Weekly";
   if (normalized.includes('month')) return "Monthly";
-  return "One-time";
+  return "One-Time";
 }
 
 // Helper function to extract UTM parameters from URL
@@ -176,48 +177,36 @@ function determineSourceChannel(utms: any): "META" | "UI_DIRECT" | "REENGAGE" | 
   return "UI_DIRECT";
 }
 
-// Helper function to calculate revenue estimates
-function calculateRevenueEstimates(
-  frequency: "One-time" | "Weekly" | "Bi-Weekly" | "Monthly",
-  totalAmount: number
-): {
-  estimated_mrr: number;
-  estimated_arr: number;
-  revenue_model: "one-time" | "recurring";
-  frequency_multiplier: number;
-} {
-  if (frequency === "One-time") {
-    return {
-      estimated_mrr: 0,
-      estimated_arr: 0,
-      revenue_model: "one-time",
-      frequency_multiplier: 0,
-    };
+// Helper function to calculate LTV
+function calculateLTV(frequency: string, totalAmount: number): number {
+  const normalized = frequency.toLowerCase();
+  if (normalized.includes('one-time') || normalized.includes('onetime')) {
+    return totalAmount;
   }
-
-  let monthlyMultiplier = 0;
   
-  switch (frequency) {
-    case "Weekly":
-      monthlyMultiplier = 4.33; // ~52 weeks / 12 months
-      break;
-    case "Bi-Weekly":
-      monthlyMultiplier = 2.17; // ~26 bi-weeks / 12 months
-      break;
-    case "Monthly":
-      monthlyMultiplier = 1;
-      break;
+  let multiplier = 0;
+  if (normalized.includes('week') && normalized.includes('bi')) {
+    multiplier = 26; // Bi-weekly for 1 year
+  } else if (normalized.includes('week')) {
+    multiplier = 52; // Weekly for 1 year
+  } else if (normalized.includes('month')) {
+    multiplier = 12; // Monthly for 1 year
   }
+  
+  return Math.round(totalAmount * multiplier * 100) / 100;
+}
 
-  const estimatedMRR = totalAmount * monthlyMultiplier;
-  const estimatedARR = estimatedMRR * 12;
+// Helper function to calculate estimated duration
+function calculateEstimatedDuration(sqft: number, serviceType: string): number {
+  const baseHours = sqft / 500; // Base: 500 sqft per hour
+  const isDeep = serviceType.toLowerCase().includes('deep');
+  return Math.round((baseHours * (isDeep ? 1.5 : 1)) * 10) / 10;
+}
 
-  return {
-    estimated_mrr: Math.round(estimatedMRR * 100) / 100, // Round to 2 decimal places
-    estimated_arr: Math.round(estimatedARR * 100) / 100,
-    revenue_model: "recurring",
-    frequency_multiplier: monthlyMultiplier,
-  };
+// Helper function to generate referral code
+function generateReferralCode(firstName: string, zip: string): string {
+  const cleanFirst = firstName.toUpperCase().replace(/[^A-Z]/g, '');
+  return `${cleanFirst}${zip}`;
 }
 
 export function createWebhookPayload(
@@ -227,107 +216,99 @@ export function createWebhookPayload(
   bookingId?: string
 ): WebhookPayload {
   const utms = extractUtmParams();
-  const sourceChannel = determineSourceChannel(utms);
-
+  const normalizedFrequency = normalizeFrequency(bookingData.serviceDetails.frequency);
+  const normalizedServiceType = normalizeServiceType(bookingData.serviceDetails.serviceType);
+  
+  const totalAmount = bookingData.pricing?.totalAmount || 0;
+  const discountAmount = bookingData.pricing?.discountAmount || 0;
+  const discountRate = bookingData.pricing?.discountRate || 0;
+  const priceBeforeDiscount = discountAmount > 0 ? totalAmount + discountAmount : totalAmount;
+  
+  const estDurationHours = calculateEstimatedDuration(
+    bookingData.serviceDetails.squareFootage,
+    normalizedServiceType
+  );
+  const laborRatePerHour = 25;
+  const laborCostTotal = Math.round(estDurationHours * laborRatePerHour * 100) / 100;
+  
+  const referralCode = generateReferralCode(
+    bookingData.customerInfo.firstName,
+    bookingData.customerInfo.address.postalCode
+  );
+  
+  const expectedLTV = calculateLTV(normalizedFrequency, totalAmount);
+  
   const payload: WebhookPayload = {
-    type,
-    idempotency_key: idempotencyKey,
-    emitted_at: new Date().toISOString(),
-    env: window.location.hostname.includes('localhost') ? "dev" : "prod",
-    source: {
-      channel: sourceChannel,
-      utms,
-    },
+    booking_id: bookingId || `BK-${Date.now().toString().slice(-5)}`,
+    timestamp: new Date().toISOString(),
+    source: "lovable-booking-ui",
+    state: bookingData.customerInfo.address.state as "CA" | "TX" | "NY",
+    service_type: normalizedServiceType,
+    sq_ft_range: getSquareFootageRange(bookingData.serviceDetails.squareFootage),
+    frequency: normalizedFrequency,
+    discount_applied: discountAmount > 0,
+    discount_rate: discountRate,
+    price_before_discount: priceBeforeDiscount,
+    price_after_discount: totalAmount,
+    
     customer: {
       first_name: bookingData.customerInfo.firstName,
       last_name: bookingData.customerInfo.lastName,
       email: bookingData.customerInfo.email,
       phone: formatPhoneToE164(bookingData.customerInfo.phone),
     },
+    
     address: {
-      line1: bookingData.customerInfo.address.line1,
-      line2: bookingData.customerInfo.address.line2 || null,
+      street: bookingData.customerInfo.address.line1,
       city: bookingData.customerInfo.address.city,
-      state: bookingData.customerInfo.address.state as "CA" | "TX" | "NY",
-      postal_code: bookingData.customerInfo.address.postalCode,
+      state: bookingData.customerInfo.address.state,
+      zip: bookingData.customerInfo.address.postalCode,
     },
-    service: {
-      service_type: normalizeServiceType(bookingData.serviceDetails.serviceType),
-      frequency: normalizeFrequency(bookingData.serviceDetails.frequency),
-      sqft_tier: getSquareFootageTier(bookingData.serviceDetails.squareFootage),
-      sqft_exact: bookingData.serviceDetails.squareFootage,
+    
+    job_details: {
       bedrooms: bookingData.serviceDetails.bedrooms,
       bathrooms: bookingData.serviceDetails.bathrooms,
-      addons: bookingData.serviceDetails.addOns,
       notes: bookingData.serviceDetails.specialInstructions || "",
+      preferred_date: bookingData.schedulingInfo?.selectedDate || "",
+      preferred_time_window: bookingData.schedulingInfo?.selectedTimeSlot || "",
+      est_duration_hours: estDurationHours,
+      labor_rate_per_hour: laborRatePerHour,
+      labor_cost_total: laborCostTotal,
     },
-  };
-
-  // Add schedule info for BOOKING_CONFIRMED
-  if (type === "BOOKING_CONFIRMED" && bookingData.schedulingInfo) {
-    payload.schedule = {
-      service_date: bookingData.schedulingInfo.selectedDate,
-      time_window: bookingData.schedulingInfo.selectedTimeSlot,
-    };
-  } else {
-    payload.schedule = {
-      service_date: "",
-      time_window: "",
-    };
-  }
-
-  // Add pricing info for BOOKING_CONFIRMED
-  if (type === "BOOKING_CONFIRMED" && bookingData.pricing) {
-    payload.pricing = {
-      currency: "USD",
-      labor_basis_per_hr_team: 50, // Base rate
-      subtotal: bookingData.pricing.subtotal,
-      tax: bookingData.pricing.taxAmount,
-      total: bookingData.pricing.totalAmount,
-    };
-  } else {
-    payload.pricing = {
-      currency: "USD",
-      labor_basis_per_hr_team: 50,
-      subtotal: 0,
-      tax: 0,
-      total: 0,
-    };
-  }
-
-  // Add Stripe info for BOOKING_CONFIRMED
-  if (type === "BOOKING_CONFIRMED" && bookingData.paymentInfo) {
-    payload.stripe = {
-      checkout_mode: bookingData.paymentInfo.subscriptionId ? "subscription" : "payment",
-      checkout_session_id: bookingData.paymentInfo.sessionId,
-      payment_intent_id: bookingData.paymentInfo.paymentIntentId,
-      subscription_id: bookingData.paymentInfo.subscriptionId,
-    };
-  } else {
-    payload.stripe = {};
-  }
-
-  // Add revenue estimates for BOOKING_CONFIRMED
-  if (type === "BOOKING_CONFIRMED" && bookingData.pricing) {
-    const revenueEstimates = calculateRevenueEstimates(
-      normalizeFrequency(bookingData.serviceDetails.frequency),
-      bookingData.pricing.totalAmount
-    );
-    payload.revenue_estimates = revenueEstimates;
-  } else {
-    // For LEAD_CREATED, estimate potential recurring value based on base pricing
-    const estimatedTotal = bookingData.pricing?.totalAmount || 350; // Default estimate
-    const revenueEstimates = calculateRevenueEstimates(
-      normalizeFrequency(bookingData.serviceDetails.frequency),
-      estimatedTotal
-    );
-    payload.revenue_estimates = revenueEstimates;
-  }
-
-  // Add metadata
-  payload.metadata = {
-    booking_id: bookingId || "",
-    manage_link: bookingId ? `https://alphaluxclean.com/manage?token=${bookingId}` : "",
+    
+    payment: {
+      payment_method: "Stripe",
+      payment_status: bookingData.paymentInfo?.paymentIntentId ? "Authorized" : "Pending",
+      transaction_id: bookingData.paymentInfo?.paymentIntentId || "",
+      amount_paid: totalAmount,
+    },
+    
+    marketing: {
+      campaign: utms.utm_campaign || "Direct",
+      ad_id: utms.utm_content || "",
+      utm_source: utms.utm_source || "direct",
+      utm_campaign: utms.utm_campaign || "",
+    },
+    
+    ltv_metrics: {
+      expected_ltv: expectedLTV,
+      expected_recurring_frequency: normalizedFrequency,
+      customer_segment: "Residential",
+      ltv_score: expectedLTV > 1000 ? "A+" : expectedLTV > 500 ? "B+" : "C",
+    },
+    
+    referral_program: {
+      referral_code: referralCode,
+      referral_link: `https://alphaluxclean.com/referral?code=${referralCode}`,
+      referral_incentive: "$50 off next cleaning per referral",
+      referral_tracking_id: `REF-${Date.now().toString().slice(-5)}`,
+    },
+    
+    system_meta: {
+      origin: "lovable.io",
+      environment: window.location.hostname.includes('localhost') ? "development" : "production",
+      version: "1.5.0",
+    },
   };
 
   return payload;
@@ -335,7 +316,7 @@ export function createWebhookPayload(
 
 export async function emitWebhook(payload: WebhookPayload): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log("Emitting webhook:", payload.type, payload.idempotency_key);
+    console.log("Emitting webhook for booking:", payload.booking_id);
 
     const { data, error } = await supabase.functions.invoke('emit-zapier-webhook', {
       body: payload,

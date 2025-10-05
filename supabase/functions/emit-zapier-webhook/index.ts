@@ -7,20 +7,17 @@ const corsHeaders = {
 };
 
 interface WebhookPayload {
-  type: "LEAD_CREATED" | "BOOKING_CONFIRMED";
-  idempotency_key: string;
-  emitted_at: string;
-  env: "prod" | "dev";
-  source: {
-    channel: "META" | "UI_DIRECT" | "REENGAGE" | "GG_LOCAL";
-    utms: {
-      utm_source?: string;
-      utm_medium?: string;
-      utm_campaign?: string;
-      utm_term?: string;
-      utm_content?: string;
-    };
-  };
+  booking_id: string;
+  timestamp: string;
+  source: string;
+  state: "CA" | "TX" | "NY";
+  service_type: string;
+  sq_ft_range: string;
+  frequency: string;
+  discount_applied: boolean;
+  discount_rate: number;
+  price_before_discount: number;
+  price_after_discount: number;
   customer: {
     first_name: string;
     last_name: string;
@@ -28,45 +25,49 @@ interface WebhookPayload {
     phone: string;
   };
   address: {
-    line1: string;
-    line2?: string | null;
+    street: string;
     city: string;
-    state: "CA" | "TX" | "NY";
-    postal_code: string;
+    state: string;
+    zip: string;
   };
-  service: {
-    service_type: "Standard" | "Deep" | "Move-In/Out" | "Commercial";
-    frequency: "One-time" | "Weekly" | "Bi-Weekly" | "Monthly";
-    sqft_tier: "1000-1500" | "1501-2500" | "2501-3500" | "3501-4500" | "4501+";
-    sqft_exact: number;
+  job_details: {
     bedrooms: number;
     bathrooms: number;
-    addons: string[];
     notes: string;
+    preferred_date: string;
+    preferred_time_window: string;
+    est_duration_hours: number;
+    labor_rate_per_hour: number;
+    labor_cost_total: number;
   };
-  schedule?: {
-    service_date: string;
-    time_window: string;
+  payment: {
+    payment_method: string;
+    payment_status: string;
+    transaction_id: string;
+    amount_paid: number;
   };
-  pricing?: {
-    currency: "USD";
-    labor_basis_per_hr_team: number;
-    subtotal: number;
-    tax: number;
-    total: number;
+  marketing: {
+    campaign: string;
+    ad_id: string;
+    utm_source: string;
+    utm_campaign: string;
   };
-  stripe?: {
-    checkout_mode?: "payment" | "subscription";
-    checkout_session_id?: string;
-    payment_intent_id?: string;
-    subscription_id?: string;
+  ltv_metrics: {
+    expected_ltv: number;
+    expected_recurring_frequency: string;
+    customer_segment: string;
+    ltv_score: string;
   };
-  metadata?: {
-    booking_id?: string;
-    manage_link?: string;
-    ghl_contact_id?: string;
-    hcp_customer_id?: string;
-    hcp_job_id?: string;
+  referral_program: {
+    referral_code: string;
+    referral_link: string;
+    referral_incentive: string;
+    referral_tracking_id: string;
+  };
+  system_meta: {
+    origin: string;
+    environment: string;
+    version: string;
   };
 }
 
@@ -85,8 +86,7 @@ async function sendWebhookWithRetry(
     try {
       logStep(`Sending webhook attempt ${attempt}/${maxRetries}`, { 
         url, 
-        type: payload.type, 
-        idempotency_key: payload.idempotency_key 
+        booking_id: payload.booking_id
       });
 
       const response = await fetch(url, {
@@ -148,20 +148,12 @@ serve(async (req) => {
   try {
     logStep("Webhook emitter started");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const zapierUrl = Deno.env.get("ZAPIER_CATCH_HOOK_URL");
-
-    if (!zapierUrl) {
-      throw new Error("ZAPIER_CATCH_HOOK_URL not configured");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const zapierUrl = "https://hooks.zapier.com/hooks/catch/24603039/um6me4v/";
     const payload: WebhookPayload = await req.json();
 
     logStep("Payload received", { 
-      type: payload.type, 
-      idempotency_key: payload.idempotency_key 
+      booking_id: payload.booking_id,
+      customer_email: payload.customer.email
     });
 
     // Validate required fields
@@ -171,50 +163,9 @@ serve(async (req) => {
     if (!payload.address?.state) {
       throw new Error("Address state is required");
     }
-    if (!payload.service?.service_type) {
+    if (!payload.service_type) {
       throw new Error("Service type is required");
     }
-
-    // Additional validation for BOOKING_CONFIRMED
-    if (payload.type === "BOOKING_CONFIRMED") {
-      if (!payload.schedule?.service_date) {
-        throw new Error("Service date is required for BOOKING_CONFIRMED");
-      }
-      if (!payload.pricing?.total) {
-        throw new Error("Pricing total is required for BOOKING_CONFIRMED");
-      }
-      if (!payload.stripe?.payment_intent_id && !payload.stripe?.subscription_id) {
-        throw new Error("Either payment_intent_id or subscription_id is required for BOOKING_CONFIRMED");
-      }
-    }
-
-    // Check idempotency
-    const { data: existingEvent } = await supabase
-      .from("webhook_idempotency")
-      .select("id")
-      .eq("idempotency_key", payload.idempotency_key)
-      .single();
-
-    if (existingEvent) {
-      logStep("Event already processed", { idempotency_key: payload.idempotency_key });
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Event already processed",
-        idempotency_key: payload.idempotency_key
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // Store idempotency key
-    await supabase
-      .from("webhook_idempotency")
-      .insert({
-        idempotency_key: payload.idempotency_key,
-        event_type: payload.type,
-        payload: payload
-      });
 
     // Send webhook
     const webhookHeaders = {
@@ -224,11 +175,11 @@ serve(async (req) => {
     const result = await sendWebhookWithRetry(zapierUrl, payload, webhookHeaders);
 
     if (result.success) {
-      logStep("Webhook sent successfully", { idempotency_key: payload.idempotency_key });
+      logStep("Webhook sent successfully", { booking_id: payload.booking_id });
       return new Response(JSON.stringify({ 
         success: true, 
         message: "Webhook sent successfully",
-        idempotency_key: payload.idempotency_key,
+        booking_id: payload.booking_id,
         response: result.response
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -237,12 +188,12 @@ serve(async (req) => {
     } else {
       logStep("Webhook failed after retries", { 
         error: result.error,
-        idempotency_key: payload.idempotency_key 
+        booking_id: payload.booking_id 
       });
       return new Response(JSON.stringify({ 
         success: false, 
         error: result.error,
-        idempotency_key: payload.idempotency_key
+        booking_id: payload.booking_id
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
