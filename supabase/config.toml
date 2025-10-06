@@ -140,3 +140,10 @@ verify_jwt = false
 
 [functions.track-promo-analytics]
 verify_jwt = false
+
+# HCP Integration Functions
+[functions.receive-hcp-webhook]
+verify_jwt = false
+
+[functions.retry-failed-hcp-syncs]
+verify_jwt = false

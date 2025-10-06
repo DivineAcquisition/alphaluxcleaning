@@ -31,8 +31,20 @@ export interface BookingPayload {
     mrr_est?: number;
     arr_est?: number;
     currency: string;
+    addons_breakdown?: Array<{
+      name: string;
+      price: number;
+    }>;
   };
   source: string;
+  special_instructions?: string;
+  property_details?: {
+    pets?: string;
+    access_code?: string;
+    parking_instructions?: string;
+  };
+  first_booking?: boolean;
+  recurring_active?: boolean;
 }
 
 export interface HCPConfig {
@@ -45,8 +57,11 @@ export interface HCPConfig {
 export interface HCPCustomer {
   id: string;
   first_name: string;
-  last_name: string;  
+  last_name: string;
+  company?: string;
   emails: string[];
+  mobile_number?: string;
+  home_number?: string;
   phones: string[];
   address?: {
     line1: string;
@@ -56,12 +71,16 @@ export interface HCPCustomer {
     postal_code: string;
   };
   tags?: string[];
+  notifications_enabled?: boolean;
+  lead_source?: string;
 }
 
 export interface HCPJob {
   id: string;
   customer_id: string;
   title: string;
+  work_status?: string;
+  description?: string;
   scheduled_start: string;
   scheduled_end: string;
   notes?: string;
@@ -74,10 +93,17 @@ export interface HCPJob {
   };
   line_items?: Array<{
     name: string;
+    description?: string;
     quantity: number;
     unit_price: number;
+    total?: number;
+    sku?: string;
   }>;
   tags?: string[];
+  lead_source?: string;
+  employee_ids?: string[];
+  invoice_number?: string;
+  custom_fields?: Record<string, any>;
 }
 
 export class HCPError extends Error {
@@ -158,6 +184,8 @@ export function redactApiKey(key: string): string {
 export function formatTimeWindow(date: string, timeWindow: string, timezone: string): { start: string; end: string } {
   const [startTime, endTime] = timeWindow.split('-');
   
+  // Create dates in local timezone, then convert to ISO
+  // This preserves the local time when sending to HCP
   const startDate = new Date(`${date}T${startTime}:00`);
   const endDate = new Date(`${date}T${endTime}:00`);
   
@@ -165,6 +193,54 @@ export function formatTimeWindow(date: string, timeWindow: string, timezone: str
     start: startDate.toISOString(),
     end: endDate.toISOString()
   };
+}
+
+export function mapLeadSource(sourceChannel: string): string {
+  const mapping: Record<string, string> = {
+    'UI_DIRECT': 'Website',
+    'META': 'Facebook',
+    'GG_LOCAL': 'Google',
+    'REENGAGE': 'Referral'
+  };
+  return mapping[sourceChannel] || 'Other';
+}
+
+export function classifyPhoneNumber(phone: string): { mobile?: string; home?: string } {
+  // Simple heuristic: if it looks like a mobile pattern, classify as mobile
+  // Otherwise, classify as home. In reality, you might use a phone validation API
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // For now, default to mobile for most cases
+  // You can enhance this with actual mobile carrier detection
+  return { mobile: phone };
+}
+
+export function categorizeError(error: any): string {
+  const message = error?.message?.toLowerCase() || '';
+  const status = error?.statusCode || error?.status;
+  
+  if (status === 401 || status === 403 || message.includes('unauthorized') || message.includes('forbidden')) {
+    return 'auth_error';
+  }
+  if (status === 429 || message.includes('rate limit')) {
+    return 'rate_limit';
+  }
+  if (status >= 400 && status < 500 || message.includes('validation') || message.includes('invalid')) {
+    return 'validation_error';
+  }
+  if (status >= 500 || message.includes('server error') || message.includes('internal error')) {
+    return 'server_error';
+  }
+  if (message.includes('network') || message.includes('timeout') || message.includes('connection')) {
+    return 'network_error';
+  }
+  return 'unknown_error';
+}
+
+export function calculateNextRetry(retryCount: number): Date {
+  const delays = [5, 15, 60, 240, 1440]; // minutes: 5m, 15m, 1h, 4h, 24h
+  const delayMinutes = delays[Math.min(retryCount, delays.length - 1)];
+  return new Date(Date.now() + delayMinutes * 60 * 1000);
 }
 
 export function buildJobTitle(serviceType: string, frequency: string): string {

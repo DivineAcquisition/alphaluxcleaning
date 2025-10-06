@@ -48,7 +48,14 @@ serve(async (req) => {
       });
     }
 
-    // Build HCP sync payload
+    // Build enhanced HCP sync payload
+    const addonsBreakdown = booking.pricing_breakdown?.addons 
+      ? Object.entries(booking.pricing_breakdown.addons).map(([name, price]) => ({
+          name,
+          price: typeof price === 'number' ? price : parseFloat(price as string)
+        }))
+      : [];
+
     const payload = {
       booking_id: booking.id,
       customer: {
@@ -79,9 +86,14 @@ serve(async (req) => {
         total: Number(booking.est_price) || 0,
         mrr_est: Number(booking.mrr) || 0,
         arr_est: Number(booking.arr) || 0,
-        currency: 'USD'
+        currency: 'USD',
+        addons_breakdown: addonsBreakdown
       },
-      source: booking.source_channel || 'AGP Booking UI'
+      source: booking.source_channel || 'AGP Booking UI',
+      special_instructions: booking.special_instructions,
+      property_details: booking.property_details || {},
+      first_booking: booking.first_booking,
+      recurring_active: booking.recurring_active
     };
 
     console.log("HCP sync payload prepared for booking:", booking_id);

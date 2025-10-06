@@ -663,10 +663,15 @@ export type Database = {
           attempts: number
           booking_id: string
           created_at: string
+          error_category: string | null
           hcp_customer_id: string | null
           hcp_job_id: string | null
           id: string
           last_error: string | null
+          next_retry_at: string | null
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_count: number | null
           status: string
           updated_at: string
         }
@@ -674,10 +679,15 @@ export type Database = {
           attempts?: number
           booking_id: string
           created_at?: string
+          error_category?: string | null
           hcp_customer_id?: string | null
           hcp_job_id?: string | null
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number | null
           status?: string
           updated_at?: string
         }
@@ -685,10 +695,15 @@ export type Database = {
           attempts?: number
           booking_id?: string
           created_at?: string
+          error_category?: string | null
           hcp_customer_id?: string | null
           hcp_job_id?: string | null
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number | null
           status?: string
           updated_at?: string
         }
