@@ -18,7 +18,8 @@ import { PromotionalBanner } from '../booking/PromotionalBanner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
@@ -37,7 +38,9 @@ export function TypeformBookingFlow({
     data: bookingData,
     updateField,
     updateData,
-    isLoading
+    clearData,
+    isLoading,
+    lastSaved
   } = useFormPersistence({
     stateCode: '',
     zipCode: '',
@@ -74,24 +77,15 @@ export function TypeformBookingFlow({
   // ZIP code validation state
   const [zipValidation, setZipValidation] = useState<ServiceAreaValidation | null>(null);
 
-  // Pre-fill address and contact info from earlier steps
+  // Show "Start Fresh" banner if there's saved data
+  const [showStartFreshBanner, setShowStartFreshBanner] = useState(false);
+
   useEffect(() => {
-    if (bookingData.stateCode && bookingData.zipCode) {
-      updateField('address', {
-        ...bookingData.address,
-        state: bookingData.stateCode,
-        zipCode: bookingData.zipCode
-      });
+    // Check if there's saved data when component mounts
+    if (lastSaved && currentStep === 1) {
+      setShowStartFreshBanner(true);
     }
-  }, [bookingData.stateCode, bookingData.zipCode]);
-  useEffect(() => {
-    if (bookingData.email) {
-      updateField('contactInfo', {
-        ...bookingData.contactInfo,
-        email: bookingData.email
-      });
-    }
-  }, [bookingData.email]);
+  }, []);
 
   // Helper to convert homeSizeId to square footage
   const getSquareFootageFromHomeSizeId = (homeSizeId: string): number => {
@@ -241,6 +235,42 @@ export function TypeformBookingFlow({
     </div>;
   }
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Start Fresh Banner - Show if saved data exists */}
+      {showStartFreshBanner && currentStep === 1 && (
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium">Continue where you left off?</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  We found a previous booking from {lastSaved ? format(lastSaved, 'MMM d, h:mm a') : 'earlier'}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    clearData();
+                    setShowStartFreshBanner(false);
+                    toast.success('Starting fresh');
+                  }}
+                >
+                  Start Fresh
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowStartFreshBanner(false)}
+                >
+                  Continue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Promotional Banner - Show on first step */}
       {currentStep === 1 && (
         <div className="max-w-4xl mx-auto px-4 pt-8">

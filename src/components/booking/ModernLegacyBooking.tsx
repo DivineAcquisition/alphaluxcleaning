@@ -283,8 +283,8 @@ const initialBookingData: BookingData = {
   address: {
     street: '',
     city: '',
-    state: 'TX',
-    zipCode: '78704'
+    state: '',
+    zipCode: ''
   },
   customerName: '',
   contactNumber: '',
