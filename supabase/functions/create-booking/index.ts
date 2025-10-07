@@ -22,7 +22,8 @@ serve(async (req) => {
       bookingData,
       paymentType,
       customerEmail,
-      customerName
+      customerName,
+      squarePaymentId
     } = requestBody;
 
     if (!bookingData || !paymentType || !customerEmail || !customerName) {
@@ -124,7 +125,8 @@ serve(async (req) => {
         deposit_amount: paymentType === 'deposit_20' ? totalPrice * 0.2 : 0,
         balance_due: paymentType === 'deposit_20' ? totalPrice * 0.8 : totalPrice,
         mrr: mrr,
-        arr: arr
+        arr: arr,
+        square_payment_id: squarePaymentId || null
       })
       .select()
       .single();

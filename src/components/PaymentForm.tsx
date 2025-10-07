@@ -444,44 +444,46 @@ export function PaymentForm({
               customerName={customerInfo.name}
               customerPhone={customerInfo.phone}
               onSuccess={async (paymentId) => {
-                console.log('Payment successful, creating booking...');
+                console.log('Payment successful, creating booking...', { paymentId });
                 
                 const finalPrice = getFinalPrice();
                 
                 try {
-                  // Create the booking record
-                  const { data: bookingData, error: bookingError } = await supabase
-                    .from('bookings')
-                    .insert({
-                      customer_name: customerInfo.name,
-                      customer_email: customerInfo.email,
-                      customer_phone: customerInfo.phone,
-                      service_type: pricingData.cleaningType,
-                      home_size: String(pricingData.squareFootage || ''),
-                      frequency: pricingData.frequency,
-                      add_ons: pricingData.addOns,
-                      scheduled_date: schedulingData?.scheduledDate || null,
-                      scheduled_time: schedulingData?.scheduledTime || null,
-                      total_price: finalPrice,
-                      payment_status: 'deposit_paid',
-                      stripe_payment_intent_id: preloadedPaymentIntentId,
-                      discount_code: appliedDiscount?.code || null,
-                      referral_code: appliedReferral?.code || null
-                    })
-                    .select()
-                    .single();
+                  // Call create-booking edge function
+                  const { data: response, error: functionError } = await supabase.functions.invoke('create-booking', {
+                    body: {
+                      bookingData: {
+                        serviceType: pricingData.cleaningType,
+                        homeSize: String(pricingData.squareFootage || ''),
+                        frequency: pricingData.frequency,
+                        addOns: pricingData.addOns,
+                        serviceDate: schedulingData?.scheduledDate || null,
+                        serviceTime: schedulingData?.scheduledTime || null,
+                        totalPrice: finalPrice,
+                        bedrooms: pricingData.bedrooms || '',
+                        bathrooms: pricingData.bathrooms || '',
+                        dwellingType: '',
+                        specialInstructions: '',
+                        zipCode: ''
+                      },
+                      paymentType: 'deposit_20',
+                      customerEmail: customerInfo.email,
+                      customerName: customerInfo.name,
+                      squarePaymentId: paymentId
+                    }
+                  });
 
-                  if (bookingError) {
-                    console.error('Booking creation failed:', bookingError);
+                  if (functionError || !response?.success) {
+                    console.error('Booking creation failed:', functionError || response);
                     toast.error('Payment successful but booking creation failed. Please contact support.');
                     return;
                   }
 
-                  console.log('Booking created successfully:', bookingData);
+                  console.log('Booking created successfully:', response.booking);
                   toast.success('Booking confirmed! Redirecting to confirmation page...');
                   
                   // Navigate to confirmation page
-                  navigateToOrderConfirmation(navigate, bookingData.id);
+                  navigateToOrderConfirmation(navigate, response.booking.id);
                 } catch (error) {
                   console.error('Booking creation error:', error);
                   toast.error('Payment successful but booking creation failed. Please contact support.');
