@@ -68,7 +68,7 @@ export function TypeformBookingFlow({
     specialInstructions: ''
   }, {
     storageKey: 'typeform-booking',
-    debounceMs: 500
+    debounceMs: 2000
   });
 
   // Calculate pricing
@@ -177,25 +177,11 @@ export function TypeformBookingFlow({
     }
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
-      // Scroll to top smoothly when advancing to next step
-      setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }, 100);
     }
   };
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
-      // Scroll to top smoothly when going back
-      setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }, 100);
     }
   };
   const canGoNext = () => {
