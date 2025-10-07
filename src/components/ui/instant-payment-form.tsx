@@ -1,13 +1,27 @@
 import React, { Suspense } from 'react';
-import { EmbeddedPaymentForm, EmbeddedPaymentFormProps } from '@/components/booking/EmbeddedPaymentForm';
+import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
 import { PaymentFormSkeleton } from '@/components/ui/loading-skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface InstantPaymentFormProps {
+  paymentAmount: number;
+  fullAmount: number;
+  paymentType: "full" | "deposit";
+  customerEmail: string;
+  customerName: string;
+  customerPhone?: string;
+  bookingId?: string;
+  applyCredits?: boolean;
+  creditsAmount?: number;
+  onSuccess: (paymentId: string) => void;
+  onCancel: () => void;
+}
 
 /**
  * Wrapper component for instant payment form loading
  * Uses Suspense and optimistic rendering for zero loading time
  */
-export const InstantPaymentForm: React.FC<EmbeddedPaymentFormProps> = (props) => {
+export const InstantPaymentForm: React.FC<InstantPaymentFormProps> = (props) => {
   return (
     <Suspense
       fallback={
@@ -24,7 +38,7 @@ export const InstantPaymentForm: React.FC<EmbeddedPaymentFormProps> = (props) =>
         </Card>
       }
     >
-      <EmbeddedPaymentForm {...props} />
+      <EmbeddedSquarePaymentForm {...props} />
     </Suspense>
   );
 };

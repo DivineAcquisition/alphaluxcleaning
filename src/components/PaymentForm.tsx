@@ -436,12 +436,14 @@ export function PaymentForm({
 
           {/* Show embedded form for payment */}
           {showEmbeddedForm && preloadedClientSecret && (
-            <EmbeddedPaymentForm
-              clientSecret={preloadedClientSecret}
+            <EmbeddedSquarePaymentForm
               paymentAmount={Math.round(getFinalPrice() * 0.2 * 100) / 100}
               fullAmount={getFinalPrice()}
-              paymentType="deposit_20"
-              onSuccess={async () => {
+              paymentType="deposit"
+              customerEmail={customerInfo.email}
+              customerName={customerInfo.name}
+              customerPhone={customerInfo.phone}
+              onSuccess={async (paymentId) => {
                 console.log('Payment successful, creating booking...');
                 
                 const finalPrice = getFinalPrice();

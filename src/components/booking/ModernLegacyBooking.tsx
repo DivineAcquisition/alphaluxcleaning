@@ -22,7 +22,7 @@ import { EnhancedServiceTypeCards } from './EnhancedServiceTypeCards';
 import { PropertyDetailsSelector } from './PropertyDetailsSelector';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
-import { EmbeddedPaymentForm } from './EmbeddedPaymentForm';
+import { EmbeddedSquarePaymentForm } from './EmbeddedSquarePaymentForm';
 import { PromoCodeInput } from './PromoCodeInput';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
@@ -562,7 +562,14 @@ export function ModernLegacyBooking() {
           </Button>
         </div>
         
-        <EmbeddedPaymentForm clientSecret={clientSecret} paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice} fullAmount={bookingData.totalPrice} paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit_20" : "full_payment"} onSuccess={async () => {
+        <EmbeddedSquarePaymentForm 
+          paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice}
+          fullAmount={bookingData.totalPrice}
+          paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit" : "full"}
+          customerEmail={bookingData.customerEmail}
+          customerName={bookingData.customerName}
+          customerPhone={bookingData.customerEmail}
+          onSuccess={async (paymentId) => {
         console.log('Payment successful, creating order');
         setIsProcessingPayment(true);
         try {

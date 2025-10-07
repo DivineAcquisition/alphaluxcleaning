@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { 
   ArrowLeft, 
   CreditCard, 
@@ -18,138 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-// Use the existing Stripe configuration from our lib
-import { getStripePromise } from '@/lib/stripe';
-
-interface PaymentFormProps {
-  amount: number;
-  tipAmount: number;
-  bookingId: string;
-  customerId: string;
-  onSuccess: () => void;
-}
-
-function PaymentForm({ amount, tipAmount, bookingId, customerId, onSuccess }: PaymentFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-
-    try {
-      // Create payment intent
-      const { data, error } = await supabase.functions.invoke('customer-payment-intent', {
-        body: {
-          customerId,
-          bookingId,
-          amount,
-          tipAmount
-        }
-      });
-
-      if (error) throw error;
-
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) throw new Error('Card element not found');
-
-      // Confirm payment
-      const { error: paymentError } = await stripe.confirmCardPayment(
-        data.clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-          }
-        }
-      );
-
-      if (paymentError) {
-        toast({
-          title: "Payment Failed",
-          description: paymentError.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Payment Successful!",
-          description: "Your payment has been processed successfully.",
-        });
-        onSuccess();
-      }
-    } catch (error: any) {
-      toast({
-        title: "Payment Error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 border rounded-lg bg-muted/5">
-        <Label className="text-sm font-medium mb-2 block">Card Information</Label>
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-            },
-          }}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Service Balance:</span>
-          <span>${amount.toFixed(2)}</span>
-        </div>
-        {tipAmount > 0 && (
-          <div className="flex justify-between text-sm">
-            <span>Tip:</span>
-            <span>${tipAmount.toFixed(2)}</span>
-          </div>
-        )}
-        <Separator />
-        <div className="flex justify-between font-medium">
-          <span>Total:</span>
-          <span>${(amount + tipAmount).toFixed(2)}</span>
-        </div>
-      </div>
-
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!stripe || isProcessing}
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing Payment...
-          </>
-        ) : (
-          <>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Pay ${(amount + tipAmount).toFixed(2)}
-          </>
-        )}
-      </Button>
-    </form>
-  );
-}
+import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
 
 export default function CustomerPortalBilling() {
   const [balance, setBalance] = useState(60);
@@ -162,6 +29,8 @@ export default function CustomerPortalBilling() {
   // Mock data
   const customerId = 'customer-123';
   const bookingId = 'booking-123';
+  const customerEmail = 'customer@example.com';
+  const customerName = 'John Doe';
 
   useEffect(() => {
     const checkAuth = () => {
@@ -311,15 +180,23 @@ export default function CustomerPortalBilling() {
                 )}
               </div>
 
-              <Elements stripe={getStripePromise()}>
-                <PaymentForm
-                  amount={balance}
-                  tipAmount={tipAmount}
-                  bookingId={bookingId}
-                  customerId={customerId}
-                  onSuccess={handlePaymentSuccess}
-                />
-              </Elements>
+              <EmbeddedSquarePaymentForm
+                paymentAmount={balance + tipAmount}
+                fullAmount={balance + tipAmount}
+                paymentType="full"
+                customerEmail={customerEmail}
+                customerName={customerName}
+                bookingId={bookingId}
+                onSuccess={(paymentId) => {
+                  handlePaymentSuccess();
+                }}
+                onCancel={() => {
+                  toast({
+                    title: "Payment Cancelled",
+                    description: "Your payment was cancelled.",
+                  });
+                }}
+              />
             </CardContent>
           </Card>
         )}

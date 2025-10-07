@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
-import { useStripePreloader } from '@/hooks/useStripePreloader';
+import { useSquarePreloader } from '@/hooks/useSquarePreloader';
 import { CheckCircle } from 'lucide-react';
 
 // Essential booking pages only
@@ -44,8 +44,8 @@ import NotFound from '@/pages/NotFound';
 const queryClient = new QueryClient();
 
 function App() {
-  // Preload Stripe for better performance
-  useStripePreloader();
+  // Preload Square for better performance
+  useSquarePreloader();
   
   return (
     <HelmetProvider>
