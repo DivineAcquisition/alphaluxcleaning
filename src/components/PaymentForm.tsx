@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { useNavigate } from "react-router-dom";
-import { EmbeddedPaymentForm } from "@/components/booking/EmbeddedPaymentForm";
+import { EmbeddedSquarePaymentForm } from "@/components/booking/EmbeddedSquarePaymentForm";
 import { usePreloadedPayment } from "@/hooks/usePreloadedPayment";
 import { navigateToOrderConfirmation } from "@/utils/routing-helpers";
 import { PaymentFormSkeleton } from "@/components/ui/loading-skeleton";

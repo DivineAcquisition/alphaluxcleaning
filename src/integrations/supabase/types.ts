@@ -221,6 +221,8 @@ export type Database = {
           source_channel: string | null
           special_instructions: string | null
           sqft_or_bedrooms: string
+          square_customer_id: string | null
+          square_payment_id: string | null
           status: Database["public"]["Enums"]["booking_status"] | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -278,6 +280,8 @@ export type Database = {
           source_channel?: string | null
           special_instructions?: string | null
           sqft_or_bedrooms: string
+          square_customer_id?: string | null
+          square_payment_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -335,6 +339,8 @@ export type Database = {
           source_channel?: string | null
           special_instructions?: string | null
           sqft_or_bedrooms?: string
+          square_customer_id?: string | null
+          square_payment_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -422,6 +428,7 @@ export type Database = {
           recurrence_plan: string | null
           referral_code: string | null
           referral_link: string | null
+          square_customer_id: string | null
           state: string
           stripe_customer_id: string | null
           user_id: string | null
@@ -450,6 +457,7 @@ export type Database = {
           recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
+          square_customer_id?: string | null
           state: string
           stripe_customer_id?: string | null
           user_id?: string | null
@@ -478,6 +486,7 @@ export type Database = {
           recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
+          square_customer_id?: string | null
           state?: string
           stripe_customer_id?: string | null
           user_id?: string | null
