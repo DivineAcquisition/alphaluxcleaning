@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Share2, Mail, MessageSquare, Gift, Users, TrendingUp, DollarSign } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Copy, Share2, Mail, MessageSquare, Gift, Users, TrendingUp, DollarSign, Sparkles, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,6 +27,8 @@ export const ReferralHub: React.FC = () => {
   const [referralData, setReferralData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
   const [customerId, setCustomerId] = useState<string>('');
+  const [isRedemptionDialogOpen, setIsRedemptionDialogOpen] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   useEffect(() => {
     loadReferralData();
@@ -91,6 +94,45 @@ export const ReferralHub: React.FC = () => {
       toast.error('Failed to load referral data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRedeemCredits = async () => {
+    if (!customerId || !referralData?.available_credits) return;
+
+    setIsRedeeming(true);
+    try {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('id', customerId)
+        .single();
+
+      if (!customer?.email) {
+        throw new Error('Customer email not found');
+      }
+
+      const { data, error } = await supabase.functions.invoke('apply-referral-credits', {
+        body: {
+          customer_email: customer.email,
+          max_amount_cents: referralData.available_credits
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(`Credits Applied! $${data.amount_redeemed.toFixed(2)} will be automatically applied to your next booking.`);
+        setIsRedemptionDialogOpen(false);
+        loadReferralData(); // Refresh data
+      } else {
+        throw new Error('Failed to apply credits');
+      }
+    } catch (error: any) {
+      console.error('Error redeeming credits:', error);
+      toast.error(error.message || "Failed to redeem credits");
+    } finally {
+      setIsRedeeming(false);
     }
   };
 
@@ -233,12 +275,94 @@ Let me know what you think after you try them out.`);
         
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Available Credits</p>
-                <p className="text-2xl font-bold">{formatCurrency(referralData.available_credits)}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Available Credits</p>
+                  <p className="text-2xl font-bold">{formatCurrency(referralData.available_credits)}</p>
+                </div>
               </div>
+              {referralData.available_credits > 0 && (
+                <Dialog open={isRedemptionDialogOpen} onOpenChange={setIsRedemptionDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" size="sm" className="gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Use Credits
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Apply Referral Credits</DialogTitle>
+                      <DialogDescription>
+                        Apply your earned referral credits to your next booking
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Gift className="h-6 w-6 text-green-600" />
+                          <div>
+                            <p className="font-semibold text-green-900">Available Credits</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              {formatCurrency(referralData.available_credits)}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-green-700">
+                          These credits will be automatically applied to reduce your payment amount on your next booking.
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="font-medium">What happens next?</h4>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>Credits will be marked as "applied" and reserved for your next booking</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>During checkout, your payment amount will be automatically reduced</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                            <span>You'll see the credits applied in your booking summary</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsRedemptionDialogOpen(false)}
+                          disabled={isRedeeming}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleRedeemCredits}
+                          disabled={isRedeeming}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          {isRedeeming ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Applying...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Apply Credits
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </CardContent>
         </Card>

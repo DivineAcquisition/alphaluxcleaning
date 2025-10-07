@@ -18,6 +18,7 @@ import { ProgressIndicator } from '@/components/booking/ProgressIndicator';
 import { PriceSummaryCard } from '@/components/booking/PriceSummaryCard';
 import { ServiceDetailsDialog } from '@/components/ServiceDetailsDialog';
 import { ReferralCodeDialog } from '@/components/ReferralCodeDialog';
+import { ReferralCreditsDisplay } from '@/components/booking/ReferralCreditsDisplay';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { stripePromise } from '@/lib/stripe';
@@ -415,6 +416,10 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   
+  // Referral credits state
+  const [availableCredits, setAvailableCredits] = useState<number>(0);
+  const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(true);
+  
   // Stripe payment state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -483,6 +488,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       referralDiscount = (subtotal - recurringDiscount - membershipDiscount) * 0.10;
     }
 
+    // Apply referral credits if auto-apply is enabled
+    let creditsDiscount = 0;
+    if (autoApplyCredits && availableCredits > 0) {
+      creditsDiscount = Math.min(availableCredits, total - referralDiscount);
+    }
+
     return {
       basePrice,
       addOnsTotal,
@@ -490,11 +501,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
       recurringDiscount,
       membershipDiscount,
       addonMemberDiscount,
-      total: total - referralDiscount,
+      total: total - referralDiscount - creditsDiscount,
       membershipFee,
-      referralDiscount
+      referralDiscount,
+      creditsDiscount
     };
-  }, [selectedTierData, selectedRecurringData, selectedTier, newClient, selectedAddOns, existingMember, addMembership, appliedReferral]);
+  }, [selectedTierData, selectedRecurringData, selectedTier, newClient, selectedAddOns, existingMember, addMembership, appliedReferral, autoApplyCredits, availableCredits]);
 
   const pricing = calculatePricing;
   
@@ -735,6 +747,34 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
     }
 
     try {
+      // Apply referral credits if auto-apply is enabled
+      let creditsApplied = 0;
+      if (autoApplyCredits && availableCredits > 0) {
+        console.log('🎁 Applying referral credits before payment...');
+        
+        const creditsResponse = await supabase.functions.invoke('apply-referral-credits', {
+          body: {
+            customer_email: customerInfo.email,
+            max_amount_cents: Math.round(availableCredits * 100)
+          }
+        });
+
+        if (creditsResponse.error) {
+          console.error('Error applying credits:', creditsResponse.error);
+          toast({
+            title: "Credits Warning",
+            description: "Unable to apply referral credits. Proceeding without credits.",
+            variant: "default"
+          });
+        } else if (creditsResponse.data?.success) {
+          creditsApplied = creditsResponse.data.amount_redeemed || 0;
+          console.log('✅ Credits applied successfully:', creditsApplied);
+          toast({
+            title: "Credits Applied!",
+            description: `$${creditsApplied.toFixed(2)} in referral credits applied to your booking.`,
+          });
+        }
+      }
       // Prepare booking data for payment
       const bookingData = {
         tier: selectedTierData,
@@ -789,7 +829,8 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
           bedrooms: parseInt(bedrooms) || undefined,
           bathrooms: parseInt(bathrooms) || undefined,
           membershipStatus: existingMember,
-          addonMemberDiscount: pricing.addonMemberDiscount
+          addonMemberDiscount: pricing.addonMemberDiscount,
+          creditsApplied: creditsApplied
         };
         
         response = await supabase.functions.invoke(functionName, {
@@ -1338,10 +1379,21 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                         cleaningType={selectedTierData?.id === 'premium' ? 'deep' : 'general'}
                         serviceType="recurring"
                       />
-                    </div>
+                     </div>
 
-                   {/* Referral & Discount Codes Section */}
-                   <div className="bg-white rounded-lg p-4 border border-green-200">
+                    {/* Referral Credits Display */}
+                    {customerInfo.email && (
+                      <ReferralCreditsDisplay
+                        customerEmail={customerInfo.email}
+                        onCreditsChange={(credits, autoApply) => {
+                          setAvailableCredits(credits);
+                          setAutoApplyCredits(autoApply);
+                        }}
+                      />
+                    )}
+ 
+                    {/* Referral & Discount Codes Section */}
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
                      <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
                        <Tag className="h-4 w-4" />
                        Referral & Discount Codes
@@ -1570,6 +1622,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
             membershipDiscount={pricing.membershipDiscount}
             referralDiscount={pricing.referralDiscount}
             codeDiscount={0}
+            creditsDiscount={pricing.creditsDiscount || 0}
             total={pricing.total}
             membershipFee={pricing.membershipFee}
             selectedTier={selectedTierData}

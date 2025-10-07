@@ -147,3 +147,8 @@ verify_jwt = false
 
 [functions.retry-failed-hcp-syncs]
 verify_jwt = false
+
+# Referral Credits System
+[functions.apply-referral-credits]
+verify_jwt = false
+

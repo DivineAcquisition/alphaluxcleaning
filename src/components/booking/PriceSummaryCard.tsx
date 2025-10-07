@@ -12,6 +12,7 @@ interface PriceSummaryProps {
   membershipDiscount: number;
   referralDiscount?: number;
   codeDiscount?: number;
+  creditsDiscount?: number;
   total: number;
   membershipFee?: number;
   selectedTier?: any;
@@ -29,6 +30,7 @@ export function PriceSummaryCard({
   membershipDiscount,
   referralDiscount = 0,
   codeDiscount = 0,
+  creditsDiscount = 0,
   total,
   membershipFee = 0,
   selectedTier,
@@ -37,7 +39,7 @@ export function PriceSummaryCard({
   membership = false,
   newClient = false
 }: PriceSummaryProps) {
-  const totalSavings = recurringDiscount + membershipDiscount + referralDiscount + codeDiscount;
+  const totalSavings = recurringDiscount + membershipDiscount + referralDiscount + codeDiscount + creditsDiscount;
   
   // Show placeholder when no service is selected
   if (!selectedTier) {
@@ -173,6 +175,14 @@ export function PriceSummaryCard({
             <div className="flex justify-between text-green-600">
               <span>Discount Code (50%)</span>
               <span>-${codeDiscount.toFixed(2)}</span>
+            </div>
+          )}
+
+          {/* Referral Credits */}
+          {creditsDiscount > 0 && (
+            <div className="flex justify-between text-green-600 font-semibold">
+              <span>Referral Credits Applied 🎁</span>
+              <span>-${creditsDiscount.toFixed(2)}</span>
             </div>
           )}
 
