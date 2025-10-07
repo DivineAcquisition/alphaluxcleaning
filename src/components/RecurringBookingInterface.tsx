@@ -21,9 +21,9 @@ import { ReferralCodeDialog } from '@/components/ReferralCodeDialog';
 import { ReferralCreditsDisplay } from '@/components/booking/ReferralCreditsDisplay';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { stripePromise } from '@/lib/stripe';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { squarePromise } from '@/lib/square';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
 
 interface BookingTier {
   id: string;
@@ -200,172 +200,6 @@ const squareFootageTiers = [
   { min: 5000, max: 999999, label: "5,000+ sq ft" }
 ];
 
-// Embedded Payment Form Component
-interface EmbeddedPaymentFormProps {
-  amount: number;
-  onSuccess: () => void;
-  onCancel: () => void;
-  clientSecret: string;
-  isSetupIntent: boolean;
-  orderId: string | null;
-}
-
-function EmbeddedPaymentForm({ amount, onSuccess, onCancel, clientSecret, isSetupIntent, orderId }: EmbeddedPaymentFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isElementReady, setIsElementReady] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  
-  console.log('PaymentElement Status:', { stripe: !!stripe, elements: !!elements, isElementReady });
-  console.log('Payment Configuration:', { isSetupIntent, orderId, clientSecret: !!clientSecret });
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    const isDevelopment = import.meta.env.DEV;
-    const baseUrl = isDevelopment 
-      ? window.location.origin 
-      : 'https://portal.bayareacleaningpros.com';
-    
-    const returnUrl = orderId 
-      ? `${baseUrl}/service-details?order_id=${orderId}`
-      : `${baseUrl}/service-details`;
-
-    let result;
-    
-    if (isSetupIntent) {
-      console.log('Processing SetupIntent for Pay After Service');
-      result = await stripe.confirmSetup({
-        elements,
-        confirmParams: {
-          return_url: returnUrl,
-        },
-        redirect: 'always',
-      });
-    } else {
-      console.log('Processing PaymentIntent for Pay Now');
-      result = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: returnUrl,
-        },
-        redirect: 'always',
-      });
-    }
-
-    if (result.error) {
-      console.error('Payment confirmation error:', result.error);
-      toast({
-        title: "Payment Failed",
-        description: result.error.message || "An error occurred during payment processing.",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-    } else {
-      console.log('Payment confirmation initiated. Redirecting via Stripe to:', returnUrl);
-      // Stripe will redirect to return_url; do not navigate programmatically here
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h5 className="font-semibold">Payment Amount</h5>
-          <p className="text-2xl font-bold text-green-600">${amount}</p>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Shield className="h-4 w-4" />
-          <span>Secured by Stripe</span>
-        </div>
-      </div>
-
-      <PaymentElement 
-        onReady={() => {
-          console.log('PaymentElement is ready!');
-          setIsElementReady(true);
-          setPaymentError(null);
-        }}
-        onLoadError={(errorEvent) => {
-          console.error('PaymentElement load error:', errorEvent);
-          const errorMessage = errorEvent.error?.message || 'Payment form failed to load';
-          setPaymentError(errorMessage);
-          toast({
-            title: "Payment Form Error",
-            description: "Unable to load payment form. Please refresh and try again.",
-            variant: "destructive"
-          });
-        }}
-        options={{
-          layout: 'tabs'
-        }}
-      />
-      
-      {paymentError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <div className="flex items-center gap-2 text-red-700">
-            <AlertCircle className="h-4 w-4" />
-            <span className="font-medium">Payment Form Error:</span>
-          </div>
-          <p className="text-sm text-red-600 mt-1">{paymentError}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
-            onClick={() => window.location.reload()}
-          >
-            Refresh Page
-          </Button>
-        </div>
-      )}
-      
-      {!isElementReady && !paymentError && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading secure payment form...</span>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading || !stripe || !elements || !isElementReady}
-          className="flex-1 bg-green-600 hover:bg-green-700"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Lock className="h-4 w-4 mr-2" />
-              Pay ${amount}
-            </>
-          )}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps> = ({
   onBookingUpdate,
   onPaymentRequest,
@@ -420,13 +254,11 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
   const [availableCredits, setAvailableCredits] = useState<number>(0);
   const [autoApplyCredits, setAutoApplyCredits] = useState<boolean>(true);
   
-  // Stripe payment state
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  // Square payment state
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [isSetupIntent, setIsSetupIntent] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   const selectedTierData = selectedTier ? bookingTiers.find(tier => tier.id === selectedTier) : null;
   const selectedRecurringData = selectedRecurring ? recurringOptions.find(opt => opt.id === selectedRecurring) : null;
@@ -694,26 +526,22 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         paymentType: selectedPaymentOption
       };
 
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      // Create booking first
+      const bookingResponse = await supabase.functions.invoke('create-booking', {
         body: paymentData
       });
 
-      if (error) throw error;
+      if (bookingResponse.error) throw bookingResponse.error;
 
-      console.log('💳 Payment intent response:', data);
-
-      if (data?.client_secret) {
-        setClientSecret(data.client_secret);
-        setOrderId(data.order_id || null);
-        setIsSetupIntent(data.is_setup_intent || false);
+      console.log('✅ Booking created successfully');
+      
+      // Store booking ID and show Square payment form
+      if (bookingResponse.data?.booking_id) {
+        setBookingId(bookingResponse.data.booking_id);
         setShowPaymentForm(true);
-        console.log('Payment data captured:', { 
-          clientSecret: !!data.client_secret, 
-          orderId: data.order_id, 
-          isSetupIntent: data.is_setup_intent 
-        });
+        console.log('Payment form will be shown for booking:', bookingResponse.data.booking_id);
       } else {
-        throw new Error('No client secret received');
+        throw new Error('No booking ID received');
       }
     } catch (error) {
       console.error('Error creating payment intent:', error);
@@ -1541,71 +1369,53 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                            </div>
                          )}
                         </>
-                       ) : (
-                        // Stripe Payment Form
-                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                          <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
-                            <Lock className="h-4 w-4" />
-                            Secure Payment
-                          </h4>
-                          {clientSecret && (
-                            <Elements 
-                              stripe={stripePromise} 
-                              options={{
-                                clientSecret,
-                                appearance: {
-                                  theme: 'stripe',
-                                  variables: {
-                                    colorPrimary: '#16a34a',
-                                    colorBackground: '#ffffff',
-                                    colorText: '#1f2937',
-                                    colorDanger: '#dc2626',
-                                    fontFamily: 'system-ui, sans-serif',
-                                    spacingUnit: '6px',
-                                    borderRadius: '8px'
-                                  }
+                        ) : (
+                          // Square Payment Form
+                          <div className="bg-white rounded-lg p-4 border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+                              <Lock className="h-4 w-4" />
+                              Secure Payment with Square
+                            </h4>
+                            <EmbeddedSquarePaymentForm
+                              paymentAmount={calculatePaymentAmount(pricing.total, selectedPaymentOption as any)}
+                              fullAmount={pricing.total}
+                              paymentType={selectedPaymentOption === 'deposit' ? 'deposit' : 'full'}
+                              customerEmail={customerInfo.email}
+                              customerName={customerInfo.name}
+                              customerPhone={customerInfo.phone}
+                              bookingId={bookingId || undefined}
+                              applyCredits={autoApplyCredits}
+                              creditsAmount={availableCredits}
+                              onSuccess={(paymentId) => {
+                                toast({
+                                  title: "Payment Successful!",
+                                  description: "Your booking is confirmed. Redirecting..."
+                                });
+                                console.log('Payment successful:', paymentId);
+                                
+                                // Navigate to confirmation
+                                const isDevelopment = import.meta.env.DEV;
+                                const baseUrl = isDevelopment 
+                                  ? window.location.origin 
+                                  : 'https://portal.bayareacleaningpros.com';
+                                
+                                if (bookingId) {
+                                  window.location.href = `${baseUrl}/service-details?booking_id=${bookingId}`;
+                                } else {
+                                  window.location.href = `${baseUrl}/service-details`;
                                 }
+                                
+                                // Reset form
+                                setShowPaymentForm(false);
+                                setBookingId(null);
                               }}
-                            >
-                              <EmbeddedPaymentForm 
-                                amount={calculatePaymentAmount(pricing.total, selectedPaymentOption as any)}
-                                clientSecret={clientSecret}
-                                isSetupIntent={isSetupIntent}
-                                orderId={orderId}
-                                onSuccess={() => {
-                                  toast({
-                                    title: "Payment Successful!",
-                                    description: "Redirecting to service details..."
-                                  });
-                                  console.log('Navigation triggered with orderId:', orderId);
-                                  // Navigate to service details page on portal domain
-                                  const isDevelopment = import.meta.env.DEV;
-                                  const baseUrl = isDevelopment 
-                                    ? window.location.origin 
-                                    : 'https://portal.bayareacleaningpros.com';
-                                  
-                                  if (orderId) {
-                                    window.location.href = `${baseUrl}/service-details?order_id=${orderId}`;
-                                  } else {
-                                    window.location.href = `${baseUrl}/service-details`;
-                                  }
-                                  // Reset form state
-                                  setShowPaymentForm(false);
-                                  setClientSecret(null);
-                                  setOrderId(null);
-                                  setIsSetupIntent(false);
-                                }}
-                                onCancel={() => {
-                                  setShowPaymentForm(false);
-                                  setClientSecret(null);
-                                  setOrderId(null);
-                                  setIsSetupIntent(false);
-                                }}
-                              />
-                            </Elements>
-                          )}
-                        </div>
-                      )}
+                              onCancel={() => {
+                                setShowPaymentForm(false);
+                                setBookingId(null);
+                              }}
+                            />
+                          </div>
+                        )}
                 </div>
               </CardContent>
             </Card>

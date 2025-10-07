@@ -148,6 +148,19 @@ verify_jwt = false
 [functions.retry-failed-hcp-syncs]
 verify_jwt = false
 
+# Square Payment Integration
+[functions.get-square-config]
+verify_jwt = false
+
+[functions.create-square-payment]
+verify_jwt = false
+
+[functions.create-square-customer]
+verify_jwt = false
+
+[functions.square-webhook]
+verify_jwt = false
+
 # Referral Credits System
 [functions.apply-referral-credits]
 verify_jwt = false
