@@ -25,6 +25,8 @@ export interface WebhookPayload {
     zip: string;
   };
   job_details: {
+    property_type: string;
+    flooring: string;
     bedrooms: number;
     bathrooms: number;
     notes: string;
@@ -87,6 +89,8 @@ export interface BookingData {
     squareFootage: number;
     bedrooms: number;
     bathrooms: number;
+    dwellingType?: string;
+    flooringType?: string;
     addOns: string[];
     specialInstructions?: string;
   };
@@ -281,6 +285,8 @@ export function createWebhookPayload(
     },
     
     job_details: {
+      property_type: bookingData.serviceDetails.dwellingType || "",
+      flooring: bookingData.serviceDetails.flooringType || "",
       bedrooms: bookingData.serviceDetails.bedrooms,
       bathrooms: bookingData.serviceDetails.bathrooms,
       notes: bookingData.serviceDetails.specialInstructions || "",

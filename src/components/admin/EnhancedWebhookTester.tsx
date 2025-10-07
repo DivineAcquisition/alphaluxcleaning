@@ -55,6 +55,8 @@ export function EnhancedWebhookTester() {
       squareFootage: 2200,
       bedrooms: 3,
       bathrooms: 2,
+      dwellingType: "house",
+      flooringType: "hardwood,carpet",
       addOns: ["inside_oven", "inside_fridge"],
       specialInstructions: "Focus on kitchen and baseboards"
     },
@@ -97,6 +99,8 @@ export function EnhancedWebhookTester() {
       squareFootage: 1800,
       bedrooms: 3,
       bathrooms: 2,
+      dwellingType: "apartment",
+      flooringType: "tile,laminate",
       addOns: [],
       specialInstructions: "Please use eco-friendly products"
     },
