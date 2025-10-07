@@ -406,13 +406,12 @@ export function ModernLegacyBooking() {
     }
     if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
     const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
-    // Apply 20% global discount to the base price
-    return applyGlobalDiscount(result.finalPrice);
+    return result.finalPrice;
   };
 
-  // Calculate pricing whenever relevant fields change with 20% discount applied
+  // Calculate pricing whenever relevant fields change
   useEffect(() => {
-    const discountedPrice = getExactPrice(); // Now includes 20% global discount
+    const baseServicePrice = getExactPrice();
 
     // Calculate add-ons total
     const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
@@ -420,10 +419,8 @@ export function ModernLegacyBooking() {
       return total + (addOn?.price || 0);
     }, 0);
 
-    // Calculate discounted add-ons (20% off add-ons too)
-    const discountedAddOnsTotal = applyGlobalDiscount(addOnsTotal);
-    const totalPrice = discountedPrice + discountedAddOnsTotal;
-    updateField('basePrice', discountedPrice);
+    const totalPrice = baseServicePrice + addOnsTotal;
+    updateField('basePrice', baseServicePrice);
     updateField('totalPrice', totalPrice);
     updateField('savings', 0);
   }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, bookingData.addOns]);

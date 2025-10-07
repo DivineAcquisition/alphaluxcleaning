@@ -10,7 +10,6 @@ import { HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-syst
 import { Save, RefreshCw, DollarSign, Home, Sparkles } from 'lucide-react';
 
 export function PricingSystemAdmin() {
-  const [discount, setDiscount] = useState(DEFAULT_PRICING_CONFIG.universalDiscount * 100);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -18,20 +17,9 @@ export function PricingSystemAdmin() {
   const saveConfig = async () => {
     setSaving(true);
     try {
-      // Save the universal discount to database
-      const configData = {
-        universal_discount: discount / 100
-      };
-
-      const { error } = await supabase.rpc('save_pricing_config', {
-        config_data: configData
-      });
-
-      if (error) throw error;
-
       toast({
-        title: "Success",
-        description: "Pricing configuration updated successfully"
+        title: "Info",
+        description: "Pricing is configured in code. Contact developer to modify."
       });
     } catch (error) {
       console.error('Error saving pricing config:', error);
@@ -61,7 +49,7 @@ export function PricingSystemAdmin() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Universal Hybrid Pricing Model</h2>
           <p className="text-muted-foreground">
-            AlphaLuxClean fixed pricing with automatic 15% discount
+            AlphaLuxClean fixed pricing with frequency-based discounts
           </p>
         </div>
         <Button onClick={saveConfig} disabled={saving} className="gap-2">
@@ -70,32 +58,30 @@ export function PricingSystemAdmin() {
         </Button>
       </div>
 
-      {/* Universal Discount */}
+      {/* Frequency Discounts */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Universal Discount
+            Frequency-Based Discounts
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="discount">Automatic Discount (%)</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="discount"
-                type="number"
-                value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                min="0"
-                max="50"
-                step="1"
-                className="w-32"
-              />
-              <span className="text-sm text-muted-foreground">
-                Applied to all services
-              </span>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {DEFAULT_PRICING_CONFIG.frequencies.map((freq) => (
+              <div key={freq.id} className="p-4 border rounded-lg">
+                <div className="font-medium">{freq.name}</div>
+                <div className="text-2xl font-bold text-primary mt-2">
+                  {freq.discount ? `${(freq.discount * 100).toFixed(0)}%` : '0%'}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {freq.discount ? 'Discount applied' : 'No discount'}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Note: Discounts apply to recurring Regular Clean services only. Deep Cleaning and Move-In/Out are one-time only.
           </div>
         </CardContent>
       </Card>
@@ -164,30 +150,30 @@ export function PricingSystemAdmin() {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg space-y-2">
-                <div className="font-medium">Weekly</div>
+                <div className="font-medium">Weekly (15% off)</div>
                 <div className="text-sm text-muted-foreground">
-                  Base × 0.40 × 4 cleans/month
+                  Base × 0.40 × 0.85 × 4 cleans/month
                 </div>
                 <div className="text-xs text-green-600">
-                  Example: $255 → $408/month
+                  Example: $238 → $323.12/month
                 </div>
               </div>
               <div className="p-4 border rounded-lg space-y-2">
-                <div className="font-medium">Bi-Weekly</div>
+                <div className="font-medium">Bi-Weekly (10% off)</div>
                 <div className="text-sm text-muted-foreground">
-                  Base × 0.55 × 2 cleans/month
+                  Base × 0.55 × 0.90 × 2 cleans/month
                 </div>
                 <div className="text-xs text-green-600">
-                  Example: $255 → $281/month
+                  Example: $238 → $235.62/month
                 </div>
               </div>
               <div className="p-4 border rounded-lg space-y-2">
-                <div className="font-medium">Monthly</div>
+                <div className="font-medium">Monthly (5% off)</div>
                 <div className="text-sm text-muted-foreground">
-                  Base × 0.75 × 1 clean/month
+                  Base × 0.75 × 0.95 × 1 clean/month
                 </div>
                 <div className="text-xs text-green-600">
-                  Example: $255 → $191/month
+                  Example: $238 → $169.58/month
                 </div>
               </div>
             </div>

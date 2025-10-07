@@ -42,21 +42,14 @@ export function NewPricingInterface({ onBookingSelect }: NewPricingInterfaceProp
     if (homeSizeId && serviceTypeId && frequencyId && stateCode) {
       try {
         const result = calculateNewPricing(homeSizeId, serviceTypeId, frequencyId, stateCode);
-        
-        // Apply 20% global discount to the final price
-        const discountedResult = {
-          ...result,
-          finalPrice: applyGlobalDiscount(result.finalPrice)
-        };
-        
-        setPricingResult(discountedResult);
+        setPricingResult(result);
         
         // Track AddToCart when user has made full selection
-        if (discountedResult.finalPrice > 0) {
+        if (result.finalPrice > 0) {
           const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
           trackAddToCart({
             content_name: serviceType?.name || serviceTypeId,
-            value: discountedResult.finalPrice
+            value: result.finalPrice
           });
         }
       } catch (error) {

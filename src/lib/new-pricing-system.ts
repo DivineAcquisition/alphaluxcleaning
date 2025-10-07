@@ -27,6 +27,7 @@ export interface FrequencyConfig {
   name: string;
   recurringMultiplier?: number; // For recurring: weekly=0.40, bi-weekly=0.55, monthly=0.75
   cleansPerMonth?: number; // weekly=4, bi-weekly=2, monthly=1
+  discount?: number; // Frequency-specific discount: one_time=0, weekly=0.15, bi_weekly=0.10, monthly=0.05
 }
 
 export interface StateConfig {
@@ -36,7 +37,6 @@ export interface StateConfig {
 }
 
 export interface PricingConfig {
-  universalDiscount: number; // 15% discount applied to all services
   states: StateConfig[];
   serviceTypes: ServiceTypeConfig[];
   frequencies: FrequencyConfig[];
@@ -59,8 +59,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1000,
     maxSqft: 1500,
     bedroomRange: '1–2 BR condos/homes',
-    regularPrice: 150,
-    deepPrice: 240,
+    regularPrice: 140,
+    deepPrice: 250,
     moveInOutPrice: 265
   },
   {
@@ -69,8 +69,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1501,
     maxSqft: 2000,
     bedroomRange: '2–3 BR homes',
-    regularPrice: 185,
-    deepPrice: 285,
+    regularPrice: 173,
+    deepPrice: 297,
     moveInOutPrice: 315
   },
   {
@@ -79,8 +79,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2001,
     maxSqft: 2500,
     bedroomRange: '3 BR homes',
-    regularPrice: 220,
-    deepPrice: 335,
+    regularPrice: 206,
+    deepPrice: 349,
     moveInOutPrice: 370
   },
   {
@@ -89,8 +89,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2501,
     maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
-    regularPrice: 255,
-    deepPrice: 385,
+    regularPrice: 238,
+    deepPrice: 401,
     moveInOutPrice: 425
   },
   {
@@ -99,8 +99,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3001,
     maxSqft: 3500,
     bedroomRange: '4 BR homes',
-    regularPrice: 290,
-    deepPrice: 435,
+    regularPrice: 271,
+    deepPrice: 453,
     moveInOutPrice: 480
   },
   {
@@ -109,8 +109,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3501,
     maxSqft: 4000,
     bedroomRange: '4–5 BR homes',
-    regularPrice: 325,
-    deepPrice: 485,
+    regularPrice: 304,
+    deepPrice: 505,
     moveInOutPrice: 535
   },
   {
@@ -119,8 +119,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4001,
     maxSqft: 4500,
     bedroomRange: '5 BR homes',
-    regularPrice: 360,
-    deepPrice: 535,
+    regularPrice: 336,
+    deepPrice: 557,
     moveInOutPrice: 590
   },
   {
@@ -129,8 +129,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4501,
     maxSqft: 5000,
     bedroomRange: '5+ BR homes',
-    regularPrice: 395,
-    deepPrice: 585,
+    regularPrice: 369,
+    deepPrice: 609,
     moveInOutPrice: 645
   },
   {
@@ -148,7 +148,6 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
 
 // Universal Hybrid Pricing Configuration
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
-  universalDiscount: 0.15, // 15% automatic discount on all services
   states: [
     { code: 'TX', name: 'Texas' },
     { code: 'CA', name: 'California' },
@@ -160,10 +159,10 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
     { id: 'move_in_out', name: 'Move-In/Out Cleaning', allowsRecurring: false }
   ],
   frequencies: [
-    { id: 'one_time', name: 'One-time' },
-    { id: 'weekly', name: 'Weekly', recurringMultiplier: 0.40, cleansPerMonth: 4 },
-    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 0.55, cleansPerMonth: 2 },
-    { id: 'monthly', name: 'Monthly', recurringMultiplier: 0.75, cleansPerMonth: 1 }
+    { id: 'one_time', name: 'One-time', discount: 0 },
+    { id: 'weekly', name: 'Weekly', recurringMultiplier: 0.40, cleansPerMonth: 4, discount: 0.15 },
+    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 0.55, cleansPerMonth: 2, discount: 0.10 },
+    { id: 'monthly', name: 'Monthly', recurringMultiplier: 0.75, cleansPerMonth: 1, discount: 0.05 }
   ]
 };
 
@@ -214,25 +213,38 @@ export function calculateNewPricing(
       throw new Error(`Unknown service type: ${serviceTypeId}`);
   }
 
-  // Apply 15% universal discount
-  const discountAmount = basePrice * config.universalDiscount;
-  const discountedPrice = basePrice - discountAmount;
-
-  // Calculate recurring pricing (only for Regular Clean)
-  let finalPrice = discountedPrice;
+  // Calculate pricing based on frequency
+  let finalPrice = basePrice;
+  let discountAmount = 0;
   let mrrEstimate = 0;
   let arrEstimate = 0;
+  let savings = '';
 
-  if (serviceTypeId === 'regular' && frequencyId !== 'one_time' && frequency.recurringMultiplier && frequency.cleansPerMonth) {
-    // For recurring: use formula (basePrice × multiplier × cleansPerMonth) with discount
+  // For one-time cleanings: no discount
+  if (frequencyId === 'one_time') {
+    finalPrice = basePrice;
+    discountAmount = 0;
+    savings = '';
+  } 
+  // For recurring cleanings (Regular Clean only): apply frequency-specific discount
+  else if (serviceTypeId === 'regular' && frequency.recurringMultiplier && frequency.cleansPerMonth) {
+    // Calculate recurring base price
     const recurringBase = basePrice * frequency.recurringMultiplier;
-    finalPrice = recurringBase - (recurringBase * config.universalDiscount); // Per clean price after discount
-    mrrEstimate = finalPrice * frequency.cleansPerMonth; // Monthly total
-    arrEstimate = mrrEstimate * 12; // Annual total
+    
+    // Apply frequency-specific discount
+    const frequencyDiscount = frequency.discount || 0;
+    discountAmount = recurringBase * frequencyDiscount;
+    finalPrice = recurringBase - discountAmount; // Per clean price after discount
+    
+    // Calculate MRR and ARR
+    mrrEstimate = finalPrice * frequency.cleansPerMonth;
+    arrEstimate = mrrEstimate * 12;
+    
+    // Format savings message
+    if (frequencyDiscount > 0) {
+      savings = `You save ${(frequencyDiscount * 100).toFixed(0)}% on recurring cleanings! ($${discountAmount.toFixed(2)} off per clean)`;
+    }
   }
-
-  // Format savings message
-  const savings = `You save 15% today! ($${discountAmount.toFixed(2)} off)`;
 
   return {
     basePrice: Math.round(basePrice * 100) / 100,
