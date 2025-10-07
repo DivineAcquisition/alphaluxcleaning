@@ -154,6 +154,10 @@ serve(async (req) => {
     const specialInstructions = bookingData.special_instructions || '';
     const addons = bookingData.addons || [];
 
+    // Extract and map property fields explicitly
+    const propertyType = propertyDetails.dwelling_type || propertyDetails.dwellingType || '';
+    const flooring = propertyDetails.flooring_type || propertyDetails.flooringType || '';
+
     // Calculate pricing
     const baseAmount = Number(bookingData.est_price) || 0;
     
@@ -198,6 +202,8 @@ serve(async (req) => {
         service: serviceDetails,
         address: addressInfo,
         property: {
+          property_type: propertyType,
+          flooring: flooring,
           ...propertyDetails,
           special_instructions: specialInstructions
         },
