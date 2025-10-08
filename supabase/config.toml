@@ -165,3 +165,7 @@ verify_jwt = false
 [functions.apply-referral-credits]
 verify_jwt = false
 
+# Public Referral Generator
+[functions.public-referral-generator]
+verify_jwt = false
+

@@ -405,7 +405,7 @@ export type Database = {
       }
       customers: {
         Row: {
-          address: string
+          address: string | null
           address_line1: string | null
           address_line2: string | null
           city: string | null
@@ -422,19 +422,19 @@ export type Database = {
           lat: number | null
           lng: number | null
           metadata: Json | null
-          name: string
-          phone: string
+          name: string | null
+          phone: string | null
           postal_code: string | null
           recurrence_plan: string | null
           referral_code: string | null
           referral_link: string | null
           square_customer_id: string | null
-          state: string
+          state: string | null
           stripe_customer_id: string | null
           user_id: string | null
         }
         Insert: {
-          address: string
+          address?: string | null
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
@@ -451,19 +451,19 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
-          name: string
-          phone: string
+          name?: string | null
+          phone?: string | null
           postal_code?: string | null
           recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
           square_customer_id?: string | null
-          state: string
+          state?: string | null
           stripe_customer_id?: string | null
           user_id?: string | null
         }
         Update: {
-          address?: string
+          address?: string | null
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
@@ -480,14 +480,14 @@ export type Database = {
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
-          name?: string
-          phone?: string
+          name?: string | null
+          phone?: string | null
           postal_code?: string | null
           recurrence_plan?: string | null
           referral_code?: string | null
           referral_link?: string | null
           square_customer_id?: string | null
-          state?: string
+          state?: string | null
           stripe_customer_id?: string | null
           user_id?: string | null
         }

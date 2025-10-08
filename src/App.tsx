@@ -25,6 +25,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import { AdminRoute } from '@/components/AdminRoute';
 import { ReferralLanding } from '@/pages/ReferralLanding';
 import { Referrals } from '@/pages/Referrals';
+import GetReferral from '@/pages/GetReferral';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -68,6 +69,7 @@ function App() {
             <Route path="/ref/:code" element={<ReferralLanding />} />
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/account/referrals" element={<Referrals />} />
+            <Route path="/get-referral" element={<GetReferral />} />
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
