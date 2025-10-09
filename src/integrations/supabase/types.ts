@@ -1463,6 +1463,53 @@ export type Database = {
           },
         ]
       }
+      webhook_audit_log: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          execution_time_ms: number | null
+          id: string
+          request_payload: Json | null
+          response_payload: Json | null
+          status: string
+          trigger_source: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          execution_time_ms?: number | null
+          id?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status: string
+          trigger_source: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          execution_time_ms?: number | null
+          id?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string
+          trigger_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_audit_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_configurations: {
         Row: {
           active: boolean
@@ -1609,6 +1656,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      webhook_queue: {
+        Row: {
+          attempts: number
+          booking_id: string
+          created_at: string
+          event_type: string
+          id: string
+          last_error: string | null
+          max_attempts: number
+          next_retry_at: string | null
+          payload: Json
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          booking_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          booking_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          next_retry_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_queue_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

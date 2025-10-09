@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { EnhancedWebhookTester } from '@/components/admin/EnhancedWebhookTester';
+import { ManualWebhookTrigger } from '@/components/admin/ManualWebhookTrigger';
 
 export function WebhookTest() {
   return (
@@ -18,6 +19,10 @@ export function WebhookTest() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Test LEAD_CREATED and BOOKING_CONFIRMED webhooks with realistic data
           </p>
+        </div>
+        
+        <div className="mb-8">
+          <ManualWebhookTrigger />
         </div>
         
         <EnhancedWebhookTester />
