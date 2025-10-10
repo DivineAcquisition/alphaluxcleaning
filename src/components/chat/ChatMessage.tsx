@@ -41,9 +41,31 @@ interface ChatMessageProps {
 
 function parseMessage(content: string): StructuredMessage {
   try {
-    if (content.startsWith('INTERACTIVE:')) {
-      const jsonStr = content.replace('INTERACTIVE:', '');
-      return JSON.parse(jsonStr);
+    // Find INTERACTIVE: anywhere in the content
+    const interactiveIndex = content.indexOf('INTERACTIVE:');
+    if (interactiveIndex !== -1) {
+      // Extract JSON after INTERACTIVE:
+      const jsonStart = interactiveIndex + 'INTERACTIVE:'.length;
+      const jsonStr = content.slice(jsonStart).trim();
+      
+      // Find the first complete JSON object
+      let braceCount = 0;
+      let jsonEnd = -1;
+      for (let i = 0; i < jsonStr.length; i++) {
+        if (jsonStr[i] === '{') braceCount++;
+        if (jsonStr[i] === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            jsonEnd = i + 1;
+            break;
+          }
+        }
+      }
+      
+      if (jsonEnd > 0) {
+        const extractedJson = jsonStr.slice(0, jsonEnd);
+        return JSON.parse(extractedJson);
+      }
     }
     return { type: 'text', content };
   } catch {
@@ -100,8 +122,8 @@ export function ChatMessage({ role, content, timestamp, onInteraction }: ChatMes
           />
         )}
 
-        {/* Option Buttons */}
-        {structuredMessage.type === 'options' && structuredMessage.options && onInteraction && (
+        {/* Option Buttons - render for both "options" and "question" types with options array */}
+        {((structuredMessage.type === 'options' || structuredMessage.type === 'question') && structuredMessage.options && onInteraction) && (
           <ChatOptionButtons 
             options={structuredMessage.options} 
             onSelect={(id, label) => onInteraction(label)} 

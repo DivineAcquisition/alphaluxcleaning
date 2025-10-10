@@ -134,7 +134,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
       const welcomeMsg: ChatMessage = {
         id: generateMessageId(),
         role: 'assistant',
-        content: "Hi! I'm here to help you with your booking. Feel free to ask me anything about our services, pricing, or the booking process! 😊",
+        content: "Hi, how can I help with your booking?",
         timestamp: new Date()
       };
       setMessages([welcomeMsg]);
