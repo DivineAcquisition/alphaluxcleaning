@@ -9,7 +9,7 @@ import {
   generateMessageId 
 } from '@/lib/chat-utils';
 
-const CHAT_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-booking-assistant`;
+const CHAT_FUNCTION_URL = 'https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/chat-booking-assistant';
 
 export interface UseChatbotReturn {
   messages: ChatMessage[];
@@ -228,7 +228,6 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
         },
         body: JSON.stringify({
           messages: [...messages, userMessage].map(m => ({

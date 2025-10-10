@@ -177,6 +177,7 @@ serve(async (req) => {
 - For interactive questions: Output ONLY "INTERACTIVE:{...}" with no extra text before or after
 - For plain responses: One sentence max, no emojis, no marketing
 - Never echo system state or debug info to user
+- After responding or running a tool, immediately ask the next missing field. Do not pause or wait for extra user confirmation unless the step is 'Confirmation'
 
 **INTERACTIVE FORMATS:**
 Single-select: INTERACTIVE:{"type":"options","question":"...","options":[{"id":"...","label":"..."}]}
@@ -188,19 +189,20 @@ Confirmation: INTERACTIVE:{"type":"confirmation","question":"...","confirmationD
 1. Service type (options: Regular Clean, Deep Clean, Move-In/Out)
 2. Home size (options: 1000-1500 sq ft, 1501-2000, etc.)
 3. Frequency (options: Weekly 15% off, Bi-Weekly 10% off, Monthly 5% off, One-Time)
-4. Show pricing (use calculate_price tool, display result in one sentence)
-5. First name (input)
-6. Last name (input)
-7. Email (input)
-8. Phone (input)
-9. Street address (input)
-10. City (input)
-11. ZIP code (input, then use check_availability tool)
-12. Preferred date (input)
-13. Preferred time (options: Morning 8-12, Afternoon 12-4, Evening 4-8)
-14. Add-ons (multiselect: Oven +$25, Fridge +$25, Windows +$35, Baseboards +$15, Inside Cabinets +$20)
-15. Confirmation (show all collected data)
-16. Create booking (use create_booking tool after confirmation)
+4. State (input: two-letter code like TX, CA, NY)
+5. Show pricing (use calculate_price tool, display result in one sentence)
+6. First name (input)
+7. Last name (input)
+8. Email (input)
+9. Phone (input)
+10. Street address (input)
+11. City (input)
+12. ZIP code (input, then use check_availability tool)
+13. Preferred date (input)
+14. Preferred time (options: Morning 8-12, Afternoon 12-4, Evening 4-8)
+15. Add-ons (multiselect: Oven +$25, Fridge +$25, Windows +$35, Baseboards +$15, Inside Cabinets +$20)
+16. Confirmation (show all collected data)
+17. Create booking (use create_booking tool after confirmation)
 
 **PRICING:**
 1000-1500 sqft: Regular $140, Deep $250, Move-In/Out $265
@@ -226,6 +228,7 @@ Deep Clean and Move-In/Out are ONE-TIME ONLY (no recurring)`;
 Service: ${collectedData.serviceType || 'MISSING'}
 Size: ${collectedData.homeSize || 'MISSING'}
 Frequency: ${collectedData.frequency || 'MISSING'}
+State: ${collectedData.stateCode || 'MISSING'}
 First: ${collectedData.firstName || 'MISSING'}
 Last: ${collectedData.lastName || 'MISSING'}
 Email: ${collectedData.email || 'MISSING'}
@@ -317,156 +320,207 @@ Ask for FIRST missing field in order. After general questions, redirect to booki
       }
     ];
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: contextPrompt },
-          ...messages
-        ],
-        tools: tools,
-        tool_choice: "auto",
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'rate_limit',
-          message: 'Our assistant is busy right now. Please try again in a moment.' 
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'payment_required',
-          message: 'Service temporarily unavailable. Please try again later.' 
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      return new Response(JSON.stringify({ 
-        error: 'ai_error',
-        message: 'Unable to reach assistant. Please try again.' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Handle streaming with tool call support
-    const reader = response.body?.getReader();
+    // Iterative tool-calling loop with streaming
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-
+    
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          let buffer = '';
-          let toolCalls: any[] = [];
+          // Maintain conversation state across tool call iterations
+          const conversation = [
+            { role: 'system', content: contextPrompt },
+            ...messages
+          ];
           
-          while (true) {
-            const { done, value } = await reader!.read();
-            if (done) break;
+          let loopCount = 0;
+          const maxLoops = 10; // Safety limit
+          
+          while (loopCount < maxLoops) {
+            loopCount++;
+            console.log(`🔄 Loop iteration ${loopCount}`, { messageCount: conversation.length });
+            
+            const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: conversation,
+                tools: tools,
+                tool_choice: "auto",
+                stream: true,
+              }),
+            });
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            if (!response.ok) {
+              if (response.status === 429) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  choices: [{
+                    delta: { content: 'Our assistant is busy right now. Please try again in a moment.' },
+                    index: 0,
+                    finish_reason: 'stop'
+                  }]
+                })}\n\n`));
+                break;
+              }
+              if (response.status === 402) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  choices: [{
+                    delta: { content: 'Service temporarily unavailable. Please try again later.' },
+                    index: 0,
+                    finish_reason: 'stop'
+                  }]
+                })}\n\n`));
+                break;
+              }
+              
+              const errorText = await response.text();
+              console.error('AI gateway error:', response.status, errorText);
+              throw new Error('AI gateway error');
+            }
 
-            for (const line of lines) {
-              if (!line.trim() || line.startsWith(':')) continue;
-              if (!line.startsWith('data: ')) continue;
+            // Stream the response
+            const reader = response.body?.getReader();
+            let buffer = '';
+            let toolCalls: any[] = [];
+            let assistantContent = '';
+            let finishReason = '';
+            
+            while (true) {
+              const { done, value } = await reader!.read();
+              if (done) break;
 
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
 
-              try {
-                const parsed = JSON.parse(data);
-                
-                // Check for tool calls
-                if (parsed.choices?.[0]?.delta?.tool_calls) {
-                  const toolCallDelta = parsed.choices[0].delta.tool_calls[0];
+              for (const line of lines) {
+                if (!line.trim() || line.startsWith(':')) continue;
+                if (!line.startsWith('data: ')) continue;
+
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
                   
-                  if (!toolCalls[toolCallDelta.index]) {
-                    toolCalls[toolCallDelta.index] = {
-                      id: toolCallDelta.id,
-                      type: toolCallDelta.type,
-                      function: { name: toolCallDelta.function?.name || '', arguments: '' }
-                    };
+                  // Capture finish reason
+                  if (parsed.choices?.[0]?.finish_reason) {
+                    finishReason = parsed.choices[0].finish_reason;
                   }
                   
-                  if (toolCallDelta.function?.arguments) {
-                    toolCalls[toolCallDelta.index].function.arguments += toolCallDelta.function.arguments;
-                  }
-                } else if (parsed.choices?.[0]?.finish_reason === 'tool_calls') {
-                  // Execute tool calls
-                  for (const toolCall of toolCalls) {
-                    const functionName = toolCall.function.name;
-                    const args = JSON.parse(toolCall.function.arguments);
+                  // Check for tool calls
+                  if (parsed.choices?.[0]?.delta?.tool_calls) {
+                    const toolCallDelta = parsed.choices[0].delta.tool_calls[0];
                     
-                    let result = '';
-                    
-                    if (functionName === 'calculate_price') {
-                      result = calculateChatPricing(args);
-                    } else if (functionName === 'check_availability') {
-                      result = await checkAvailability(args.zipCode);
-                    } else if (functionName === 'create_booking') {
-                      // Call booking creation endpoint
-                      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-                      const bookingResponse = await fetch(`${SUPABASE_URL}/functions/v1/chat-create-booking`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-                        },
-                        body: JSON.stringify(args)
-                      });
-                      
-                      const bookingResult = await bookingResponse.json();
-                      if (bookingResult.error) {
-                        result = `Error creating booking: ${bookingResult.error}`;
-                      } else {
-                        result = `Booking created successfully! Booking ID: ${bookingResult.bookingId}. ${bookingResult.message}`;
-                      }
+                    if (!toolCalls[toolCallDelta.index]) {
+                      toolCalls[toolCallDelta.index] = {
+                        id: toolCallDelta.id || `call_${Date.now()}_${toolCallDelta.index}`,
+                        type: toolCallDelta.type || 'function',
+                        function: { name: toolCallDelta.function?.name || '', arguments: '' }
+                      };
                     }
                     
-                    // Send tool result as a message
-                    const toolResultMessage = {
-                      role: 'assistant',
-                      content: result
-                    };
+                    if (toolCallDelta.function?.name) {
+                      toolCalls[toolCallDelta.index].function.name = toolCallDelta.function.name;
+                    }
                     
-                    const chunk = encoder.encode(`data: ${JSON.stringify({
-                      choices: [{
-                        delta: { content: result },
-                        index: 0,
-                        finish_reason: null
-                      }]
-                    })}\n\n`);
-                    controller.enqueue(chunk);
+                    if (toolCallDelta.function?.arguments) {
+                      toolCalls[toolCallDelta.index].function.arguments += toolCallDelta.function.arguments;
+                    }
+                  } else if (parsed.choices?.[0]?.delta?.content) {
+                    // Regular content - stream to client and accumulate
+                    const content = parsed.choices[0].delta.content;
+                    assistantContent += content;
+                    controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                   }
-                  
-                  toolCalls = [];
-                } else {
-                  // Regular content streaming
-                  controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+                } catch (e) {
+                  console.error('Error parsing SSE:', e);
                 }
-              } catch (e) {
-                console.error('Error parsing SSE:', e);
               }
             }
+
+            // Handle tool calls if finish_reason is 'tool_calls'
+            if (finishReason === 'tool_calls' && toolCalls.length > 0) {
+              console.log(`🔧 Executing ${toolCalls.length} tool(s)`, toolCalls.map(tc => tc.function.name));
+              
+              // Append assistant message with tool_calls to conversation
+              conversation.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: toolCalls.map(tc => ({
+                  id: tc.id,
+                  type: tc.type,
+                  function: {
+                    name: tc.function.name,
+                    arguments: tc.function.arguments
+                  }
+                }))
+              });
+              
+              // Execute each tool and append tool messages
+              for (const toolCall of toolCalls) {
+                const functionName = toolCall.function.name;
+                let args;
+                try {
+                  args = JSON.parse(toolCall.function.arguments);
+                } catch (e) {
+                  console.error('Failed to parse tool arguments:', e);
+                  continue;
+                }
+                
+                console.log(`  → ${functionName}(${JSON.stringify(args).substring(0, 100)}...)`);
+                
+                let result = '';
+                
+                if (functionName === 'calculate_price') {
+                  result = calculateChatPricing(args);
+                } else if (functionName === 'check_availability') {
+                  result = await checkAvailability(args.zipCode);
+                } else if (functionName === 'create_booking') {
+                  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+                  const bookingResponse = await fetch(`${SUPABASE_URL}/functions/v1/chat-create-booking`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+                    },
+                    body: JSON.stringify(args)
+                  });
+                  
+                  const bookingResult = await bookingResponse.json();
+                  if (bookingResult.error) {
+                    result = `Error creating booking: ${bookingResult.error}`;
+                  } else {
+                    result = `Booking created successfully! Booking ID: ${bookingResult.bookingId}. ${bookingResult.message}`;
+                  }
+                }
+                
+                console.log(`  ✓ ${functionName} result:`, result.substring(0, 100));
+                
+                // Append tool result message to conversation
+                conversation.push({
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  name: functionName,
+                  content: result
+                });
+              }
+              
+              // Loop again - call LLM with updated conversation including tool results
+              continue;
+            } else {
+              // Normal completion - we're done
+              console.log(`✅ Completed with finish_reason: ${finishReason}`);
+              break;
+            }
+          }
+          
+          if (loopCount >= maxLoops) {
+            console.warn('⚠️ Max loop iterations reached');
           }
 
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
