@@ -25,6 +25,7 @@ export interface UseChatbotReturn {
     serviceType: string;
     homeSize: string;
     frequency: string;
+    stateCode: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -51,6 +52,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     serviceType: '',
     homeSize: '',
     frequency: '',
+    stateCode: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -106,6 +108,18 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     if (lowerAI.includes('zip')) {
       const zipMatch = userMessage.match(/\d{5}/);
       if (zipMatch) return { field: 'zipCode', value: zipMatch[0] };
+    }
+
+    // State code detection
+    if (lowerAI.includes('state') || lowerAI.includes('located in')) {
+      const stateMatch = userMessage.match(/\b([A-Z]{2})\b/);
+      if (stateMatch) return { field: 'stateCode', value: stateMatch[1] };
+      
+      // Handle lowercase or mixed case
+      const stateLower = userMessage.trim().toUpperCase();
+      if (/^[A-Z]{2}$/.test(stateLower)) {
+        return { field: 'stateCode', value: stateLower };
+      }
     }
 
     // Date detection
