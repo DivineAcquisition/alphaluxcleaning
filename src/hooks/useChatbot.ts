@@ -65,6 +65,17 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     addOns: [] as string[],
   });
 
+  // Helper to get last non-empty assistant content
+  const getLastNonEmptyAssistantContent = (msgs: ChatMessage[]): string => {
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const m = msgs[i];
+      if (m.role === 'assistant' && m.content && m.content.trim()) {
+        return m.content;
+      }
+    }
+    return '';
+  };
+
   // Helper to extract question text from INTERACTIVE blocks
   const extractQuestionText = (aiMessage: string): string => {
     try {
@@ -186,14 +197,20 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
 
     setError(null);
     
-    // Extract data from user message if possible
-    const lastAIMsg = messages[messages.length - 1];
-    if (lastAIMsg?.role === 'assistant') {
-      const extracted = extractDataFromMessage(content.trim(), lastAIMsg.content);
-      if (extracted) {
-        console.log('📝 Extracted field:', extracted.field, '=', extracted.value);
-        setCollectedData(prev => ({ ...prev, [extracted.field]: extracted.value }));
-      }
+    // Extract data from user message if possible using last non-empty assistant content
+    const lastAssistantContent = getLastNonEmptyAssistantContent(messages);
+    const extracted = lastAssistantContent 
+      ? extractDataFromMessage(content.trim(), lastAssistantContent)
+      : null;
+    
+    // Create updated collectedData before the fetch
+    const nextCollected = extracted
+      ? { ...collectedData, [extracted.field]: extracted.value }
+      : collectedData;
+    
+    if (extracted) {
+      console.log('📝 Extracted field:', extracted.field, '=', extracted.value);
+      setCollectedData(nextCollected);
     }
 
     const userMessage: ChatMessage = {
@@ -220,7 +237,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
           })),
           bookingContext: {
             ...bookingContext,
-            collectedData
+            collectedData: nextCollected
           }
         })
       });
@@ -281,6 +298,16 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
             // Ignore JSON parse errors for incomplete chunks
           }
         }
+      }
+
+      // Handle empty assistant replies
+      if (!assistantContent.trim()) {
+        assistantContent = "I didn't get a response there. Please try again.";
+        setMessages(prev => prev.map(m => 
+          m.id === assistantMsgId 
+            ? { ...m, content: assistantContent }
+            : m
+        ));
       }
 
       // Increment unread count if chat is closed
