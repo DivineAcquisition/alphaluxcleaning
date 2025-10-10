@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, X, Minus, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Minus, Trash2, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useChatbot } from '@/hooks/useChatbot';
@@ -28,6 +28,22 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // ESC key handler for fullscreen
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isFullscreen]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -76,10 +92,13 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
       {/* Chat Panel */}
       {isOpen && (
         <div className={cn(
-          "fixed z-50 bg-background border rounded-lg shadow-2xl flex flex-col animate-scale-in",
-          "bottom-24 right-6 w-[400px] h-[600px]",
-          "md:bottom-24 md:right-6 md:w-[400px] md:h-[600px]",
-          "max-md:bottom-0 max-md:right-0 max-md:left-0 max-md:w-full max-md:h-[100vh] max-md:rounded-none"
+          "fixed z-50 bg-background flex flex-col animate-scale-in transition-all duration-300",
+          isFullscreen 
+            ? "inset-0 rounded-none" 
+            : cn(
+                "bottom-24 right-6 w-[400px] h-[600px] border rounded-lg shadow-2xl",
+                "max-md:bottom-0 max-md:right-0 max-md:left-0 max-md:w-full max-md:h-[100vh] max-md:rounded-none"
+              )
         )}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-card">
@@ -88,6 +107,15 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
               <h3 className="font-semibold text-sm">Alpha Lux Assistant</h3>
             </div>
             <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleFullscreen}
+                className="h-8 w-8"
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -118,10 +146,13 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages - centered in fullscreen */}
           <div 
             ref={messageContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-4 bg-background"
+            className={cn(
+              "flex-1 overflow-y-auto p-4 space-y-4 bg-background",
+              isFullscreen && "max-w-3xl mx-auto w-full py-8"
+            )}
           >
             {bookingInProgress && (
               <div className="bg-primary/10 p-3 rounded-lg mb-2">
@@ -152,6 +183,7 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
                 role={msg.role}
                 content={msg.content}
                 timestamp={msg.timestamp}
+                onInteraction={sendMessage}
               />
             ))}
             {isLoading && <ChatTypingIndicator />}
@@ -163,12 +195,17 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <ChatInput
-            onSend={sendMessage}
-            disabled={isLoading}
-            placeholder="Ask me anything..."
-          />
+          {/* Input - centered in fullscreen */}
+          <div className={cn(
+            "border-t",
+            isFullscreen && "max-w-3xl mx-auto w-full"
+          )}>
+            <ChatInput
+              onSend={sendMessage}
+              disabled={isLoading}
+              placeholder="Ask me anything..."
+            />
+          </div>
         </div>
       )}
     </>
