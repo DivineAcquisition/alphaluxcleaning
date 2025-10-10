@@ -27,8 +27,22 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
-  const [bookingInProgress, setBookingInProgress] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+
+  // Calculate booking progress
+  const requiredFields = ['serviceType', 'homeSize', 'frequency', 'email', 'phone', 'zipCode', 'preferredDate'];
+  const collectedData = {
+    serviceType: messages.some(m => m.content.includes('Regular Clean') || m.content.includes('Deep Clean') || m.content.includes('Move-In/Out')),
+    homeSize: messages.some(m => m.content.includes('sq ft')),
+    frequency: messages.some(m => m.content.includes('Weekly') || m.content.includes('Bi-Weekly') || m.content.includes('Monthly')),
+    email: messages.some(m => m.role === 'user' && m.content.includes('@')),
+    phone: messages.some(m => m.role === 'user' && /\d{3}[-.]?\d{3}[-.]?\d{4}/.test(m.content)),
+    zipCode: messages.some(m => m.role === 'user' && /\d{5}/.test(m.content)),
+    preferredDate: messages.some(m => m.role === 'user' && m.content.toLowerCase().includes('day')),
+  };
+  const completedFields = Object.values(collectedData).filter(Boolean).length;
+  const progressPercent = (completedFields / requiredFields.length) * 100;
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -101,49 +115,67 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
               )
         )}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-card">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <h3 className="font-semibold text-sm">Alpha Lux Assistant</h3>
+          <div className="border-b bg-card">
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <h3 className="font-semibold text-sm">Alpha Lux Assistant</h3>
+              </div>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleFullscreen}
+                  className="h-8 w-8"
+                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearChat}
+                  className="h-8 w-8"
+                  title="Clear chat"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleChat}
+                  className="h-8 w-8 md:hidden"
+                  title="Minimize"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleChat}
+                  className="h-8 w-8"
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleFullscreen}
-                className="h-8 w-8"
-                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-              >
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={clearChat}
-                className="h-8 w-8"
-                title="Clear chat"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleChat}
-                className="h-8 w-8 md:hidden"
-                title="Minimize"
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleChat}
-                className="h-8 w-8"
-                title="Close"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            
+            {/* Progress Bar */}
+            {completedFields > 0 && completedFields < requiredFields.length && (
+              <div className="px-4 pb-3">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Booking Progress</span>
+                  <span>{completedFields}/{requiredFields.length} completed</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Messages - centered in fullscreen */}

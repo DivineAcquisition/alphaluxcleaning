@@ -6,9 +6,10 @@ import { ChatOptionButtons } from './interactive/ChatOptionButtons';
 import { ChatInputField } from './interactive/ChatInputField';
 import { ChatConfirmationCard } from './interactive/ChatConfirmationCard';
 import { ChatProgressBar } from './interactive/ChatProgressBar';
+import { ChatMultiSelect } from './interactive/ChatMultiSelect';
 
 interface StructuredMessage {
-  type: 'text' | 'question' | 'options' | 'input' | 'confirmation' | 'progress';
+  type: 'text' | 'question' | 'options' | 'input' | 'confirmation' | 'progress' | 'multiselect';
   content?: string;
   question?: string;
   icon?: string;
@@ -22,6 +23,13 @@ interface StructuredMessage {
   placeholder?: string;
   confirmationData?: Record<string, any>;
   progress?: { current: number; total: number };
+  multiSelectOptions?: Array<{
+    id: string;
+    label: string;
+    description?: string;
+  }>;
+  minSelections?: number;
+  maxSelections?: number;
 }
 
 interface ChatMessageProps {
@@ -85,7 +93,7 @@ export function ChatMessage({ role, content, timestamp, onInteraction }: ChatMes
         )}
 
         {/* Question Message */}
-        {(structuredMessage.type === 'question' || structuredMessage.type === 'options' || structuredMessage.type === 'input') && structuredMessage.question && (
+        {(structuredMessage.type === 'question' || structuredMessage.type === 'options' || structuredMessage.type === 'input' || structuredMessage.type === 'multiselect') && structuredMessage.question && (
           <ChatQuestionMessage 
             question={structuredMessage.question} 
             icon={structuredMessage.icon} 
@@ -110,12 +118,29 @@ export function ChatMessage({ role, content, timestamp, onInteraction }: ChatMes
           />
         )}
 
+        {/* Multi-Select */}
+        {structuredMessage.type === 'multiselect' && structuredMessage.multiSelectOptions && onInteraction && (
+          <ChatMultiSelect 
+            question={structuredMessage.question || 'Select options'} 
+            options={structuredMessage.multiSelectOptions} 
+            minSelections={structuredMessage.minSelections}
+            maxSelections={structuredMessage.maxSelections}
+            onSubmit={(selectedIds) => {
+              const labels = selectedIds.map(id => 
+                structuredMessage.multiSelectOptions?.find(opt => opt.id === id)?.label
+              ).filter(Boolean);
+              onInteraction(labels.length > 0 ? labels.join(', ') : 'None');
+            }} 
+          />
+        )}
+
         {/* Confirmation Card */}
         {structuredMessage.type === 'confirmation' && structuredMessage.confirmationData && onInteraction && (
           <ChatConfirmationCard 
             question={structuredMessage.question || 'Does this look correct?'} 
             confirmationData={structuredMessage.confirmationData} 
-            onConfirm={() => onInteraction('Yes, looks good!')} 
+            onConfirm={() => onInteraction('Yes, looks good!')}
+            onEdit={(field) => onInteraction(`I want to change my ${field}`)}
           />
         )}
 

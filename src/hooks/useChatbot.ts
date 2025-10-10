@@ -30,6 +30,23 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
   const [unreadCount, setUnreadCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const isFirstLoad = useRef(true);
+  
+  // Track collected data for sequential flow
+  const [collectedData, setCollectedData] = useState({
+    serviceType: '',
+    homeSize: '',
+    frequency: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    streetAddress: '',
+    city: '',
+    zipCode: '',
+    preferredDate: '',
+    preferredTime: '',
+    addOns: [] as string[],
+  });
 
   // Load chat history on mount
   useEffect(() => {
@@ -86,7 +103,10 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
             role: m.role,
             content: m.content
           })),
-          bookingContext
+          bookingContext: {
+            ...bookingContext,
+            collectedData
+          }
         })
       });
 
