@@ -46,7 +46,7 @@ serve(async (req) => {
         .from('bookings')
         .select(`
           *,
-          customers!inner(*)
+          customers!customer_id(*)
         `)
         .eq('id', input.booking_id)
         .maybeSingle();
@@ -71,7 +71,7 @@ serve(async (req) => {
         .from('bookings')
         .select(`
           *,
-          customers!inner(*)
+          customers!customer_id(*)
         `)
         .eq('stripe_checkout_session_id', input.session_id)
         .maybeSingle();
@@ -97,7 +97,7 @@ serve(async (req) => {
         .from('bookings')
         .select(`
           *,
-          customers!inner(*)
+          customers!customer_id(*)
         `)
         .eq('stripe_payment_intent_id', identifier)
         .maybeSingle();
