@@ -169,3 +169,7 @@ verify_jwt = false
 [functions.public-referral-generator]
 verify_jwt = false
 
+# AI Chat Assistant
+[functions.chat-booking-assistant]
+verify_jwt = false
+

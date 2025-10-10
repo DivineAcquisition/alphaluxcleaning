@@ -26,6 +26,7 @@ import { EmbeddedSquarePaymentForm } from './EmbeddedSquarePaymentForm';
 import { PromoCodeInput } from './PromoCodeInput';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 
 // Original pricing matrix - 20% discount applied automatically in calculations
 const pricingMatrix = {
@@ -1289,5 +1290,15 @@ export function ModernLegacyBooking() {
           </div>
         </div>
       </div>
+      
+      {/* AI Chat Assistant */}
+      <ChatWidget bookingContext={{
+        currentStep,
+        zipCode: bookingData.zipCode,
+        serviceType: bookingData.serviceType,
+        homeSize: bookingData.homeSize,
+        frequency: bookingData.frequency,
+        totalPrice: bookingData.totalPrice
+      }} />
     </div>;
 }

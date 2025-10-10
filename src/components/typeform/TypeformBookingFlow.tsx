@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, ServiceAreaValidation } from '@/lib/service-area-validation';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 interface TypeformBookingFlowProps {
   onComplete?: () => void;
 }
@@ -471,5 +472,16 @@ export function TypeformBookingFlow({
 
       {/* Floating Pricing Summary - Show from Step 4 onwards */}
       {currentStep >= 4 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
+      
+      {/* AI Chat Assistant */}
+      <ChatWidget bookingContext={{
+        currentStep,
+        stateCode: bookingData.stateCode,
+        zipCode: bookingData.zipCode,
+        serviceType: bookingData.serviceTypeId,
+        homeSize: bookingData.homeSizeId,
+        frequency: bookingData.frequencyId,
+        estimatedPrice: pricing?.discountedPrice
+      }} />
     </div>;
 }
