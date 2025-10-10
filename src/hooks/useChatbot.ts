@@ -65,10 +65,27 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     addOns: [] as string[],
   });
 
+  // Helper to extract question text from INTERACTIVE blocks
+  const extractQuestionText = (aiMessage: string): string => {
+    try {
+      const interactiveIndex = aiMessage.indexOf('INTERACTIVE:');
+      if (interactiveIndex !== -1) {
+        const jsonStart = interactiveIndex + 'INTERACTIVE:'.length;
+        const jsonStr = aiMessage.slice(jsonStart).trim();
+        const parsed = JSON.parse(jsonStr);
+        return parsed.question || parsed.content || aiMessage;
+      }
+      return aiMessage;
+    } catch {
+      return aiMessage;
+    }
+  };
+
   // Extract data from user messages based on context
   const extractDataFromMessage = useCallback((userMessage: string, lastAIMessage: string): { field: keyof typeof collectedData; value: string } | null => {
     const lowerMsg = userMessage.toLowerCase();
-    const lowerAI = lastAIMessage.toLowerCase();
+    const questionText = extractQuestionText(lastAIMessage);
+    const lowerAI = questionText.toLowerCase();
 
     // Email detection
     if (lowerAI.includes('email')) {
@@ -110,7 +127,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
       if (zipMatch) return { field: 'zipCode', value: zipMatch[0] };
     }
 
-    // State code detection
+    // State code detection (before time to avoid conflicts)
     if (lowerAI.includes('state') || lowerAI.includes('located in')) {
       const stateMatch = userMessage.match(/\b([A-Z]{2})\b/);
       if (stateMatch) return { field: 'stateCode', value: stateMatch[1] };
@@ -127,7 +144,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
       return { field: 'preferredDate', value: userMessage };
     }
 
-    // Time detection
+    // Time detection (after state to avoid conflicts)
     if (lowerAI.includes('time')) {
       return { field: 'preferredTime', value: userMessage };
     }
@@ -174,6 +191,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     if (lastAIMsg?.role === 'assistant') {
       const extracted = extractDataFromMessage(content.trim(), lastAIMsg.content);
       if (extracted) {
+        console.log('📝 Extracted field:', extracted.field, '=', extracted.value);
         setCollectedData(prev => ({ ...prev, [extracted.field]: extracted.value }));
       }
     }
