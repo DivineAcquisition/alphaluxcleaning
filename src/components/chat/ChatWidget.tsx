@@ -22,7 +22,8 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
     sendMessage,
     toggleChat,
     clearChat,
-    markAsRead
+    markAsRead,
+    collectedData
   } = useChatbot(bookingContext);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -30,18 +31,9 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
 
-  // Calculate booking progress
+  // Calculate booking progress from collected data
   const requiredFields = ['serviceType', 'homeSize', 'frequency', 'email', 'phone', 'zipCode', 'preferredDate'];
-  const collectedData = {
-    serviceType: messages.some(m => m.content.includes('Regular Clean') || m.content.includes('Deep Clean') || m.content.includes('Move-In/Out')),
-    homeSize: messages.some(m => m.content.includes('sq ft')),
-    frequency: messages.some(m => m.content.includes('Weekly') || m.content.includes('Bi-Weekly') || m.content.includes('Monthly')),
-    email: messages.some(m => m.role === 'user' && m.content.includes('@')),
-    phone: messages.some(m => m.role === 'user' && /\d{3}[-.]?\d{3}[-.]?\d{4}/.test(m.content)),
-    zipCode: messages.some(m => m.role === 'user' && /\d{5}/.test(m.content)),
-    preferredDate: messages.some(m => m.role === 'user' && m.content.toLowerCase().includes('day')),
-  };
-  const completedFields = Object.values(collectedData).filter(Boolean).length;
+  const completedFields = requiredFields.filter(field => collectedData[field as keyof typeof collectedData]).length;
   const progressPercent = (completedFields / requiredFields.length) * 100;
 
   const toggleFullscreen = () => {
@@ -116,49 +108,73 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
         )}>
           {/* Header */}
           <div className="border-b bg-card">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <h3 className="font-semibold text-sm">Alpha Lux Assistant</h3>
+            <div className="space-y-2 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <h3 className="font-semibold text-sm">Alpha Lux Assistant</h3>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleFullscreen}
+                    className="h-8 w-8"
+                    title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  >
+                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={clearChat}
+                    className="h-8 w-8"
+                    title="Clear chat"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleChat}
+                    className="h-8 w-8 md:hidden"
+                    title="Minimize"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleChat}
+                    className="h-8 w-8"
+                    title="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleFullscreen}
-                  className="h-8 w-8"
-                  title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                >
-                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearChat}
-                  className="h-8 w-8"
-                  title="Clear chat"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleChat}
-                  className="h-8 w-8 md:hidden"
-                  title="Minimize"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleChat}
-                  className="h-8 w-8"
-                  title="Close"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              
+              {/* Collected Data Visual Feedback */}
+              {Object.values(collectedData).some(v => v && (typeof v === 'string' ? v.length > 0 : (v as any[]).length > 0)) && (
+                <div className="text-xs bg-muted/50 rounded p-2 space-y-1">
+                  <p className="font-semibold text-muted-foreground">Collected Info:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {collectedData.serviceType && <span className="text-primary">✓ Service</span>}
+                    {collectedData.homeSize && <span className="text-primary">✓ Size</span>}
+                    {collectedData.frequency && <span className="text-primary">✓ Frequency</span>}
+                    {collectedData.firstName && <span className="text-primary">✓ First Name</span>}
+                    {collectedData.lastName && <span className="text-primary">✓ Last Name</span>}
+                    {collectedData.email && <span className="text-primary">✓ Email</span>}
+                    {collectedData.phone && <span className="text-primary">✓ Phone</span>}
+                    {collectedData.streetAddress && <span className="text-primary">✓ Address</span>}
+                    {collectedData.city && <span className="text-primary">✓ City</span>}
+                    {collectedData.zipCode && <span className="text-primary">✓ ZIP</span>}
+                    {collectedData.preferredDate && <span className="text-primary">✓ Date</span>}
+                    {collectedData.preferredTime && <span className="text-primary">✓ Time</span>}
+                    {collectedData.addOns && collectedData.addOns.length > 0 && <span className="text-primary">✓ Add-ons</span>}
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Progress Bar */}

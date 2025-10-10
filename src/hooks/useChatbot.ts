@@ -21,6 +21,21 @@ export interface UseChatbotReturn {
   toggleChat: () => void;
   clearChat: () => void;
   markAsRead: () => void;
+  collectedData: {
+    serviceType: string;
+    homeSize: string;
+    frequency: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    streetAddress: string;
+    city: string;
+    zipCode: string;
+    preferredDate: string;
+    preferredTime: string;
+    addOns: string[];
+  };
 }
 
 export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
@@ -47,6 +62,64 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     preferredTime: '',
     addOns: [] as string[],
   });
+
+  // Extract data from user messages based on context
+  const extractDataFromMessage = useCallback((userMessage: string, lastAIMessage: string): { field: keyof typeof collectedData; value: string } | null => {
+    const lowerMsg = userMessage.toLowerCase();
+    const lowerAI = lastAIMessage.toLowerCase();
+
+    // Email detection
+    if (lowerAI.includes('email')) {
+      const emailMatch = userMessage.match(/[\w.-]+@[\w.-]+\.\w+/);
+      if (emailMatch) return { field: 'email', value: emailMatch[0] };
+    }
+
+    // Phone detection
+    if (lowerAI.includes('phone')) {
+      const phoneMatch = userMessage.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+      if (phoneMatch) return { field: 'phone', value: phoneMatch[0].replace(/\D/g, '') };
+    }
+
+    // Name detection (first name)
+    if (lowerAI.includes('first name')) {
+      const nameMatch = userMessage.match(/^([A-Za-z]+)$/);
+      if (nameMatch) return { field: 'firstName', value: nameMatch[1] };
+    }
+
+    // Last name detection
+    if (lowerAI.includes('last name')) {
+      const nameMatch = userMessage.match(/^([A-Za-z]+)$/);
+      if (nameMatch) return { field: 'lastName', value: nameMatch[1] };
+    }
+
+    // Address detection
+    if (lowerAI.includes('street') || lowerAI.includes('address')) {
+      return { field: 'streetAddress', value: userMessage };
+    }
+
+    // City detection
+    if (lowerAI.includes('city')) {
+      return { field: 'city', value: userMessage };
+    }
+
+    // ZIP code detection
+    if (lowerAI.includes('zip')) {
+      const zipMatch = userMessage.match(/\d{5}/);
+      if (zipMatch) return { field: 'zipCode', value: zipMatch[0] };
+    }
+
+    // Date detection
+    if (lowerAI.includes('date') || lowerAI.includes('when')) {
+      return { field: 'preferredDate', value: userMessage };
+    }
+
+    // Time detection
+    if (lowerAI.includes('time')) {
+      return { field: 'preferredTime', value: userMessage };
+    }
+
+    return null;
+  }, []);
 
   // Load chat history on mount
   useEffect(() => {
@@ -81,6 +154,16 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     if (!content.trim() || isLoading) return;
 
     setError(null);
+    
+    // Extract data from user message if possible
+    const lastAIMsg = messages[messages.length - 1];
+    if (lastAIMsg?.role === 'assistant') {
+      const extracted = extractDataFromMessage(content.trim(), lastAIMsg.content);
+      if (extracted) {
+        setCollectedData(prev => ({ ...prev, [extracted.field]: extracted.value }));
+      }
+    }
+
     const userMessage: ChatMessage = {
       id: generateMessageId(),
       role: 'user',
@@ -189,7 +272,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, bookingContext, isLoading, isOpen]);
+  }, [messages, bookingContext, isLoading, isOpen, collectedData, extractDataFromMessage]);
 
   const toggleChat = useCallback(() => {
     setIsOpen(prev => {
@@ -228,6 +311,7 @@ export function useChatbot(bookingContext?: BookingContext): UseChatbotReturn {
     sendMessage,
     toggleChat,
     clearChat,
-    markAsRead
+    markAsRead,
+    collectedData
   };
 }

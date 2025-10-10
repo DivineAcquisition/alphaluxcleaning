@@ -159,6 +159,13 @@ serve(async (req) => {
     const { messages, bookingContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
+    // Log incoming request for debugging
+    console.log('Chat request:', { 
+      messageCount: messages.length, 
+      hasContext: !!bookingContext,
+      collectedData: bookingContext?.collectedData 
+    });
+    
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
@@ -386,15 +393,66 @@ Use these exact options when asking about home size:
 - If ZIP code is not in service areas, politely explain where we do serve
 - Keep responses under 3-4 sentences unless user asks for detailed info`;
 
-    // Add current booking context if provided
+    // Add current booking state tracking
+    const collectedData = bookingContext?.collectedData || {};
+    const userMsgCount = messages.filter((m: any) => m.role === 'user').length;
+    const collectedFieldCount = Object.values(collectedData).filter(v => v).length;
+    
+    contextPrompt += `\n\n**CURRENT BOOKING STATE - WHAT YOU'VE COLLECTED:**
+${collectedData.serviceType ? `✅ Service Type: ${collectedData.serviceType}` : '❌ Service Type: NOT COLLECTED'}
+${collectedData.homeSize ? `✅ Home Size: ${collectedData.homeSize}` : '❌ Home Size: NOT COLLECTED'}
+${collectedData.frequency ? `✅ Frequency: ${collectedData.frequency}` : '❌ Frequency: NOT COLLECTED'}
+${collectedData.firstName ? `✅ First Name: ${collectedData.firstName}` : '❌ First Name: NOT COLLECTED'}
+${collectedData.lastName ? `✅ Last Name: ${collectedData.lastName}` : '❌ Last Name: NOT COLLECTED'}
+${collectedData.email ? `✅ Email: ${collectedData.email}` : '❌ Email: NOT COLLECTED'}
+${collectedData.phone ? `✅ Phone: ${collectedData.phone}` : '❌ Phone: NOT COLLECTED'}
+${collectedData.streetAddress ? `✅ Street Address: ${collectedData.streetAddress}` : '❌ Street Address: NOT COLLECTED'}
+${collectedData.city ? `✅ City: ${collectedData.city}` : '❌ City: NOT COLLECTED'}
+${collectedData.zipCode ? `✅ ZIP Code: ${collectedData.zipCode}` : '❌ ZIP Code: NOT COLLECTED'}
+${collectedData.preferredDate ? `✅ Preferred Date: ${collectedData.preferredDate}` : '❌ Preferred Date: NOT COLLECTED'}
+${collectedData.preferredTime ? `✅ Preferred Time: ${collectedData.preferredTime}` : '❌ Preferred Time: NOT COLLECTED'}
+${collectedData.addOns && collectedData.addOns.length > 0 ? `✅ Add-ons: ${collectedData.addOns.join(', ')}` : 'ℹ️ Add-ons: Optional (not asked yet)'}
+
+**YOUR IMMEDIATE ACTION - DECISION TREE:**
+${!collectedData.serviceType ? 'ASK FOR SERVICE TYPE (use question format with options)' :
+  !collectedData.homeSize ? 'ASK FOR HOME SIZE (use question format with options)' :
+  !collectedData.frequency ? 'ASK FOR FREQUENCY (use question format with options)' :
+  !bookingContext?.estimatedPrice ? 'USE calculate_price TOOL and show pricing' :
+  !collectedData.firstName ? 'SAY "Ready to book? Let me get your details!" then ASK FOR FIRST NAME (use input format)' :
+  !collectedData.lastName ? 'ASK FOR LAST NAME (use input format)' :
+  !collectedData.email ? 'ASK FOR EMAIL (use input format with email type)' :
+  !collectedData.phone ? 'ASK FOR PHONE NUMBER (use input format with tel type)' :
+  !collectedData.streetAddress ? 'ASK FOR STREET ADDRESS (use input format)' :
+  !collectedData.city ? 'ASK FOR CITY (use input format)' :
+  !collectedData.zipCode ? 'ASK FOR ZIP CODE (use input format)' :
+  !bookingContext?.zipCodeChecked ? 'USE check_availability TOOL with the zip code' :
+  !collectedData.preferredDate ? 'ASK FOR PREFERRED DATE (use input format with date type)' :
+  !collectedData.preferredTime ? 'ASK FOR PREFERRED TIME (use question format with Morning/Afternoon/Evening options)' :
+  'ASK ABOUT ADD-ONS (use multiselect format) or SHOW CONFIRMATION if add-ons already handled'}
+
+**PROACTIVE BOOKING BEHAVIOR:**
+After answering ANY general question (pricing, services, availability), ALWAYS:
+1. Give a brief answer (1-2 sentences max)
+2. Say "Ready to book? Let me help you with that!"
+3. Immediately ask for the FIRST missing field from the decision tree above
+
+Example:
+User: "Do you provide cleaning supplies?"
+AI: "Yes! We bring all cleaning supplies and equipment. Ready to book? Let me help you with that! What type of cleaning do you need?"
+[Show service type options]`;
+
+    // Add fallback if conversation is stuck
+    if (userMsgCount > 10 && collectedFieldCount < 3) {
+      contextPrompt += `\n\n**⚠️ CRITICAL: BOOKING NOT PROGRESSING**
+The conversation has gone too long without collecting booking info. You MUST immediately ask for the next missing field from the decision tree above. 
+DO NOT provide general information. Focus ONLY on completing the booking.`;
+    }
+    
+    // Add legacy context if provided
     if (bookingContext) {
-      contextPrompt += `\n\n**CURRENT BOOKING CONTEXT:**`;
       if (bookingContext.currentStep) contextPrompt += `\n- Current Step: ${bookingContext.currentStep}`;
       if (bookingContext.stateCode) contextPrompt += `\n- State: ${bookingContext.stateCode}`;
       if (bookingContext.zipCode) contextPrompt += `\n- ZIP Code: ${bookingContext.zipCode}`;
-      if (bookingContext.serviceType) contextPrompt += `\n- Service Type: ${bookingContext.serviceType}`;
-      if (bookingContext.homeSize) contextPrompt += `\n- Home Size: ${bookingContext.homeSize}`;
-      if (bookingContext.frequency) contextPrompt += `\n- Frequency: ${bookingContext.frequency}`;
       if (bookingContext.estimatedPrice) contextPrompt += `\n- Current Price Estimate: $${bookingContext.estimatedPrice}`;
     }
 
