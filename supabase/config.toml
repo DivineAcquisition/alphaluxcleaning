@@ -173,3 +173,6 @@ verify_jwt = false
 [functions.chat-booking-assistant]
 verify_jwt = false
 
+[functions.chat-create-booking]
+verify_jwt = false
+

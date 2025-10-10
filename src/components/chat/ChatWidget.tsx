@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, X, Minus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -34,6 +35,16 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  // Detect booking creation in messages
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.content.includes('Booking created successfully')) {
+      setBookingInProgress(false);
+    } else if (lastMessage?.role === 'assistant' && lastMessage.content.toLowerCase().includes('creating your booking')) {
+      setBookingInProgress(true);
+    }
+  }, [messages]);
 
   // Mark as read when opened
   useEffect(() => {
@@ -112,6 +123,29 @@ export function ChatWidget({ bookingContext }: ChatWidgetProps) {
             ref={messageContainerRef}
             className="flex-1 overflow-y-auto p-4 space-y-4 bg-background"
           >
+            {bookingInProgress && (
+              <div className="bg-primary/10 p-3 rounded-lg mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin">⏳</div>
+                  <span className="text-sm font-medium">Creating your booking...</span>
+                </div>
+              </div>
+            )}
+            
+            {bookingContext && (
+              <div className="bg-muted p-3 rounded-lg mb-2">
+                <p className="text-xs font-semibold mb-2">Current Booking Info:</p>
+                <div className="text-xs space-y-1">
+                  {bookingContext.stateCode && <div>📍 State: {bookingContext.stateCode}</div>}
+                  {bookingContext.zipCode && <div>🏠 ZIP: {bookingContext.zipCode}</div>}
+                  {bookingContext.serviceType && <div>🧹 Service: {bookingContext.serviceType}</div>}
+                  {bookingContext.homeSize && <div>📐 Size: {bookingContext.homeSize}</div>}
+                  {bookingContext.frequency && <div>📅 Frequency: {bookingContext.frequency}</div>}
+                  {bookingContext.estimatedPrice && <div>💰 Price: ${bookingContext.estimatedPrice}</div>}
+                </div>
+              </div>
+            )}
+            
             {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}
