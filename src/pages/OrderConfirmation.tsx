@@ -116,20 +116,20 @@ export default function OrderConfirmation() {
           .from("bookings")
           .select(`
             *,
-            customers!inner(
-              id,
-              name,
-              first_name,
-              last_name,
-              email,
-              phone,
-              address,
-              address_line1,
-              address_line2,
-              city,
-              state,
-              postal_code
-            )
+          customers!customer_id(
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            phone,
+            address,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            postal_code
+          )
           `)
           .eq("stripe_checkout_session_id", sessionId)
           .maybeSingle();
@@ -143,20 +143,20 @@ export default function OrderConfirmation() {
           .from("bookings")
           .select(`
             *,
-            customers!inner(
-              id,
-              name,
-              first_name,
-              last_name,
-              email,
-              phone,
-              address,
-              address_line1,
-              address_line2,
-              city,
-              state,
-              postal_code
-            )
+          customers!customer_id(
+            id,
+            name,
+            first_name,
+            last_name,
+            email,
+            phone,
+            address,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            postal_code
+          )
           `)
           .eq("id", orderId)
           .maybeSingle();

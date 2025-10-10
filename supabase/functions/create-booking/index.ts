@@ -138,6 +138,26 @@ serve(async (req) => {
 
     console.log("Booking created successfully:", booking.id);
 
+    // Trigger webhook immediately (don't wait for it to complete)
+    try {
+      console.log("Triggering enhanced-booking-webhook-v2 for booking:", booking.id);
+      supabase.functions.invoke('enhanced-booking-webhook-v2', {
+        body: {
+          booking_id: booking.id,
+          action: 'booking_confirmed'
+        }
+      }).then((result) => {
+        if (result.error) {
+          console.error("Webhook trigger error:", result.error);
+        } else {
+          console.log("Webhook triggered successfully");
+        }
+      });
+    } catch (webhookError) {
+      // Log but don't block booking creation
+      console.error("Failed to trigger webhook:", webhookError);
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
       booking: booking,

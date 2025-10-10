@@ -444,11 +444,15 @@ export function PaymentForm({
               customerName={customerInfo.name}
               customerPhone={customerInfo.phone}
               onSuccess={async (paymentId) => {
-                console.log('Payment successful, creating booking...', { paymentId });
+                console.log('✅ Payment successful, creating booking...', { paymentId });
                 
                 const finalPrice = getFinalPrice();
                 
                 try {
+                  // Store payment info in localStorage as backup
+                  localStorage.setItem('last_payment_id', paymentId);
+                  localStorage.setItem('last_payment_timestamp', new Date().toISOString());
+                  
                   // Call create-booking edge function
                   const { data: response, error: functionError } = await supabase.functions.invoke('create-booking', {
                     body: {
@@ -474,19 +478,34 @@ export function PaymentForm({
                   });
 
                   if (functionError || !response?.success) {
-                    console.error('Booking creation failed:', functionError || response);
-                    toast.error('Payment successful but booking creation failed. Please contact support.');
+                    console.error('❌ Booking creation failed:', functionError || response);
+                    toast.error(
+                      "Payment received but booking needs verification. " +
+                      "Please contact support with payment ID: " + paymentId,
+                      { duration: 10000 }
+                    );
                     return;
                   }
 
-                  console.log('Booking created successfully:', response.booking);
+                  const bookingId = response.booking.id;
+                  console.log('✅ Booking created successfully:', bookingId);
+                  
+                  // Store booking ID in localStorage as backup
+                  localStorage.setItem('current_order_id', bookingId);
+                  localStorage.setItem('last_booking_timestamp', new Date().toISOString());
+                  
                   toast.success('Booking confirmed! Redirecting to confirmation page...');
                   
-                  // Navigate to confirmation page
-                  navigateToOrderConfirmation(navigate, response.booking.id);
+                  // Navigate directly to confirmation page
+                  console.log('🎯 Navigating to order confirmation:', bookingId);
+                  navigateToOrderConfirmation(navigate, bookingId);
                 } catch (error) {
-                  console.error('Booking creation error:', error);
-                  toast.error('Payment successful but booking creation failed. Please contact support.');
+                  console.error('❌ Booking creation error:', error);
+                  toast.error(
+                    "Payment received but booking needs verification. " +
+                    "Please contact support with payment ID: " + paymentId,
+                    { duration: 10000 }
+                  );
                 }
               }}
               onCancel={() => {

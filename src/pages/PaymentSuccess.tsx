@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useFacebookPixel } from '@/hooks/useFacebookPixel';
+import { toast } from 'sonner';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -159,12 +160,13 @@ export default function PaymentSuccess() {
         localStorage.removeItem('current_order_id');
         navigate(`/order-confirmation/${orderData.id}`, { replace: true });
       } else {
-        console.log('❌ No valid order data found, redirecting to guest-booking after delay');
+        console.log('❌ No valid order data found after checking all identifiers');
         console.log('Available identifiers were:', { sessionId, orderId, paymentIntentId, setupIntentId });
-        // Wait a bit to show debug info if needed
+        // Shorter timeout - user shouldn't wait long if order not found
         setTimeout(() => {
+          toast.error("Unable to find your order. Please check your email or contact support.");
           navigate('/guest-booking', { replace: true });
-        }, 3000);
+        }, 2000);
         return; // Don't navigate immediately
       }
     };
