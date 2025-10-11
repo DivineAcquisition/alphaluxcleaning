@@ -27,6 +27,7 @@ import { ReferralLanding } from '@/pages/ReferralLanding';
 import { Referrals } from '@/pages/Referrals';
 import GetReferral from '@/pages/GetReferral';
 import LearnMore from '@/pages/LearnMore';
+import RecurringServices from '@/pages/RecurringServices';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -74,6 +75,9 @@ function App() {
             
             {/* Lead Capture */}
             <Route path="/learn-more" element={<LearnMore />} />
+            
+            {/* Recurring Services */}
+            <Route path="/recurring-services" element={<RecurringServices />} />
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />

@@ -1,0 +1,41 @@
+import { Heading, Text, Section } from "npm:@react-email/components@0.0.22";
+import * as React from "npm:react@18.3.1";
+import { EmailBase, ActionButton } from "./email-base.tsx";
+
+interface RecurringServicePausedEmailProps {
+  first_name: string;
+  service_type: string;
+  pause_until?: string;
+  app_url: string;
+}
+
+export const RecurringServicePausedEmail = ({ 
+  first_name, 
+  service_type, 
+  pause_until,
+  app_url 
+}: RecurringServicePausedEmailProps) => (
+  <EmailBase preview="Your recurring service has been paused">
+    <Heading style={h1}>Service Paused, {first_name}</Heading>
+    <Text style={text}>
+      Your {service_type} recurring service has been paused as requested.
+    </Text>
+    {pause_until && (
+      <Text style={text}>
+        Your service will automatically resume on {new Date(pause_until).toLocaleDateString()}.
+      </Text>
+    )}
+    <Text style={text}>
+      You can resume your service anytime from your dashboard.
+    </Text>
+    <Section style={ctaSection}>
+      <ActionButton href={`${app_url}/recurring-services`}>
+        Manage Services →
+      </ActionButton>
+    </Section>
+  </EmailBase>
+);
+
+const h1 = { color: "#1A1A1A", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
+const text = { color: "#1A1A1A", fontSize: "16px", lineHeight: "1.6", margin: "0 0 16px 0" };
+const ctaSection = { textAlign: "center" as const, margin: "32px 0" };

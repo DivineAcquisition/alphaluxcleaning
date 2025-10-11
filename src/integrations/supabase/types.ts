@@ -198,12 +198,14 @@ export type Database = {
           hcp_job_id: string | null
           housecall_job_id: string | null
           id: string
+          is_recurring_instance: boolean | null
           manage_token: string | null
           manage_token_expires_at: string | null
           marketing_opt_in: boolean | null
           membership_plan_id: string | null
           mrr: number | null
           paid_at: string | null
+          parent_recurring_service_id: string | null
           payment_option_id: string | null
           pricing_breakdown: Json | null
           promo_applied: string | null
@@ -257,12 +259,14 @@ export type Database = {
           hcp_job_id?: string | null
           housecall_job_id?: string | null
           id?: string
+          is_recurring_instance?: boolean | null
           manage_token?: string | null
           manage_token_expires_at?: string | null
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
           paid_at?: string | null
+          parent_recurring_service_id?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           promo_applied?: string | null
@@ -316,12 +320,14 @@ export type Database = {
           hcp_job_id?: string | null
           housecall_job_id?: string | null
           id?: string
+          is_recurring_instance?: boolean | null
           manage_token?: string | null
           manage_token_expires_at?: string | null
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
           paid_at?: string | null
+          parent_recurring_service_id?: string | null
           payment_option_id?: string | null
           pricing_breakdown?: Json | null
           promo_applied?: string | null
@@ -357,6 +363,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_parent_recurring_service_id_fkey"
+            columns: ["parent_recurring_service_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_services"
             referencedColumns: ["id"]
           },
           {
@@ -1118,6 +1131,87 @@ export type Database = {
           },
           {
             foreignKeyName: "promo_redemptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_services: {
+        Row: {
+          booking_id: string | null
+          cancellation_date: string | null
+          cancellation_reason: string | null
+          created_at: string | null
+          customer_id: string
+          discount_percentage: number | null
+          frequency: string
+          id: string
+          next_service_date: string | null
+          pause_end_date: string | null
+          pause_start_date: string | null
+          price_per_service: number
+          service_address: Json | null
+          service_type: string
+          status: string
+          stripe_subscription_id: string | null
+          total_amount_saved: number | null
+          total_services_completed: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          created_at?: string | null
+          customer_id: string
+          discount_percentage?: number | null
+          frequency: string
+          id?: string
+          next_service_date?: string | null
+          pause_end_date?: string | null
+          pause_start_date?: string | null
+          price_per_service: number
+          service_address?: Json | null
+          service_type: string
+          status?: string
+          stripe_subscription_id?: string | null
+          total_amount_saved?: number | null
+          total_services_completed?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          cancellation_date?: string | null
+          cancellation_reason?: string | null
+          created_at?: string | null
+          customer_id?: string
+          discount_percentage?: number | null
+          frequency?: string
+          id?: string
+          next_service_date?: string | null
+          pause_end_date?: string | null
+          pause_start_date?: string | null
+          price_per_service?: number
+          service_address?: Json | null
+          service_type?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          total_amount_saved?: number | null
+          total_services_completed?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_services_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_services_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
