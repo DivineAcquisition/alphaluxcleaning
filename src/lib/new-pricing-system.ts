@@ -33,7 +33,7 @@ export interface FrequencyConfig {
 export interface StateConfig {
   code: string;
   name: string;
-  // No multiplier needed - using universal pricing
+  multiplier: number; // TX: 1.0, CA: 1.10, NY: 1.15
 }
 
 export interface PricingConfig {
@@ -44,12 +44,23 @@ export interface PricingConfig {
 
 export interface PricingResult {
   basePrice: number; // Original price before discount
-  discountAmount: number; // Amount saved with 15% discount
+  discountAmount: number; // Amount saved with discount
+  discountedPrice: number; // Price after discount (deprecated, use finalPrice)
   finalPrice: number; // Price after discount (for one-time or per-clean)
+  depositAmount: number; // 25% deposit amount
   mrrEstimate: number; // Monthly recurring revenue (if applicable)
   arrEstimate: number; // Annual recurring revenue (if applicable)
   savings: string; // Formatted savings message
+  tierLabel: string; // Home size label
+  recurringDetails?: {
+    perClean: number;
+    cleansPerMonth: number;
+    monthlyTotal: number;
+  };
 }
+
+// Deposit configuration
+export const DEPOSIT_PERCENTAGE = 0.25; // 25% deposit required
 
 // Universal Hybrid Pricing Model - Home size ranges with base prices
 export const HOME_SIZE_RANGES: HomeSizeRange[] = [
@@ -59,9 +70,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1000,
     maxSqft: 1500,
     bedroomRange: '1–2 BR condos/homes',
-    regularPrice: 140,
-    deepPrice: 250,
-    moveInOutPrice: 265
+    regularPrice: 190,
+    deepPrice: 295,
+    moveInOutPrice: 340
   },
   {
     id: '1501_2000',
@@ -69,9 +80,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1501,
     maxSqft: 2000,
     bedroomRange: '2–3 BR homes',
-    regularPrice: 173,
-    deepPrice: 297,
-    moveInOutPrice: 315
+    regularPrice: 235,
+    deepPrice: 355,
+    moveInOutPrice: 410
   },
   {
     id: '2001_2500',
@@ -79,9 +90,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2001,
     maxSqft: 2500,
     bedroomRange: '3 BR homes',
-    regularPrice: 206,
-    deepPrice: 349,
-    moveInOutPrice: 370
+    regularPrice: 280,
+    deepPrice: 415,
+    moveInOutPrice: 480
   },
   {
     id: '2501_3000',
@@ -89,9 +100,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2501,
     maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
-    regularPrice: 238,
-    deepPrice: 401,
-    moveInOutPrice: 425
+    regularPrice: 325,
+    deepPrice: 475,
+    moveInOutPrice: 550
   },
   {
     id: '3001_3500',
@@ -99,9 +110,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3001,
     maxSqft: 3500,
     bedroomRange: '4 BR homes',
-    regularPrice: 271,
-    deepPrice: 453,
-    moveInOutPrice: 480
+    regularPrice: 370,
+    deepPrice: 535,
+    moveInOutPrice: 620
   },
   {
     id: '3501_4000',
@@ -109,9 +120,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3501,
     maxSqft: 4000,
     bedroomRange: '4–5 BR homes',
-    regularPrice: 304,
-    deepPrice: 505,
-    moveInOutPrice: 535
+    regularPrice: 415,
+    deepPrice: 595,
+    moveInOutPrice: 690
   },
   {
     id: '4001_4500',
@@ -119,9 +130,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4001,
     maxSqft: 4500,
     bedroomRange: '5 BR homes',
-    regularPrice: 336,
-    deepPrice: 557,
-    moveInOutPrice: 590
+    regularPrice: 460,
+    deepPrice: 655,
+    moveInOutPrice: 760
   },
   {
     id: '4501_5000',
@@ -129,16 +140,16 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4501,
     maxSqft: 5000,
     bedroomRange: '5+ BR homes',
-    regularPrice: 369,
-    deepPrice: 609,
-    moveInOutPrice: 645
+    regularPrice: 505,
+    deepPrice: 715,
+    moveInOutPrice: 830
   },
   {
     id: '5000_plus',
     label: '5,000+ sq ft',
     minSqft: 5000,
     maxSqft: 999999,
-    bedroomRange: 'Custom Quote Required',
+    bedroomRange: 'Custom Quote Required - Call (972) 559-0223',
     requiresEstimate: true,
     regularPrice: 0,
     deepPrice: 0,
@@ -149,20 +160,20 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
 // Universal Hybrid Pricing Configuration
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   states: [
-    { code: 'TX', name: 'Texas' },
-    { code: 'CA', name: 'California' },
-    { code: 'NY', name: 'New York' }
+    { code: 'TX', name: 'Texas', multiplier: 1.0 },
+    { code: 'CA', name: 'California', multiplier: 1.10 },
+    { code: 'NY', name: 'New York', multiplier: 1.15 }
   ],
   serviceTypes: [
-    { id: 'regular', name: 'Regular Clean', allowsRecurring: true },
+    { id: 'regular', name: 'Standard Cleaning', allowsRecurring: true },
     { id: 'deep', name: 'Deep Cleaning', allowsRecurring: false },
     { id: 'move_in_out', name: 'Move-In/Out Cleaning', allowsRecurring: false }
   ],
   frequencies: [
     { id: 'one_time', name: 'One-time', discount: 0 },
-    { id: 'weekly', name: 'Weekly', recurringMultiplier: 0.40, cleansPerMonth: 4, discount: 0.15 },
-    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 0.55, cleansPerMonth: 2, discount: 0.10 },
-    { id: 'monthly', name: 'Monthly', recurringMultiplier: 0.75, cleansPerMonth: 1, discount: 0.05 }
+    { id: 'weekly', name: 'Weekly', recurringMultiplier: 1.0, cleansPerMonth: 4, discount: 0.15 },
+    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 1.0, cleansPerMonth: 2, discount: 0.10 },
+    { id: 'monthly', name: 'Monthly', recurringMultiplier: 1.0, cleansPerMonth: 1, discount: 0.05 }
   ]
 };
 
@@ -190,10 +201,13 @@ export function calculateNewPricing(
     return {
       basePrice: 0,
       discountAmount: 0,
+      discountedPrice: 0,
       finalPrice: 0,
+      depositAmount: 0,
       mrrEstimate: 0,
       arrEstimate: 0,
-      savings: 'Custom Quote Required'
+      savings: 'Custom Quote Required - Call (972) 559-0223',
+      tierLabel: homeSize.label
     };
   }
 
@@ -213,12 +227,16 @@ export function calculateNewPricing(
       throw new Error(`Unknown service type: ${serviceTypeId}`);
   }
 
+  // Apply state multiplier
+  basePrice = basePrice * state.multiplier;
+
   // Calculate pricing based on frequency
   let finalPrice = basePrice;
   let discountAmount = 0;
   let mrrEstimate = 0;
   let arrEstimate = 0;
   let savings = '';
+  let recurringDetails;
 
   // For one-time cleanings: no discount
   if (frequencyId === 'one_time') {
@@ -227,32 +245,42 @@ export function calculateNewPricing(
     savings = '';
   } 
   // For recurring cleanings (Regular Clean only): apply frequency-specific discount
-  else if (serviceTypeId === 'regular' && frequency.recurringMultiplier && frequency.cleansPerMonth) {
-    // Calculate recurring base price
-    const recurringBase = basePrice * frequency.recurringMultiplier;
-    
+  else if (serviceTypeId === 'regular' && frequency.cleansPerMonth) {
     // Apply frequency-specific discount
     const frequencyDiscount = frequency.discount || 0;
-    discountAmount = recurringBase * frequencyDiscount;
-    finalPrice = recurringBase - discountAmount; // Per clean price after discount
+    discountAmount = basePrice * frequencyDiscount;
+    finalPrice = basePrice - discountAmount; // Per clean price after discount
     
     // Calculate MRR and ARR
     mrrEstimate = finalPrice * frequency.cleansPerMonth;
     arrEstimate = mrrEstimate * 12;
     
+    recurringDetails = {
+      perClean: finalPrice,
+      cleansPerMonth: frequency.cleansPerMonth,
+      monthlyTotal: mrrEstimate
+    };
+    
     // Format savings message
     if (frequencyDiscount > 0) {
-      savings = `You save ${(frequencyDiscount * 100).toFixed(0)}% on recurring cleanings! ($${discountAmount.toFixed(2)} off per clean)`;
+      savings = `You save ${(frequencyDiscount * 100).toFixed(0)}% on recurring cleanings!`;
     }
   }
+
+  // Calculate deposit (25% of final price)
+  const depositAmount = finalPrice * DEPOSIT_PERCENTAGE;
 
   return {
     basePrice: Math.round(basePrice * 100) / 100,
     discountAmount: Math.round(discountAmount * 100) / 100,
+    discountedPrice: Math.round(finalPrice * 100) / 100,
     finalPrice: Math.round(finalPrice * 100) / 100,
+    depositAmount: Math.round(depositAmount * 100) / 100,
     mrrEstimate: Math.round(mrrEstimate * 100) / 100,
     arrEstimate: Math.round(arrEstimate * 100) / 100,
-    savings
+    savings,
+    tierLabel: homeSize.label,
+    recurringDetails
   };
 }
 

@@ -18,6 +18,7 @@ export interface PriceQuoteParams {
 
 export interface PriceQuote {
   discountedPrice: number;
+  depositAmount: number;
   recurringDetails?: {
     perClean: number;
     cleansPerMonth: number;
@@ -44,6 +45,7 @@ export function getPriceQuote(params: PriceQuoteParams): PriceQuote | null {
 
         return {
           discountedPrice: result.finalPrice,
+          depositAmount: Math.round(result.finalPrice * 0.25 * 100) / 100,
           recurringDetails: result.isRecurring && result.perCleanPrice && result.cleansPerMonth
             ? {
                 perClean: result.perCleanPrice,
@@ -68,6 +70,7 @@ export function getPriceQuote(params: PriceQuoteParams): PriceQuote | null {
 
         return {
           discountedPrice: result.discountedPrice,
+          depositAmount: Math.round(result.discountedPrice * 0.25 * 100) / 100,
           recurringDetails: result.recurringDetails
             ? {
                 perClean: result.recurringDetails.perClean,
@@ -108,6 +111,7 @@ export function getPriceQuote(params: PriceQuoteParams): PriceQuote | null {
 
         return {
           discountedPrice: result.finalPrice,
+          depositAmount: result.depositAmount,
           recurringDetails,
           tierLabel
         };

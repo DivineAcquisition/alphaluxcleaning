@@ -25,16 +25,16 @@ interface ChatBookingRequest {
   specialInstructions?: string;
 }
 
-// Pricing calculation (same as in chat-booking-assistant)
+// Pricing calculation - Updated to match new pricing structure
 const HOME_SIZE_RANGES = [
-  { id: '1000_1500', minSqft: 1000, maxSqft: 1500, regularClean: 140, deepClean: 250, moveInOut: 265 },
-  { id: '1501_2000', minSqft: 1501, maxSqft: 2000, regularClean: 175, deepClean: 315, moveInOut: 332 },
-  { id: '2001_2500', minSqft: 2001, maxSqft: 2500, regularClean: 206, deepClean: 370, moveInOut: 390 },
-  { id: '2501_3000', minSqft: 2501, maxSqft: 3000, regularClean: 237, deepClean: 426, moveInOut: 449 },
-  { id: '3001_3500', minSqft: 3001, maxSqft: 3500, regularClean: 268, deepClean: 482, moveInOut: 507 },
-  { id: '3501_4000', minSqft: 3501, maxSqft: 4000, regularClean: 299, deepClean: 537, moveInOut: 566 },
-  { id: '4001_4500', minSqft: 4001, maxSqft: 4500, regularClean: 330, deepClean: 593, moveInOut: 624 },
-  { id: '4501_5000', minSqft: 4501, maxSqft: 5000, regularClean: 361, deepClean: 649, moveInOut: 683 },
+  { id: '1000_1500', minSqft: 1000, maxSqft: 1500, regularClean: 190, deepClean: 295, moveInOut: 340 },
+  { id: '1501_2000', minSqft: 1501, maxSqft: 2000, regularClean: 235, deepClean: 355, moveInOut: 410 },
+  { id: '2001_2500', minSqft: 2001, maxSqft: 2500, regularClean: 280, deepClean: 415, moveInOut: 480 },
+  { id: '2501_3000', minSqft: 2501, maxSqft: 3000, regularClean: 325, deepClean: 475, moveInOut: 550 },
+  { id: '3001_3500', minSqft: 3001, maxSqft: 3500, regularClean: 370, deepClean: 535, moveInOut: 620 },
+  { id: '3501_4000', minSqft: 3501, maxSqft: 4000, regularClean: 415, deepClean: 595, moveInOut: 690 },
+  { id: '4001_4500', minSqft: 4001, maxSqft: 4500, regularClean: 460, deepClean: 655, moveInOut: 760 },
+  { id: '4501_5000', minSqft: 4501, maxSqft: 5000, regularClean: 505, deepClean: 715, moveInOut: 830 },
   { id: '5000_plus', minSqft: 5001, maxSqft: 999999, regularClean: 0, deepClean: 0, moveInOut: 0 }
 ];
 
@@ -47,9 +47,11 @@ function calculatePrice(homeSizeId: string, serviceType: string, frequency: stri
   else if (serviceType === 'deep') basePrice = homeSize.deepClean;
   else if (serviceType === 'move_in_out') basePrice = homeSize.moveInOut;
 
-  const stateMultipliers: Record<string, number> = { TX: 1.0, CA: 1.5, NY: 1.3 };
+  // Regional adjustments: TX base, CA +10%, NY +15%
+  const stateMultipliers: Record<string, number> = { TX: 1.0, CA: 1.10, NY: 1.15 };
   basePrice *= (stateMultipliers[stateCode] || 1.0);
 
+  // Recurring discounts for regular cleaning only
   if (frequency !== 'one_time' && serviceType === 'regular') {
     const discounts: Record<string, number> = { weekly: 0.15, bi_weekly: 0.10, monthly: 0.05 };
     basePrice *= (1 - (discounts[frequency] || 0));

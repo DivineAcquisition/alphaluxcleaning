@@ -132,11 +132,23 @@ export function PricingSummaryCard({
       </CardHeader>
       <CardContent className="pt-6 space-y-3">
 
+        {/* Regional Adjustment Notice */}
+        {stateCode && stateCode !== 'TX' && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+            <p className="text-xs text-blue-700 font-medium">
+              {stateCode === 'CA' && '📍 California pricing: Base rate +10%'}
+              {stateCode === 'NY' && '📍 New York pricing: Base rate +15%'}
+            </p>
+          </div>
+        )}
+
         {/* Discount Savings Banner */}
         {showDiscount && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-green-600">
-              ✨ You save 15% today! ✨
+              {frequencyId === 'weekly' && '✨ Save 15% with weekly service! ✨'}
+              {frequencyId === 'bi_weekly' && '✨ Save 10% with bi-weekly service! ✨'}
+              {frequencyId === 'monthly' && '✨ Save 5% with monthly service! ✨'}
             </p>
           </div>
         )}
@@ -173,15 +185,32 @@ export function PricingSummaryCard({
           </p>
         </div>
 
-        {/* Payment Note */}
+        {/* Deposit Information */}
         <div className="pt-4 border-t border-border/50">
-          <div className="text-center space-y-2">
-            <p className="text-sm font-medium text-success">Pay After Service</p>
-            <p className="text-xs text-muted-foreground">
-              No payment required now. You'll be charged only after completion.
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">25% Deposit:</span>
+              <span className="text-sm font-semibold text-primary">
+                {formatPrice(pricingResult.depositAmount)}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground text-center pt-2">
+              💳 Deposits get priority scheduling. Or choose to pay after service.
             </p>
           </div>
         </div>
+
+        {/* Deep Clean Recommendation */}
+        {serviceTypeId === 'regular' && (
+          <div className="pt-3 border-t border-border/50">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+              <p className="text-xs text-amber-700">
+                💡 <strong>Tip:</strong> If your home hasn't been professionally cleaned in over 2 months, 
+                we recommend starting with a Deep Cleaning for best results.
+              </p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

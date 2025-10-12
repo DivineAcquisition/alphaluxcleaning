@@ -77,6 +77,11 @@ serve(async (req) => {
     const basePrice = bookingData.basePrice || bookingData.totalPrice || 0;
     const totalPrice = bookingData.totalPrice || basePrice;
     
+    // Calculate deposit (25%)
+    const depositAmount = paymentType === 'deposit_25' || paymentType === '25_percent_with_discount' 
+      ? Math.round(totalPrice * 0.25 * 100) / 100 
+      : 0;
+    
     // Calculate MRR/ARR based on frequency
     let mrr = 0;
     let arr = 0;
@@ -122,8 +127,8 @@ serve(async (req) => {
           dwellingType: bookingData.dwellingType || '',
           flooringType: bookingData.flooringType || ''
         },
-        deposit_amount: paymentType === 'deposit_20' ? totalPrice * 0.2 : 0,
-        balance_due: paymentType === 'deposit_20' ? totalPrice * 0.8 : totalPrice,
+        deposit_amount: depositAmount,
+        balance_due: depositAmount > 0 ? totalPrice - depositAmount : totalPrice,
         mrr: mrr,
         arr: arr,
         square_payment_id: squarePaymentId || null
