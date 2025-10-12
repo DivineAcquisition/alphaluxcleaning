@@ -6,7 +6,9 @@ import { TypeformProgress } from './TypeformProgress';
 import { FloatingPricingSummary } from './FloatingPricingSummary';
 import { WeeklyDateGrid } from './WeeklyDateGrid';
 import { TimeSlotSelector } from './TimeSlotSelector';
+import { WarmUpStep } from './WarmUpStep';
 import { MapPin, Home, Sparkles, Calendar, MapPinned, Phone, FileText, CreditCard, Mail, Hash, Building } from 'lucide-react';
+import { getDeepCleanRecommendation } from '@/lib/booking-recommendations';
 import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
@@ -32,8 +34,8 @@ interface TypeformBookingFlowProps {
 export function TypeformBookingFlow({
   onComplete
 }: TypeformBookingFlowProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 12; // Combined date/time into single step
+  const [currentStep, setCurrentStep] = useState(0);
+  const totalSteps = 13; // Added warm-up step
   const navigate = useNavigate();
 
   // Use form persistence hook
@@ -45,6 +47,7 @@ export function TypeformBookingFlow({
     isLoading,
     lastSaved
   } = useFormPersistence({
+    lastCleanedTimeline: '',
     stateCode: '',
     zipCode: '',
     email: '',
@@ -83,12 +86,36 @@ export function TypeformBookingFlow({
   // Show "Start Fresh" banner if there's saved data
   const [showStartFreshBanner, setShowStartFreshBanner] = useState(false);
 
+  // Deep clean recommendation state
+  const [showDeepCleanRecommendation, setShowDeepCleanRecommendation] = useState(false);
+  const [deepCleanReason, setDeepCleanReason] = useState('');
+
   useEffect(() => {
     // Check if there's saved data when component mounts
-    if (lastSaved && currentStep === 1) {
+    if (lastSaved && currentStep === 0) {
       setShowStartFreshBanner(true);
     }
   }, []);
+
+  // Check for deep clean recommendation when lastCleanedTimeline changes
+  useEffect(() => {
+    if (bookingData.lastCleanedTimeline) {
+      const recommendation = getDeepCleanRecommendation(bookingData.lastCleanedTimeline);
+      if (recommendation.shouldRecommend) {
+        setShowDeepCleanRecommendation(true);
+        setDeepCleanReason(recommendation.reason);
+        
+        // Auto-suggest deep cleaning if urgency is high
+        if (recommendation.urgency === 'high' && bookingData.serviceTypeId !== 'deep') {
+          updateField('serviceTypeId', 'deep');
+          toast.info('We recommend Deep Cleaning for your situation');
+        }
+      } else {
+        setShowDeepCleanRecommendation(false);
+        setDeepCleanReason('');
+      }
+    }
+  }, [bookingData.lastCleanedTimeline]);
 
   // Scroll to top instantly when step changes to prevent bottom-scroll issue
   useEffect(() => {
@@ -137,6 +164,10 @@ export function TypeformBookingFlow({
   }, [bookingData.serviceTypeId, bookingData.frequencyId, bookingData.homeSizeId, bookingData.stateCode]);
   const handleNext = () => {
     // Validation for each step
+    if (currentStep === 0 && !bookingData.lastCleanedTimeline) {
+      toast.error('Please select an option');
+      return;
+    }
     if (currentStep === 1 && !bookingData.stateCode) {
       toast.error('Please select a state');
       return;
@@ -188,12 +219,14 @@ export function TypeformBookingFlow({
     }
   };
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
   const canGoNext = () => {
     switch (currentStep) {
+      case 0:
+        return !!bookingData.lastCleanedTimeline;
       case 1:
         return !!bookingData.stateCode;
       case 2:
@@ -230,7 +263,7 @@ export function TypeformBookingFlow({
   }
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Start Fresh Banner - Show if saved data exists */}
-      {showStartFreshBanner && currentStep === 1 && (
+      {showStartFreshBanner && currentStep === 0 && (
         <div className="max-w-4xl mx-auto px-4 pt-8">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 flex items-center justify-between">
@@ -266,9 +299,29 @@ export function TypeformBookingFlow({
       )}
 
       {/* Promotional Banner - Show on first step */}
-      {currentStep === 1 && (
+      {currentStep === 0 && (
         <div className="max-w-4xl mx-auto px-4 pt-8">
           <PromotionalBanner />
+        </div>
+      )}
+
+      {/* Step 0: Warm-Up Question */}
+      <TypeformStep questionNumber={0} totalSteps={totalSteps} isActive={currentStep === 0} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Continue">
+        <WarmUpStep 
+          value={bookingData.lastCleanedTimeline}
+          onSelect={(value) => updateField('lastCleanedTimeline', value)}
+        />
+      </TypeformStep>
+
+      {/* Deep Clean Recommendation Banner */}
+      {showDeepCleanRecommendation && currentStep === 4 && (
+        <div className="max-w-4xl mx-auto px-4 pb-4">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-4">
+              <p className="text-sm font-medium text-primary">💡 Deep Cleaning Recommended</p>
+              <p className="text-xs text-muted-foreground mt-1">{deepCleanReason}</p>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -470,8 +523,8 @@ export function TypeformBookingFlow({
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Floating Pricing Summary - Show from Step 4 onwards */}
-      {currentStep >= 4 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
+      {/* Floating Pricing Summary - Show from Step 5 onwards (after warm-up) */}
+      {currentStep >= 5 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
       
       {/* AI Chat Assistant */}
       <ChatWidget bookingContext={{

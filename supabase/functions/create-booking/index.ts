@@ -125,7 +125,8 @@ serve(async (req) => {
           bedrooms: bookingData.bedrooms || '',
           bathrooms: bookingData.bathrooms || '',
           dwellingType: bookingData.dwellingType || '',
-          flooringType: bookingData.flooringType || ''
+          flooringType: bookingData.flooringType || '',
+          lastCleanedTimeline: bookingData.lastCleanedTimeline || ''
         },
         deposit_amount: depositAmount,
         balance_due: depositAmount > 0 ? totalPrice - depositAmount : totalPrice,
