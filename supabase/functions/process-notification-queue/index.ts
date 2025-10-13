@@ -178,14 +178,17 @@ async function sendSMSNotification(notification: any): Promise<boolean> {
       return false;
     }
 
-    // Use the enhanced SMS notification function
-    const { data, error } = await supabase.functions.invoke('enhanced-sms-notification', {
+    // Use unified SMS function with OpenPhone primary, Twilio fallback
+    const { data, error } = await supabase.functions.invoke('send-sms-unified', {
       body: {
         to: profile.phone,
         message: notification.message,
         notificationId: notification.id,
         customerId: notification.customer_id,
-        templateData: notification.template_data || {}
+        templateId: notification.template_id,
+        variables: notification.template_variables || notification.template_data || {},
+        provider: 'auto', // Auto-select OpenPhone first, then Twilio
+        enableFallback: true // Enable fallback to alternative provider
       }
     });
 
