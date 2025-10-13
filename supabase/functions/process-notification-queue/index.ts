@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
+import { renderSMSTemplate } from '../_shared/sms-templates.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -166,29 +167,50 @@ async function sendSMSNotification(notification: any): Promise<boolean> {
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     
-    // Get customer phone from profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('phone')
-      .eq('id', notification.customer_id)
-      .single();
+    console.log(`Sending SMS notification ${notification.id}`);
+    
+    // Get phone number from notification or customer record
+    let phoneNumber = notification.recipient_phone;
+    
+    if (!phoneNumber && notification.customer_id) {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('phone')
+        .eq('id', notification.customer_id)
+        .single();
+      
+      phoneNumber = customer?.phone;
+    }
 
-    if (!profile?.phone) {
-      console.error('No phone number found for customer');
+    if (!phoneNumber) {
+      console.error('No phone number available for SMS');
       return false;
+    }
+
+    // Render message from template if template_id is provided
+    let messageToSend = notification.message;
+    
+    if (notification.template_id && notification.variables) {
+      try {
+        messageToSend = renderSMSTemplate(notification.template_id, notification.variables);
+        console.log(`Rendered SMS template: ${notification.template_id}`);
+      } catch (templateError: any) {
+        console.error('Failed to render SMS template:', templateError.message);
+        if (!messageToSend) {
+          return false;
+        }
+      }
     }
 
     // Use unified SMS function with OpenPhone primary, Twilio fallback
     const { data, error } = await supabase.functions.invoke('send-sms-unified', {
       body: {
-        to: profile.phone,
-        message: notification.message,
+        to: phoneNumber,
+        message: messageToSend,
         notificationId: notification.id,
         customerId: notification.customer_id,
-        templateId: notification.template_id,
-        variables: notification.template_variables || notification.template_data || {},
-        provider: 'auto', // Auto-select OpenPhone first, then Twilio
-        enableFallback: true // Enable fallback to alternative provider
+        provider: 'auto',
+        enableFallback: true
       }
     });
 
@@ -197,6 +219,7 @@ async function sendSMSNotification(notification: any): Promise<boolean> {
       return false;
     }
 
+    console.log('SMS sent successfully via', data?.provider);
     return data?.success || false;
   } catch (error) {
     console.error('SMS sending error:', error);

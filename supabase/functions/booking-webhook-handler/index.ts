@@ -176,7 +176,7 @@ async function sendBookingConfirmationEmail(bookingId: string) {
         est_price,
         manage_token,
         receipt_url,
-        customers!inner(first_name, email, address_line1, city, state, postal_code)
+        customers!inner(first_name, email, phone, address_line1, city, state, postal_code)
       `)
       .eq('id', bookingId)
       .single();
@@ -207,6 +207,33 @@ async function sendBookingConfirmationEmail(bookingId: string) {
         event_id: `booking_confirmed_${bookingId}`
       }
     });
+
+    // Queue SMS notification via OpenPhone
+    if (booking.customers.phone) {
+      console.log('Queueing booking confirmation SMS');
+      
+      await supabase
+        .from('notification_queue')
+        .insert({
+          delivery_method: 'sms',
+          recipient_phone: booking.customers.phone,
+          message: '', // Will be rendered from template
+          template_id: 'booking_confirmed',
+          variables: {
+            first_name: booking.customers.first_name || 'there',
+            service_type: booking.service_type,
+            service_date: booking.service_date,
+            time_window: booking.time_slot || 'TBD',
+            manage_link: manageLink
+          },
+          customer_id: booking.customer_id,
+          booking_id: booking.id,
+          priority: 1,
+          metadata: { source: 'booking_webhook_handler' }
+        });
+      
+      console.log('SMS notification queued successfully');
+    }
   } catch (error) {
     console.error('Failed to send booking confirmation email:', error);
   }

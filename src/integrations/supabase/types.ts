@@ -825,6 +825,132 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_analytics: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          delivery_method: string
+          id: string
+          metadata: Json | null
+          notification_id: string | null
+          notification_type: string
+          provider: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_method: string
+          id?: string
+          metadata?: Json | null
+          notification_id?: string | null
+          notification_type: string
+          provider?: string | null
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_method?: string
+          id?: string
+          metadata?: Json | null
+          notification_id?: string | null
+          notification_type?: string
+          provider?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_analytics_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_analytics_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notification_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_queue: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          delivery_method: string
+          error_message: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          priority: number | null
+          provider_used: string | null
+          recipient_phone: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          template_id: string | null
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_method: string
+          error_message?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          priority?: number | null
+          provider_used?: string | null
+          recipient_phone?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          delivery_method?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          priority?: number | null
+          provider_used?: string | null
+          recipient_phone?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_queue_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_options: {
         Row: {
           active: boolean

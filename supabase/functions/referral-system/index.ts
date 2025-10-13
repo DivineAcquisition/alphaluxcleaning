@@ -287,7 +287,7 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
   // Get customer details
   const { data: customers } = await supabase
     .from('customers')
-    .select('id, first_name, email')
+    .select('id, first_name, email, phone')
     .in('id', [referredCustomerId, referrerCustomerId]);
 
   if (!customers || customers.length !== 2) {
@@ -326,6 +326,50 @@ async function sendRewardEmails(referredCustomerId: string, referrerCustomerId: 
       category: 'transactional'
     }
   });
+
+  // Queue SMS to referrer
+  if (referrerCustomer?.phone) {
+    console.log('Queueing referral reward SMS to referrer');
+    
+    await supabase
+      .from('notification_queue')
+      .insert({
+        delivery_method: 'sms',
+        recipient_phone: referrerCustomer.phone,
+        message: '',
+        template_id: 'referral_reward_earned',
+        variables: {
+          first_name: referrerCustomer.first_name || 'there',
+          amount: '$50.00',
+          referred_name: referredCustomer?.first_name || 'your friend'
+        },
+        customer_id: referrerCustomer.id,
+        priority: 2,
+        metadata: { source: 'referral_system', type: 'reward_earned' }
+      });
+  }
+
+  // Queue SMS to referred customer
+  if (referredCustomer?.phone) {
+    console.log('Queueing welcome credit SMS to referred customer');
+    
+    await supabase
+      .from('notification_queue')
+      .insert({
+        delivery_method: 'sms',
+        recipient_phone: referredCustomer.phone,
+        message: '',
+        template_id: 'referral_welcome_credit',
+        variables: {
+          first_name: referredCustomer.first_name || 'there',
+          amount: '$50.00',
+          referrer_name: referrerCustomer?.first_name || 'a friend'
+        },
+        customer_id: referredCustomer.id,
+        priority: 2,
+        metadata: { source: 'referral_system', type: 'welcome_credit' }
+      });
+  }
 }
 
 serve(handler);
