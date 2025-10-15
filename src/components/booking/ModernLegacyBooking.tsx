@@ -269,6 +269,8 @@ interface BookingData {
   basePrice: number;
   totalPrice: number;
   savings: number;
+  discountPercentage?: number;
+  originalBasePrice?: number;
 }
 const initialBookingData: BookingData = {
   zipCode: '',
@@ -360,13 +362,13 @@ export function ModernLegacyBooking() {
     }));
   };
 
-  // Get price using new pricing system and apply 20% global discount
+  // Get price using new pricing system and apply frequency-based discounts
   const getExactPrice = () => {
-    if (!bookingData.homeSize) return 0;
+    if (!bookingData.homeSize) return null;
 
     // Handle homes over 5,000 sq ft
     if (bookingData.homeSize === '5000-plus') {
-      return 0; // Requires estimate
+      return null; // Requires estimate
     }
 
     // Map home size to approximate square footage midpoint
@@ -382,7 +384,7 @@ export function ModernLegacyBooking() {
     };
     const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
     const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
-    if (!homeSizeRange) return 0;
+    if (!homeSizeRange) return null;
 
     // Map legacy service type to new system ids
     let serviceTypeId: 'standard' | 'deep' | 'move_in_out' = 'standard';
@@ -391,7 +393,7 @@ export function ModernLegacyBooking() {
     // Map legacy frequency to new system ids
     let frequencyId: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
     if (bookingData.serviceType === 'regular') {
-      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';else if (bookingData.frequency === 'oneTime') frequencyId = 'one_time';else return 0; // Require frequency selection for regular
+      if (bookingData.frequency === 'weekly') frequencyId = 'weekly';else if (bookingData.frequency === 'biweekly') frequencyId = 'bi_weekly';else if (bookingData.frequency === 'monthly') frequencyId = 'monthly';else if (bookingData.frequency === 'oneTime') frequencyId = 'one_time';else return null; // Require frequency selection for regular
     } else {
       frequencyId = 'one_time';
     }
@@ -407,23 +409,38 @@ export function ModernLegacyBooking() {
     }
     if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
     const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
-    return result.finalPrice;
+    
+    // Return full pricing breakdown
+    return {
+      finalPrice: result.finalPrice,
+      basePrice: result.basePrice,
+      discountAmount: result.discountAmount,
+      discountPercentage: result.basePrice > 0 
+        ? (result.discountAmount / result.basePrice) * 100 
+        : 0
+    };
   };
 
   // Calculate pricing whenever relevant fields change
   useEffect(() => {
-    const baseServicePrice = getExactPrice();
+    const pricingResult = getExactPrice();
 
-    // Calculate add-ons total
-    const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
-      const addOn = addOnServices.find(a => a.id === addOnId);
-      return total + (addOn?.price || 0);
-    }, 0);
+    if (pricingResult) {
+      // Calculate add-ons total
+      const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
+        const addOn = addOnServices.find(a => a.id === addOnId);
+        return total + (addOn?.price || 0);
+      }, 0);
 
-    const totalPrice = baseServicePrice + addOnsTotal;
-    updateField('basePrice', baseServicePrice);
-    updateField('totalPrice', totalPrice);
-    updateField('savings', 0);
+      const totalPrice = pricingResult.finalPrice + addOnsTotal;
+      const totalDiscount = pricingResult.discountAmount;
+      
+      updateField('basePrice', pricingResult.finalPrice);
+      updateField('originalBasePrice', pricingResult.basePrice);
+      updateField('totalPrice', totalPrice);
+      updateField('savings', totalDiscount);
+      updateField('discountPercentage', pricingResult.discountPercentage);
+    }
   }, [bookingData.homeSize, bookingData.serviceType, bookingData.frequency, bookingData.addOns]);
 
   // Validate ZIP code
@@ -849,7 +866,7 @@ export function ModernLegacyBooking() {
               serviceTypes={serviceTypes} 
               selectedType={bookingData.serviceType} 
               onSelect={typeId => updateField('serviceType', typeId)}
-              currentPrice={getExactPrice()}
+              currentPrice={getExactPrice()?.finalPrice || 0}
             />}
           </div>;
       case 2:
@@ -889,16 +906,19 @@ export function ModernLegacyBooking() {
                 </div>
 
                 {/* Real-time pricing display */}
-                {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && getExactPrice() > 0 && (
-                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center mb-6">
-                    <div className="text-2xl font-bold text-primary mb-1">
-                      {formatPrice(getExactPrice())}
+                {(() => {
+                  const priceResult = getExactPrice();
+                  return bookingData.homeSize && bookingData.homeSize !== '5000-plus' && priceResult && priceResult.finalPrice > 0 && (
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center mb-6">
+                      <div className="text-2xl font-bold text-primary mb-1">
+                        {formatPrice(priceResult.finalPrice)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Current pricing based on your selections
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Current pricing based on your selections
-                    </p>
-                  </div>
-                )}
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -970,16 +990,21 @@ export function ModernLegacyBooking() {
               </Card>}
 
             {/* Show price for Deep Clean and Move-Out */}
-            {bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-6 text-center">
-                  <h3 className="text-2xl font-bold text-primary">
-                    {formatPrice(getExactPrice())}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {bookingData.serviceType === 'deep' ? 'Deep Cleaning' : 'Move-Out Cleaning'} Price
-                  </p>
-                </CardContent>
-              </Card>}
+            {(() => {
+              const priceResult = getExactPrice();
+              return bookingData.homeSize && bookingData.homeSize !== '5000-plus' && (bookingData.serviceType === 'deep' || bookingData.serviceType === 'moveout') && priceResult && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="p-6 text-center">
+                    <h3 className="text-2xl font-bold text-primary">
+                      {formatPrice(priceResult.finalPrice)}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {bookingData.serviceType === 'deep' ? 'Deep Cleaning' : 'Move-Out Cleaning'} Price
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Large Home Estimate Notice */}
             {bookingData.homeSize === '5000-plus' && <Card className="bg-warning/5 border-warning/20">

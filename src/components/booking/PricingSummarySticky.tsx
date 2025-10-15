@@ -13,6 +13,8 @@ interface BookingData {
   basePrice: number;
   totalPrice: number;
   savings: number;
+  discountPercentage?: number;
+  originalBasePrice?: number;
 }
 
 interface ServiceType {
@@ -57,22 +59,20 @@ export function PricingSummarySticky({
   const selectedSize = homeSizes.find(h => h.id === bookingData.homeSize);
   const selectedFrequency = frequencyOptions.find(f => f.id === bookingData.frequency);
   
-  // Calculate original prices without discount
-  // bookingData.basePrice already has 20% discount applied via getExactPrice()
-  // To show the original price, we need to reverse the discount calculation
+  // Use actual pricing data from booking calculation
+  const originalBasePrice = bookingData.originalBasePrice || bookingData.basePrice;
   const discountedBasePrice = bookingData.basePrice;
-  const discountedAddOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
+
+  // Calculate add-ons (no discount on add-ons)
+  const addOnsTotal = bookingData.addOns.reduce((total, addOnId) => {
     const addOn = addOnServices.find(a => a.id === addOnId);
     return total + (addOn?.price || 0);
   }, 0);
-  
-  // Calculate original prices (before discount)
-  const originalBasePrice = discountedBasePrice / 0.8; // Reverse 20% discount
-  const originalAddOnsTotal = discountedAddOnsTotal / 0.8; // Reverse 20% discount
-  const originalSubtotal = originalBasePrice + originalAddOnsTotal;
-  
+
+  const originalSubtotal = originalBasePrice + addOnsTotal;
   const discountAmount = originalSubtotal - bookingData.totalPrice;
   const hasDiscount = discountAmount > 0;
+  const discountPercentage = bookingData.discountPercentage || 0;
 
   if (!selectedService) {
     return (
@@ -137,12 +137,11 @@ export function PricingSummarySticky({
                   const addOn = addOnServices.find(a => a.id === addOnId);
                   if (!addOn) return null;
                   
-                  // Apply discount to add-on price for display
-                  const discountedPrice = addOn.price * 0.8; // 20% discount applied
+                  // Add-ons should not have discounts applied
                   return (
                     <div key={addOnId} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{addOn.name}</span>
-                      <span className="font-medium">{formatPrice(discountedPrice)}</span>
+                      <span className="font-medium">{formatPrice(addOn.price)}</span>
                     </div>
                   );
                 })}
@@ -161,7 +160,9 @@ export function PricingSummarySticky({
               <div className="flex justify-between text-sm">
                 <span className="text-success flex items-center gap-1">
                   <Tag className="h-3 w-3" />
-                  20% Savings Applied
+                  {discountPercentage > 0 
+                    ? `${Math.round(discountPercentage)}% Savings Applied` 
+                    : 'Savings Applied'}
                 </span>
                 <span className="font-medium text-success">-{formatPrice(discountAmount)}</span>
               </div>
