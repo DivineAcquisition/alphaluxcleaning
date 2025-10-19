@@ -24,31 +24,9 @@ export function TypeformProgress({
 }: TypeformProgressProps) {
   return (
     <div className="mt-8 pt-6 border-t border-border">
-      {/* Mobile: Text Progress */}
-      <div className="sm:hidden text-center text-sm text-muted-foreground mb-4">
-        Step {currentStep} of {totalSteps}
-      </div>
-
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        {/* Desktop: Progress Dots - Hidden on mobile */}
-        <div className="hidden sm:flex items-center gap-2 order-2 sm:order-1">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(
-                "h-2 rounded-full transition-all duration-300",
-                index < currentStep 
-                  ? "w-8 bg-primary" 
-                  : index === currentStep 
-                    ? "w-12 bg-primary" 
-                    : "w-2 bg-border"
-              )}
-            />
-          ))}
-        </div>
-
         {/* Mobile & Desktop: Navigation Buttons */}
-        <div className="flex items-center justify-between gap-2 w-full sm:w-auto order-1 sm:order-2">
+        <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
           {/* Back Button */}
           <Button
             variant="ghost"

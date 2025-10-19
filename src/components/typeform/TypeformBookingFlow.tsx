@@ -523,8 +523,8 @@ export function TypeformBookingFlow({
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Floating Pricing Summary - Show from Step 5 onwards (after warm-up) */}
-      {currentStep >= 5 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
+      {/* Floating Pricing Summary - Show from Step 4 onwards (after service type) */}
+      {currentStep >= 4 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
       
       {/* AI Chat Assistant */}
       <ChatWidget bookingContext={{

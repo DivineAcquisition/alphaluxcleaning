@@ -49,20 +49,6 @@ export function TypeformStep({
       )}
     >
       <div className="w-full max-w-3xl space-y-8">
-        {/* Question Number Badge */}
-        <div className="flex items-center gap-3 animate-fade-in">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <span className="text-primary font-bold">{questionNumber}</span>
-          </div>
-          <div className="h-0.5 flex-1 bg-border">
-            <div 
-              className="h-full bg-primary transition-all duration-1000"
-              style={{ width: `${(questionNumber / totalSteps) * 100}%` }}
-            />
-          </div>
-          <span className="text-sm text-muted-foreground">{questionNumber} of {totalSteps}</span>
-        </div>
-
         {/* Content */}
         <div className="space-y-6">
           {children}
