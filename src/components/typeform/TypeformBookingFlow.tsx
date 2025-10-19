@@ -52,6 +52,7 @@ export function TypeformBookingFlow({
     zipCode: '',
     email: '',
     homeSizeId: '',
+    customSqFt: null as number | null,
     bedrooms: '2',
     bathrooms: '2',
     dwellingType: '',
@@ -138,9 +139,9 @@ export function TypeformBookingFlow({
     return sizeMap[homeSizeId] || 1250;
   };
   useEffect(() => {
-    if (bookingData.serviceTypeId && bookingData.frequencyId && bookingData.homeSizeId && bookingData.stateCode) {
+    if (bookingData.serviceTypeId && bookingData.frequencyId && (bookingData.homeSizeId || bookingData.customSqFt) && bookingData.stateCode) {
       try {
-        const sqft = getSquareFootageFromHomeSizeId(bookingData.homeSizeId);
+        const sqft = bookingData.customSqFt || getSquareFootageFromHomeSizeId(bookingData.homeSizeId);
         const result = getPriceQuote({
           stateCode: bookingData.stateCode,
           sqft,
@@ -161,7 +162,7 @@ export function TypeformBookingFlow({
         console.error('Pricing calculation error:', error);
       }
     }
-  }, [bookingData.serviceTypeId, bookingData.frequencyId, bookingData.homeSizeId, bookingData.stateCode]);
+  }, [bookingData.serviceTypeId, bookingData.frequencyId, bookingData.homeSizeId, bookingData.customSqFt, bookingData.stateCode]);
   const handleNext = () => {
     // Validation for each step
     if (currentStep === 0 && !bookingData.lastCleanedTimeline) {
@@ -194,8 +195,8 @@ export function TypeformBookingFlow({
       toast.error('Please complete property details');
       return;
     }
-    if (currentStep === 6 && !bookingData.homeSizeId) {
-      toast.error('Please select your home size');
+    if (currentStep === 6 && !bookingData.homeSizeId && !bookingData.customSqFt) {
+      toast.error('Please select your home size or enter exact square footage');
       return;
     }
     if (currentStep === 7 && !bookingData.frequencyId) {
@@ -238,7 +239,7 @@ export function TypeformBookingFlow({
       case 5:
         return !!(bookingData.bedrooms && bookingData.bathrooms && bookingData.dwellingType);
       case 6:
-        return !!bookingData.homeSizeId;
+        return !!(bookingData.homeSizeId || (bookingData.customSqFt && bookingData.customSqFt >= 500 && bookingData.customSqFt <= 10000));
       case 7:
         return !!bookingData.frequencyId;
       case 8:
@@ -400,8 +401,13 @@ export function TypeformBookingFlow({
 
       {/* Step 6: Home Size */}
       <TypeformStep questionNumber={6} totalSteps={totalSteps} isActive={currentStep === 6} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Continue">
-        <ConversationalQuestion question="What size is your home?" description="This helps us provide accurate pricing and timing" icon={<Home className="w-8 h-8" />}>
-          <HomeSizeGrid selectedId={bookingData.homeSizeId} onSelect={id => updateField('homeSizeId', id)} />
+        <ConversationalQuestion question="What size is your home?" description="Enter exact square footage for the most accurate pricing" icon={<Home className="w-8 h-8" />}>
+          <HomeSizeGrid 
+            selectedId={bookingData.homeSizeId} 
+            customSqFt={bookingData.customSqFt}
+            onSelect={id => updateField('homeSizeId', id)}
+            onCustomSqFtChange={sqft => updateField('customSqFt', sqft)}
+          />
         </ConversationalQuestion>
       </TypeformStep>
 
@@ -523,8 +529,17 @@ export function TypeformBookingFlow({
         </ConversationalQuestion>
       </TypeformStep>
 
-      {/* Floating Pricing Summary - Show from Step 4 onwards (after service type) */}
-      {currentStep >= 4 && <FloatingPricingSummary serviceTypeId={bookingData.serviceTypeId} frequencyId={bookingData.frequencyId} homeSizeId={bookingData.homeSizeId} stateCode={bookingData.stateCode} />}
+      {/* Floating Pricing Summary - Show from Step 6 onwards (after home size) with proceed button */}
+      {currentStep >= 6 && bookingData.homeSizeId && bookingData.frequencyId && (
+        <FloatingPricingSummary 
+          serviceTypeId={bookingData.serviceTypeId} 
+          frequencyId={bookingData.frequencyId} 
+          homeSizeId={bookingData.homeSizeId}
+          customSqFt={bookingData.customSqFt}
+          stateCode={bookingData.stateCode}
+          onProceed={currentStep < totalSteps ? handleNext : undefined}
+        />
+      )}
       
       {/* AI Chat Assistant */}
       <ChatWidget bookingContext={{

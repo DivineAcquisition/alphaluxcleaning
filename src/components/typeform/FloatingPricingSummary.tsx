@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChevronUp, ChevronDown, Calculator } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
-import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
+import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { getPriceQuote } from '@/lib/pricing-adapter';
 import { cn } from '@/lib/utils';
 
@@ -13,16 +13,20 @@ interface FloatingPricingSummaryProps {
   serviceTypeId?: string;
   frequencyId?: string;
   homeSizeId?: string;
+  customSqFt?: number;
   stateCode?: string;
   className?: string;
+  onProceed?: () => void;
 }
 
 export function FloatingPricingSummary({
   serviceTypeId,
   frequencyId,
   homeSizeId,
+  customSqFt,
   stateCode,
-  className
+  className,
+  onProceed
 }: FloatingPricingSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -48,7 +52,8 @@ export function FloatingPricingSummary({
     return sizeMap[homeSizeId] || 1250;
   };
 
-  const sqft = getSquareFootageFromHomeSizeId(homeSizeId);
+  // Use custom square footage if provided, otherwise use range midpoint
+  const sqft = customSqFt || getSquareFootageFromHomeSizeId(homeSizeId);
   
   // Calculate pricing using adapter
   const pricingResult = getPriceQuote({
@@ -65,6 +70,7 @@ export function FloatingPricingSummary({
 
   const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
   const frequency = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === frequencyId);
+  const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
 
   const isRecurring = pricingResult.recurringDetails !== undefined;
   const cleansPerMonth = pricingResult.recurringDetails?.cleansPerMonth || 0;
@@ -88,7 +94,8 @@ export function FloatingPricingSummary({
     }
   }
 
-  const showDiscount = pricingResult.discountedPrice > 0;
+  const showDiscount = pricingResult.discountAmount > 0;
+  const discountPercentage = frequency?.discount ? (frequency.discount * 100).toFixed(0) : '0';
 
   return (
     <div className={cn("fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border shadow-lg", className)}>
@@ -96,47 +103,61 @@ export function FloatingPricingSummary({
         {/* Collapsed View */}
         <div className="p-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-primary">
-                <Calculator className="h-5 w-5" />
-                <span className="font-semibold">Total:</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Calculator className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {serviceType?.name} • {customSqFt ? `${customSqFt} sq ft` : homeSize?.label}
+                </span>
               </div>
+              <p className="text-xs text-muted-foreground mb-2">
+                {frequency?.name}
+                {showDiscount && ` • ${discountPercentage}% savings applied`}
+              </p>
               <div>
                 <span className="text-2xl font-bold text-primary">
                   {formatPrice(finalPrice)}
                 </span>
-                <p className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground ml-2">
                   {isRecurring && cleansPerMonth > 0 
-                    ? `${cleansPerMonth} clean${cleansPerMonth > 1 ? 's' : ''} per month`
+                    ? `per visit (${cleansPerMonth}x/month)`
                     : priceLabel
                   }
-                </p>
-                {showDiscount && (
-                  <p className="text-xs font-semibold text-green-600">
-                    ✨ 15% off included!
-                  </p>
-                )}
+                </span>
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="gap-2"
-            >
-              {isExpanded ? (
-                <>
-                  Hide
-                  <ChevronDown className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Details
-                  <ChevronUp className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+            {onProceed && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={onProceed}
+                className="gap-2 shrink-0"
+              >
+                Continue →
+              </Button>
+            )}
+            
+            {!onProceed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="gap-2 shrink-0"
+              >
+                {isExpanded ? (
+                  <>
+                    Hide
+                    <ChevronDown className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Details
+                    <ChevronUp className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -145,44 +166,66 @@ export function FloatingPricingSummary({
           <div className="border-t border-border">
             <Card className="rounded-none border-0 shadow-none">
               <CardContent className="p-4 space-y-3">
-                {/* Discount Banner */}
-                {showDiscount && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
-                    <p className="text-xs font-semibold text-green-600">
-                      ✨ 15% discount applied! ✨
-                    </p>
+                {/* Service Summary */}
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-foreground">📋 Service Summary</p>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p>• {serviceType?.name}</p>
+                    <p>• {customSqFt ? `${customSqFt} sq ft (exact)` : homeSize?.label}</p>
+                    <p>• {frequency?.name} {isRecurring && cleansPerMonth > 0 ? `(${cleansPerMonth}x per month)` : ''}</p>
                   </div>
-                )}
-
-                {/* Total */}
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-base font-bold text-foreground">
-                    {priceLabel}
-                  </span>
-                  <p className="text-xl font-bold text-primary">
-                    {formatPrice(finalPrice)}
-                  </p>
                 </div>
 
-                {/* Per-clean breakdown */}
-                {isRecurring && cleansPerMonth > 0 && (
-                  <div className="text-center pt-1">
-                    <p className="text-xs text-muted-foreground">
-                      {cleansPerMonth} clean{cleansPerMonth > 1 ? 's' : ''} per month
+                <Separator />
+
+                {/* Pricing Breakdown */}
+                <div className="space-y-2">
+                  {showDiscount && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Original Price:</span>
+                        <span className="text-foreground">{formatPrice(pricingResult.basePrice)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>{frequency?.name} Savings ({discountPercentage}%):</span>
+                        <span>-{formatPrice(pricingResult.discountAmount)}</span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-bold text-foreground">
+                      {priceLabel}
+                    </span>
+                    <p className="text-xl font-bold text-primary">
+                      {formatPrice(finalPrice)}
                     </p>
                   </div>
-                )}
 
-                {/* Service details */}
-                <Separator className="mt-3" />
-                <div className="space-y-1 pt-1">
-                  <p className="text-xs text-muted-foreground">
-                    {serviceType?.name} • {pricingResult.tierLabel}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {frequency?.name}
-                  </p>
+                  {/* Monthly Total for recurring */}
+                  {isRecurring && monthlyTotal > 0 && (
+                    <div className="text-center pt-2 bg-primary/5 rounded-lg p-2">
+                      <p className="text-xs text-muted-foreground">
+                        Monthly Total: <span className="font-semibold text-foreground">{formatPrice(monthlyTotal)}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {onProceed && (
+                  <>
+                    <Separator />
+                    <Button
+                      variant="default"
+                      size="lg"
+                      onClick={onProceed}
+                      className="w-full gap-2"
+                    >
+                      Continue to Next Step →
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
