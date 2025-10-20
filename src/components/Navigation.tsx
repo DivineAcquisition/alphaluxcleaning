@@ -7,24 +7,19 @@ export function Navigation() {
   const handleTroubleBooking = () => {
     window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
   };
-
   return <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center justify-center space-x-3">
-            <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-16 md:w-auto object-contain rounded-xl" />
+            <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-11 md:w-auto object-contain rounded-xl" />
           </Link>
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
             {/* Having Trouble Booking Button */}
             <div className="hidden md:flex">
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={handleTroubleBooking}
-              >
+              <Button variant="outline" className="flex items-center gap-2" onClick={handleTroubleBooking}>
                 <HelpCircle className="h-4 w-4" />
                 Having Trouble Booking?
               </Button>
