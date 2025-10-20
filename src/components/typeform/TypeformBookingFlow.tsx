@@ -259,24 +259,41 @@ export function TypeformBookingFlow({
     setIsProcessing(true);
 
     try {
-      // Create customer first
-      const { data: customerData, error: customerError } = await supabase
+      // Step 1: Handle customer creation (check for duplicates)
+      let customerData;
+      const { data: existingCustomer } = await supabase
         .from('customers')
-        .insert({
-          email: bookingData.email,
-          name: bookingData.contactInfo.name,
-          phone: bookingData.contactInfo.phone,
-          address_line1: bookingData.address.street,
-          city: bookingData.address.city,
-          postal_code: bookingData.address.zipCode || bookingData.zipCode,
-          state: bookingData.stateCode
-        })
         .select()
-        .single();
+        .eq('email', bookingData.email)
+        .maybeSingle();
 
-      if (customerError) throw customerError;
+      if (existingCustomer) {
+        customerData = existingCustomer;
+        console.log('✅ Using existing customer:', customerData.id);
+      } else {
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            email: bookingData.email,
+            name: bookingData.contactInfo.name,
+            phone: bookingData.contactInfo.phone,
+            address_line1: bookingData.address.street,
+            city: bookingData.address.city,
+            postal_code: bookingData.address.zipCode || bookingData.zipCode,
+            state: bookingData.stateCode
+          })
+          .select()
+          .single();
 
-      // Create complete booking with ALL collected data
+        if (customerError) throw customerError;
+        customerData = newCustomer;
+        console.log('✅ Created new customer:', customerData.id);
+      }
+
+      // Step 2: Create complete booking
+      const depositAmount = pricing.discountedPrice * 0.2;
+      const balanceDue = pricing.discountedPrice - depositAmount;
+
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -285,9 +302,12 @@ export function TypeformBookingFlow({
           paid_at: new Date().toISOString(),
           status: 'confirmed',
           service_type: bookingData.serviceTypeId,
-          sqft_or_bedrooms: bookingData.customSqFt || getSquareFootageFromHomeSizeId(bookingData.homeSizeId)?.toString(),
+          sqft_or_bedrooms: bookingData.customSqFt || 
+            getSquareFootageFromHomeSizeId(bookingData.homeSizeId)?.toString(),
           frequency: bookingData.frequencyId,
           est_price: pricing.discountedPrice,
+          deposit_amount: depositAmount,
+          balance_due: balanceDue,
           service_date: format(bookingData.serviceDate, 'yyyy-MM-dd'),
           time_slot: bookingData.serviceTime,
           property_details: {
@@ -305,17 +325,106 @@ export function TypeformBookingFlow({
         .single();
 
       if (bookingError) throw bookingError;
+      console.log('✅ Booking created:', booking.id);
 
-      // Clear form data
+      // Step 3: Send confirmation email
+      try {
+        const emailResponse = await supabase.functions.invoke('send-email-system', {
+          body: {
+            template: 'booking_confirmed',
+            to: bookingData.email,
+            data: {
+              first_name: bookingData.contactInfo.name.split(' ')[0],
+              service_type: bookingData.serviceTypeId,
+              service_date: format(bookingData.serviceDate, 'MMM d, yyyy'),
+              time_window: bookingData.serviceTime,
+              manage_link: `${window.location.origin}/customer-portal?booking=${booking.id}`,
+              receipt_link: `${window.location.origin}/order-confirmation/${booking.id}`,
+              total_price: pricing.discountedPrice,
+              deposit_paid: depositAmount,
+              balance_due: balanceDue,
+              address: `${bookingData.address.street}, ${bookingData.address.city}`,
+              property_details: {
+                bedrooms: bookingData.bedrooms,
+                bathrooms: bookingData.bathrooms,
+                dwelling_type: bookingData.dwellingType
+              }
+            },
+            category: 'transactional',
+            event_id: `booking_confirmed_${booking.id}`
+          }
+        });
+
+        if (emailResponse.error) {
+          console.error('⚠️ Email failed:', emailResponse.error);
+          await supabase.from('email_jobs').insert({
+            template_name: 'booking_confirmed',
+            to_email: bookingData.email,
+            status: 'failed',
+            last_error: emailResponse.error.message,
+            payload: { booking_id: booking.id, customer_id: customerData.id }
+          });
+        } else {
+          console.log('✅ Confirmation email sent');
+        }
+      } catch (emailError) {
+        console.error('⚠️ Email error (non-fatal):', emailError);
+      }
+
+      // Step 4: Send webhook to Zapier
+      try {
+        const webhookPayload = {
+          booking_id: booking.id,
+          customer_id: customerData.id,
+          customer_name: bookingData.contactInfo.name,
+          customer_email: bookingData.email,
+          customer_phone: bookingData.contactInfo.phone,
+          service_type: bookingData.serviceTypeId,
+          service_date: format(bookingData.serviceDate, 'yyyy-MM-dd'),
+          service_time: bookingData.serviceTime,
+          home_size: bookingData.customSqFt || getSquareFootageFromHomeSizeId(bookingData.homeSizeId),
+          frequency: bookingData.frequencyId,
+          total_price: pricing.discountedPrice,
+          deposit_paid: depositAmount,
+          balance_due: balanceDue,
+          address: {
+            street: bookingData.address.street,
+            city: bookingData.address.city,
+            zipCode: bookingData.address.zipCode || bookingData.zipCode,
+            state: bookingData.stateCode
+          },
+          property_details: {
+            bedrooms: parseInt(bookingData.bedrooms),
+            bathrooms: parseInt(bookingData.bathrooms),
+            dwelling_type: bookingData.dwellingType,
+            flooring_type: bookingData.flooringType
+          },
+          special_instructions: bookingData.specialInstructions,
+          payment_id: paymentInfo.paymentId,
+          timestamp: new Date().toISOString()
+        };
+
+        const webhookUrl = import.meta.env.VITE_ZAPIER_WEBHOOK_URL;
+        if (webhookUrl) {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookPayload)
+          });
+          console.log('✅ Zapier webhook sent');
+        }
+      } catch (webhookError) {
+        console.error('⚠️ Webhook error (non-fatal):', webhookError);
+      }
+
+      // Clear form data and navigate
       clearData();
-
-      // Navigate to confirmation page
-      toast.success('🎉 Booking confirmed!');
+      toast.success('🎉 Booking confirmed! Check your email for details.', { duration: 6000 });
       navigateToOrderConfirmation(navigate, booking.id);
       
     } catch (error) {
-      console.error('Final submission error:', error);
-      toast.error('Failed to complete booking. Please contact support.');
+      console.error('❌ Final submission error:', error);
+      toast.error('Failed to complete booking. Please contact support at (555) 123-4567', { duration: 10000 });
     } finally {
       setIsProcessing(false);
     }
@@ -572,7 +681,28 @@ export function TypeformBookingFlow({
                     name: bookingData.contactInfo.name,
                     email: bookingData.email,
                     phone: bookingData.contactInfo.phone
-                  }} 
+                  }}
+                  authorizationOnly={true}
+                  onPaymentSuccess={(paymentId, paymentDetails) => {
+                    console.log('✅ Payment authorized', { paymentId, paymentDetails });
+                    setPaymentInfo({ 
+                      paymentId, 
+                      timestamp: new Date().toISOString(),
+                      amount: pricing.discountedPrice * 0.2,
+                      fullAmount: pricing.discountedPrice,
+                      status: 'authorized',
+                      ...paymentDetails 
+                    });
+                    setPaymentCompleted(true);
+                    toast.success("✅ Payment authorized! Let's complete your booking details.", { duration: 5000 });
+                    setTimeout(() => handleNext(), 1000);
+                  }}
+                  onPaymentError={(error) => {
+                    console.error('❌ Payment failed:', error);
+                    toast.error(`Payment failed: ${error.message || 'Please try again or contact support.'}`, { duration: 8000 });
+                    setPaymentCompleted(false);
+                    setPaymentInfo(null);
+                  }}
                 />
               </Card>
             </div>

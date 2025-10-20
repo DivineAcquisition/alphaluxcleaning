@@ -40,6 +40,9 @@ interface PaymentFormProps {
     email: string;
     phone: string;
   };
+  authorizationOnly?: boolean;
+  onPaymentSuccess?: (paymentId: string, paymentDetails?: any) => void;
+  onPaymentError?: (error: any) => void;
 }
 
 export function PaymentForm({
@@ -47,7 +50,10 @@ export function PaymentForm({
   calculatedPrice,
   priceBreakdown,
   schedulingData,
-  customerInfo: prefilledCustomerInfo
+  customerInfo: prefilledCustomerInfo,
+  authorizationOnly = false,
+  onPaymentSuccess,
+  onPaymentError
 }: PaymentFormProps) {
   const [customerInfo, setCustomerInfo] = useState({
     name: prefilledCustomerInfo?.name || "",
@@ -444,8 +450,18 @@ export function PaymentForm({
               customerName={customerInfo.name}
               customerPhone={customerInfo.phone}
               onSuccess={async (paymentId) => {
-                console.log('✅ Payment successful, creating booking...', { paymentId });
+                console.log('✅ Payment successful', { paymentId, authorizationOnly });
                 
+                // If authorization-only mode, just notify parent
+                if (authorizationOnly && onPaymentSuccess) {
+                  onPaymentSuccess(paymentId, {
+                    amount: Math.round(getFinalPrice() * 0.2 * 100) / 100,
+                    fullAmount: getFinalPrice()
+                  });
+                  return;
+                }
+                
+                // Otherwise, create booking as usual
                 const finalPrice = getFinalPrice();
                 
                 try {
@@ -506,6 +522,9 @@ export function PaymentForm({
                     "Please contact support with payment ID: " + paymentId,
                     { duration: 10000 }
                   );
+                  if (onPaymentError) {
+                    onPaymentError(error);
+                  }
                 }
               }}
               onCancel={() => {
