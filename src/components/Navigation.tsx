@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Phone, Mail, Menu, HelpCircle } from "lucide-react";
+import logo from "@/assets/logo.png";
 export function Navigation() {
   const handleTroubleBooking = () => {
     window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
@@ -12,7 +13,7 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center justify-center space-x-3">
-            <img src="/assets/alphalux-logo.png" alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-16 md:w-auto object-contain" />
+            <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-16 md:w-auto object-contain rounded-xl" />
           </Link>
 
           {/* Right Section */}

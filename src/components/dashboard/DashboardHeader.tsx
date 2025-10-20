@@ -1,12 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
+import logo from "@/assets/logo.png";
 export function DashboardHeader() {
   return <div className="space-y-6">
       {/* Main Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center mb-4">
-          <img src="/lovable-uploads/f10b1f5a-67c8-4702-a276-cc9dd8959a0a.png" alt="Bay Area Cleaning Professionals" className="h-24 w-auto" />
+          <img src={logo} alt="Bay Area Cleaning Professionals" className="h-24 w-auto rounded-xl" />
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Bay Area Cleaning Professionals
