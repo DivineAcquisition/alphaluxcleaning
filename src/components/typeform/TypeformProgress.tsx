@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TypeformProgressProps {
@@ -11,6 +11,7 @@ interface TypeformProgressProps {
   canGoBack?: boolean;
   canGoNext?: boolean;
   nextLabel?: string;
+  isProcessing?: boolean;
 }
 
 export function TypeformProgress({
@@ -20,7 +21,8 @@ export function TypeformProgress({
   onNext,
   canGoBack = true,
   canGoNext = true,
-  nextLabel = 'Continue'
+  nextLabel = 'Continue',
+  isProcessing = false
 }: TypeformProgressProps) {
   return (
     <div className="mt-8 pt-6 border-t border-border">
@@ -47,12 +49,21 @@ export function TypeformProgress({
             variant="default"
             size="lg"
             onClick={onNext}
-            disabled={!canGoNext}
+            disabled={!canGoNext || isProcessing}
             data-next-button
             className="gap-2 touch-manipulation bg-primary hover:bg-primary/90 sm:px-8 px-4 flex-1 sm:flex-initial"
           >
-            <span>{nextLabel}</span>
-            <ArrowRight className="w-4 h-4" />
+            {isProcessing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <span>{nextLabel}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </div>
       </div>

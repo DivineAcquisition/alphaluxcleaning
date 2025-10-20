@@ -28,6 +28,8 @@ import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, ServiceAreaValidation } from '@/lib/service-area-validation';
 import { ChatWidget } from '@/components/chat/ChatWidget';
+import { navigateToOrderConfirmation } from '@/utils/routing-helpers';
+import { supabase } from '@/integrations/supabase/client';
 interface TypeformBookingFlowProps {
   onComplete?: () => void;
 }
@@ -94,6 +96,9 @@ export function TypeformBookingFlow({
   // Payment completion tracking
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
+  
+  // Final booking submission state
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     // Check if there's saved data when component mounts
@@ -226,6 +231,93 @@ export function TypeformBookingFlow({
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!paymentCompleted || !paymentInfo) {
+      toast.error("Payment information is missing. Please contact support.");
+      setCurrentStep(7);
+      return;
+    }
+
+    // Validate all required fields
+    const validationErrors = [];
+    if (!bookingData.serviceDate) validationErrors.push("service date");
+    if (!bookingData.serviceTime) validationErrors.push("service time");
+    if (!bookingData.address.street) validationErrors.push("street address");
+    if (!bookingData.address.city) validationErrors.push("city");
+    if (!bookingData.bedrooms) validationErrors.push("bedrooms");
+    if (!bookingData.bathrooms) validationErrors.push("bathrooms");
+    if (!bookingData.dwellingType) validationErrors.push("dwelling type");
+
+    if (validationErrors.length > 0) {
+      toast.error(`Please complete: ${validationErrors.join(", ")}`);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Create customer first
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          email: bookingData.email,
+          name: bookingData.contactInfo.name,
+          phone: bookingData.contactInfo.phone,
+          address_line1: bookingData.address.street,
+          city: bookingData.address.city,
+          postal_code: bookingData.address.zipCode || bookingData.zipCode,
+          state: bookingData.stateCode
+        })
+        .select()
+        .single();
+
+      if (customerError) throw customerError;
+
+      // Create complete booking with ALL collected data
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          customer_id: customerData.id,
+          stripe_payment_intent_id: paymentInfo.paymentId,
+          paid_at: new Date().toISOString(),
+          status: 'confirmed',
+          service_type: bookingData.serviceTypeId,
+          sqft_or_bedrooms: bookingData.customSqFt || getSquareFootageFromHomeSizeId(bookingData.homeSizeId)?.toString(),
+          frequency: bookingData.frequencyId,
+          est_price: pricing.discountedPrice,
+          service_date: format(bookingData.serviceDate, 'yyyy-MM-dd'),
+          time_slot: bookingData.serviceTime,
+          property_details: {
+            bedrooms: parseInt(bookingData.bedrooms),
+            bathrooms: parseInt(bookingData.bathrooms),
+            dwelling_type: bookingData.dwellingType,
+            flooring_type: bookingData.flooringType
+          },
+          zip_code: bookingData.zipCode,
+          special_instructions: bookingData.specialInstructions || '',
+          source_channel: 'UI_DIRECT',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // Clear form data
+      clearData();
+
+      // Navigate to confirmation page
+      toast.success('🎉 Booking confirmed!');
+      navigateToOrderConfirmation(navigate, booking.id);
+      
+    } catch (error) {
+      console.error('Final submission error:', error);
+      toast.error('Failed to complete booking. Please contact support.');
+    } finally {
+      setIsProcessing(false);
     }
   };
   const canGoNext = () => {
@@ -594,7 +686,7 @@ export function TypeformBookingFlow({
       </TypeformStep>
 
       {/* Step 12: Special Instructions */}
-      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Complete Booking">
+      <TypeformStep questionNumber={12} totalSteps={totalSteps} isActive={currentStep === 12} onBack={handleBack} onNext={handleFinalSubmit} canGoNext={canGoNext()} nextLabel="Complete Booking" isProcessing={isProcessing}>
         <ConversationalQuestion question="Any special instructions?" description="Let us know about pets, access codes, or specific requests (optional)" icon={<FileText className="w-8 h-8" />}>
           <Textarea value={bookingData.specialInstructions} onChange={e => updateField('specialInstructions', e.target.value)} placeholder="e.g., Please focus on the kitchen, we have a friendly dog..." rows={6} className="text-lg" />
         </ConversationalQuestion>

@@ -13,6 +13,7 @@ interface TypeformStepProps {
   canGoBack?: boolean;
   canGoNext?: boolean;
   nextLabel?: string;
+  isProcessing?: boolean;
 }
 
 export function TypeformStep({ 
@@ -25,7 +26,8 @@ export function TypeformStep({
   onNext,
   canGoBack = true,
   canGoNext = true,
-  nextLabel = 'Continue'
+  nextLabel = 'Continue',
+  isProcessing = false
 }: TypeformStepProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -63,6 +65,7 @@ export function TypeformStep({
           canGoBack={canGoBack}
           canGoNext={canGoNext}
           nextLabel={nextLabel}
+          isProcessing={isProcessing}
         />
       </div>
     </div>
