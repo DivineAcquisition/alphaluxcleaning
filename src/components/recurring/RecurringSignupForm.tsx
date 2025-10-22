@@ -27,6 +27,8 @@ interface RecurringSignupFormProps {
       postal_code: string;
     };
   };
+  lastCleanedTimeline: string;
+  acknowledgedWarning?: boolean;
 }
 
 type Frequency = 'weekly' | 'bi-weekly' | 'monthly';
@@ -43,7 +45,7 @@ const FREQUENCY_LABELS = {
   monthly: 'Monthly',
 };
 
-export function RecurringSignupForm({ booking }: RecurringSignupFormProps) {
+export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledgedWarning }: RecurringSignupFormProps) {
   const navigate = useNavigate();
   const [selectedFrequency, setSelectedFrequency] = useState<Frequency>('weekly');
   const [showPayment, setShowPayment] = useState(false);
@@ -80,6 +82,8 @@ export function RecurringSignupForm({ booking }: RecurringSignupFormProps) {
             postalCode: booking.customers.postal_code,
           },
           propertyDetails: booking.property_details,
+          lastCleanedTimeline,
+          acknowledgedDeepCleanWarning: acknowledgedWarning || false,
         },
       });
 
@@ -154,6 +158,22 @@ export function RecurringSignupForm({ booking }: RecurringSignupFormProps) {
 
   return (
     <div className="space-y-8">
+      {/* Warning Reminder */}
+      {acknowledgedWarning && (
+        <Card className="p-4 border-2 border-orange-200 bg-orange-50">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div className="flex-1">
+              <h4 className="font-semibold mb-1">Reminder: Your First Service Will Be a Standard Clean</h4>
+              <p className="text-sm text-muted-foreground">
+                If you notice areas that need deeper attention, please let us know before your first service 
+                and we can adjust the schedule or pricing accordingly.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Frequency Selection */}
       <div>
         <h2 className="text-2xl font-bold mb-4 text-center">Choose Your Schedule</h2>

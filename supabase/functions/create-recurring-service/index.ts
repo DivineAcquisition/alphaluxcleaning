@@ -31,6 +31,8 @@ serve(async (req) => {
       paymentMethodId,
       serviceAddress,
       propertyDetails,
+      lastCleanedTimeline,
+      acknowledgedDeepCleanWarning,
     } = await req.json();
 
     console.log('Creating recurring service for customer:', customerId);
@@ -73,6 +75,8 @@ serve(async (req) => {
         next_service_date: nextServiceDate.toISOString().split('T')[0],
         status: 'active',
         service_address: serviceAddress,
+        last_cleaned_timeline: lastCleanedTimeline || null,
+        acknowledged_deep_clean_warning: acknowledgedDeepCleanWarning || false,
       })
       .select()
       .single();
