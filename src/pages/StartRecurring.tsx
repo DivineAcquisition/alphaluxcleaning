@@ -101,39 +101,18 @@ export default function StartRecurring() {
 
     setSearching(true);
     try {
-      const { data, error: searchError } = await supabase
-        .from('bookings')
-        .select(`
-          id,
-          service_type,
-          est_price,
-          service_date,
-          frequency,
-          property_details,
-          customers!inner (
-            id,
-            name,
-            email,
-            phone,
-            address_line1,
-            address_line2,
-            city,
-            state,
-            postal_code
-          )
-        `)
-        .eq('customers.email', searchEmail.trim().toLowerCase())
-        .order('service_date', { ascending: false })
-        .limit(5);
+      const { data, error } = await supabase.functions.invoke('search-bookings-by-email', {
+        body: { email: searchEmail.trim() }
+      });
 
-      if (searchError) throw searchError;
+      if (error) throw error;
 
-      if (!data || data.length === 0) {
+      if (!data?.data || data.data.length === 0) {
         toast.error('No bookings found for this email address');
         setSearchResults([]);
       } else {
-        setSearchResults(data as any);
-        toast.success(`Found ${data.length} booking(s)`);
+        setSearchResults(data.data as any);
+        toast.success(`Found ${data.data.length} booking(s)`);
       }
     } catch (err: any) {
       console.error('Error searching bookings:', err);

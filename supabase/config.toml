@@ -183,3 +183,6 @@ verify_jwt = false
 [functions.get-recurring-services]
 verify_jwt = false
 
+[functions.search-bookings-by-email]
+verify_jwt = false
+
