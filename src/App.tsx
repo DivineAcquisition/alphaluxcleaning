@@ -28,6 +28,7 @@ import { Referrals } from '@/pages/Referrals';
 import GetReferral from '@/pages/GetReferral';
 import LearnMore from '@/pages/LearnMore';
 import RecurringServices from '@/pages/RecurringServices';
+import StartRecurring from '@/pages/StartRecurring';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -78,6 +79,7 @@ function App() {
             
             {/* Recurring Services */}
             <Route path="/recurring-services" element={<RecurringServices />} />
+            <Route path="/start-recurring" element={<StartRecurring />} />
             
             {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
