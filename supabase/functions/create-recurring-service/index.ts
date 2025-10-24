@@ -36,6 +36,20 @@ serve(async (req) => {
       acknowledgedDeepCleanWarning,
     } = await req.json();
 
+    // Validate service type allows recurring
+    const allowedRecurringTypes = ['regular', 'standard', 'deep'];
+    if (!allowedRecurringTypes.includes(serviceType?.toLowerCase())) {
+      return new Response(
+        JSON.stringify({ 
+          error: `${serviceType} cleaning is not available for recurring services. Only Standard and Deep cleaning can be recurring.` 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
     let finalCustomerId = customerId;
 
     // If no customerId provided, create new customer

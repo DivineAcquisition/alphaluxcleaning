@@ -35,12 +35,14 @@ export function EmbeddedSquarePaymentForm({
   creditsAmount = 0,
 }: EmbeddedSquarePaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [card, setCard] = useState<any>(null);
   const [isCardReady, setIsCardReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeSquare = async () => {
+      setIsInitializing(true);
       try {
         console.log("🎨 Initializing Square payment form");
         const square = await squarePromise;
@@ -55,10 +57,12 @@ export function EmbeddedSquarePaymentForm({
         
         setCard(cardInstance);
         setIsCardReady(true);
+        setIsInitializing(false);
         console.log("✅ Square card form initialized");
       } catch (err: any) {
         console.error("❌ Error initializing Square:", err);
         setError(err.message || "Failed to initialize payment form");
+        setIsInitializing(false);
         toast.error("Payment form initialization failed. Please refresh the page.");
       }
     };
@@ -170,7 +174,14 @@ export function EmbeddedSquarePaymentForm({
         </div>
 
         <div className="space-y-4">
-          <div id="square-card-container" className="min-h-[200px]" />
+          {isInitializing ? (
+            <div className="flex items-center justify-center min-h-[200px]">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Loading payment form...</span>
+            </div>
+          ) : (
+            <div id="square-card-container" className="min-h-[200px]" />
+          )}
           
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

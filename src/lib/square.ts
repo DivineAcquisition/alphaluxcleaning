@@ -105,6 +105,12 @@ if (typeof window !== "undefined") {
 
 export const squarePromise = squareInstancePromise;
 
+export function resetSquarePromise() {
+  console.log("🔄 Resetting Square promise for retry...");
+  squareInstancePromise = createSquareInstance();
+  return squareInstancePromise;
+}
+
 export async function hasSquareKey(): Promise<boolean> {
   try {
     const square = await squarePromise;

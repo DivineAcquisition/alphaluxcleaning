@@ -154,7 +154,12 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
           <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
             <div className="flex justify-between">
               <span className="font-medium">Service:</span>
-              <span>{booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning</span>
+              <span>
+                {booking 
+                  ? `${booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning`
+                  : `${manualEntryData?.service_type?.charAt(0).toUpperCase() + manualEntryData?.service_type?.slice(1)} Cleaning`
+                }
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium">Frequency:</span>

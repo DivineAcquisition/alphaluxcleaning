@@ -33,7 +33,7 @@ export function RecurringManualEntryForm({ onSubmit }: RecurringManualEntryFormP
     city: '',
     state: '',
     postal_code: '',
-    service_type: 'standard',
+    service_type: 'regular',
     bedrooms: '2',
     bathrooms: '2',
   });
@@ -142,11 +142,13 @@ export function RecurringManualEntryForm({ onSubmit }: RecurringManualEntryFormP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard Cleaning</SelectItem>
+                <SelectItem value="regular">Standard Cleaning</SelectItem>
                 <SelectItem value="deep">Deep Cleaning</SelectItem>
-                <SelectItem value="move-in-out">Move In/Out</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Move-In/Out cleaning is only available as a one-time service. <a href="/" className="underline hover:text-primary">Book a one-time cleaning</a>
+            </p>
           </div>
           <div>
             <Label htmlFor="bedrooms">Bedrooms *</Label>
