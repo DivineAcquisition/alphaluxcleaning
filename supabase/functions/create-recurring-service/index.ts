@@ -23,6 +23,7 @@ serve(async (req) => {
 
     const {
       customerId,
+      customerInfo,
       bookingId,
       frequency,
       serviceType,
@@ -35,13 +36,43 @@ serve(async (req) => {
       acknowledgedDeepCleanWarning,
     } = await req.json();
 
-    console.log('Creating recurring service for customer:', customerId);
+    let finalCustomerId = customerId;
+
+    // If no customerId provided, create new customer
+    if (!customerId && customerInfo) {
+      console.log('Creating new customer:', customerInfo.email);
+      
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          address_line1: serviceAddress.street,
+          address_line2: serviceAddress.street2,
+          city: serviceAddress.city,
+          state: serviceAddress.state,
+          postal_code: serviceAddress.postalCode,
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('Error creating customer:', customerError);
+        throw customerError;
+      }
+
+      finalCustomerId = newCustomer.id;
+      console.log('New customer created:', finalCustomerId);
+    }
+
+    console.log('Creating recurring service for customer:', finalCustomerId);
 
     // Check if customer already has active recurring service
     const { data: existingService } = await supabase
       .from('recurring_services')
       .select('id')
-      .eq('customer_id', customerId)
+      .eq('customer_id', finalCustomerId)
       .eq('status', 'active')
       .single();
 
@@ -66,8 +97,8 @@ serve(async (req) => {
     const { data: recurringService, error: createError } = await supabase
       .from('recurring_services')
       .insert({
-        customer_id: customerId,
-        booking_id: bookingId,
+        customer_id: finalCustomerId,
+        booking_id: bookingId || null,
         service_type: serviceType,
         frequency: frequency,
         price_per_service: pricePerService,
@@ -92,7 +123,7 @@ serve(async (req) => {
     const { data: customer } = await supabase
       .from('customers')
       .select('name, email, first_name')
-      .eq('id', customerId)
+      .eq('id', finalCustomerId)
       .single();
 
     // Send confirmation email

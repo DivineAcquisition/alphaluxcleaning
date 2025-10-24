@@ -6,11 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, TrendingDown } from 'lucide-react';
 import { SavingsCalculator } from './SavingsCalculator';
 import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
+import { RecurringManualEntryForm } from './RecurringManualEntryForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface RecurringSignupFormProps {
-  booking: {
+  booking?: {
     id: string;
     service_type: string;
     est_price: number;
@@ -50,11 +51,27 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
   const [selectedFrequency, setSelectedFrequency] = useState<Frequency>('weekly');
   const [showPayment, setShowPayment] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [manualEntryData, setManualEntryData] = useState<any>(null);
+  const [showFrequencySelection, setShowFrequencySelection] = useState(!!booking);
 
-  const basePrice = booking.est_price;
+  // Calculate base price - either from booking or estimate from manual entry
+  const basePrice = booking?.est_price || (manualEntryData ? estimatePrice(manualEntryData) : 150);
   const discountRate = DISCOUNT_RATES[selectedFrequency];
   const recurringPrice = basePrice * (1 - discountRate);
   const savingsPerVisit = basePrice - recurringPrice;
+
+  function estimatePrice(data: any): number {
+    const bedroomCount = parseInt(data.bedrooms) || 2;
+    const bathroomCount = parseInt(data.bathrooms) || 2;
+    const baseRate = 40; // per hour
+    const hoursEstimate = 2 + (bedroomCount * 0.5) + (bathroomCount * 0.5);
+    return baseRate * hoursEstimate;
+  }
+
+  const handleManualEntrySubmit = (data: any) => {
+    setManualEntryData(data);
+    setShowFrequencySelection(true);
+  };
 
   const handleContinue = () => {
     setShowPayment(true);
@@ -65,26 +82,49 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
     
     try {
       // Create recurring service via edge function
-      const { data, error } = await supabase.functions.invoke('create-recurring-service', {
-        body: {
-          customerId: booking.customers.id,
-          bookingId: booking.id,
-          frequency: selectedFrequency,
-          serviceType: booking.service_type,
-          pricePerService: recurringPrice,
-          discountPercentage: discountRate * 100,
-          paymentMethodId,
-          serviceAddress: {
-            street: booking.customers.address_line1,
-            street2: booking.customers.address_line2,
-            city: booking.customers.city,
-            state: booking.customers.state,
-            postalCode: booking.customers.postal_code,
-          },
-          propertyDetails: booking.property_details,
-          lastCleanedTimeline,
-          acknowledgedDeepCleanWarning: acknowledgedWarning || false,
+      const requestBody: any = {
+        frequency: selectedFrequency,
+        serviceType: booking?.service_type || manualEntryData.service_type,
+        pricePerService: recurringPrice,
+        discountPercentage: discountRate * 100,
+        paymentMethodId,
+        propertyDetails: booking?.property_details || {
+          bedrooms: parseInt(manualEntryData.bedrooms),
+          bathrooms: parseInt(manualEntryData.bathrooms),
         },
+        lastCleanedTimeline,
+        acknowledgedDeepCleanWarning: acknowledgedWarning || false,
+      };
+
+      if (booking) {
+        // Existing customer with booking
+        requestBody.customerId = booking.customers.id;
+        requestBody.bookingId = booking.id;
+        requestBody.serviceAddress = {
+          street: booking.customers.address_line1,
+          street2: booking.customers.address_line2,
+          city: booking.customers.city,
+          state: booking.customers.state,
+          postalCode: booking.customers.postal_code,
+        };
+      } else {
+        // New customer - manual entry
+        requestBody.customerInfo = {
+          name: manualEntryData.name,
+          email: manualEntryData.email,
+          phone: manualEntryData.phone,
+        };
+        requestBody.serviceAddress = {
+          street: manualEntryData.address_line1,
+          street2: manualEntryData.address_line2,
+          city: manualEntryData.city,
+          state: manualEntryData.state,
+          postalCode: manualEntryData.postal_code,
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-recurring-service', {
+        body: requestBody,
       });
 
       if (error) throw error;
@@ -136,10 +176,10 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
             paymentType="deposit"
             onSuccess={handlePaymentSuccess}
             onCancel={() => setShowPayment(false)}
-            customerEmail={booking.customers.email}
-            customerName={booking.customers.name}
-            customerPhone={booking.customers.phone}
-            bookingId={booking.id}
+            customerEmail={booking?.customers.email || manualEntryData?.email}
+            customerName={booking?.customers.name || manualEntryData?.name}
+            customerPhone={booking?.customers.phone || manualEntryData?.phone}
+            bookingId={booking?.id}
           />
         </Card>
 
@@ -154,6 +194,11 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
         )}
       </div>
     );
+  }
+
+  // Show manual entry form first if no booking
+  if (!booking && !showFrequencySelection) {
+    return <RecurringManualEntryForm onSubmit={handleManualEntrySubmit} />;
   }
 
   return (
@@ -278,14 +323,26 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
           <div className="flex justify-between py-2 border-b">
             <span className="text-muted-foreground">Service Type:</span>
             <span className="font-medium">
-              {booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning
+              {booking ? 
+                `${booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning` :
+                `${manualEntryData.service_type.charAt(0).toUpperCase() + manualEntryData.service_type.slice(1)} Cleaning`
+              }
             </span>
           </div>
           <div className="flex justify-between py-2 border-b">
             <span className="text-muted-foreground">Address:</span>
             <span className="font-medium text-right">
-              {booking.customers.address_line1}<br />
-              {booking.customers.city}, {booking.customers.state} {booking.customers.postal_code}
+              {booking ? (
+                <>
+                  {booking.customers.address_line1}<br />
+                  {booking.customers.city}, {booking.customers.state} {booking.customers.postal_code}
+                </>
+              ) : (
+                <>
+                  {manualEntryData.address_line1}<br />
+                  {manualEntryData.city}, {manualEntryData.state} {manualEntryData.postal_code}
+                </>
+              )}
             </span>
           </div>
           <div className="flex justify-between py-2 border-b">

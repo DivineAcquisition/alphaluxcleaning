@@ -116,7 +116,7 @@ export default function StartRecurring() {
     );
   }
 
-  if (error || !booking) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         <div className="container max-w-4xl mx-auto px-4 py-12">
@@ -131,10 +131,10 @@ export default function StartRecurring() {
 
           <Card className="p-8 text-center">
             <p className="text-muted-foreground mb-4">
-              We couldn't find your booking information.
+              There was an error loading your information. Please try again.
             </p>
             <Button onClick={() => navigate('/')}>
-              Book a Service First
+              Go Home
             </Button>
           </Card>
         </div>
@@ -142,7 +142,7 @@ export default function StartRecurring() {
     );
   }
 
-  const firstName = booking.customers.name.split(' ')[0];
+  const firstName = booking?.customers.name.split(' ')[0] || 'there';
   const recommendation = getDeepCleanRecommendation(lastCleanedTimeline);
 
   return (
@@ -151,7 +151,7 @@ export default function StartRecurring() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Welcome back, {firstName}! 🎉
+            {booking ? `Welcome back, ${firstName}! 🎉` : 'Ready for Recurring Service? 🎉'}
           </h1>
           <p className="text-lg text-muted-foreground">
             {!lastCleanedTimeline && "Let's make sure recurring service is right for you"}
@@ -195,30 +195,32 @@ export default function StartRecurring() {
         )}
 
         {/* Step 3: Recurring signup form */}
-        {proceedToSignup && booking && (
+        {proceedToSignup && (
           <div className="space-y-8">
-            {/* Last Service Summary */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Your Last Service</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service:</span>
-                  <span className="font-medium">
-                    {booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning
-                  </span>
+            {/* Last Service Summary - only show if booking exists */}
+            {booking && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Your Last Service</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Service:</span>
+                    <span className="font-medium">
+                      {booking.service_type.charAt(0).toUpperCase() + booking.service_type.slice(1)} Cleaning
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date:</span>
+                    <span className="font-medium">
+                      {new Date(booking.service_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Price:</span>
+                    <span className="font-medium">${booking.est_price.toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Date:</span>
-                  <span className="font-medium">
-                    {new Date(booking.service_date).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Price:</span>
-                  <span className="font-medium">${booking.est_price.toFixed(2)}</span>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            )}
 
             {/* Recurring signup form */}
             <RecurringSignupForm 
