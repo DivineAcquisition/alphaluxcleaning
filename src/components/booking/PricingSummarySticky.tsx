@@ -74,6 +74,10 @@ export function PricingSummarySticky({
   const hasDiscount = discountAmount > 0;
   const discountPercentage = bookingData.discountPercentage || 0;
 
+  // Detect deep cleaning and calculate its discount separately
+  const isDeepCleaning = bookingData.serviceType === 'deep';
+  const deepCleanDiscountAmount = isDeepCleaning ? originalSubtotal * 0.20 : 0;
+
   if (!selectedService) {
     return (
       <div className="lg:sticky lg:top-8">
@@ -156,13 +160,22 @@ export function PricingSummarySticky({
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">{formatPrice(originalSubtotal)}</span>
             </div>
-            {hasDiscount && (
+            {isDeepCleaning && (
+              <div className="flex justify-between text-sm">
+                <span className="text-blue-600 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Deep Clean Discount (20%)
+                </span>
+                <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscountAmount)}</span>
+              </div>
+            )}
+            {hasDiscount && discountAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-success flex items-center gap-1">
                   <Tag className="h-3 w-3" />
                   {discountPercentage > 0 
-                    ? `${Math.round(discountPercentage)}% Savings Applied` 
-                    : 'Savings Applied'}
+                    ? `${Math.round(discountPercentage)}% Frequency Discount` 
+                    : 'Additional Savings'}
                 </span>
                 <span className="font-medium text-success">-{formatPrice(discountAmount)}</span>
               </div>

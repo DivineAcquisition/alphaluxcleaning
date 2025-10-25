@@ -185,8 +185,8 @@ export function ModernBookingFlow({
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Promotional Banner */}
-          {currentStep === 1 && <PromotionalBanner />}
+          {/* Promotional Banner - Show on steps 1 and 2 */}
+          {(currentStep === 1 || currentStep === 2) && <PromotionalBanner />}
 
           {/* Progress Indicator */}
           <div className="mb-8">

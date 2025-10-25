@@ -503,8 +503,8 @@ export function TypeformBookingFlow({
         </div>
       )}
 
-      {/* Promotional Banner - Show on first step */}
-      {currentStep === 0 && (
+      {/* Promotional Banner - Show from step 0 through step 6 (customer contact info) */}
+      {currentStep >= 0 && currentStep <= 6 && (
         <div className="max-w-4xl mx-auto px-4 pt-8">
           <PromotionalBanner />
         </div>

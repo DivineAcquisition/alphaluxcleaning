@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, DollarSign } from 'lucide-react';
+import { Calculator, DollarSign, Sparkles } from 'lucide-react';
 import { formatPrice } from '@/lib/pricing-utils';
 import { DEFAULT_PRICING_CONFIG } from '@/lib/new-pricing-system';
 import { getPriceQuote } from '@/lib/pricing-adapter';
@@ -122,6 +122,15 @@ export function PricingSummaryCard({
   // Get base price and discount info from the new pricing result
   const showDiscount = pricingResult.discountedPrice > 0;
 
+  // Detect if this is a deep cleaning service
+  const isDeepCleaning = serviceTypeId === 'deep';
+
+  // Calculate deep clean discount if applicable
+  const deepCleanDiscount = isDeepCleaning ? pricingResult.discountedPrice * 0.20 : 0;
+  const priceBeforeDeepCleanDiscount = isDeepCleaning 
+    ? pricingResult.discountedPrice / 0.80  // Reverse the 20% discount
+    : pricingResult.discountedPrice;
+
   return (
     <Card className={cn("shadow-lg border-primary/20", className)}>
       <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
@@ -142,14 +151,41 @@ export function PricingSummaryCard({
           </div>
         )}
 
-        {/* Discount Savings Banner */}
-        {showDiscount && (
+        {/* Deep Clean Discount Banner */}
+        {isDeepCleaning && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
+            <p className="text-sm font-semibold text-blue-600">
+              ✨ Deep Cleaning Special: 20% OFF ✨
+            </p>
+          </div>
+        )}
+
+        {/* Recurring Frequency Discount Banner */}
+        {showDiscount && frequencyId !== 'one_time' && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-green-600">
               {frequencyId === 'weekly' && '✨ Save 15% with weekly service! ✨'}
               {frequencyId === 'bi_weekly' && '✨ Save 10% with bi-weekly service! ✨'}
               {frequencyId === 'monthly' && '✨ Save 5% with monthly service! ✨'}
             </p>
+          </div>
+        )}
+
+        {/* Pricing Breakdown - Show if deep cleaning */}
+        {isDeepCleaning && (
+          <div className="space-y-2 pt-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Base Price</span>
+              <span className="font-medium">{formatPrice(priceBeforeDeepCleanDiscount)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-blue-600 font-medium flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                Deep Clean Discount (20%)
+              </span>
+              <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscount)}</span>
+            </div>
+            <Separator className="my-2" />
           </div>
         )}
 
