@@ -43,6 +43,53 @@ export async function applyFirst20Discount(
 }
 
 /**
+ * Apply 25% first clean discount (24-hour urgency offer)
+ */
+export async function applyFirst25Discount(
+  subtotalCents: number,
+  customerEmail: string
+): Promise<PromoApplication> {
+  // Check if customer has already used the first clean discount
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('first_clean_discount_used')
+    .eq('email', customerEmail)
+    .maybeSingle();
+
+  if (customer?.first_clean_discount_used) {
+    throw new Error('First clean discount already used');
+  }
+
+  const discountPercent = 25;
+  const discountAmount = Math.round(subtotalCents * 0.25);
+  const finalPrice = subtotalCents - discountAmount;
+
+  return {
+    code: 'PROMO_FIRST25_24HR',
+    discountPercent,
+    discountAmount,
+    finalPrice
+  };
+}
+
+/**
+ * Check if customer can use 25% time-sensitive discount
+ */
+export async function canApplyFirst25(customerEmail: string): Promise<boolean> {
+  const canApply = await canApplyFirst20(customerEmail);
+  
+  // Also check if within 24-hour window
+  const sessionStart = localStorage.getItem('promo_session_start');
+  if (!sessionStart) return false;
+  
+  const startTime = new Date(sessionStart);
+  const now = new Date();
+  const hoursSinceStart = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+  
+  return canApply && hoursSinceStart < 24;
+}
+
+/**
  * Mark first clean discount as used for a customer
  */
 export async function markFirstCleanUsed(customerEmail: string): Promise<void> {

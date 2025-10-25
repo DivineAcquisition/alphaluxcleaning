@@ -10,7 +10,7 @@ interface EmbeddedSquarePaymentFormProps {
   clientSecret?: string;
   paymentAmount: number;
   fullAmount: number;
-  paymentType: "full" | "deposit";
+  paymentType: "full" | "deposit" | "full_with_discount";
   onSuccess: (paymentId: string) => void;
   onCancel: () => void;
   customerEmail: string;
@@ -19,6 +19,10 @@ interface EmbeddedSquarePaymentFormProps {
   bookingId?: string;
   applyCredits?: boolean;
   creditsAmount?: number;
+  prepaymentDiscount?: {
+    applied: boolean;
+    amount: number;
+  };
 }
 
 export function EmbeddedSquarePaymentForm({
@@ -33,6 +37,7 @@ export function EmbeddedSquarePaymentForm({
   bookingId,
   applyCredits = false,
   creditsAmount = 0,
+  prepaymentDiscount,
 }: EmbeddedSquarePaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -151,8 +156,26 @@ export function EmbeddedSquarePaymentForm({
       <Card className="p-6 space-y-4">
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">
-            {paymentType === "deposit" ? "Pay 20% Deposit" : "Complete Payment"}
+            {paymentType === "deposit" ? "Pay 20% Deposit" : paymentType === "full_with_discount" ? "Pay Full Amount (5% Discount)" : "Complete Payment"}
           </h3>
+          
+          {prepaymentDiscount?.applied && (
+            <div className="bg-green-50 border border-green-200 p-3 rounded-lg space-y-1">
+              <div className="flex items-center gap-2 text-green-700 font-semibold">
+                <span className="text-lg">🎉</span>
+                <span>Prepayment Discount Applied!</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground line-through">Original Price:</span>
+                <span className="text-muted-foreground line-through">${fullAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-600 font-semibold">
+                <span>You Save:</span>
+                <span>-${prepaymentDiscount.amount.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+          
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
               {paymentType === "deposit" ? "Deposit Amount:" : "Total Amount:"}

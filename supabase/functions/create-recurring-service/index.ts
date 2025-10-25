@@ -21,20 +21,22 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const {
-      customerId,
-      customerInfo,
-      bookingId,
-      frequency,
-      serviceType,
-      pricePerService,
-      discountPercentage,
-      paymentMethodId,
-      serviceAddress,
-      propertyDetails,
-      lastCleanedTimeline,
-      acknowledgedDeepCleanWarning,
-    } = await req.json();
+  const {
+    customerId,
+    customerInfo,
+    bookingId,
+    frequency,
+    serviceType,
+    pricePerService,
+    discountPercentage,
+    paymentMethodId,
+    serviceAddress,
+    propertyDetails,
+    lastCleanedTimeline,
+    acknowledgedDeepCleanWarning,
+    bundleCode,
+    commitmentMonths,
+  } = await req.json();
 
     // Validate service type allows recurring
     const allowedRecurringTypes = ['regular', 'standard', 'deep'];
@@ -122,6 +124,8 @@ serve(async (req) => {
         service_address: serviceAddress,
         last_cleaned_timeline: lastCleanedTimeline || null,
         acknowledged_deep_clean_warning: acknowledgedDeepCleanWarning || false,
+        bundle_code: bundleCode || null,
+        commitment_months: commitmentMonths || null,
       })
       .select()
       .single();
@@ -142,19 +146,29 @@ serve(async (req) => {
 
     // Send confirmation email
     if (customer) {
+      const emailVariables: any = {
+        first_name: customer.first_name || customer.name.split(' ')[0],
+        frequency: frequency,
+        price_per_service: pricePerService.toFixed(2),
+        discount_percentage: discountPercentage,
+        next_service_date: nextServiceDate.toLocaleDateString(),
+        service_type: serviceType,
+        app_url: 'https://app.alphaluxclean.com',
+      };
+
+      // Add bundle info if applicable
+      if (bundleCode && commitmentMonths) {
+        emailVariables.bundle_applied = true;
+        emailVariables.bundle_code = bundleCode;
+        emailVariables.commitment_months = commitmentMonths;
+        emailVariables.deep_clean_code = bundleCode; // Will be generated
+      }
+
       const { error: emailError } = await supabase.functions.invoke('send-email-system', {
         body: {
           to: customer.email,
           templateKey: 'recurring_confirmed',
-          variables: {
-            first_name: customer.first_name || customer.name.split(' ')[0],
-            frequency: frequency,
-            price_per_service: pricePerService.toFixed(2),
-            discount_percentage: discountPercentage,
-            next_service_date: nextServiceDate.toLocaleDateString(),
-            service_type: serviceType,
-            app_url: 'https://app.alphaluxclean.com',
-          },
+          variables: emailVariables,
         },
       });
 
@@ -169,6 +183,8 @@ serve(async (req) => {
         success: true,
         recurringServiceId: recurringService.id,
         nextServiceDate: nextServiceDate.toISOString(),
+        bundleCode: bundleCode || null,
+        commitmentMonths: commitmentMonths || null,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

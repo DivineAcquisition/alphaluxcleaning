@@ -102,3 +102,21 @@ export function toStripeAmount(dollars: number): number {
 export function toDisplayAmount(amount: number, isInCents: boolean = false): number {
   return isInCents ? centsToDollars(amount) : amount;
 }
+
+/**
+ * Apply 5% prepayment discount for full upfront payment
+ */
+export function applyPrepaymentDiscount(totalDollars: number): {
+  originalPrice: number;
+  discountedPrice: number;
+  savingsAmount: number;
+} {
+  const discountedPrice = Math.round(totalDollars * 0.95 * 100) / 100;
+  const savingsAmount = Math.round(totalDollars * 0.05 * 100) / 100;
+  
+  return {
+    originalPrice: totalDollars,
+    discountedPrice,
+    savingsAmount
+  };
+}

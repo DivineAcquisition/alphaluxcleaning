@@ -8,7 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, CheckCircle } from 'lucide-react';
+import { Sparkles, CheckCircle, Gift } from 'lucide-react';
+import { calculateBundleSavings } from '@/lib/bundle-offers';
 
 interface DeepCleanPromptModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface DeepCleanPromptModalProps {
   onSelectBundle: () => void;
   onSelect20Percent: () => void;
   frequency: string;
+  recurringPrice?: number;
 }
 
 export function DeepCleanPromptModal({
@@ -23,11 +25,17 @@ export function DeepCleanPromptModal({
   onClose,
   onSelectBundle,
   onSelect20Percent,
-  frequency
+  frequency,
+  recurringPrice = 150
 }: DeepCleanPromptModalProps) {
   const [lastClean, setLastClean] = React.useState<string | null>(null);
 
   const showRecommendation = lastClean === 'OVER_2M' || lastClean === 'UNSURE';
+  const bundleSavings = calculateBundleSavings(
+    recurringPrice,
+    frequency === 'weekly' ? 'weekly' : 'bi-weekly',
+    3
+  );
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -73,42 +81,64 @@ export function DeepCleanPromptModal({
               Start your recurring plan on the right foot. Choose one of these:
             </p>
 
-            {/* Bundle Option */}
-            <div className="border-2 border-[#ECC98B] rounded-lg p-6 space-y-4 bg-gradient-to-br from-[#ECC98B]/5 to-transparent">
-              <div className="flex items-start justify-between gap-4">
+            {/* NEW: Enhanced Bundle Option */}
+            <div className="border-2 border-primary rounded-lg p-6 space-y-4 bg-gradient-to-br from-primary/10 to-transparent relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1 text-xs font-bold">
+                Save ${bundleSavings.toFixed(0)}+
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-full bg-primary/20">
+                  <Gift className="h-6 w-6 text-primary" />
+                </div>
                 <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[#ECC98B]" />
-                    <h3 className="font-bold text-lg">Bundle & Save: 30% OFF Deep Clean</h3>
+                    <h3 className="font-bold text-xl">🎁 3-Month {frequency === 'weekly' ? 'Weekly' : 'Bi-Weekly'} Bundle</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Keep {frequency === 'weekly' ? 'Weekly' : 'Bi-Weekly'} for 2 months and we'll issue your code today (valid 90 days).
+                  <p className="text-lg font-semibold text-primary">
+                    Get 20% OFF Every Clean + FREE Deep Clean ($355 Value)
                   </p>
+                  <p className="text-sm text-muted-foreground">
+                    Commit to 3 months of {frequency === 'weekly' ? 'weekly' : 'bi-weekly'} service and unlock massive savings.
+                  </p>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mt-3">
+                    <p className="font-bold text-primary mb-2">Your Total Savings:</p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">20% off {frequency === 'weekly' ? '~13' : '~6'} cleanings</span>
+                        <span className="font-semibold">${(bundleSavings - 355).toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">FREE Deep Clean</span>
+                        <span className="font-semibold">$355</span>
+                      </div>
+                      <div className="border-t border-primary/20 pt-1 mt-1 flex justify-between">
+                        <span className="font-bold">Total Savings</span>
+                        <span className="font-bold text-primary text-lg">${bundleSavings.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="space-y-1 pt-2">
                     <div className="flex items-center gap-2 text-sm">
                       <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Receive code immediately in your booking flow</span>
+                      <span className="font-medium">Receive Deep Clean code instantly</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Redeem anytime within 90 days</span>
+                      <span className="font-medium">Redeem anytime within 90 days</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Save 30% on your next Deep Clean</span>
+                      <span className="font-medium">20% OFF automatically applied to each clean</span>
                     </div>
                   </div>
                 </div>
-                <Badge className="bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80 whitespace-nowrap">
-                  Best Value
-                </Badge>
               </div>
               <Button
                 onClick={onSelectBundle}
-                className="w-full bg-[#ECC98B] hover:bg-[#ECC98B]/90 text-[#ECC98B]-foreground"
+                className="w-full"
                 size="lg"
               >
-                Choose Bundle & Save 30% on Deep Clean Later
+                Choose Bundle & Save ${bundleSavings.toFixed(0)}
               </Button>
             </div>
 
