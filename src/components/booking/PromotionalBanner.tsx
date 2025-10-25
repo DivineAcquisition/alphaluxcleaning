@@ -43,17 +43,14 @@ export function PromotionalBanner() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-xl font-bold">⏰ Limited Time Offer!</h3>
-                <Badge variant="destructive" className="animate-pulse">
-                  Extra 5% OFF
-                </Badge>
               </div>
               <p className="text-muted-foreground">
-                Book in the next <span className="font-mono font-bold text-destructive">{formattedTime}</span> and get <span className="font-bold">25% OFF</span> your first clean
+                Book in the next <span className="font-mono font-bold text-destructive">{formattedTime}</span> and get <span className="font-bold">20% OFF</span> your first clean
               </p>
             </div>
             <div className="text-right">
               <Badge className="bg-destructive text-destructive-foreground px-4 py-2 text-2xl font-bold">
-                25% OFF
+                20% OFF
               </Badge>
               <p className="text-xs text-muted-foreground mt-1">Expires soon!</p>
             </div>
