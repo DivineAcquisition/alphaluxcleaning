@@ -36,7 +36,7 @@ export function TypeformProgress({
             onClick={onBack}
             disabled={!canGoBack || currentStep === 1}
             className={cn(
-              "gap-2 touch-manipulation sm:px-8 px-4 flex-1 sm:flex-initial",
+              "gap-2 touch-manipulation min-h-[48px] px-6 sm:px-8 flex-1 sm:flex-initial",
               currentStep === 1 && "invisible"
             )}
           >
@@ -51,7 +51,7 @@ export function TypeformProgress({
             onClick={onNext}
             disabled={!canGoNext || isProcessing}
             data-next-button
-            className="gap-2 touch-manipulation bg-primary hover:bg-primary/90 sm:px-8 px-4 flex-1 sm:flex-initial"
+            className="gap-2 touch-manipulation min-h-[48px] bg-primary hover:bg-primary/90 px-6 sm:px-8 flex-1 sm:flex-initial"
           >
             {isProcessing ? (
               <>

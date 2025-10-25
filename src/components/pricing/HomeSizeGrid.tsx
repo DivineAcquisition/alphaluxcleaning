@@ -51,7 +51,7 @@ export function HomeSizeGrid({ selectedId, customSqFt, onSelect, onCustomSqFtCha
       {/* Custom Square Footage Toggle */}
       {onCustomSqFtChange && (
         <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function HomeSizeGrid({ selectedId, customSqFt, onSelect, onCustomSqFtCha
 
       {/* Home Size Range Grid */}
       {!showCustomInput && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {HOME_SIZE_RANGES.map((range) => (
             <HomeSizeCard
               key={range.id}
@@ -124,13 +124,13 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
         "cursor-pointer transition-all duration-200 hover:shadow-md border-2",
         "border-border bg-card text-card-foreground"
       )}>
-        <CardContent className="p-6">
-          <div className="text-center space-y-3">
+        <CardContent className="p-4 md:p-6">
+          <div className="text-center space-y-2 md:space-y-3">
             <div className="space-y-1">
-              <h3 className="font-semibold text-lg text-foreground">
+              <h3 className="font-semibold text-base md:text-lg text-foreground">
                 {range.label}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs md:text-sm text-muted-foreground">
                 {range.bedroomRange}
               </p>
             </div>
@@ -154,23 +154,23 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md border-2",
+        "cursor-pointer transition-all duration-200 hover:shadow-md border-2 touch-manipulation",
         isSelected 
           ? "border-[#ECC98B] bg-[#ECC98B]/5 shadow-md" 
           : "border-border hover:border-[#ECC98B]/50"
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-6">
-        <div className="space-y-3">
+      <CardContent className="p-4 md:p-6">
+        <div className="space-y-2 md:space-y-3">
           <div className="space-y-1">
             <h3 className={cn(
-              "font-semibold text-lg",
+              "font-semibold text-base md:text-lg",
               isSelected ? "text-[#ECC98B]" : "text-foreground"
             )}>
               {range.label}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground">
               {range.bedroomRange}
             </p>
           </div>

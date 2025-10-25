@@ -193,19 +193,19 @@ export function EmbeddedSquarePaymentForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">
             {paymentType === "deposit" ? "Pay 20% Deposit" : paymentType === "full_with_discount" ? "Pay Full Amount (5% Discount)" : "Complete Payment"}
           </h3>
           
           {deepCleanDiscount?.applied && (
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-1">
-              <div className="flex items-center gap-2 text-blue-700 font-semibold">
-                <span className="text-lg">✨</span>
+            <div className="bg-blue-50 border border-blue-200 p-2 md:p-3 rounded-lg space-y-1">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm md:text-base">
+                <span className="text-base md:text-lg">✨</span>
                 <span>Deep Cleaning Discount Applied!</span>
               </div>
-              <div className="flex justify-between text-sm text-blue-600 font-semibold">
+              <div className="flex justify-between text-xs md:text-sm text-blue-600 font-semibold">
                 <span>You Save (20% OFF):</span>
                 <span>-${deepCleanDiscount.amount.toFixed(2)}</span>
               </div>
@@ -213,16 +213,16 @@ export function EmbeddedSquarePaymentForm({
           )}
           
           {prepaymentDiscount?.applied && (
-            <div className="bg-green-50 border border-green-200 p-3 rounded-lg space-y-1">
-              <div className="flex items-center gap-2 text-green-700 font-semibold">
-                <span className="text-lg">🎉</span>
+            <div className="bg-green-50 border border-green-200 p-2 md:p-3 rounded-lg space-y-1">
+              <div className="flex items-center gap-2 text-green-700 font-semibold text-sm md:text-base">
+                <span className="text-base md:text-lg">🎉</span>
                 <span>Prepayment Discount Applied!</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground line-through">Original Price:</span>
                 <span className="text-muted-foreground line-through">${fullAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-green-600 font-semibold">
+              <div className="flex justify-between text-xs md:text-sm text-green-600 font-semibold">
                 <span>You Save:</span>
                 <span>-${prepaymentDiscount.amount.toFixed(2)}</span>
               </div>
@@ -255,7 +255,7 @@ export function EmbeddedSquarePaymentForm({
             <div 
               id="square-card-container"
               key="square-payment-container"
-              className={`min-h-[200px] transition-opacity ${isInitializing ? 'opacity-0' : 'opacity-100'}`}
+              className={`min-h-[180px] md:min-h-[200px] transition-opacity ${isInitializing ? 'opacity-0' : 'opacity-100'}`}
             />
             
             {/* Show loading overlay while initializing */}
@@ -274,11 +274,11 @@ export function EmbeddedSquarePaymentForm({
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button
             type="submit"
             disabled={isLoading || !isCardReady}
-            className="flex-1"
+            className="w-full sm:flex-1 min-h-[48px] touch-manipulation"
           >
             {isLoading ? (
               <>
@@ -294,6 +294,7 @@ export function EmbeddedSquarePaymentForm({
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
+            className="w-full sm:w-auto min-h-[48px] touch-manipulation"
           >
             Cancel
           </Button>

@@ -24,19 +24,19 @@ export function ConversationalQuestion({
   return (
     <div className="space-y-8">
       {/* Question */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {icon && (
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary animate-scale-in">
+          <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary/10 text-primary animate-scale-in">
             {icon}
           </div>
         )}
         
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground leading-tight animate-fade-in">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight animate-fade-in break-words">
           {question}
         </h2>
         
         {description && (
-          <p className="text-lg md:text-xl text-muted-foreground animate-fade-in">
+          <p className="text-base md:text-lg lg:text-xl text-muted-foreground animate-fade-in">
             {description}
           </p>
         )}

@@ -66,12 +66,12 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
   return (
     <div className="space-y-6 w-full">
       {/* Quick Select Bar */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
         <Button
           variant="outline"
           size="sm"
           onClick={selectThisWeek}
-          className="text-sm"
+          className="text-sm w-full sm:w-auto touch-manipulation"
         >
           <Sparkles className="w-4 h-4 mr-2" />
           This Week
@@ -80,7 +80,7 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
           variant="outline"
           size="sm"
           onClick={selectNextWeek}
-          className="text-sm"
+          className="text-sm w-full sm:w-auto touch-manipulation"
         >
           <Calendar className="w-4 h-4 mr-2" />
           Next Week
@@ -89,7 +89,7 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
           variant="outline"
           size="sm"
           onClick={selectWeekend}
-          className="text-sm"
+          className="text-sm w-full sm:w-auto touch-manipulation"
         >
           Weekends Only
         </Button>
@@ -112,7 +112,7 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
             </div>
 
             {/* Date Cards Grid */}
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
               {week.map((date) => {
                 const isSelected = selectedDate && isSameDay(date, selectedDate);
                 const availableSlots = getAvailableSlots(date);
@@ -121,7 +121,7 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
                   <Card
                     key={date.toISOString()}
                     className={cn(
-                      "relative p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1",
+                      "relative p-3 md:p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 min-h-[80px] md:min-h-[100px] touch-manipulation",
                       isSelected 
                         ? "ring-2 ring-primary bg-primary/5 shadow-lg" 
                         : "hover:bg-accent/50"
@@ -147,7 +147,7 @@ export function WeeklyDateGrid({ selectedDate, onSelectDate }: WeeklyDateGridPro
 
                       {/* Date Number */}
                       <div className={cn(
-                        "text-2xl font-bold",
+                        "text-xl md:text-2xl font-bold",
                         isSelected ? "text-primary" : ""
                       )}>
                         {format(date, 'd')}

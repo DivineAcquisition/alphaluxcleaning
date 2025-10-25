@@ -25,7 +25,7 @@ export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelecto
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {TIME_SLOTS.map((slot) => {
           const isSelected = selectedTime === slot.time;
 
@@ -33,7 +33,7 @@ export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelecto
             <Card
               key={slot.time}
               className={cn(
-                "relative p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1",
+                "relative p-3 md:p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 touch-manipulation min-h-[68px]",
                 isSelected 
                   ? "ring-2 ring-primary bg-primary/5 shadow-lg" 
                   : "hover:bg-accent/50"
@@ -54,11 +54,11 @@ export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelecto
               <div className="flex items-center gap-3">
                 {/* Clock Icon */}
                 <div className={cn(
-                  "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
+                  "flex-shrink-0 w-12 h-12 md:w-10 md:h-10 rounded-full flex items-center justify-center",
                   isSelected ? "bg-primary/20" : "bg-accent"
                 )}>
                   <Clock className={cn(
-                    "w-5 h-5",
+                    "w-6 h-6 md:w-5 md:h-5",
                     isSelected ? "text-primary" : "text-muted-foreground"
                   )} />
                 </div>
@@ -66,7 +66,7 @@ export function TimeSlotSelector({ selectedTime, onSelectTime }: TimeSlotSelecto
                 {/* Time Info */}
                 <div className="flex-1 min-w-0">
                   <div className={cn(
-                    "text-lg font-semibold",
+                    "text-lg md:text-xl font-semibold",
                     isSelected ? "text-primary" : ""
                   )}>
                     {slot.time}

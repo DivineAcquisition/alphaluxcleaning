@@ -20,7 +20,7 @@ const frequencyIcons = {
 
 export function FrequencySelector({ selectedId, onSelect, className }: FrequencySelectorProps) {
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", className)}>
+    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4", className)}>
       {DEFAULT_PRICING_CONFIG.frequencies.map((frequency) => (
         <FrequencyCard
           key={frequency.id}
@@ -50,18 +50,18 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md border-2",
+        "cursor-pointer transition-all duration-200 hover:shadow-md border-2 touch-manipulation",
         isSelected 
           ? "border-[#ECC98B] bg-[#ECC98B]/5 shadow-md" 
           : "border-border hover:border-[#ECC98B]/50"
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="p-4 md:p-6">
+        <div className="space-y-3 md:space-y-4">
           <div className="flex items-center justify-between">
             <Icon className={cn(
-              "h-5 w-5",
+              "h-6 w-6 md:h-5 md:w-5",
               isSelected ? "text-[#ECC98B]" : "text-muted-foreground"
             )} />
             
@@ -72,7 +72,7 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
           
           <div className="space-y-2">
             <h3 className={cn(
-              "font-medium",
+              "font-medium text-sm md:text-base",
               isSelected ? "text-[#ECC98B]" : "text-foreground"
             )}>
               {frequency.name}
@@ -80,7 +80,7 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
             
             <Badge 
               variant="secondary"
-              className="text-xs"
+              className="text-[10px] md:text-xs"
             >
               {frequencyInfo}
             </Badge>
