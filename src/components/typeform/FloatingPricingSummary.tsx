@@ -104,6 +104,26 @@ export function FloatingPricingSummary({
         <div className="p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
+              {/* Discount Banners for One-Time Services */}
+              {frequencyId === 'one_time' && pricingResult.discountAmount > 0 && (
+                <div className="mb-2">
+                  {serviceTypeId === 'deep' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                      <p className="text-xs font-semibold text-blue-700 text-center">
+                        ✨ Deep Cleaning Special: 20% OFF
+                      </p>
+                    </div>
+                  )}
+                  {serviceTypeId === 'regular' && (
+                    <div className="bg-green-50 border border-green-200 rounded px-2 py-1">
+                      <p className="text-xs font-semibold text-green-700 text-center">
+                        ✨ First-Time Special: 10% OFF
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="flex items-center gap-2 mb-1">
                 <Calculator className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium text-foreground">
@@ -115,6 +135,11 @@ export function FloatingPricingSummary({
                 {showDiscount && ` • ${discountPercentage}% savings applied`}
               </p>
               <div>
+                {frequencyId === 'one_time' && pricingResult.discountAmount > 0 && (
+                  <span className="text-sm text-muted-foreground line-through mr-2">
+                    {formatPrice(pricingResult.basePrice)}
+                  </span>
+                )}
                 <span className="text-2xl font-bold text-primary">
                   {formatPrice(finalPrice)}
                 </span>
@@ -180,7 +205,25 @@ export function FloatingPricingSummary({
 
                 {/* Pricing Breakdown */}
                 <div className="space-y-2">
-                  {showDiscount && (
+                  {/* One-Time Service Discount Breakdown */}
+                  {frequencyId === 'one_time' && pricingResult.discountAmount > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Original Price:</span>
+                        <span className="text-foreground line-through">{formatPrice(pricingResult.basePrice)}</span>
+                      </div>
+                      <div className={`flex justify-between text-sm font-semibold ${serviceTypeId === 'deep' ? 'text-blue-600' : 'text-green-600'}`}>
+                        <span>
+                          {serviceTypeId === 'deep' ? 'Deep Clean Discount (20%):' : 'First-Time Discount (10%):'}
+                        </span>
+                        <span>-{formatPrice(pricingResult.discountAmount)}</span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+                  
+                  {/* Recurring Service Discount Breakdown */}
+                  {showDiscount && frequencyId !== 'one_time' && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Original Price:</span>

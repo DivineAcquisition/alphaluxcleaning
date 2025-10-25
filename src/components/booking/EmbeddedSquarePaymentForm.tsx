@@ -55,10 +55,12 @@ export function EmbeddedSquarePaymentForm({
   const cardInstanceRef = React.useRef<any>(null);
 
   useEffect(() => {
+    let mounted = true;
+    
     const initializeSquare = async () => {
       // Prevent double initialization
-      if (isInitialized.current) {
-        console.log("⚠️ Square already initialized, skipping");
+      if (!mounted || isInitialized.current) {
+        console.log("⚠️ Square already initialized or component unmounted, skipping");
         return;
       }
 
@@ -78,9 +80,16 @@ export function EmbeddedSquarePaymentForm({
           throw new Error("Square payments not initialized");
         }
 
-        // Initialize card payment method
+        // Initialize card payment method only if still mounted
+        if (!mounted) return;
+        
         const cardInstance = await square.payments.card();
         await cardInstance.attach("#square-card-container");
+        
+        if (!mounted) {
+          await cardInstance.destroy();
+          return;
+        }
         
         cardInstanceRef.current = cardInstance;
         setCard(cardInstance);
@@ -90,16 +99,19 @@ export function EmbeddedSquarePaymentForm({
         console.log("✅ Square card form initialized");
       } catch (err: any) {
         console.error("❌ Error initializing Square:", err);
-        setError(err.message || "Failed to initialize payment form");
-        setIsInitializing(false);
-        isInitialized.current = false;
-        toast.error("Payment form initialization failed. Please refresh the page.");
+        if (mounted) {
+          setError(err.message || "Failed to initialize payment form");
+          setIsInitializing(false);
+          isInitialized.current = false;
+          toast.error("Payment form initialization failed. Please refresh the page.");
+        }
       }
     };
 
     initializeSquare();
 
     return () => {
+      mounted = false;
       console.log("🧹 Cleaning up Square card instance");
       if (cardInstanceRef.current) {
         cardInstanceRef.current.destroy();
@@ -239,9 +251,10 @@ export function EmbeddedSquarePaymentForm({
 
         <div className="space-y-4">
           <div className="relative">
-            {/* Always render container so Square can attach to it */}
+            {/* Always render container so Square can attach to it - key prevents double mounting */}
             <div 
-              id="square-card-container" 
+              id="square-card-container"
+              key="square-payment-container"
               className={`min-h-[200px] transition-opacity ${isInitializing ? 'opacity-0' : 'opacity-100'}`}
             />
             

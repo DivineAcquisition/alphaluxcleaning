@@ -238,12 +238,27 @@ export function calculateNewPricing(
   let savings = '';
   let recurringDetails;
 
-  // For one-time cleanings: no discount
+  // For one-time cleanings: apply promotional discounts
   if (frequencyId === 'one_time') {
-    finalPrice = basePrice;
-    discountAmount = 0;
-    savings = '';
-  } 
+    // Standard cleaning: 10% off
+    if (serviceTypeId === 'regular') {
+      discountAmount = basePrice * 0.10;
+      finalPrice = basePrice - discountAmount;
+      savings = 'Save 10% on your first cleaning!';
+    }
+    // Deep cleaning: 20% off
+    else if (serviceTypeId === 'deep') {
+      discountAmount = basePrice * 0.20;
+      finalPrice = basePrice - discountAmount;
+      savings = 'Save 20% on deep cleaning service!';
+    }
+    // Move-in/out: no discount
+    else {
+      finalPrice = basePrice;
+      discountAmount = 0;
+      savings = '';
+    }
+  }
   // For recurring cleanings (Regular Clean only): apply frequency-specific discount
   else if (serviceTypeId === 'regular' && frequency.cleansPerMonth) {
     // Apply frequency-specific discount
