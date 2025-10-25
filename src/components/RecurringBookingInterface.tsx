@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { calculatePaymentAmount, formatPriceFromCents } from '@/lib/pricing-utils';
+import { navigateToOrderConfirmation } from '@/utils/routing-helpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -1393,16 +1394,9 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                 });
                                 console.log('Payment successful:', paymentId);
                                 
-                                // Navigate to confirmation
-                                const isDevelopment = import.meta.env.DEV;
-                                const baseUrl = isDevelopment 
-                                  ? window.location.origin 
-                                  : 'https://portal.bayareacleaningpros.com';
-                                
+                                // Navigate to order confirmation for consistency
                                 if (bookingId) {
-                                  window.location.href = `${baseUrl}/service-details?booking_id=${bookingId}`;
-                                } else {
-                                  window.location.href = `${baseUrl}/service-details`;
+                                  navigateToOrderConfirmation(navigate, bookingId);
                                 }
                                 
                                 // Reset form
