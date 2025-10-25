@@ -142,9 +142,16 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
       basePrice = tier.oneTime;
     }
 
-    // For deep cleaning ONE-TIME only, apply $75 discount
+    // For deep cleaning ONE-TIME only, apply 20% discount
     if ((cleaningType === 'deep' || cleaningType === 'moveout') && frequency === 'one_time') {
-      basePrice = tier.deepClean - 75; // Apply $75 discount for deep cleaning
+      const originalDeepPrice = tier.deepClean;
+      basePrice = Math.round(originalDeepPrice * 0.80 * 100) / 100; // 20% off
+    }
+    
+    // For standard/regular ONE-TIME cleaning, apply 10% discount
+    if (cleaningType === 'regular' && frequency === 'one_time') {
+      const originalPrice = basePrice;
+      basePrice = Math.round(originalPrice * 0.90 * 100) / 100; // 10% off
     }
     
     const addOnTotal = pricingData.addOns.reduce((total, addOn) => {

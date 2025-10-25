@@ -49,12 +49,29 @@ export function EmbeddedSquarePaymentForm({
   const [card, setCard] = useState<any>(null);
   const [isCardReady, setIsCardReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add refs to prevent double initialization
+  const isInitialized = React.useRef(false);
+  const cardInstanceRef = React.useRef<any>(null);
 
   useEffect(() => {
     const initializeSquare = async () => {
+      // Prevent double initialization
+      if (isInitialized.current) {
+        console.log("⚠️ Square already initialized, skipping");
+        return;
+      }
+
       setIsInitializing(true);
       try {
         console.log("🎨 Initializing Square payment form");
+        
+        // Destroy existing instance if any
+        if (cardInstanceRef.current) {
+          await cardInstanceRef.current.destroy();
+          cardInstanceRef.current = null;
+        }
+
         const square = await squarePromise;
         
         if (!square?.payments) {
@@ -65,14 +82,17 @@ export function EmbeddedSquarePaymentForm({
         const cardInstance = await square.payments.card();
         await cardInstance.attach("#square-card-container");
         
+        cardInstanceRef.current = cardInstance;
         setCard(cardInstance);
         setIsCardReady(true);
+        isInitialized.current = true;
         setIsInitializing(false);
         console.log("✅ Square card form initialized");
       } catch (err: any) {
         console.error("❌ Error initializing Square:", err);
         setError(err.message || "Failed to initialize payment form");
         setIsInitializing(false);
+        isInitialized.current = false;
         toast.error("Payment form initialization failed. Please refresh the page.");
       }
     };
@@ -80,9 +100,12 @@ export function EmbeddedSquarePaymentForm({
     initializeSquare();
 
     return () => {
-      if (card) {
-        card.destroy();
+      console.log("🧹 Cleaning up Square card instance");
+      if (cardInstanceRef.current) {
+        cardInstanceRef.current.destroy();
+        cardInstanceRef.current = null;
       }
+      isInitialized.current = false;
     };
   }, []);
 

@@ -77,6 +77,10 @@ export function PricingSummarySticky({
   // Detect deep cleaning and calculate its discount separately
   const isDeepCleaning = bookingData.serviceType === 'deep';
   const deepCleanDiscountAmount = isDeepCleaning ? originalSubtotal * 0.20 : 0;
+  
+  // Detect standard one-time cleaning
+  const isStandardOneTime = bookingData.serviceType === 'regular' && bookingData.frequency === 'one_time';
+  const standardOneTimeDiscountAmount = isStandardOneTime ? originalSubtotal * 0.10 : 0;
 
   if (!selectedService) {
     return (
@@ -167,6 +171,15 @@ export function PricingSummarySticky({
                   Deep Clean Discount (20%)
                 </span>
                 <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscountAmount)}</span>
+              </div>
+            )}
+            {isStandardOneTime && (
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  First-Time Discount (10%)
+                </span>
+                <span className="font-medium text-green-600">-{formatPrice(standardOneTimeDiscountAmount)}</span>
               </div>
             )}
             {hasDiscount && discountAmount > 0 && (

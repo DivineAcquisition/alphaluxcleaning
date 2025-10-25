@@ -159,6 +159,15 @@ export function PricingSummaryCard({
             </p>
           </div>
         )}
+        
+        {/* Standard One-Time Discount Banner */}
+        {serviceTypeId === 'regular' && frequencyId === 'one_time' && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+            <p className="text-sm font-semibold text-green-600">
+              ✨ First-Time Special: 10% OFF ✨
+            </p>
+          </div>
+        )}
 
         {/* Recurring Frequency Discount Banner */}
         {showDiscount && frequencyId !== 'one_time' && (
@@ -184,6 +193,24 @@ export function PricingSummaryCard({
                 Deep Clean Discount (20%)
               </span>
               <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscount)}</span>
+            </div>
+            <Separator className="my-2" />
+          </div>
+        )}
+        
+        {/* Standard One-Time Discount Breakdown */}
+        {serviceTypeId === 'regular' && frequencyId === 'one_time' && (
+          <div className="space-y-2 pt-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Base Price</span>
+              <span className="font-medium">{formatPrice(pricingResult.discountedPrice / 0.90)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-green-600 font-medium flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                First-Time Discount (10%)
+              </span>
+              <span className="font-medium text-green-600">-{formatPrice(pricingResult.discountedPrice * 0.1111)}</span>
             </div>
             <Separator className="my-2" />
           </div>

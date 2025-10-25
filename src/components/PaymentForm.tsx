@@ -88,11 +88,14 @@ export function PaymentForm({
     return finalPrice;
   };
 
-  // Detect deep cleaning service type
+  // Detect deep cleaning service type (discount already applied in calculator)
   const isDeepCleaning = pricingData.cleaningType === 'deep';
   
-  // Calculate deep cleaning discount if applicable
-  const deepCleanDiscount = isDeepCleaning ? applyDeepCleanDiscount(getFinalPrice()) : null;
+  // Calculate deep clean discount for display (20% was already applied in calculatedPrice)
+  const deepCleanDiscount = isDeepCleaning ? {
+    applied: true,
+    amount: Math.round(getFinalPrice() * 0.25 * 100) / 100 // 20% off means discounted price is 80%, so discount = price * (20/80) = price * 0.25
+  } : null;
   
   // Preloaded payment hook for instant form loading
   const {
@@ -540,14 +543,7 @@ export function PaymentForm({
                     }
                   : undefined
               }
-              deepCleanDiscount={
-                isDeepCleaning && deepCleanDiscount
-                  ? {
-                      applied: true,
-                      amount: deepCleanDiscount.savingsAmount
-                    }
-                  : undefined
-              }
+              deepCleanDiscount={deepCleanDiscount || undefined}
               customerEmail={customerInfo.email}
               customerName={customerInfo.name}
               customerPhone={customerInfo.phone}
