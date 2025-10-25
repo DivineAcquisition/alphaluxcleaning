@@ -43,6 +43,7 @@ export function TypeformStep({
 
   return (
     <div 
+      data-typeform-step="active"
       className={cn(
         "min-h-screen w-full flex items-center justify-center p-4 md:p-8 pb-40 safe-area-pb",
         "transition-all duration-500",

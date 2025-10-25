@@ -127,9 +127,50 @@ export function TypeformBookingFlow({
     }
   }, [bookingData.lastCleanedTimeline]);
 
-  // Scroll to top instantly when step changes to prevent bottom-scroll issue
+  // Scroll to center on form content when step changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const scrollToContent = async () => {
+      // Small delay to let the new step render and animate
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Priority selectors - try in order
+      const selectors = [
+        '[data-typeform-step="active"]',  // The active step container
+        'input:not([type="hidden"]):not([disabled])', // First enabled input
+        'textarea:not([disabled])',       // Textarea fields
+        '.space-y-6',                     // Content wrapper
+        'button:not([disabled])',         // Interactive buttons
+      ];
+      
+      for (const selector of selectors) {
+        const element = document.querySelector(selector) as HTMLElement;
+        
+        // Check if element exists and is visible
+        if (element && element.offsetParent !== null) {
+          // Calculate offset to center properly on mobile
+          const elementRect = element.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          const elementHeight = elementRect.height;
+          
+          // If element is taller than viewport, scroll to top of element
+          // Otherwise, center it
+          const scrollBehavior = elementHeight > viewportHeight ? 'start' : 'center';
+          
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: scrollBehavior as ScrollLogicalPosition,
+            inline: 'nearest'
+          });
+          
+          return;
+        }
+      }
+      
+      // Fallback: smooth scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    
+    scrollToContent();
   }, [currentStep]);
 
   // Helper to convert homeSizeId to square footage
