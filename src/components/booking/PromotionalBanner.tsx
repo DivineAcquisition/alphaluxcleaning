@@ -45,7 +45,7 @@ export function PromotionalBanner() {
                 <h3 className="text-xl font-bold">⏰ Limited Time Offer!</h3>
               </div>
               <p className="text-muted-foreground">
-                Book in the next <span className="font-mono font-bold text-destructive">{formattedTime}</span> and get <span className="font-bold">20% OFF</span> your first clean
+                Book in the next <span className="font-mono font-bold text-destructive">{formattedTime}</span> and get <span className="font-bold">20% off</span> your first deep clean
               </p>
             </div>
             <div className="text-right">
