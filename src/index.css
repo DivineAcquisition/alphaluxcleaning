@@ -277,4 +277,18 @@ All colors MUST be HSL.
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
+  
+  /* Subtle pulse animation for promotional banners */
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.95;
+    }
+  }
 }

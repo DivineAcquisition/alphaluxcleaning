@@ -207,6 +207,9 @@ export type Database = {
           paid_at: string | null
           parent_recurring_service_id: string | null
           payment_option_id: string | null
+          payment_status: string | null
+          prepayment_discount_amount: number | null
+          prepayment_discount_applied: boolean | null
           pricing_breakdown: Json | null
           promo_applied: string | null
           promo_code: string | null
@@ -268,6 +271,9 @@ export type Database = {
           paid_at?: string | null
           parent_recurring_service_id?: string | null
           payment_option_id?: string | null
+          payment_status?: string | null
+          prepayment_discount_amount?: number | null
+          prepayment_discount_applied?: boolean | null
           pricing_breakdown?: Json | null
           promo_applied?: string | null
           promo_code?: string | null
@@ -329,6 +335,9 @@ export type Database = {
           paid_at?: string | null
           parent_recurring_service_id?: string | null
           payment_option_id?: string | null
+          payment_status?: string | null
+          prepayment_discount_amount?: number | null
+          prepayment_discount_applied?: boolean | null
           pricing_breakdown?: Json | null
           promo_applied?: string | null
           promo_code?: string | null
@@ -1267,8 +1276,10 @@ export type Database = {
       recurring_services: {
         Row: {
           booking_id: string | null
+          bundle_code: string | null
           cancellation_date: string | null
           cancellation_reason: string | null
+          commitment_months: number | null
           created_at: string | null
           customer_id: string
           discount_percentage: number | null
@@ -1288,8 +1299,10 @@ export type Database = {
         }
         Insert: {
           booking_id?: string | null
+          bundle_code?: string | null
           cancellation_date?: string | null
           cancellation_reason?: string | null
+          commitment_months?: number | null
           created_at?: string | null
           customer_id: string
           discount_percentage?: number | null
@@ -1309,8 +1322,10 @@ export type Database = {
         }
         Update: {
           booking_id?: string | null
+          bundle_code?: string | null
           cancellation_date?: string | null
           cancellation_reason?: string | null
+          commitment_months?: number | null
           created_at?: string | null
           customer_id?: string
           discount_percentage?: number | null
@@ -1932,10 +1947,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_expired_admin_otp_codes: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_admin_otp_codes: { Args: never; Returns: undefined }
       create_admin_user: {
         Args: { p_email: string; p_role?: string }
         Returns: string
@@ -1944,12 +1956,9 @@ export type Database = {
         Args: { customer_email: string; customer_id: string }
         Returns: string
       }
-      get_admin_role: {
-        Args: { _user_id?: string }
-        Returns: string
-      }
+      get_admin_role: { Args: { _user_id?: string }; Returns: string }
       get_pricing_config: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           base_hourly_rate: number
           biweekly_discount: number
@@ -1965,18 +1974,12 @@ export type Database = {
           weekly_discount: number
         }[]
       }
-      is_admin: {
-        Args: { _user_id?: string }
-        Returns: boolean
-      }
+      is_admin: { Args: { _user_id?: string }; Returns: boolean }
       issue_referral_code: {
         Args: { input_customer_id: string }
         Returns: string
       }
-      save_pricing_config: {
-        Args: { config_data: Json }
-        Returns: undefined
-      }
+      save_pricing_config: { Args: { config_data: Json }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

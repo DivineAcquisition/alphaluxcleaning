@@ -65,7 +65,7 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"25_percent_with_discount">("25_percent_with_discount");
+  const [paymentType, setPaymentType] = useState<"deposit" | "full_with_discount">("deposit");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   
   const { trackInitiateCheckout } = useFacebookPixel();
@@ -330,17 +330,30 @@ export function PaymentForm({
               <p className="text-muted-foreground">Select your preferred payment option</p>
             </div>
             
-            <div className="grid grid-cols-1 gap-6 w-full max-w-2xl mx-auto">
-              {/* Pay 20% Deposit Now Option - Only Option */}
-              <div className="relative border-2 rounded-xl p-6 border-primary bg-primary/5 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mx-auto">
+              {/* Pay 20% Deposit Now Option */}
+              <div 
+                onClick={() => setPaymentType('deposit')}
+                className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all ${
+                  paymentType === 'deposit' 
+                    ? 'border-primary bg-primary/5 shadow-lg' 
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <Badge variant="secondary" className="px-3 py-1">
                     Secure Deposit
                   </Badge>
                 </div>
                 <div className="text-center space-y-4">
-                  <div className="w-8 h-8 rounded-full mx-auto border-2 border-primary bg-primary flex items-center justify-center">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 ${
+                    paymentType === 'deposit' 
+                      ? 'border-primary bg-primary' 
+                      : 'border-muted-foreground bg-background'
+                  } flex items-center justify-center transition-all`}>
+                    {paymentType === 'deposit' && (
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-xl font-bold mb-2">Pay 20% Deposit Now</h4>
@@ -366,6 +379,64 @@ export function PaymentForm({
                     <div className="flex items-center justify-center text-green-600 gap-2">
                       <CheckCircle className="h-4 w-4" />
                       Secure booking guarantee
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pay Full Amount & Save 5% - NEW OPTION */}
+              <div 
+                onClick={() => setPaymentType('full_with_discount')}
+                className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all ${
+                  paymentType === 'full_with_discount' 
+                    ? 'border-green-500 bg-green-50 shadow-lg' 
+                    : 'border-border hover:border-green-500/50'
+                }`}
+              >
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">
+                    💰 Best Value - Save 5%
+                  </Badge>
+                </div>
+                <div className="text-center space-y-4">
+                  <div className={`w-8 h-8 rounded-full mx-auto border-2 ${
+                    paymentType === 'full_with_discount' 
+                      ? 'border-green-600 bg-green-600' 
+                      : 'border-muted-foreground bg-background'
+                  } flex items-center justify-center transition-all`}>
+                    {paymentType === 'full_with_discount' && (
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold mb-2">Pay Full Amount & Save</h4>
+                    <div className="space-y-1 mb-2">
+                      <div className="text-2xl text-muted-foreground line-through">
+                        ${getFinalPrice().toFixed(2)}
+                      </div>
+                      <div className="text-3xl font-bold text-green-600">
+                        ${(getFinalPrice() * 0.95).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold mb-2">
+                      You save ${(getFinalPrice() * 0.05).toFixed(2)}!
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Get 5% instant discount for paying in full
+                    </p>
+                  </div>
+                   <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">5% instant savings</span>
+                    </div>
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">No balance due after service</span>
+                    </div>
+                    <div className="flex items-center justify-center text-green-600 gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">Priority scheduling</span>
                     </div>
                   </div>
                 </div>
@@ -443,9 +514,21 @@ export function PaymentForm({
           {/* Show embedded form for payment */}
           {showEmbeddedForm && preloadedClientSecret && (
             <EmbeddedSquarePaymentForm
-              paymentAmount={Math.round(getFinalPrice() * 0.2 * 100) / 100}
+              paymentAmount={
+                paymentType === 'deposit' 
+                  ? Math.round(getFinalPrice() * 0.2 * 100) / 100
+                  : Math.round(getFinalPrice() * 0.95 * 100) / 100
+              }
               fullAmount={getFinalPrice()}
-              paymentType="deposit"
+              paymentType={paymentType}
+              prepaymentDiscount={
+                paymentType === 'full_with_discount'
+                  ? {
+                      applied: true,
+                      amount: Math.round(getFinalPrice() * 0.05 * 100) / 100
+                    }
+                  : undefined
+              }
               customerEmail={customerInfo.email}
               customerName={customerInfo.name}
               customerPhone={customerInfo.phone}
