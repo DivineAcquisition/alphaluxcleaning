@@ -11,7 +11,9 @@ import { MapPin, Home, Sparkles, Calendar, MapPinned, Phone, FileText, CreditCar
 import { getDeepCleanRecommendation } from '@/lib/booking-recommendations';
 import { HomeSizeGrid } from '../pricing/HomeSizeGrid';
 import { FrequencySelector } from '../pricing/FrequencySelector';
+import { ServiceTypeSelector } from '../pricing/ServiceTypeSelector';
 import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
+import { PriceRangeIndicator } from '../pricing/PriceRangeIndicator';
 import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { getPriceQuote } from '@/lib/pricing-adapter';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
@@ -574,8 +576,14 @@ export function TypeformBookingFlow({
       {/* Step 1: State Selection */}
       <TypeformStep questionNumber={1} totalSteps={totalSteps} isActive={currentStep === 1} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Continue">
         <ConversationalQuestion question="Where do you need cleaning?" description="Select your state to get accurate pricing" icon={<MapPin className="w-8 h-8" />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {DEFAULT_PRICING_CONFIG.states.map(state => <AnswerOption key={state.code} label={state.name} icon={<MapPin className="w-6 h-6" />} isSelected={bookingData.stateCode === state.code} onClick={() => updateField('stateCode', state.code)} />)}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {DEFAULT_PRICING_CONFIG.states.map(state => <AnswerOption key={state.code} label={state.name} icon={<MapPin className="w-6 h-6" />} isSelected={bookingData.stateCode === state.code} onClick={() => updateField('stateCode', state.code)} />)}
+            </div>
+            
+            {bookingData.stateCode && (
+              <PriceRangeIndicator stateCode={bookingData.stateCode} />
+            )}
           </div>
         </ConversationalQuestion>
       </TypeformStep>
@@ -617,15 +625,18 @@ export function TypeformBookingFlow({
       {/* Step 3: Service Type */}
       <TypeformStep questionNumber={3} totalSteps={totalSteps} isActive={currentStep === 3} onBack={handleBack} onNext={handleNext} canGoNext={canGoNext()} nextLabel="Continue">
         <ConversationalQuestion question="What type of cleaning do you need?" description="Choose the service that best fits your needs" icon={<Sparkles className="w-8 h-8" />}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {DEFAULT_PRICING_CONFIG.serviceTypes.map(service => {
-            const descriptions: Record<string, string> = {
-              regular: 'Regular maintenance cleaning',
-              deep: 'Thorough deep cleaning',
-              move_in_out: 'Move-in or move-out cleaning'
-            };
-            return <AnswerOption key={service.id} label={service.name} description={descriptions[service.id]} icon={<Sparkles className="w-6 h-6" />} isSelected={bookingData.serviceTypeId === service.id} onClick={() => updateField('serviceTypeId', service.id)} />;
-          })}
+          <div className="space-y-6">
+            <ServiceTypeSelector 
+              selectedId={bookingData.serviceTypeId}
+              onSelect={id => updateField('serviceTypeId', id)}
+            />
+            
+            {bookingData.serviceTypeId && bookingData.stateCode && (
+              <PriceRangeIndicator 
+                stateCode={bookingData.stateCode}
+                serviceTypeId={bookingData.serviceTypeId}
+              />
+            )}
           </div>
         </ConversationalQuestion>
       </TypeformStep>

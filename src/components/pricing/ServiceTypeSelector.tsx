@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DEFAULT_PRICING_CONFIG, type ServiceTypeConfig } from '@/lib/new-pricing-system';
+import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES, type ServiceTypeConfig } from '@/lib/new-pricing-system';
 import { Sparkles, Home, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +42,26 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
   const Icon = serviceIcons[serviceType.id as keyof typeof serviceIcons] || Home;
   const recurringText = serviceType.allowsRecurring ? 'One-time & Recurring' : 'One-time only';
 
+  // Get the minimum price for this service type
+  const getMinPrice = () => {
+    const filteredRanges = HOME_SIZE_RANGES.filter(range => !range.requiresEstimate);
+    const prices = filteredRanges.map(range => {
+      switch (serviceType.id) {
+        case 'regular':
+          return range.regularPrice;
+        case 'deep':
+          return range.deepPrice;
+        case 'move_in_out':
+          return range.moveInOutPrice;
+        default:
+          return 0;
+      }
+    });
+    return Math.min(...prices);
+  };
+
+  const minPrice = getMinPrice();
+
   return (
     <Card 
       className={cn(
@@ -52,11 +72,11 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
       )}
       onClick={onSelect}
     >
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="p-4 md:p-6">
+        <div className="space-y-3 md:space-y-4">
           <div className="flex items-center justify-between">
             <Icon className={cn(
-              "h-6 w-6",
+              "h-5 w-5 md:h-6 md:w-6",
               isSelected ? "text-[#ECC98B]" : "text-muted-foreground"
             )} />
             
@@ -67,21 +87,33 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
           
           <div className="space-y-2">
             <h3 className={cn(
-              "font-semibold text-lg",
+              "font-semibold text-base md:text-lg",
               isSelected ? "text-[#ECC98B]" : "text-foreground"
             )}>
               {serviceType.name}
             </h3>
             
-            <Badge 
-              variant={isSelected ? "default" : "secondary"}
-              className={cn(
-                "text-xs",
-                isSelected && "bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80"
-              )}
-            >
-              {recurringText}
-            </Badge>
+            <div className="flex flex-col gap-1.5">
+              <Badge 
+                variant={isSelected ? "default" : "secondary"}
+                className={cn(
+                  "text-xs w-fit",
+                  isSelected && "bg-[#ECC98B] text-[#ECC98B]-foreground hover:bg-[#ECC98B]/80"
+                )}
+              >
+                {recurringText}
+              </Badge>
+              
+              <div className="pt-1">
+                <p className="text-xs text-muted-foreground">Starting at</p>
+                <p className={cn(
+                  "text-xl md:text-2xl font-bold",
+                  isSelected ? "text-[#ECC98B]" : "text-foreground"
+                )}>
+                  ${minPrice}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

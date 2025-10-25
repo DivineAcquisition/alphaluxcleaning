@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConversationalQuestion } from './ConversationalQuestion';
 import { AnswerOption } from './AnswerOption';
+import { PriceTeaserBanner } from '@/components/pricing/PriceTeaserBanner';
 import { Sparkles } from 'lucide-react';
 
 interface WarmUpStepProps {
@@ -38,23 +39,27 @@ export function WarmUpStep({ value, onSelect }: WarmUpStepProps) {
   ];
 
   return (
-    <ConversationalQuestion
-      question="We just need a few details to give you an instant quote 👇"
-      description="When was your home last professionally cleaned?"
-      icon={<Sparkles className="w-8 h-8" />}
-    >
-      <div className="space-y-3">
-        {options.map((option) => (
-          <AnswerOption
-            key={option.value}
-            label={option.label}
-            description={option.description}
-            isSelected={value === option.value}
-            onClick={() => onSelect(option.value)}
-            autoAdvance={true}
-          />
-        ))}
-      </div>
-    </ConversationalQuestion>
+    <>
+      <PriceTeaserBanner />
+      
+      <ConversationalQuestion
+        question="We just need a few details to give you an instant quote 👇"
+        description="When was your home last professionally cleaned?"
+        icon={<Sparkles className="w-8 h-8" />}
+      >
+        <div className="space-y-3">
+          {options.map((option) => (
+            <AnswerOption
+              key={option.value}
+              label={option.label}
+              description={option.description}
+              isSelected={value === option.value}
+              onClick={() => onSelect(option.value)}
+              autoAdvance={true}
+            />
+          ))}
+        </div>
+      </ConversationalQuestion>
+    </>
   );
 }
