@@ -61,11 +61,15 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
   };
 
   const minPrice = getMinPrice();
+  
+  // Calculate discounted price
+  const discount = serviceType.id === 'regular' ? 0.10 : serviceType.id === 'deep' ? 0.20 : 0;
+  const discountedPrice = discount > 0 ? Math.round(minPrice * (1 - discount)) : minPrice;
 
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md border-2",
+        "relative cursor-pointer transition-all duration-200 hover:shadow-md border-2",
         isSelected 
           ? "border-[#ECC98B] bg-[#ECC98B]/5 shadow-md" 
           : "border-border hover:border-[#ECC98B]/50"
@@ -73,8 +77,24 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
       onClick={onSelect}
     >
       <CardContent className="p-4 md:p-6">
+        {/* Discount Badge */}
+        {discount > 0 && (
+          <div className="absolute top-3 right-3 md:top-4 md:right-4">
+            {serviceType.id === 'regular' && (
+              <div className="px-2 py-1 rounded-full bg-green-500 text-white text-[10px] md:text-xs font-bold shadow-sm">
+                10% OFF
+              </div>
+            )}
+            {serviceType.id === 'deep' && (
+              <div className="px-2 py-1 rounded-full bg-[#ECC98B] text-[#1A1F2C] text-[10px] md:text-xs font-bold shadow-sm">
+                20% OFF
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="space-y-3 md:space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-12 md:pr-16">
             <Icon className={cn(
               "h-5 w-5 md:h-6 md:w-6",
               isSelected ? "text-[#ECC98B]" : "text-muted-foreground"
@@ -106,12 +126,26 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
               
               <div className="pt-1">
                 <p className="text-xs text-muted-foreground">Starting at</p>
-                <p className={cn(
-                  "text-xl md:text-2xl font-bold",
-                  isSelected ? "text-[#ECC98B]" : "text-foreground"
-                )}>
-                  ${minPrice}
-                </p>
+                {discount > 0 ? (
+                  <div className="space-y-0.5">
+                    <p className="text-sm text-muted-foreground line-through">
+                      ${minPrice}
+                    </p>
+                    <p className={cn(
+                      "text-xl md:text-2xl font-bold",
+                      isSelected ? "text-[#ECC98B]" : "text-foreground"
+                    )}>
+                      ${discountedPrice}
+                    </p>
+                  </div>
+                ) : (
+                  <p className={cn(
+                    "text-xl md:text-2xl font-bold",
+                    isSelected ? "text-[#ECC98B]" : "text-foreground"
+                  )}>
+                    ${minPrice}
+                  </p>
+                )}
               </div>
             </div>
           </div>

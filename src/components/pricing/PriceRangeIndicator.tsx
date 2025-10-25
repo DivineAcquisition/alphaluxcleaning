@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingDown, Info } from 'lucide-react';
 import { HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG, type StateConfig } from '@/lib/new-pricing-system';
+import { cn } from '@/lib/utils';
 
 interface PriceRangeIndicatorProps {
   stateCode?: string;
@@ -62,6 +63,12 @@ export function PriceRangeIndicator({
 
   const { min, max, isNarrowed } = getPriceRange();
   const serviceType = DEFAULT_PRICING_CONFIG.serviceTypes.find(s => s.id === serviceTypeId);
+  
+  // Calculate discount
+  const discount = serviceTypeId === 'regular' ? 0.10 : serviceTypeId === 'deep' ? 0.20 : 0;
+  const discountedMin = discount > 0 ? Math.round(min * (1 - discount)) : min;
+  const discountedMax = discount > 0 ? Math.round(max * (1 - discount)) : max;
+  const savingsAmount = discount > 0 ? max - discountedMax : 0;
 
   return (
     <div className={`bg-card border border-border rounded-lg p-4 md:p-5 ${className}`}>
@@ -73,7 +80,7 @@ export function PriceRangeIndicator({
         </div>
         
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-sm md:text-base font-semibold text-foreground">
               Your Price Range
             </h4>
@@ -82,16 +89,33 @@ export function PriceRangeIndicator({
                 <span className="text-[10px] md:text-xs font-medium text-primary">Narrowed</span>
               </div>
             )}
+            {discount > 0 && (
+              <div className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium",
+                serviceTypeId === 'regular' 
+                  ? "bg-green-500/10 text-green-700 border border-green-500/20"
+                  : "bg-primary/20 text-primary border border-primary/30"
+              )}>
+                {discount === 0.10 ? '10% OFF' : '20% OFF'} First Clean
+              </div>
+            )}
           </div>
           
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl md:text-3xl font-bold text-primary">
-              ${min}
-            </span>
-            <span className="text-muted-foreground">-</span>
-            <span className="text-2xl md:text-3xl font-bold text-primary">
-              ${max}
-            </span>
+          <div className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl md:text-3xl font-bold text-primary">
+                ${discountedMin}
+              </span>
+              <span className="text-muted-foreground">-</span>
+              <span className="text-2xl md:text-3xl font-bold text-primary">
+                ${discountedMax}
+              </span>
+            </div>
+            {discount > 0 && (
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                Save up to ${savingsAmount} with this offer!
+              </p>
+            )}
           </div>
           
           <p className="text-xs md:text-sm text-muted-foreground">

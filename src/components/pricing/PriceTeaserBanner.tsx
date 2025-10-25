@@ -16,6 +16,10 @@ export function PriceTeaserBanner() {
       .map(range => range.deepPrice)
   );
 
+  // Calculate discounted prices (10% off regular, 20% off deep)
+  const minRegularDiscounted = Math.round(minRegularPrice * 0.90);
+  const minDeepDiscounted = Math.round(minDeepPrice * 0.80);
+
   return (
     <div className="mb-6 md:mb-8">
       <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 p-4 md:p-6">
@@ -32,10 +36,23 @@ export function PriceTeaserBanner() {
             <h3 className="text-base md:text-lg font-semibold text-foreground">
               Instant Pricing Available
             </h3>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              Standard cleaning starting at <span className="font-semibold text-primary">${minRegularPrice}</span> • 
-              Deep cleaning from <span className="font-semibold text-primary">${minDeepPrice}</span>
-            </p>
+            <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-muted-foreground">
+              <span>
+                Standard cleaning{' '}
+                <span className="font-semibold text-primary">${minRegularDiscounted}</span>
+                <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-700 border border-green-500/20">
+                  10% OFF
+                </span>
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span>
+                Deep cleaning{' '}
+                <span className="font-semibold text-primary">${minDeepDiscounted}</span>
+                <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/20 text-primary border border-primary/30">
+                  20% OFF
+                </span>
+              </span>
+            </div>
           </div>
           
           <div className="flex-shrink-0 hidden sm:block">
