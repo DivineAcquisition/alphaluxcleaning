@@ -120,3 +120,21 @@ export function applyPrepaymentDiscount(totalDollars: number): {
     savingsAmount
   };
 }
+
+/**
+ * Apply 20% discount to deep cleaning services
+ */
+export function applyDeepCleanDiscount(basePrice: number): {
+  originalPrice: number;
+  discountedPrice: number;
+  savingsAmount: number;
+} {
+  const discountedPrice = Math.round(basePrice * 0.80 * 100) / 100;
+  const savingsAmount = Math.round(basePrice * 0.20 * 100) / 100;
+  
+  return {
+    originalPrice: basePrice,
+    discountedPrice,
+    savingsAmount
+  };
+}

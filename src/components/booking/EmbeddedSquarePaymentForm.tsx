@@ -23,6 +23,10 @@ interface EmbeddedSquarePaymentFormProps {
     applied: boolean;
     amount: number;
   };
+  deepCleanDiscount?: {
+    applied: boolean;
+    amount: number;
+  };
 }
 
 export function EmbeddedSquarePaymentForm({
@@ -38,6 +42,7 @@ export function EmbeddedSquarePaymentForm({
   applyCredits = false,
   creditsAmount = 0,
   prepaymentDiscount,
+  deepCleanDiscount,
 }: EmbeddedSquarePaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -159,6 +164,19 @@ export function EmbeddedSquarePaymentForm({
             {paymentType === "deposit" ? "Pay 20% Deposit" : paymentType === "full_with_discount" ? "Pay Full Amount (5% Discount)" : "Complete Payment"}
           </h3>
           
+          {deepCleanDiscount?.applied && (
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-1">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                <span className="text-lg">✨</span>
+                <span>Deep Cleaning Discount Applied!</span>
+              </div>
+              <div className="flex justify-between text-sm text-blue-600 font-semibold">
+                <span>You Save (20% OFF):</span>
+                <span>-${deepCleanDiscount.amount.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+          
           {prepaymentDiscount?.applied && (
             <div className="bg-green-50 border border-green-200 p-3 rounded-lg space-y-1">
               <div className="flex items-center gap-2 text-green-700 font-semibold">
@@ -197,14 +215,21 @@ export function EmbeddedSquarePaymentForm({
         </div>
 
         <div className="space-y-4">
-          {isInitializing ? (
-            <div className="flex items-center justify-center min-h-[200px]">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Loading payment form...</span>
-            </div>
-          ) : (
-            <div id="square-card-container" className="min-h-[200px]" />
-          )}
+          <div className="relative">
+            {/* Always render container so Square can attach to it */}
+            <div 
+              id="square-card-container" 
+              className={`min-h-[200px] transition-opacity ${isInitializing ? 'opacity-0' : 'opacity-100'}`}
+            />
+            
+            {/* Show loading overlay while initializing */}
+            {isInitializing && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading payment form...</span>
+              </div>
+            )}
+          </div>
           
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

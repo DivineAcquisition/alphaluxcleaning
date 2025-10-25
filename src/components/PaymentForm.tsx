@@ -15,6 +15,8 @@ import { EmbeddedSquarePaymentForm } from "@/components/booking/EmbeddedSquarePa
 import { usePreloadedPayment } from "@/hooks/usePreloadedPayment";
 import { navigateToOrderConfirmation } from "@/utils/routing-helpers";
 import { PaymentFormSkeleton } from "@/components/ui/loading-skeleton";
+import { DeepCleaningPromoBanner } from "@/components/booking/DeepCleaningPromoBanner";
+import { applyDeepCleanDiscount } from "@/lib/pricing-utils";
 
 interface PaymentFormProps {
   pricingData: {
@@ -85,6 +87,12 @@ export function PaymentForm({
     });
     return finalPrice;
   };
+
+  // Detect deep cleaning service type
+  const isDeepCleaning = pricingData.cleaningType === 'deep';
+  
+  // Calculate deep cleaning discount if applicable
+  const deepCleanDiscount = isDeepCleaning ? applyDeepCleanDiscount(getFinalPrice()) : null;
   
   // Preloaded payment hook for instant form loading
   const {
@@ -323,6 +331,9 @@ export function PaymentForm({
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-6 text-center">
+          {/* Deep Cleaning Promo Banner */}
+          <DeepCleaningPromoBanner show={isDeepCleaning} />
+          
           {/* Payment Type Selection */}
           <div className="space-y-8">
             <div className="text-center space-y-2">
@@ -526,6 +537,14 @@ export function PaymentForm({
                   ? {
                       applied: true,
                       amount: Math.round(getFinalPrice() * 0.05 * 100) / 100
+                    }
+                  : undefined
+              }
+              deepCleanDiscount={
+                isDeepCleaning && deepCleanDiscount
+                  ? {
+                      applied: true,
+                      amount: deepCleanDiscount.savingsAmount
                     }
                   : undefined
               }
