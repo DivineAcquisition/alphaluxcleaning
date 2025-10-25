@@ -29,6 +29,7 @@ import GetReferral from '@/pages/GetReferral';
 import LearnMore from '@/pages/LearnMore';
 import RecurringServices from '@/pages/RecurringServices';
 import StartRecurring from '@/pages/StartRecurring';
+import Pricing from '@/pages/Pricing';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -76,6 +77,9 @@ function App() {
             
             {/* Lead Capture */}
             <Route path="/learn-more" element={<LearnMore />} />
+            
+            {/* Pricing Page */}
+            <Route path="/pricing" element={<Pricing />} />
             
             {/* Recurring Services */}
             <Route path="/recurring-services" element={<RecurringServices />} />
