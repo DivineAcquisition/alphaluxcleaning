@@ -23,6 +23,7 @@ interface BookingData {
   bedrooms: number;
   bathrooms: number;
   sqft: number;
+  homeSizeId?: string;
   homeType: 'house' | 'apartment' | 'condo';
   
   // Step 3: Service Type
@@ -140,27 +141,28 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Map sqft to home size ID based on new pricing system ranges
-      let homeSizeId = '1000_1500'; // Default
+      // Use homeSizeId if available, otherwise map from sqft or bedrooms
+      let homeSizeId = bookingData.homeSizeId || '2001_2500'; // Default
       
-      if (bookingData.sqft > 0) {
-        if (bookingData.sqft >= 1000 && bookingData.sqft <= 1500) homeSizeId = '1000_1500';
-        else if (bookingData.sqft >= 1501 && bookingData.sqft <= 2000) homeSizeId = '1501_2000';
-        else if (bookingData.sqft >= 2001 && bookingData.sqft <= 2500) homeSizeId = '2001_2500';
-        else if (bookingData.sqft >= 2501 && bookingData.sqft <= 3000) homeSizeId = '2501_3000';
-        else if (bookingData.sqft >= 3001 && bookingData.sqft <= 3500) homeSizeId = '3001_3500';
-        else if (bookingData.sqft >= 3501 && bookingData.sqft <= 4000) homeSizeId = '3501_4000';
-        else if (bookingData.sqft >= 4001 && bookingData.sqft <= 4500) homeSizeId = '4001_4500';
-        else if (bookingData.sqft >= 4501 && bookingData.sqft <= 5000) homeSizeId = '4501_5000';
-        else if (bookingData.sqft >= 5000) homeSizeId = '5000_plus';
-        else if (bookingData.sqft < 1000) homeSizeId = '1000_1500'; // Default for small spaces
-      } else if (bookingData.bedrooms > 0) {
-        // Estimate from bedrooms
-        if (bookingData.bedrooms <= 1) homeSizeId = '1000_1500';
-        else if (bookingData.bedrooms === 2) homeSizeId = '1501_2000';
-        else if (bookingData.bedrooms === 3) homeSizeId = '2001_2500';
-        else if (bookingData.bedrooms === 4) homeSizeId = '2501_3000';
-        else homeSizeId = '3001_3500';
+      if (!bookingData.homeSizeId) {
+        if (bookingData.sqft > 0) {
+          if (bookingData.sqft >= 1000 && bookingData.sqft <= 1500) homeSizeId = '1000_1500';
+          else if (bookingData.sqft >= 1501 && bookingData.sqft <= 2000) homeSizeId = '1501_2000';
+          else if (bookingData.sqft >= 2001 && bookingData.sqft <= 2500) homeSizeId = '2001_2500';
+          else if (bookingData.sqft >= 2501 && bookingData.sqft <= 3000) homeSizeId = '2501_3000';
+          else if (bookingData.sqft >= 3001 && bookingData.sqft <= 3500) homeSizeId = '3001_3500';
+          else if (bookingData.sqft >= 3501 && bookingData.sqft <= 4000) homeSizeId = '3501_4000';
+          else if (bookingData.sqft >= 4001 && bookingData.sqft <= 4500) homeSizeId = '4001_4500';
+          else if (bookingData.sqft >= 4501 && bookingData.sqft <= 5000) homeSizeId = '4501_5000';
+          else if (bookingData.sqft >= 5000) homeSizeId = '5000_plus';
+          else if (bookingData.sqft < 1000) homeSizeId = '1000_1500';
+        } else if (bookingData.bedrooms > 0) {
+          if (bookingData.bedrooms <= 1) homeSizeId = '1000_1500';
+          else if (bookingData.bedrooms === 2) homeSizeId = '1501_2000';
+          else if (bookingData.bedrooms === 3) homeSizeId = '2001_2500';
+          else if (bookingData.bedrooms === 4) homeSizeId = '2501_3000';
+          else homeSizeId = '3001_3500';
+        }
       }
 
       const result = calculateNewPricing(

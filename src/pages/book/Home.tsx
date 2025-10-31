@@ -5,8 +5,8 @@ import { LiveEstimateCard } from '@/components/booking/LiveEstimateCard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { useBooking } from '@/contexts/BookingContext';
+import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 
 export default function BookingHome() {
   const navigate = useNavigate();
@@ -85,18 +85,30 @@ export default function BookingHome() {
             </div>
             
             <div>
-              <Label htmlFor="sqft" className="mb-2">
-                Square Footage <span className="text-muted-foreground">(Optional)</span>
-              </Label>
-              <Input 
-                id="sqft"
-                type="number"
-                min="0"
-                placeholder="2000"
-                value={bookingData.sqft || ''}
-                onChange={(e) => updateBookingData({ sqft: parseInt(e.target.value) || 0 })}
-                className="h-12"
-              />
+              <Label htmlFor="sqft" className="mb-2">Home Size</Label>
+              <Select 
+                value={bookingData.homeSizeId || '2001_2500'} 
+                onValueChange={(val) => {
+                  const range = HOME_SIZE_RANGES.find(r => r.id === val);
+                  if (range) {
+                    const midpoint = Math.floor((range.minSqft + range.maxSqft) / 2);
+                    updateBookingData({ homeSizeId: val, sqft: midpoint });
+                  }
+                }}
+              >
+                <SelectTrigger id="sqft" className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {HOME_SIZE_RANGES
+                    .filter(range => !range.requiresEstimate)
+                    .map(range => (
+                      <SelectItem key={range.id} value={range.id}>
+                        {range.label} ({range.bedroomRange})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
