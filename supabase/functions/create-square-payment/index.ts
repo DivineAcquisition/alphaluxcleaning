@@ -261,6 +261,20 @@ serve(async (req) => {
           paid_at: new Date().toISOString(),
         })
         .eq("id", bookingId);
+      
+      // Trigger confirmation emails (non-blocking)
+      try {
+        logStep("Triggering confirmation emails", { bookingId });
+        supabase.functions.invoke('send-booking-confirmation', {
+          body: { bookingId }
+        }).then(() => {
+          logStep("Confirmation emails triggered");
+        }).catch((emailError) => {
+          console.error("Email notification failed (non-critical):", emailError);
+        });
+      } catch (emailError) {
+        console.error("Failed to trigger emails (non-critical):", emailError);
+      }
     }
 
     return new Response(
