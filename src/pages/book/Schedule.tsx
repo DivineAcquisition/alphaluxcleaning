@@ -3,14 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { LiveEstimateCard } from '@/components/booking/LiveEstimateCard';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { addDays } from 'date-fns';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { EnhancedDateTimePicker } from '@/components/booking/EnhancedDateTimePicker';
 
 interface TimeSlot {
   id: string;
@@ -91,60 +87,16 @@ export default function BookingSchedule() {
           </p>
           
           <div className="space-y-6">
-            <div>
-              <Label className="mb-3 block">Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => {
-                  return date < today || date > maxDate || date.getDay() === 0;
-                }}
-                className="rounded-md border mx-auto"
-              />
-            </div>
-            
-            {selectedDate && (
-              <div>
-                <Label className="mb-3 block">Select Time</Label>
-                {isLoadingSlots ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : timeSlots.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No slots available for this date
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {timeSlots.map((slot) => {
-                      const available = slot.available_slots - slot.booked_slots;
-                      const isSelected = bookingData.timeSlot === slot.time_slot;
-                      
-                      return (
-                        <Button
-                          key={slot.id}
-                          variant={isSelected ? 'default' : 'outline'}
-                          className={cn(
-                            'h-auto py-4 flex flex-col items-center justify-center',
-                            available <= 3 && 'border-warning'
-                          )}
-                          onClick={() => handleTimeSlotSelect(slot.time_slot)}
-                          disabled={available < 1}
-                        >
-                          <span className="font-medium text-base">{slot.time_slot}</span>
-                          {available <= 3 && available > 0 && (
-                            <Badge className="mt-2 text-xs bg-warning text-warning-foreground">
-                              Only {available} spots left
-                            </Badge>
-                          )}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+            <EnhancedDateTimePicker
+              selectedDate={selectedDate}
+              selectedTime={bookingData.timeSlot}
+              timeSlots={timeSlots}
+              isLoadingSlots={isLoadingSlots}
+              onDateSelect={setSelectedDate}
+              onTimeSelect={handleTimeSlotSelect}
+              minDate={today}
+              maxDate={maxDate}
+            />
             
             <Button 
               size="lg" 
