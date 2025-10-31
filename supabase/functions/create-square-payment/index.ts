@@ -41,6 +41,7 @@ serve(async (req) => {
       verificationToken, // For 3DS
       applyCredits = false,
       creditsAmount = 0,
+      saveCard = false, // NEW: Save card to customer profile
     } = await req.json();
 
     logStep("Request data", { amount, customerEmail, bookingId, applyCredits });
@@ -194,12 +195,68 @@ serve(async (req) => {
 
     logStep("Square payment created", { paymentId: paymentData.payment.id });
 
-    // Update booking with Square payment ID
+    // Save card to Square Customer if requested
+    let cardSaved = false;
+    if (saveCard && customerId) {
+      try {
+        logStep("Saving card to Square customer", { customerId });
+        
+        const cardResponse = await fetch(
+          "https://connect.squareup.com/v2/cards",
+          {
+            method: "POST",
+            headers: {
+              "Square-Version": "2024-01-18",
+              "Authorization": `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              idempotency_key: crypto.randomUUID(),
+              source_id: sourceId,
+              card: {
+                customer_id: customerId,
+              },
+            }),
+          }
+        );
+
+        const cardData = await cardResponse.json();
+        
+        if (cardData.card) {
+          logStep("Card saved successfully", { 
+            cardId: cardData.card.id,
+            last4: cardData.card.last_4,
+            cardBrand: cardData.card.card_brand
+          });
+          
+          // Update customer record with card info
+          await supabase
+            .from('customers')
+            .update({ 
+              square_card_id: cardData.card.id,
+              square_card_last4: cardData.card.last_4
+            })
+            .eq('email', customerEmail);
+            
+          cardSaved = true;
+        } else if (cardData.errors) {
+          console.error("Card save errors:", cardData.errors);
+          logStep("Failed to save card (non-critical)", { errors: cardData.errors });
+        }
+      } catch (cardError: any) {
+        console.error("Card save error:", cardError);
+        logStep("Card save failed (non-critical)", { error: cardError.message });
+        // Don't fail the payment if card save fails
+      }
+    }
+
+    // Update booking with Square payment ID and customer ID
     if (bookingId) {
       await supabase
         .from("bookings")
         .update({
           square_payment_id: paymentData.payment.id,
+          square_customer_id: customerId,
           status: "confirmed",
           paid_at: new Date().toISOString(),
         })
@@ -210,9 +267,11 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         payment_id: paymentData.payment.id,
+        customer_id: customerId,
         amount: finalAmount,
         credits_applied: creditsApplied,
         receipt_url: paymentData.payment.receipt_url,
+        card_saved: cardSaved,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
