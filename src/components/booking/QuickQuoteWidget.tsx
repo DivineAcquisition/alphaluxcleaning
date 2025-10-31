@@ -40,21 +40,8 @@ export function QuickQuoteWidget() {
   }, [selectedHomeSize, selectedServiceType, selectedState]);
 
   const handleGetQuote = () => {
-    // Navigate to full booking flow with pre-filled data
-    const searchParams = new URLSearchParams({
-      state: selectedState,
-      homeSize: selectedHomeSize,
-      serviceType: selectedServiceType
-    });
-    navigate(`/?${searchParams.toString()}`);
-    
-    // Scroll to booking form
-    setTimeout(() => {
-      const bookingForm = document.getElementById('booking-flow');
-      if (bookingForm) {
-        bookingForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+    // Navigate to new booking flow
+    navigate('/book/zip');
   };
 
   const isFormValid = selectedState && selectedHomeSize && selectedServiceType;

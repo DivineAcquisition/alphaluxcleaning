@@ -23,7 +23,7 @@ export function DomainAwareHome() {
       <Navigation />
       
       {/* Hero Section - Compelling above-the-fold content */}
-      <HeroSection />
+      <HeroSection bookingFlowUrl="/book/zip" />
       
       {/* Quick Benefits Bar */}
       <QuickBenefitsBar />

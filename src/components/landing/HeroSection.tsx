@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-export function HeroSection() {
+export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?: string }) {
   return (
     <div className="relative bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 lg:py-20 overflow-hidden">
       {/* Decorative background elements */}
@@ -40,7 +40,7 @@ export function HeroSection() {
               className="w-full sm:w-auto text-base lg:text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
               asChild
             >
-              <a href="#quote-widget">Get Instant Quote</a>
+              <Link to={bookingFlowUrl}>Get Instant Quote</Link>
             </Button>
             <Button 
               size="lg" 
