@@ -5,9 +5,20 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
 import { useSquarePreloader } from '@/hooks/useSquarePreloader';
 import { CheckCircle } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+import { BookingProvider } from '@/contexts/BookingContext';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
+
+// Lazy load new booking flow pages
+const BookZip = lazy(() => import('@/pages/book/Zip'));
+const BookHome = lazy(() => import('@/pages/book/Home'));
+const BookService = lazy(() => import('@/pages/book/Service'));
+const BookFrequency = lazy(() => import('@/pages/book/Frequency'));
+const BookSchedule = lazy(() => import('@/pages/book/Schedule'));
+const BookCheckout = lazy(() => import('@/pages/book/Checkout'));
+const BookConfirmation = lazy(() => import('@/pages/book/Confirmation'));
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 import ConfirmationPreview from '@/pages/ConfirmationPreview';
@@ -55,10 +66,20 @@ function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <Router>
-          <Routes>
-            {/* Main booking route */}
-            <Route path="/" element={<DomainAwareHome />} />
+        <BookingProvider>
+          <Router>
+            <Routes>
+              {/* New booking flow */}
+              <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
+              <Route path="/book/home" element={<Suspense fallback={<div>Loading...</div>}><BookHome /></Suspense>} />
+              <Route path="/book/service" element={<Suspense fallback={<div>Loading...</div>}><BookService /></Suspense>} />
+              <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
+              <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
+              <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
+              <Route path="/book/confirmation/:bookingId" element={<Suspense fallback={<div>Loading...</div>}><BookConfirmation /></Suspense>} />
+              
+              {/* Main booking route */}
+              <Route path="/" element={<DomainAwareHome />} />
             
             {/* Essential booking confirmation and status pages */}
             <Route path="/order-status" element={<OrderStatus />} />
@@ -124,6 +145,7 @@ function App() {
         </Router>
         <Toaster />
         <Sonner />
+        </BookingProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );

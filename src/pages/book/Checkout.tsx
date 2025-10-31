@@ -1,0 +1,437 @@
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { useBooking } from '@/contexts/BookingContext';
+import { supabase } from '@/integrations/supabase/client';
+import { squarePromise } from '@/lib/square';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+
+export default function BookingCheckout() {
+  const navigate = useNavigate();
+  const { bookingData, updateBookingData, pricing, depositAmount, clearBookingData } = useBooking();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCardReady, setIsCardReady] = useState(false);
+  const [cardInstance, setCardInstance] = useState<any>(null);
+  const isInitializing = useRef(false);
+
+  useEffect(() => {
+    if (!bookingData.zipCode || !bookingData.date) {
+      navigate('/book/zip');
+    }
+  }, [bookingData, navigate]);
+
+  useEffect(() => {
+    initializeSquare();
+    return () => {
+      if (cardInstance) {
+        cardInstance.destroy();
+      }
+    };
+  }, []);
+
+  const initializeSquare = async () => {
+    if (isInitializing.current) return;
+    isInitializing.current = true;
+
+    try {
+      const square = await squarePromise;
+      if (!square?.payments) throw new Error('Square not loaded');
+
+      const card = await square.payments.card();
+      await card.attach('#square-card-container');
+      
+      setCardInstance(card);
+      setIsCardReady(true);
+      console.log('✅ Square card form ready');
+    } catch (error) {
+      console.error('Square initialization error:', error);
+      toast.error('Failed to load payment form');
+    } finally {
+      isInitializing.current = false;
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!cardInstance || !pricing) {
+      toast.error('Payment form not ready');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Step 1: Tokenize card
+      const tokenResult = await cardInstance.tokenize();
+      if (tokenResult.status === 'OK') {
+        const { token, details } = tokenResult;
+
+        // Step 2: Create customer in Supabase
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            email: bookingData.contactInfo.email,
+            name: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+            first_name: bookingData.contactInfo.firstName,
+            last_name: bookingData.contactInfo.lastName,
+            phone: bookingData.contactInfo.phone,
+            address_line1: bookingData.contactInfo.address1,
+            address_line2: bookingData.contactInfo.address2,
+            city: bookingData.contactInfo.city,
+            state: bookingData.contactInfo.state,
+            postal_code: bookingData.contactInfo.zip,
+          })
+          .select()
+          .single();
+
+        if (customerError && customerError.code !== '23505') {
+          throw customerError;
+        }
+
+        // If customer exists, fetch it
+        let customerId = customerData?.id;
+        if (!customerId) {
+          const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('email', bookingData.contactInfo.email)
+            .single();
+          customerId = existingCustomer?.id;
+        }
+
+        // Step 3: Create booking
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .insert({
+            customer_id: customerId,
+            service_type: bookingData.serviceType,
+            frequency: bookingData.frequency,
+            service_date: bookingData.date,
+            time_slot: bookingData.timeSlot,
+            est_price: pricing.finalPrice,
+            deposit_amount: depositAmount,
+            status: 'pending',
+            zip_code: bookingData.zipCode,
+            special_instructions: bookingData.specialInstructions,
+            sqft_or_bedrooms: `${bookingData.bedrooms}BR/${bookingData.bathrooms}BA`,
+            property_details: {
+              bedrooms: bookingData.bedrooms,
+              bathrooms: bookingData.bathrooms,
+              sqft: bookingData.sqft,
+              homeType: bookingData.homeType,
+            },
+          })
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+
+        // Step 4: Process $49 payment via Square
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'create-square-payment',
+          {
+            body: {
+              amount: depositAmount,
+              customerEmail: bookingData.contactInfo.email,
+              customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+              customerPhone: bookingData.contactInfo.phone,
+              bookingId: booking.id,
+              sourceId: token,
+              verificationToken: details?.verification_token,
+              saveCard: true, // Save card to Square Customer
+            },
+          }
+        );
+
+        if (paymentError) throw paymentError;
+
+        // Step 5: If membership selected, note it (future: create Square subscription)
+        if (bookingData.joinMembership) {
+          // TODO: Implement Square membership subscription ($9/month)
+          console.log('Membership requested - to be implemented');
+        }
+
+        // Step 6: Clear booking data and redirect
+        clearBookingData();
+        navigate(`/book/confirmation/${booking.id}`);
+        
+        toast.success('Booking confirmed! Check your email.');
+      } else {
+        throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const serviceTypeLabels: Record<string, string> = {
+    regular: 'Standard Cleaning',
+    deep: 'Deep Cleaning',
+    move_in_out: 'Move-In/Out Cleaning',
+  };
+
+  const frequencyLabels: Record<string, string> = {
+    one_time: 'One-Time',
+    weekly: 'Weekly',
+    bi_weekly: 'Bi-Weekly',
+    monthly: 'Monthly',
+  };
+
+  if (!pricing) return null;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <BookingProgressBar currentStep={6} totalSteps={6} />
+      
+      <div className="flex-1 px-4 py-8 lg:py-12">
+        <div className="max-w-6xl mx-auto">
+          <Link 
+            to="/book/schedule" 
+            className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
+          >
+            ← Previous
+          </Link>
+          
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            Lock in your booking
+          </h1>
+          <p className="text-muted-foreground text-lg mb-8">
+            ${depositAmount} deposit today. Fully applied to your service.
+          </p>
+          
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Left: Contact Form & Payment */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input 
+                        id="firstName"
+                        value={bookingData.contactInfo.firstName}
+                        onChange={(e) => updateBookingData({
+                          contactInfo: { ...bookingData.contactInfo, firstName: e.target.value }
+                        })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input 
+                        id="lastName"
+                        value={bookingData.contactInfo.lastName}
+                        onChange={(e) => updateBookingData({
+                          contactInfo: { ...bookingData.contactInfo, lastName: e.target.value }
+                        })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email"
+                      type="email"
+                      value={bookingData.contactInfo.email}
+                      onChange={(e) => updateBookingData({
+                        contactInfo: { ...bookingData.contactInfo, email: e.target.value }
+                      })}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input 
+                      id="phone"
+                      type="tel"
+                      value={bookingData.contactInfo.phone}
+                      onChange={(e) => updateBookingData({
+                        contactInfo: { ...bookingData.contactInfo, phone: e.target.value }
+                      })}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="address1">Address</Label>
+                    <Input 
+                      id="address1"
+                      value={bookingData.contactInfo.address1}
+                      onChange={(e) => updateBookingData({
+                        contactInfo: { ...bookingData.contactInfo, address1: e.target.value }
+                      })}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="address2">Apt, Suite (Optional)</Label>
+                    <Input 
+                      id="address2"
+                      value={bookingData.contactInfo.address2}
+                      onChange={(e) => updateBookingData({
+                        contactInfo: { ...bookingData.contactInfo, address2: e.target.value }
+                      })}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="instructions">Special Instructions (Optional)</Label>
+                    <Textarea 
+                      id="instructions"
+                      placeholder="Gate code, parking info, pet details..."
+                      rows={3}
+                      value={bookingData.specialInstructions}
+                      onChange={(e) => updateBookingData({ specialInstructions: e.target.value })}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div className="flex items-start space-x-3 p-4 border rounded-lg">
+                <Checkbox 
+                  id="membership"
+                  checked={bookingData.joinMembership}
+                  onCheckedChange={(checked) => updateBookingData({ joinMembership: !!checked })}
+                />
+                <Label htmlFor="membership" className="cursor-pointer flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium">Join AlphaLux Club</span>
+                    <Badge>$9/month</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Save on every clean, priority booking, and VIP support
+                  </p>
+                </Label>
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Secure your booking with ${depositAmount} today. Card will be saved for remaining balance due after service.
+                  </p>
+                  
+                  <div id="square-card-container" className="min-h-[200px]"></div>
+                  
+                  <Button 
+                    size="lg" 
+                    className="w-full h-14 text-lg" 
+                    onClick={handlePayment}
+                    disabled={isProcessing || !isCardReady}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${depositAmount} & Book`
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Right: Booking Summary */}
+            <Card className="h-fit sticky top-24">
+              <CardHeader>
+                <CardTitle>Booking Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Service</p>
+                  <p className="font-medium">{serviceTypeLabels[bookingData.serviceType]}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground">Frequency</p>
+                  <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground">Date & Time</p>
+                  <p className="font-medium">
+                    {new Date(bookingData.date).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                  <p className="text-sm">{bookingData.timeSlot}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground">Address</p>
+                  <p className="font-medium">
+                    {bookingData.contactInfo.address1}
+                    {bookingData.contactInfo.address2 && `, ${bookingData.contactInfo.address2}`}
+                  </p>
+                  <p className="text-sm">
+                    {bookingData.city}, {bookingData.state} {bookingData.zipCode}
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>${pricing.basePrice.toFixed(2)}</span>
+                  </div>
+                  
+                  {pricing.discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-success">
+                      <span>
+                        Discount ({pricing.basePrice > 0 ? Math.round((pricing.discountAmount / pricing.basePrice) * 100) : 0}%):
+                      </span>
+                      <span>-${pricing.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>${pricing.finalPrice.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="bg-primary/10 p-3 rounded-lg mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">Due Today</span>
+                      <span className="text-xl font-bold text-primary">
+                        ${depositAmount.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Remaining ${(pricing.finalPrice - depositAmount).toFixed(2)} due after service
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

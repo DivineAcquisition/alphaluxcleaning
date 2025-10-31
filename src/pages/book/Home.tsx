@@ -1,0 +1,158 @@
+import { useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
+import { LiveEstimateCard } from '@/components/booking/LiveEstimateCard';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { useBooking } from '@/contexts/BookingContext';
+
+export default function BookingHome() {
+  const navigate = useNavigate();
+  const { bookingData, updateBookingData, pricing } = useBooking();
+
+  useEffect(() => {
+    if (!bookingData.zipCode) {
+      navigate('/book/zip');
+    }
+  }, [bookingData.zipCode, navigate]);
+
+  const handleContinue = () => {
+    navigate('/book/service');
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <BookingProgressBar currentStep={2} totalSteps={6} />
+      
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Left: Form */}
+        <main className="flex-1 px-4 py-8 lg:py-12 max-w-2xl mx-auto lg:mx-0 lg:max-w-none lg:w-3/5 lg:px-12">
+          <Link 
+            to="/book/zip" 
+            className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
+          >
+            ← Previous
+          </Link>
+          
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            Tell us about your home
+          </h1>
+          <p className="text-muted-foreground text-lg mb-8">
+            We'll personalize your quote instantly
+          </p>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="bedrooms" className="mb-2">Bedrooms</Label>
+                <Select 
+                  value={bookingData.bedrooms.toString()} 
+                  onValueChange={(val) => updateBookingData({ bedrooms: parseInt(val) })}
+                >
+                  <SelectTrigger id="bedrooms" className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6].map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'Bedroom' : 'Bedrooms'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="bathrooms" className="mb-2">Bathrooms</Label>
+                <Select 
+                  value={bookingData.bathrooms.toString()} 
+                  onValueChange={(val) => updateBookingData({ bathrooms: parseInt(val) })}
+                >
+                  <SelectTrigger id="bathrooms" className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6].map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'Bathroom' : 'Bathrooms'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="sqft" className="mb-2">
+                Square Footage <span className="text-muted-foreground">(Optional)</span>
+              </Label>
+              <Input 
+                id="sqft"
+                type="number"
+                min="0"
+                placeholder="2000"
+                value={bookingData.sqft || ''}
+                onChange={(e) => updateBookingData({ sqft: parseInt(e.target.value) || 0 })}
+                className="h-12"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="homeType" className="mb-2">Home Type</Label>
+              <Select 
+                value={bookingData.homeType} 
+                onValueChange={(val: any) => updateBookingData({ homeType: val })}
+              >
+                <SelectTrigger id="homeType" className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="house">House</SelectItem>
+                  <SelectItem value="apartment">Apartment</SelectItem>
+                  <SelectItem value="condo">Condo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button 
+              size="lg" 
+              className="w-full h-14 text-lg" 
+              onClick={handleContinue}
+            >
+              Continue
+            </Button>
+          </div>
+        </main>
+        
+        {/* Right: Live Estimate (Desktop) */}
+        <aside className="hidden lg:block w-2/5 p-8 bg-muted/30">
+          {pricing && (
+            <LiveEstimateCard
+              serviceType={bookingData.serviceType}
+              frequency={bookingData.frequency}
+              basePrice={pricing.basePrice}
+              discountAmount={pricing.discountAmount}
+              discountRate={pricing.basePrice > 0 ? Math.round((pricing.discountAmount / pricing.basePrice) * 100) : 0}
+              finalPrice={pricing.finalPrice}
+              depositAmount={49}
+            />
+          )}
+        </aside>
+      </div>
+      
+      {/* Mobile: Sticky bottom estimate */}
+      {pricing && (
+        <div className="lg:hidden sticky bottom-0 border-t bg-background p-4 shadow-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Estimated Total</span>
+            <span className="text-2xl font-bold text-primary">
+              ${pricing.finalPrice.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
