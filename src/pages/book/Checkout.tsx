@@ -21,6 +21,8 @@ export default function BookingCheckout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCardReady, setIsCardReady] = useState(false);
   const [cardInstance, setCardInstance] = useState<any>(null);
+  const [availableCredits, setAvailableCredits] = useState(0);
+  const [applyCredits, setApplyCredits] = useState(false);
   const isInitializing = useRef(false);
 
   useEffect(() => {
@@ -30,6 +32,10 @@ export default function BookingCheckout() {
   }, [bookingData, navigate]);
 
   useEffect(() => {
+    fetchAvailableCredits();
+  }, [bookingData.contactInfo.email]);
+
+  useEffect(() => {
     initializeSquare();
     return () => {
       if (cardInstance) {
@@ -37,6 +43,32 @@ export default function BookingCheckout() {
       }
     };
   }, []);
+
+  const fetchAvailableCredits = async () => {
+    if (!bookingData.contactInfo.email) return;
+
+    try {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', bookingData.contactInfo.email)
+        .maybeSingle();
+
+      if (!customer) return;
+
+      const { data: credits } = await supabase
+        .from('referral_rewards')
+        .select('amount_cents')
+        .eq('customer_id', customer.id)
+        .eq('status', 'APPLIED');
+
+      const total = credits?.reduce((sum, c) => sum + c.amount_cents, 0) || 0;
+      setAvailableCredits(total / 100);
+      if (total > 0) setApplyCredits(true);
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    }
+  };
 
   const initializeSquare = async () => {
     if (isInitializing.current) return;
@@ -134,36 +166,48 @@ export default function BookingCheckout() {
 
         if (bookingError) throw bookingError;
 
-        // Step 4: Process $49 payment via Square
+        // Step 4: Calculate final amount with credits
+        const finalPaymentAmount = applyCredits 
+          ? Math.max(0, depositAmount - availableCredits)
+          : depositAmount;
+
+        // Step 5: Process payment via Square (with credits if applicable)
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
           'create-square-payment',
           {
             body: {
-              amount: depositAmount,
+              amount: finalPaymentAmount,
               customerEmail: bookingData.contactInfo.email,
               customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
               customerPhone: bookingData.contactInfo.phone,
               bookingId: booking.id,
               sourceId: token,
               verificationToken: details?.verification_token,
-              saveCard: true, // Save card to Square Customer
+              saveCard: true,
+              applyCredits: applyCredits,
+              creditsAmount: availableCredits,
             },
           }
         );
 
         if (paymentError) throw paymentError;
 
-        // Step 5: If membership selected, note it (future: create Square subscription)
+        // Success message with credits info
+        if (paymentData?.credits_applied > 0) {
+          toast.success(`Booking confirmed! $${paymentData.credits_applied.toFixed(2)} in referral credits applied.`);
+        } else {
+          toast.success('Booking confirmed! Check your email.');
+        }
+
+        // Step 6: If membership selected, note it (future: create Square subscription)
         if (bookingData.joinMembership) {
           // TODO: Implement Square membership subscription ($9/month)
           console.log('Membership requested - to be implemented');
         }
 
-        // Step 6: Clear booking data and redirect
+        // Step 7: Clear booking data and redirect
         clearBookingData();
         navigate(`/book/confirmation/${booking.id}`);
-        
-        toast.success('Booking confirmed! Check your email.');
       } else {
         throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
       }
@@ -408,6 +452,13 @@ export default function BookingCheckout() {
                     </div>
                   )}
                   
+                  {availableCredits > 0 && applyCredits && (
+                    <div className="flex justify-between text-sm text-primary font-medium">
+                      <span>Referral Credits Applied</span>
+                      <span>-${availableCredits.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
                   <Separator />
                   
                   <div className="flex justify-between font-bold text-lg">
@@ -419,9 +470,14 @@ export default function BookingCheckout() {
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium">Due Today</span>
                       <span className="text-xl font-bold text-primary">
-                        ${depositAmount.toFixed(2)}
+                        ${(applyCredits ? Math.max(0, depositAmount - availableCredits) : depositAmount).toFixed(2)}
                       </span>
                     </div>
+                    {availableCredits > 0 && applyCredits && (
+                      <p className="text-xs text-success mb-1">
+                        🎉 ${availableCredits.toFixed(2)} in referral credits applied!
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Remaining ${(pricing.finalPrice - depositAmount).toFixed(2)} due after service
                     </p>

@@ -183,3 +183,13 @@ verify_jwt = false
 [functions.get-recurring-services]
 verify_jwt = false
 
+# Booking Flow Functions
+[functions.validate-zip]
+verify_jwt = false
+
+[functions.get-available-slots]
+verify_jwt = false
+
+[functions.send-booking-confirmation]
+verify_jwt = false
+
