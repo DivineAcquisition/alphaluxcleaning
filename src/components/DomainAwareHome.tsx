@@ -6,7 +6,6 @@ import { QuickQuoteWidget } from '@/components/booking/QuickQuoteWidget';
 import { TestimonialSection } from '@/components/landing/TestimonialSection';
 import { WhyChooseUsSection } from '@/components/landing/WhyChooseUsSection';
 import { FAQSection } from '@/components/landing/FAQSection';
-import { ExitIntentPopup } from '@/components/landing/ExitIntentPopup';
 import { LiveBookingNotification } from '@/components/social-proof/LiveBookingNotification';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -52,9 +51,6 @@ export function DomainAwareHome() {
           <TypeformBookingFlow />
         </Suspense>
       </div>
-      
-      {/* Exit Intent Popup */}
-      <ExitIntentPopup />
       
       {/* Live Booking Notifications */}
       <LiveBookingNotification />
