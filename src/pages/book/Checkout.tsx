@@ -236,12 +236,12 @@ export default function BookingCheckout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={6} totalSteps={6} />
+      <BookingProgressBar currentStep={7} totalSteps={7} />
       
       <div className="flex-1 px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
           <Link 
-            to="/book/schedule" 
+            to="/book/summary" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
           >
             ← Previous

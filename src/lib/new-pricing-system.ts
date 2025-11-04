@@ -307,6 +307,35 @@ export function getHomeSizeBySquareFootage(sqft: number): HomeSizeRange | null {
 }
 
 /**
+ * Calculate recurring upgrade discount when switching from one-time to recurring
+ */
+export function calculateRecurringUpgradeDiscount(
+  basePrice: number,
+  currentFrequency: string,
+  newFrequency: string,
+  wasOneTime: boolean
+): { finalPrice: number; totalDiscount: number; bonusDiscount: number; frequencyDiscount: number } {
+  // Bonus 10% discount for upgrading from one-time to recurring
+  const bonusDiscount = wasOneTime ? 0.10 : 0;
+  
+  // Get standard frequency discount
+  const frequencyConfig = DEFAULT_PRICING_CONFIG.frequencies.find(f => f.id === newFrequency);
+  const frequencyDiscount = frequencyConfig?.discount || 0;
+  
+  // Stack discounts: frequency + bonus (capped at 25% total)
+  const totalDiscount = Math.min(frequencyDiscount + bonusDiscount, 0.25);
+  
+  const finalPrice = basePrice * (1 - totalDiscount);
+  
+  return {
+    finalPrice: Math.round(finalPrice * 100) / 100,
+    totalDiscount,
+    bonusDiscount,
+    frequencyDiscount
+  };
+}
+
+/**
  * Format pricing for webhook payload
  */
 export function formatPricingForWebhook(

@@ -36,7 +36,12 @@ interface BookingData {
   date: string;
   timeSlot: string;
   
-  // Step 6: Contact & Payment
+  // Step 6: Summary & Upsell
+  recurringStartDate?: string;
+  upgradedToRecurring?: boolean;
+  recurringUpgradeDiscount?: number;
+  
+  // Step 7: Contact & Payment
   contactInfo: ContactInfo;
   specialInstructions: string;
   joinMembership: boolean;
@@ -122,6 +127,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     bookingData.sqft,
     bookingData.serviceType,
     bookingData.frequency,
+    bookingData.upgradedToRecurring,
+    bookingData.recurringUpgradeDiscount,
   ]);
 
   const updateBookingData = (data: Partial<BookingData>) => {
@@ -165,12 +172,33 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const result = calculateNewPricing(
+      let result = calculateNewPricing(
         homeSizeId,
         bookingData.serviceType,
         bookingData.frequency,
         bookingData.state
       );
+
+      // Apply bonus discount if user upgraded from one-time to recurring
+      if (bookingData.upgradedToRecurring && bookingData.recurringUpgradeDiscount) {
+        const bonusDiscount = bookingData.recurringUpgradeDiscount;
+        const additionalDiscountAmount = result.basePrice * bonusDiscount;
+        
+        result = {
+          ...result,
+          discountAmount: result.discountAmount + additionalDiscountAmount,
+          finalPrice: result.finalPrice - additionalDiscountAmount,
+          discountedPrice: result.discountedPrice - additionalDiscountAmount,
+        };
+        
+        // Update recurring details if present
+        if (result.recurringDetails) {
+          result.recurringDetails.perClean = result.finalPrice;
+          result.recurringDetails.monthlyTotal = result.finalPrice * result.recurringDetails.cleansPerMonth;
+          result.mrrEstimate = result.recurringDetails.monthlyTotal;
+          result.arrEstimate = result.mrrEstimate * 12;
+        }
+      }
 
       setPricing(result);
     } catch (error) {

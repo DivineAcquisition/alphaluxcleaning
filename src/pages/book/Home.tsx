@@ -24,7 +24,7 @@ export default function BookingHome() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={2} totalSteps={6} />
+      <BookingProgressBar currentStep={2} totalSteps={7} />
       
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Left: Form */}
