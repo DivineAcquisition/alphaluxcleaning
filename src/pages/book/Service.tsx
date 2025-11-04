@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
-import { LiveEstimateCard } from '@/components/booking/LiveEstimateCard';
+import { EnhancedPricingDisplay } from '@/components/pricing/EnhancedPricingDisplay';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -123,14 +123,13 @@ export default function BookingService() {
         
         <aside className="hidden lg:block w-2/5 p-8 bg-muted/30">
           {pricing && (
-            <LiveEstimateCard
-              serviceType={bookingData.serviceType}
-              frequency={bookingData.frequency}
+            <EnhancedPricingDisplay
+              finalPrice={pricing.finalPrice}
               basePrice={pricing.basePrice}
               discountAmount={pricing.discountAmount}
-              discountRate={pricing.basePrice > 0 ? Math.round((pricing.discountAmount / pricing.basePrice) * 100) : 0}
-              finalPrice={pricing.finalPrice}
-              depositAmount={49}
+              frequency={bookingData.frequency}
+              serviceType={bookingData.serviceType}
+              homeSizeId={bookingData.homeSizeId || 'medium'}
             />
           )}
         </aside>

@@ -248,10 +248,10 @@ export default function BookingCheckout() {
           </Link>
           
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            Lock in your booking
+            🎊 Almost there!
           </h1>
           <p className="text-muted-foreground text-lg mb-8">
-            ${depositAmount} deposit today. Fully applied to your service.
+            Reserve your spot now • Just ${depositAmount} to lock in this rate
           </p>
           
           <div className="grid lg:grid-cols-2 gap-8">
@@ -379,7 +379,7 @@ export default function BookingCheckout() {
                   
                   <Button 
                     size="lg" 
-                    className="w-full h-14 text-lg" 
+                    className="w-full h-14 text-lg font-semibold" 
                     onClick={handlePayment}
                     disabled={isProcessing || !isCardReady}
                   >
@@ -389,9 +389,12 @@ export default function BookingCheckout() {
                         Processing...
                       </>
                     ) : (
-                      `Pay $${depositAmount} & Book`
+                      <>🎉 Reserve My Spot - ${depositAmount} Today</>
                     )}
                   </Button>
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    Lock in this rate • Remaining balance due at service
+                  </p>
                 </CardContent>
               </Card>
             </div>

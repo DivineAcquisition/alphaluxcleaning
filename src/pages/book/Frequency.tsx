@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
-import { LiveEstimateCard } from '@/components/booking/LiveEstimateCard';
+import { EnhancedPricingDisplay } from '@/components/pricing/EnhancedPricingDisplay';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { calculatePricingBreakdown } from '@/lib/pricing-psychology';
 
 export default function BookingFrequency() {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ export default function BookingFrequency() {
       id: 'one_time' as const,
       name: 'One-Time',
       description: 'Perfect for occasional needs',
+      tagline: 'No commitment',
       discount: null,
       allowedForAll: true,
     },
@@ -42,6 +44,7 @@ export default function BookingFrequency() {
       id: 'bi_weekly' as const,
       name: 'Every 2 Weeks',
       description: '2× per month',
+      tagline: null,
       discount: 10,
       allowedForAll: false,
     },
@@ -49,6 +52,7 @@ export default function BookingFrequency() {
       id: 'monthly' as const,
       name: 'Monthly',
       description: 'Once per month',
+      tagline: 'Best for light maintenance',
       discount: 5,
       allowedForAll: false,
     },
@@ -56,6 +60,7 @@ export default function BookingFrequency() {
       id: 'weekly' as const,
       name: 'Weekly',
       description: '4× per month',
+      tagline: 'Maximum savings',
       discount: 15,
       allowedForAll: false,
     },
@@ -86,6 +91,19 @@ export default function BookingFrequency() {
               const isSelected = bookingData.frequency === freq.id;
               const isDisabled = !freq.allowedForAll && !canRecur;
               
+              // Calculate daily cost for recurring services
+              let dailyCost: string | null = null;
+              if (pricing && freq.id !== 'one_time') {
+                const breakdown = calculatePricingBreakdown(
+                  pricing.finalPrice,
+                  freq.id,
+                  bookingData.homeSizeId || 'medium'
+                );
+                if (breakdown.perDay > 0) {
+                  dailyCost = `Just $${Math.round(breakdown.perDay)}/day`;
+                }
+              }
+              
               return (
                 <Card
                   key={freq.id}
@@ -96,11 +114,18 @@ export default function BookingFrequency() {
                   )}
                   onClick={() => !isDisabled && handleFrequencySelect(freq.id)}
                 >
-                  {freq.discount && (
-                    <Badge className="mb-3 bg-success text-success-foreground">
-                      Save {freq.discount}%
-                    </Badge>
-                  )}
+                  <div className="flex justify-between items-start mb-3">
+                    {freq.discount ? (
+                      <Badge className="bg-success text-success-foreground">
+                        Save {freq.discount}%
+                      </Badge>
+                    ) : (
+                      <div />
+                    )}
+                    {freq.tagline && (
+                      <span className="text-xs text-muted-foreground">{freq.tagline}</span>
+                    )}
+                  </div>
                   
                   <Calendar className="h-8 w-8 text-primary mb-3" />
                   <h3 className="text-xl font-bold mb-2">{freq.name}</h3>
@@ -109,9 +134,16 @@ export default function BookingFrequency() {
                   </p>
                   
                   {pricing && freq.id === bookingData.frequency && (
-                    <p className="text-2xl font-bold text-primary">
-                      ${pricing.finalPrice.toFixed(2)}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold text-primary">
+                        ${pricing.finalPrice.toFixed(2)}
+                      </p>
+                      {dailyCost && (
+                        <p className="text-xs text-muted-foreground">
+                          {dailyCost} for a spotless home
+                        </p>
+                      )}
+                    </div>
                   )}
                 </Card>
               );
@@ -142,14 +174,13 @@ export default function BookingFrequency() {
         
         <aside className="hidden lg:block w-2/5 p-8 bg-muted/30">
           {pricing && (
-            <LiveEstimateCard
-              serviceType={bookingData.serviceType}
-              frequency={bookingData.frequency}
+            <EnhancedPricingDisplay
+              finalPrice={pricing.finalPrice}
               basePrice={pricing.basePrice}
               discountAmount={pricing.discountAmount}
-              discountRate={pricing.basePrice > 0 ? Math.round((pricing.discountAmount / pricing.basePrice) * 100) : 0}
-              finalPrice={pricing.finalPrice}
-              depositAmount={49}
+              frequency={bookingData.frequency}
+              serviceType={bookingData.serviceType}
+              homeSizeId={bookingData.homeSizeId || 'medium'}
             />
           )}
         </aside>
