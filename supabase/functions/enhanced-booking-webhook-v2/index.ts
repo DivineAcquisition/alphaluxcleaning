@@ -285,14 +285,20 @@ serve(async (req) => {
     const sqft = parseInt(bookingData.sqft_or_bedrooms) || 2000;
     const estimatedHours = Math.max(2, Math.ceil(sqft / 1000));
 
-    // Build the webhook payload in FLAT structure matching webhook-utils.ts
+    // Build the webhook payload in STANDARDIZED structure
     const payloadGenerationStart = Date.now();
     
-    const webhookPayload = {
+    // Determine webhook type based on trigger event or booking status
+    const webhookType = input.trigger_event || 
+      (bookingData.frequency !== 'one_time' ? 'booking-confirmed-recurring' : 'booking-confirmed');
+    
+    // Check if this was an upgrade from one-time to recurring
+    const wasUpgraded = bookingData.metadata?.upgraded_from_one_time || input.include_upgrade_metadata;
+    
+    // Build the data payload (existing flat structure)
+    const webhookDataPayload = {
       // Root-level fields
       booking_id: `BK-${bookingData.id.slice(0, 5).toUpperCase()}`,
-      timestamp: new Date().toISOString(),
-      source: "lovable-booking-ui",
       state: (addressInfo.state || "TX") as "CA" | "TX" | "NY",
       service_type: normalizeServiceType(serviceDetails.type),
       sq_ft_range: formatSquareFootageRange(sqft),
@@ -331,7 +337,10 @@ serve(async (req) => {
         service_end_datetime: calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours),
         est_duration_hours: parseFloat(estimatedHours.toFixed(1)),
         labor_rate_per_hour: 25,
-        labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2))
+        labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2)),
+        is_recurring: serviceDetails.frequency !== 'one_time',
+        recurring_start_date: bookingData.recurring_start_date || serviceDetails.date,
+        upgraded_from_onetime: wasUpgraded
       },
       
       // Payment object
@@ -370,21 +379,32 @@ serve(async (req) => {
       system_meta: {
         origin: "lovable.io",
         environment: "production",
-        version: "1.5.0",
+        version: "2.0.0",
         querystring: bookingData.utms ? new URLSearchParams(bookingData.utms as any).toString() : ""
       }
+    };
+    
+    // Wrap in STANDARDIZED format matching test webhooks
+    const webhookPayload = {
+      type: webhookType,
+      data: webhookDataPayload,
+      timestamp: new Date().toISOString(),
+      source: "alphalux_booking_system"
     };
 
     const payloadGenerationTime = Date.now() - payloadGenerationStart;
     const payloadString = JSON.stringify(webhookPayload);
     const payloadSizeKb = Math.round(payloadString.length / 1024 * 100) / 100;
     
-    console.log('📦 Webhook payload generated (flat structure):', {
-      booking_id: webhookPayload.booking_id,
-      customer: webhookPayload.customer.email,
-      service_type: webhookPayload.service_type,
-      frequency: webhookPayload.frequency,
-      amount: webhookPayload.price_after_discount,
+    console.log('📦 Webhook payload generated (standardized format):', {
+      type: webhookPayload.type,
+      booking_id: webhookPayload.data.booking_id,
+      customer: webhookPayload.data.customer.email,
+      service_type: webhookPayload.data.service_type,
+      frequency: webhookPayload.data.frequency,
+      is_recurring: webhookPayload.data.job_details.is_recurring,
+      upgraded: webhookPayload.data.job_details.upgraded_from_onetime,
+      amount: webhookPayload.data.price_after_discount,
       payload_size_kb: payloadSizeKb,
       generation_time_ms: payloadGenerationTime
     });

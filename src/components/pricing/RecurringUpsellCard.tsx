@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Sparkles, TrendingDown } from 'lucide-react';
+import { CalendarIcon, Sparkles, TrendingDown, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useBooking } from '@/contexts/BookingContext';
 
 interface RecurringUpsellCardProps {
   currentPrice: number;
@@ -49,11 +51,13 @@ export function RecurringUpsellCard({
   isOneTime,
   selectedDate 
 }: RecurringUpsellCardProps) {
+  const { bookingData, pricing } = useBooking();
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [selectedFrequency, setSelectedFrequency] = useState('bi_weekly');
   const [startDate, setStartDate] = useState<Date | undefined>(
     selectedDate ? new Date(selectedDate) : undefined
   );
+  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
   if (!isOneTime) return null;
 
@@ -65,9 +69,37 @@ export function RecurringUpsellCard({
   const annualSavings = savingsPerClean * selectedOption.perYear;
   const freeCleans = Math.floor(annualSavings / newPrice);
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!startDate) return;
+    
+    setIsSendingWebhook(true);
+    
+    // Update booking context first
     onUpgrade(selectedFrequency, format(startDate, 'yyyy-MM-dd'));
+    
+    // Send webhook to track recurring upgrade
+    try {
+      console.log('🔄 Sending recurring upgrade webhook...');
+      await supabase.functions.invoke('send-recurring-upgrade-webhook', {
+        body: {
+          booking_context_data: bookingData,
+          upgrade_details: {
+            previous_frequency: 'one_time',
+            new_frequency: selectedFrequency,
+            recurring_start_date: format(startDate, 'yyyy-MM-dd'),
+            additional_discount: BONUS_DISCOUNT,
+            new_price_per_clean: newPrice,
+            annual_savings: annualSavings
+          }
+        }
+      });
+      console.log('✅ Recurring upgrade webhook sent successfully');
+    } catch (error) {
+      console.error('❌ Recurring upgrade webhook failed:', error);
+      // Don't block user flow if webhook fails
+    } finally {
+      setIsSendingWebhook(false);
+    }
   };
 
   return (
@@ -254,9 +286,16 @@ export function RecurringUpsellCard({
                 size="lg" 
                 className="w-full"
                 onClick={handleUpgrade}
-                disabled={!startDate}
+                disabled={!startDate || isSendingWebhook}
               >
-                Confirm Recurring Service
+                {isSendingWebhook ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Confirm Recurring Service'
+                )}
               </Button>
             </div>
           </div>

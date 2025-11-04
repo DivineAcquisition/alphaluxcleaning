@@ -166,6 +166,24 @@ export default function BookingCheckout() {
 
         if (bookingError) throw bookingError;
 
+        // Step 3.5: Send booking confirmed webhook
+        try {
+          console.log('📡 Sending booking confirmation webhook...');
+          await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+            body: {
+              booking_id: booking.id,
+              trigger_event: bookingData.upgradedToRecurring 
+                ? 'booking-confirmed-recurring'
+                : 'booking-confirmed',
+              include_upgrade_metadata: bookingData.upgradedToRecurring
+            }
+          });
+          console.log('✅ Booking confirmation webhook sent');
+        } catch (webhookError) {
+          console.error('❌ Webhook failed (non-blocking):', webhookError);
+          // Don't block booking flow if webhook fails
+        }
+
         // Step 4: Calculate final amount with credits
         const finalPaymentAmount = applyCredits 
           ? Math.max(0, depositAmount - availableCredits)
