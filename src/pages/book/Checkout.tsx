@@ -205,9 +205,9 @@ export default function BookingCheckout() {
           console.log('Membership requested - to be implemented');
         }
 
-        // Step 7: Clear booking data and redirect
+        // Step 7: Clear booking data and redirect to success page with referral incentive
         clearBookingData();
-        navigate(`/book/confirmation/${booking.id}`);
+        navigate(`/book/success?booking_id=${booking.id}`);
       } else {
         throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
       }

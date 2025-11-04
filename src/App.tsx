@@ -19,6 +19,7 @@ const BookService = lazy(() => import('@/pages/book/Service'));
 const BookFrequency = lazy(() => import('@/pages/book/Frequency'));
 const BookSchedule = lazy(() => import('@/pages/book/Schedule'));
 const BookCheckout = lazy(() => import('@/pages/book/Checkout'));
+const BookSuccess = lazy(() => import('@/pages/book/Success'));
 const BookConfirmation = lazy(() => import('@/pages/book/Confirmation'));
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
@@ -77,6 +78,7 @@ function App() {
               <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
               <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
               <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
+              <Route path="/book/success" element={<Suspense fallback={<div>Loading...</div>}><BookSuccess /></Suspense>} />
               <Route path="/book/confirmation/:bookingId" element={<Suspense fallback={<div>Loading...</div>}><BookConfirmation /></Suspense>} />
               
               {/* Landing page with marketing content */}
