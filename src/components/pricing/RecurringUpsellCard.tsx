@@ -82,7 +82,11 @@ export function RecurringUpsellCard({
       console.log('🔄 Sending recurring upgrade webhook...');
       await supabase.functions.invoke('send-recurring-upgrade-webhook', {
         body: {
-          booking_context_data: bookingData,
+          booking_context_data: {
+            ...bookingData,
+            pricing: pricing, // Include current pricing object
+            sqft: bookingData.sqft || 2000 // Ensure sqft is present
+          },
           upgrade_details: {
             previous_frequency: 'one_time',
             new_frequency: selectedFrequency,
