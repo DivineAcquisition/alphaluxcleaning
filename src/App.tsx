@@ -10,6 +10,7 @@ import { BookingProvider } from '@/contexts/BookingContext';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
+import { Landing } from '@/pages/Landing';
 
 // Lazy load new booking flow pages
 const BookZip = lazy(() => import('@/pages/book/Zip'));
@@ -77,6 +78,9 @@ function App() {
               <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
               <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
               <Route path="/book/confirmation/:bookingId" element={<Suspense fallback={<div>Loading...</div>}><BookConfirmation /></Suspense>} />
+              
+              {/* Landing page with marketing content */}
+              <Route path="/landing" element={<Landing />} />
               
               {/* Main booking route */}
               <Route path="/" element={<DomainAwareHome />} />

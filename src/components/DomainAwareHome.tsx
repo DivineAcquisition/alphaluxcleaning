@@ -1,11 +1,5 @@
 import React, { lazy, Suspense } from 'react';
 import { Navigation } from '@/components/Navigation';
-import { HeroSection } from '@/components/landing/HeroSection';
-import { QuickBenefitsBar } from '@/components/landing/QuickBenefitsBar';
-import { QuickQuoteWidget } from '@/components/booking/QuickQuoteWidget';
-import { TestimonialSection } from '@/components/landing/TestimonialSection';
-import { WhyChooseUsSection } from '@/components/landing/WhyChooseUsSection';
-import { FAQSection } from '@/components/landing/FAQSection';
 import { LiveBookingNotification } from '@/components/social-proof/LiveBookingNotification';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -21,24 +15,8 @@ export function DomainAwareHome() {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section - Compelling above-the-fold content */}
-      <HeroSection bookingFlowUrl="/book/zip" />
-      
-      {/* Quick Benefits Bar */}
-      <QuickBenefitsBar />
-      
-      {/* Quick Quote Widget - Simplified 4-field form */}
-      <QuickQuoteWidget />
-      
-      {/* Trust & Social Proof Sections */}
-      <TestimonialSection />
-      <WhyChooseUsSection />
-      
-      {/* FAQ Section */}
-      <FAQSection />
-      
       {/* Full Booking Flow (Lazy Loaded) */}
-      <div id="booking-flow">
+      <div id="booking-flow" className="pt-4">
         <Suspense fallback={
           <div className="container mx-auto px-4 py-12">
             <div className="space-y-4 max-w-2xl mx-auto">

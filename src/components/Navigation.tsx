@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Phone, Mail, Menu, HelpCircle, DollarSign } from "lucide-react";
+import { Phone, Mail, Menu, HelpCircle, DollarSign, Home } from "lucide-react";
 import logo from "@/assets/logo.png";
 export function Navigation() {
   const handleTroubleBooking = () => {
@@ -17,6 +17,14 @@ export function Navigation() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
+            {/* Home Link - Desktop */}
+            <Link to="/landing" className="hidden md:block">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
+            
             {/* Pricing Link - Desktop */}
             <Link to="/pricing" className="hidden md:block">
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -67,6 +75,14 @@ export function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 bg-background border shadow-lg z-[100]">
+                  {/* Home Link - Mobile */}
+                  <DropdownMenuItem asChild>
+                    <Link to="/landing" className="flex items-center gap-3 py-3 cursor-pointer">
+                      <Home className="h-4 w-4" />
+                      Home
+                    </Link>
+                  </DropdownMenuItem>
+                  
                   {/* Pricing Link - Mobile */}
                   <DropdownMenuItem asChild>
                     <Link to="/pricing" className="flex items-center gap-3 py-3 cursor-pointer">
