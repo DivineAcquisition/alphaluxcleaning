@@ -7,6 +7,7 @@ import { useSquarePreloader } from '@/hooks/useSquarePreloader';
 import { CheckCircle } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { BookingProvider } from '@/contexts/BookingContext';
+import { TestModeBanner } from '@/components/admin/TestModeBanner';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
@@ -71,6 +72,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BookingProvider>
           <Router>
+            <TestModeBanner />
             <Routes>
               {/* New booking flow */}
               <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />

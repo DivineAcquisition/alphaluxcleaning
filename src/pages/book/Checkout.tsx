@@ -9,15 +9,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, TestTube } from 'lucide-react';
+import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData, pricing, depositAmount, clearBookingData } = useBooking();
+  const { isTestMode } = useTestMode();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCardReady, setIsCardReady] = useState(false);
   const [cardInstance, setCardInstance] = useState<any>(null);
@@ -36,13 +39,18 @@ export default function BookingCheckout() {
   }, [bookingData.contactInfo.email]);
 
   useEffect(() => {
-    initializeSquare();
+    // Skip Square initialization in test mode
+    if (!isTestMode) {
+      initializeSquare();
+    } else {
+      setIsCardReady(true); // Card is "ready" in test mode
+    }
     return () => {
       if (cardInstance) {
         cardInstance.destroy();
       }
     };
-  }, []);
+  }, [isTestMode]);
 
   const fetchAvailableCredits = async () => {
     if (!bookingData.contactInfo.email) return;
@@ -93,7 +101,13 @@ export default function BookingCheckout() {
   };
 
   const handlePayment = async () => {
-    if (!cardInstance || !pricing) {
+    if (!pricing) {
+      toast.error('Payment form not ready');
+      return;
+    }
+
+    // In test mode, skip card validation
+    if (!isTestMode && !cardInstance) {
       toast.error('Payment form not ready');
       return;
     }
@@ -101,10 +115,19 @@ export default function BookingCheckout() {
     setIsProcessing(true);
 
     try {
-      // Step 1: Tokenize card
-      const tokenResult = await cardInstance.tokenize();
-      if (tokenResult.status === 'OK') {
-        const { token, details } = tokenResult;
+      // Step 1: Tokenize card (skip in test mode)
+      let token = 'test_token';
+      let details: any = { verification_token: 'test_verification' };
+      
+      if (!isTestMode) {
+        const tokenResult = await cardInstance.tokenize();
+        if (tokenResult.status === 'OK') {
+          token = tokenResult.token;
+          details = tokenResult.details;
+        } else {
+          throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
+        }
+      }
 
         // Step 2: Create customer in Supabase
         const { data: customerData, error: customerError } = await supabase
@@ -189,33 +212,54 @@ export default function BookingCheckout() {
           ? Math.max(0, depositAmount - availableCredits)
           : depositAmount;
 
-        // Step 5: Process payment via Square (with credits if applicable)
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-          'create-square-payment',
-          {
-            body: {
-              amount: finalPaymentAmount,
-              customerEmail: bookingData.contactInfo.email,
-              customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-              customerPhone: bookingData.contactInfo.phone,
-              bookingId: booking.id,
-              sourceId: token,
-              verificationToken: details?.verification_token,
-              saveCard: true,
-              applyCredits: applyCredits,
-              creditsAmount: availableCredits,
-            },
-          }
-        );
+        // Step 5: Process payment via Square (skip in test mode)
+        let paymentData: any = null;
+        
+        if (!isTestMode) {
+          const { data, error: paymentError } = await supabase.functions.invoke(
+            'create-square-payment',
+            {
+              body: {
+                amount: finalPaymentAmount,
+                customerEmail: bookingData.contactInfo.email,
+                customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+                customerPhone: bookingData.contactInfo.phone,
+                bookingId: booking.id,
+                sourceId: token,
+                verificationToken: details?.verification_token,
+                saveCard: true,
+                applyCredits: applyCredits,
+                creditsAmount: availableCredits,
+              },
+            }
+          );
 
-        if (paymentError) throw paymentError;
+          if (paymentError) throw paymentError;
+          paymentData = data;
+        } else {
+          // Test mode: simulate successful payment
+          console.log('🧪 TEST MODE: Skipping Square payment processing');
+          paymentData = { 
+            success: true, 
+            payment_id: 'test_payment_' + Date.now(),
+            credits_applied: applyCredits ? availableCredits : 0
+          };
+          
+          // Update booking status to confirmed in test mode
+          await supabase
+            .from('bookings')
+            .update({ status: 'confirmed' })
+            .eq('id', booking.id);
+        }
 
         // Success message with credits info
-        if (paymentData?.credits_applied > 0) {
-          toast.success(`Booking confirmed! $${paymentData.credits_applied.toFixed(2)} in referral credits applied.`);
-        } else {
-          toast.success('Booking confirmed! Check your email.');
-        }
+        const successMessage = isTestMode 
+          ? '🧪 TEST MODE: Booking created (no payment processed)'
+          : paymentData?.credits_applied > 0 
+            ? `Booking confirmed! $${paymentData.credits_applied.toFixed(2)} in referral credits applied.`
+            : 'Booking confirmed! Check your email.';
+        
+        toast.success(successMessage);
 
         // Step 6: If membership selected, note it (future: create Square subscription)
         if (bookingData.joinMembership) {
@@ -223,12 +267,9 @@ export default function BookingCheckout() {
           console.log('Membership requested - to be implemented');
         }
 
-        // Step 7: Clear booking data and redirect to success page with referral incentive
-        clearBookingData();
-        navigate(`/book/success?booking_id=${booking.id}`);
-      } else {
-        throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
-      }
+      // Step 7: Clear booking data and redirect to success page with referral incentive
+      clearBookingData();
+      navigate(`/book/success?booking_id=${booking.id}`);
     } catch (error: any) {
       console.error('Payment error:', error);
       toast.error(error.message || 'Payment failed. Please try again.');
@@ -258,6 +299,16 @@ export default function BookingCheckout() {
       
       <div className="flex-1 px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
+          {isTestMode && (
+            <Alert className="mb-6 bg-orange-50 dark:bg-orange-950/30 border-orange-300">
+              <TestTube className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Test Mode Active:</strong> This booking will be created without processing payment.
+                All webhooks will fire normally. Perfect for testing integrations.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Link 
             to="/book/summary" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
@@ -386,33 +437,50 @@ export default function BookingCheckout() {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment</CardTitle>
+                  <CardTitle>
+                    {isTestMode ? '🧪 Test Payment' : 'Payment'}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Secure your booking with ${depositAmount} today. Card will be saved for remaining balance due after service.
-                  </p>
-                  
-                  <div id="square-card-container" className="min-h-[200px]"></div>
+                  {!isTestMode ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Secure your booking with ${depositAmount} today. Card will be saved for remaining balance due after service.
+                      </p>
+                      <div id="square-card-container" className="min-h-[200px]"></div>
+                    </>
+                  ) : (
+                    <Alert className="bg-orange-50 dark:bg-orange-950/30 border-orange-300">
+                      <TestTube className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Test Mode:</strong> Payment processing is bypassed. No card required.
+                        The booking will be created and all webhooks will fire normally.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   
                   <Button 
                     size="lg" 
                     className="w-full h-14 text-lg font-semibold" 
                     onClick={handlePayment}
-                    disabled={isProcessing || !isCardReady}
+                    disabled={isProcessing || (!isTestMode && !isCardReady)}
                   >
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Processing...
+                        {isTestMode ? 'Creating Test Booking...' : 'Processing...'}
                       </>
+                    ) : isTestMode ? (
+                      <>🧪 Create Test Booking</>
                     ) : (
                       <>🎉 Reserve My Spot - ${depositAmount} Today</>
                     )}
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground mt-2">
-                    Lock in this rate • Remaining balance due at service
-                  </p>
+                  {!isTestMode && (
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                      Lock in this rate • Remaining balance due at service
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

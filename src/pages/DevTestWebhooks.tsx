@@ -6,6 +6,7 @@ import { ArrowLeft, Webhook } from 'lucide-react';
 import { EnhancedWebhookTester } from '@/components/admin/EnhancedWebhookTester';
 import { WebhookConfigurationPanel } from '@/components/admin/WebhookConfigurationPanel';
 import { WebhookHealthMonitor } from '@/components/admin/WebhookHealthMonitor';
+import { TestModeToggle } from '@/components/admin/TestModeToggle';
 import { GHLWebhookTest } from '@/components/GHLWebhookTest';
 import { BulkZapierSender } from '@/components/BulkZapierSender';
 
@@ -39,6 +40,11 @@ export function DevTestWebhooks() {
               Test webhook integrations with GoHighLevel, Zapier, and other external services
             </p>
           </div>
+        </div>
+
+        {/* Test Mode Toggle */}
+        <div className="mb-8">
+          <TestModeToggle />
         </div>
 
         {/* Webhook Health Monitor */}
