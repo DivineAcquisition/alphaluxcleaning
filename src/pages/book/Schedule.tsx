@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
-import { EnhancedPricingDisplay } from '@/components/pricing/EnhancedPricingDisplay';
 import { Button } from '@/components/ui/button';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ interface TimeSlot {
 
 export default function BookingSchedule() {
   const navigate = useNavigate();
-  const { bookingData, updateBookingData, pricing } = useBooking();
+  const { bookingData, updateBookingData } = useBooking();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -70,8 +69,8 @@ export default function BookingSchedule() {
     <div className="min-h-screen flex flex-col bg-background">
       <BookingProgressBar currentStep={5} totalSteps={7} />
       
-      <div className="flex-1 flex flex-col lg:flex-row">
-        <main className="flex-1 px-4 py-8 lg:py-12 max-w-4xl mx-auto lg:mx-0 lg:max-w-none lg:w-3/5 lg:px-12">
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 px-4 py-8 lg:py-12 max-w-4xl mx-auto w-full">
           <Link 
             to="/book/frequency" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
@@ -108,31 +107,7 @@ export default function BookingSchedule() {
             </Button>
           </div>
         </main>
-        
-        <aside className="hidden lg:block w-2/5 p-8 bg-muted/30">
-          {pricing && (
-            <EnhancedPricingDisplay
-              finalPrice={pricing.finalPrice}
-              basePrice={pricing.basePrice}
-              discountAmount={pricing.discountAmount}
-              frequency={bookingData.frequency}
-              serviceType={bookingData.serviceType}
-              homeSizeId={bookingData.homeSizeId || 'medium'}
-            />
-          )}
-        </aside>
       </div>
-      
-      {pricing && (
-        <div className="lg:hidden sticky bottom-0 border-t bg-background p-4 shadow-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Estimated Total</span>
-            <span className="text-2xl font-bold text-primary">
-              ${pricing.finalPrice.toFixed(2)}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

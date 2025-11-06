@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
-import { EnhancedPricingDisplay } from '@/components/pricing/EnhancedPricingDisplay';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,7 +9,7 @@ import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 
 export default function BookingHome() {
   const navigate = useNavigate();
-  const { bookingData, updateBookingData, pricing } = useBooking();
+  const { bookingData, updateBookingData } = useBooking();
 
   useEffect(() => {
     if (!bookingData.zipCode) {
@@ -26,9 +25,8 @@ export default function BookingHome() {
     <div className="min-h-screen flex flex-col bg-background">
       <BookingProgressBar currentStep={2} totalSteps={7} />
       
-      <div className="flex-1 flex flex-col lg:flex-row">
-        {/* Left: Form */}
-        <main className="flex-1 px-4 py-8 lg:py-12 max-w-2xl mx-auto lg:mx-0 lg:max-w-none lg:w-3/5 lg:px-12">
+      <div className="flex-1 flex flex-col">
+        <main className="flex-1 px-4 py-8 lg:py-12 max-w-4xl mx-auto w-full">
           <Link 
             to="/book/zip" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
@@ -137,33 +135,7 @@ export default function BookingHome() {
             </Button>
           </div>
         </main>
-        
-        {/* Right: Live Estimate (Desktop) */}
-        <aside className="hidden lg:block w-2/5 p-8 bg-muted/30">
-          {pricing && (
-            <EnhancedPricingDisplay
-              finalPrice={pricing.finalPrice}
-              basePrice={pricing.basePrice}
-              discountAmount={pricing.discountAmount}
-              frequency={bookingData.frequency}
-              serviceType={bookingData.serviceType}
-              homeSizeId={bookingData.homeSizeId || 'medium'}
-            />
-          )}
-        </aside>
       </div>
-      
-      {/* Mobile: Sticky bottom estimate */}
-      {pricing && (
-        <div className="lg:hidden sticky bottom-0 border-t bg-background p-4 shadow-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Estimated Total</span>
-            <span className="text-2xl font-bold text-primary">
-              ${pricing.finalPrice.toFixed(2)}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
