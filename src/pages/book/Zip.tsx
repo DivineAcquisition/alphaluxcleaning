@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +81,25 @@ export default function BookingZip() {
       
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="w-full max-w-2xl">
+          {/* Promotional Banner */}
+          <Card className="mb-6 border-success/30 bg-success/5 shadow-lg">
+            <div className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
+                <Badge className="bg-success text-success-foreground text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
+                  $50 OFF
+                </Badge>
+                <div>
+                  <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
+                    Limited Time: Save $50 on Your First Cleaning!
+                  </h2>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    All one-time cleaning services include $50 instant discount
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+          
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
               Check availability in your area

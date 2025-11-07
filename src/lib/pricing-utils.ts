@@ -65,7 +65,7 @@ export function formatPriceFromCents(cents: number, options: PriceDisplayOptions
  */
 export function calculatePaymentAmount(totalDollars: number, paymentType: 'full' | 'deposit' | '25_percent_with_discount'): number {
   if (paymentType === 'deposit') {
-    return Math.round(totalDollars * 0.3 * 100) / 100; // Round to nearest cent
+    return Math.round(totalDollars * 0.25 * 100) / 100; // 25% deposit
   }
   if (paymentType === '25_percent_with_discount') {
     // Apply 5% discount to total, then calculate 25% of discounted amount

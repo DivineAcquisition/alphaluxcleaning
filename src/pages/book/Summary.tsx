@@ -118,29 +118,29 @@ export default function BookingSummary() {
                   </div>
                 </div>
 
-                {/* Pricing Breakdown */}
+                {/* Simplified Pricing - Show only what they pay today */}
                 <div className="pt-4 border-t">
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Base Price</span>
-                      <span className="font-medium">${Math.round(pricing.basePrice)}</span>
-                    </div>
-                    {pricing.discountAmount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Discount ({Math.round((pricing.discountAmount / pricing.basePrice) * 100)}%)</span>
-                        <span className="font-medium text-green-600">-${Math.round(pricing.discountAmount)}</span>
+                  <div className="space-y-4">
+                    {/* Due Today - Prominent */}
+                    <div>
+                      <div className="text-sm text-muted-foreground mb-2">Due Today (25% Deposit)</div>
+                      <div className="text-4xl font-bold text-primary">
+                        ${Math.round(pricing.finalPrice * 0.25)}
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-between items-baseline pt-3 border-t">
-                    <span className="text-lg font-semibold">Total</span>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-primary">
-                        ${Math.round(pricing.finalPrice)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground mt-1">
                         ~{estimatedHours} hours of service
+                      </div>
+                    </div>
+                    
+                    {/* Remaining Balance - Secondary */}
+                    <div className="p-4 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Remaining balance (due after service)</span>
+                        <span className="text-lg font-semibold">${Math.round(pricing.finalPrice * 0.75)}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
+                        <span className="text-sm font-medium">Service Total</span>
+                        <span className="text-base font-semibold">${Math.round(pricing.finalPrice)}</span>
                       </div>
                     </div>
                   </div>
@@ -199,10 +199,13 @@ export default function BookingSummary() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
                   <div className="text-sm text-muted-foreground mb-1">
-                    {isOneTime ? 'Total Due Today' : 'Per Clean'}
+                    Due Today (25% Deposit)
                   </div>
                   <div className="text-3xl font-bold text-primary">
-                    ${Math.round(pricing.finalPrice)}
+                    ${Math.round(pricing.finalPrice * 0.25)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Total: ${Math.round(pricing.finalPrice)}
                   </div>
                 </div>
                 <Button 
