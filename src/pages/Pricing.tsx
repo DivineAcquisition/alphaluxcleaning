@@ -24,10 +24,10 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>Transparent Cleaning Pricing | 10% OFF Standard, 20% OFF Deep Cleaning</title>
+        <title>Transparent Cleaning Pricing | $50 OFF One-Time Cleaning Services</title>
         <meta 
           name="description" 
-          content="View our transparent pricing for house cleaning services. Get 10% off standard cleaning and 20% off deep cleaning. Serving TX, CA, and NY." 
+          content="View our transparent pricing for house cleaning services. Get $50 off all one-time cleaning bookings. Serving TX, CA, and NY." 
         />
       </Helmet>
 
@@ -51,7 +51,7 @@ export default function Pricing() {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Professional cleaning services with upfront pricing. Get <span className="font-semibold text-success">10% OFF</span> Standard Cleaning and <span className="font-semibold text-warning">20% OFF</span> Deep Cleaning.
+              Professional cleaning services with upfront pricing. Get <span className="font-semibold text-success">$50 OFF</span> all one-time cleaning bookings.
             </p>
             
             <div className="flex flex-wrap gap-4 justify-center">
@@ -68,29 +68,19 @@ export default function Pricing() {
         </section>
 
         {/* Promotional Banner */}
-        <section className="bg-gradient-to-r from-success/10 via-warning/10 to-success/10 border-y py-8">
+        <section className="bg-gradient-to-r from-success/10 via-primary/10 to-success/10 border-y py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-success/20 bg-success/5">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <Badge className="bg-success text-success-foreground text-lg px-4 py-2">10% OFF</Badge>
+            <Card className="border-success/30 bg-success/5">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-center md:text-left">
+                  <Badge className="bg-success text-success-foreground text-2xl px-6 py-3 whitespace-nowrap">$50 OFF</Badge>
                   <div>
-                    <h3 className="font-semibold text-lg text-foreground">Standard Cleaning</h3>
-                    <p className="text-sm text-muted-foreground">Save on regular maintenance cleanings</p>
+                    <h3 className="font-bold text-xl md:text-2xl text-foreground mb-1">Limited Time Offer: $50 Off One-Time Cleanings!</h3>
+                    <p className="text-sm md:text-base text-muted-foreground">All one-time cleaning services now include $50 instant discount. Standard, Deep Clean, and Move-In/Out eligible.</p>
                   </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-warning/20 bg-warning/5">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <Badge className="bg-warning text-warning-foreground text-lg px-4 py-2">20% OFF</Badge>
-                  <div>
-                    <h3 className="font-semibold text-lg text-foreground">Deep Cleaning</h3>
-                    <p className="text-sm text-muted-foreground">Maximum savings on thorough deep cleans</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -132,9 +122,11 @@ export default function Pricing() {
                   <TableBody>
                     {bookableTiers.map((tier) => {
                       const regularOriginal = tier.regular;
-                      const regularDiscounted = Math.round(tier.regular * 0.9);
+                      const regularDiscounted = tier.regular - 50;
                       const deepOriginal = tier.deep;
-                      const deepDiscounted = Math.round(tier.deep * 0.8);
+                      const deepDiscounted = tier.deep - 50;
+                      const moveInOutOriginal = tier.moveInOut;
+                      const moveInOutDiscounted = tier.moveInOut - 50;
                       
                       return (
                         <TableRow key={tier.id} className="hover:bg-muted/30">
@@ -154,7 +146,7 @@ export default function Pricing() {
                                   {formatPrice(regularDiscounted)}
                                 </span>
                                 <Badge variant="secondary" className="bg-success/10 text-success text-xs">
-                                  10% OFF
+                                  $50 OFF
                                 </Badge>
                               </div>
                             </div>
@@ -169,16 +161,24 @@ export default function Pricing() {
                                   {formatPrice(deepDiscounted)}
                                 </span>
                                 <Badge variant="secondary" className="bg-warning/10 text-warning text-xs">
-                                  20% OFF
+                                  $50 OFF
                                 </Badge>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-foreground">
-                                {formatPrice(tier.moveInOut)}
-                              </span>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground line-through">
+                                  {formatPrice(moveInOutOriginal)}
+                                </span>
+                                <span className="text-lg font-bold text-primary">
+                                  {formatPrice(moveInOutDiscounted)}
+                                </span>
+                                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                  $50 OFF
+                                </Badge>
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
