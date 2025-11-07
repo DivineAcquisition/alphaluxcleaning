@@ -70,9 +70,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1000,
     maxSqft: 1500,
     bedroomRange: '1–2 BR condos/homes',
-    regularPrice: 190,
-    deepPrice: 295,
-    moveInOutPrice: 340
+    regularPrice: 165,
+    deepPrice: 270,
+    moveInOutPrice: 315
   },
   {
     id: '1501_2000',
@@ -80,9 +80,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1501,
     maxSqft: 2000,
     bedroomRange: '2–3 BR homes',
-    regularPrice: 235,
-    deepPrice: 355,
-    moveInOutPrice: 410
+    regularPrice: 210,
+    deepPrice: 330,
+    moveInOutPrice: 385
   },
   {
     id: '2001_2500',
@@ -90,9 +90,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2001,
     maxSqft: 2500,
     bedroomRange: '3 BR homes',
-    regularPrice: 280,
-    deepPrice: 415,
-    moveInOutPrice: 480
+    regularPrice: 255,
+    deepPrice: 390,
+    moveInOutPrice: 455
   },
   {
     id: '2501_3000',
@@ -100,9 +100,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2501,
     maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
-    regularPrice: 325,
-    deepPrice: 475,
-    moveInOutPrice: 550
+    regularPrice: 300,
+    deepPrice: 450,
+    moveInOutPrice: 525
   },
   {
     id: '3001_3500',
@@ -110,9 +110,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3001,
     maxSqft: 3500,
     bedroomRange: '4 BR homes',
-    regularPrice: 370,
-    deepPrice: 535,
-    moveInOutPrice: 620
+    regularPrice: 345,
+    deepPrice: 510,
+    moveInOutPrice: 595
   },
   {
     id: '3501_4000',
@@ -120,9 +120,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3501,
     maxSqft: 4000,
     bedroomRange: '4–5 BR homes',
-    regularPrice: 415,
-    deepPrice: 595,
-    moveInOutPrice: 690
+    regularPrice: 390,
+    deepPrice: 570,
+    moveInOutPrice: 665
   },
   {
     id: '4001_4500',
@@ -130,9 +130,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4001,
     maxSqft: 4500,
     bedroomRange: '5 BR homes',
-    regularPrice: 460,
-    deepPrice: 655,
-    moveInOutPrice: 760
+    regularPrice: 435,
+    deepPrice: 630,
+    moveInOutPrice: 735
   },
   {
     id: '4501_5000',
@@ -140,9 +140,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4501,
     maxSqft: 5000,
     bedroomRange: '5+ BR homes',
-    regularPrice: 505,
-    deepPrice: 715,
-    moveInOutPrice: 830
+    regularPrice: 480,
+    deepPrice: 690,
+    moveInOutPrice: 805
   },
   {
     id: '5000_plus',
@@ -238,26 +238,11 @@ export function calculateNewPricing(
   let savings = '';
   let recurringDetails;
 
-  // For one-time cleanings: apply promotional discounts
+  // For one-time cleanings: apply $50 flat discount
   if (frequencyId === 'one_time') {
-    // Standard cleaning: 10% off
-    if (serviceTypeId === 'regular') {
-      discountAmount = basePrice * 0.10;
-      finalPrice = basePrice - discountAmount;
-      savings = 'Save 10% on your first cleaning!';
-    }
-    // Deep cleaning: 20% off
-    else if (serviceTypeId === 'deep') {
-      discountAmount = basePrice * 0.20;
-      finalPrice = basePrice - discountAmount;
-      savings = 'Save 20% on deep cleaning service!';
-    }
-    // Move-in/out: no discount
-    else {
-      finalPrice = basePrice;
-      discountAmount = 0;
-      savings = '';
-    }
+    discountAmount = 50;
+    finalPrice = basePrice - discountAmount;
+    savings = 'Save $50 on your one-time cleaning!';
   }
   // For recurring cleanings (Regular Clean only): apply frequency-specific discount
   else if (serviceTypeId === 'regular' && frequency.cleansPerMonth) {
