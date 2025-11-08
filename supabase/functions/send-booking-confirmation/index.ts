@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import React from 'npm:react@18.3.1';
+import { renderAsync } from 'npm:@react-email/components@0.0.22';
+import { BookingConfirmationEmail } from './_templates/booking-confirmation.tsx';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -82,111 +85,36 @@ serve(async (req) => {
       day: "numeric",
     });
 
-    // Construct customer email HTML
-    const customerEmailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-          .booking-card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-          .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
-          .detail-row:last-child { border-bottom: none; }
-          .label { font-weight: 600; color: #6b7280; }
-          .value { color: #111827; }
-          .highlight { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b; }
-          .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
-          .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1 style="margin: 0; font-size: 28px;">🎉 Booking Confirmed!</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Order #${booking.id.slice(0, 8).toUpperCase()}</p>
-          </div>
-          
-          <div class="content">
-            <p style="font-size: 18px; margin-top: 0;">Hi ${booking.customer.first_name || booking.customer.name}!</p>
-            <p>Great news! Your AlphaLux Clean booking is confirmed and locked in. We can't wait to make your home sparkle! ✨</p>
-            
-            <div class="booking-card">
-              <h2 style="margin-top: 0; color: #667eea;">📅 Service Details</h2>
-              <div class="detail-row">
-                <span class="label">Service Type:</span>
-                <span class="value">${serviceTypeLabels[booking.service_type] || booking.service_type}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Frequency:</span>
-                <span class="value">${frequencyLabels[booking.frequency] || booking.frequency}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Date:</span>
-                <span class="value">${formattedDate}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Time:</span>
-                <span class="value">${booking.time_slot}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Address:</span>
-                <span class="value">${booking.customer.address_line1}${booking.customer.address_line2 ? `, ${booking.customer.address_line2}` : ""}<br>${booking.customer.city}, ${booking.customer.state} ${booking.customer.postal_code}</span>
-              </div>
-            </div>
+    // Calculate if there's a discount (for one-time bookings)
+    const isOneTime = booking.frequency === 'one_time';
+    const discount = isOneTime ? 50 : 0; // $50 discount for one-time bookings
 
-            <div class="booking-card">
-              <h2 style="margin-top: 0; color: #667eea;">💰 Payment Summary</h2>
-              <div class="detail-row">
-                <span class="label">Estimated Total:</span>
-                <span class="value" style="font-size: 18px; font-weight: 600;">$${booking.est_price.toFixed(2)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Deposit Paid:</span>
-                <span class="value" style="color: #10b981;">$${booking.deposit_amount.toFixed(2)}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Balance Due After Service:</span>
-                <span class="value">$${(booking.est_price - booking.deposit_amount).toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div class="highlight">
-              <strong>📱 What's Next?</strong>
-              <ul style="margin: 10px 0;">
-                <li>We'll send a reminder 24 hours before your service</li>
-                <li>Our team will arrive within your scheduled time slot</li>
-                <li>Remaining balance will be charged after completion</li>
-              </ul>
-            </div>
-
-            <p style="text-align: center;">
-              <a href="tel:9725590223" class="button">📞 Call Us: (972) 559-0223</a>
-            </p>
-
-            ${booking.special_instructions ? `
-              <div class="booking-card">
-                <h3 style="margin-top: 0; color: #667eea;">📝 Your Special Instructions</h3>
-                <p style="margin: 0;">${booking.special_instructions}</p>
-              </div>
-            ` : ''}
-
-            <p>Have questions? Just reply to this email or call us anytime!</p>
-            <p>Thanks for choosing AlphaLux Clean! 💎</p>
-          </div>
-          
-          <div class="footer">
-            <p>AlphaLux Clean | Professional Cleaning Services</p>
-            <p>(972) 559-0223 | info@alphaluxclean.com</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Render React Email template
+    const customerEmailHtml = await renderAsync(
+      React.createElement(BookingConfirmationEmail, {
+        customerName: booking.customer.first_name || booking.customer.name,
+        orderId: booking.id.slice(0, 8).toUpperCase(),
+        serviceType: serviceTypeLabels[booking.service_type] || booking.service_type,
+        frequency: frequencyLabels[booking.frequency] || booking.frequency,
+        serviceDate: formattedDate,
+        timeSlot: booking.time_slot,
+        address: {
+          line1: booking.customer.address_line1,
+          line2: booking.customer.address_line2 || undefined,
+          city: booking.customer.city,
+          state: booking.customer.state,
+          postalCode: booking.customer.postal_code,
+        },
+        pricing: {
+          total: booking.est_price,
+          deposit: booking.deposit_amount,
+          balance: booking.est_price - booking.deposit_amount,
+          discount: discount > 0 ? discount : undefined,
+        },
+        specialInstructions: booking.special_instructions || undefined,
+        isOneTime,
+      })
+    );
 
     // Send customer confirmation email
     logStep("Sending customer confirmation email");
