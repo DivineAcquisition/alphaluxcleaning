@@ -16,6 +16,7 @@ import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
 import { Loader2, TestTube } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
+import { BookingCountdown } from '@/components/booking/BookingCountdown';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -291,6 +292,11 @@ export default function BookingCheckout() {
     monthly: 'Monthly',
   };
 
+  const handleCountdownExpire = () => {
+    toast.error('Time slot expired. Please select a new date and time.');
+    navigate('/book/schedule');
+  };
+
   if (!pricing) return null;
 
   return (
@@ -308,8 +314,18 @@ export default function BookingCheckout() {
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Countdown Timer */}
+          {bookingData.bookingExpiresAt && (
+            <div className="mb-6">
+              <BookingCountdown 
+                expiresAt={bookingData.bookingExpiresAt}
+                onExpire={handleCountdownExpire}
+              />
+            </div>
+          )}
           
-          <Link 
+          <Link
             to="/book/summary" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
           >

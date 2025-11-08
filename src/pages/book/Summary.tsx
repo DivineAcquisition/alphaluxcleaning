@@ -8,6 +8,7 @@ import { useBooking } from '@/contexts/BookingContext';
 import { getEstimatedHours } from '@/lib/pricing-psychology';
 import { Shield, Award, Calendar, MapPin, Home, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { BookingCountdown } from '@/components/booking/BookingCountdown';
 
 export default function BookingSummary() {
   const navigate = useNavigate();
@@ -31,6 +32,15 @@ export default function BookingSummary() {
 
   const handleContinue = () => {
     navigate('/book/checkout');
+  };
+
+  const handleCountdownExpire = () => {
+    toast({
+      title: "Time Slot Expired",
+      description: "Please select a new date and time",
+      variant: "destructive",
+    });
+    navigate('/book/schedule');
   };
 
   const frequencyLabels = {
@@ -64,6 +74,14 @@ export default function BookingSummary() {
 
           {/* Single Column Layout */}
           <div className="max-w-2xl mx-auto space-y-6 mb-6">
+            {/* Countdown Timer */}
+            {bookingData.bookingExpiresAt && (
+              <BookingCountdown 
+                expiresAt={bookingData.bookingExpiresAt}
+                onExpire={handleCountdownExpire}
+              />
+            )}
+
             {/* Consolidated Service Summary & Pricing */}
             <Card className="p-6">
               <div className="space-y-6">

@@ -35,6 +35,7 @@ interface BookingData {
   // Step 5: Schedule
   date: string;
   timeSlot: string;
+  bookingExpiresAt?: number; // Timestamp when booking expires (15 min after time slot selection)
   
   // Step 6: Summary & Upsell
   recurringStartDate?: string;
@@ -80,6 +81,7 @@ const defaultBookingData: BookingData = {
   frequency: 'one_time',
   date: '',
   timeSlot: '',
+  bookingExpiresAt: undefined,
   contactInfo: defaultContactInfo,
   specialInstructions: '',
   joinMembership: false,

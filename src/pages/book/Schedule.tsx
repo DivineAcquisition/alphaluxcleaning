@@ -57,7 +57,12 @@ export default function BookingSchedule() {
 
   const handleContinue = () => {
     if (selectedDate && bookingData.timeSlot) {
-      updateBookingData({ date: selectedDate.toISOString().split('T')[0] });
+      // Set expiration time to 15 minutes from now
+      const expiresAt = Date.now() + (15 * 60 * 1000);
+      updateBookingData({ 
+        date: selectedDate.toISOString().split('T')[0],
+        bookingExpiresAt: expiresAt
+      });
       navigate('/book/summary');
     }
   };
