@@ -53,7 +53,7 @@ interface BookingContextType {
   clearBookingData: () => void;
   pricing: PricingResult | null;
   calculatePricing: () => void;
-  depositAmount: number; // Fixed $49
+  depositAmount: number; // 25% of final price
 }
 
 const defaultContactInfo: ContactInfo = {
@@ -86,7 +86,6 @@ const defaultBookingData: BookingData = {
 };
 
 const STORAGE_KEY = 'alphalux-booking-flow';
-const DEPOSIT_AMOUNT = 49; // Fixed $49 deposit
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
@@ -215,7 +214,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         clearBookingData,
         pricing,
         calculatePricing,
-        depositAmount: DEPOSIT_AMOUNT,
+        depositAmount: pricing ? Math.round(pricing.finalPrice * 0.25) : 0,
       }}
     >
       {children}
