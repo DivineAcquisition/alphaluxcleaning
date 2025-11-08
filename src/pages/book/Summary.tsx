@@ -118,29 +118,51 @@ export default function BookingSummary() {
                   </div>
                 </div>
 
-                {/* Simplified Pricing - Show only what they pay today */}
+                {/* Visual Payment Breakdown */}
                 <div className="pt-4 border-t">
-                  <div className="space-y-4">
-                    {/* Due Today - Prominent */}
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-2">Due Today (25% Deposit)</div>
-                      <div className="text-4xl font-bold text-primary">
-                        ${Math.round(pricing.finalPrice * 0.25)}
+                  <div className="space-y-6">
+                    {/* Prominent Deposit Display */}
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border-2 border-primary/20">
+                      <div className="text-center">
+                        <div className="text-sm font-medium text-muted-foreground mb-2">
+                          💳 Due Today (25% Deposit)
+                        </div>
+                        <div className="text-5xl md:text-6xl font-bold text-primary mb-2">
+                          ${Math.round(pricing.finalPrice * 0.25)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          ~{estimatedHours} hours of professional service
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        ~{estimatedHours} hours of service
+                    </div>
+
+                    {/* Visual Progress Bar */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm font-medium mb-2">
+                        <span className="text-primary">Deposit (25%)</span>
+                        <span className="text-muted-foreground">Remaining (75%)</span>
+                      </div>
+                      <div className="h-8 bg-muted rounded-full overflow-hidden flex">
+                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" style={{ width: '25%' }}>
+                          ${Math.round(pricing.finalPrice * 0.25)}
+                        </div>
+                        <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium" style={{ width: '75%' }}>
+                          ${Math.round(pricing.finalPrice * 0.75)}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground text-center">
+                        Remaining balance due after service completion
                       </div>
                     </div>
                     
-                    {/* Remaining Balance - Secondary */}
-                    <div className="p-4 bg-muted/30 rounded-lg">
+                    {/* Total Summary Box */}
+                    <div className="p-4 bg-muted/50 rounded-lg border border-border">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Remaining balance (due after service)</span>
-                        <span className="text-lg font-semibold">${Math.round(pricing.finalPrice * 0.75)}</span>
-                      </div>
-                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
-                        <span className="text-sm font-medium">Service Total</span>
-                        <span className="text-base font-semibold">${Math.round(pricing.finalPrice)}</span>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Total Service Cost</div>
+                          <div className="text-xs text-muted-foreground mt-1">Pay remaining ${Math.round(pricing.finalPrice * 0.75)} after completion</div>
+                        </div>
+                        <div className="text-2xl font-bold">${Math.round(pricing.finalPrice)}</div>
                       </div>
                     </div>
                   </div>
