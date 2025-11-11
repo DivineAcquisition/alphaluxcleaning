@@ -53,6 +53,7 @@ import { DevTestScenarios } from '@/pages/DevTestScenarios';
 import { DevTestDatabase } from '@/pages/DevTestDatabase';
 import { DevTestPayments } from '@/pages/DevTestPayments';
 import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
+import DevTestModeToggle from '@/pages/DevTestModeToggle';
 import BookingDebug from '@/pages/BookingDebug';
 import EmailTools from '@/pages/EmailTools';
 import HousecallProSettings from '@/pages/admin/HousecallProSettings';
@@ -143,6 +144,7 @@ function App() {
             <Route path="/dev-test/database" element={<DevTestDatabase />} />
             <Route path="/dev-test/payments" element={<DevTestPayments />} />
             <Route path="/dev-test/webhooks" element={<DevTestWebhooks />} />
+            <Route path="/dev-test/test-mode" element={<DevTestModeToggle />} />
             <Route path="/booking-debug" element={<BookingDebug />} />
             <Route path="/email-tools" element={<EmailTools />} />
             

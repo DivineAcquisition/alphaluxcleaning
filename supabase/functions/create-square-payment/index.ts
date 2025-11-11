@@ -294,9 +294,26 @@ serve(async (req) => {
     );
   } catch (error: any) {
     logStep("Error creating Square payment", error);
+    
+    // Enhanced error logging with context
+    console.error("❌ PAYMENT PROCESSING FAILED:", {
+      error: error.message,
+      stack: error.stack,
+      requestDetails: {
+        bookingId: body?.bookingId,
+        customerEmail: body?.customerEmail,
+        amount: body?.amount,
+        hasSourceId: !!body?.sourceId,
+        hasVerificationToken: !!body?.verificationToken,
+      },
+      timestamp: new Date().toISOString(),
+    });
+    
     return new Response(
       JSON.stringify({
+        success: false,
         error: error.message || "Internal server error",
+        details: "Payment processing failed. Please try again or contact support.",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -29,6 +29,19 @@ export default function BookingCheckout() {
   const [applyCredits, setApplyCredits] = useState(false);
   const isInitializing = useRef(false);
 
+  // Log test mode status on mount
+  useEffect(() => {
+    const testModeStatus = localStorage.getItem('booking_test_mode');
+    console.log('🧪 Test mode check:', { 
+      isTestMode, 
+      localStorage: testModeStatus 
+    });
+    
+    if (isTestMode) {
+      console.warn('⚠️ TEST MODE ACTIVE - PAYMENTS WILL BE BYPASSED');
+    }
+  }, [isTestMode]);
+
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.date) {
       navigate('/book/zip');
@@ -217,6 +230,16 @@ export default function BookingCheckout() {
         let paymentData: any = null;
         
         if (!isTestMode) {
+          console.log('💳 Invoking create-square-payment...', {
+            amount: finalPaymentAmount,
+            bookingId: booking.id,
+            customerEmail: bookingData.contactInfo.email,
+            hasToken: !!token,
+            hasVerificationToken: !!details?.verification_token,
+            applyCredits,
+            creditsAmount: availableCredits
+          });
+
           const { data, error: paymentError } = await supabase.functions.invoke(
             'create-square-payment',
             {
@@ -235,7 +258,18 @@ export default function BookingCheckout() {
             }
           );
 
-          if (paymentError) throw paymentError;
+          console.log('💳 Payment response:', { data, error: paymentError });
+
+          if (paymentError) {
+            console.error('❌ Payment error details:', paymentError);
+            throw new Error(`Payment failed: ${paymentError.message}`);
+          }
+
+          if (!data?.success) {
+            console.error('❌ Payment returned unsuccessful status:', data);
+            throw new Error('Payment processing returned unsuccessful status');
+          }
+
           paymentData = data;
         } else {
           // Test mode: simulate successful payment
@@ -250,6 +284,25 @@ export default function BookingCheckout() {
           await supabase
             .from('bookings')
             .update({ status: 'confirmed' })
+            .eq('id', booking.id);
+        }
+
+        // CRITICAL: Verify payment was actually processed
+        if (!isTestMode && !paymentData?.payment_id) {
+          console.error('❌ CRITICAL: Payment processing failed - no payment ID received', paymentData);
+          throw new Error('Payment processing failed - no payment ID received. Please contact support.');
+        }
+
+        // Only update to confirmed if payment succeeded (non-test mode)
+        if (!isTestMode) {
+          console.log('✅ Updating booking to confirmed with payment ID:', paymentData.payment_id);
+          await supabase
+            .from('bookings')
+            .update({ 
+              status: 'confirmed',
+              square_payment_id: paymentData.payment_id,
+              paid_at: new Date().toISOString()
+            })
             .eq('id', booking.id);
         }
 
