@@ -300,11 +300,11 @@ serve(async (req) => {
       error: error.message,
       stack: error.stack,
       requestDetails: {
-        bookingId: body?.bookingId,
-        customerEmail: body?.customerEmail,
-        amount: body?.amount,
-        hasSourceId: !!body?.sourceId,
-        hasVerificationToken: !!body?.verificationToken,
+        bookingId: bookingId,
+        customerEmail: customerEmail,
+        amount: amount,
+        hasSourceId: !!sourceId,
+        hasVerificationToken: !!verificationToken,
       },
       timestamp: new Date().toISOString(),
     });
