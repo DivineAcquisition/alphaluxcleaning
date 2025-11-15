@@ -6,12 +6,14 @@ import { Check, Sparkles, Home } from "lucide-react";
 import { useState, useEffect } from "react";
 import { BookingProgressBar } from "@/components/booking/BookingProgressBar";
 import { SQFT_RANGES } from "@/lib/tier-pricing-system";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BookingTier() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
-  const [selectedSqft, setSelectedSqft] = useState<number>(bookingData.sqft || 2000);
-  const [selectedTier, setSelectedTier] = useState<'essential' | 'premium'>(bookingData.tier || 'premium');
+  const { toast } = useToast();
+  const [selectedSqft, setSelectedSqft] = useState<number | undefined>(bookingData.sqft);
+  const [selectedTier, setSelectedTier] = useState<'essential' | 'premium' | undefined>(bookingData.tier);
 
   useEffect(() => {
     if (!bookingData.zipCode) navigate('/book/zip');
@@ -22,6 +24,14 @@ export default function BookingTier() {
   const premiumFeatures = ['Everything in Essential', 'Baseboards & window sills', 'Inside cabinets', 'Appliance detailing', 'Deeper bathroom scrubbing'];
 
   const handleContinue = () => {
+    if (!selectedTier || !selectedSqft) {
+      toast({
+        title: "Selection Required",
+        description: "Please select both home size and service tier",
+        variant: "destructive",
+      });
+      return;
+    }
     updateBookingData({ tier: selectedTier, sqft: selectedSqft, frequency: 'one_time' });
     navigate('/book/schedule');
   };
@@ -55,7 +65,7 @@ export default function BookingTier() {
               </div>
               <ul className="space-y-1 mb-4">{essentialFeatures.map((f, i) => <li key={i} className="flex items-start gap-2 text-sm"><Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /><span>{f}</span></li>)}</ul>
               <div className="text-sm text-muted-foreground mb-3">Reserve your spot for <span className="font-semibold text-foreground">$49</span></div>
-              <Button variant={selectedTier === 'essential' ? 'default' : 'outline'} className="w-full" size="sm">Select Essential</Button>
+              <Button variant={selectedTier === 'essential' ? 'default' : 'outline'} className="w-full" size="sm" disabled={!selectedSqft}>Select Essential</Button>
             </Card>
             <Card className={`relative p-4 cursor-pointer transition-all hover:shadow-lg ${selectedTier === 'premium' ? 'ring-2 ring-primary shadow-lg' : ''}`} onClick={() => setSelectedTier('premium')}>
               <div className="absolute -top-2 right-4"><span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">⭐ RECOMMENDED</span></div>
@@ -68,11 +78,11 @@ export default function BookingTier() {
               </div>
               <ul className="space-y-1 mb-4">{premiumFeatures.map((f, i) => <li key={i} className="flex items-start gap-2 text-sm"><Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" /><span>{f}</span></li>)}</ul>
               <div className="text-sm text-muted-foreground mb-3">Reserve your spot for <span className="font-semibold text-foreground">$49</span></div>
-              <Button variant={selectedTier === 'premium' ? 'default' : 'outline'} className="w-full" size="sm">Select Premium</Button>
+              <Button variant={selectedTier === 'premium' ? 'default' : 'outline'} className="w-full" size="sm" disabled={!selectedSqft}>Select Premium</Button>
             </Card>
           </div>
           <div className="text-center text-sm text-muted-foreground mb-6"><span className="text-xs">See full pricing on next step • 40% of customers choose Premium</span></div>
-          <div className="flex justify-center"><Button onClick={handleContinue} size="default" className="min-w-[180px]">Continue to Frequency</Button></div>
+          <div className="flex justify-center"><Button onClick={handleContinue} size="lg" className="min-w-[200px]" disabled={!selectedTier || !selectedSqft}>Continue to Schedule →</Button></div>
         </div>
       </div>
     </div>
