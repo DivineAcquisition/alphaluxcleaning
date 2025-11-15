@@ -72,12 +72,12 @@ export default function BookingSchedule() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={5} totalSteps={7} />
+      <BookingProgressBar currentStep={3} totalSteps={5} />
       
       <div className="flex-1 flex flex-col">
         <main className="flex-1 px-4 py-8 lg:py-12 max-w-4xl mx-auto w-full">
           <Link 
-            to="/book/frequency" 
+            to="/book/tier" 
             className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
           >
             ← Previous

@@ -100,6 +100,20 @@ export default function BookingCheckout() {
     isInitializing.current = true;
 
     try {
+      // Wait for DOM element to be ready
+      const checkElement = () => {
+        return new Promise((resolve) => {
+          const element = document.getElementById('square-card-container');
+          if (element) {
+            resolve(element);
+          } else {
+            setTimeout(() => resolve(checkElement()), 100);
+          }
+        });
+      };
+
+      await checkElement();
+
       const square = await squarePromise;
       if (!square?.payments) throw new Error('Square not loaded');
 
@@ -355,10 +369,10 @@ export default function BookingCheckout() {
 
   // Calculate pricing for recurring upsell
   const getRecurringUpsellPricing = () => {
-    if (!bookingData.tier || !bookingData.bedrooms || !bookingData.state) return null;
+    if (!bookingData.tier || !bookingData.sqft || !bookingData.stateCode) return null;
     
-    const oneTimeResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'one_time');
-    const monthlyResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'monthly');
+    const oneTimeResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'one_time');
+    const monthlyResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'monthly');
     
     return {
       oneTimePrice: oneTimeResult.finalPrice,
@@ -379,7 +393,7 @@ export default function BookingCheckout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={6} totalSteps={6} />
+      <BookingProgressBar currentStep={5} totalSteps={5} />
       
       <div className="flex-1 px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">

@@ -76,6 +76,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const clearBookingData = () => {
     setBookingData({ zipCode: '', frequency: 'one_time', tier: 'premium', sqft: 2000 });
     localStorage.removeItem('bookingData');
+    localStorage.removeItem('booking_test_mode');
   };
 
   const calculatePricing = () => {
