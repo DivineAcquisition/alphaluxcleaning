@@ -14,14 +14,34 @@ interface TierPricingResult {
   annualSavings?: number;
 }
 
-// Essential pricing by bedrooms (base prices)
-const ESSENTIAL_PRICES: Record<number, number> = {
-  1: 139,
-  2: 179,
-  3: 219,
-  4: 259,
-  5: 299, // 5+ bedrooms
-};
+// Square footage ranges with corresponding prices
+interface SqftRange {
+  min: number;
+  max: number | null;
+  label: string;
+  essentialPrice: number;
+}
+
+const SQFT_RANGES: SqftRange[] = [
+  { min: 1000, max: 1500, label: '1,000-1,500 sq ft', essentialPrice: 139 },
+  { min: 1501, max: 2000, label: '1,501-2,000 sq ft', essentialPrice: 179 },
+  { min: 2001, max: 2500, label: '2,001-2,500 sq ft', essentialPrice: 219 },
+  { min: 2501, max: 3000, label: '2,501-3,000 sq ft', essentialPrice: 259 },
+  { min: 3001, max: 3500, label: '3,001-3,500 sq ft', essentialPrice: 299 },
+  { min: 3501, max: 4000, label: '3,501-4,000 sq ft', essentialPrice: 339 },
+  { min: 4001, max: null, label: '4,000+ sq ft', essentialPrice: 379 },
+];
+
+// Helper to get price by square footage
+function getEssentialPriceBySquareFeet(sqft: number): number {
+  const range = SQFT_RANGES.find(r => {
+    if (r.max === null) return sqft >= r.min;
+    return sqft >= r.min && sqft <= r.max;
+  });
+  return range?.essentialPrice || SQFT_RANGES[SQFT_RANGES.length - 1].essentialPrice;
+}
+
+export { SQFT_RANGES };
 
 // Premium is 1.75x Essential
 const PREMIUM_MULTIPLIER = 1.75;
@@ -49,12 +69,12 @@ const FREQUENCY_DISCOUNTS: Record<string, number> = {
  */
 export function getTierPrice(
   tier: 'essential' | 'premium',
-  bedrooms: number,
+  sqft: number,
   stateCode: string,
   frequency: string
 ): TierPricingResult {
-  // Get base essential price
-  const essentialBase = ESSENTIAL_PRICES[bedrooms] || ESSENTIAL_PRICES[5];
+  // Get base essential price by square footage
+  const essentialBase = getEssentialPriceBySquareFeet(sqft);
   
   // Calculate tier price
   const tierBase = tier === 'essential' 
@@ -114,8 +134,8 @@ export function getTierPrice(
 /**
  * Get tier pricing for display (no state/frequency discounts)
  */
-export function getBaseTierPricing(tier: 'essential' | 'premium', bedrooms: number) {
-  const essentialBase = ESSENTIAL_PRICES[bedrooms] || ESSENTIAL_PRICES[5];
+export function getBaseTierPricing(tier: 'essential' | 'premium', sqft: number) {
+  const essentialBase = getEssentialPriceBySquareFeet(sqft);
   const price = tier === 'essential' 
     ? essentialBase 
     : Math.round(essentialBase * PREMIUM_MULTIPLIER);
@@ -132,13 +152,13 @@ export function getBaseTierPricing(tier: 'essential' | 'premium', bedrooms: numb
 export function formatTierPricingForWebhook(
   result: TierPricingResult,
   tier: string,
-  bedrooms: number,
+  sqft: number,
   frequency: string,
   stateCode: string
 ) {
   return {
     tier,
-    bedrooms,
+    sqft,
     frequency,
     state: stateCode,
     base_price: result.basePrice,
