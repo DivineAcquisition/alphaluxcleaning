@@ -378,19 +378,23 @@ export default function BookingCheckout() {
     if (!bookingData.tier || !bookingData.sqft || !bookingData.stateCode) return null;
     
     const oneTimeResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'one_time');
+    const biWeeklyResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'bi_weekly');
     const monthlyResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'monthly');
     
     return {
       oneTimePrice: oneTimeResult.finalPrice,
+      biWeeklyPrice: biWeeklyResult.finalPrice,
       monthlyPrice: monthlyResult.finalPrice,
     };
   };
 
-  const handleRecurringSelection = (frequency: 'one_time' | 'monthly') => {
+  const handleRecurringSelection = (frequency: 'one_time' | 'bi_weekly' | 'monthly') => {
     updateBookingData({ frequency });
-    // Show success toast when monthly is selected
+    
     if (frequency === 'monthly') {
       toast.success('✅ Monthly Membership Selected! You\'re saving on every visit.');
+    } else if (frequency === 'bi_weekly') {
+      toast.success('✅ Bi-Weekly Membership Selected! You\'re saving on every visit.');
     }
   };
 
@@ -428,8 +432,10 @@ export default function BookingCheckout() {
           {recurringUpsellPricing && (
             <RecurringUpsellCard
               oneTimePrice={recurringUpsellPricing.oneTimePrice}
+              biWeeklyPrice={recurringUpsellPricing.biWeeklyPrice}
               monthlyPrice={recurringUpsellPricing.monthlyPrice}
               onSelectOneTime={() => handleRecurringSelection('one_time')}
+              onSelectBiWeekly={() => handleRecurringSelection('bi_weekly')}
               onSelectMonthly={() => handleRecurringSelection('monthly')}
               selectedFrequency={bookingData.frequency}
             />
@@ -629,10 +635,18 @@ export default function BookingCheckout() {
                     {bookingData.frequency === 'monthly' && (
                       <Badge className="bg-primary text-xs">Membership</Badge>
                     )}
+                    {bookingData.frequency === 'bi_weekly' && (
+                      <Badge className="bg-blue-500 text-white text-xs">Membership</Badge>
+                    )}
                   </div>
                   {bookingData.frequency === 'monthly' && recurringUpsellPricing && (
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                       💰 Saving ${recurringUpsellPricing.oneTimePrice - recurringUpsellPricing.monthlyPrice} per visit
+                    </p>
+                  )}
+                  {bookingData.frequency === 'bi_weekly' && recurringUpsellPricing && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      💰 Saving ${recurringUpsellPricing.oneTimePrice - recurringUpsellPricing.biWeeklyPrice} per visit
                     </p>
                   )}
                 </div>
