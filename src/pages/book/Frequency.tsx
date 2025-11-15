@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useEffect } from "react";
-import BookingProgressBar from "@/components/booking/BookingProgressBar";
+import { BookingProgressBar } from "@/components/booking/BookingProgressBar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function BookingFrequency() {
