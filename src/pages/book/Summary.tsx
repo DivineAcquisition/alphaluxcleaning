@@ -67,7 +67,7 @@ export default function BookingSummary() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={5} totalSteps={6} />
+      <BookingProgressBar currentStep={4} totalSteps={5} />
       
       <main className="flex-1 px-4 py-8 md:py-12">
         <div className="max-w-5xl mx-auto">

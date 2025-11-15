@@ -11,6 +11,13 @@ export function useTestMode() {
     const checkTestMode = () => {
       const testMode = localStorage.getItem('booking_test_mode') === 'true';
       setIsTestMode(testMode);
+      
+      // Auto-disable test mode on mount if it's enabled
+      if (testMode) {
+        console.log('🔧 Disabling test mode...');
+        localStorage.removeItem('booking_test_mode');
+        setIsTestMode(false);
+      }
     };
 
     checkTestMode();

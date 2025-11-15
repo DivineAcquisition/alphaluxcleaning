@@ -22,13 +22,13 @@ export default function BookingTier() {
   const premiumFeatures = ['Everything in Essential', 'Baseboards & window sills', 'Inside cabinets', 'Appliance detailing', 'Deeper bathroom scrubbing'];
 
   const handleContinue = () => {
-    updateBookingData({ tier: selectedTier, sqft: selectedSqft });
-    navigate('/book/frequency');
+    updateBookingData({ tier: selectedTier, sqft: selectedSqft, frequency: 'one_time' });
+    navigate('/book/schedule');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
-      <BookingProgressBar currentStep={2} totalSteps={6} />
+      <BookingProgressBar currentStep={2} totalSteps={5} />
       <div className="container mx-auto px-4 py-4 lg:py-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-6">
