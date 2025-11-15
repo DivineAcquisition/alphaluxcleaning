@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { calculateNewPricing, PricingResult } from '@/lib/new-pricing-system';
+import { getTierPrice } from '@/lib/tier-pricing-system';
 
 interface ContactInfo {
   firstName: string;
@@ -19,14 +20,15 @@ interface BookingData {
   city: string;
   state: string;
   
-  // Step 2: Home Details
+  // Step 2: Tier & Bedrooms (NEW)
+  tier?: 'essential' | 'premium';
   bedrooms: number;
   bathrooms: number;
   sqft: number;
   homeSizeId?: string;
   homeType: 'house' | 'apartment' | 'condo';
   
-  // Step 3: Service Type
+  // Step 3: Service Type (legacy)
   serviceType: 'regular' | 'deep' | 'move_in_out';
   
   // Step 4: Frequency
@@ -73,6 +75,7 @@ const defaultBookingData: BookingData = {
   zipCode: '',
   city: '',
   state: '',
+  tier: 'premium',
   bedrooms: 2,
   bathrooms: 2,
   sqft: 0,
@@ -144,7 +147,35 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const calculatePricing = () => {
     try {
-      // Check if we have all required data
+      // Priority 1: Use tier-based pricing if available
+      if (bookingData.tier && bookingData.bedrooms && bookingData.state) {
+        console.log('📊 Using tier-based pricing:', {
+          tier: bookingData.tier,
+          bedrooms: bookingData.bedrooms,
+          state: bookingData.state,
+          frequency: bookingData.frequency,
+        });
+
+        const tierResult = getTierPrice(
+          bookingData.tier,
+          bookingData.bedrooms,
+          bookingData.state,
+          bookingData.frequency
+        );
+
+        setPricing({
+          basePrice: tierResult.basePrice,
+          finalPrice: tierResult.finalPrice,
+          discountedPrice: tierResult.finalPrice,
+          discountAmount: tierResult.discountAmount,
+          depositAmount: tierResult.depositAmount,
+        } as any);
+        
+        console.log('✅ Tier pricing calculated:', tierResult);
+        return;
+      }
+
+      // Priority 2: Legacy pricing system (fallback)
       if (!bookingData.state || !bookingData.serviceType || !bookingData.frequency) {
         return;
       }
