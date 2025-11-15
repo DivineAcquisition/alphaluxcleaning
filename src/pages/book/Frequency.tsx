@@ -1,149 +1,58 @@
-import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBooking } from '@/contexts/BookingContext';
-import { Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useNavigate } from "react-router-dom";
+import { useBooking } from "@/contexts/BookingContext";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
+import { useEffect } from "react";
+import BookingProgressBar from "@/components/booking/BookingProgressBar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function BookingFrequency() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
 
-  useEffect(() => {
-    if (!bookingData.zipCode) {
-      navigate('/book/zip');
-    }
-  }, [bookingData.zipCode, navigate]);
+  useEffect(() => { if (!bookingData.zipCode) navigate('/book/zip'); }, [bookingData.zipCode, navigate]);
 
-  const canRecur = bookingData.serviceType === 'regular';
-
-  const handleFrequencySelect = (frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly') => {
-    updateBookingData({ frequency });
-  };
-
-  const handleContinue = () => {
-    navigate('/book/schedule');
-  };
-
+  const canRecur = bookingData.serviceType !== 'move_in_out' && bookingData.serviceType !== 'deep';
   const frequencies = [
-    {
-      id: 'one_time' as const,
-      name: 'One-Time',
-      description: 'Perfect for occasional needs',
-      tagline: 'No commitment',
-      discount: null,
-      allowedForAll: true,
-    },
-    {
-      id: 'bi_weekly' as const,
-      name: 'Every 2 Weeks',
-      description: '2× per month',
-      tagline: null,
-      discount: 10,
-      allowedForAll: false,
-    },
-    {
-      id: 'monthly' as const,
-      name: 'Monthly',
-      description: 'Once per month',
-      tagline: 'Best for light maintenance',
-      discount: 5,
-      allowedForAll: false,
-    },
-    {
-      id: 'weekly' as const,
-      name: 'Weekly',
-      description: '4× per month',
-      tagline: 'Maximum savings',
-      discount: 15,
-      allowedForAll: false,
-    },
+    { id: 'one_time', name: 'One-Time', description: 'Perfect for occasional needs', tagline: 'No commitment', discount: '', availableForAll: true },
+    { id: 'weekly', name: 'Weekly', description: '4× per month', tagline: 'Maximum savings', discount: '15%', availableForAll: false },
+    { id: 'bi_weekly', name: 'Every 2 Weeks', description: '2× per month', tagline: 'Great balance', discount: '10%', availableForAll: false },
+    { id: 'monthly', name: 'Monthly', description: 'Once per month', tagline: 'Light maintenance', discount: '5%', availableForAll: false },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={4} totalSteps={7} />
-      
-      <div className="flex-1 flex flex-col">
-        <main className="flex-1 px-4 py-8 lg:py-12 max-w-4xl mx-auto w-full">
-          <Link 
-            to="/book/service" 
-            className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
-          >
-            ← Previous
-          </Link>
-          
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            How often?
-          </h1>
-          <p className="text-muted-foreground text-lg mb-8">
-            Save up to 15% with recurring
-          </p>
-          
-          <div className="grid gap-4 md:grid-cols-2 mb-6">
-            {frequencies.map((freq) => {
-              const isSelected = bookingData.frequency === freq.id;
-              const isDisabled = !freq.allowedForAll && !canRecur;
-              
-              
-              return (
-                <Card
-                  key={freq.id}
-                  className={cn(
-                    'cursor-pointer hover:border-primary transition-all p-6',
-                    isSelected && 'border-primary ring-2 ring-primary',
-                    isDisabled && 'opacity-50 cursor-not-allowed hover:border-border'
-                  )}
-                  onClick={() => !isDisabled && handleFrequencySelect(freq.id)}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    {freq.discount ? (
-                      <Badge className="bg-success text-success-foreground">
-                        Save {freq.discount}%
-                      </Badge>
-                    ) : (
-                      <div />
-                    )}
-                    {freq.tagline && (
-                      <span className="text-xs text-muted-foreground">{freq.tagline}</span>
-                    )}
-                  </div>
-                  
-                  <Calendar className="h-8 w-8 text-primary mb-3" />
-                  <h3 className="text-xl font-bold mb-2">{freq.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {freq.description}
-                  </p>
-                </Card>
-              );
-            })}
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <BookingProgressBar currentStep={3} totalSteps={6} />
+      <div className="container mx-auto px-4 py-4 lg:py-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-6">
+            <a href="/book/tier" className="text-sm text-muted-foreground hover:text-primary mb-3 inline-block">← Previous</a>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">How often?</h1>
+            <p className="text-base text-muted-foreground">Save up to 15% with recurring service</p>
           </div>
-          
-          {!canRecur && (
-            <Alert className="mb-6">
-              <AlertDescription>
-                Recurring service is only available for Standard Cleaning. 
-                Deep and Move-In/Out cleanings are one-time services.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          <p className="text-sm text-center text-muted-foreground mb-6">
-            💎 <strong>Members</strong> save more + get priority booking
-          </p>
-          
-          <Button 
-            size="lg" 
-            className="w-full h-14 text-lg" 
-            onClick={handleContinue}
-          >
-            Continue
-          </Button>
-        </main>
+          <div className="space-y-3 mb-6">
+            {frequencies.map((freq) => (
+              <Card key={freq.id} className={`p-4 cursor-pointer transition-all hover:shadow-lg ${bookingData.frequency === freq.id ? 'ring-2 ring-primary shadow-lg' : ''} ${!freq.availableForAll && !canRecur ? 'opacity-50 cursor-not-allowed' : ''}`} onClick={() => (freq.availableForAll || canRecur) && updateBookingData({ frequency: freq.id })}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold">{freq.name}</h3>
+                      {freq.discount && <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">Save {freq.discount}</span>}
+                      {freq.id === 'weekly' && <span className="bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full">Most Popular</span>}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-0.5">{freq.description}</p>
+                    <p className="text-xs text-muted-foreground italic">{freq.tagline}</p>
+                  </div>
+                  {bookingData.frequency === freq.id && <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center ml-3 flex-shrink-0"><Check className="h-3 w-3 text-primary-foreground" /></div>}
+                </div>
+              </Card>
+            ))}
+          </div>
+          {!canRecur && <Alert className="mb-6"><AlertDescription className="text-sm">Recurring service is available for Standard Cleaning only.</AlertDescription></Alert>}
+          <div className="text-center text-xs text-muted-foreground mb-4">See full pricing breakdown on next step</div>
+          <div className="flex justify-center"><Button onClick={() => navigate('/book/schedule')} size="default" className="min-w-[180px]" disabled={!bookingData.frequency}>Continue to Schedule</Button></div>
+        </div>
       </div>
     </div>
   );
