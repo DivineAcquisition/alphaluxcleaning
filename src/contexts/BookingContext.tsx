@@ -54,7 +54,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [bookingData, setBookingData] = useState<BookingData>(() => {
     const saved = localStorage.getItem('bookingData');
     if (saved) return JSON.parse(saved);
-    return { zipCode: '', frequency: 'one_time', tier: 'premium', sqft: 2000 };
+    return { zipCode: '', frequency: 'one_time' };
   });
 
   const [pricing, setPricing] = useState<PricingResult | null>(null);
@@ -74,7 +74,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   };
 
   const clearBookingData = () => {
-    setBookingData({ zipCode: '', frequency: 'one_time', tier: 'premium', sqft: 2000 });
+    setBookingData({ zipCode: '', frequency: 'one_time' });
     localStorage.removeItem('bookingData');
     localStorage.removeItem('booking_test_mode');
   };

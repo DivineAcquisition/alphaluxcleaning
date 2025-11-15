@@ -258,12 +258,12 @@ export default function BookingSummary() {
             <Card className="p-6 sticky bottom-4 shadow-lg border-2">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Due Today (25% Deposit)
-                  </div>
-                  <div className="text-3xl font-bold text-primary">
-                    ${Math.round(pricing.finalPrice * 0.25)}
-                  </div>
+              <div className="text-sm text-muted-foreground mb-1">
+                Due Today (Deposit)
+              </div>
+              <div className="text-3xl font-bold text-primary">
+                ${pricing.depositAmount}
+              </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Total: ${Math.round(pricing.finalPrice)}
                   </div>
