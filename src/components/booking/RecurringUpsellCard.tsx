@@ -16,6 +16,18 @@ export function RecurringUpsellCard({ oneTimePrice, monthlyPrice, onSelectOneTim
 
   return (
     <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+      {/* Selection confirmation banner */}
+      {selectedFrequency === 'monthly' && (
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+            <Check className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Monthly Membership Selected - Saving ${savings} per visit!
+            </span>
+          </div>
+        </div>
+      )}
+      
       <div className="flex items-start gap-2 mb-4">
         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"><Zap className="h-4 w-4 text-primary" /></div>
         <div>
