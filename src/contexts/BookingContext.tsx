@@ -21,11 +21,20 @@ interface BookingData {
   stateCode?: string;
   tier?: 'essential' | 'premium';
   sqft?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  homeType?: 'house' | 'apartment' | 'condo';
   serviceType?: string;
   homeSizeId?: string;
   frequency: string;
+  date?: string;
   serviceDate?: string;
   timeSlot?: string;
+  bookingExpiresAt?: number;
+  upgradedToRecurring?: boolean;
+  recurringUpgradeDiscount?: number;
+  recurringStartDate?: string;
+  joinMembership?: boolean;
   contactInfo?: ContactInfo;
   specialInstructions?: string;
 }
@@ -76,24 +85,28 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setPricing({
           basePrice: tierResult.basePrice,
           discountAmount: tierResult.discountAmount,
-          totalPrice: tierResult.finalPrice,
+          discountedPrice: tierResult.finalPrice,
+          finalPrice: tierResult.finalPrice,
           depositAmount: tierResult.depositAmount,
-          savings: tierResult.savings,
-          annualSavings: tierResult.annualSavings,
+          mrrEstimate: 0,
+          arrEstimate: 0,
+          savings: tierResult.savings || '',
+          tierLabel: tierResult.tierLabel,
         });
         return;
       } catch (error) {
         console.error('Tier pricing failed:', error);
       }
     }
+    
     if (bookingData.serviceType && bookingData.homeSizeId && bookingData.stateCode) {
       try {
-        const result = calculateNewPricing({
-          serviceType: bookingData.serviceType,
-          homeSizeId: bookingData.homeSizeId,
-          frequency: bookingData.frequency,
-          stateCode: bookingData.stateCode,
-        });
+        const result = calculateNewPricing(
+          bookingData.serviceType,
+          bookingData.homeSizeId,
+          bookingData.frequency,
+          bookingData.stateCode
+        );
         if (result) setPricing(result);
       } catch (error) {
         console.error('Legacy pricing failed:', error);

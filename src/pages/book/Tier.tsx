@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Home } from "lucide-react";
 import { useState, useEffect } from "react";
-import BookingProgressBar from "@/components/booking/BookingProgressBar";
+import { BookingProgressBar } from "@/components/booking/BookingProgressBar";
 import { SQFT_RANGES } from "@/lib/tier-pricing-system";
 
 export default function BookingTier() {
