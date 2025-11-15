@@ -46,6 +46,7 @@ export default function BookingZip() {
           zipCode,
           city: data.city,
           state: data.state,
+          stateCode: data.state,
         });
         
         // Pre-fill contact info city/state/zip
