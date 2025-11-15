@@ -29,7 +29,7 @@ export default function BookingCheckout() {
   const [cardInstance, setCardInstance] = useState<any>(null);
   const [availableCredits, setAvailableCredits] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
-  const [showRecurringUpsell, setShowRecurringUpsell] = useState(bookingData.frequency === 'one_time');
+  const showRecurringUpsell = true; // Always show to allow toggling
   const isInitializing = useRef(false);
 
   // Log test mode status on mount
@@ -339,6 +339,12 @@ export default function BookingCheckout() {
         }
 
       // Step 7: Clear booking data and redirect to success page with referral incentive
+      if (!booking?.id) {
+        console.error('❌ No booking ID available for redirect');
+        toast.error('Booking created but redirect failed. Check your email for confirmation.');
+        return;
+      }
+      
       clearBookingData();
       navigate(`/book/success?booking_id=${booking.id}`);
     } catch (error: any) {
@@ -382,8 +388,9 @@ export default function BookingCheckout() {
 
   const handleRecurringSelection = (frequency: 'one_time' | 'monthly') => {
     updateBookingData({ frequency });
+    // Show success toast when monthly is selected
     if (frequency === 'monthly') {
-      setShowRecurringUpsell(false);
+      toast.success('✅ Monthly Membership Selected! You\'re saving on every visit.');
     }
   };
 
@@ -417,8 +424,8 @@ export default function BookingCheckout() {
             </div>
           )}
 
-          {/* Recurring Upsell Card (for one-time bookings only) */}
-          {showRecurringUpsell && recurringUpsellPricing && (
+          {/* Recurring Upsell Card */}
+          {recurringUpsellPricing && (
             <RecurringUpsellCard
               oneTimePrice={recurringUpsellPricing.oneTimePrice}
               monthlyPrice={recurringUpsellPricing.monthlyPrice}
@@ -616,8 +623,18 @@ export default function BookingCheckout() {
                 </div>
                 
                 <div>
-                  <p className="text-sm text-muted-foreground">Frequency</p>
-                  <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
+                  <p className="text-sm text-muted-foreground">Service Plan</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
+                    {bookingData.frequency === 'monthly' && (
+                      <Badge className="bg-primary text-xs">Membership</Badge>
+                    )}
+                  </div>
+                  {bookingData.frequency === 'monthly' && recurringUpsellPricing && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      💰 Saving ${recurringUpsellPricing.oneTimePrice - recurringUpsellPricing.monthlyPrice} per visit
+                    </p>
+                  )}
                 </div>
                 
                 <div>
