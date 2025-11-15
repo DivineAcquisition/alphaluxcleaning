@@ -16,8 +16,7 @@ import { Landing } from '@/pages/Landing';
 
 // Lazy load new booking flow pages
 const BookZip = lazy(() => import('@/pages/book/Zip'));
-const BookHome = lazy(() => import('@/pages/book/Home'));
-const BookService = lazy(() => import('@/pages/book/Service'));
+const BookTier = lazy(() => import('@/pages/book/Tier'));
 const BookFrequency = lazy(() => import('@/pages/book/Frequency'));
 const BookSchedule = lazy(() => import('@/pages/book/Schedule'));
 const BookSummary = lazy(() => import('@/pages/book/Summary'));
@@ -79,8 +78,7 @@ function App() {
             <Routes>
               {/* New booking flow */}
               <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
-              <Route path="/book/home" element={<Suspense fallback={<div>Loading...</div>}><BookHome /></Suspense>} />
-              <Route path="/book/service" element={<Suspense fallback={<div>Loading...</div>}><BookService /></Suspense>} />
+              <Route path="/book/tier" element={<Suspense fallback={<div>Loading...</div>}><BookTier /></Suspense>} />
               <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
               <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
               <Route path="/book/summary" element={<Suspense fallback={<div>Loading...</div>}><BookSummary /></Suspense>} />

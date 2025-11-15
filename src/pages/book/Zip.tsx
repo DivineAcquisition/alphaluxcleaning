@@ -57,7 +57,7 @@ export default function BookingZip() {
           } as any,
         });
         
-        navigate('/book/home');
+        navigate('/book/tier');
       } else {
         setError(data?.message || "We don't service this area yet.");
       }

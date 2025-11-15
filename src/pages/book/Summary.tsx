@@ -50,15 +50,24 @@ export default function BookingSummary() {
     monthly: 'Monthly Recurring',
   };
 
+  const tierLabels = {
+    essential: 'Essential Clean',
+    premium: 'Premium Reset',
+  };
+
   const serviceLabels = {
     regular: 'Standard Cleaning',
     deep: 'Deep Cleaning',
     move_in_out: 'Move-In/Out Cleaning',
   };
 
+  const displayServiceType = bookingData.tier 
+    ? tierLabels[bookingData.tier]
+    : serviceLabels[bookingData.serviceType];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={6} totalSteps={7} />
+      <BookingProgressBar currentStep={5} totalSteps={6} />
       
       <main className="flex-1 px-4 py-8 md:py-12">
         <div className="max-w-5xl mx-auto">
@@ -97,8 +106,17 @@ export default function BookingSummary() {
                         <Calendar className="w-4 h-4" />
                         Service Type
                       </span>
-                      <span className="font-medium text-right">{serviceLabels[bookingData.serviceType]}</span>
+                      <span className="font-medium text-right">{displayServiceType}</span>
                     </div>
+                    {bookingData.bedrooms && (
+                      <div className="flex justify-between items-start">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <Home className="w-4 h-4" />
+                          Bedrooms
+                        </span>
+                        <span className="font-medium text-right">{bookingData.bedrooms} BR</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-start">
                       <span className="text-muted-foreground flex items-center gap-2">
                         <Clock className="w-4 h-4" />
@@ -143,13 +161,13 @@ export default function BookingSummary() {
                     <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border-2 border-primary/20">
                       <div className="text-center">
                         <div className="text-sm font-medium text-muted-foreground mb-2">
-                          💳 Due Today (25% Deposit)
+                          💳 Reserve Today
                         </div>
                         <div className="text-5xl md:text-6xl font-bold text-primary mb-2">
-                          ${Math.round(pricing.finalPrice * 0.25)}
+                          $49
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          ~{estimatedHours} hours of professional service
+                          Pay balance after service: ${pricing.finalPrice - 49}
                         </div>
                       </div>
                     </div>
@@ -157,19 +175,19 @@ export default function BookingSummary() {
                     {/* Visual Progress Bar */}
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm font-medium mb-2">
-                        <span className="text-primary">Deposit (25%)</span>
-                        <span className="text-muted-foreground">Remaining (75%)</span>
+                        <span className="text-primary">Today: $49</span>
+                        <span className="text-muted-foreground">After: ${pricing.finalPrice - 49}</span>
                       </div>
                       <div className="h-8 bg-muted rounded-full overflow-hidden flex">
-                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" style={{ width: '25%' }}>
-                          ${Math.round(pricing.finalPrice * 0.25)}
+                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" style={{ width: '12%' }}>
+                          $49
                         </div>
-                        <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium" style={{ width: '75%' }}>
-                          ${Math.round(pricing.finalPrice * 0.75)}
+                        <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium" style={{ width: '88%' }}>
+                          ${pricing.finalPrice - 49}
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground text-center">
-                        Remaining balance due after service completion
+                        Balance due after service completion
                       </div>
                     </div>
                     
@@ -178,7 +196,9 @@ export default function BookingSummary() {
                       <div className="flex justify-between items-center">
                         <div>
                           <div className="text-sm text-muted-foreground">Total Service Cost</div>
-                          <div className="text-xs text-muted-foreground mt-1">Pay remaining ${Math.round(pricing.finalPrice * 0.75)} after completion</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            🛡️ 100% Satisfaction Guarantee • 💳 No hidden fees
+                          </div>
                         </div>
                         <div className="text-2xl font-bold">${Math.round(pricing.finalPrice)}</div>
                       </div>
