@@ -187,6 +187,9 @@ export default function BookingCheckout() {
             time_slot: bookingData.timeSlot,
             est_price: pricing.finalPrice,
             deposit_amount: depositAmount,
+            balance_due: pricing.finalPrice + 
+              (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0) - 
+              depositAmount,
             status: 'pending',
             zip_code: bookingData.zipCode,
             special_instructions: bookingData.specialInstructions,
@@ -196,6 +199,17 @@ export default function BookingCheckout() {
               bathrooms: bookingData.bathrooms,
               sqft: bookingData.sqft,
               homeType: bookingData.homeType,
+            },
+            pricing_breakdown: {
+              basePrice: pricing.basePrice,
+              discountAmount: pricing.discountAmount,
+              finalPrice: pricing.finalPrice,
+              depositAmount: depositAmount,
+              balanceDue: pricing.finalPrice - depositAmount,
+              recurringServiceAdded: bookingData.upgradedToRecurring || false,
+              recurringFrequency: bookingData.recurringStartDate,
+              recurringFirstMonthPrice: bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0,
+              orderTotal: pricing.finalPrice + (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0),
             },
           })
           .select()
@@ -389,7 +403,7 @@ export default function BookingCheckout() {
             🎊 Almost there!
           </h1>
           <p className="text-muted-foreground text-lg mb-8">
-            Reserve your spot now • Just ${depositAmount} to lock in this rate
+            🎁 Holiday Special: Reserve your spot now • Just $49 to lock in this rate
           </p>
           
           <div className="grid lg:grid-cols-2 gap-8">
@@ -514,7 +528,12 @@ export default function BookingCheckout() {
                   {!isTestMode ? (
                     <>
                       <p className="text-sm text-muted-foreground">
-                        Secure your booking with ${depositAmount} today. Card will be saved for remaining balance due after service.
+                        🎁 Secure your booking with just $49 today. Card will be saved for remaining balance due after service.
+                        {bookingData.upgradedToRecurring && (
+                          <span className="block mt-2 text-green-600 font-medium">
+                            + Recurring service setup included
+                          </span>
+                        )}
                       </p>
                       <div id="square-card-container" className="min-h-[200px]"></div>
                     </>
@@ -542,12 +561,12 @@ export default function BookingCheckout() {
                     ) : isTestMode ? (
                       <>🧪 Create Test Booking</>
                     ) : (
-                      <>🎉 Reserve My Spot - ${depositAmount} Today</>
+                      <>🎉 Reserve My Spot - $49 Today</>
                     )}
                   </Button>
                   {!isTestMode && (
                     <p className="text-xs text-center text-muted-foreground mt-2">
-                      Lock in this rate • Remaining balance due at service
+                      🎁 Holiday Special: $49 today • Up to 2 months to pay balance
                     </p>
                   )}
                 </CardContent>
@@ -568,6 +587,12 @@ export default function BookingCheckout() {
                 <div>
                   <p className="text-sm text-muted-foreground">Frequency</p>
                   <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
+                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (
+                    <Badge className="mt-2 bg-green-600">
+                      + {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
+                         bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Added
+                    </Badge>
+                  )}
                 </div>
                 
                 <div>
@@ -596,8 +621,8 @@ export default function BookingCheckout() {
                 <Separator />
                 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal</span>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>One-Time Deep Clean</span>
                     <span>${pricing.basePrice.toFixed(2)}</span>
                   </div>
                   
@@ -608,6 +633,40 @@ export default function BookingCheckout() {
                       </span>
                       <span>-${pricing.discountAmount.toFixed(2)}</span>
                     </div>
+                  )}
+
+                  <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                    <span>Deep Clean Total</span>
+                    <span>${pricing.finalPrice.toFixed(2)}</span>
+                  </div>
+                  
+                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (
+                    <>
+                      <Separator className="my-3" />
+                      <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                            {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
+                             bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Service
+                          </span>
+                          <Badge className="bg-green-600">50% OFF</Badge>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">First month (50% off)</span>
+                          <div className="text-right">
+                            <span className="font-semibold text-green-600">
+                              ${(pricing.finalPrice * 0.5).toFixed(2)}
+                            </span>
+                            <span className="text-xs text-muted-foreground line-through ml-2">
+                              ${pricing.finalPrice.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Starts after your initial deep clean
+                        </p>
+                      </div>
+                    </>
                   )}
                   
                   {availableCredits > 0 && applyCredits && (
@@ -620,13 +679,16 @@ export default function BookingCheckout() {
                   <Separator />
                   
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>${pricing.finalPrice.toFixed(2)}</span>
+                    <span>Order Total</span>
+                    <span>${(
+                      pricing.finalPrice + 
+                      (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0)
+                    ).toFixed(2)}</span>
                   </div>
                   
                   <div className="bg-primary/10 p-3 rounded-lg mt-2">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">Due Today</span>
+                      <span className="text-sm font-medium">🎁 Due Today (Holiday Special)</span>
                       <span className="text-xl font-bold text-primary">
                         ${(applyCredits ? Math.max(0, depositAmount - availableCredits) : depositAmount).toFixed(2)}
                       </span>
@@ -637,7 +699,11 @@ export default function BookingCheckout() {
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Remaining ${(pricing.finalPrice - depositAmount).toFixed(2)} due after service
+                      Remaining ${(
+                        pricing.finalPrice + 
+                        (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0) - 
+                        depositAmount
+                      ).toFixed(2)} due after service
                     </p>
                   </div>
                 </div>

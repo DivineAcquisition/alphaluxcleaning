@@ -54,7 +54,7 @@ interface BookingContextType {
   clearBookingData: () => void;
   pricing: PricingResult | null;
   calculatePricing: () => void;
-  depositAmount: number; // 25% of final price
+  depositAmount: number; // Flat $49 holiday special deposit
 }
 
 const defaultContactInfo: ContactInfo = {
@@ -216,7 +216,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         clearBookingData,
         pricing,
         calculatePricing,
-        depositAmount: pricing ? Math.round(pricing.finalPrice * 0.25) : 0,
+        depositAmount: 49, // Flat $49 holiday special deposit
       }}
     >
       {children}
