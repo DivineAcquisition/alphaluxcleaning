@@ -370,14 +370,14 @@ export default function BookingSummary() {
                     <div className="text-center">
                       <div className="text-sm font-medium text-green-600 mb-2">WEEKLY</div>
                       <div className="text-3xl font-bold mb-1">
-                        ${Math.round(pricing.finalPrice * 0.5)}
+                        ${Math.round((pricing.finalPrice * 4) * 0.5)}
                         <span className="text-sm text-muted-foreground line-through ml-2">
-                          ${Math.round(pricing.finalPrice)}
+                          ${Math.round(pricing.finalPrice * 4)}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-xs text-muted-foreground mb-3">First month (4 cleanings)</div>
                       <div className="text-sm font-medium text-green-600 mb-3">
-                        Save ${Math.round(pricing.finalPrice * 6)} /month
+                        Save ${Math.round((pricing.finalPrice * 4) * 0.5)} first month
                       </div>
                       <ul className="text-xs text-left space-y-1 text-muted-foreground">
                         <li>✓ 4 cleanings/month</li>
@@ -411,14 +411,14 @@ export default function BookingSummary() {
                     <div className="text-center">
                       <div className="text-sm font-medium text-green-600 mb-2">BI-WEEKLY</div>
                       <div className="text-3xl font-bold mb-1">
-                        ${Math.round(pricing.finalPrice * 0.5)}
+                        ${Math.round((pricing.finalPrice * 2) * 0.5)}
                         <span className="text-sm text-muted-foreground line-through ml-2">
-                          ${Math.round(pricing.finalPrice)}
+                          ${Math.round(pricing.finalPrice * 2)}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-xs text-muted-foreground mb-3">First month (2 cleanings)</div>
                       <div className="text-sm font-medium text-green-600 mb-3">
-                        Save ${Math.round(pricing.finalPrice * 3)} /month
+                        Save ${Math.round((pricing.finalPrice * 2) * 0.5)} first month
                       </div>
                       <ul className="text-xs text-left space-y-1 text-muted-foreground">
                         <li>✓ 2 cleanings/month</li>
@@ -452,9 +452,9 @@ export default function BookingSummary() {
                           ${Math.round(pricing.finalPrice)}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-xs text-muted-foreground mb-3">First month (1 cleaning)</div>
                       <div className="text-sm font-medium text-green-600 mb-3">
-                        Save ${Math.round(pricing.finalPrice * 0.5)} /month
+                        Save ${Math.round(pricing.finalPrice * 0.5)} first month
                       </div>
                       <ul className="text-xs text-left space-y-1 text-muted-foreground">
                         <li>✓ 1 cleaning/month</li>
