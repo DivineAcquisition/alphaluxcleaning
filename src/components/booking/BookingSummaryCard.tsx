@@ -24,7 +24,7 @@ interface BookingData {
   nextDayFee: number;
   promoDiscount: number;
   totalPrice: number;
-  paymentType: '25_percent_with_discount';
+  paymentType: '25_percent_with_discount' | '49_flat_deposit';
   customerName?: string;
   customerEmail?: string;
 }
@@ -57,8 +57,10 @@ export function BookingSummaryCard({ bookingData }: BookingSummaryCardProps) {
   const subtotal = basePrice + addOnTotal + nextDayFee;
   const totalDiscounts = frequencyDiscount + promoDiscount;
   
-  const nowDue = paymentType === '25_percent_with_discount' ? totalPrice * 0.25 : 0;
-  const laterDue = paymentType === '25_percent_with_discount' ? totalPrice * 0.75 : totalPrice;
+  const nowDue = paymentType === '49_flat_deposit' ? 49 : 
+                  paymentType === '25_percent_with_discount' ? totalPrice * 0.25 : 0;
+  const laterDue = paymentType === '49_flat_deposit' ? totalPrice - 49 : 
+                   paymentType === '25_percent_with_discount' ? totalPrice * 0.75 : totalPrice;
 
   return (
     <Card className="w-full">
@@ -198,17 +200,36 @@ export function BookingSummaryCard({ bookingData }: BookingSummaryCardProps) {
               </>
             )}
             
+            {paymentType === '49_flat_deposit' && (
+              <>
+                <Separator />
+                <div className="space-y-1 text-sm bg-muted/50 p-3 rounded-lg">
+                  <div className="flex justify-between font-medium">
+                    <span>🎁 Due now (Holiday Special)</span>
+                    <span>$49.00</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Due after service</span>
+                    <span>${(totalPrice - 49).toFixed(2)}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Up to 2 months to pay balance
+                  </div>
+                </div>
+              </>
+            )}
+            
             {paymentType === '25_percent_with_discount' && (
               <>
                 <Separator />
                 <div className="space-y-1 text-sm bg-muted/50 p-3 rounded-lg">
                   <div className="flex justify-between font-medium">
-                    <span>Due now (20%)</span>
-                    <span>${(totalPrice * 0.2).toFixed(2)}</span>
+                    <span>Due now (25%)</span>
+                    <span>${(totalPrice * 0.25).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Due after service</span>
-                    <span>${(totalPrice * 0.8).toFixed(2)}</span>
+                    <span>${(totalPrice * 0.75).toFixed(2)}</span>
                   </div>
                 </div>
               </>

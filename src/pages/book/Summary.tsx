@@ -143,13 +143,13 @@ export default function BookingSummary() {
                     <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border-2 border-primary/20">
                       <div className="text-center">
                         <div className="text-sm font-medium text-muted-foreground mb-2">
-                          💳 Due Today (25% Deposit)
+                          🎁 Holiday Special - Due Today
                         </div>
                         <div className="text-5xl md:text-6xl font-bold text-primary mb-2">
-                          ${Math.round(pricing.finalPrice * 0.25)}
+                          $49
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          ~{estimatedHours} hours of professional service
+                          Start your deep clean today • 2 months to pay balance
                         </div>
                       </div>
                     </div>
@@ -157,19 +157,21 @@ export default function BookingSummary() {
                     {/* Visual Progress Bar */}
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm font-medium mb-2">
-                        <span className="text-primary">Deposit (25%)</span>
-                        <span className="text-muted-foreground">Remaining (75%)</span>
+                        <span className="text-primary">Due Today</span>
+                        <span className="text-muted-foreground">Pay After Service</span>
                       </div>
                       <div className="h-8 bg-muted rounded-full overflow-hidden flex">
-                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" style={{ width: '25%' }}>
-                          ${Math.round(pricing.finalPrice * 0.25)}
+                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" 
+                             style={{ width: `${(49 / pricing.finalPrice) * 100}%` }}>
+                          $49
                         </div>
-                        <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium" style={{ width: '75%' }}>
-                          ${Math.round(pricing.finalPrice * 0.75)}
+                        <div className="bg-muted flex items-center justify-center text-muted-foreground text-xs font-medium" 
+                             style={{ width: `${((pricing.finalPrice - 49) / pricing.finalPrice) * 100}%` }}>
+                          ${Math.round(pricing.finalPrice - 49)}
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground text-center">
-                        Remaining balance due after service completion
+                        Balance due after service • Up to 2 months to pay
                       </div>
                     </div>
                     
@@ -178,7 +180,9 @@ export default function BookingSummary() {
                       <div className="flex justify-between items-center">
                         <div>
                           <div className="text-sm text-muted-foreground">Total Service Cost</div>
-                          <div className="text-xs text-muted-foreground mt-1">Pay remaining ${Math.round(pricing.finalPrice * 0.75)} after completion</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Pay $49 today • Remaining ${Math.round(pricing.finalPrice - 49)} after completion
+                          </div>
                         </div>
                         <div className="text-2xl font-bold">${Math.round(pricing.finalPrice)}</div>
                       </div>
@@ -223,13 +227,110 @@ export default function BookingSummary() {
               </div>
             </Card>
 
-            {/* Simple Recurring Mention for One-Time */}
+            {/* Recurring Service Upsell - One-Time Customers Only */}
             {isOneTime && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <p className="text-sm text-center">
-                  💡 <strong>Want to save up to 20%?</strong> You can switch to recurring service after checkout
-                </p>
-              </div>
+              <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-2 border-green-200 dark:border-green-800">
+                <div className="text-center mb-6">
+                  <div className="inline-block bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
+                    🎁 EXCLUSIVE HOLIDAY OFFER
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold mb-3">
+                    Keep Your Home Spotless All Year
+                  </h3>
+                  <p className="text-lg text-muted-foreground">
+                    Add recurring service to your order and get <span className="font-bold text-green-600">50% OFF your first month</span>
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                  {/* Weekly Option */}
+                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-200 dark:border-green-700 hover:border-green-400 transition-colors cursor-pointer">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-green-600 mb-2">WEEKLY</div>
+                      <div className="text-3xl font-bold mb-1">
+                        ${Math.round(pricing.finalPrice * 0.5)}
+                        <span className="text-sm text-muted-foreground line-through ml-2">
+                          ${Math.round(pricing.finalPrice)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-sm font-medium text-green-600 mb-3">
+                        Save ${Math.round(pricing.finalPrice * 6)} /month
+                      </div>
+                      <ul className="text-xs text-left space-y-1 text-muted-foreground">
+                        <li>✓ 4 cleanings/month</li>
+                        <li>✓ Always spotless home</li>
+                        <li>✓ Priority scheduling</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Bi-Weekly Option */}
+                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-300 dark:border-green-600 hover:border-green-500 transition-colors cursor-pointer relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                        MOST POPULAR
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-green-600 mb-2">BI-WEEKLY</div>
+                      <div className="text-3xl font-bold mb-1">
+                        ${Math.round(pricing.finalPrice * 0.5)}
+                        <span className="text-sm text-muted-foreground line-through ml-2">
+                          ${Math.round(pricing.finalPrice)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-sm font-medium text-green-600 mb-3">
+                        Save ${Math.round(pricing.finalPrice * 3)} /month
+                      </div>
+                      <ul className="text-xs text-left space-y-1 text-muted-foreground">
+                        <li>✓ 2 cleanings/month</li>
+                        <li>✓ Perfect maintenance</li>
+                        <li>✓ Best value</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Monthly Option */}
+                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-200 dark:border-green-700 hover:border-green-400 transition-colors cursor-pointer">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-green-600 mb-2">MONTHLY</div>
+                      <div className="text-3xl font-bold mb-1">
+                        ${Math.round(pricing.finalPrice * 0.5)}
+                        <span className="text-sm text-muted-foreground line-through ml-2">
+                          ${Math.round(pricing.finalPrice)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mb-3">First month only</div>
+                      <div className="text-sm font-medium text-green-600 mb-3">
+                        Save ${Math.round(pricing.finalPrice * 0.5)} /month
+                      </div>
+                      <ul className="text-xs text-left space-y-1 text-muted-foreground">
+                        <li>✓ 1 cleaning/month</li>
+                        <li>✓ Budget-friendly</li>
+                        <li>✓ Regular refresh</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-green-200 dark:border-green-700 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div>
+                      <div className="font-semibold mb-1">Why Maintain After Your Deep Clean?</div>
+                      <p className="text-sm text-muted-foreground">
+                        Your home will be spotless after today's deep clean. Regular recurring service keeps it that way—no more heavy scrubbing, just light maintenance to preserve that fresh, clean feeling all year long.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center text-sm text-muted-foreground">
+                  💳 Add to this order • Cancel anytime after first month • No commitment
+                </div>
+              </Card>
             )}
           </div>
 
@@ -239,13 +340,13 @@ export default function BookingSummary() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
                   <div className="text-sm text-muted-foreground mb-1">
-                    Due Today (25% Deposit)
+                    🎁 Holiday Special - Due Today
                   </div>
                   <div className="text-3xl font-bold text-primary">
-                    ${Math.round(pricing.finalPrice * 0.25)}
+                    $49
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Total: ${Math.round(pricing.finalPrice)}
+                    Total: ${Math.round(pricing.finalPrice)} • Balance after service
                   </div>
                 </div>
                 <Button 
