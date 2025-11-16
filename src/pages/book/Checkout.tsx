@@ -17,8 +17,6 @@ import { toast } from 'sonner';
 import { Loader2, TestTube } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 import { BookingCountdown } from '@/components/booking/BookingCountdown';
-import { RecurringUpsellCard } from '@/components/booking/RecurringUpsellCard';
-import { getTierPrice } from '@/lib/tier-pricing-system';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -29,7 +27,6 @@ export default function BookingCheckout() {
   const [cardInstance, setCardInstance] = useState<any>(null);
   const [availableCredits, setAvailableCredits] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
-  const [showRecurringUpsell, setShowRecurringUpsell] = useState(bookingData.frequency === 'one_time');
   const isInitializing = useRef(false);
 
   // Log test mode status on mount
@@ -353,33 +350,11 @@ export default function BookingCheckout() {
     navigate('/book/schedule');
   };
 
-  // Calculate pricing for recurring upsell
-  const getRecurringUpsellPricing = () => {
-    if (!bookingData.tier || !bookingData.bedrooms || !bookingData.state) return null;
-    
-    const oneTimeResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'one_time');
-    const monthlyResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'monthly');
-    
-    return {
-      oneTimePrice: oneTimeResult.finalPrice,
-      monthlyPrice: monthlyResult.finalPrice,
-    };
-  };
-
-  const handleRecurringSelection = (frequency: 'one_time' | 'monthly') => {
-    updateBookingData({ frequency });
-    if (frequency === 'monthly') {
-      setShowRecurringUpsell(false);
-    }
-  };
-
   if (!pricing) return null;
-
-  const recurringUpsellPricing = getRecurringUpsellPricing();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={6} totalSteps={6} />
+      <BookingProgressBar currentStep={7} totalSteps={7} />
       
       <div className="flex-1 px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
@@ -401,17 +376,6 @@ export default function BookingCheckout() {
                 onExpire={handleCountdownExpire}
               />
             </div>
-          )}
-
-          {/* Recurring Upsell Card (for one-time bookings only) */}
-          {showRecurringUpsell && recurringUpsellPricing && (
-            <RecurringUpsellCard
-              oneTimePrice={recurringUpsellPricing.oneTimePrice}
-              monthlyPrice={recurringUpsellPricing.monthlyPrice}
-              onSelectOneTime={() => handleRecurringSelection('one_time')}
-              onSelectMonthly={() => handleRecurringSelection('monthly')}
-              selectedFrequency={bookingData.frequency}
-            />
           )}
           
           <Link
