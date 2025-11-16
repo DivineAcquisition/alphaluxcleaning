@@ -51,7 +51,7 @@ export default function BookingSummary() {
     updateBookingData({
       upgradedToRecurring: true,
       recurringStartDate: frequency,
-      recurringUpgradeDiscount: 50, // 50% off first month
+      recurringUpgradeDiscount: 0.5, // 50% off first month (as decimal)
     });
     
     toast({
