@@ -86,14 +86,14 @@ export default function BookingZip() {
             <div className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
                 <Badge className="bg-success text-success-foreground text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
-                  $50 OFF
+                  🎄 HOLIDAY SPECIAL
                 </Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Limited Time: Save $50 on Your First Cleaning!
+                    Start for Just $49 Today! 🎁
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    All one-time cleaning services include $50 instant discount
+                    Get your home deep cleaned with flexible 2-month payment plan
                   </p>
                 </div>
               </div>
@@ -101,11 +101,14 @@ export default function BookingZip() {
           </Card>
           
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              Check availability in your area
+            <h1 className="text-3xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+              Start for $49 Today & Get Your Home Deep Cleaned 
+              <span className="block text-primary mt-2">
+                2 Months to Pay—No Full Upfront Cost! 🎁
+              </span>
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Enter your ZIP to see open slots today
+            <p className="text-muted-foreground text-lg md:text-xl">
+              Enter your ZIP code to secure your holiday cleaning slot
             </p>
           </div>
           
