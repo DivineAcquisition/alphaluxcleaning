@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Loader2, TestTube } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 import { BookingCountdown } from '@/components/booking/BookingCountdown';
+import { calculateNewPricing } from '@/lib/new-pricing-system';
 
 // Helper function to calculate recurring pricing with 50% off first month
 const getRecurringMonthlyDetails = (pricePerClean: number, frequency: string) => {
@@ -672,9 +673,9 @@ export default function BookingCheckout() {
                   {pricing.discountAmount > 0 && (
                     <div className="flex justify-between text-sm text-success">
                       <span>
-                        Discount ({pricing.basePrice > 0 ? Math.round((pricing.discountAmount / pricing.basePrice) * 100) : 0}%):
+                        Discount ({pricing.basePrice > 0 ? Math.min(100, Math.max(0, Math.round((Math.abs(pricing.discountAmount) / pricing.basePrice) * 100))) : 0}%):
                       </span>
-                      <span>-${pricing.discountAmount.toFixed(2)}</span>
+                      <span>-${Math.abs(pricing.discountAmount).toFixed(2)}</span>
                     </div>
                   )}
 
@@ -684,8 +685,24 @@ export default function BookingCheckout() {
                   </div>
                   
                   {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (() => {
+                    // Calculate recurring price using 'regular' service type (not deep clean)
+                    const recurringPerClean = (() => {
+                      try {
+                        const homeSizeId = bookingData.homeSizeId || '2001_2500';
+                        const recurringPricing = calculateNewPricing(
+                          homeSizeId,
+                          'regular', // Use regular service type for recurring
+                          bookingData.recurringStartDate,
+                          bookingData.state
+                        );
+                        return recurringPricing.finalPrice;
+                      } catch {
+                        return pricing.finalPrice; // Fallback
+                      }
+                    })();
+                    
                     const recurringDetails = getRecurringMonthlyDetails(
-                      pricing.finalPrice, 
+                      recurringPerClean, 
                       bookingData.recurringStartDate
                     );
                     
@@ -705,7 +722,7 @@ export default function BookingCheckout() {
                           <div className="space-y-1 text-sm">
                             <div className="flex justify-between text-muted-foreground">
                               <span>Regular price per clean:</span>
-                              <span>${pricing.finalPrice.toFixed(2)}</span>
+                              <span>${recurringPerClean.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-muted-foreground">
                               <span>Cleanings per month:</span>
