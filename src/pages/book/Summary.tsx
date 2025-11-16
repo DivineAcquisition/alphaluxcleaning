@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,16 @@ import { Card } from '@/components/ui/card';
 
 import { useBooking } from '@/contexts/BookingContext';
 import { getEstimatedHours } from '@/lib/pricing-psychology';
-import { Shield, Award, Calendar, MapPin, Home, Clock } from 'lucide-react';
+import { Shield, Award, Calendar, MapPin, Home, Clock, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { BookingCountdown } from '@/components/booking/BookingCountdown';
 
 export default function BookingSummary() {
   const navigate = useNavigate();
-  const { bookingData, pricing } = useBooking();
+  const { bookingData, pricing, updateBookingData } = useBooking();
+  const [selectedRecurringFrequency, setSelectedRecurringFrequency] = useState<string | null>(
+    bookingData.upgradedToRecurring ? (bookingData.recurringStartDate || null) : null
+  );
 
   useEffect(() => {
     if (!pricing || !bookingData.date || !bookingData.timeSlot) {
@@ -41,6 +44,34 @@ export default function BookingSummary() {
       variant: "destructive",
     });
     navigate('/book/schedule');
+  };
+
+  const handleRecurringSelect = (frequency: 'weekly' | 'bi_weekly' | 'monthly') => {
+    setSelectedRecurringFrequency(frequency);
+    updateBookingData({
+      upgradedToRecurring: true,
+      recurringStartDate: frequency,
+      recurringUpgradeDiscount: 50, // 50% off first month
+    });
+    
+    toast({
+      title: "Recurring Service Added! 🎉",
+      description: `${frequency === 'bi_weekly' ? 'Bi-weekly' : frequency === 'weekly' ? 'Weekly' : 'Monthly'} service added to your order with 50% off first month`,
+    });
+  };
+
+  const handleRemoveRecurring = () => {
+    setSelectedRecurringFrequency(null);
+    updateBookingData({
+      upgradedToRecurring: false,
+      recurringStartDate: undefined,
+      recurringUpgradeDiscount: undefined,
+    });
+    
+    toast({
+      title: "Recurring Service Removed",
+      description: "Your order has been updated",
+    });
   };
 
   const frequencyLabels = {
@@ -104,7 +135,16 @@ export default function BookingSummary() {
                         <Clock className="w-4 h-4" />
                         Frequency
                       </span>
-                      <span className="font-medium text-right">{frequencyLabels[bookingData.frequency]}</span>
+                      <span className="font-medium text-right">
+                        {frequencyLabels[bookingData.frequency]}
+                        {selectedRecurringFrequency && (
+                          <span className="block text-green-600 text-sm mt-1 flex items-center gap-1">
+                            <Check className="w-3 h-3" />
+                            + {selectedRecurringFrequency === 'bi_weekly' ? 'Bi-Weekly' : 
+                               selectedRecurringFrequency === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Added
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-muted-foreground flex items-center gap-2">
@@ -179,7 +219,9 @@ export default function BookingSummary() {
                     <div className="p-4 bg-muted/50 rounded-lg border border-border">
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="text-sm text-muted-foreground">Total Service Cost</div>
+                          <div className="text-sm text-muted-foreground">
+                            {selectedRecurringFrequency ? 'Initial Deep Clean Cost' : 'Total Service Cost'}
+                          </div>
                           <div className="text-xs text-muted-foreground mt-1">
                             Pay $49 today • Remaining ${Math.round(pricing.finalPrice - 49)} after completion
                           </div>
@@ -187,6 +229,50 @@ export default function BookingSummary() {
                         <div className="text-2xl font-bold">${Math.round(pricing.finalPrice)}</div>
                       </div>
                     </div>
+
+                    {/* Recurring Service Breakdown */}
+                    {selectedRecurringFrequency && (
+                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border-2 border-green-200 dark:border-green-700">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Check className="w-5 h-5 text-green-600" />
+                              <div>
+                                <div className="font-semibold text-green-700 dark:text-green-300">
+                                  {selectedRecurringFrequency === 'bi_weekly' ? 'Bi-Weekly' : 
+                                   selectedRecurringFrequency === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Service
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Starts after your initial deep clean
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xl font-bold text-green-600">
+                                ${Math.round(pricing.finalPrice * 0.5)}
+                              </div>
+                              <div className="text-xs text-muted-foreground line-through">
+                                ${Math.round(pricing.finalPrice)}
+                              </div>
+                              <div className="text-xs font-medium text-green-600">
+                                First month
+                              </div>
+                            </div>
+                          </div>
+                          <div className="pt-2 border-t border-green-200 dark:border-green-700">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">Your Total Order</span>
+                              <span className="text-xl font-bold">
+                                ${Math.round(pricing.finalPrice + (pricing.finalPrice * 0.5))}
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Deep clean + First month recurring (50% off)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -242,9 +328,45 @@ export default function BookingSummary() {
                   </p>
                 </div>
 
+                {selectedRecurringFrequency && (
+                  <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-5 h-5 text-green-600" />
+                        <span className="font-semibold text-green-700 dark:text-green-300">
+                          {selectedRecurringFrequency === 'bi_weekly' ? 'Bi-Weekly' : 
+                           selectedRecurringFrequency === 'weekly' ? 'Weekly' : 'Monthly'} Service Added
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveRecurring}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-3 gap-4 mb-6">
                   {/* Weekly Option */}
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-200 dark:border-green-700 hover:border-green-400 transition-colors cursor-pointer">
+                  <div 
+                    onClick={() => handleRecurringSelect('weekly')}
+                    className={`bg-white dark:bg-gray-900 p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                      selectedRecurringFrequency === 'weekly' 
+                        ? 'border-green-500 shadow-lg ring-2 ring-green-500 ring-offset-2' 
+                        : 'border-green-200 dark:border-green-700 hover:border-green-400'
+                    }`}
+                  >
+                    {selectedRecurringFrequency === 'weekly' && (
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-green-600 text-white rounded-full p-1">
+                          <Check className="w-4 h-4" />
+                        </div>
+                      </div>
+                    )}
                     <div className="text-center">
                       <div className="text-sm font-medium text-green-600 mb-2">WEEKLY</div>
                       <div className="text-3xl font-bold mb-1">
@@ -266,12 +388,26 @@ export default function BookingSummary() {
                   </div>
 
                   {/* Bi-Weekly Option */}
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-300 dark:border-green-600 hover:border-green-500 transition-colors cursor-pointer relative">
+                  <div 
+                    onClick={() => handleRecurringSelect('bi_weekly')}
+                    className={`bg-white dark:bg-gray-900 p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                      selectedRecurringFrequency === 'bi_weekly'
+                        ? 'border-green-500 shadow-lg ring-2 ring-green-500 ring-offset-2'
+                        : 'border-green-300 dark:border-green-600 hover:border-green-500'
+                    }`}
+                  >
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                       <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold">
                         MOST POPULAR
                       </span>
                     </div>
+                    {selectedRecurringFrequency === 'bi_weekly' && (
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-green-600 text-white rounded-full p-1">
+                          <Check className="w-4 h-4" />
+                        </div>
+                      </div>
+                    )}
                     <div className="text-center">
                       <div className="text-sm font-medium text-green-600 mb-2">BI-WEEKLY</div>
                       <div className="text-3xl font-bold mb-1">
@@ -293,7 +429,21 @@ export default function BookingSummary() {
                   </div>
 
                   {/* Monthly Option */}
-                  <div className="bg-white dark:bg-gray-900 p-5 rounded-xl border-2 border-green-200 dark:border-green-700 hover:border-green-400 transition-colors cursor-pointer">
+                  <div 
+                    onClick={() => handleRecurringSelect('monthly')}
+                    className={`bg-white dark:bg-gray-900 p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                      selectedRecurringFrequency === 'monthly'
+                        ? 'border-green-500 shadow-lg ring-2 ring-green-500 ring-offset-2'
+                        : 'border-green-200 dark:border-green-700 hover:border-green-400'
+                    }`}
+                  >
+                    {selectedRecurringFrequency === 'monthly' && (
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-green-600 text-white rounded-full p-1">
+                          <Check className="w-4 h-4" />
+                        </div>
+                      </div>
+                    )}
                     <div className="text-center">
                       <div className="text-sm font-medium text-green-600 mb-2">MONTHLY</div>
                       <div className="text-3xl font-bold mb-1">
@@ -346,7 +496,14 @@ export default function BookingSummary() {
                     $49
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Total: ${Math.round(pricing.finalPrice)} • Balance after service
+                    {selectedRecurringFrequency ? (
+                      <>
+                        Order Total: ${Math.round(pricing.finalPrice + (pricing.finalPrice * 0.5))}
+                        <span className="block">Deep clean + Recurring service</span>
+                      </>
+                    ) : (
+                      <>Total: ${Math.round(pricing.finalPrice)} • Balance after service</>
+                    )}
                   </div>
                 </div>
                 <Button 
