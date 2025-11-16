@@ -18,6 +18,26 @@ import { Loader2, TestTube } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 import { BookingCountdown } from '@/components/booking/BookingCountdown';
 
+// Helper function to calculate recurring pricing with 50% off first month
+const getRecurringMonthlyDetails = (pricePerClean: number, frequency: string) => {
+  const cleansPerMonth = {
+    'weekly': 4,
+    'bi_weekly': 2,
+    'monthly': 1
+  }[frequency] || 1;
+  
+  const monthlyTotal = pricePerClean * cleansPerMonth;
+  const firstMonthWithDiscount = monthlyTotal * 0.5;
+  const pricePerCleanDiscounted = firstMonthWithDiscount / cleansPerMonth;
+  
+  return {
+    cleansPerMonth,
+    monthlyTotal,
+    firstMonthWithDiscount,
+    pricePerCleanDiscounted
+  };
+};
+
 export default function BookingCheckout() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData, pricing, depositAmount, clearBookingData } = useBooking();
@@ -187,9 +207,17 @@ export default function BookingCheckout() {
             time_slot: bookingData.timeSlot,
             est_price: pricing.finalPrice,
             deposit_amount: depositAmount,
-            balance_due: pricing.finalPrice + 
-              (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0) - 
-              depositAmount,
+            balance_due: (() => {
+              let balance = pricing.finalPrice - depositAmount;
+              if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
+                const recurringDetails = getRecurringMonthlyDetails(
+                  pricing.finalPrice,
+                  bookingData.recurringStartDate
+                );
+                balance += recurringDetails.firstMonthWithDiscount;
+              }
+              return balance;
+            })(),
             status: 'pending',
             zip_code: bookingData.zipCode,
             special_instructions: bookingData.specialInstructions,
@@ -208,8 +236,23 @@ export default function BookingCheckout() {
               balanceDue: pricing.finalPrice - depositAmount,
               recurringServiceAdded: bookingData.upgradedToRecurring || false,
               recurringFrequency: bookingData.recurringStartDate,
-              recurringFirstMonthPrice: bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0,
-              orderTotal: pricing.finalPrice + (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0),
+              ...(bookingData.upgradedToRecurring && bookingData.recurringStartDate ? {
+                recurringDetails: getRecurringMonthlyDetails(
+                  pricing.finalPrice,
+                  bookingData.recurringStartDate
+                )
+              } : {}),
+              orderTotal: (() => {
+                let total = pricing.finalPrice;
+                if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
+                  const recurringDetails = getRecurringMonthlyDetails(
+                    pricing.finalPrice,
+                    bookingData.recurringStartDate
+                  );
+                  total += recurringDetails.firstMonthWithDiscount;
+                }
+                return total;
+              })()
             },
           })
           .select()
@@ -640,34 +683,69 @@ export default function BookingCheckout() {
                     <span>${pricing.finalPrice.toFixed(2)}</span>
                   </div>
                   
-                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (
-                    <>
-                      <Separator className="my-3" />
-                      <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                            {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
-                             bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Service
-                          </span>
-                          <Badge className="bg-green-600">50% OFF</Badge>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">First month (50% off)</span>
-                          <div className="text-right">
-                            <span className="font-semibold text-green-600">
-                              ${(pricing.finalPrice * 0.5).toFixed(2)}
+                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (() => {
+                    const recurringDetails = getRecurringMonthlyDetails(
+                      pricing.finalPrice, 
+                      bookingData.recurringStartDate
+                    );
+                    
+                    return (
+                      <>
+                        <Separator className="my-3" />
+                        <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                              {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
+                               bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Service
                             </span>
-                            <span className="text-xs text-muted-foreground line-through ml-2">
-                              ${pricing.finalPrice.toFixed(2)}
-                            </span>
+                            <Badge className="bg-green-600">50% OFF 1ST MONTH</Badge>
                           </div>
+                          
+                          {/* Show per-clean breakdown */}
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between text-muted-foreground">
+                              <span>Regular price per clean:</span>
+                              <span>${pricing.finalPrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-muted-foreground">
+                              <span>Cleanings per month:</span>
+                              <span>{recurringDetails.cleansPerMonth}x</span>
+                            </div>
+                            <div className="flex justify-between font-medium">
+                              <span>Regular monthly total:</span>
+                              <span className="line-through">${recurringDetails.monthlyTotal.toFixed(2)}</span>
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          {/* First month pricing */}
+                          <div className="bg-white dark:bg-green-900/30 p-3 rounded-md">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="text-sm font-semibold text-green-700 dark:text-green-300">
+                                  First Month Total (50% OFF)
+                                </span>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  ${recurringDetails.pricePerCleanDiscounted.toFixed(2)}/clean × {recurringDetails.cleansPerMonth}
+                                </p>
+                              </div>
+                              <span className="text-xl font-bold text-green-600">
+                                ${recurringDetails.firstMonthWithDiscount.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-muted-foreground">
+                            🎁 Recurring service starts after your initial deep clean
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            💡 Regular pricing (${recurringDetails.monthlyTotal.toFixed(2)}/month) applies after first month
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Starts after your initial deep clean
-                        </p>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    );
+                  })()}
                   
                   {availableCredits > 0 && applyCredits && (
                     <div className="flex justify-between text-sm text-primary font-medium">
@@ -680,10 +758,19 @@ export default function BookingCheckout() {
                   
                   <div className="flex justify-between font-bold text-lg">
                     <span>Order Total</span>
-                    <span>${(
-                      pricing.finalPrice + 
-                      (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0)
-                    ).toFixed(2)}</span>
+                    <span>${(() => {
+                      let total = pricing.finalPrice;
+                      
+                      if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
+                        const recurringDetails = getRecurringMonthlyDetails(
+                          pricing.finalPrice,
+                          bookingData.recurringStartDate
+                        );
+                        total += recurringDetails.firstMonthWithDiscount;
+                      }
+                      
+                      return total.toFixed(2);
+                    })()}</span>
                   </div>
                   
                   <div className="bg-primary/10 p-3 rounded-lg mt-2">
@@ -699,11 +786,19 @@ export default function BookingCheckout() {
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Remaining ${(
-                        pricing.finalPrice + 
-                        (bookingData.upgradedToRecurring ? pricing.finalPrice * 0.5 : 0) - 
-                        depositAmount
-                      ).toFixed(2)} due after service
+                      Remaining ${(() => {
+                        let remaining = pricing.finalPrice - depositAmount;
+                        
+                        if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
+                          const recurringDetails = getRecurringMonthlyDetails(
+                            pricing.finalPrice,
+                            bookingData.recurringStartDate
+                          );
+                          remaining += recurringDetails.firstMonthWithDiscount;
+                        }
+                        
+                        return remaining.toFixed(2);
+                      })()} due after service
                     </p>
                   </div>
                 </div>
