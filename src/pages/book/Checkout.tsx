@@ -29,7 +29,7 @@ export default function BookingCheckout() {
   const [cardInstance, setCardInstance] = useState<any>(null);
   const [availableCredits, setAvailableCredits] = useState(0);
   const [applyCredits, setApplyCredits] = useState(false);
-  const showRecurringUpsell = true; // Always show to allow toggling
+  const [showRecurringUpsell, setShowRecurringUpsell] = useState(bookingData.frequency === 'one_time');
   const isInitializing = useRef(false);
 
   // Log test mode status on mount
@@ -100,20 +100,6 @@ export default function BookingCheckout() {
     isInitializing.current = true;
 
     try {
-      // Wait for DOM element to be ready
-      const checkElement = () => {
-        return new Promise((resolve) => {
-          const element = document.getElementById('square-card-container');
-          if (element) {
-            resolve(element);
-          } else {
-            setTimeout(() => resolve(checkElement()), 100);
-          }
-        });
-      };
-
-      await checkElement();
-
       const square = await squarePromise;
       if (!square?.payments) throw new Error('Square not loaded');
 
@@ -339,12 +325,6 @@ export default function BookingCheckout() {
         }
 
       // Step 7: Clear booking data and redirect to success page with referral incentive
-      if (!booking?.id) {
-        console.error('❌ No booking ID available for redirect');
-        toast.error('Booking created but redirect failed. Check your email for confirmation.');
-        return;
-      }
-      
       clearBookingData();
       navigate(`/book/success?booking_id=${booking.id}`);
     } catch (error: any) {
@@ -375,26 +355,21 @@ export default function BookingCheckout() {
 
   // Calculate pricing for recurring upsell
   const getRecurringUpsellPricing = () => {
-    if (!bookingData.tier || !bookingData.sqft || !bookingData.stateCode) return null;
+    if (!bookingData.tier || !bookingData.bedrooms || !bookingData.state) return null;
     
-    const oneTimeResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'one_time');
-    const biWeeklyResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'bi_weekly');
-    const monthlyResult = getTierPrice(bookingData.tier, bookingData.sqft, bookingData.stateCode, 'monthly');
+    const oneTimeResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'one_time');
+    const monthlyResult = getTierPrice(bookingData.tier, bookingData.bedrooms, bookingData.state, 'monthly');
     
     return {
       oneTimePrice: oneTimeResult.finalPrice,
-      biWeeklyPrice: biWeeklyResult.finalPrice,
       monthlyPrice: monthlyResult.finalPrice,
     };
   };
 
-  const handleRecurringSelection = (frequency: 'one_time' | 'bi_weekly' | 'monthly') => {
+  const handleRecurringSelection = (frequency: 'one_time' | 'monthly') => {
     updateBookingData({ frequency });
-    
     if (frequency === 'monthly') {
-      toast.success('✅ Monthly Membership Selected! You\'re saving on every visit.');
-    } else if (frequency === 'bi_weekly') {
-      toast.success('✅ Bi-Weekly Membership Selected! You\'re saving on every visit.');
+      setShowRecurringUpsell(false);
     }
   };
 
@@ -404,7 +379,7 @@ export default function BookingCheckout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={5} totalSteps={5} />
+      <BookingProgressBar currentStep={6} totalSteps={6} />
       
       <div className="flex-1 px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
@@ -428,14 +403,12 @@ export default function BookingCheckout() {
             </div>
           )}
 
-          {/* Recurring Upsell Card */}
-          {recurringUpsellPricing && (
+          {/* Recurring Upsell Card (for one-time bookings only) */}
+          {showRecurringUpsell && recurringUpsellPricing && (
             <RecurringUpsellCard
               oneTimePrice={recurringUpsellPricing.oneTimePrice}
-              biWeeklyPrice={recurringUpsellPricing.biWeeklyPrice}
               monthlyPrice={recurringUpsellPricing.monthlyPrice}
               onSelectOneTime={() => handleRecurringSelection('one_time')}
-              onSelectBiWeekly={() => handleRecurringSelection('bi_weekly')}
               onSelectMonthly={() => handleRecurringSelection('monthly')}
               selectedFrequency={bookingData.frequency}
             />
@@ -629,26 +602,8 @@ export default function BookingCheckout() {
                 </div>
                 
                 <div>
-                  <p className="text-sm text-muted-foreground">Service Plan</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
-                    {bookingData.frequency === 'monthly' && (
-                      <Badge className="bg-primary text-xs">Membership</Badge>
-                    )}
-                    {bookingData.frequency === 'bi_weekly' && (
-                      <Badge className="bg-blue-500 text-white text-xs">Membership</Badge>
-                    )}
-                  </div>
-                  {bookingData.frequency === 'monthly' && recurringUpsellPricing && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      💰 Saving ${recurringUpsellPricing.oneTimePrice - recurringUpsellPricing.monthlyPrice} per visit
-                    </p>
-                  )}
-                  {bookingData.frequency === 'bi_weekly' && recurringUpsellPricing && (
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                      💰 Saving ${recurringUpsellPricing.oneTimePrice - recurringUpsellPricing.biWeeklyPrice} per visit
-                    </p>
-                  )}
+                  <p className="text-sm text-muted-foreground">Frequency</p>
+                  <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
                 </div>
                 
                 <div>

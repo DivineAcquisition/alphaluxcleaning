@@ -12,7 +12,6 @@ interface RecurringServiceCardProps {
 
 export const RecurringServiceCard = ({ service, onUpdate }: RecurringServiceCardProps) => {
   const [showManageModal, setShowManageModal] = useState(false);
-  const hasCommitment = service.commitment_months && service.commitment_months > 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,14 +95,6 @@ export const RecurringServiceCard = ({ service, onUpdate }: RecurringServiceCard
                   day: 'numeric'
                 })}
               </span>
-            </div>
-          )}
-
-          {hasCommitment && service.commitment_progress && (
-            <div className="flex items-center gap-2 text-sm pt-2 border-t">
-              <Badge variant="outline" className="text-xs">
-                {service.commitment_progress.visits_completed}/{service.commitment_progress.expected_visits} visits
-              </Badge>
             </div>
           )}
         </div>

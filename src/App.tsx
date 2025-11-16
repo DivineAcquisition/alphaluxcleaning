@@ -79,6 +79,7 @@ function App() {
               {/* New booking flow */}
               <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
               <Route path="/book/tier" element={<Suspense fallback={<div>Loading...</div>}><BookTier /></Suspense>} />
+              <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
               <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
               <Route path="/book/summary" element={<Suspense fallback={<div>Loading...</div>}><BookSummary /></Suspense>} />
               <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />

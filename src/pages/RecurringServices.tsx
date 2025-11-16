@@ -8,14 +8,7 @@ import { Plus, Clock, TrendingDown } from 'lucide-react';
 import { RecurringServiceCard } from '@/components/recurring/RecurringServiceCard';
 import { RecurringSavingsDashboard } from '@/components/recurring/RecurringSavingsDashboard';
 import { RecurringServiceHistory } from '@/components/recurring/RecurringServiceHistory';
-import { MembershipProgressTracker } from '@/components/recurring/MembershipProgressTracker';
-import { UpcomingVisitFocusAreas } from '@/components/recurring/UpcomingVisitFocusAreas';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 export default function RecurringServices() {
   const navigate = useNavigate();
@@ -83,7 +76,6 @@ export default function RecurringServices() {
 
   const activeServices = services.filter(s => s.status === 'active');
   const pausedServices = services.filter(s => s.status === 'paused');
-  const committedServices = activeServices.filter(s => s.commitment_months && s.commitment_months > 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,36 +132,6 @@ export default function RecurringServices() {
 
         {/* Savings Dashboard */}
         {customerId && <RecurringSavingsDashboard customerId={customerId} />}
-
-        {/* Membership Progress Section */}
-        {committedServices.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Membership Progress</h2>
-            <div className="space-y-6">
-              {committedServices.map(service => (
-                <Collapsible key={service.id} defaultOpen={true}>
-                  <div className="space-y-4">
-                    <CollapsibleTrigger asChild>
-                      <div className="cursor-pointer">
-                        <MembershipProgressTracker service={service} />
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      {customerId && (
-                        <UpcomingVisitFocusAreas
-                          recurringServiceId={service.id}
-                          customerId={customerId}
-                          upcomingBookings={service.upcoming_bookings || []}
-                          onUpdate={fetchCustomerAndServices}
-                        />
-                      )}
-                    </CollapsibleContent>
-                  </div>
-                </Collapsible>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Active Services */}
         {activeServices.length > 0 && (
