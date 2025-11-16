@@ -76,8 +76,9 @@ const defaultBookingData: BookingData = {
   bedrooms: 2,
   bathrooms: 2,
   sqft: 0,
+  homeSizeId: '2001_2500',
   homeType: 'house',
-  serviceType: 'regular',
+  serviceType: 'deep',
   frequency: 'one_time',
   date: '',
   timeSlot: '',
@@ -179,6 +180,17 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         bookingData.frequency,
         bookingData.state
       );
+
+      // Log for debugging pricing calculations
+      console.log('Pricing calculated:', {
+        homeSizeId,
+        serviceType: bookingData.serviceType,
+        frequency: bookingData.frequency,
+        state: bookingData.state,
+        basePrice: result.basePrice,
+        discountAmount: result.discountAmount,
+        finalPrice: result.finalPrice,
+      });
 
       // Note: recurringUpgradeDiscount is NOT applied to the deep clean price
       // It only applies to the recurring service pricing shown separately in checkout

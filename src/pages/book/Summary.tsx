@@ -103,43 +103,6 @@ export default function BookingSummary() {
             </p>
           </div>
 
-          {/* Debug Display */}
-          <div className="max-w-2xl mx-auto mb-6">
-            <Card className="p-4 bg-yellow-50 border-yellow-300 dark:bg-yellow-950/20 dark:border-yellow-800">
-              <div className="text-xs font-mono space-y-1">
-                <div className="font-bold text-yellow-900 dark:text-yellow-100 mb-2">🔍 Debug Info:</div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  <div className="text-yellow-800 dark:text-yellow-200">homeSizeId:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.homeSizeId || 'not set'}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">sqft:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.sqft || 'not set'}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">bedrooms:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.bedrooms || 'not set'}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">serviceType:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.serviceType}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">frequency:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.frequency}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">state:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">{bookingData.state}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">Base Price:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">${pricing.basePrice.toFixed(2)}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">Discount:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">${pricing.discountAmount.toFixed(2)}</div>
-                  
-                  <div className="text-yellow-800 dark:text-yellow-200">Final Price:</div>
-                  <div className="font-semibold text-yellow-900 dark:text-yellow-100">${pricing.finalPrice.toFixed(2)}</div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
           {/* Single Column Layout */}
           <div className="max-w-2xl mx-auto space-y-6 mb-6">
             {/* Countdown Timer */}
