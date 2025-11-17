@@ -11,8 +11,8 @@ export function DomainRedirect({ children }: { children: React.ReactNode }) {
     const isRootPath = location.pathname === '/';
 
     if (isBookDomain && isRootPath) {
-      console.log('📍 Redirecting from book.alphaluxclean.com to /book/zip');
-      navigate('/book/zip', { replace: true });
+      console.log('📍 Redirecting from book.alphaluxclean.com to /book/home-details');
+      navigate('/book/home-details', { replace: true });
     }
   }, [location.pathname, navigate]);
 

@@ -14,7 +14,7 @@ export function Landing() {
       <Navigation />
       
       {/* Hero Section - Compelling above-the-fold content */}
-      <HeroSection bookingFlowUrl="/book/zip" />
+      <HeroSection bookingFlowUrl="/book/home-details" />
       
       {/* Quick Benefits Bar */}
       <QuickBenefitsBar />

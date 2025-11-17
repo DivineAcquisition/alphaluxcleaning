@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
@@ -16,23 +16,11 @@ import { DomainAwareHome } from '@/components/DomainAwareHome';
 import { Landing } from '@/pages/Landing';
 
 // Lazy load booking flow pages
-const BookZip = lazy(() => import('@/pages/book/Zip'));
-const BookSquareFeet = lazy(() => import('@/pages/book/SquareFeet'));
-const BookAdditionalDetails = lazy(() => import('@/pages/book/AdditionalDetails'));
-const BookHome = lazy(() => import('@/pages/book/Home'));
-const BookService = lazy(() => import('@/pages/book/Service'));
-const BookFrequency = lazy(() => import('@/pages/book/Frequency'));
-const BookSchedule = lazy(() => import('@/pages/book/Schedule'));
-const BookSummary = lazy(() => import('@/pages/book/Summary'));
-const BookCheckout = lazy(() => import('@/pages/book/Checkout'));
-const BookSuccess = lazy(() => import('@/pages/book/Success'));
-const BookConfirmation = lazy(() => import('@/pages/book/Confirmation'));
-
-// Simple booking flow (new 3-step flow)
 const SimpleHomeDetails = lazy(() => import('@/pages/simple-book/HomeDetails'));
 const SimpleChoosePlan = lazy(() => import('@/pages/simple-book/ChoosePlan'));
 const SimpleConfirmBook = lazy(() => import('@/pages/simple-book/ConfirmBook'));
 const SimpleSuccess = lazy(() => import('@/pages/simple-book/Success'));
+const BookSuccess = lazy(() => import('@/pages/book/Success')); // Keep for old bookings
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 import ConfirmationPreview from '@/pages/ConfirmationPreview';
@@ -87,20 +75,24 @@ function App() {
             <DomainRedirect>
               <TestModeBanner />
             <Routes>
-              {/* Simplified deep clean booking flow */}
-              <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
-              <Route path="/book/sqft" element={<Suspense fallback={<div>Loading...</div>}><BookSquareFeet /></Suspense>} />
-              <Route path="/book/details" element={<Suspense fallback={<div>Loading...</div>}><BookAdditionalDetails /></Suspense>} />
+              {/* New Simplified Offer-Based Booking Flow */}
+              <Route path="/book" element={<Suspense fallback={<div>Loading...</div>}><SimpleHomeDetails /></Suspense>} />
+              <Route path="/book/home-details" element={<Suspense fallback={<div>Loading...</div>}><SimpleHomeDetails /></Suspense>} />
+              <Route path="/book/choose-plan" element={<Suspense fallback={<div>Loading...</div>}><SimpleChoosePlan /></Suspense>} />
+              <Route path="/book/confirm" element={<Suspense fallback={<div>Loading...</div>}><SimpleConfirmBook /></Suspense>} />
+              <Route path="/book/success" element={<Suspense fallback={<div>Loading...</div>}><SimpleSuccess /></Suspense>} />
               
-              {/* Legacy routes - keep for backwards compatibility */}
-              <Route path="/book/home" element={<Suspense fallback={<div>Loading...</div>}><BookHome /></Suspense>} />
-              <Route path="/book/service" element={<Suspense fallback={<div>Loading...</div>}><BookService /></Suspense>} />
-              <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
-              <Route path="/book/schedule" element={<Suspense fallback={<div>Loading...</div>}><BookSchedule /></Suspense>} />
-              <Route path="/book/summary" element={<Suspense fallback={<div>Loading...</div>}><BookSummary /></Suspense>} />
-              <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
-              <Route path="/book/success" element={<Suspense fallback={<div>Loading...</div>}><BookSuccess /></Suspense>} />
-              <Route path="/book/confirmation/:bookingId" element={<Suspense fallback={<div>Loading...</div>}><BookConfirmation /></Suspense>} />
+              {/* Redirects from old booking flow to new flow */}
+              <Route path="/book/zip" element={<Navigate to="/book/home-details" replace />} />
+              <Route path="/book/sqft" element={<Navigate to="/book/home-details" replace />} />
+              <Route path="/book/home" element={<Navigate to="/book/home-details" replace />} />
+              <Route path="/book/details" element={<Navigate to="/book/home-details" replace />} />
+              <Route path="/book/service" element={<Navigate to="/book/choose-plan" replace />} />
+              <Route path="/book/frequency" element={<Navigate to="/book/choose-plan" replace />} />
+              <Route path="/book/schedule" element={<Navigate to="/book/confirm" replace />} />
+              <Route path="/book/summary" element={<Navigate to="/book/confirm" replace />} />
+              <Route path="/book/checkout" element={<Navigate to="/book/confirm" replace />} />
+              <Route path="/book/confirmation/:bookingId" element={<Navigate to="/book/success" replace />} />
               
               {/* Landing page with marketing content */}
               <Route path="/landing" element={<Landing />} />

@@ -41,7 +41,7 @@ export function QuickQuoteWidget() {
 
   const handleGetQuote = () => {
     // Navigate to new booking flow
-    navigate('/book/zip');
+    navigate('/book/home-details');
   };
 
   const isFormValid = selectedState && selectedHomeSize && selectedServiceType;
