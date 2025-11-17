@@ -176,10 +176,13 @@ export type Database = {
       bookings: {
         Row: {
           addons: Json | null
+          address_line1: string | null
+          address_line2: string | null
           arr: number | null
           at_risk: boolean | null
           attribution_method: string | null
           balance_due: number | null
+          base_price: number | null
           commitment_months: number | null
           conversion_status:
             | Database["public"]["Enums"]["conversion_status"]
@@ -193,21 +196,29 @@ export type Database = {
           est_price: number
           first_booking: boolean | null
           frequency: string
+          full_name: string | null
           ghl_contact_id: string | null
           hcp_customer_id: string | null
           hcp_job_id: string | null
+          home_size: string | null
           housecall_job_id: string | null
           id: string
+          is_recurring: boolean | null
           is_recurring_instance: boolean | null
           manage_token: string | null
           manage_token_expires_at: string | null
           marketing_opt_in: boolean | null
           membership_plan_id: string | null
           mrr: number | null
+          notes: string | null
+          offer_name: string | null
+          offer_type: string | null
           paid_at: string | null
           parent_recurring_service_id: string | null
           payment_option_id: string | null
           payment_status: string | null
+          preferred_date: string | null
+          preferred_time_block: string | null
           prepayment_discount_amount: number | null
           prepayment_discount_applied: boolean | null
           pricing_breakdown: Json | null
@@ -236,14 +247,18 @@ export type Database = {
           timezone: string | null
           updated_at: string | null
           utms: Json | null
+          visit_count: number | null
           zip_code: string | null
         }
         Insert: {
           addons?: Json | null
+          address_line1?: string | null
+          address_line2?: string | null
           arr?: number | null
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          base_price?: number | null
           commitment_months?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
@@ -257,21 +272,29 @@ export type Database = {
           est_price: number
           first_booking?: boolean | null
           frequency: string
+          full_name?: string | null
           ghl_contact_id?: string | null
           hcp_customer_id?: string | null
           hcp_job_id?: string | null
+          home_size?: string | null
           housecall_job_id?: string | null
           id?: string
+          is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
           manage_token?: string | null
           manage_token_expires_at?: string | null
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
+          notes?: string | null
+          offer_name?: string | null
+          offer_type?: string | null
           paid_at?: string | null
           parent_recurring_service_id?: string | null
           payment_option_id?: string | null
           payment_status?: string | null
+          preferred_date?: string | null
+          preferred_time_block?: string | null
           prepayment_discount_amount?: number | null
           prepayment_discount_applied?: boolean | null
           pricing_breakdown?: Json | null
@@ -300,14 +323,18 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           utms?: Json | null
+          visit_count?: number | null
           zip_code?: string | null
         }
         Update: {
           addons?: Json | null
+          address_line1?: string | null
+          address_line2?: string | null
           arr?: number | null
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          base_price?: number | null
           commitment_months?: number | null
           conversion_status?:
             | Database["public"]["Enums"]["conversion_status"]
@@ -321,21 +348,29 @@ export type Database = {
           est_price?: number
           first_booking?: boolean | null
           frequency?: string
+          full_name?: string | null
           ghl_contact_id?: string | null
           hcp_customer_id?: string | null
           hcp_job_id?: string | null
+          home_size?: string | null
           housecall_job_id?: string | null
           id?: string
+          is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
           manage_token?: string | null
           manage_token_expires_at?: string | null
           marketing_opt_in?: boolean | null
           membership_plan_id?: string | null
           mrr?: number | null
+          notes?: string | null
+          offer_name?: string | null
+          offer_type?: string | null
           paid_at?: string | null
           parent_recurring_service_id?: string | null
           payment_option_id?: string | null
           payment_status?: string | null
+          preferred_date?: string | null
+          preferred_time_block?: string | null
           prepayment_discount_amount?: number | null
           prepayment_discount_applied?: boolean | null
           pricing_breakdown?: Json | null
@@ -364,6 +399,7 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           utms?: Json | null
+          visit_count?: number | null
           zip_code?: string | null
         }
         Relationships: [
