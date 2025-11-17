@@ -84,8 +84,8 @@ export default function BookingDetails() {
         .update({
           address_line1: addressLine1,
           address_line2: addressLine2 || null,
-          preferred_date: preferredDate,
-          preferred_time_block: preferredTimeBlock,
+          service_date: preferredDate,
+          time_slot: preferredTimeBlock,
           special_instructions: notes || null,
           status: 'confirmed',
           updated_at: new Date().toISOString(),

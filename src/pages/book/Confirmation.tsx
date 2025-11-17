@@ -94,9 +94,12 @@ export default function BookingConfirmation() {
               <Check className="h-8 w-8 text-success" />
             </div>
             
-            <h1 className="text-3xl font-bold mb-2">🎉 You're booked!</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              🎉 {booking.offer_type === '90_day_plan' ? "You're in for 90 days!" : "You're booked!"}
+            </h1>
             <p className="text-muted-foreground">
-              We've received your ${booking.deposit_amount?.toFixed(2)} deposit. 
+              We've received your ${booking.deposit_amount?.toFixed(2)} deposit for your{' '}
+              <strong>{booking.offer_name || 'cleaning service'}</strong>.
               A confirmation has been sent to {customer?.email}.
             </p>
           </div>
@@ -110,34 +113,54 @@ export default function BookingConfirmation() {
                   <span className="font-mono text-xs">{booking.id.slice(0, 8)}</span>
                 </div>
                 
+                {booking.offer_name && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Plan:</span>
+                    <span className="font-medium">{booking.offer_name}</span>
+                  </div>
+                )}
+
+                {booking.visit_count && booking.visit_count > 1 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Visits:</span>
+                    <span className="font-medium">
+                      {booking.visit_count} cleanings over {booking.offer_type === '90_day_plan' ? '90 days' : 'coming months'}
+                    </span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service:</span>
+                  <span className="text-muted-foreground">Service Type:</span>
                   <span className="font-medium">
-                    {serviceTypeLabels[booking.service_type]}
+                    {booking.offer_type === '90_day_plan' 
+                      ? 'Deep Clean + Maintenance Plan'
+                      : booking.offer_type === 'tester_deep_clean'
+                        ? 'Home Reset Deep Clean (Tester)'
+                        : serviceTypeLabels[booking.service_type]
+                    }
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Frequency:</span>
+                  <span className="text-muted-foreground">Service Date:</span>
                   <span className="font-medium">
-                    {frequencyLabels[booking.frequency]}
+                    {booking.service_date ? (
+                      new Date(booking.service_date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })
+                    ) : (
+                      <span className="text-muted-foreground">To be scheduled</span>
+                    )}
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Date:</span>
+                  <span className="text-muted-foreground">Time Window:</span>
                   <span className="font-medium">
-                    {new Date(booking.service_date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {booking.time_slot || <span className="text-muted-foreground">To be scheduled</span>}
                   </span>
-                </div>
-                
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Time:</span>
-                  <span className="font-medium">{booking.time_slot}</span>
                 </div>
                 
                 <div className="flex justify-between">
@@ -153,21 +176,27 @@ export default function BookingConfirmation() {
                 <Separator />
                 
                 <div className="flex justify-between font-bold text-base">
-                  <span>Total Service Cost:</span>
+                  <span>Total Plan Cost:</span>
                   <span>${booking.est_price?.toFixed(2)}</span>
                 </div>
                 
-                <div className="flex justify-between text-success">
-                  <span>Paid Today:</span>
-                  <Badge className="bg-success text-success-foreground">
+                <div className="flex justify-between text-success text-sm">
+                  <span>✓ Deposit Paid Today:</span>
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                     ${booking.deposit_amount?.toFixed(2)}
                   </Badge>
                 </div>
                 
-                <div className="flex justify-between">
-                  <span>Balance Due After Service:</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Balance Due After Service:</span>
                   <span className="font-medium">${balanceDue.toFixed(2)}</span>
                 </div>
+
+                {booking.visit_count > 1 && (
+                  <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded">
+                    💡 Remaining balance will be charged after each service
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -183,18 +212,37 @@ export default function BookingConfirmation() {
           <div className="space-y-4">
             <h3 className="font-bold">What happens next?</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex gap-3">
-                <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <span>We'll send you a reminder 24 hours before your appointment</span>
-              </li>
-              <li className="flex gap-3">
-                <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <span>Our team will arrive during your selected time window</span>
-              </li>
-              <li className="flex gap-3">
-                <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <span>Pay the remaining balance after service completion</span>
-              </li>
+              {booking.offer_type === '90_day_plan' ? (
+                <>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>We'll call you within 24 hours to schedule your first deep clean</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>After your deep clean, we'll schedule your 3 maintenance visits over the next 90 days</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>Remaining balance charged after each service completion</span>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>We'll call you within 24 hours to confirm your appointment</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>You'll receive a reminder 24 hours before service</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                    <span>Pay remaining balance after service completion</span>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
           
