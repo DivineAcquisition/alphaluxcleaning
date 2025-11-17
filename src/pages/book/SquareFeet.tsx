@@ -73,20 +73,6 @@ export default function BookingSquareFeet() {
                   <div className="text-sm text-muted-foreground">
                     {range.bedroomRange}
                   </div>
-                  
-                  {pricing && selectedId === range.id && (
-                    <div className="pt-3 border-t">
-                      <div className="text-xs text-muted-foreground mb-1">
-                        Deep Clean Price
-                      </div>
-                      <div className="text-3xl font-bold text-primary">
-                        ${pricing.finalPrice.toFixed(0)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        25% deposit: ${(pricing.finalPrice * 0.25).toFixed(0)}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </Card>
             );
