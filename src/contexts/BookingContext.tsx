@@ -19,30 +19,33 @@ interface BookingData {
   city: string;
   state: string;
   
-  // Step 2: Home Details
+  // Step 2: Home Size (Square Feet)
   bedrooms: number;
   bathrooms: number;
   sqft: number;
   homeSizeId?: string;
   homeType: 'house' | 'apartment' | 'condo';
   
-  // Step 3: Service Type
+  // Step 3: Service Type (locked to 'deep')
   serviceType: 'regular' | 'deep' | 'move_in_out';
   
-  // Step 4: Frequency
+  // Step 4: Frequency (locked to 'one_time')
   frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
   
-  // Step 5: Schedule
+  // Step 5: Schedule (collected post-payment)
   date: string;
   timeSlot: string;
-  bookingExpiresAt?: number; // Timestamp when booking expires (15 min after time slot selection)
+  bookingExpiresAt?: number;
   
-  // Step 6: Summary & Upsell
+  // Post-payment tracking
+  additionalDetailsCollected?: boolean;
+  
+  // Summary & Upsell (not used in simplified flow)
   recurringStartDate?: string;
   upgradedToRecurring?: boolean;
   recurringUpgradeDiscount?: number;
   
-  // Step 7: Contact & Payment
+  // Contact & Payment
   contactInfo: ContactInfo;
   specialInstructions: string;
   joinMembership: boolean;

@@ -14,8 +14,10 @@ import { DomainRedirect } from '@/components/DomainRedirect';
 import { DomainAwareHome } from '@/components/DomainAwareHome';
 import { Landing } from '@/pages/Landing';
 
-// Lazy load new booking flow pages
+// Lazy load booking flow pages
 const BookZip = lazy(() => import('@/pages/book/Zip'));
+const BookSquareFeet = lazy(() => import('@/pages/book/SquareFeet'));
+const BookAdditionalDetails = lazy(() => import('@/pages/book/AdditionalDetails'));
 const BookHome = lazy(() => import('@/pages/book/Home'));
 const BookService = lazy(() => import('@/pages/book/Service'));
 const BookFrequency = lazy(() => import('@/pages/book/Frequency'));
@@ -77,8 +79,12 @@ function App() {
             <DomainRedirect>
               <TestModeBanner />
             <Routes>
-              {/* New booking flow */}
+              {/* Simplified deep clean booking flow */}
               <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
+              <Route path="/book/sqft" element={<Suspense fallback={<div>Loading...</div>}><BookSquareFeet /></Suspense>} />
+              <Route path="/book/details" element={<Suspense fallback={<div>Loading...</div>}><BookAdditionalDetails /></Suspense>} />
+              
+              {/* Legacy routes - keep for backwards compatibility */}
               <Route path="/book/home" element={<Suspense fallback={<div>Loading...</div>}><BookHome /></Suspense>} />
               <Route path="/book/service" element={<Suspense fallback={<div>Loading...</div>}><BookService /></Suspense>} />
               <Route path="/book/frequency" element={<Suspense fallback={<div>Loading...</div>}><BookFrequency /></Suspense>} />
