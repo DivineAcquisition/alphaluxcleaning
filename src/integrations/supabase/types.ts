@@ -188,6 +188,7 @@ export type Database = {
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at: string
+          created_by_user_id: string | null
           customer_id: string
           deep_clean_last_answer: string | null
           deep_clean_recommendation_shown: boolean | null
@@ -234,6 +235,7 @@ export type Database = {
           service_date: string | null
           service_time_window: string | null
           service_type: string
+          source: string | null
           source_channel: string | null
           special_instructions: string | null
           sqft_or_bedrooms: string
@@ -264,6 +266,7 @@ export type Database = {
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at?: string
+          created_by_user_id?: string | null
           customer_id: string
           deep_clean_last_answer?: string | null
           deep_clean_recommendation_shown?: boolean | null
@@ -310,6 +313,7 @@ export type Database = {
           service_date?: string | null
           service_time_window?: string | null
           service_type: string
+          source?: string | null
           source_channel?: string | null
           special_instructions?: string | null
           sqft_or_bedrooms: string
@@ -340,6 +344,7 @@ export type Database = {
             | Database["public"]["Enums"]["conversion_status"]
             | null
           created_at?: string
+          created_by_user_id?: string | null
           customer_id?: string
           deep_clean_last_answer?: string | null
           deep_clean_recommendation_shown?: boolean | null
@@ -386,6 +391,7 @@ export type Database = {
           service_date?: string | null
           service_time_window?: string | null
           service_type?: string
+          source?: string | null
           source_channel?: string | null
           special_instructions?: string | null
           sqft_or_bedrooms?: string

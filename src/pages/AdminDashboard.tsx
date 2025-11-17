@@ -107,6 +107,10 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={() => window.location.href = '/admin/csr-booking'}>
+              <Phone className="w-4 h-4 mr-2" />
+              CSR Booking
+            </Button>
             <Button variant="outline" size="sm" onClick={refetch}>
               <Clock className="w-4 h-4 mr-2" />
               Refresh
