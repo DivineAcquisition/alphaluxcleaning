@@ -60,6 +60,7 @@ import HCPTestSuite from '@/pages/admin/HCPTestSuite';
 import PromoCodes from '@/pages/admin/PromoCodes';
 
 import NotFound from '@/pages/NotFound';
+import React from 'react';
 
 const queryClient = new QueryClient();
 
@@ -135,10 +136,24 @@ function App() {
           <Route path="/admin/integrations/housecall-pro/logs" element={<HousecallProLogs />} />
           <Route path="/admin/integrations/housecall-pro/test" element={<HCPTestSuite />} />
           <Route path="/admin/promos" element={<PromoCodes />} />
-            <Route path="/admin" element={
+          <Route path="/admin/csr-booking" element={
+            <AdminRoute requiredRole="ops">
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/admin/CSRBookingForm')))}
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
+            } />
+            
+            {/* Payment Link Public Page */}
+            <Route path="/pay/:bookingId" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/PaymentLinkPage')))}
+              </Suspense>
             } />
             
             {/* Dev Test Routes */}

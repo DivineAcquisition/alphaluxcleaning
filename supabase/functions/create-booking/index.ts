@@ -114,6 +114,8 @@ serve(async (req) => {
         frequency: bookingData.frequency || 'one_time',
         sqft_or_bedrooms: bookingData.homeSize || 'unknown',
         est_price: totalPrice,
+        source: bookingData.source || 'customer_web', // Track booking source
+        created_by_user_id: bookingData.created_by_user_id || null, // Track admin user if CSR booking
         service_date: bookingData.serviceDate || null,
         time_slot: bookingData.serviceTime || null,
         zip_code: bookingData.zipCode || bookingData.address?.zipCode || '',

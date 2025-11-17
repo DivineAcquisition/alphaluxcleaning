@@ -400,7 +400,10 @@ serve(async (req) => {
     // Wrap in STANDARDIZED format matching test webhooks
     const webhookPayload = {
       type: webhookType,
-      data: webhookDataPayload,
+      data: {
+        ...webhookDataPayload,
+        booking_source: bookingData.source || 'customer_web', // NEW: Track booking origin (customer_web, csr_phone, admin_manual)
+      },
       timestamp: new Date().toISOString(),
       source: "alphalux_booking_system"
     };
