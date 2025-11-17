@@ -10,9 +10,11 @@ export interface HomeSizeRange {
   maxSqft: number;
   bedroomRange: string;
   requiresEstimate?: boolean;
-  // Base prices for each service type (before discount)
-  regularPrice: number;
-  deepPrice: number;
+  // Base prices for each service type
+  deepPrice: number;           // Tester Deep Clean price
+  maintenancePrice: number;    // Standard maintenance clean price
+  ninetyDayPrice: number;      // Pre-calculated 90-Day Plan price (deep + 3 maintenance with bundle discount)
+  regularPrice: number;        // Deprecated - kept for compatibility
   moveInOutPrice: number;
 }
 
@@ -66,93 +68,87 @@ export const DEPOSIT_PERCENTAGE = 0.25; // 25% deposit required
 export const HOME_SIZE_RANGES: HomeSizeRange[] = [
   {
     id: '1000_1500',
-    label: '1,000 – 1,500 sq ft',
+    label: '1,000 – 1,499 sq ft',
     minSqft: 1000,
-    maxSqft: 1500,
+    maxSqft: 1499,
     bedroomRange: '1–2 BR condos/homes',
-    regularPrice: 165,
-    deepPrice: 270,
+    deepPrice: 250,              // Tester price
+    maintenancePrice: 170,       // Regular maintenance
+    ninetyDayPrice: 699,         // Bundle: deep $250 + 3×$170 = $760, with ~8% discount
+    regularPrice: 170,
     moveInOutPrice: 315
   },
   {
     id: '1501_2000',
-    label: '1,501 – 2,000 sq ft',
-    minSqft: 1501,
-    maxSqft: 2000,
+    label: '1,500 – 1,999 sq ft',
+    minSqft: 1500,
+    maxSqft: 1999,
     bedroomRange: '2–3 BR homes',
-    regularPrice: 210,
-    deepPrice: 330,
+    deepPrice: 300,              // +$50 from previous tier
+    maintenancePrice: 195,
+    ninetyDayPrice: 799,         // Bundle: deep $300 + 3×$195 = $885, with ~10% discount
+    regularPrice: 195,
     moveInOutPrice: 385
   },
   {
     id: '2001_2500',
-    label: '2,001 – 2,500 sq ft',
-    minSqft: 2001,
-    maxSqft: 2500,
+    label: '2,000 – 2,499 sq ft',
+    minSqft: 2000,
+    maxSqft: 2499,
     bedroomRange: '3 BR homes',
-    regularPrice: 255,
-    deepPrice: 390,
+    deepPrice: 350,              // +$50 from previous tier
+    maintenancePrice: 220,
+    ninetyDayPrice: 949,         // Bundle: deep $350 + 3×$220 = $1,010, with ~6% discount
+    regularPrice: 220,
     moveInOutPrice: 455
   },
   {
     id: '2501_3000',
-    label: '2,501 – 3,000 sq ft',
-    minSqft: 2501,
-    maxSqft: 3000,
+    label: '2,500 – 2,999 sq ft',
+    minSqft: 2500,
+    maxSqft: 2999,
     bedroomRange: '3–4 BR homes',
-    regularPrice: 300,
-    deepPrice: 450,
+    deepPrice: 400,              // +$50 from previous tier
+    maintenancePrice: 250,
+    ninetyDayPrice: 1099,        // Bundle: deep $400 + 3×$250 = $1,150, with ~4% discount
+    regularPrice: 250,
     moveInOutPrice: 525
   },
   {
-    id: '3001_3500',
-    label: '3,001 – 3,500 sq ft',
-    minSqft: 3001,
-    maxSqft: 3500,
+    id: '3001_4000',
+    label: '3,000 – 3,999 sq ft',
+    minSqft: 3000,
+    maxSqft: 3999,
     bedroomRange: '4 BR homes',
-    regularPrice: 345,
-    deepPrice: 510,
+    deepPrice: 450,              // +$50 from previous tier
+    maintenancePrice: 280,
+    ninetyDayPrice: 1249,        // Bundle: deep $450 + 3×$280 = $1,290, with ~3% discount
+    regularPrice: 280,
     moveInOutPrice: 595
   },
   {
-    id: '3501_4000',
-    label: '3,501 – 4,000 sq ft',
-    minSqft: 3501,
-    maxSqft: 4000,
+    id: '4001_5000',
+    label: '4,000 – 4,999 sq ft',
+    minSqft: 4000,
+    maxSqft: 4999,
     bedroomRange: '4–5 BR homes',
-    regularPrice: 390,
-    deepPrice: 570,
+    deepPrice: 500,              // +$50 from previous tier
+    maintenancePrice: 310,
+    ninetyDayPrice: 1399,        // Bundle: deep $500 + 3×$310 = $1,430, with ~2% discount
+    regularPrice: 310,
     moveInOutPrice: 665
   },
   {
-    id: '4001_4500',
-    label: '4,001 – 4,500 sq ft',
-    minSqft: 4001,
-    maxSqft: 4500,
-    bedroomRange: '5 BR homes',
-    regularPrice: 435,
-    deepPrice: 630,
-    moveInOutPrice: 735
-  },
-  {
-    id: '4501_5000',
-    label: '4,501 – 5,000 sq ft',
-    minSqft: 4501,
-    maxSqft: 5000,
-    bedroomRange: '5+ BR homes',
-    regularPrice: 480,
-    deepPrice: 690,
-    moveInOutPrice: 805
-  },
-  {
-    id: '5000_plus',
+    id: '5001_plus',
     label: '5,000+ sq ft',
     minSqft: 5000,
     maxSqft: 999999,
     bedroomRange: 'Custom Quote Required - Call (972) 559-0223',
     requiresEstimate: true,
+    deepPrice: 550,              // Starting point for custom quotes
+    maintenancePrice: 350,       // Starting point
+    ninetyDayPrice: 1599,        // Starting point: deep $550 + 3×$350 = $1,600
     regularPrice: 0,
-    deepPrice: 0,
     moveInOutPrice: 0
   }
 ];
