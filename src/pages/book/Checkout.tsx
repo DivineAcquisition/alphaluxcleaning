@@ -1,84 +1,37 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
-import { Loader2, TestTube } from 'lucide-react';
+import { Loader2, Shield, CreditCard, Lock } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
-import { BookingCountdown } from '@/components/booking/BookingCountdown';
-import { calculateNewPricing } from '@/lib/new-pricing-system';
-
-// Helper function to calculate recurring pricing with 50% off first month
-const getRecurringMonthlyDetails = (pricePerClean: number, frequency: string) => {
-  const cleansPerMonth = {
-    'weekly': 4,
-    'bi_weekly': 2,
-    'monthly': 1
-  }[frequency] || 1;
-  
-  const monthlyTotal = pricePerClean * cleansPerMonth;
-  const firstMonthWithDiscount = monthlyTotal * 0.5;
-  const pricePerCleanDiscounted = firstMonthWithDiscount / cleansPerMonth;
-  
-  return {
-    cleansPerMonth,
-    monthlyTotal,
-    firstMonthWithDiscount,
-    pricePerCleanDiscounted
-  };
-};
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
-  const { bookingData, updateBookingData, pricing, depositAmount, clearBookingData } = useBooking();
+  const { bookingData, pricing, depositAmount } = useBooking();
   const { isTestMode } = useTestMode();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCardReady, setIsCardReady] = useState(false);
   const [cardInstance, setCardInstance] = useState<any>(null);
-  const [availableCredits, setAvailableCredits] = useState(0);
-  const [applyCredits, setApplyCredits] = useState(false);
   const isInitializing = useRef(false);
 
-  // Log test mode status on mount
   useEffect(() => {
-    const testModeStatus = localStorage.getItem('booking_test_mode');
-    console.log('🧪 Test mode check:', { 
-      isTestMode, 
-      localStorage: testModeStatus 
-    });
-    
-    if (isTestMode) {
-      console.warn('⚠️ TEST MODE ACTIVE - PAYMENTS WILL BE BYPASSED');
-    }
-  }, [isTestMode]);
-
-  useEffect(() => {
-    if (!bookingData.zipCode || !bookingData.date) {
+    if (!bookingData.zipCode || !pricing) {
       navigate('/book/zip');
     }
-  }, [bookingData, navigate]);
+  }, [bookingData, pricing, navigate]);
 
   useEffect(() => {
-    fetchAvailableCredits();
-  }, [bookingData.contactInfo.email]);
-
-  useEffect(() => {
-    // Skip Square initialization in test mode
     if (!isTestMode) {
       initializeSquare();
     } else {
-      setIsCardReady(true); // Card is "ready" in test mode
+      setIsCardReady(true);
     }
     return () => {
       if (cardInstance) {
@@ -86,32 +39,6 @@ export default function BookingCheckout() {
       }
     };
   }, [isTestMode]);
-
-  const fetchAvailableCredits = async () => {
-    if (!bookingData.contactInfo.email) return;
-
-    try {
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', bookingData.contactInfo.email)
-        .maybeSingle();
-
-      if (!customer) return;
-
-      const { data: credits } = await supabase
-        .from('referral_rewards')
-        .select('amount_cents')
-        .eq('customer_id', customer.id)
-        .eq('status', 'APPLIED');
-
-      const total = credits?.reduce((sum, c) => sum + c.amount_cents, 0) || 0;
-      setAvailableCredits(total / 100);
-      if (total > 0) setApplyCredits(true);
-    } catch (error) {
-      console.error('Error fetching credits:', error);
-    }
-  };
 
   const initializeSquare = async () => {
     if (isInitializing.current) return;
@@ -137,11 +64,10 @@ export default function BookingCheckout() {
 
   const handlePayment = async () => {
     if (!pricing) {
-      toast.error('Payment form not ready');
+      toast.error('Payment information not available');
       return;
     }
 
-    // In test mode, skip card validation
     if (!isTestMode && !cardInstance) {
       toast.error('Payment form not ready');
       return;
@@ -150,238 +76,111 @@ export default function BookingCheckout() {
     setIsProcessing(true);
 
     try {
-      // Step 1: Tokenize card (skip in test mode)
-      let token = 'test_token';
-      let details: any = { verification_token: 'test_verification' };
-      
+      let token = null;
+      let details = null;
+
       if (!isTestMode) {
-        const tokenResult = await cardInstance.tokenize();
-        if (tokenResult.status === 'OK') {
-          token = tokenResult.token;
-          details = tokenResult.details;
+        const result = await cardInstance.tokenize();
+        if (result.status === 'OK') {
+          token = result.token;
+          details = result.details;
         } else {
-          throw new Error(tokenResult.errors?.[0]?.message || 'Card tokenization failed');
+          throw new Error(result.errors?.[0]?.message || 'Card tokenization failed');
         }
       }
 
-        // Step 2: Create customer in Supabase
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .insert({
-            email: bookingData.contactInfo.email,
-            name: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-            first_name: bookingData.contactInfo.firstName,
-            last_name: bookingData.contactInfo.lastName,
-            phone: bookingData.contactInfo.phone,
-            address_line1: bookingData.contactInfo.address1,
-            address_line2: bookingData.contactInfo.address2,
-            city: bookingData.contactInfo.city,
-            state: bookingData.contactInfo.state,
-            postal_code: bookingData.contactInfo.zip,
-          })
-          .select()
-          .single();
+      // Create customer
+      const { data: customer, error: customerError } = await supabase
+        .from('customers')
+        .upsert({
+          email: bookingData.contactInfo.email,
+          first_name: bookingData.contactInfo.firstName,
+          last_name: bookingData.contactInfo.lastName,
+          phone: bookingData.contactInfo.phone,
+          address_line1: bookingData.contactInfo.address1,
+          address_line2: bookingData.contactInfo.address2,
+          city: bookingData.contactInfo.city || bookingData.city,
+          state: bookingData.contactInfo.state || bookingData.state,
+          postal_code: bookingData.contactInfo.zip || bookingData.zipCode,
+        }, { onConflict: 'email' })
+        .select()
+        .single();
 
-        if (customerError && customerError.code !== '23505') {
-          throw customerError;
-        }
+      if (customerError) throw customerError;
 
-        // If customer exists, fetch it
-        let customerId = customerData?.id;
-        if (!customerId) {
-          const { data: existingCustomer } = await supabase
-            .from('customers')
-            .select('id')
-            .eq('email', bookingData.contactInfo.email)
-            .single();
-          customerId = existingCustomer?.id;
-        }
+      // Create booking
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          customer_id: customer.id,
+          service_type: bookingData.serviceType,
+          frequency: bookingData.frequency,
+          sqft_or_bedrooms: bookingData.homeSizeId || `${bookingData.bedrooms}bed`,
+          est_price: pricing.finalPrice,
+          deposit_amount: depositAmount,
+          balance_due: pricing.finalPrice - depositAmount,
+          zip_code: bookingData.zipCode,
+          special_instructions: bookingData.specialInstructions,
+          status: 'pending',
+          payment_status: 'pending',
+          pricing_breakdown: {
+            basePrice: pricing.basePrice,
+            discountAmount: pricing.discountAmount,
+            finalPrice: pricing.finalPrice,
+            depositAmount: depositAmount,
+            balanceDue: pricing.finalPrice - depositAmount,
+          },
+        })
+        .select()
+        .single();
 
-        // Step 3: Create booking
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .insert({
-            customer_id: customerId,
-            service_type: bookingData.serviceType,
-            frequency: bookingData.frequency,
-            service_date: bookingData.date,
-            time_slot: bookingData.timeSlot,
-            est_price: pricing.finalPrice,
-            deposit_amount: depositAmount,
-            balance_due: (() => {
-              let balance = pricing.finalPrice - depositAmount;
-              if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
-                const recurringDetails = getRecurringMonthlyDetails(
-                  pricing.finalPrice,
-                  bookingData.recurringStartDate
-                );
-                balance += recurringDetails.firstMonthWithDiscount;
-              }
-              return balance;
-            })(),
-            status: 'pending',
-            zip_code: bookingData.zipCode,
-            special_instructions: bookingData.specialInstructions,
-            sqft_or_bedrooms: `${bookingData.bedrooms}BR/${bookingData.bathrooms}BA`,
-            property_details: {
-              bedrooms: bookingData.bedrooms,
-              bathrooms: bookingData.bathrooms,
-              sqft: bookingData.sqft,
-              homeType: bookingData.homeType,
-            },
-            pricing_breakdown: {
-              basePrice: pricing.basePrice,
-              discountAmount: pricing.discountAmount,
-              finalPrice: pricing.finalPrice,
-              depositAmount: depositAmount,
-              balanceDue: pricing.finalPrice - depositAmount,
-              recurringServiceAdded: bookingData.upgradedToRecurring || false,
-              recurringFrequency: bookingData.recurringStartDate,
-              ...(bookingData.upgradedToRecurring && bookingData.recurringStartDate ? {
-                recurringDetails: getRecurringMonthlyDetails(
-                  pricing.finalPrice,
-                  bookingData.recurringStartDate
-                )
-              } : {}),
-              orderTotal: (() => {
-                let total = pricing.finalPrice;
-                if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
-                  const recurringDetails = getRecurringMonthlyDetails(
-                    pricing.finalPrice,
-                    bookingData.recurringStartDate
-                  );
-                  total += recurringDetails.firstMonthWithDiscount;
-                }
-                return total;
-              })()
-            },
-          })
-          .select()
-          .single();
+      if (bookingError) throw bookingError;
 
-        if (bookingError) throw bookingError;
-
-        // Step 3.5: Send booking confirmed webhook
-        try {
-          console.log('📡 Sending booking confirmation webhook...');
-          await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+      // Process payment
+      let paymentData: any = null;
+      
+      if (!isTestMode) {
+        const { data, error: paymentError } = await supabase.functions.invoke(
+          'create-square-payment',
+          {
             body: {
-              booking_id: booking.id,
-              trigger_event: bookingData.upgradedToRecurring 
-                ? 'booking-confirmed-recurring'
-                : 'booking-confirmed',
-              include_upgrade_metadata: bookingData.upgradedToRecurring
-            }
-          });
-          console.log('✅ Booking confirmation webhook sent');
-        } catch (webhookError) {
-          console.error('❌ Webhook failed (non-blocking):', webhookError);
-          // Don't block booking flow if webhook fails
-        }
-
-        // Step 4: Calculate final amount with credits
-        const finalPaymentAmount = applyCredits 
-          ? Math.max(0, depositAmount - availableCredits)
-          : depositAmount;
-
-        // Step 5: Process payment via Square (skip in test mode)
-        let paymentData: any = null;
-        
-        if (!isTestMode) {
-          console.log('💳 Invoking create-square-payment...', {
-            amount: finalPaymentAmount,
-            bookingId: booking.id,
-            customerEmail: bookingData.contactInfo.email,
-            hasToken: !!token,
-            hasVerificationToken: !!details?.verification_token,
-            applyCredits,
-            creditsAmount: availableCredits
-          });
-
-          const { data, error: paymentError } = await supabase.functions.invoke(
-            'create-square-payment',
-            {
-              body: {
-                amount: finalPaymentAmount,
-                customerEmail: bookingData.contactInfo.email,
-                customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-                customerPhone: bookingData.contactInfo.phone,
-                bookingId: booking.id,
-                sourceId: token,
-                verificationToken: details?.verification_token,
-                saveCard: true,
-                applyCredits: applyCredits,
-                creditsAmount: availableCredits,
-              },
-            }
-          );
-
-          console.log('💳 Payment response:', { data, error: paymentError });
-
-          if (paymentError) {
-            console.error('❌ Payment error details:', paymentError);
-            throw new Error(`Payment failed: ${paymentError.message}`);
+              amount: depositAmount,
+              customerEmail: bookingData.contactInfo.email,
+              customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+              customerPhone: bookingData.contactInfo.phone,
+              bookingId: booking.id,
+              sourceId: token,
+              verificationToken: details?.verification_token,
+              saveCard: true,
+            },
           }
+        );
 
-          if (!data?.success) {
-            console.error('❌ Payment returned unsuccessful status:', data);
-            throw new Error('Payment processing returned unsuccessful status');
-          }
+        if (paymentError) throw new Error(`Payment failed: ${paymentError.message}`);
+        if (!data?.success) throw new Error('Payment processing failed');
 
-          paymentData = data;
-        } else {
-          // Test mode: simulate successful payment
-          console.log('🧪 TEST MODE: Skipping Square payment processing');
-          paymentData = { 
-            success: true, 
-            payment_id: 'test_payment_' + Date.now(),
-            credits_applied: applyCredits ? availableCredits : 0
-          };
-          
-          // Update booking status to confirmed in test mode
-          await supabase
-            .from('bookings')
-            .update({ status: 'confirmed' })
-            .eq('id', booking.id);
-        }
+        paymentData = data;
 
-        // CRITICAL: Verify payment was actually processed
-        if (!isTestMode && !paymentData?.payment_id) {
-          console.error('❌ CRITICAL: Payment processing failed - no payment ID received', paymentData);
-          throw new Error('Payment processing failed - no payment ID received. Please contact support.');
-        }
-
-        // Only update to confirmed if payment succeeded (non-test mode)
-        if (!isTestMode) {
-          console.log('✅ Updating booking to confirmed with payment ID:', paymentData.payment_id);
-          await supabase
-            .from('bookings')
-            .update({ 
-              status: 'confirmed',
-              square_payment_id: paymentData.payment_id,
-              paid_at: new Date().toISOString()
-            })
-            .eq('id', booking.id);
-        }
-
-        // Success message with credits info
-        const successMessage = isTestMode 
-          ? '🧪 TEST MODE: Booking created (no payment processed)'
-          : paymentData?.credits_applied > 0 
-            ? `Booking confirmed! $${paymentData.credits_applied.toFixed(2)} in referral credits applied.`
-            : 'Booking confirmed! Check your email.';
+        await supabase
+          .from('bookings')
+          .update({ 
+            status: 'confirmed',
+            square_payment_id: paymentData.payment_id,
+            paid_at: new Date().toISOString()
+          })
+          .eq('id', booking.id);
+      } else {
+        console.log('🧪 TEST MODE: Skipping payment');
+        paymentData = { success: true, payment_id: 'test_' + Date.now() };
         
-        toast.success(successMessage);
+        await supabase
+          .from('bookings')
+          .update({ status: 'confirmed' })
+          .eq('id', booking.id);
+      }
 
-        // Step 6: If membership selected, note it (future: create Square subscription)
-        if (bookingData.joinMembership) {
-          // TODO: Implement Square membership subscription ($9/month)
-          console.log('Membership requested - to be implemented');
-        }
-
-      // Step 7: Clear booking data and redirect to success page with referral incentive
-      clearBookingData();
-      navigate(`/book/success?booking_id=${booking.id}`);
+      toast.success('Deposit paid successfully!');
+      navigate(`/book/details?booking_id=${booking.id}`);
     } catch (error: any) {
       console.error('Payment error:', error);
       toast.error(error.message || 'Payment failed. Please try again.');
@@ -390,438 +189,131 @@ export default function BookingCheckout() {
     }
   };
 
-  const serviceTypeLabels: Record<string, string> = {
-    regular: 'Standard Cleaning',
-    deep: 'Deep Cleaning',
-    move_in_out: 'Move-In/Out Cleaning',
-  };
-
-  const frequencyLabels: Record<string, string> = {
-    one_time: 'One-Time',
-    weekly: 'Weekly',
-    bi_weekly: 'Bi-Weekly',
-    monthly: 'Monthly',
-  };
-
-  const handleCountdownExpire = () => {
-    toast.error('Time slot expired. Please select a new date and time.');
-    navigate('/book/schedule');
-  };
-
   if (!pricing) return null;
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={7} totalSteps={7} />
-      
-      <div className="flex-1 px-4 py-8 lg:py-12">
-        <div className="max-w-6xl mx-auto">
-          {isTestMode && (
-            <Alert className="mb-6 bg-orange-50 dark:bg-orange-950/30 border-orange-300">
-              <TestTube className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Test Mode Active:</strong> This booking will be created without processing payment.
-                All webhooks will fire normally. Perfect for testing integrations.
-              </AlertDescription>
-            </Alert>
-          )}
+  const balanceDue = pricing.finalPrice - depositAmount;
 
-          {/* Countdown Timer */}
-          {bookingData.bookingExpiresAt && (
-            <div className="mb-6">
-              <BookingCountdown 
-                expiresAt={bookingData.bookingExpiresAt}
-                onExpire={handleCountdownExpire}
-              />
-            </div>
-          )}
-          
-          <Link
-            to="/book/summary" 
-            className="text-sm text-muted-foreground hover:text-foreground mb-6 inline-block transition-colors"
-          >
-            ← Previous
-          </Link>
-          
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <BookingProgressBar currentStep={4} totalSteps={4} />
+      
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            🎊 Almost there!
+            Secure Your Deep Clean
           </h1>
-          <p className="text-muted-foreground text-lg mb-8">
-            🎁 Holiday Special: Reserve your spot now • Just $49 to lock in this rate
+          <p className="text-lg text-muted-foreground">
+            Just pay 25% deposit to reserve your spot
           </p>
-          
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Left: Contact Form & Payment */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contact Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input 
-                        id="firstName"
-                        value={bookingData.contactInfo.firstName}
-                        onChange={(e) => updateBookingData({
-                          contactInfo: { ...bookingData.contactInfo, firstName: e.target.value }
-                        })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input 
-                        id="lastName"
-                        value={bookingData.contactInfo.lastName}
-                        onChange={(e) => updateBookingData({
-                          contactInfo: { ...bookingData.contactInfo, lastName: e.target.value }
-                        })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email"
-                      type="email"
-                      value={bookingData.contactInfo.email}
-                      onChange={(e) => updateBookingData({
-                        contactInfo: { ...bookingData.contactInfo, email: e.target.value }
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input 
-                      id="phone"
-                      type="tel"
-                      value={bookingData.contactInfo.phone}
-                      onChange={(e) => updateBookingData({
-                        contactInfo: { ...bookingData.contactInfo, phone: e.target.value }
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="address1">Address</Label>
-                    <Input 
-                      id="address1"
-                      value={bookingData.contactInfo.address1}
-                      onChange={(e) => updateBookingData({
-                        contactInfo: { ...bookingData.contactInfo, address1: e.target.value }
-                      })}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="address2">Apt, Suite (Optional)</Label>
-                    <Input 
-                      id="address2"
-                      value={bookingData.contactInfo.address2}
-                      onChange={(e) => updateBookingData({
-                        contactInfo: { ...bookingData.contactInfo, address2: e.target.value }
-                      })}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="instructions">Special Instructions (Optional)</Label>
-                    <Textarea 
-                      id="instructions"
-                      placeholder="Gate code, parking info, pet details..."
-                      rows={3}
-                      value={bookingData.specialInstructions}
-                      onChange={(e) => updateBookingData({ specialInstructions: e.target.value })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <div className="flex items-start space-x-3 p-4 border rounded-lg">
-                <Checkbox 
-                  id="membership"
-                  checked={bookingData.joinMembership}
-                  onCheckedChange={(checked) => updateBookingData({ joinMembership: !!checked })}
-                />
-                <Label htmlFor="membership" className="cursor-pointer flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">Join AlphaLux Club</span>
-                    <Badge>$9/month</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Save on every clean, priority booking, and VIP support
-                  </p>
-                </Label>
+        </div>
+
+        <div className="grid gap-6">
+          {/* Booking Summary */}
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle>Booking Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Service</span>
+                <span className="font-semibold">Deep Cleaning - One Time</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Location</span>
+                <span className="font-semibold">{bookingData.city}, {bookingData.state}</span>
               </div>
               
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {isTestMode ? '🧪 Test Payment' : 'Payment'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!isTestMode ? (
-                    <>
-                      <p className="text-sm text-muted-foreground">
-                        🎁 Secure your booking with just $49 today. Card will be saved for remaining balance due after service.
-                        {bookingData.upgradedToRecurring && (
-                          <span className="block mt-2 text-green-600 font-medium">
-                            + Recurring service setup included
-                          </span>
-                        )}
-                      </p>
-                      <div id="square-card-container" className="min-h-[200px]"></div>
-                    </>
-                  ) : (
-                    <Alert className="bg-orange-50 dark:bg-orange-950/30 border-orange-300">
-                      <TestTube className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        <strong>Test Mode:</strong> Payment processing is bypassed. No card required.
-                        The booking will be created and all webhooks will fire normally.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <Button 
-                    size="lg" 
-                    className="w-full h-14 text-lg font-semibold" 
-                    onClick={handlePayment}
-                    disabled={isProcessing || (!isTestMode && !isCardReady)}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        {isTestMode ? 'Creating Test Booking...' : 'Processing...'}
-                      </>
-                    ) : isTestMode ? (
-                      <>🧪 Create Test Booking</>
-                    ) : (
-                      <>🎉 Reserve My Spot - $49 Today</>
-                    )}
-                  </Button>
-                  {!isTestMode && (
-                    <p className="text-xs text-center text-muted-foreground mt-2">
-                      🎁 Holiday Special: $49 today • Up to 2 months to pay balance
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right: Booking Summary */}
-            <Card className="h-fit sticky top-24">
-              <CardHeader>
-                <CardTitle>Booking Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Service</p>
-                  <p className="font-medium">{serviceTypeLabels[bookingData.serviceType]}</p>
+              <Separator />
+              
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total Service Cost</span>
+                <span>${pricing.finalPrice.toFixed(2)}</span>
+              </div>
+              
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">💳 Due Today (25% Deposit)</span>
+                  <span className="text-2xl font-bold text-primary">
+                    ${depositAmount.toFixed(2)}
+                  </span>
                 </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Frequency</p>
-                  <p className="font-medium">{frequencyLabels[bookingData.frequency]}</p>
-                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (
-                    <Badge className="mt-2 bg-green-600">
-                      + {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
-                         bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Added
-                    </Badge>
-                  )}
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Date & Time</p>
-                  <p className="font-medium">
-                    {new Date(bookingData.date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-sm">{bookingData.timeSlot}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium">
-                    {bookingData.contactInfo.address1}
-                    {bookingData.contactInfo.address2 && `, ${bookingData.contactInfo.address2}`}
-                  </p>
-                  <p className="text-sm">
-                    {bookingData.city}, {bookingData.state} {bookingData.zipCode}
-                  </p>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm font-medium">
-                    <span>One-Time Deep Clean</span>
-                    <span>${pricing.basePrice.toFixed(2)}</span>
-                  </div>
-                  
-                  {pricing.discountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-success">
-                      <span>
-                        Discount ({pricing.basePrice > 0 ? Math.min(100, Math.max(0, Math.round((Math.abs(pricing.discountAmount) / pricing.basePrice) * 100))) : 0}%):
-                      </span>
-                      <span>-${Math.abs(pricing.discountAmount).toFixed(2)}</span>
-                    </div>
-                  )}
+                <p className="text-xs text-muted-foreground">
+                  Remaining ${balanceDue.toFixed(2)} due after service completion
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-                  <div className="flex justify-between text-sm font-semibold border-t pt-2">
-                    <span>Deep Clean Total</span>
-                    <span>${pricing.finalPrice.toFixed(2)}</span>
-                  </div>
-                  
-                  {bookingData.upgradedToRecurring && bookingData.recurringStartDate && (() => {
-                    // Calculate recurring price using 'regular' service type (not deep clean)
-                    const recurringPerClean = (() => {
-                      try {
-                        const homeSizeId = bookingData.homeSizeId || '2001_2500';
-                        const recurringPricing = calculateNewPricing(
-                          homeSizeId,
-                          'regular', // Use regular service type for recurring
-                          bookingData.recurringStartDate,
-                          bookingData.state
-                        );
-                        return recurringPricing.finalPrice;
-                      } catch {
-                        return pricing.finalPrice; // Fallback
-                      }
-                    })();
-                    
-                    const recurringDetails = getRecurringMonthlyDetails(
-                      recurringPerClean, 
-                      bookingData.recurringStartDate
-                    );
-                    
-                    return (
-                      <>
-                        <Separator className="my-3" />
-                        <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-green-700 dark:text-green-300">
-                              {bookingData.recurringStartDate === 'bi_weekly' ? 'Bi-Weekly' : 
-                               bookingData.recurringStartDate === 'weekly' ? 'Weekly' : 'Monthly'} Recurring Service
-                            </span>
-                            <Badge className="bg-green-600">50% OFF 1ST MONTH</Badge>
-                          </div>
-                          
-                          {/* Show per-clean breakdown */}
-                          <div className="space-y-1 text-sm">
-                            <div className="flex justify-between text-muted-foreground">
-                              <span>Regular price per clean:</span>
-                              <span>${recurringPerClean.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-muted-foreground">
-                              <span>Cleanings per month:</span>
-                              <span>{recurringDetails.cleansPerMonth}x</span>
-                            </div>
-                            <div className="flex justify-between font-medium">
-                              <span>Regular monthly total:</span>
-                              <span className="line-through">${recurringDetails.monthlyTotal.toFixed(2)}</span>
-                            </div>
-                          </div>
-                          
-                          <Separator />
-                          
-                          {/* First month pricing */}
-                          <div className="bg-white dark:bg-green-900/30 p-3 rounded-md">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="text-sm font-semibold text-green-700 dark:text-green-300">
-                                  First Month Total (50% OFF)
-                                </span>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  ${recurringDetails.pricePerCleanDiscounted.toFixed(2)}/clean × {recurringDetails.cleansPerMonth}
-                                </p>
-                              </div>
-                              <span className="text-xl font-bold text-green-600">
-                                ${recurringDetails.firstMonthWithDiscount.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <p className="text-xs text-muted-foreground">
-                            🎁 Recurring service starts after your initial deep clean
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            💡 Regular pricing (${recurringDetails.monthlyTotal.toFixed(2)}/month) applies after first month
-                          </p>
-                        </div>
-                      </>
-                    );
-                  })()}
-                  
-                  {availableCredits > 0 && applyCredits && (
-                    <div className="flex justify-between text-sm text-primary font-medium">
-                      <span>Referral Credits Applied</span>
-                      <span>-${availableCredits.toFixed(2)}</span>
+          {/* Payment Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isTestMode && (
+                <Alert>
+                  <AlertDescription>
+                    🧪 TEST MODE: Payment processing is disabled
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!isTestMode && (
+                <div>
+                  <div id="square-card-container" className="min-h-[200px]"></div>
+                  {!isCardReady && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   )}
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Order Total</span>
-                    <span>${(() => {
-                      let total = pricing.finalPrice;
-                      
-                      if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
-                        const recurringDetails = getRecurringMonthlyDetails(
-                          pricing.finalPrice,
-                          bookingData.recurringStartDate
-                        );
-                        total += recurringDetails.firstMonthWithDiscount;
-                      }
-                      
-                      return total.toFixed(2);
-                    })()}</span>
-                  </div>
-                  
-                  <div className="bg-primary/10 p-3 rounded-lg mt-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">🎁 Due Today (Holiday Special)</span>
-                      <span className="text-xl font-bold text-primary">
-                        ${(applyCredits ? Math.max(0, depositAmount - availableCredits) : depositAmount).toFixed(2)}
-                      </span>
-                    </div>
-                    {availableCredits > 0 && applyCredits && (
-                      <p className="text-xs text-success mb-1">
-                        🎉 ${availableCredits.toFixed(2)} in referral credits applied!
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Remaining ${(() => {
-                        let remaining = pricing.finalPrice - depositAmount;
-                        
-                        if (bookingData.upgradedToRecurring && bookingData.recurringStartDate) {
-                          const recurringDetails = getRecurringMonthlyDetails(
-                            pricing.finalPrice,
-                            bookingData.recurringStartDate
-                          );
-                          remaining += recurringDetails.firstMonthWithDiscount;
-                        }
-                        
-                        return remaining.toFixed(2);
-                      })()} due after service
-                    </p>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="h-4 w-4" />
+                <span>Your payment information is secure and encrypted</span>
+              </div>
+
+              <Button
+                onClick={handlePayment}
+                disabled={!isCardReady || isProcessing}
+                size="lg"
+                className="w-full"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Pay $${depositAmount.toFixed(2)} Deposit`
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Trust Badges */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                <div>
+                  <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="font-medium">Secure Payment</p>
+                </div>
+                <div>
+                  <Lock className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="font-medium">Encrypted</p>
+                </div>
+                <div>
+                  <CreditCard className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <p className="font-medium">PCI Compliant</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
