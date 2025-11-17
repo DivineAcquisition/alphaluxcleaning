@@ -14,7 +14,7 @@ import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
-  const { bookingData, pricing, depositAmount } = useBooking();
+  const { bookingData, depositAmount } = useBooking();
   const { isTestMode } = useTestMode();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCardReady, setIsCardReady] = useState(false);
@@ -22,10 +22,10 @@ export default function BookingCheckout() {
   const isInitializing = useRef(false);
 
   useEffect(() => {
-    if (!bookingData.zipCode || !pricing) {
+    if (!bookingData.zipCode || !bookingData.basePrice) {
       navigate('/book/zip');
     }
-  }, [bookingData, pricing, navigate]);
+  }, [bookingData, navigate]);
 
   useEffect(() => {
     if (!isTestMode) {
@@ -63,7 +63,7 @@ export default function BookingCheckout() {
   };
 
   const handlePayment = async () => {
-    if (!pricing) {
+    if (!bookingData.basePrice || !depositAmount) {
       toast.error('Payment information not available');
       return;
     }
@@ -115,20 +115,24 @@ export default function BookingCheckout() {
           customer_id: customer.id,
           service_type: bookingData.serviceType,
           frequency: bookingData.frequency,
-          sqft_or_bedrooms: bookingData.homeSizeId || `${bookingData.bedrooms}bed`,
-          est_price: pricing.finalPrice,
-          deposit_amount: depositAmount,
-          balance_due: pricing.finalPrice - depositAmount,
+          sqft_or_bedrooms: `${bookingData.bedrooms}bed/${bookingData.bathrooms}bath`,
+          home_size: bookingData.homeSizeId,
           zip_code: bookingData.zipCode,
-          special_instructions: bookingData.specialInstructions,
-          status: 'pending',
+          est_price: bookingData.basePrice || 0,
+          deposit_amount: depositAmount,
+          base_price: bookingData.basePrice || 0,
+          balance_due: (bookingData.basePrice || 0) - depositAmount,
+          offer_name: bookingData.offerName,
+          offer_type: bookingData.offerType,
+          visit_count: bookingData.visitCount,
+          is_recurring: bookingData.isRecurring || false,
+          status: 'payment_pending',
           payment_status: 'pending',
           pricing_breakdown: {
-            basePrice: pricing.basePrice,
-            discountAmount: pricing.discountAmount,
-            finalPrice: pricing.finalPrice,
+            basePrice: bookingData.basePrice || 0,
+            finalPrice: bookingData.basePrice || 0,
             depositAmount: depositAmount,
-            balanceDue: pricing.finalPrice - depositAmount,
+            balanceDue: (bookingData.basePrice || 0) - depositAmount,
           },
         })
         .select()
@@ -189,9 +193,9 @@ export default function BookingCheckout() {
     }
   };
 
-  if (!pricing) return null;
+  if (!bookingData.basePrice || !depositAmount) return null;
 
-  const balanceDue = pricing.finalPrice - depositAmount;
+  const balanceDue = bookingData.basePrice - depositAmount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -216,7 +220,7 @@ export default function BookingCheckout() {
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Service</span>
-                <span className="font-semibold">Deep Cleaning - One Time</span>
+                <span className="font-semibold">{bookingData.offerName || 'Deep Cleaning'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Location</span>
@@ -227,7 +231,7 @@ export default function BookingCheckout() {
               
               <div className="flex justify-between font-bold text-lg">
                 <span>Total Service Cost</span>
-                <span>${pricing.finalPrice.toFixed(2)}</span>
+                <span>${bookingData.basePrice?.toFixed(2)}</span>
               </div>
               
               <div className="bg-primary/10 p-4 rounded-lg">

@@ -26,10 +26,17 @@ interface BookingData {
   homeSizeId?: string;
   homeType: 'house' | 'apartment' | 'condo';
   
-  // Step 3: Service Type (locked to 'deep')
+  // Step 3: Offer Selection
+  offerType?: 'tester_deep_clean' | '90_day_plan';
+  offerName?: string;
+  basePrice?: number;
+  visitCount?: number;
+  isRecurring?: boolean;
+  
+  // Service Type (locked to 'deep')
   serviceType: 'regular' | 'deep' | 'move_in_out';
   
-  // Step 4: Frequency (locked to 'one_time')
+  // Frequency (locked to 'one_time')
   frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
   
   // Step 5: Schedule (collected post-payment)
@@ -57,7 +64,7 @@ interface BookingContextType {
   clearBookingData: () => void;
   pricing: PricingResult | null;
   calculatePricing: () => void;
-  depositAmount: number; // Flat $49 holiday special deposit
+  depositAmount: number; // Dynamic 25% deposit
 }
 
 const defaultContactInfo: ContactInfo = {
@@ -92,6 +99,7 @@ const defaultBookingData: BookingData = {
 };
 
 const STORAGE_KEY = 'alphalux-booking-flow';
+const DEPOSIT_PERCENTAGE = 0.25; // 25%
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
@@ -110,6 +118,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   });
 
   const [pricing, setPricing] = useState<PricingResult | null>(null);
+
+  // Calculate deposit dynamically based on selected offer (25% of basePrice)
+  const depositAmount = bookingData.basePrice 
+    ? Math.round(bookingData.basePrice * DEPOSIT_PERCENTAGE)
+    : 0;
 
   // Save to localStorage whenever bookingData changes
   useEffect(() => {
@@ -213,7 +226,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         clearBookingData,
         pricing,
         calculatePricing,
-        depositAmount: 49, // Flat $49 holiday special deposit
+        depositAmount,
       }}
     >
       {children}

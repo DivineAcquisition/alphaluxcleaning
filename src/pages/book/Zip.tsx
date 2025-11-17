@@ -90,10 +90,10 @@ export default function BookingZip() {
                 </Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Start for Just $49 Today! 🎁
+                    Book with Just 25% Down Today! 🎁
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Get your home deep cleaned with flexible 2-month payment plan
+                    Get your home deep cleaned with flexible payment options
                   </p>
                 </div>
               </div>
@@ -102,9 +102,9 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              Start for $49 Today & Get Your Home Deep Cleaned 
+              Book Your Deep Clean with Just 25% Down
               <span className="block text-primary mt-2">
-                2 Months to Pay—No Full Upfront Cost! 🎁
+                Pay the Rest Later—Flexible & Easy! 🎁
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
