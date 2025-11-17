@@ -57,7 +57,7 @@ export default function BookingZip() {
           } as any,
         });
         
-        navigate('/book/home');
+        navigate('/book/sqft');
       } else {
         setError(data?.message || "We don't service this area yet.");
       }
@@ -77,7 +77,7 @@ export default function BookingZip() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <BookingProgressBar currentStep={1} totalSteps={7} />
+      <BookingProgressBar currentStep={1} totalSteps={6} />
       
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="w-full max-w-2xl">

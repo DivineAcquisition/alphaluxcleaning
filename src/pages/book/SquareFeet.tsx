@@ -23,15 +23,15 @@ export default function BookingSquareFeet() {
     setSelectedId(homeSizeId);
     updateBookingData({ homeSizeId });
     
-    // Auto-navigate to summary after selection
+    // Auto-navigate to offer after selection
     setTimeout(() => {
-      navigate('/book/summary');
+      navigate('/book/offer');
     }, 300);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <BookingProgressBar currentStep={2} totalSteps={4} />
+      <BookingProgressBar currentStep={2} totalSteps={6} />
       
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
