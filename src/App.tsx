@@ -7,6 +7,7 @@ import { useSquarePreloader } from '@/hooks/useSquarePreloader';
 import { CheckCircle } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { BookingProvider } from '@/contexts/BookingContext';
+import { SimpleBookingProvider } from '@/contexts/SimpleBookingContext';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
 import { DomainRedirect } from '@/components/DomainRedirect';
 
@@ -26,6 +27,12 @@ const BookSummary = lazy(() => import('@/pages/book/Summary'));
 const BookCheckout = lazy(() => import('@/pages/book/Checkout'));
 const BookSuccess = lazy(() => import('@/pages/book/Success'));
 const BookConfirmation = lazy(() => import('@/pages/book/Confirmation'));
+
+// Simple booking flow (new 3-step flow)
+const SimpleHomeDetails = lazy(() => import('@/pages/simple-book/HomeDetails'));
+const SimpleChoosePlan = lazy(() => import('@/pages/simple-book/ChoosePlan'));
+const SimpleConfirmBook = lazy(() => import('@/pages/simple-book/ConfirmBook'));
+const SimpleSuccess = lazy(() => import('@/pages/simple-book/Success'));
 import OrderStatus from '@/pages/OrderStatus';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 import ConfirmationPreview from '@/pages/ConfirmationPreview';
@@ -74,8 +81,9 @@ function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <BookingProvider>
-          <Router>
+        <SimpleBookingProvider>
+          <BookingProvider>
+            <Router>
             <DomainRedirect>
               <TestModeBanner />
             <Routes>
@@ -167,6 +175,7 @@ function App() {
         <Toaster />
         <Sonner />
         </BookingProvider>
+        </SimpleBookingProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );
