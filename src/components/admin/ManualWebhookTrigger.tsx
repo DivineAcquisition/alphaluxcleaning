@@ -2,12 +2,32 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
+const testScenarios = [
+  { 
+    id: 'tester_1500', 
+    label: 'Tester - 1,000-1,499 sq ft ($250)',
+    bookingId: '83ea1bcd-e791-4343-9990-7331f0fc0191'
+  },
+  { 
+    id: '90day_1500', 
+    label: '90-Day Plan - 1,000-1,499 sq ft ($699)',
+    bookingId: '' // Add real booking ID when available
+  },
+  { 
+    id: '90day_2000', 
+    label: '90-Day Plan - 1,500-1,999 sq ft ($799)',
+    bookingId: '' // Add real booking ID when available
+  },
+];
+
 export function ManualWebhookTrigger() {
   const [bookingId, setBookingId] = useState('');
+  const [selectedScenario, setSelectedScenario] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -54,11 +74,28 @@ export function ManualWebhookTrigger() {
     }
   };
 
-  const handleTriggerApril = async () => {
-    setBookingId('83ea1bcd-e791-4343-9990-7331f0fc0191');
-    setTimeout(() => {
-      document.getElementById('trigger-button')?.click();
-    }, 100);
+  const handleScenarioSelect = (scenarioId: string) => {
+    setSelectedScenario(scenarioId);
+    const scenario = testScenarios.find(s => s.id === scenarioId);
+    if (scenario?.bookingId) {
+      setBookingId(scenario.bookingId);
+    }
+  };
+
+  const handleTriggerScenario = async () => {
+    const scenario = testScenarios.find(s => s.id === selectedScenario);
+    if (scenario?.bookingId) {
+      setBookingId(scenario.bookingId);
+      setTimeout(() => {
+        handleTrigger();
+      }, 100);
+    } else {
+      toast({
+        title: "Error",
+        description: "This scenario doesn't have a booking ID yet. Please create a test booking first.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -66,7 +103,7 @@ export function ManualWebhookTrigger() {
       <CardHeader>
         <CardTitle>Manual Webhook Trigger</CardTitle>
         <CardDescription>
-          Manually trigger webhooks for a specific booking
+          Test webhooks with different offer types and scenarios
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -88,15 +125,27 @@ export function ManualWebhookTrigger() {
           </Button>
         </div>
 
-        <div className="pt-4 border-t">
-          <p className="text-sm text-muted-foreground mb-2">Quick Actions:</p>
+        <div className="pt-4 border-t space-y-3">
+          <p className="text-sm text-muted-foreground mb-2">Test Scenarios:</p>
+          <Select value={selectedScenario} onValueChange={handleScenarioSelect}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a test scenario" />
+            </SelectTrigger>
+            <SelectContent>
+              {testScenarios.map((scenario) => (
+                <SelectItem key={scenario.id} value={scenario.id}>
+                  {scenario.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
-            onClick={handleTriggerApril}
-            disabled={isLoading}
+            onClick={handleTriggerScenario}
+            disabled={isLoading || !selectedScenario}
             className="w-full"
           >
-            Trigger Webhook for April's Booking
+            Test Selected Scenario
           </Button>
         </div>
       </CardContent>
