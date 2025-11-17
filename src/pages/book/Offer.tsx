@@ -154,11 +154,17 @@ export default function BookingOffer() {
               <p className="text-sm text-muted-foreground mb-4">(Tester)</p>
 
               <div className="mb-6">
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-4xl md:text-5xl font-bold text-foreground">${testerPrice}</span>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Try our service risk-free
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl md:text-5xl font-bold text-primary">
+                    ${Math.round(testerPrice * 0.25)}
+                  </span>
+                  <span className="text-lg text-muted-foreground">today</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  One-time deep clean for homes up to 1,500 sq ft
+                <p className="text-sm text-muted-foreground mt-2">
+                  for 1 deep clean visit
                 </p>
               </div>
 
@@ -182,7 +188,7 @@ export default function BookingOffer() {
                 size="lg"
                 variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}
               >
-                Select Tester - ${testerPrice}
+                Get Started - ${Math.round(testerPrice * 0.25)} Today
               </Button>
             </Card>
           ) : (
@@ -244,12 +250,17 @@ export default function BookingOffer() {
             </h2>
 
             <div className="mb-6">
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className="text-4xl md:text-5xl font-bold text-foreground">${ninetyDayPrice}</span>
+              <p className="text-sm text-muted-foreground mb-3">
+                Lock in your clean home routine
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl md:text-5xl font-bold text-primary">
+                  ${Math.round(ninetyDayPrice * 0.25)}
+                </span>
+                <span className="text-lg text-muted-foreground">today</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">≈ ${perVisitPrice} per visit</p>
-              <p className="text-sm text-muted-foreground">
-                One deep clean + 3 maintenance cleanings over 90 days
+              <p className="text-sm text-muted-foreground mt-2">
+                for 4 visits over 90 days
               </p>
             </div>
 
@@ -257,24 +268,16 @@ export default function BookingOffer() {
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">
-                  <strong>Visit 1:</strong> Full 40-point Deep Clean (${testerPrice})
+                  1 Deep Clean + 3 Maintenance Visits
                 </span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">
-                  <strong>Visits 2–4:</strong> Standard maintenance (${maintenancePrice} each)
-                </span>
+                <span className="text-foreground">Priority scheduling & member support</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">
-                  <strong>Save ${savings}</strong> vs. booking separately
-                </span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Priority booking & member support</span>
+                <span className="text-foreground">48-hour re-clean guarantee</span>
               </li>
             </ul>
 
@@ -283,7 +286,7 @@ export default function BookingOffer() {
               variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
               size="lg"
             >
-              Select 90-Day Plan - ${ninetyDayPrice}
+              Get Started - ${Math.round(ninetyDayPrice * 0.25)} Today
             </Button>
           </Card>
         </div>
