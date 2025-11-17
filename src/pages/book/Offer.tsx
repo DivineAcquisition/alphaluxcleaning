@@ -18,20 +18,71 @@ export default function BookingOffer() {
     range => range.id === bookingData.homeSizeId
   );
   
-  // Check if Tester is eligible (only for homes ≤1,500 sq ft)
-  const isTesterEligible = selectedHomeSize && selectedHomeSize.maxSqft <= 1500;
+  // Check if Tester is eligible (only for homes ≤1,499 sq ft)
+  const isTesterEligible = selectedHomeSize && selectedHomeSize.maxSqft <= 1499;
   
-  // Get the deep clean price for this home size
-  const testerPrice = selectedHomeSize?.deepPrice || 270;
+  // Use the new pre-calculated pricing fields
+  const testerPrice = selectedHomeSize?.deepPrice || 250;
+  const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
+  const ninetyDayPrice = selectedHomeSize?.ninetyDayPrice || 699;
   
-  // Calculate 90-Day Plan price (1 deep clean + 3 maintenance at discounted rate)
-  const ninetyDayPrice = Math.round(testerPrice * 2.6);
+  // Calculate per-visit price for display
+  const perVisitPrice = Math.round(ninetyDayPrice / 4);
+  
+  // Calculate savings vs. individual booking
+  const individualTotal = testerPrice + (maintenancePrice * 3);
+  const savings = individualTotal - ninetyDayPrice;
 
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.homeSizeId) {
-      navigate('/book/zip');
+      navigate('/book');
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
+
+  // Handle custom quote requirement for large homes
+  if (selectedHomeSize?.requiresEstimate) {
+    return (
+      <div className="min-h-screen bg-background">
+        <BookingProgressBar currentStep={3} totalSteps={6} />
+        
+        <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+          <Card className="p-6 md:p-8 text-center">
+            <h1 className="text-2xl md:text-3xl font-bold mb-4">Custom Quote Required</h1>
+            <p className="text-base md:text-lg text-muted-foreground mb-6">
+              Your home (5,000+ sq ft) requires a customized quote for the most accurate pricing.
+            </p>
+            
+            <div className="bg-muted p-6 rounded-lg mb-6 text-left">
+              <h3 className="font-bold text-xl mb-4 text-center">Estimated Starting Prices:</h3>
+              <ul className="space-y-2">
+                <li className="flex justify-between">
+                  <span>• Deep Clean (Tester):</span>
+                  <span className="font-semibold">Starting at ${selectedHomeSize.deepPrice}</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>• Custom 90-Day Plan:</span>
+                  <span className="font-semibold">Starting at ${selectedHomeSize.ninetyDayPrice}</span>
+                </li>
+              </ul>
+            </div>
+            
+            <p className="mb-6 text-lg">
+              Call us at <strong className="text-primary">(972) 559-0223</strong> for a personalized quote.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={() => window.location.href = 'tel:9725590223'}>
+                📞 Call Now
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/book/sqft')}>
+                ← Back
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const handleSelectOffer = (
     offerType: 'tester_deep_clean' | '90_day_plan',
@@ -149,7 +200,7 @@ export default function BookingOffer() {
 
               <div className="mb-6">
                 <p className="text-base text-muted-foreground">
-                  Your home qualifies for our 90-Day Plan, which offers better value for larger spaces.
+                  Your home qualifies for our 90-Day Plan with better value for larger spaces.
                 </p>
               </div>
 
@@ -196,7 +247,7 @@ export default function BookingOffer() {
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-4xl md:text-5xl font-bold text-foreground">${ninetyDayPrice}</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">≈ ${Math.round(ninetyDayPrice / 4)} per visit</p>
+              <p className="text-sm text-muted-foreground mb-2">≈ ${perVisitPrice} per visit</p>
               <p className="text-sm text-muted-foreground">
                 One deep clean + 3 maintenance cleanings over 90 days
               </p>
@@ -206,22 +257,24 @@ export default function BookingOffer() {
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">
-                  <strong>Visit 1:</strong> Full 40-point Deep Clean
+                  <strong>Visit 1:</strong> Full 40-point Deep Clean (${testerPrice})
                 </span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">
-                  <strong>Visits 2–4:</strong> Standard maintenance clean
+                  <strong>Visits 2–4:</strong> Standard maintenance (${maintenancePrice} each)
+                </span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">
+                  <strong>Save ${savings}</strong> vs. booking separately
                 </span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">Priority booking & member support</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Lower rate than booking individually</span>
               </li>
             </ul>
 
