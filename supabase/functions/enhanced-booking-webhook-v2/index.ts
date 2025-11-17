@@ -351,6 +351,19 @@ serve(async (req) => {
         amount_paid: Math.round(baseAmount)
       },
       
+      // Offer details object
+      offer_details: {
+        offer_name: bookingData.offer_name || 'Custom Service',
+        offer_type: bookingData.offer_type || 'one_time',
+        visit_count: bookingData.visit_count || 1,
+        is_recurring: bookingData.is_recurring || false,
+        base_price: Math.round(bookingData.base_price || baseAmount),
+        deposit_paid: Math.round(bookingData.deposit_amount || 0),
+        balance_due: Math.round(bookingData.balance_due || 0),
+        deposit_percentage: 25,
+        payment_plan: bookingData.deposit_amount && bookingData.deposit_amount > 0 ? 'deposit_first' : 'full_payment'
+      },
+      
       // Marketing object
       marketing: {
         campaign: (bookingData.utms?.utm_campaign) || "Direct",

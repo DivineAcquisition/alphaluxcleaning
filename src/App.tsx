@@ -94,8 +94,8 @@ function App() {
               {/* Landing page with marketing content */}
               <Route path="/landing" element={<Landing />} />
               
-              {/* Main booking route */}
-              <Route path="/" element={<DomainAwareHome />} />
+              {/* Main booking route - redirect to booking flow */}
+              <Route path="/" element={<Navigate to="/book/zip" replace />} />
             
             {/* Essential booking confirmation and status pages */}
             <Route path="/order-status" element={<OrderStatus />} />
