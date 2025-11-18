@@ -1,0 +1,93 @@
+import type { TestScenario } from '@/hooks/useBookingFlowTest';
+
+export const HAPPY_PATH_SCENARIOS: TestScenario[] = [
+  {
+    id: 'tx-small-tester',
+    name: 'TX Small Home - Tester Deep Clean',
+    description: 'Texas 1000-1499 sqft home with Tester Deep Clean offer',
+    zipCode: '75001',
+    homeSize: '1000-1499',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+    expectedPrice: 250,
+    expectedDeposit: 62.5,
+  },
+  {
+    id: 'tx-medium-90day',
+    name: 'TX Medium Home - 90-Day Plan',
+    description: 'Texas 1500-1999 sqft home with 90-Day Plan',
+    zipCode: '75002',
+    homeSize: '1500-1999',
+    serviceType: 'deep-cleaning',
+    frequency: '90-day-plan',
+    expectedPrice: 799,
+    expectedDeposit: 199.75,
+  },
+  {
+    id: 'ca-large-tester',
+    name: 'CA Large Home - Tester Deep Clean',
+    description: 'California 2000-2499 sqft home with Tester Deep Clean',
+    zipCode: '90210',
+    homeSize: '2000-2499',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+    expectedPrice: 350,
+    expectedDeposit: 87.5,
+  },
+  {
+    id: 'ca-xlarge-90day',
+    name: 'CA Extra Large Home - 90-Day Plan',
+    description: 'California 2500-2999 sqft home with 90-Day Plan',
+    zipCode: '90211',
+    homeSize: '2500-2999',
+    serviceType: 'deep-cleaning',
+    frequency: '90-day-plan',
+    expectedPrice: 1099,
+    expectedDeposit: 274.75,
+  },
+  {
+    id: 'ny-small-tester',
+    name: 'NY Small Home - Tester Deep Clean',
+    description: 'New York 1000-1499 sqft home with Tester Deep Clean',
+    zipCode: '10001',
+    homeSize: '1000-1499',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+    expectedPrice: 250,
+    expectedDeposit: 62.5,
+  },
+];
+
+export const EDGE_CASE_SCENARIOS: TestScenario[] = [
+  {
+    id: 'invalid-zip',
+    name: 'Invalid ZIP Code',
+    description: 'Test ZIP code validation with invalid format',
+    zipCode: '00000',
+    homeSize: '1500-1999',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+  },
+  {
+    id: 'unsupported-area',
+    name: 'Unsupported Service Area',
+    description: 'ZIP code outside supported service areas',
+    zipCode: '99999',
+    homeSize: '1500-1999',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+  },
+  {
+    id: 'very-large-home',
+    name: 'Very Large Home (5000+ sqft)',
+    description: 'Test custom estimate flow for homes requiring quotes',
+    zipCode: '75001',
+    homeSize: '5000+',
+    serviceType: 'deep-cleaning',
+    frequency: 'one-time',
+    expectedPrice: 550,
+    expectedDeposit: 137.5,
+  },
+];
+
+export const ALL_TEST_SCENARIOS = [...HAPPY_PATH_SCENARIOS, ...EDGE_CASE_SCENARIOS];

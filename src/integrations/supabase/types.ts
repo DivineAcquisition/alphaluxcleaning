@@ -173,6 +173,47 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_events: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          error_message: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          session_id: string | null
+          step_name: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          step_name?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          step_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           addons: Json | null
@@ -1739,6 +1780,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      test_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          results: Json | null
+          scenario_name: string
+          status: string
+          test_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          results?: Json | null
+          scenario_name: string
+          status: string
+          test_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          results?: Json | null
+          scenario_name?: string
+          status?: string
+          test_type?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
