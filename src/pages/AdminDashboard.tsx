@@ -19,7 +19,10 @@ import {
   MoreHorizontal,
   CheckCircle,
   XCircle,
-  Timer
+  Timer,
+  Activity,
+  TestTube,
+  Database
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -120,6 +123,64 @@ export default function AdminDashboard() {
 
         {/* KPI Cards */}
         <KPICards kpis={kpis} />
+
+        {/* Developer Tools - Real-Time Monitoring & Testing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Developer Tools
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Booking Monitor */}
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-start gap-2"
+                onClick={() => window.location.href = '/admin/booking-monitor'}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <Activity className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Booking Monitor</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-left">
+                  Real-time tracking of active bookings, conversion funnel, and live activity feed
+                </p>
+              </Button>
+
+              {/* Automated Tester */}
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-start gap-2"
+                onClick={() => window.location.href = '/admin/booking-tester'}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <TestTube className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Automated Tester</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-left">
+                  Run automated test suites on booking flow with detailed validation reports
+                </p>
+              </Button>
+
+              {/* Database Watcher */}
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-start gap-2"
+                onClick={() => window.location.href = '/admin/database-watcher'}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <Database className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Database Watcher</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-left">
+                  Monitor live database changes across all tables with real-time event stream
+                </p>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Workboard */}
         <div className="grid lg:grid-cols-2 gap-6">

@@ -58,6 +58,9 @@ import HousecallProSettings from '@/pages/admin/HousecallProSettings';
 import HousecallProLogs from '@/pages/admin/HousecallProLogs';
 import HCPTestSuite from '@/pages/admin/HCPTestSuite';
 import PromoCodes from '@/pages/admin/PromoCodes';
+import BookingMonitor from '@/pages/admin/BookingMonitor';
+import BookingTester from '@/pages/admin/BookingTester';
+import DatabaseWatcher from '@/pages/admin/DatabaseWatcher';
 
 import NotFound from '@/pages/NotFound';
 import React from 'react';
@@ -141,6 +144,21 @@ function App() {
               <Suspense fallback={<div>Loading...</div>}>
                 {React.createElement(React.lazy(() => import('./pages/admin/CSRBookingForm')))}
               </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/admin/booking-monitor" element={
+            <AdminRoute>
+              <BookingMonitor />
+            </AdminRoute>
+          } />
+          <Route path="/admin/booking-tester" element={
+            <AdminRoute>
+              <BookingTester />
+            </AdminRoute>
+          } />
+          <Route path="/admin/database-watcher" element={
+            <AdminRoute>
+              <DatabaseWatcher />
             </AdminRoute>
           } />
           <Route path="/admin" element={
