@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Home, ArrowRight, CheckCircle } from 'lucide-react';
+import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 
 export default function BookingSquareFeet() {
   const navigate = useNavigate();
@@ -91,6 +92,8 @@ export default function BookingSquareFeet() {
             </a>
           </Button>
         </Card>
+        
+        <CleaningShowcaseCarousel />
       </div>
     </div>
   );
