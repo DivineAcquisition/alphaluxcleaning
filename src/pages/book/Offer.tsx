@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Check, Sparkles, TrendingUp } from 'lucide-react';
+import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
@@ -296,6 +297,8 @@ export default function BookingOffer() {
             ← Back to Home Size
           </Button>
         </div>
+        
+        <CleaningShowcaseCarousel />
       </div>
     </div>
   );
