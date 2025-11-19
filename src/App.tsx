@@ -61,6 +61,7 @@ import PromoCodes from '@/pages/admin/PromoCodes';
 import BookingMonitor from '@/pages/admin/BookingMonitor';
 import BookingTester from '@/pages/admin/BookingTester';
 import DatabaseWatcher from '@/pages/admin/DatabaseWatcher';
+import ConversionOptimization from '@/pages/admin/ConversionOptimization';
 
 import NotFound from '@/pages/NotFound';
 import React from 'react';
@@ -159,6 +160,11 @@ function App() {
           <Route path="/admin/database-watcher" element={
             <AdminRoute>
               <DatabaseWatcher />
+            </AdminRoute>
+          } />
+          <Route path="/admin/conversion" element={
+            <AdminRoute>
+              <ConversionOptimization />
             </AdminRoute>
           } />
           <Route path="/admin" element={
