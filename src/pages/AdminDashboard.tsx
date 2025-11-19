@@ -133,7 +133,7 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Booking Monitor */}
               <Button
                 variant="outline"
@@ -176,6 +176,21 @@ export default function AdminDashboard() {
                 </div>
                 <p className="text-xs text-muted-foreground text-left">
                   Monitor live database changes across all tables with real-time event stream
+                </p>
+              </Button>
+
+              {/* Conversion Optimization */}
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-start gap-2"
+                onClick={() => window.location.href = '/admin/conversion'}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Conversion Optimization</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-left">
+                  A/B test results, drop-off heatmaps, and pricing sensitivity analysis
                 </p>
               </Button>
             </div>
