@@ -12,6 +12,8 @@ import Autoplay from 'embla-carousel-autoplay';
 import kitchenShowcase from '@/assets/showcase/kitchen-showcase.jpg';
 import fridgeShowcase from '@/assets/showcase/fridge-showcase.jpg';
 import bathroomShowcase from '@/assets/showcase/bathroom-showcase.jpg';
+import commercialShowcase from '@/assets/showcase/commercial-showcase.jpg';
+import roomShowcase from '@/assets/showcase/room-showcase.jpg';
 
 const showcaseImages = [
   {
@@ -28,6 +30,16 @@ const showcaseImages = [
     src: bathroomShowcase,
     alt: 'Pristine bathroom cleaning',
     caption: '🚿 Pristine Bathroom - Sparkling Clean',
+  },
+  {
+    src: commercialShowcase,
+    alt: 'Commercial space deep cleaning',
+    caption: '🏢 Commercial Deep Clean - Professional Results',
+  },
+  {
+    src: roomShowcase,
+    alt: 'Immaculate room cleaning',
+    caption: '🏠 Immaculate Spaces - Fresh & Clean',
   },
 ];
 
