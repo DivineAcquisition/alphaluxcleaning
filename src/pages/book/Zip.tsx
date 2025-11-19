@@ -103,7 +103,7 @@ export default function BookingZip() {
           </Card>
           
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
               Book Your Deep Clean with Just 25% Down
               <span className="block text-primary mt-2">
                 Pay the Rest Later—Flexible & Easy! 🎁
@@ -129,7 +129,7 @@ export default function BookingZip() {
                   value={zipCode}
                   onChange={handleZipChange}
                   onKeyPress={handleKeyPress}
-                  className="text-2xl text-center h-16 tracking-wider"
+                  className="text-lg md:text-2xl text-center h-12 md:h-16 tracking-wider"
                   autoFocus
                   disabled={isLoading}
                 />
