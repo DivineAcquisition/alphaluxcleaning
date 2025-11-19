@@ -11,6 +11,7 @@ import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
+import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 
 export default function BookingZip() {
   const navigate = useNavigate();
@@ -172,6 +173,8 @@ export default function BookingZip() {
           </Card>
           
           <CleaningShowcaseCarousel />
+          
+          <ReviewsWidget />
           
           <p className="text-sm text-center text-muted-foreground mt-6">
             By booking you agree to AlphaLuxClean's terms & service policy
