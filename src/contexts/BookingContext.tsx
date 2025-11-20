@@ -161,6 +161,13 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const calculatePricing = () => {
     try {
+      // SKIP auto-recalculation if user has already selected a specific offer
+      // These offers have pre-calculated bundle/promotional pricing
+      if (bookingData.offerType) {
+        console.log('Skipping auto-pricing: offerType already set to', bookingData.offerType);
+        return;
+      }
+
       // Check if we have all required data
       if (!bookingData.state || !bookingData.serviceType || !bookingData.frequency) {
         return;
