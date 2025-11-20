@@ -12,53 +12,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
-
 export default function BookingZip() {
   const navigate = useNavigate();
-  const { updateBookingData } = useBooking();
+  const {
+    updateBookingData
+  } = useBooking();
   const [zipCode, setZipCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 5);
     setZipCode(value);
     setError('');
   };
-
   const handleCheckAvailability = async () => {
     if (zipCode.length !== 5) {
       setError('Please enter a valid 5-digit ZIP code');
       return;
     }
-
     setIsLoading(true);
     setError('');
-
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('validate-zip', {
-        body: { zipCode },
+      const {
+        data,
+        error: functionError
+      } = await supabase.functions.invoke('validate-zip', {
+        body: {
+          zipCode
+        }
       });
-
       if (functionError) throw functionError;
-
       if (data?.isValid) {
         // Store ZIP data and proceed
         updateBookingData({
           zipCode,
           city: data.city,
-          state: data.state,
+          state: data.state
         });
-        
+
         // Pre-fill contact info city/state/zip
         updateBookingData({
           contactInfo: {
             city: data.city,
             state: data.state,
-            zip: zipCode,
-          } as any,
+            zip: zipCode
+          } as any
         });
-        
         navigate('/book/sqft');
       } else {
         setError(data?.message || "We don't service this area yet.");
@@ -70,15 +69,12 @@ export default function BookingZip() {
       setIsLoading(false);
     }
   };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && zipCode.length === 5) {
       handleCheckAvailability();
     }
   };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
+  return <div className="min-h-screen flex flex-col bg-background">
       <BookingProgressBar currentStep={1} totalSteps={6} />
       
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
@@ -88,11 +84,11 @@ export default function BookingZip() {
             <div className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
                 <Badge className="bg-success text-success-foreground text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
-                  🎄 HOLIDAY SPECIAL
+                  HOLIDAY SPECIAL
                 </Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Book with Just 25% Down Today! 🎁
+                    Book with Just 25% Down Today! 
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
                     Get your home deep cleaned with flexible payment options
@@ -106,7 +102,7 @@ export default function BookingZip() {
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
               Book Your Deep Clean with Just 25% Down
               <span className="block text-primary mt-2">
-                Pay the Rest Later—Flexible & Easy! 🎁
+                Pay the Rest Later—Flexible & Easy!  
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
@@ -120,54 +116,26 @@ export default function BookingZip() {
                 <Label htmlFor="zip" className="text-base mb-2">
                   ZIP Code
                 </Label>
-                <Input 
-                  id="zip"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={5}
-                  placeholder="75001"
-                  value={zipCode}
-                  onChange={handleZipChange}
-                  onKeyPress={handleKeyPress}
-                  className="text-lg md:text-2xl text-center h-12 md:h-16 tracking-wider"
-                  autoFocus
-                  disabled={isLoading}
-                />
+                <Input id="zip" type="text" inputMode="numeric" maxLength={5} placeholder="75001" value={zipCode} onChange={handleZipChange} onKeyPress={handleKeyPress} className="text-lg md:text-2xl text-center h-12 md:h-16 tracking-wider" autoFocus disabled={isLoading} />
               </div>
               
-              {error && (
-                <Alert variant="destructive">
+              {error && <Alert variant="destructive">
                   <AlertDescription className="text-center">
                     {error}
-                    {error.includes("don't service") && (
-                      <div className="mt-2">
-                        <a 
-                          href="tel:9725590223" 
-                          className="font-medium underline"
-                        >
+                    {error.includes("don't service") && <div className="mt-2">
+                        <a href="tel:9725590223" className="font-medium underline">
                           Call (972) 559-0223
                         </a>
                         {' '}for options
-                      </div>
-                    )}
+                      </div>}
                   </AlertDescription>
-                </Alert>
-              )}
+                </Alert>}
               
-              <Button 
-                size="lg" 
-                className="w-full h-14 text-lg" 
-                onClick={handleCheckAvailability}
-                disabled={isLoading || zipCode.length !== 5}
-              >
-                {isLoading ? (
-                  <>
+              <Button size="lg" className="w-full h-14 text-lg" onClick={handleCheckAvailability} disabled={isLoading || zipCode.length !== 5}>
+                {isLoading ? <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Checking...
-                  </>
-                ) : (
-                  'Check Availability'
-                )}
+                  </> : 'Check Availability'}
               </Button>
             </div>
           </Card>
@@ -181,6 +149,5 @@ export default function BookingZip() {
           </p>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 }
