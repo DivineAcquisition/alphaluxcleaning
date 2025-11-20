@@ -8,11 +8,13 @@ import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Check, Sparkles, TrendingUp } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
+import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
+  const [showUpsellModal, setShowUpsellModal] = useState(false);
 
   // Find the selected home size range
   const selectedHomeSize = HOME_SIZE_RANGES.find(
@@ -94,6 +96,12 @@ export default function BookingOffer() {
   ) => {
     setSelectedOffer(offerType);
     
+    // Show upsell modal for Standard Clean selection
+    if (offerType === 'standard_clean') {
+      setShowUpsellModal(true);
+      return;
+    }
+    
     let serviceType: 'regular' | 'deep' | 'move_in_out' = 'regular';
     let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = 'one_time';
     
@@ -116,6 +124,43 @@ export default function BookingOffer() {
     });
 
     // Navigate after brief delay for visual feedback
+    setTimeout(() => {
+      navigate('/book/checkout');
+    }, 200);
+  };
+
+  const handleUpgradeToBundle = () => {
+    setShowUpsellModal(false);
+    setSelectedOffer('90_day_plan');
+    
+    updateBookingData({
+      offerType: '90_day_plan',
+      offerName: '90-Day Reset & Maintain Plan',
+      basePrice: ninetyDayPrice,
+      visitCount: 4,
+      isRecurring: true,
+      serviceType: 'deep',
+      frequency: 'weekly',
+    });
+
+    setTimeout(() => {
+      navigate('/book/checkout');
+    }, 200);
+  };
+
+  const handleContinueStandard = () => {
+    setShowUpsellModal(false);
+    
+    updateBookingData({
+      offerType: 'standard_clean',
+      offerName: 'One-Time Standard Clean',
+      basePrice: maintenancePrice,
+      visitCount: 1,
+      isRecurring: false,
+      serviceType: 'regular',
+      frequency: 'one_time',
+    });
+
     setTimeout(() => {
       navigate('/book/checkout');
     }, 200);
@@ -353,6 +398,17 @@ export default function BookingOffer() {
         
         <CleaningShowcaseCarousel />
       </div>
+
+      {/* Bundle & Save Upsell Modal */}
+      <BundleSaveModal
+        open={showUpsellModal}
+        onClose={() => setShowUpsellModal(false)}
+        onUpgrade={handleUpgradeToBundle}
+        onContinue={handleContinueStandard}
+        standardPrice={maintenancePrice}
+        bundlePrice={ninetyDayPrice}
+        savings={Math.round((maintenancePrice * 4) - ninetyDayPrice)}
+      />
     </div>
   );
 }
