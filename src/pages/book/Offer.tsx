@@ -86,21 +86,33 @@ export default function BookingOffer() {
   }
 
   const handleSelectOffer = (
-    offerType: 'tester_deep_clean' | '90_day_plan',
+    offerType: 'tester_deep_clean' | '90_day_plan' | 'standard_clean',
     offerName: string,
     basePrice: number,
     visitCount: number,
     isRecurring: boolean
   ) => {
     setSelectedOffer(offerType);
+    
+    let serviceType: 'regular' | 'deep' | 'move_in_out' = 'regular';
+    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = 'one_time';
+    
+    if (offerType === 'tester_deep_clean') {
+      serviceType = 'deep';
+      frequency = 'one_time';
+    } else if (offerType === '90_day_plan') {
+      serviceType = 'deep';
+      frequency = 'weekly';
+    }
+    
     updateBookingData({
       offerType,
       offerName,
       basePrice,
       visitCount,
       isRecurring,
-      serviceType: offerType === 'tester_deep_clean' ? 'deep' : 'deep',
-      frequency: offerType === 'tester_deep_clean' ? 'one_time' : 'weekly',
+      serviceType,
+      frequency,
     });
 
     // Navigate after brief delay for visual feedback
@@ -123,7 +135,71 @@ export default function BookingOffer() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+        <div className={`grid gap-6 md:gap-8 ${isTesterEligible ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+          {/* Standard Clean - Always available */}
+          <Card
+            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
+              selectedOffer === 'standard_clean'
+                ? 'border-primary shadow-lg'
+                : 'border-border hover:border-primary/50'
+            }`}
+            onClick={() =>
+              handleSelectOffer(
+                'standard_clean',
+                'One-Time Standard Clean',
+                maintenancePrice,
+                1,
+                false
+              )
+            }
+          >
+            <div className="mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                Simple & Straightforward
+              </span>
+            </div>
+
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Standard Clean
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">Perfect for regular upkeep</p>
+
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl md:text-5xl font-bold text-primary">
+                  ${Math.round(maintenancePrice * 0.25)}
+                </span>
+                <span className="text-lg text-muted-foreground">today</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                for 1 standard clean visit
+              </p>
+            </div>
+
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">Complete home cleaning checklist</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">All supplies & equipment included</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">48-hour re-clean guarantee</span>
+              </li>
+            </ul>
+
+            <Button
+              className="w-full"
+              size="lg"
+              variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}
+            >
+              Get Started - ${Math.round(maintenancePrice * 0.25)} Today
+            </Button>
+          </Card>
+
           {/* Tester Deep Clean - Only for homes ≤1,500 sq ft */}
           {isTesterEligible ? (
             <Card
@@ -192,30 +268,7 @@ export default function BookingOffer() {
                 Get Started - ${Math.round(testerPrice * 0.25)} Today
               </Button>
             </Card>
-          ) : (
-            <Card className="relative p-6 md:p-8 opacity-60 border-2 border-border bg-muted/30">
-              <div className="mb-4">
-                <Badge variant="outline">Not Available</Badge>
-              </div>
-              
-              <h2 className="text-2xl font-bold text-muted-foreground mb-2">
-                Tester Deep Clean
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Only available for homes up to 1,500 sq ft
-              </p>
-
-              <div className="mb-6">
-                <p className="text-base text-muted-foreground">
-                  Your home qualifies for our 90-Day Plan with better value for larger spaces.
-                </p>
-              </div>
-
-              <Button disabled className="w-full" size="lg" variant="outline">
-                Not Available for Your Home Size
-              </Button>
-            </Card>
-          )}
+          ) : null}
 
           {/* 90-Day Reset & Maintain Plan */}
           <Card
@@ -223,7 +276,7 @@ export default function BookingOffer() {
               selectedOffer === '90_day_plan'
                 ? 'border-primary shadow-lg'
                 : 'border-primary/30 hover:border-primary'
-            } ${!isTesterEligible ? 'md:col-span-2 max-w-xl mx-auto' : ''}`}
+            }`}
             onClick={() =>
               handleSelectOffer(
                 '90_day_plan',
