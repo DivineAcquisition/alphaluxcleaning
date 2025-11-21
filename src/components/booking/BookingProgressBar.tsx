@@ -21,7 +21,7 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
           <Button variant="outline" size="sm" asChild>
             <a href="tel:+19725590223" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              <span className="hidden sm:inline">Call Us</span>
+              <span className="hidden sm:inline">(972) 559-0223</span>
             </a>
           </Button>
         </div>

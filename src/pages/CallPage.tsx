@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { SEOHead } from "@/components/SEOHead";
 
 export default function CallPage() {
-  const phoneNumber = "(844) 564-2584";
-  const phoneLink = "tel:+18445642584";
+  const phoneNumber = "(972) 559-0223";
+  const phoneLink = "tel:+19725590223";
 
   return (
     <>
