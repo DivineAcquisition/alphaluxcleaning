@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { Check, Sparkles, TrendingUp, Tag } from 'lucide-react';
+import { Check, Sparkles, TrendingUp, Tag, Info } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
+import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { toast } from 'sonner';
 
 export default function BookingOffer() {
@@ -18,6 +19,8 @@ export default function BookingOffer() {
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('standard');
 
   // Find the selected home size range
   const selectedHomeSize = HOME_SIZE_RANGES.find(
@@ -256,13 +259,28 @@ export default function BookingOffer() {
               </li>
             </ul>
 
-            <Button
-              className="w-full"
-              size="lg"
-              variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}
-            >
-              Get Started - ${Math.round(maintenancePrice * 0.25)} Today
-            </Button>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                size="lg"
+                variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}
+              >
+                Get Started - ${Math.round(maintenancePrice * 0.25)} Today
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDetailsServiceType('standard');
+                  setShowDetailsModal(true);
+                }}
+                variant="ghost"
+                size="sm"
+                className="w-full"
+              >
+                <Info className="h-4 w-4 mr-2" />
+                What's Included?
+              </Button>
+            </div>
           </Card>
 
           {/* Tester Deep Clean - Only for homes ≤1,500 sq ft */}
@@ -339,13 +357,28 @@ export default function BookingOffer() {
                 </li>
               </ul>
 
-              <Button
-                className="w-full"
-                size="lg"
-                variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}
-              >
-                Get Started - ${Math.round(testerPrice * 0.25)} Today
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}
+                >
+                  Get Started - ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)} Today
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDetailsServiceType('tester');
+                    setShowDetailsModal(true);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                >
+                  <Info className="h-4 w-4 mr-2" />
+                  What's Included?
+                </Button>
+              </div>
             </Card>
           ) : null}
 
@@ -414,13 +447,28 @@ export default function BookingOffer() {
               </li>
             </ul>
 
-            <Button
-              className="w-full"
-              variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
-              size="lg"
-            >
-              Get Started - ${Math.round(ninetyDayPrice * 0.25)} Today
-            </Button>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
+                size="lg"
+              >
+                Get Started - ${Math.round(ninetyDayPrice * 0.25)} Today
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDetailsServiceType('90day');
+                  setShowDetailsModal(true);
+                }}
+                variant="ghost"
+                size="sm"
+                className="w-full"
+              >
+                <Info className="h-4 w-4 mr-2" />
+                What's Included?
+              </Button>
+            </div>
           </Card>
         </div>
 
@@ -442,6 +490,13 @@ export default function BookingOffer() {
         standardPrice={maintenancePrice}
         bundlePrice={ninetyDayPrice}
         savings={Math.round((maintenancePrice * 4) - ninetyDayPrice)}
+      />
+
+      {/* Service Details Modal */}
+      <ServiceDetailsModal
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        serviceType={detailsServiceType}
       />
     </div>
   );

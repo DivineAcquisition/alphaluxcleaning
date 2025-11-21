@@ -252,10 +252,13 @@ export default function Waitlist() {
                     Regular: $300-550
                   </p>
                   <p className="text-3xl font-bold text-primary">
-                    Today: $240-490
+                    Today: $48-110
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    25% deposit to secure your spot
+                    (25% deposit to secure your deep clean)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Pricing varies by home size
                   </p>
                 </div>
                 <Button
