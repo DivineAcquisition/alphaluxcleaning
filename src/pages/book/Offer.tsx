@@ -438,7 +438,7 @@ export default function BookingOffer() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    ${Math.round((ninetyDayPrice * 0.75) / 3)}
+                    ${Math.round(ninetyDayPrice * 0.25)}
                   </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
