@@ -120,6 +120,13 @@ function App() {
             {/* Lead Capture */}
             <Route path="/learn-more" element={<LearnMore />} />
             
+            {/* Call Page */}
+            <Route path="/call" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/CallPage')))}
+              </Suspense>
+            } />
+            
             {/* Pricing Page */}
             <Route path="/pricing" element={<Pricing />} />
             
