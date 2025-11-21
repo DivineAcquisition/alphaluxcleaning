@@ -419,13 +419,32 @@ export default function BookingOffer() {
               <p className="text-sm text-muted-foreground mb-3">
                 Lock in your clean home routine
               </p>
+              
+              {/* Deposit Amount */}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
                   ${Math.round(ninetyDayPrice * 0.25)}
                 </span>
                 <span className="text-lg text-muted-foreground">today</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-1">
+                25% deposit to secure your plan
+              </p>
+              
+              {/* Monthly Payment */}
+              <div className="mt-4 p-3 bg-secondary/50 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground mb-1">
+                  After first service:
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">
+                    ${Math.round((ninetyDayPrice * 0.75) / 3)}
+                  </span>
+                  <span className="text-sm text-muted-foreground">/month</span>
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mt-3">
                 for 4 visits over 90 days
               </p>
             </div>
