@@ -337,9 +337,23 @@ export default function BookingCheckout() {
                     ${finalDepositAmount.toFixed(2)}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Remaining ${balanceDue.toFixed(2)} due after service completion
-                </p>
+                {bookingData.offerType === '90_day_plan' ? (
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      After first service:
+                    </p>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-medium">Monthly Payment</span>
+                      <span className="text-lg font-bold text-primary">
+                        ${Math.round(finalPrice * 0.25)}/month
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Remaining ${balanceDue.toFixed(2)} due after service completion
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
