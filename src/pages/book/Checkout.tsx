@@ -9,7 +9,7 @@ import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
-import { Loader2, Shield, CreditCard, Lock, Tag } from 'lucide-react';
+import { Loader2, Shield, CreditCard, Lock, Tag, CheckCircle2, Clock, Star } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingCheckout() {
@@ -209,6 +209,71 @@ export default function BookingCheckout() {
   const finalDepositAmount = Math.round(finalPrice * 0.25);
   const balanceDue = finalPrice - finalDepositAmount;
 
+  // Get service details based on service type
+  const getServiceDetails = () => {
+    const serviceType = bookingData.serviceType || 'standard';
+    
+    const details = {
+      standard: {
+        title: "Standard Deep Cleaning",
+        duration: "3-4 hours",
+        features: [
+          "Professional deep cleaning team",
+          "Eco-friendly cleaning products",
+          "All supplies and equipment included",
+          "Satisfaction guarantee"
+        ],
+        checklist: [
+          "Kitchen: Deep clean appliances, cabinets, countertops",
+          "Bathrooms: Scrub tiles, sanitize fixtures, polish mirrors",
+          "Living Areas: Dust surfaces, vacuum carpets, mop floors",
+          "Bedrooms: Change linens, dust furniture, organize",
+          "Windows: Clean interior windows and sills",
+          "Baseboards: Wipe down and detail clean"
+        ]
+      },
+      tester: {
+        title: "Tester Deep Clean (90-Min)",
+        duration: "90 minutes",
+        features: [
+          "Experienced cleaning professional",
+          "Focus on high-priority areas",
+          "Premium eco-friendly products",
+          "Perfect for trying our service"
+        ],
+        checklist: [
+          "Kitchen: Clean countertops, sink, and stovetop",
+          "Bathroom: Sanitize toilet, sink, and mirror",
+          "Living Room: Dust surfaces and vacuum",
+          "Quick tidy of visible areas",
+          "Trash removal and basic organizing"
+        ]
+      },
+      '90day': {
+        title: "90-Day Deep Clean Bundle",
+        duration: "3-4 hours per visit",
+        features: [
+          "3 deep cleaning sessions over 90 days",
+          "Consistent cleaning team",
+          "Flexible scheduling",
+          "Best value for money"
+        ],
+        checklist: [
+          "Complete deep cleaning for each visit",
+          "All areas covered thoroughly",
+          "Kitchen, bathrooms, bedrooms, living areas",
+          "Windows, baseboards, and detailed surfaces",
+          "Customizable priority areas",
+          "Build relationship with your cleaning team"
+        ]
+      }
+    };
+    
+    return details[serviceType as keyof typeof details] || details.standard;
+  };
+
+  const serviceDetails = getServiceDetails();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <BookingProgressBar currentStep={4} totalSteps={6} />
@@ -275,6 +340,48 @@ export default function BookingCheckout() {
                 <p className="text-xs text-muted-foreground">
                   Remaining ${balanceDue.toFixed(2)} due after service completion
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Service Details */}
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-primary" />
+                What's Included in Your Clean
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="font-semibold">{serviceDetails.duration}</span>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3 text-sm">Premium Features</h3>
+                <div className="grid gap-2">
+                  {serviceDetails.features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="font-semibold mb-3 text-sm">Detailed Cleaning Checklist</h3>
+                <div className="grid gap-2">
+                  {serviceDetails.checklist.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
