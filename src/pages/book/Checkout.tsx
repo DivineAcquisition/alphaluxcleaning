@@ -9,7 +9,7 @@ import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
-import { Loader2, Shield, CreditCard, Lock } from 'lucide-react';
+import { Loader2, Shield, CreditCard, Lock, Tag } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingCheckout() {
@@ -89,6 +89,11 @@ export default function BookingCheckout() {
         }
       }
 
+      // Calculate final price after promo discount
+      const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
+      const finalDepositAmount = Math.round(finalPrice * 0.25);
+      const finalBalanceDue = finalPrice - finalDepositAmount;
+
       // Create customer
       const { data: customer, error: customerError } = await supabase
         .from('customers')
@@ -118,21 +123,25 @@ export default function BookingCheckout() {
           sqft_or_bedrooms: `${bookingData.bedrooms}bed/${bookingData.bathrooms}bath`,
           home_size: bookingData.homeSizeId,
           zip_code: bookingData.zipCode,
-          est_price: bookingData.basePrice || 0,
-          deposit_amount: depositAmount,
-          base_price: bookingData.basePrice || 0,
-          balance_due: (bookingData.basePrice || 0) - depositAmount,
+          est_price: finalPrice,
+          deposit_amount: finalDepositAmount,
+          base_price: finalPrice,
+          balance_due: finalBalanceDue,
           offer_name: bookingData.offerName,
           offer_type: bookingData.offerType,
           visit_count: bookingData.visitCount,
           is_recurring: bookingData.isRecurring || false,
           status: 'payment_pending',
           payment_status: 'pending',
+          promo_code: bookingData.promoCode || null,
+          promo_discount_cents: bookingData.promoDiscount ? Math.round(bookingData.promoDiscount * 100) : 0,
           pricing_breakdown: {
             basePrice: bookingData.basePrice || 0,
-            finalPrice: bookingData.basePrice || 0,
-            depositAmount: depositAmount,
-            balanceDue: (bookingData.basePrice || 0) - depositAmount,
+            promoCode: bookingData.promoCode,
+            promoDiscount: bookingData.promoDiscount || 0,
+            finalPrice: finalPrice,
+            depositAmount: finalDepositAmount,
+            balanceDue: finalBalanceDue,
           },
         })
         .select()
@@ -195,7 +204,10 @@ export default function BookingCheckout() {
 
   if (!bookingData.basePrice || !depositAmount) return null;
 
-  const balanceDue = bookingData.basePrice - depositAmount;
+  // Calculate final amounts with promo discount
+  const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
+  const finalDepositAmount = Math.round(finalPrice * 0.25);
+  const balanceDue = finalPrice - finalDepositAmount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -229,16 +241,35 @@ export default function BookingCheckout() {
               
               <Separator />
               
+              {bookingData.promoCode && bookingData.promoDiscount && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="line-through">${bookingData.basePrice?.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-primary font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-4 h-4" />
+                      {bookingData.promoCode} Discount
+                    </span>
+                    <span>-${bookingData.promoDiscount.toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                </>
+              )}
+              
               <div className="flex justify-between font-bold text-lg">
                 <span>Total Service Cost</span>
-                <span>${bookingData.basePrice?.toFixed(2)}</span>
+                <span>
+                  ${((bookingData.basePrice || 0) - (bookingData.promoDiscount || 0)).toFixed(2)}
+                </span>
               </div>
               
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">💳 Due Today (25% Deposit)</span>
                   <span className="text-2xl font-bold text-primary">
-                    ${depositAmount.toFixed(2)}
+                    ${finalDepositAmount.toFixed(2)}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">

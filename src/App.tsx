@@ -62,6 +62,8 @@ import BookingMonitor from '@/pages/admin/BookingMonitor';
 import BookingTester from '@/pages/admin/BookingTester';
 import DatabaseWatcher from '@/pages/admin/DatabaseWatcher';
 import ConversionOptimization from '@/pages/admin/ConversionOptimization';
+import Waitlist from '@/pages/Waitlist';
+import CallPage from '@/pages/CallPage';
 
 import NotFound from '@/pages/NotFound';
 import React from 'react';
@@ -126,6 +128,9 @@ function App() {
                 {React.createElement(React.lazy(() => import('./pages/CallPage')))}
               </Suspense>
             } />
+            
+            {/* Waitlist Page */}
+            <Route path="/waitlist" element={<Waitlist />} />
             
             {/* Pricing Page */}
             <Route path="/pricing" element={<Pricing />} />
