@@ -1,10 +1,11 @@
-import { Phone } from "lucide-react";
+import { Phone, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEOHead } from "@/components/SEOHead";
 
 export default function CallPage() {
   const phoneNumber = "(972) 559-0223";
   const phoneLink = "tel:+19725590223";
+  const smsLink = "sms:+19725590223";
 
   return (
     <>
@@ -50,15 +51,27 @@ export default function CallPage() {
                 </a>
               </div>
 
-              {/* Call Button */}
-              <Button
-                size="lg"
-                className="w-full md:w-auto text-lg px-12 py-6"
-                onClick={() => window.location.href = phoneLink}
-              >
-                <Phone className="w-5 h-5 mr-2" />
-                Call Now
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="text-lg px-12 py-6"
+                  onClick={() => window.location.href = phoneLink}
+                >
+                  <Phone className="w-5 h-5 mr-2" />
+                  Call Now
+                </Button>
+                
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-12 py-6"
+                  onClick={() => window.location.href = smsLink}
+                >
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  Text Us
+                </Button>
+              </div>
             </div>
           </div>
 
