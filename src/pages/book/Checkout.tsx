@@ -211,7 +211,7 @@ export default function BookingCheckout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <BookingProgressBar currentStep={4} totalSteps={4} />
+      <BookingProgressBar currentStep={4} totalSteps={6} />
       
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
