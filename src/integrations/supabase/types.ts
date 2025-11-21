@@ -1835,6 +1835,68 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_leads: {
+        Row: {
+          converted_at: string | null
+          converted_booking_id: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          home_size: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          preferred_contact: string | null
+          promo_claimed: boolean | null
+          ready_timeline: string | null
+          source: string | null
+          status: string
+          zip_code: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_booking_id?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          home_size?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          promo_claimed?: boolean | null
+          ready_timeline?: string | null
+          source?: string | null
+          status?: string
+          zip_code?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          converted_booking_id?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          home_size?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          promo_claimed?: boolean | null
+          ready_timeline?: string | null
+          source?: string | null
+          status?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_leads_converted_booking_id_fkey"
+            columns: ["converted_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_audit_log: {
         Row: {
           booking_id: string | null

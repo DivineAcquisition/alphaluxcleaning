@@ -33,6 +33,10 @@ interface BookingData {
   visitCount?: number;
   isRecurring?: boolean;
   
+  // Promo code support
+  promoCode?: string;
+  promoDiscount?: number;
+  
   // Service Type (locked to 'deep')
   serviceType: 'regular' | 'deep' | 'move_in_out';
   

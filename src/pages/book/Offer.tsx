@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { Check, Sparkles, TrendingUp } from 'lucide-react';
+import { Check, Sparkles, TrendingUp, Tag } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
+import { toast } from 'sonner';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { bookingData, updateBookingData } = useBooking();
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [promoApplied, setPromoApplied] = useState(false);
 
   // Find the selected home size range
   const selectedHomeSize = HOME_SIZE_RANGES.find(
@@ -41,6 +44,23 @@ export default function BookingOffer() {
       navigate('/book');
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
+
+  // Check for promo code in URL params
+  useEffect(() => {
+    const promoCode = searchParams.get('promo');
+    const lockService = searchParams.get('lock_service');
+    
+    if (promoCode === 'DEEPCLEAN60' && !promoApplied) {
+      updateBookingData({
+        promoCode: 'DEEPCLEAN60',
+        promoDiscount: 60,
+      });
+      setPromoApplied(true);
+      toast.success('🎉 $60 Deep Clean Discount Applied!', {
+        description: 'Your discount will be shown at checkout',
+      });
+    }
+  }, [searchParams, promoApplied, updateBookingData]);
 
   // Handle custom quote requirement for large homes
   if (selectedHomeSize?.requiresEstimate) {
@@ -270,25 +290,39 @@ export default function BookingOffer() {
                 </span>
               </div>
 
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Home Reset Deep Clean
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">(Tester)</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Home Reset Deep Clean
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">(Tester)</p>
 
-              <div className="mb-6">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Try our service risk-free
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl md:text-5xl font-bold text-primary">
-                    ${Math.round(testerPrice * 0.25)}
-                  </span>
-                  <span className="text-lg text-muted-foreground">today</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  for 1 deep clean visit
-                </p>
+            {bookingData.promoCode === 'DEEPCLEAN60' && (
+              <div className="mb-4">
+                <Badge variant="default" className="flex items-center gap-1 w-fit">
+                  <Tag className="w-3 h-3" />
+                  $60 Discount Applied
+                </Badge>
               </div>
+            )}
+
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground mb-3">
+                Try our service risk-free
+              </p>
+              {bookingData.promoCode === 'DEEPCLEAN60' && (
+                <div className="text-sm text-muted-foreground line-through mb-1">
+                  Regular: ${Math.round(testerPrice * 0.25)} today
+                </div>
+              )}
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl md:text-5xl font-bold text-primary">
+                  ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)}
+                </span>
+                <span className="text-lg text-muted-foreground">today</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                for 1 deep clean visit
+              </p>
+            </div>
 
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start gap-2 text-sm">
