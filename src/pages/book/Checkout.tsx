@@ -199,7 +199,27 @@ export default function BookingCheckout() {
           .eq('id', booking.id);
       }
 
-      toast.success('Deposit paid successfully!');
+      // Send payment schedule email
+      try {
+        await supabase.functions.invoke('send-payment-schedule', {
+          body: {
+            bookingId: booking.id,
+            customerEmail: bookingData.contactInfo.email,
+            customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+            offerType: bookingData.offerType || 'standard',
+            totalPrice: finalPrice,
+            depositAmount: finalDepositAmount,
+            firstCleanBalance: firstCleanBalance,
+            monthlyPayment: monthlyPayment,
+          },
+        });
+        console.log('Payment schedule email sent');
+      } catch (emailError) {
+        console.error('Failed to send payment schedule email:', emailError);
+        // Don't block the booking flow if email fails
+      }
+
+      toast.success('Deposit paid successfully! Check your email for payment details.');
       navigate(`/book/details?booking_id=${booking.id}`);
     } catch (error: any) {
       console.error('Payment error:', error);

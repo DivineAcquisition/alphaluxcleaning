@@ -252,13 +252,21 @@ export default function Waitlist() {
                     Regular: $300-550
                   </p>
                   <p className="text-3xl font-bold text-primary">
-                    Today: $48-110
+                    Today: $44-110
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    (25% deposit to secure your deep clean)
+                    (Starter deposit to secure your spot)
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Pricing varies by home size
+                  <div className="bg-primary/10 rounded-lg p-4 mt-3 text-left max-w-md mx-auto">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">90-Day Plan Payment Breakdown:</p>
+                    <ul className="text-xs space-y-1 text-muted-foreground">
+                      <li>• <strong>Today:</strong> $44-110 starter deposit</li>
+                      <li>• <strong>After 1st service:</strong> Complete first clean balance</li>
+                      <li>• <strong>Then:</strong> 3 monthly payments of 25% each</li>
+                    </ul>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Pricing varies by home size • Flexible payment options
                   </p>
                 </div>
                 <Button
