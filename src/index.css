@@ -2,6 +2,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Merriweather&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -34,12 +37,12 @@ All colors MUST be HSL.
     --accent: 211 41% 95%;
     --accent-foreground: 211 41% 24%;
 
-    --destructive: 0 72% 50%;
+    --destructive: 211 40.9836% 23.9216%;
     --destructive-foreground: 0 85% 97%;
 
     --border: 240 4% 83%;
     --input: 240 4% 83%;
-    --ring: 333 71% 50%;
+    --ring: 215 19.3182% 34.5098%;
 
     --success: 160 85% 35%;
     --success-foreground: 0 0% 100%;
@@ -90,13 +93,13 @@ All colors MUST be HSL.
 
     --sidebar-ring: 211 41% 24%;
 
-    --chart-1: 328 85% 70%;
+    --chart-1: 215 19.3182% 34.5098%;
 
-    --chart-2: 351 94% 71%;
+    --chart-2: 211 40.9836% 23.9216%;
 
-    --chart-3: 327 87% 81%;
+    --chart-3: 215 20.2247% 65.098%;
 
-    --chart-4: 352 95% 81%;
+    --chart-4: 215 20.2247% 65.098%;
 
     --chart-5: 240 3% 46%;
 
