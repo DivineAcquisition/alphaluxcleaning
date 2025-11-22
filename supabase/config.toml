@@ -193,3 +193,9 @@ verify_jwt = false
 [functions.send-booking-confirmation]
 verify_jwt = false
 
+[functions.send-payment-schedule]
+verify_jwt = false
+
+[functions.waitlist-signup]
+verify_jwt = false
+
