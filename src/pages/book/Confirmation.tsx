@@ -6,13 +6,15 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Loader2, TestTube } from 'lucide-react';
+import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingConfirmation() {
   const { bookingId } = useParams();
   const [booking, setBooking] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isTestMode } = useTestMode();
 
   useEffect(() => {
     if (bookingId) {
@@ -89,6 +91,15 @@ export default function BookingConfirmation() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-background">
       <Card className="max-w-2xl w-full">
         <CardContent className="pt-8">
+          {isTestMode && (
+            <Alert className="mb-4 border-orange-500 bg-orange-50 dark:bg-orange-950/30">
+              <TestTube className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Demo Mode Active</strong> - This was a test booking. No real charges were made.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="h-8 w-8 text-success" />

@@ -199,6 +199,16 @@ function App() {
             <Route path="/dev-test/payments" element={<DevTestPayments />} />
             <Route path="/dev-test/webhooks" element={<DevTestWebhooks />} />
             <Route path="/dev-test/test-mode" element={<DevTestModeToggle />} />
+            <Route path="/dev-test/cleanup" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/DevTestCleanup')))}
+              </Suspense>
+            } />
+            <Route path="/demo-booking" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/DemoBooking')))}
+              </Suspense>
+            } />
             <Route path="/booking-debug" element={<BookingDebug />} />
             <Route path="/email-tools" element={<EmailTools />} />
             

@@ -1,16 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
+import { useTestMode } from '@/hooks/useTestMode';
+import { TestTube } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Lock, Tag, CheckCircle2, Clock, Star } from 'lucide-react';
-import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -186,9 +187,15 @@ export default function BookingCheckout() {
         console.log('🧪 TEST MODE: Skipping payment');
         paymentData = { success: true, payment_id: 'test_' + Date.now() };
         
+        // Update booking status to confirmed with full payment details
         await supabase
           .from('bookings')
-          .update({ status: 'confirmed' })
+          .update({ 
+            status: 'confirmed',
+            payment_status: 'paid',
+            square_payment_id: paymentData.payment_id,
+            paid_at: new Date().toISOString()
+          })
           .eq('id', booking.id);
       }
 
