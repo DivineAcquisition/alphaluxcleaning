@@ -158,7 +158,7 @@ export default function BookingCheckout() {
           'create-square-payment',
           {
             body: {
-              amount: depositAmount,
+              amount: finalDepositAmount,
               customerEmail: bookingData.contactInfo.email,
               customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
               customerPhone: bookingData.contactInfo.phone,
