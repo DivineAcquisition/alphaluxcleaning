@@ -218,6 +218,16 @@ export default function BookingCheckout() {
   const finalDepositAmount = Math.round(finalPrice * depositPercentage);
   const balanceDue = finalPrice - finalDepositAmount;
 
+  // For 90-day plan: calculate payment breakdown
+  const monthlyPayment = Math.round(finalPrice * 0.25);
+  const totalMonthlyPayments = monthlyPayment * 3;
+  const firstCleanBalance = finalPrice - finalDepositAmount - totalMonthlyPayments;
+  
+  // Calculate savings for 90-day plan (compare to 4 individual deep cleans at full price)
+  const individualServicePrice = bookingData.basePrice ? (bookingData.basePrice / 4) * 1.2 : 0;
+  const totalIndividualCost = individualServicePrice * 4;
+  const savings = Math.round(totalIndividualCost - finalPrice);
+
   // Get service details based on service type
   const getServiceDetails = () => {
     const serviceType = bookingData.serviceType || 'standard';
@@ -333,35 +343,61 @@ export default function BookingCheckout() {
               )}
               
               <div className="flex justify-between font-bold text-lg">
-                <span>Total Service Cost</span>
+                <span>
+                  {bookingData.offerType === '90_day_plan' 
+                    ? 'Total Service Cost (Over 3 Months)' 
+                    : 'Total Service Cost'}
+                </span>
                 <span>
                   ${((bookingData.basePrice || 0) - (bookingData.promoDiscount || 0)).toFixed(2)}
                 </span>
               </div>
               
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">💳 Due Today (25% Deposit)</span>
-                  <span className="text-2xl font-bold text-primary">
-                    ${finalDepositAmount.toFixed(2)}
-                  </span>
+              {bookingData.offerType === '90_day_plan' && savings > 0 && (
+                <div className="text-sm text-primary font-semibold">
+                  Save ${savings} vs booking separately
                 </div>
+              )}
+              
+              <div className="bg-primary/10 p-4 rounded-lg">
                 {bookingData.offerType === '90_day_plan' ? (
-                  <div className="mt-3 pt-3 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      After first service:
-                    </p>
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-sm font-medium">Monthly Payment</span>
-                      <span className="text-lg font-bold text-primary">
-                        ${Math.round(finalPrice * 0.25)}/month
+                  <>
+                    <div className="mb-3">
+                      <p className="font-semibold text-sm mb-3">💳 Payment Breakdown</p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Today (Starter Deposit)</span>
+                          <span className="font-bold text-primary">
+                            ${finalDepositAmount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">After 1st Service (Complete First Clean)</span>
+                          <span className="font-bold">
+                            ${firstCleanBalance.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                          <span className="text-sm font-medium">Monthly Payment (3 months)</span>
+                          <span className="text-lg font-bold text-primary">
+                            ${monthlyPayment}/month
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">💳 Due Today (25% Deposit)</span>
+                      <span className="text-2xl font-bold text-primary">
+                        ${finalDepositAmount.toFixed(2)}
                       </span>
                     </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Remaining ${balanceDue.toFixed(2)} due after service completion
-                  </p>
+                    <p className="text-xs text-muted-foreground">
+                      Remaining ${balanceDue.toFixed(2)} due after service completion
+                    </p>
+                  </>
                 )}
               </div>
             </CardContent>
