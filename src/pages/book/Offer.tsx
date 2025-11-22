@@ -159,7 +159,7 @@ export default function BookingOffer() {
     updateBookingData({
       offerType: '90_day_plan',
       offerName: '90-Day Reset & Maintain Plan',
-      basePrice: ninetyDayPrice,
+      basePrice: ninetyDayPrice - (bookingData.promoDiscount || 0),
       visitCount: 4,
       isRecurring: true,
       serviceType: 'deep',
@@ -295,7 +295,7 @@ export default function BookingOffer() {
                 handleSelectOffer(
                   'tester_deep_clean',
                   'Home Reset Deep Clean (Tester)',
-                  testerPrice,
+                  testerPrice - (bookingData.promoDiscount || 0),
                   1,
                   false
                 )
@@ -393,7 +393,7 @@ export default function BookingOffer() {
               handleSelectOffer(
                 '90_day_plan',
                 '90-Day Reset & Maintain Plan',
-                ninetyDayPrice,
+                ninetyDayPrice - (bookingData.promoDiscount || 0),
                 4,
                 true
               )
@@ -415,15 +415,30 @@ export default function BookingOffer() {
               90-Day Reset & Maintain Plan
             </h2>
 
+            {bookingData.promoCode === 'DEEPCLEAN60' && (
+              <div className="mb-4">
+                <Badge variant="default" className="flex items-center gap-1 w-fit">
+                  <Tag className="w-3 h-3" />
+                  $60 Discount Applied
+                </Badge>
+              </div>
+            )}
+
             <div className="mb-6">
               <p className="text-sm text-muted-foreground mb-3">
                 Lock in your clean home routine
               </p>
               
+              {bookingData.promoCode === 'DEEPCLEAN60' && (
+                <div className="text-sm text-muted-foreground line-through mb-1">
+                  Regular: ${Math.round(ninetyDayPrice * 0.25)} today
+                </div>
+              )}
+              
               {/* Deposit Amount */}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round(ninetyDayPrice * 0.25)}
+                  ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)}
                 </span>
                 <span className="text-lg text-muted-foreground">today</span>
               </div>
@@ -438,7 +453,7 @@ export default function BookingOffer() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    ${Math.round(ninetyDayPrice * 0.25)}
+                    ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)}
                   </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
@@ -472,7 +487,7 @@ export default function BookingOffer() {
                 variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
                 size="lg"
               >
-                Get Started - ${Math.round(ninetyDayPrice * 0.25)} Today
+                Get Started - ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)} Today
               </Button>
               <Button
                 onClick={(e) => {
@@ -507,8 +522,8 @@ export default function BookingOffer() {
         onUpgrade={handleUpgradeToBundle}
         onContinue={handleContinueStandard}
         standardPrice={maintenancePrice}
-        bundlePrice={ninetyDayPrice}
-        savings={Math.round((maintenancePrice * 4) - ninetyDayPrice)}
+        bundlePrice={ninetyDayPrice - (bookingData.promoDiscount || 0)}
+        savings={Math.round((maintenancePrice * 4) - (ninetyDayPrice - (bookingData.promoDiscount || 0)))}
       />
 
       {/* Service Details Modal */}
