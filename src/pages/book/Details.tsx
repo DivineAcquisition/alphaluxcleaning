@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
+import { useTestMode } from '@/hooks/useTestMode';
+import { TestTube } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +21,7 @@ export default function BookingDetails() {
 
   const [loading, setLoading] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
+  const { isTestMode } = useTestMode();
   
   const [addressLine1, setAddressLine1] = useState('');
   const [addressLine2, setAddressLine2] = useState('');
