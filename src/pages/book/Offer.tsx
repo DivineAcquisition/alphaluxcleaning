@@ -431,19 +431,19 @@ export default function BookingOffer() {
               
               {bookingData.promoCode === 'DEEPCLEAN60' && (
                 <div className="text-sm text-muted-foreground line-through mb-1">
-                  Regular: ${Math.round(ninetyDayPrice * 0.25)} today
+                  Regular: ${Math.round((ninetyDayPrice * 0.25) * 0.25)} today
                 </div>
               )}
               
               {/* Deposit Amount */}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)}
+                  ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)}
                 </span>
                 <span className="text-lg text-muted-foreground">today</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                25% deposit to secure your plan
+                Starter deposit to secure your plan
               </p>
               
               {/* Monthly Payment */}
@@ -453,7 +453,7 @@ export default function BookingOffer() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)}
+                    ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) - (((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)) / 3)}
                   </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
@@ -487,7 +487,7 @@ export default function BookingOffer() {
                 variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
                 size="lg"
               >
-                Get Started - ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25)} Today
+                Get Started - ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)} Today
               </Button>
               <Button
                 onClick={(e) => {

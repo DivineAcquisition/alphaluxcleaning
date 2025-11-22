@@ -213,7 +213,9 @@ export default function BookingCheckout() {
 
   // Calculate final amounts with promo discount
   const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
-  const finalDepositAmount = Math.round(finalPrice * 0.25);
+  // For 90-day plan: 25% of monthly amount (6.25% of total), otherwise 25% of total
+  const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.25;
+  const finalDepositAmount = Math.round(finalPrice * depositPercentage);
   const balanceDue = finalPrice - finalDepositAmount;
 
   // Get service details based on service type
