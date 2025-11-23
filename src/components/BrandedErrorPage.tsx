@@ -43,14 +43,14 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
         title: 'Bay Area Cleaning Pros',
         subtitle: 'Get Started',
         ctaText: 'Sign Up Now',
-        ctaAction: () => window.location.href = 'https://admin.bayareacleaningpros.com/signup',
+        ctaAction: () => window.location.href = 'https://admin.alphaluxclean.com/signup',
         icon: LogIn
       },
       root: {
         title: 'Bay Area Cleaning Pros',
         subtitle: 'Professional Cleaning Services',
         ctaText: 'Get Started',
-        ctaAction: () => window.location.href = 'https://try.bayareacleaningpros.com',
+        ctaAction: () => window.location.href = 'https://app.alphaluxclean.com',
         icon: Home
       }
     };

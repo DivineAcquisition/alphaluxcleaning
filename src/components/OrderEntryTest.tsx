@@ -218,7 +218,7 @@ export function OrderEntryTest() {
       { 
         id: "sub_001", 
         name: "Maria Garcia", 
-        email: "maria.garcia@bayareacleaningpros.com",
+        email: "maria.garcia@alphaluxclean.com",
         phone: "(281) 809-9901",
         hourly_rate: 18.00, 
         tier_level: 2, 
@@ -241,7 +241,7 @@ export function OrderEntryTest() {
       { 
         id: "sub_007", 
         name: "Jennifer Chen", 
-        email: "jennifer.chen@bayareacleaningpros.com",
+        email: "jennifer.chen@alphaluxclean.com",
         phone: "(281) 809-9901",
         hourly_rate: 21.00, 
         tier_level: 3, 

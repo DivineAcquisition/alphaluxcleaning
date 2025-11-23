@@ -71,7 +71,7 @@ const ServiceDetails = () => {
           setFormData(prev => ({
             ...prev,
             customerName: "Admin Preview User",
-            customerEmail: "admin@bayareacleaningpros.com",
+            customerEmail: "admin@alphaluxclean.com",
             customerPhone: "(555) 123-4567",
             streetAddress: "123 Admin Street",
             city: "San Francisco",

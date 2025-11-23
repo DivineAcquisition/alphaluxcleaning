@@ -86,7 +86,7 @@ serve(async (req) => {
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://app.bayareacleaningpros.com/subcontractor-dashboard" 
+            <a href="https://app.alphaluxclean.com/subcontractor-dashboard" 
                style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               View Your Dashboard
             </a>
@@ -100,8 +100,8 @@ serve(async (req) => {
           
           <div style="text-align: center; color: #666; font-size: 14px;">
             <p>Bay Area Cleaning Professionals</p>
-            <p>📞 (281) 201-6112 | 📧 support@bayareacleaningpros.com</p>
-            <p>Visit us at <a href="https://bayareacleaningpros.com" style="color: #2563eb;">bayareacleaningpros.com</a></p>
+            <p>📞 (281) 201-6112 | 📧 support@alphaluxclean.com</p>
+            <p>Visit us at <a href="https://alphaluxclean.com" style="color: #2563eb;">alphaluxclean.com</a></p>
           </div>
         </div>
       </div>

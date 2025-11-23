@@ -70,7 +70,7 @@ export default function OrderConfirmation() {
             time_slot: '10:00 AM - 12:00 PM',
             customers: {
               name: 'Admin Preview User',
-              email: 'admin@bayareacleaningpros.com',
+              email: 'admin@alphaluxclean.com',
               phone: '(555) 123-4567'
             },
             service_details: {
@@ -852,7 +852,7 @@ Questions? Call (857) 754-4557
                 variant="outline" 
                 size="sm"
               >
-                <a href="mailto:support@bayareacleaningpros.com">
+                <a href="mailto:support@alphaluxclean.com">
                   <Mail className="h-4 w-4 mr-2" />
                   Email Us
                 </a>

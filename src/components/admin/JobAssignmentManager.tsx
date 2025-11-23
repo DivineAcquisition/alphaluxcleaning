@@ -169,7 +169,7 @@ export function JobAssignmentManager() {
             subcontractorId: assignment.subcontractor_id,
             bookingId: bookingId,
             assignmentId: assignment.id,
-            adminEmail: 'support@bayareacleaningpros.com'
+            adminEmail: 'support@alphaluxclean.com'
           }
         })
       );

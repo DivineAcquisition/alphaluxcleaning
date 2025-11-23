@@ -284,7 +284,7 @@ function generateResponsePage(title: string, message: string, type: 'success' | 
         <p>${message}</p>
         <div class="footer">
           Bay Area Cleaning Professionals<br>
-          Questions? Contact us at support@bayareacleaningpros.com
+          Questions? Contact us at support@alphaluxclean.com
         </div>
       </div>
     </body>

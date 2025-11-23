@@ -96,7 +96,7 @@ export default function SubcontractorApplicationThankYou() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
                   <Badge variant="outline" className="px-4 py-2">
-                    Email: careers@bayareacleaningpros.com
+                    Email: careers@alphaluxclean.com
                   </Badge>
                   <Badge variant="outline" className="px-4 py-2">
                     Phone: (555) 123-4567

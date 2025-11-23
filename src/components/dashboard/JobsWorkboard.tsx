@@ -192,7 +192,7 @@ export function JobsWorkboard({ jobs, onAssignJob, onRefresh }: JobsWorkboardPro
       </p>
       {type === 'today' && (
         <Button variant="outline" onClick={() => {
-          navigator.clipboard.writeText('https://book.bayareacleaningpros.com/');
+          navigator.clipboard.writeText('https://app.alphaluxclean.com/booking');
         }}>
           Copy Booking Link
         </Button>

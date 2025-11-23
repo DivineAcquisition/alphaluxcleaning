@@ -25,7 +25,7 @@ export function DashboardHeader() {
           </Badge>
           
         </div>
-        <p className="text-sm text-muted-foreground">bayareacleaningpros.com • support@bayareacleaningpros.com</p>
+        <p className="text-sm text-muted-foreground">alphaluxclean.com • support@alphaluxclean.com</p>
       </div>
 
       {/* Service Highlights */}

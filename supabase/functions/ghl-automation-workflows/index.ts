@@ -346,17 +346,17 @@ async function executeCustomerFeedback(params: any, token: string, locationId: s
     'satisfaction_survey': {
       subject: 'How did we do? Quick 2-minute survey',
       message: `Hi ${customerName}! We hope you love your freshly cleaned space. Could you spare 2 minutes to tell us how we did?`,
-      surveyLink: 'https://survey.bayareacleaningpros.com/satisfaction'
+      surveyLink: 'https://survey.alphaluxclean.com/satisfaction'
     },
     'improvement_feedback': {
       subject: 'Help us improve - Your input matters',
       message: `${customerName}, your feedback helps us improve. What can we do better for your next cleaning?`,
-      surveyLink: 'https://survey.bayareacleaningpros.com/improvement'
+      surveyLink: 'https://survey.alphaluxclean.com/improvement'
     },
     'service_rating': {
       subject: 'Rate your cleaning experience',
       message: `${customerName}, please rate your cleaning experience from 1-5 stars. Your opinion matters to us!`,
-      surveyLink: 'https://survey.bayareacleaningpros.com/rating'
+      surveyLink: 'https://survey.alphaluxclean.com/rating'
     }
   };
 

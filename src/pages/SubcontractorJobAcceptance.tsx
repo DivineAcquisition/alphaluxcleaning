@@ -291,8 +291,8 @@ export default function SubcontractorJobAcceptance() {
               {/* Help Text */}
               <div className="text-center text-sm text-muted-foreground">
                 Having trouble? Contact us at{' '}
-                <a href="mailto:support@bayareacleaningpros.com" className="text-primary hover:underline">
-                  support@bayareacleaningpros.com
+                <a href="mailto:support@alphaluxclean.com" className="text-primary hover:underline">
+                  support@alphaluxclean.com
                 </a>
               </div>
             </div>
