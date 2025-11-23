@@ -24,7 +24,7 @@ export const WaitlistConfirmationEmail = ({
   promoAmount,
   bookingUrl,
 }: WaitlistConfirmationEmailProps) => {
-  // Add promo code to URL to preserve the offer
+  // Add promo code to URL to preserve the offer - using book.alphaluxclean.com
   const bookingUrlWithPromo = `${bookingUrl}?promo=${promoCode}&source=waitlist`;
   
   return (

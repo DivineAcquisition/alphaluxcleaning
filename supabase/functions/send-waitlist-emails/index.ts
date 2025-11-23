@@ -59,7 +59,7 @@ serve(async (req) => {
         let payload: any = {
           first_name: lead.first_name || 'Valued Customer',
           email: lead.email,
-          app_url: 'https://app.alphaluxclean.com'
+          app_url: 'https://book.alphaluxclean.com'
         };
 
         // Add offer-specific data for waitlist welcome emails
@@ -68,7 +68,7 @@ serve(async (req) => {
             ...payload,
             promo_code: 'DEEPCLEAN60',
             promo_amount: 60,
-            booking_url: 'https://app.alphaluxclean.com/booking?promo=DEEPCLEAN60&source=waitlist'
+            booking_url: 'https://book.alphaluxclean.com/booking?promo=DEEPCLEAN60&source=waitlist'
           };
         }
 
