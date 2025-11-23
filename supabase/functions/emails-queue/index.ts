@@ -90,6 +90,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Email job queued successfully for ${to}`);
 
+    // Trigger worker to process the queue
+    try {
+      const { error: workerError } = await supabase.functions.invoke('emails-worker', {
+        body: {}
+      });
+      
+      if (workerError) {
+        console.error("Error invoking emails-worker:", workerError);
+        // Don't throw - email is queued, worker will eventually process it
+      } else {
+        console.log("emails-worker triggered successfully");
+      }
+    } catch (workerInvokeError) {
+      console.error("Failed to invoke emails-worker:", workerInvokeError);
+      // Continue - email is queued
+    }
+
     return new Response(JSON.stringify({ ok: true }), { 
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
