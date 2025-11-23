@@ -175,7 +175,7 @@ serve(async (req) => {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://cleaners.bayareacleaningpros.com" style="background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Access Subcontractor Portal</a>
+                <a href="https://cleaners.alphaluxclean.com" style="background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Access Subcontractor Portal</a>
             </div>
             
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">

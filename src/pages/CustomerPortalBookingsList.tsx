@@ -246,7 +246,7 @@ export default function CustomerPortalBookingsList() {
                   : "You don't have any bookings yet."}
               </p>
               {!searchTerm && statusFilter === 'all' && (
-                <Button onClick={() => window.open('https://book.bayareacleaningpros.com', '_blank')}>
+                <Button onClick={() => window.open('https://app.alphaluxclean.com/booking', '_blank')}>
                   Book Your First Service
                 </Button>
               )}

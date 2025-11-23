@@ -119,7 +119,7 @@ serve(async (req) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'User-Agent': 'BayAreaCleaningPros-Diagnostics/1.0',
+              'User-Agent': 'AlphaLuxClean-Diagnostics/1.0',
               'X-Webhook-Version': 'diagnostics-test',
               'X-Test-Mode': 'true'
             },

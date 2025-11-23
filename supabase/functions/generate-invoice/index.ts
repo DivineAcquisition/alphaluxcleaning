@@ -198,7 +198,7 @@ function generateInvoiceHTML(invoiceData: any): string {
         
         <div style="margin-top: 40px; font-size: 14px; color: #666;">
             <p>Thank you for choosing Bay Area Cleaning Professionals!</p>
-            <p>Questions? Contact us at support@bayareacleaningpros.com</p>
+            <p>Questions? Contact us at support@alphaluxclean.com</p>
         </div>
     </body>
     </html>

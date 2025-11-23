@@ -60,7 +60,7 @@ export default function ComingSoonPage() {
               <Button 
                 variant="outline"
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = 'mailto:info@bayareacleaningpros.com'}
+                onClick={() => window.location.href = 'mailto:info@alphaluxclean.com'}
               >
                 <Mail className="w-4 h-4" />
                 Email Us
@@ -68,7 +68,7 @@ export default function ComingSoonPage() {
               
               <Button 
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = 'https://book.bayareacleaningpros.com'}
+                onClick={() => window.location.href = 'https://app.alphaluxclean.com/booking'}
               >
                 <Calendar className="w-4 h-4" />
                 Book Service

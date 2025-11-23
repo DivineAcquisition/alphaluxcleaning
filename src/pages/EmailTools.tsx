@@ -42,8 +42,8 @@ export const EmailTools = () => {
                   <h3 className="font-medium mb-2">Email Sender Details</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Test emails sent from: <code className="bg-muted px-2 py-1 rounded">info@alphaluxclean.com</code></li>
-                    <li>• Production emails sent from: <code className="bg-muted px-2 py-1 rounded">noreply@notify.bayareacleaningpros.com</code></li>
-                    <li>• Admin emails sent from: <code className="bg-muted px-2 py-1 rounded">admin@bayareacleaningpros.com</code></li>
+                    <li>• Production emails sent from: <code className="bg-muted px-2 py-1 rounded">noreply@alphaluxclean.com</code></li>
+                    <li>• Admin emails sent from: <code className="bg-muted px-2 py-1 rounded">admin@alphaluxclean.com</code></li>
                   </ul>
                 </div>
                 

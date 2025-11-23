@@ -180,7 +180,7 @@ export default function CustomerPortalHome() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => window.open('https://book.bayareacleaningpros.com', '_blank')}
+                onClick={() => window.open('https://app.alphaluxclean.com/booking', '_blank')}
               >
                 Book Now
               </Button>

@@ -96,11 +96,9 @@ serve(async (req) => {
       .insert({
         customer_id: newUser.user.id,
         title: 'Welcome to Bay Area Cleaning Pros!',
-        message: `Your account has been created automatically. Your temporary password is: ${tempPassword}. Please log in to your customer portal at portal.bayareacleaningpros.com and change your password for security.`,
-        notification_type: 'account_created',
-        order_id: orderId,
-        importance: 'high',
-        action_url: 'https://portal.bayareacleaningpros.com',
+        message: `Your account has been created automatically. Your temporary password is: ${tempPassword}. Please log in to your customer portal at portal.alphaluxclean.com and change your password for security.`,
+...
+        action_url: 'https://portal.alphaluxclean.com',
         action_label: 'Access Customer Portal'
       });
 
@@ -110,7 +108,7 @@ serve(async (req) => {
 
     // Send welcome email with temporary password
     try {
-      const portalUrl = 'https://portal.bayareacleaningpros.com';
+      const portalUrl = 'https://portal.alphaluxclean.com';
       
       const emailResponse = await resend.emails.send({
         from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
@@ -156,7 +154,7 @@ serve(async (req) => {
               <h3 style="color: #334155; margin-top: 0;">📞 Need Help?</h3>
               <p style="color: #334155; margin-bottom: 0;">
                 If you have any questions or need assistance, please don't hesitate to contact us:<br>
-                Email: support@bayareacleaningpros.com<br>
+                Email: support@alphaluxclean.com<br>
                 Phone: (510) 882-4388
               </p>
             </div>

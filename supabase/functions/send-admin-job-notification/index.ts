@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
       booking = orderData;
     }
 
-    const adminEmails = ["elliepangilinan17@gmail.com", "admin1@bayareacleaningpros.com"];
+    const adminEmails = ["elliepangilinan17@gmail.com", "admin1@alphaluxclean.com"];
     const assignmentUrl = `https://kqoezqzogleaaupjzxch.supabase.co/job-assignments?highlight=${booking_id || order_id}`;
 
     const emailHTML = `

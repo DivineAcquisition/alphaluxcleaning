@@ -86,7 +86,7 @@ export default function EmailSettings() {
   const [settings, setSettings] = useState<EmailSettings>({
     company_id: '550e8400-e29b-41d4-a716-446655440000',
     from_name: 'AlphaLux Clean',
-    from_email: 'notifications@bayareacleaningpros.com',
+    from_email: 'notifications@alphaluxclean.com',
     reply_to: '',
     brand: {
       logo_url: '',
@@ -314,7 +314,7 @@ export default function EmailSettings() {
                     type="email"
                     value={settings.from_email}
                     onChange={(e) => setSettings({...settings, from_email: e.target.value})}
-                    placeholder="notifications@bayareacleaningpros.com"
+                    placeholder="notifications@alphaluxclean.com"
                   />
                 </div>
               </div>
@@ -326,7 +326,7 @@ export default function EmailSettings() {
                   type="email"
                   value={settings.reply_to || ''}
                   onChange={(e) => setSettings({...settings, reply_to: e.target.value})}
-                  placeholder="support@bayareacleaningpros.com"
+                  placeholder="support@alphaluxclean.com"
                 />
               </div>
 

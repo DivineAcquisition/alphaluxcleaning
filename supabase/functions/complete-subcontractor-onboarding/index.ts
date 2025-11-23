@@ -302,7 +302,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 7. Send welcome email
     try {
-      const dashboardUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/subcontractor-dashboard` || "https://app.bayareacleaningpros.com/subcontractor-dashboard";
+      const dashboardUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '')}/subcontractor-dashboard` || "https://app.alphaluxclean.com/subcontractor-dashboard";
       
       const emailHtml = await renderAsync(
         React.createElement(SubcontractorWelcomeEmail, {

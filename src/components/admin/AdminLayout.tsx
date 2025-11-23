@@ -12,7 +12,7 @@ interface AdminLayoutProps {
 }
 
 const handlePreviewCustomerPortal = () => {
-  window.open('https://portal.bayareacleaningpros.com/customer-portal-dashboard', '_blank');
+  window.open('https://portal.alphaluxclean.com/customer-portal-dashboard', '_blank');
 };
 
 export function AdminLayout({ children, title, description }: AdminLayoutProps) {

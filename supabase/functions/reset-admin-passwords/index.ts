@@ -37,9 +37,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     const adminEmails = [
-      'admin1@bayareacleaningpros.com',
-      'ellie@bayareacleaningpros.com',
-      'divine@bayareacleaningpros.com'
+      'admin1@alphaluxclean.com',
+      'ellie@alphaluxclean.com',
+      'divine@alphaluxclean.com'
     ];
 
     const results = [];
@@ -70,8 +70,8 @@ const handler = async (req: Request): Promise<Response> => {
             password: tempPassword,
             email_confirm: true,
             user_metadata: {
-              full_name: email === 'ellie@bayareacleaningpros.com' ? 'Ellie' : 
-                        email === 'divine@bayareacleaningpros.com' ? 'Divine Acquisition' : 'Admin User'
+              full_name: email === 'ellie@alphaluxclean.com' ? 'Ellie' : 
+                        email === 'divine@alphaluxclean.com' ? 'Divine Acquisition' : 'Admin User'
             }
           });
 

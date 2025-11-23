@@ -341,7 +341,7 @@ export default function SubcontractorSettings() {
               <div className="text-left">
                 <div className="font-medium">Contact Support</div>
                 <div className="text-sm text-muted-foreground">
-                  support@bayareacleaningpros.com
+                  support@alphaluxclean.com
                 </div>
               </div>
             </Button>

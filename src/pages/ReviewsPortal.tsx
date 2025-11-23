@@ -169,7 +169,7 @@ export default function ReviewsPortal() {
             Join hundreds of satisfied customers across the Bay Area
           </p>
           <Button size="lg" asChild>
-            <a href="https://booking.bayareacleaningpros.com">Book Your Cleaning</a>
+            <a href="https://app.alphaluxclean.com/booking">Book Your Cleaning</a>
           </Button>
         </div>
       </div>
