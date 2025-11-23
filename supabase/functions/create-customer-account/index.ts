@@ -97,7 +97,6 @@ serve(async (req) => {
         customer_id: newUser.user.id,
         title: 'Welcome to Bay Area Cleaning Pros!',
         message: `Your account has been created automatically. Your temporary password is: ${tempPassword}. Please log in to your customer portal at portal.alphaluxclean.com and change your password for security.`,
-...
         action_url: 'https://portal.alphaluxclean.com',
         action_label: 'Access Customer Portal'
       });
