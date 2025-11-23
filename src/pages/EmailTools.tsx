@@ -2,6 +2,7 @@ import React from 'react';
 import { EmailTestButton } from '@/components/EmailTestButton';
 import { EmailSystemTest } from '@/components/EmailSystemTest';
 import { EmailQueueMonitor } from '@/components/EmailQueueMonitor';
+import { WaitlistEmailManager } from '@/components/WaitlistEmailManager';
 
 export const EmailTools = () => {
   return (
@@ -18,6 +19,11 @@ export const EmailTools = () => {
           </div>
 
           <div className="grid gap-6">
+            {/* Waitlist Email Manager - New Feature */}
+            <div className="bg-card rounded-lg border p-6">
+              <WaitlistEmailManager />
+            </div>
+
             {/* New Email System Test */}
             <div className="bg-card rounded-lg border p-6">
               <EmailSystemTest />

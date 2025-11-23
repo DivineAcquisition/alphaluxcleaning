@@ -23,32 +23,36 @@ export const WaitlistConfirmationEmail = ({
   promoCode,
   promoAmount,
   bookingUrl,
-}: WaitlistConfirmationEmailProps) => (
-  <Html>
-    <Head />
-    <Preview>You're on the list! Don't forget your exclusive $60 off offer ✨</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>You're on the List! 🎉</Heading>
-        <Text style={text}>
-          Hey {firstName},
-        </Text>
-        <Text style={text}>
-          Thanks for joining our waitlist! We'll send you a friendly reminder when you're ready to experience the AlphaLux Clean difference.
-        </Text>
-
-        {/* Promo Offer Section */}
-        <Section style={promoBox}>
-          <Heading style={promoHeading}>🎁 Your Exclusive Offer</Heading>
-          <Text style={promoAmount}>${promoAmount} OFF Deep Clean</Text>
-          <Text style={promoCode}>Code: {promoCode}</Text>
-          <Text style={promoExpiry}>
-            ⏰ Offer expires in 48 hours
+}: WaitlistConfirmationEmailProps) => {
+  // Add promo code to URL to preserve the offer
+  const bookingUrlWithPromo = `${bookingUrl}?promo=${promoCode}&source=waitlist`;
+  
+  return (
+    <Html>
+      <Head />
+      <Preview>You're on the list! Don't forget your exclusive ${promoAmount} off offer ✨</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={h1}>You're on the List! 🎉</Heading>
+          <Text style={text}>
+            Hey {firstName},
           </Text>
-          <Button pX={20} pY={12} style={button} href={bookingUrl}>
-            Book Now & Save ${promoAmount}
-          </Button>
-        </Section>
+          <Text style={text}>
+            Thanks for joining our waitlist! We'll send you a friendly reminder when you're ready to experience the AlphaLux Clean difference.
+          </Text>
+
+          {/* Promo Offer Section - Navy Blue Theme */}
+          <Section style={promoBox}>
+            <Heading style={promoHeading}>🎁 Your Exclusive Offer</Heading>
+            <Text style={promoAmount}>${promoAmount} OFF Deep Clean</Text>
+            <Text style={promoCode}>Code: {promoCode}</Text>
+            <Text style={promoExpiry}>
+              ⏰ Offer expires in 48 hours
+            </Text>
+            <Button pX={20} pY={12} style={button} href={bookingUrlWithPromo}>
+              Book Now & Save ${promoAmount}
+            </Button>
+          </Section>
 
         {/* What You'll Get */}
         <Section style={benefitsSection}>
@@ -64,19 +68,20 @@ export const WaitlistConfirmationEmail = ({
           </ul>
         </Section>
 
-        <Text style={text}>
-          Questions? Just reply to this email or call us at <strong>(972) 559-0223</strong>
-        </Text>
+          <Text style={text}>
+            Questions? Just reply to this email or call us at <strong>(972) 559-0223</strong>
+          </Text>
 
-        <Text style={footer}>
-          AlphaLux Clean - Premium Home Cleaning Services
-          <br />
-          Not interested? <a href="#" style={link}>Unsubscribe</a>
-        </Text>
-      </Container>
-    </Body>
-  </Html>
-);
+          <Text style={footer}>
+            AlphaLux Clean - Premium Home Cleaning Services
+            <br />
+            Not interested? <a href="#" style={link}>Unsubscribe</a>
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+};
 
 export default WaitlistConfirmationEmail;
 
@@ -116,9 +121,10 @@ const text = {
   margin: "16px 48px",
 };
 
+// Navy Blue Theme for Promo Box
 const promoBox = {
-  backgroundColor: "#f0f9ff",
-  border: "2px solid #0ea5e9",
+  backgroundColor: "#EDF5FF",
+  border: "2px solid #2C5282",
   borderRadius: "8px",
   padding: "32px",
   margin: "32px 48px",
@@ -126,14 +132,14 @@ const promoBox = {
 };
 
 const promoHeading = {
-  color: "#0ea5e9",
+  color: "#2C5282",
   fontSize: "18px",
   fontWeight: "bold",
   margin: "0 0 12px",
 };
 
 const promoAmount = {
-  color: "#0ea5e9",
+  color: "#2C5282",
   fontSize: "36px",
   fontWeight: "bold",
   margin: "16px 0 8px",
@@ -153,10 +159,11 @@ const promoExpiry = {
   margin: "12px 0 20px",
 };
 
+// Gold Button with Dark Text
 const button = {
-  backgroundColor: "#0ea5e9",
+  backgroundColor: "#ECC98B",
   borderRadius: "5px",
-  color: "#fff",
+  color: "#1A1A1A",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",
@@ -190,6 +197,6 @@ const footer = {
 };
 
 const link = {
-  color: "#0ea5e9",
+  color: "#2C5282",
   textDecoration: "underline",
 };

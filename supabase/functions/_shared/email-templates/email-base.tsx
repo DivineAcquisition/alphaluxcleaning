@@ -32,7 +32,7 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
               src="/brand/alphaluxclean-logo.png"
               width="180"
               height="60"
-              alt="Bay Area Cleaning Professionals"
+              alt="AlphaLux Clean"
               style={logo}
             />
           </Link>
@@ -46,10 +46,10 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
         {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>
-            Bay Area Cleaning Professionals<br />
-            123 Main Street, Suite 100<br />
-            San Francisco, CA 94102<br />
-            Phone: (555) 123-4567
+            AlphaLux Clean<br />
+            Premium Cleaning Services<br />
+            Texas & California<br />
+            Phone: (972) 559-0223
           </Text>
           
           <Text style={footerLinks}>
@@ -133,7 +133,7 @@ const footerLinks = {
 };
 
 const link = {
-  color: "#ECC98B",
+  color: "#2C5282",
   textDecoration: "none",
 };
 
