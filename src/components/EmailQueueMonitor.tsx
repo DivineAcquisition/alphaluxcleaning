@@ -74,7 +74,15 @@ export const EmailQueueMonitor = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const isStuck = (job: EmailJob) => {
+    if (job.status !== 'queued') return false;
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return new Date(job.created_at) < fiveMinutesAgo;
+  };
+
+  const stuckCount = emailJobs.filter(isStuck).length;
+
+  const getStatusBadge = (status: string, stuck: boolean = false) => {
     const variants = {
       'queued': 'secondary',
       'sending': 'default',
@@ -84,7 +92,7 @@ export const EmailQueueMonitor = () => {
     } as const;
 
     const colors = {
-      'queued': 'bg-blue-500',
+      'queued': stuck ? 'bg-orange-500' : 'bg-blue-500',
       'sending': 'bg-yellow-500',
       'sent': 'bg-green-500',
       'failed': 'bg-red-500',
@@ -96,7 +104,7 @@ export const EmailQueueMonitor = () => {
         variant={variants[status as keyof typeof variants] || 'outline'}
         className={`${colors[status as keyof typeof colors]} text-white`}
       >
-        {status.toUpperCase()}
+        {stuck ? '⚠️ STUCK' : status.toUpperCase()}
       </Badge>
     );
   };
@@ -114,6 +122,12 @@ export const EmailQueueMonitor = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {stuckCount > 0 && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+            ⚠️ {stuckCount} email{stuckCount > 1 ? 's' : ''} stuck in queue for over 5 minutes. Click "Process Queue" to retry.
+          </div>
+        )}
+        
         <div className="flex gap-2">
           <Button onClick={loadEmailJobs} disabled={loading} variant="outline">
             {loading ? (
@@ -137,7 +151,7 @@ export const EmailQueueMonitor = () => {
             ) : (
               <>
                 <Zap className="mr-2 h-4 w-4" />
-                Process Queue
+                Process Queue Now
               </>
             )}
           </Button>
@@ -149,13 +163,15 @@ export const EmailQueueMonitor = () => {
               No email jobs found
             </p>
           ) : (
-            emailJobs.map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{job.to_email}</span>
-                    {getStatusBadge(job.status)}
-                  </div>
+            emailJobs.map((job) => {
+              const stuck = isStuck(job);
+              return (
+                <div key={job.id} className={`flex items-center justify-between p-3 border rounded-lg ${stuck ? 'bg-orange-50 border-orange-200' : ''}`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{job.to_email}</span>
+                      {getStatusBadge(job.status, stuck)}
+                    </div>
                   <div className="text-xs text-muted-foreground">
                     Template: {job.template_name} • Attempts: {job.attempts}
                   </div>
@@ -172,7 +188,8 @@ export const EmailQueueMonitor = () => {
                   )}
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </CardContent>
