@@ -20,6 +20,7 @@ import { ReferralRewardEarnedEmail } from "./_templates/referral-reward-earned.t
 import { ReferralWelcomeCreditEmail } from "./_templates/referral-welcome-credit.tsx";
 import { ReferralInviteEmail } from "./_templates/referral-invite.tsx";
 import { AdminOTPEmail } from "../_shared/email-templates/admin-otp-template.tsx";
+import { WaitlistConfirmationEmail } from "../_shared/email-templates/waitlist-confirmation.tsx";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -254,6 +255,16 @@ async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 
     case 'admin_otp':
       subject = `Admin Portal Access Code: ${data.code}`;
       emailComponent = React.createElement(AdminOTPEmail, templateProps);
+      break;
+
+    case 'waitlist_confirmation':
+      subject = "You're on the list! Here's your $60 off code 🎉";
+      emailComponent = React.createElement(WaitlistConfirmationEmail, {
+        firstName: data.firstName || data.first_name,
+        promoCode: data.promoCode || 'DEEPCLEAN60',
+        promoAmount: data.promoAmount || 60,
+        bookingUrl: data.bookingUrl || `${templateProps.app_url}/booking?promo=DEEPCLEAN60`
+      });
       break;
 
     default:
