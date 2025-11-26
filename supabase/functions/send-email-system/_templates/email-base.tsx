@@ -79,6 +79,23 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
   </Html>
 );
 
+export const GoogleGuaranteedBadge = () => (
+  <Section style={trustBadgeContainer}>
+    <div style={trustBadge}>
+      <div style={badgeIcon}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" fill="#4CAF50"/>
+          <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white"/>
+        </svg>
+      </div>
+      <div style={badgeText}>
+        <Text style={badgeTitle}>Google Guaranteed</Text>
+        <Text style={badgeSubtitle}>Backed by Google's guarantee</Text>
+      </div>
+    </div>
+  </Section>
+);
+
 export const ActionButton = ({ href, children, style: customStyle }: { href: string; children: React.ReactNode; style?: any }) => (
   <Link href={href} style={{ ...buttonStyle, ...customStyle }}>
     {children}
@@ -227,4 +244,44 @@ const tableCellValue = {
 
 const totalRow = {
   borderTop: '2px solid #1A1A1A',
+};
+
+// Google Guaranteed Badge Styles
+const trustBadgeContainer = {
+  textAlign: 'center' as const,
+  margin: '24px 0',
+};
+
+const trustBadge = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '12px',
+  backgroundColor: '#E8F5E9',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  border: '1px solid #4CAF50',
+};
+
+const badgeIcon = {
+  display: 'flex',
+  alignItems: 'center',
+};
+
+const badgeText = {
+  textAlign: 'left' as const,
+};
+
+const badgeTitle = {
+  fontSize: '14px',
+  fontWeight: 'bold',
+  color: '#2E7D32',
+  margin: '0',
+  lineHeight: '1.2',
+};
+
+const badgeSubtitle = {
+  fontSize: '11px',
+  color: '#66BB6A',
+  margin: '2px 0 0 0',
+  lineHeight: '1.2',
 };

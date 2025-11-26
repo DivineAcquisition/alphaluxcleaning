@@ -12,6 +12,24 @@ import {
 } from "npm:@react-email/components@0.0.22";
 import * as React from "npm:react@18.3.1";
 
+// Google Guaranteed Badge Component
+const GoogleGuaranteedBadge = () => (
+  <Section style={trustBadgeContainer}>
+    <div style={trustBadge}>
+      <div style={badgeIcon}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" fill="#4CAF50"/>
+          <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white"/>
+        </svg>
+      </div>
+      <div style={badgeTextContent}>
+        <Text style={badgeTitle}>Google Guaranteed</Text>
+        <Text style={badgeSubtitle}>Backed by Google's guarantee</Text>
+      </div>
+    </div>
+  </Section>
+);
+
 interface PromoAppliedEmailProps {
   customerName: string;
   promoCode: string;
@@ -50,6 +68,9 @@ export const PromoAppliedEmail = ({
           </Section>
 
           <Section style={content}>
+            {/* Google Guaranteed Badge */}
+            <GoogleGuaranteedBadge />
+
             <Text style={greeting}>Hi {customerName},</Text>
             
             <Text style={text}>
@@ -324,4 +345,44 @@ const footerText = {
 const footerLink = {
   color: "#2C5282",
   textDecoration: "none",
+};
+
+// Google Guaranteed Badge Styles
+const trustBadgeContainer = {
+  textAlign: "center" as const,
+  margin: "24px 0",
+};
+
+const trustBadge = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "12px",
+  backgroundColor: "#E8F5E9",
+  padding: "12px 24px",
+  borderRadius: "8px",
+  border: "1px solid #4CAF50",
+};
+
+const badgeIcon = {
+  display: "flex",
+  alignItems: "center",
+};
+
+const badgeTextContent = {
+  textAlign: "left" as const,
+};
+
+const badgeTitle = {
+  fontSize: "14px",
+  fontWeight: "bold",
+  color: "#2E7D32",
+  margin: "0",
+  lineHeight: "1.2",
+};
+
+const badgeSubtitle = {
+  fontSize: "11px",
+  color: "#66BB6A",
+  margin: "2px 0 0 0",
+  lineHeight: "1.2",
 };
