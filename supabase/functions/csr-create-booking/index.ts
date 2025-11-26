@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,11 +25,20 @@ interface BookingRequest {
     preferredDate?: string;
     preferredTime?: string;
     specialInstructions?: string;
+    visitCount?: number;
+    planFrequency?: 'weekly' | 'biweekly' | 'monthly';
   };
   pricing: {
     total: number;
     deposit: number;
     balance: number;
+    basePrice: number;
+    discountAmount: number;
+  };
+  discount?: {
+    type: 'percentage' | 'fixed' | 'none';
+    value: number;
+    reason: string;
   };
 }
 
@@ -96,9 +105,14 @@ serve(async (req) => {
     console.log(`✅ Admin verified: ${adminData.role}`);
 
     // Parse request body
-    const { customerData, bookingData, pricing }: BookingRequest = await req.json();
+    const { customerData, bookingData, pricing, discount }: BookingRequest = await req.json();
 
-    console.log('📝 Creating customer and booking...');
+    console.log('📝 Creating customer and booking...', {
+      offerType: bookingData.offerType,
+      visitCount: bookingData.visitCount,
+      planFrequency: bookingData.planFrequency,
+      discount: discount
+    });
 
     // Create customer using service_role (bypasses RLS)
     const { data: customer, error: customerError } = await supabaseAdmin
@@ -123,12 +137,18 @@ serve(async (req) => {
     console.log(`✅ Customer created: ${customer.id}`);
 
     // Determine offer details
+    const visitCount = bookingData.visitCount || 1;
     const offerDetails = 
       bookingData.offerType === 'tester' 
-        ? { name: 'Tester Deep Clean', type: 'tester', visits: 1, serviceType: 'Deep Cleaning' }
+        ? { name: 'Tester Deep Clean', type: 'tester', visits: visitCount, serviceType: 'Deep Cleaning' }
         : bookingData.offerType === '90_day'
         ? { name: '90-Day Reset & Maintain Plan', type: '90_day_plan', visits: 4, serviceType: 'Deep Cleaning' }
-        : { name: 'Standard Clean', type: 'standard_clean', visits: 1, serviceType: 'Standard Cleaning' };
+        : { name: 'Standard Clean', type: 'standard_clean', visits: visitCount, serviceType: 'Standard Cleaning' };
+    
+    // Determine frequency for 90-day plan
+    const frequency = bookingData.offerType === '90_day' 
+      ? (bookingData.planFrequency || 'biweekly')
+      : 'one-time';
 
     // Create booking using service_role (bypasses RLS)
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -142,8 +162,9 @@ serve(async (req) => {
         zip_code: customerData.zipCode,
         sqft_or_bedrooms: bookingData.sqftRange,
         service_type: offerDetails.serviceType,
-        frequency: bookingData.offerType === '90_day' ? 'recurring' : 'one-time',
+        frequency: frequency,
         est_price: pricing.total,
+        base_price: pricing.basePrice,
         deposit_amount: pricing.deposit,
         balance_due: pricing.balance,
         offer_name: offerDetails.name,
@@ -157,10 +178,14 @@ serve(async (req) => {
         preferred_date: bookingData.preferredDate || null,
         preferred_time_block: bookingData.preferredTime || null,
         special_instructions: bookingData.specialInstructions || null,
+        notes: discount ? `Discount Applied: ${discount.type} ${discount.value}${discount.type === 'percentage' ? '%' : '$'} - ${discount.reason}` : null,
         property_details: {
           bedrooms: bookingData.bedrooms,
           bathrooms: bookingData.bathrooms,
           sqft_range: bookingData.sqftRange,
+          visit_count: visitCount,
+          plan_frequency: bookingData.planFrequency || null,
+          discount_applied: discount || null,
         },
       })
       .select()
