@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Gift, Copy, Share2, Home } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 const Success: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -120,6 +121,9 @@ const Success: React.FC = () => {
           <p className="text-muted-foreground">
             Thank you, {customerName}! Your cleaning is scheduled and we've sent a confirmation to {customerEmail}
           </p>
+          <div className="flex justify-center mt-4">
+            <GoogleGuaranteedBadge variant="standard" />
+          </div>
         </Card>
 
         {/* Referral Incentive */}

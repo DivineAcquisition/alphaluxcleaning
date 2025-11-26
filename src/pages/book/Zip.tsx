@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 export default function BookingZip() {
   const navigate = useNavigate();
   const {
@@ -88,7 +89,7 @@ export default function BookingZip() {
                 </Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Book with Just 25% Down Today! 
+                    Book with Just 25% Down Today! 
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
                     Get your home deep cleaned with flexible payment options
@@ -97,6 +98,11 @@ export default function BookingZip() {
               </div>
             </div>
           </Card>
+
+          {/* Google Guaranteed Badge */}
+          <div className="flex justify-center mb-6">
+            <GoogleGuaranteedBadge variant="standard" />
+          </div>
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">

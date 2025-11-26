@@ -11,6 +11,7 @@ import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseC
 import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
 import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { toast } from 'sonner';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
@@ -201,6 +202,9 @@ export default function BookingOffer() {
           <p className="text-lg text-muted-foreground">
             Start with a deep clean. Continue with regular maintenance (optional).
           </p>
+          <div className="flex justify-center mt-4">
+            <GoogleGuaranteedBadge variant="compact" />
+          </div>
         </div>
 
         <div className={`grid gap-6 md:gap-8 ${isTesterEligible ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>

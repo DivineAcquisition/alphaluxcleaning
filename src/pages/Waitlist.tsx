@@ -17,6 +17,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { Users, CheckCircle, Shield, Sparkles, Clock, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { GoogleGuaranteedBadge } from "@/components/trust/GoogleGuaranteedBadge";
 
 export default function Waitlist() {
   const navigate = useNavigate();
@@ -242,6 +243,11 @@ export default function Waitlist() {
                       <span>Same-day service available</span>
                     </li>
                   </ul>
+                </div>
+
+                {/* Google Guaranteed Badge */}
+                <div className="pt-4 border-t">
+                  <GoogleGuaranteedBadge variant="large" showSubtitle />
                 </div>
               </div>
 

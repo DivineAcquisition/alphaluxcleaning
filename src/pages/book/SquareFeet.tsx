@@ -9,6 +9,7 @@ import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Home, ArrowRight, CheckCircle } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 export default function BookingSquareFeet() {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ export default function BookingSquareFeet() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Select your home size to see instant pricing for a professional deep clean
           </p>
+          <div className="flex justify-center mt-4">
+            <GoogleGuaranteedBadge variant="compact" />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
