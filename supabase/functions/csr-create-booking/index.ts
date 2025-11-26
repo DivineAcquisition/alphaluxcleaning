@@ -51,25 +51,24 @@ serve(async (req) => {
   try {
     console.log('🔐 CSR booking creation initiated');
 
-    // Get the authorization header
+    // Get the authorization header and extract JWT
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
+      console.error('❌ No authorization header');
       throw new Error('No authorization header');
     }
 
-    // Create client with user's token to verify they're logged in
+    // Extract JWT token from "Bearer <token>"
+    const jwt = authHeader.replace('Bearer ', '');
+    
+    // Create client for user verification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Verify user is authenticated
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Verify user is authenticated by validating JWT
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(jwt);
     if (userError || !user) {
       console.error('❌ User authentication failed:', userError);
       throw new Error('User not authenticated');
