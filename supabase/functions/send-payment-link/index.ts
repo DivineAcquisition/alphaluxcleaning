@@ -28,8 +28,8 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Get app URL from environment or use default
-    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'https://book.alphaluxclean.com';
+    // Use production booking domain
+    const appUrl = 'https://book.alphaluxclean.com';
     const paymentUrl = `${appUrl}/pay/${bookingId}`;
 
     // Send email with payment link
@@ -46,9 +46,14 @@ serve(async (req) => {
             <title>Complete Your Booking</title>
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <div style="background: hsl(211 41% 24%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="margin: 0; font-size: 28px;">AlphaLux Clean</h1>
               <p style="margin: 10px 0 0; opacity: 0.9;">Premium Cleaning Services</p>
+              <div style="margin-top: 12px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 16px; font-size: 12px;">
+                  <span style="color: #4CAF50;">✓</span> Google Guaranteed
+                </span>
+              </div>
             </div>
             
             <div style="background: #fff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
@@ -59,7 +64,7 @@ serve(async (req) => {
               <p>To confirm your booking, please complete your payment by clicking the button below:</p>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${paymentUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+                <a href="${paymentUrl}" style="background: hsl(211 41% 24%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
                   Complete Payment ($${depositAmount})
                 </a>
               </div>
@@ -69,15 +74,15 @@ serve(async (req) => {
                 <table style="width: 100%; border-collapse: collapse;">
                   <tr>
                     <td style="padding: 8px 0; color: #666;">Deposit Due Today:</td>
-                    <td style="padding: 8px 0; text-align: right; font-weight: 600; color: #667eea; font-size: 18px;">$${depositAmount}</td>
+                    <td style="padding: 8px 0; text-align: right; font-weight: 600; color: hsl(211 41% 24%); font-size: 18px;">$${depositAmount}</td>
                   </tr>
                 </table>
               </div>
               
               <p style="font-size: 14px; color: #666; margin-top: 30px;">
                 <strong>Need help?</strong><br>
-                Call us at <a href="tel:2149197134" style="color: #667eea; text-decoration: none;">(214) 919-7134</a><br>
-                Email us at <a href="mailto:support@alphaluxclean.com" style="color: #667eea; text-decoration: none;">support@alphaluxclean.com</a>
+                Call us at <a href="tel:9725590223" style="color: hsl(211 41% 24%); text-decoration: none;">(972) 559-0223</a><br>
+                Email us at <a href="mailto:support@alphaluxclean.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxclean.com</a>
               </p>
               
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; font-size: 12px; color: #999;">

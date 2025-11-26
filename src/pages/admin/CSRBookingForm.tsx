@@ -32,13 +32,13 @@ const HOME_SIZE_RANGES = [
 ];
 
 const TIME_WINDOWS = [
-  { value: 'early_morning', label: 'Early Morning', time: '7am-9am', icon: '🌅' },
-  { value: 'mid_morning', label: 'Mid-Morning', time: '9am-11am', icon: '☀️' },
-  { value: 'late_morning', label: 'Late Morning', time: '11am-1pm', icon: '🌤️' },
-  { value: 'early_afternoon', label: 'Early Afternoon', time: '1pm-3pm', icon: '🌞' },
-  { value: 'late_afternoon', label: 'Late Afternoon', time: '3pm-5pm', icon: '🌇' },
-  { value: 'evening', label: 'Evening', time: '5pm-7pm', icon: '🌆' },
-  { value: 'flexible', label: 'Flexible', time: 'Any time works', icon: '✨' },
+  { value: 'early_morning', label: 'Early Morning', time: '7am-9am' },
+  { value: 'mid_morning', label: 'Mid-Morning', time: '9am-11am' },
+  { value: 'late_morning', label: 'Late Morning', time: '11am-1pm' },
+  { value: 'early_afternoon', label: 'Early Afternoon', time: '1pm-3pm' },
+  { value: 'late_afternoon', label: 'Late Afternoon', time: '3pm-5pm' },
+  { value: 'evening', label: 'Evening', time: '5pm-7pm' },
+  { value: 'flexible', label: 'Flexible', time: 'Any time' },
 ];
 
 const formSchema = z.object({
@@ -478,6 +478,7 @@ export default function CSRBookingForm() {
                               <div className="text-center">
                                 <div className="font-semibold">Standard Clean</div>
                                 <div className="text-sm text-muted-foreground">Regular maintenance</div>
+                                <div className="text-xs text-muted-foreground mt-1">~2 hours • 2-person team</div>
                                 {pricing.total > 0 && watchOffer === 'standard' && (
                                   <div className="mt-2 text-lg font-bold">${pricing.total}</div>
                                 )}
@@ -493,6 +494,7 @@ export default function CSRBookingForm() {
                               <div className="text-center">
                                 <div className="font-semibold">Tester Deep Clean</div>
                                 <div className="text-sm text-muted-foreground">Single deep clean</div>
+                                <div className="text-xs text-muted-foreground mt-1">~4 hours • 2-person team</div>
                                 {pricing.total > 0 && watchOffer === 'tester' && (
                                   <div className="mt-2 text-lg font-bold">${pricing.total}</div>
                                 )}
@@ -508,6 +510,7 @@ export default function CSRBookingForm() {
                               <div className="text-center">
                                 <div className="font-semibold">90-Day Plan</div>
                                 <div className="text-sm text-muted-foreground">4 visits + savings</div>
+                                <div className="text-xs text-muted-foreground mt-1">~4 hrs first • ~2 hrs maintenance</div>
                                 {pricing.total > 0 && watchOffer === '90_day' && (
                                   <div className="mt-2 text-lg font-bold">${pricing.total}</div>
                                 )}
@@ -608,9 +611,8 @@ export default function CSRBookingForm() {
                                     : "border-muted hover:border-primary/50 hover:bg-accent"
                                 )}
                               >
-                                <span className="text-2xl mb-1">{window.icon}</span>
-                                <span className="text-xs font-semibold">{window.label}</span>
-                                <span className="text-[10px] text-muted-foreground">{window.time}</span>
+                                <span className="text-sm font-semibold">{window.label}</span>
+                                <span className="text-xs text-muted-foreground">{window.time}</span>
                               </button>
                             ))}
                           </div>
