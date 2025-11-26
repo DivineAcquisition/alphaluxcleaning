@@ -99,6 +99,20 @@ async function createSquareInstance() {
   throw lastError || new Error("Failed to initialize Square");
 }
 
+/**
+ * Initialize Square SDK explicitly (useful for lazy loading)
+ */
+export const initializeSquare = async () => {
+  try {
+    const result = await squarePromise;
+    console.log('✅ Square initialized successfully');
+    return result;
+  } catch (error) {
+    console.error('❌ Square initialization failed:', error);
+    throw error;
+  }
+};
+
 if (typeof window !== "undefined") {
   squareInstancePromise = createSquareInstance();
 }

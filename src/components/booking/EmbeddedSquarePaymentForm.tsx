@@ -54,64 +54,53 @@ export function EmbeddedSquarePaymentForm({
   const isInitialized = React.useRef(false);
   const cardInstanceRef = React.useRef<any>(null);
 
-  useEffect(() => {
-    let mounted = true;
+  const initializePaymentForm = async (isRetry = false) => {
+    if (isInitialized.current && !isRetry) {
+      console.log("⚠️ Square already initialized, skipping");
+      return;
+    }
     
-    const initializeSquare = async () => {
-      // Prevent double initialization
-      if (!mounted || isInitialized.current) {
-        console.log("⚠️ Square already initialized or component unmounted, skipping");
-        return;
+    setIsInitializing(true);
+    setError(null);
+
+    try {
+      console.log('Starting Square payment form initialization...');
+      
+      // Destroy existing instance if any
+      if (cardInstanceRef.current) {
+        await cardInstanceRef.current.destroy();
+        cardInstanceRef.current = null;
       }
 
-      setIsInitializing(true);
-      try {
-        console.log("🎨 Initializing Square payment form");
-        
-        // Destroy existing instance if any
-        if (cardInstanceRef.current) {
-          await cardInstanceRef.current.destroy();
-          cardInstanceRef.current = null;
-        }
-
-        const square = await squarePromise;
-        
-        if (!square?.payments) {
-          throw new Error("Square payments not initialized");
-        }
-
-        // Initialize card payment method only if still mounted
-        if (!mounted) return;
-        
-        const cardInstance = await square.payments.card();
-        await cardInstance.attach("#square-card-container");
-        
-        if (!mounted) {
-          await cardInstance.destroy();
-          return;
-        }
-        
-        cardInstanceRef.current = cardInstance;
-        setCard(cardInstance);
-        setIsCardReady(true);
-        isInitialized.current = true;
-        setIsInitializing(false);
-        console.log("✅ Square card form initialized");
-      } catch (err: any) {
-        console.error("❌ Error initializing Square:", err);
-        if (mounted) {
-          setError(err.message || "Failed to initialize payment form");
-          setIsInitializing(false);
-          isInitialized.current = false;
-          toast.error("Payment form initialization failed. Please refresh the page.");
-        }
+      const result = await squarePromise;
+      
+      if (!result?.payments) {
+        throw new Error('Square Payments not properly initialized');
       }
-    };
 
-    initializeSquare();
+      const cardInstance = await result.payments.card();
+      cardInstanceRef.current = cardInstance;
+      await cardInstance.attach('#square-card-container');
+      
+      setCard(cardInstance);
+      setIsCardReady(true);
+      isInitialized.current = true;
+      console.log('✅ Square payment form ready');
+    } catch (error) {
+      console.error('Square initialization error:', error);
+      setError("Unable to load payment form. Please try again.");
+      toast.error("Payment form initialization failed. Please try again.");
+      setIsCardReady(false);
+      isInitialized.current = false;
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  useEffect(() => {
+    initializePaymentForm();
 
     return () => {
-      mounted = false;
       console.log("🧹 Cleaning up Square card instance");
       if (cardInstanceRef.current) {
         cardInstanceRef.current.destroy();
@@ -263,6 +252,21 @@ export function EmbeddedSquarePaymentForm({
               <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Loading payment form...</span>
+              </div>
+            )}
+
+            {!isInitializing && !isCardReady && (
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-sm text-destructive">Failed to load payment form</p>
+                  <Button 
+                    onClick={() => initializePaymentForm(true)} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    Retry
+                  </Button>
+                </div>
               </div>
             )}
           </div>
