@@ -9,6 +9,7 @@ import { getEstimatedHours } from '@/lib/pricing-psychology';
 import { Shield, Award, Calendar, MapPin, Home, Clock, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { BookingCountdown } from '@/components/booking/BookingCountdown';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 export default function BookingSummary() {
   const navigate = useNavigate();
@@ -309,6 +310,9 @@ export default function BookingSummary() {
                     <div className="font-medium">100% Satisfaction Guarantee</div>
                     <div className="text-sm text-muted-foreground">We'll re-clean if you're not happy</div>
                   </div>
+                </div>
+                <div className="pt-4 border-t">
+                  <GoogleGuaranteedBadge variant="standard" showSubtitle />
                 </div>
               </div>
             </Card>

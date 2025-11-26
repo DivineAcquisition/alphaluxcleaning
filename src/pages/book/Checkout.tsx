@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Lock, Tag, CheckCircle2, Clock, Star } from 'lucide-react';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -519,7 +520,7 @@ export default function BookingCheckout() {
           {/* Trust Badges */}
           <Card>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-3 gap-4 text-center text-sm">
+              <div className="grid grid-cols-3 gap-4 text-center text-sm mb-4">
                 <div>
                   <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
                   <p className="font-medium">Secure Payment</p>
@@ -532,6 +533,9 @@ export default function BookingCheckout() {
                   <CreditCard className="h-6 w-6 mx-auto mb-2 text-primary" />
                   <p className="font-medium">PCI Compliant</p>
                 </div>
+              </div>
+              <div className="pt-4 border-t flex justify-center">
+                <GoogleGuaranteedBadge variant="standard" showSubtitle />
               </div>
             </CardContent>
           </Card>

@@ -3,6 +3,7 @@ import { Shield, Award, Clock, MapPin, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
 export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?: string }) {
   return (
@@ -73,6 +74,11 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
               <MapPin className="w-8 h-8 lg:w-10 lg:h-10 text-primary mb-2" />
               <p className="text-xs lg:text-sm font-semibold text-foreground">Serving TX, CA, NY</p>
             </div>
+          </div>
+
+          {/* Google Guaranteed Badge */}
+          <div className="flex justify-center mt-6">
+            <GoogleGuaranteedBadge variant="standard" />
           </div>
 
           {/* Social Proof Text */}
