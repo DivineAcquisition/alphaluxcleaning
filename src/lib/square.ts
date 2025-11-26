@@ -101,18 +101,17 @@ async function createSquareInstance() {
 
 /**
  * Initialize Square SDK explicitly (useful for lazy loading)
+ * Returns the Square instance promise
  */
-export const initializeSquare = async () => {
-  try {
-    const result = await squarePromise;
-    console.log('✅ Square initialized successfully');
-    return result;
-  } catch (error) {
-    console.error('❌ Square initialization failed:', error);
-    throw error;
+export const initializeSquare = () => {
+  if (!squareInstancePromise) {
+    console.log('🔄 Initializing Square SDK on demand...');
+    squareInstancePromise = createSquareInstance();
   }
+  return squareInstancePromise;
 };
 
+// Initialize Square on module load (for backward compatibility)
 if (typeof window !== "undefined") {
   squareInstancePromise = createSquareInstance();
 }

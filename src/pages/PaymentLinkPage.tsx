@@ -170,7 +170,7 @@ export default function PaymentLinkPage() {
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>🔒 Secure payment powered by Square</p>
-          <p className="mt-2">Questions? Call us at (214) 919-7134</p>
+          <p className="mt-2">Questions? Call us at (972) 559-0223</p>
         </div>
       </div>
     </div>

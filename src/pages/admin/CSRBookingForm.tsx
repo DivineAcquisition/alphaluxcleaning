@@ -119,72 +119,44 @@ export default function CSRBookingForm() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const pricingCalc = calculatePricing(data.sqftRange, data.offerType);
       
-      // Create customer
-      const { data: customerData, error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          email: data.email,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone: data.phone,
-          address_line1: data.addressLine1,
-          address_line2: data.addressLine2,
-          postal_code: data.zipCode,
-        })
-        .select()
-        .single();
-
-      if (customerError) throw customerError;
-
-      const offerDetails = 
-        data.offerType === 'tester' 
-          ? { name: 'Tester Deep Clean', type: 'tester', visits: 1, serviceType: 'Deep Cleaning' }
-          : data.offerType === '90_day'
-          ? { name: '90-Day Reset & Maintain Plan', type: '90_day_plan', visits: 4, serviceType: 'Deep Cleaning' }
-          : { name: 'Standard Clean', type: 'standard_clean', visits: 1, serviceType: 'Standard Cleaning' };
-
-      // Create booking
-      const { data: bookingRecord, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          customer_id: customerData.id,
-          email: data.email,
-          full_name: `${data.firstName} ${data.lastName}`,
-          address_line1: data.addressLine1,
-          address_line2: data.addressLine2,
-          zip_code: data.zipCode,
-          sqft_or_bedrooms: data.sqftRange,
-          service_type: offerDetails.serviceType,
-          frequency: data.offerType === '90_day' ? 'recurring' : 'one-time',
-          est_price: pricingCalc.total,
-          deposit_amount: pricingCalc.deposit,
-          balance_due: pricingCalc.balance,
-          offer_name: offerDetails.name,
-          offer_type: offerDetails.type,
-          visit_count: offerDetails.visits,
-          is_recurring: data.offerType === '90_day',
-          status: data.paymentMode === 'instant' ? 'pending' : 'payment_pending',
-          payment_status: 'pending',
-          source: 'csr_phone',
-          created_by_user_id: user.id,
-          preferred_date: data.preferredDate ? format(data.preferredDate, 'yyyy-MM-dd') : null,
-          preferred_time_block: data.preferredTime || null,
-          special_instructions: data.specialInstructions || null,
-          property_details: {
+      // Call edge function to create booking (bypasses RLS using service_role)
+      const { data: result, error: createError } = await supabase.functions.invoke('csr-create-booking', {
+        body: {
+          customerData: {
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            phone: data.phone,
+            addressLine1: data.addressLine1,
+            addressLine2: data.addressLine2,
+            zipCode: data.zipCode,
+          },
+          bookingData: {
+            sqftRange: data.sqftRange,
             bedrooms: data.bedrooms,
             bathrooms: data.bathrooms,
-            sqft_range: data.sqftRange,
+            offerType: data.offerType,
+            paymentMode: data.paymentMode,
+            preferredDate: data.preferredDate ? format(data.preferredDate, 'yyyy-MM-dd') : undefined,
+            preferredTime: data.preferredTime,
+            specialInstructions: data.specialInstructions,
           },
-        })
-        .select()
-        .single();
+          pricing: pricingCalc,
+        },
+      });
 
-      if (bookingError) throw bookingError;
+      if (createError) {
+        console.error('Edge function error:', createError);
+        throw new Error(createError.message || 'Failed to create booking');
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create booking');
+      }
+
+      const bookingRecord = result.booking;
 
       if (data.paymentMode === 'instant') {
         // Show payment form
@@ -197,6 +169,7 @@ export default function CSRBookingForm() {
           fullAmount: pricingCalc.total,
         });
         setShowPaymentForm(true);
+        toast.success('Booking created! Collect payment over the phone.');
       } else {
         // Send payment link
         const { error: linkError } = await supabase.functions.invoke('send-payment-link', {
@@ -208,14 +181,18 @@ export default function CSRBookingForm() {
           },
         });
 
-        if (linkError) throw linkError;
-
-        toast.success('Booking created! Payment link sent to customer.');
+        if (linkError) {
+          console.error('Payment link error:', linkError);
+          toast.error('Booking created but failed to send payment link. Please send manually.');
+        } else {
+          toast.success('Booking created! Payment link sent to customer.');
+        }
+        
         navigate('/admin/dashboard');
       }
     } catch (error: any) {
       console.error('Error creating booking:', error);
-      toast.error(error.message || 'Failed to create booking');
+      toast.error(error.message || 'Failed to create booking. Please check console for details.');
     } finally {
       setIsLoading(false);
     }
