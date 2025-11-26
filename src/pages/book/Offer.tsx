@@ -234,7 +234,7 @@ export default function BookingOffer() {
             <h2 className="text-2xl font-bold text-foreground mb-2">
               Standard Clean
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">Perfect for regular upkeep</p>
+            <p className="text-sm text-muted-foreground mb-4">Keep your home guest-ready, always</p>
 
             <div className="mb-6">
               <div className="flex items-baseline gap-2">
@@ -251,11 +251,23 @@ export default function BookingOffer() {
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Complete home cleaning checklist</span>
+                <span className="text-foreground">Save 3+ hours every weekend</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">2-person professional team</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">All supplies & equipment included</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">Eco-friendly, pet-safe products</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">Insured & bonded crews</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
