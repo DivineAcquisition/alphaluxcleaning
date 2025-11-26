@@ -13,15 +13,17 @@ export function ServiceDetailsModal({ open, onOpenChange, serviceType }: Service
       case 'standard':
         return {
           title: "Standard Clean - What's Included",
-          duration: "~2-3 hours",
-          timeSaved: "Get your evenings back - no more spending 3+ hours cleaning",
-          premium: "Professional-grade supplies, trained crew, consistent results",
+          duration: "2-3 hours with 2-person team",
+          timeSaved: "Save 3+ hours every weekend - get your evenings back",
+          premium: "Professional-grade equipment & supplies, insured & bonded crew, eco-friendly products",
           checklist: [
-            "Kitchen: Countertops, sink, appliances (exterior), floors",
-            "Bathrooms: Toilet, sink, tub/shower, mirror, floors",
-            "All rooms: Vacuum carpets, mop hard floors, dust surfaces",
-            "Trash removal from all rooms",
-            "Surface cleaning and organization"
+            "Kitchen: Wipe countertops & backsplash, clean sink & faucet, wipe appliance exteriors, sweep & mop floors, take out trash",
+            "Bathrooms: Clean & disinfect toilets, scrub sinks & counters, clean mirrors, wipe shower/tub surfaces, mop floors",
+            "Living Areas: Vacuum all carpets & rugs, dust all surfaces & furniture, straighten cushions & decor, spot-clean high-touch areas",
+            "Bedrooms: Vacuum floors, dust nightstands & dressers, make beds (with your sheets), tidy visible areas",
+            "Hallways & Entryways: Vacuum or sweep floors, dust railings & light fixtures, wipe doorknobs & switches",
+            "General: Empty all trash bins throughout home, spot-clean fingerprints on doors & walls",
+            "Note: Perfect for regular maintenance between deep cleans. Recommended frequency: bi-weekly or monthly"
           ]
         };
       

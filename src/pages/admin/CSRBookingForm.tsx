@@ -11,9 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { toast } from 'sonner';
-import { Loader2, Phone, Mail, MapPin, Home, Calendar, CreditCard } from 'lucide-react';
+import { Loader2, Phone, Mail, MapPin, Home, Calendar, CreditCard, CalendarIcon, Clock } from 'lucide-react';
 import { InstantPaymentForm } from '@/components/ui/instant-payment-form';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const HOME_SIZE_RANGES = [
   { id: 'under_1000', label: 'Under 1,000 sq ft', sqft: 800 },
@@ -27,6 +31,16 @@ const HOME_SIZE_RANGES = [
   { id: '5000_plus', label: '5,000+ sq ft', sqft: 5500 },
 ];
 
+const TIME_WINDOWS = [
+  { value: 'early_morning', label: 'Early Morning', time: '7am-9am', icon: '🌅' },
+  { value: 'mid_morning', label: 'Mid-Morning', time: '9am-11am', icon: '☀️' },
+  { value: 'late_morning', label: 'Late Morning', time: '11am-1pm', icon: '🌤️' },
+  { value: 'early_afternoon', label: 'Early Afternoon', time: '1pm-3pm', icon: '🌞' },
+  { value: 'late_afternoon', label: 'Late Afternoon', time: '3pm-5pm', icon: '🌇' },
+  { value: 'evening', label: 'Evening', time: '5pm-7pm', icon: '🌆' },
+  { value: 'flexible', label: 'Flexible', time: 'Any time works', icon: '✨' },
+];
+
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name required'),
   lastName: z.string().min(2, 'Last name required'),
@@ -38,9 +52,9 @@ const formSchema = z.object({
   bedrooms: z.string().min(1, 'Select bedrooms'),
   bathrooms: z.string().min(1, 'Select bathrooms'),
   sqftRange: z.string().min(1, 'Select square footage'),
-  offerType: z.enum(['tester', '90_day'], { required_error: 'Select an offer' }),
+  offerType: z.enum(['tester', '90_day', 'standard'], { required_error: 'Select an offer' }),
   paymentMode: z.enum(['instant', 'link'], { required_error: 'Select payment mode' }),
-  preferredDate: z.string().optional(),
+  preferredDate: z.date().optional(),
   preferredTime: z.string().optional(),
   specialInstructions: z.string().optional(),
 });
@@ -66,10 +80,23 @@ export default function CSRBookingForm() {
     if (!range) return { total: 0, deposit: 0, balance: 0 };
 
     let basePrice = 0;
-    if (range.sqft < 1500) basePrice = offerType === 'tester' ? 199 : 549;
-    else if (range.sqft < 2500) basePrice = offerType === 'tester' ? 249 : 649;
-    else if (range.sqft < 4000) basePrice = offerType === 'tester' ? 299 : 749;
-    else basePrice = offerType === 'tester' ? 349 : 849;
+    if (offerType === 'tester') {
+      if (range.sqft < 1500) basePrice = 199;
+      else if (range.sqft < 2500) basePrice = 249;
+      else if (range.sqft < 4000) basePrice = 299;
+      else basePrice = 349;
+    } else if (offerType === '90_day') {
+      if (range.sqft < 1500) basePrice = 549;
+      else if (range.sqft < 2500) basePrice = 649;
+      else if (range.sqft < 4000) basePrice = 749;
+      else basePrice = 849;
+    } else if (offerType === 'standard') {
+      // Standard clean pricing (maintenance rates)
+      if (range.sqft < 1500) basePrice = 149;
+      else if (range.sqft < 2500) basePrice = 179;
+      else if (range.sqft < 4000) basePrice = 209;
+      else basePrice = 249;
+    }
 
     const deposit = Math.round(basePrice * 0.25 * 100) / 100;
     const balance = Math.round((basePrice - deposit) * 100) / 100;
@@ -114,9 +141,12 @@ export default function CSRBookingForm() {
 
       if (customerError) throw customerError;
 
-      const offerDetails = data.offerType === 'tester' 
-        ? { name: 'Tester Deep Clean', type: 'tester', visits: 1 }
-        : { name: '90-Day Reset & Maintain Plan', type: '90_day_plan', visits: 4 };
+      const offerDetails = 
+        data.offerType === 'tester' 
+          ? { name: 'Tester Deep Clean', type: 'tester', visits: 1, serviceType: 'Deep Cleaning' }
+          : data.offerType === '90_day'
+          ? { name: '90-Day Reset & Maintain Plan', type: '90_day_plan', visits: 4, serviceType: 'Deep Cleaning' }
+          : { name: 'Standard Clean', type: 'standard_clean', visits: 1, serviceType: 'Standard Cleaning' };
 
       // Create booking
       const { data: bookingRecord, error: bookingError } = await supabase
@@ -129,8 +159,8 @@ export default function CSRBookingForm() {
           address_line2: data.addressLine2,
           zip_code: data.zipCode,
           sqft_or_bedrooms: data.sqftRange,
-          service_type: 'Deep Cleaning',
-          frequency: data.offerType === 'tester' ? 'one-time' : 'recurring',
+          service_type: offerDetails.serviceType,
+          frequency: data.offerType === '90_day' ? 'recurring' : 'one-time',
           est_price: pricingCalc.total,
           deposit_amount: pricingCalc.deposit,
           balance_due: pricingCalc.balance,
@@ -142,7 +172,7 @@ export default function CSRBookingForm() {
           payment_status: 'pending',
           source: 'csr_phone',
           created_by_user_id: user.id,
-          preferred_date: data.preferredDate || null,
+          preferred_date: data.preferredDate ? format(data.preferredDate, 'yyyy-MM-dd') : null,
           preferred_time_block: data.preferredTime || null,
           special_instructions: data.specialInstructions || null,
           property_details: {
@@ -437,8 +467,23 @@ export default function CSRBookingForm() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-2 gap-4"
+                          className="grid grid-cols-3 gap-4"
                         >
+                          <div>
+                            <RadioGroupItem value="standard" id="standard" className="peer sr-only" />
+                            <label
+                              htmlFor="standard"
+                              className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                            >
+                              <div className="text-center">
+                                <div className="font-semibold">Standard Clean</div>
+                                <div className="text-sm text-muted-foreground">Regular maintenance</div>
+                                {pricing.total > 0 && watchOffer === 'standard' && (
+                                  <div className="mt-2 text-lg font-bold">${pricing.total}</div>
+                                )}
+                              </div>
+                            </label>
+                          </div>
                           <div>
                             <RadioGroupItem value="tester" id="tester" className="peer sr-only" />
                             <label
@@ -447,8 +492,8 @@ export default function CSRBookingForm() {
                             >
                               <div className="text-center">
                                 <div className="font-semibold">Tester Deep Clean</div>
-                                <div className="text-sm text-muted-foreground">Single visit</div>
-                                {pricing.total > 0 && (
+                                <div className="text-sm text-muted-foreground">Single deep clean</div>
+                                {pricing.total > 0 && watchOffer === 'tester' && (
                                   <div className="mt-2 text-lg font-bold">${pricing.total}</div>
                                 )}
                               </div>
@@ -462,8 +507,8 @@ export default function CSRBookingForm() {
                             >
                               <div className="text-center">
                                 <div className="font-semibold">90-Day Plan</div>
-                                <div className="text-sm text-muted-foreground">4 visits over 90 days</div>
-                                {pricing.total > 0 && (
+                                <div className="text-sm text-muted-foreground">4 visits + savings</div>
+                                {pricing.total > 0 && watchOffer === '90_day' && (
                                   <div className="mt-2 text-lg font-bold">${pricing.total}</div>
                                 )}
                               </div>
@@ -499,16 +544,43 @@ export default function CSRBookingForm() {
                   <Calendar className="w-4 h-4" />
                   Scheduling (Optional)
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <FormField
                     control={form.control}
                     name="preferredDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Preferred Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -518,19 +590,31 @@ export default function CSRBookingForm() {
                     name="preferredTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred Time</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="morning">Morning (8am-12pm)</SelectItem>
-                            <SelectItem value="afternoon">Afternoon (12pm-4pm)</SelectItem>
-                            <SelectItem value="evening">Evening (4pm-8pm)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Preferred Time Window
+                        </FormLabel>
+                        <FormControl>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {TIME_WINDOWS.map((window) => (
+                              <button
+                                key={window.value}
+                                type="button"
+                                onClick={() => field.onChange(window.value)}
+                                className={cn(
+                                  "flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all",
+                                  field.value === window.value
+                                    ? "border-primary bg-primary/10"
+                                    : "border-muted hover:border-primary/50 hover:bg-accent"
+                                )}
+                              >
+                                <span className="text-2xl mb-1">{window.icon}</span>
+                                <span className="text-xs font-semibold">{window.label}</span>
+                                <span className="text-[10px] text-muted-foreground">{window.time}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
