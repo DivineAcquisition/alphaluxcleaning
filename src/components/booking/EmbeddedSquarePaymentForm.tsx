@@ -64,7 +64,7 @@ export function EmbeddedSquarePaymentForm({
     setError(null);
 
     try {
-      console.log('Starting Square payment form initialization...');
+      console.log('🔄 Starting Square payment form initialization...');
       
       // Destroy existing instance if any
       if (cardInstanceRef.current) {
@@ -72,24 +72,43 @@ export function EmbeddedSquarePaymentForm({
         cardInstanceRef.current = null;
       }
 
-      const result = await squarePromise;
-      
-      if (!result?.payments) {
-        throw new Error('Square Payments not properly initialized');
-      }
+      // Add timeout for initialization
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Square SDK initialization timeout (15s)')), 15000)
+      );
 
-      const cardInstance = await result.payments.card();
-      cardInstanceRef.current = cardInstance;
-      await cardInstance.attach('#square-card-container');
+      const initPromise = (async () => {
+        const result = await squarePromise;
+        
+        if (!result?.payments) {
+          throw new Error('Square Payments SDK not available');
+        }
+
+        if (!result?.config?.applicationId || !result?.config?.locationId) {
+          throw new Error('Square configuration missing (applicationId or locationId)');
+        }
+
+        console.log('✅ Square SDK loaded, creating card...');
+        const cardInstance = await result.payments.card();
+        
+        console.log('✅ Card created, attaching to DOM...');
+        await cardInstance.attach('#square-card-container');
+        
+        return cardInstance;
+      })();
+
+      const cardInstance = await Promise.race([initPromise, timeoutPromise]) as any;
       
+      cardInstanceRef.current = cardInstance;
       setCard(cardInstance);
       setIsCardReady(true);
       isInitialized.current = true;
-      console.log('✅ Square payment form ready');
+      console.log('✅ Square payment form initialized successfully');
     } catch (error) {
-      console.error('Square initialization error:', error);
-      setError("Unable to load payment form. Please try again.");
-      toast.error("Payment form initialization failed. Please try again.");
+      console.error('❌ Square initialization error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unable to load payment form';
+      setError(errorMessage);
+      toast.error(`Payment form failed: ${errorMessage}`);
       setIsCardReady(false);
       isInitialized.current = false;
     } finally {
@@ -272,8 +291,17 @@ export function EmbeddedSquarePaymentForm({
           </div>
           
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-              {error}
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive space-y-2">
+              <p className="font-semibold">Payment Form Error</p>
+              <p>{error}</p>
+              <Button 
+                type="button"
+                variant="outline" 
+                size="sm"
+                onClick={() => initializePaymentForm(true)}
+              >
+                Retry Loading Payment Form
+              </Button>
             </div>
           )}
         </div>
