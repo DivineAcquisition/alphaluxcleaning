@@ -135,6 +135,13 @@ function App() {
             {/* Pricing Page */}
             <Route path="/pricing" element={<Pricing />} />
             
+            {/* Printable Pricing Sheet */}
+            <Route path="/pricing-sheet" element={
+              <Suspense fallback={<div>Loading...</div>}>
+                {React.createElement(React.lazy(() => import('./pages/PricingSheet')))}
+              </Suspense>
+            } />
+            
             {/* Recurring Services */}
             <Route path="/recurring-services" element={<RecurringServices />} />
             <Route path="/start-recurring" element={<StartRecurring />} />
