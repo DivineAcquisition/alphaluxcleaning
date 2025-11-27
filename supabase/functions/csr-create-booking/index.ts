@@ -113,27 +113,66 @@ serve(async (req) => {
       discount: discount
     });
 
-    // Create customer using service_role (bypasses RLS)
-    const { data: customer, error: customerError } = await supabaseAdmin
+    // Check if customer already exists
+    const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
-      .insert({
-        email: customerData.email,
-        first_name: customerData.firstName,
-        last_name: customerData.lastName,
-        phone: customerData.phone,
-        address_line1: customerData.addressLine1,
-        address_line2: customerData.addressLine2,
-        postal_code: customerData.zipCode,
-      })
-      .select()
-      .single();
+      .select('*')
+      .eq('email', customerData.email)
+      .maybeSingle();
 
-    if (customerError) {
-      console.error('❌ Customer creation failed:', customerError);
-      throw new Error(`Failed to create customer: ${customerError.message}`);
+    let customer;
+    
+    if (existingCustomer) {
+      console.log(`📧 Customer exists: ${existingCustomer.id}, updating info...`);
+      
+      // Update existing customer with new information
+      const { data: updatedCustomer, error: updateError } = await supabaseAdmin
+        .from('customers')
+        .update({
+          first_name: customerData.firstName,
+          last_name: customerData.lastName,
+          phone: customerData.phone,
+          address_line1: customerData.addressLine1,
+          address_line2: customerData.addressLine2,
+          postal_code: customerData.zipCode,
+        })
+        .eq('id', existingCustomer.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('❌ Customer update failed:', updateError);
+        throw new Error(`Failed to update customer: ${updateError.message}`);
+      }
+      
+      customer = updatedCustomer;
+      console.log(`✅ Customer updated: ${customer.id}`);
+    } else {
+      console.log('📝 Creating new customer...');
+      
+      // Create new customer using service_role (bypasses RLS)
+      const { data: newCustomer, error: customerError } = await supabaseAdmin
+        .from('customers')
+        .insert({
+          email: customerData.email,
+          first_name: customerData.firstName,
+          last_name: customerData.lastName,
+          phone: customerData.phone,
+          address_line1: customerData.addressLine1,
+          address_line2: customerData.addressLine2,
+          postal_code: customerData.zipCode,
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('❌ Customer creation failed:', customerError);
+        throw new Error(`Failed to create customer: ${customerError.message}`);
+      }
+
+      customer = newCustomer;
+      console.log(`✅ Customer created: ${customer.id}`);
     }
-
-    console.log(`✅ Customer created: ${customer.id}`);
 
     // Determine offer details
     const visitCount = bookingData.visitCount || 1;
