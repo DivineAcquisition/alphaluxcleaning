@@ -12,11 +12,13 @@ import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
 import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { toast } from 'sonner';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
-
 export default function BookingOffer() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { bookingData, updateBookingData } = useBooking();
+  const {
+    bookingData,
+    updateBookingData
+  } = useBooking();
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [promoApplied, setPromoApplied] = useState(false);
@@ -24,25 +26,22 @@ export default function BookingOffer() {
   const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('standard');
 
   // Find the selected home size range
-  const selectedHomeSize = HOME_SIZE_RANGES.find(
-    range => range.id === bookingData.homeSizeId
-  );
-  
+  const selectedHomeSize = HOME_SIZE_RANGES.find(range => range.id === bookingData.homeSizeId);
+
   // Check if Tester is eligible (only for homes ≤1,499 sq ft)
   const isTesterEligible = selectedHomeSize && selectedHomeSize.maxSqft <= 1499;
-  
+
   // Use the new pre-calculated pricing fields
   const testerPrice = selectedHomeSize?.deepPrice || 250;
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
   const ninetyDayPrice = selectedHomeSize?.ninetyDayPrice || 699;
-  
+
   // Calculate per-visit price for display
   const perVisitPrice = Math.round(ninetyDayPrice / 4);
-  
-  // Calculate savings vs. individual booking
-  const individualTotal = testerPrice + (maintenancePrice * 3);
-  const savings = individualTotal - ninetyDayPrice;
 
+  // Calculate savings vs. individual booking
+  const individualTotal = testerPrice + maintenancePrice * 3;
+  const savings = individualTotal - ninetyDayPrice;
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.homeSizeId) {
       navigate('/book');
@@ -53,23 +52,21 @@ export default function BookingOffer() {
   useEffect(() => {
     const promoCode = searchParams.get('promo');
     const lockService = searchParams.get('lock_service');
-    
     if (promoCode === 'DEEPCLEAN60' && !promoApplied) {
       updateBookingData({
         promoCode: 'DEEPCLEAN60',
-        promoDiscount: 60,
+        promoDiscount: 60
       });
       setPromoApplied(true);
       toast.success('🎉 $60 Deep Clean Discount Applied!', {
-        description: 'Your discount will be shown at checkout',
+        description: 'Your discount will be shown at checkout'
       });
     }
   }, [searchParams, promoApplied, updateBookingData]);
 
   // Handle custom quote requirement for large homes
   if (selectedHomeSize?.requiresEstimate) {
-    return (
-      <div className="min-h-screen bg-background">
+    return <div className="min-h-screen bg-background">
         <BookingProgressBar currentStep={3} totalSteps={6} />
         
         <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
@@ -107,28 +104,18 @@ export default function BookingOffer() {
             </div>
           </Card>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  const handleSelectOffer = (
-    offerType: 'tester_deep_clean' | '90_day_plan' | 'standard_clean',
-    offerName: string,
-    basePrice: number,
-    visitCount: number,
-    isRecurring: boolean
-  ) => {
+  const handleSelectOffer = (offerType: 'tester_deep_clean' | '90_day_plan' | 'standard_clean', offerName: string, basePrice: number, visitCount: number, isRecurring: boolean) => {
     setSelectedOffer(offerType);
-    
+
     // Show upsell modal for Standard Clean selection
     if (offerType === 'standard_clean') {
       setShowUpsellModal(true);
       return;
     }
-    
     let serviceType: 'regular' | 'deep' | 'move_in_out' = 'regular';
     let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = 'one_time';
-    
     if (offerType === 'tester_deep_clean') {
       serviceType = 'deep';
       frequency = 'one_time';
@@ -136,7 +123,6 @@ export default function BookingOffer() {
       serviceType = 'deep';
       frequency = 'weekly';
     }
-    
     updateBookingData({
       offerType,
       offerName,
@@ -144,7 +130,7 @@ export default function BookingOffer() {
       visitCount,
       isRecurring,
       serviceType,
-      frequency,
+      frequency
     });
 
     // Navigate after brief delay for visual feedback
@@ -152,11 +138,9 @@ export default function BookingOffer() {
       navigate('/book/checkout');
     }, 200);
   };
-
   const handleUpgradeToBundle = () => {
     setShowUpsellModal(false);
     setSelectedOffer('90_day_plan');
-    
     updateBookingData({
       offerType: '90_day_plan',
       offerName: '90-Day Reset & Maintain Plan',
@@ -164,17 +148,14 @@ export default function BookingOffer() {
       visitCount: 4,
       isRecurring: true,
       serviceType: 'deep',
-      frequency: 'weekly',
+      frequency: 'weekly'
     });
-
     setTimeout(() => {
       navigate('/book/checkout');
     }, 200);
   };
-
   const handleContinueStandard = () => {
     setShowUpsellModal(false);
-    
     updateBookingData({
       offerType: 'standard_clean',
       offerName: 'One-Time Standard Clean',
@@ -182,16 +163,13 @@ export default function BookingOffer() {
       visitCount: 1,
       isRecurring: false,
       serviceType: 'regular',
-      frequency: 'one_time',
+      frequency: 'one_time'
     });
-
     setTimeout(() => {
       navigate('/book/checkout');
     }, 200);
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <BookingProgressBar currentStep={3} totalSteps={6} />
 
       <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
@@ -209,22 +187,7 @@ export default function BookingOffer() {
 
         <div className={`grid gap-6 md:gap-8 ${isTesterEligible ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
           {/* Standard Clean - Always available */}
-          <Card
-            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-              selectedOffer === 'standard_clean'
-                ? 'border-primary shadow-lg'
-                : 'border-border hover:border-primary/50'
-            }`}
-            onClick={() =>
-              handleSelectOffer(
-                'standard_clean',
-                'One-Time Standard Clean',
-                maintenancePrice,
-                1,
-                false
-              )
-            }
-          >
+          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'standard_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('standard_clean', 'One-Time Standard Clean', maintenancePrice, 1, false)}>
             <div className="mb-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
                 Simple & Straightforward
@@ -276,23 +239,14 @@ export default function BookingOffer() {
             </ul>
 
             <div className="space-y-2">
-              <Button
-                className="w-full"
-                size="lg"
-                variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}
-              >
+              <Button className="w-full" size="lg" variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}>
                 Get Started - ${Math.round(maintenancePrice * 0.25)} Today
               </Button>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDetailsServiceType('standard');
-                  setShowDetailsModal(true);
-                }}
-                variant="ghost"
-                size="sm"
-                className="w-full"
-              >
+              <Button onClick={e => {
+              e.stopPropagation();
+              setDetailsServiceType('standard');
+              setShowDetailsModal(true);
+            }} variant="ghost" size="sm" className="w-full">
                 <Info className="h-4 w-4 mr-2" />
                 What's Included?
               </Button>
@@ -300,23 +254,7 @@ export default function BookingOffer() {
           </Card>
 
           {/* Tester Deep Clean - Only for homes ≤1,500 sq ft */}
-          {isTesterEligible ? (
-            <Card
-              className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-                selectedOffer === 'tester_deep_clean'
-                  ? 'border-primary shadow-lg'
-                  : 'border-border hover:border-primary/50'
-              }`}
-              onClick={() =>
-                handleSelectOffer(
-                  'tester_deep_clean',
-                  'Home Reset Deep Clean (Tester)',
-                  testerPrice - (bookingData.promoDiscount || 0),
-                  1,
-                  false
-                )
-              }
-            >
+          {isTesterEligible ? <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'tester_deep_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('tester_deep_clean', 'Home Reset Deep Clean (Tester)', testerPrice - (bookingData.promoDiscount || 0), 1, false)}>
               <div className="mb-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
                   <Sparkles className="h-3 w-3" />
@@ -329,24 +267,20 @@ export default function BookingOffer() {
             </h2>
             <p className="text-sm text-muted-foreground mb-4">(Tester)</p>
 
-            {bookingData.promoCode === 'DEEPCLEAN60' && (
-              <div className="mb-4">
+            {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
                 <Badge variant="default" className="flex items-center gap-1 w-fit">
                   <Tag className="w-3 h-3" />
                   $60 Discount Applied
                 </Badge>
-              </div>
-            )}
+              </div>}
 
             <div className="mb-6">
               <p className="text-sm text-muted-foreground mb-3">
                 Try our service risk-free
               </p>
-              {bookingData.promoCode === 'DEEPCLEAN60' && (
-                <div className="text-sm text-muted-foreground line-through mb-1">
+              {bookingData.promoCode === 'DEEPCLEAN60' && <div className="text-sm text-muted-foreground line-through mb-1">
                   Regular: ${Math.round(testerPrice * 0.25)} today
-                </div>
-              )}
+                </div>}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
                   ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)}
@@ -374,47 +308,22 @@ export default function BookingOffer() {
               </ul>
 
               <div className="space-y-2">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}
-                >
+                <Button className="w-full" size="lg" variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}>
                   Get Started - ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)} Today
                 </Button>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDetailsServiceType('tester');
-                    setShowDetailsModal(true);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                >
+                <Button onClick={e => {
+              e.stopPropagation();
+              setDetailsServiceType('tester');
+              setShowDetailsModal(true);
+            }} variant="ghost" size="sm" className="w-full">
                   <Info className="h-4 w-4 mr-2" />
                   What's Included?
                 </Button>
               </div>
-            </Card>
-          ) : null}
+            </Card> : null}
 
           {/* 90-Day Reset & Maintain Plan */}
-          <Card
-            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-              selectedOffer === '90_day_plan'
-                ? 'border-primary shadow-lg'
-                : 'border-primary/30 hover:border-primary'
-            }`}
-            onClick={() =>
-              handleSelectOffer(
-                '90_day_plan',
-                '90-Day Reset & Maintain Plan',
-                ninetyDayPrice - (bookingData.promoDiscount || 0),
-                4,
-                true
-              )
-            }
-          >
+          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === '90_day_plan' ? 'border-primary shadow-lg' : 'border-primary/30 hover:border-primary'}`} onClick={() => handleSelectOffer('90_day_plan', '90-Day Reset & Maintain Plan', ninetyDayPrice - (bookingData.promoDiscount || 0), 4, true)}>
             {/* Popular badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
               Most Popular
@@ -427,19 +336,15 @@ export default function BookingOffer() {
               </span>
             </div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              🖤 BLACK FRIDAY: 90-Day Home Reset
-            </h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">BLACK FRIDAY: 90-Day Home Reset</h2>
             <p className="text-sm font-semibold text-primary mb-1">Save $100 – Limited Time</p>
 
-            {bookingData.promoCode === 'DEEPCLEAN60' && (
-              <div className="mb-4">
+            {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
                 <Badge variant="default" className="flex items-center gap-1 w-fit">
                   <Tag className="w-3 h-3" />
                   $60 Discount Applied
                 </Badge>
-              </div>
-            )}
+              </div>}
 
             {/* Black Friday Badge */}
             <div className="mb-4">
@@ -454,16 +359,14 @@ export default function BookingOffer() {
                 Lock in your clean home routine
               </p>
               
-              {bookingData.promoCode === 'DEEPCLEAN60' && (
-                <div className="text-sm text-muted-foreground line-through mb-1">
-                  Regular: ${Math.round((ninetyDayPrice * 0.25) * 0.25)} today
-                </div>
-              )}
+              {bookingData.promoCode === 'DEEPCLEAN60' && <div className="text-sm text-muted-foreground line-through mb-1">
+                  Regular: ${Math.round(ninetyDayPrice * 0.25 * 0.25)} today
+                </div>}
               
               {/* Deposit Amount */}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)}
+                  ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25)}
                 </span>
                 <span className="text-lg text-muted-foreground">today</span>
               </div>
@@ -478,7 +381,7 @@ export default function BookingOffer() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) - (((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)) / 3)}
+                    ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0) - (ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25) / 3)}
                   </span>
                   <span className="text-sm text-muted-foreground">/month</span>
                 </div>
@@ -507,23 +410,14 @@ export default function BookingOffer() {
             </ul>
 
             <div className="space-y-2">
-              <Button
-                className="w-full"
-                variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'}
-                size="lg"
-              >
-                Get Started - ${Math.round(((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25) * 0.25)} Today
+              <Button className="w-full" variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'} size="lg">
+                Get Started - ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25)} Today
               </Button>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDetailsServiceType('90day');
-                  setShowDetailsModal(true);
-                }}
-                variant="ghost"
-                size="sm"
-                className="w-full"
-              >
+              <Button onClick={e => {
+              e.stopPropagation();
+              setDetailsServiceType('90day');
+              setShowDetailsModal(true);
+            }} variant="ghost" size="sm" className="w-full">
                 <Info className="h-4 w-4 mr-2" />
                 What's Included?
               </Button>
@@ -541,22 +435,9 @@ export default function BookingOffer() {
       </div>
 
       {/* Bundle & Save Upsell Modal */}
-      <BundleSaveModal
-        open={showUpsellModal}
-        onClose={() => setShowUpsellModal(false)}
-        onUpgrade={handleUpgradeToBundle}
-        onContinue={handleContinueStandard}
-        standardPrice={maintenancePrice}
-        bundlePrice={ninetyDayPrice - (bookingData.promoDiscount || 0)}
-        savings={Math.round((maintenancePrice * 4) - (ninetyDayPrice - (bookingData.promoDiscount || 0)))}
-      />
+      <BundleSaveModal open={showUpsellModal} onClose={() => setShowUpsellModal(false)} onUpgrade={handleUpgradeToBundle} onContinue={handleContinueStandard} standardPrice={maintenancePrice} bundlePrice={ninetyDayPrice - (bookingData.promoDiscount || 0)} savings={Math.round(maintenancePrice * 4 - (ninetyDayPrice - (bookingData.promoDiscount || 0)))} />
 
       {/* Service Details Modal */}
-      <ServiceDetailsModal
-        open={showDetailsModal}
-        onOpenChange={setShowDetailsModal}
-        serviceType={detailsServiceType}
-      />
-    </div>
-  );
+      <ServiceDetailsModal open={showDetailsModal} onOpenChange={setShowDetailsModal} serviceType={detailsServiceType} />
+    </div>;
 }
