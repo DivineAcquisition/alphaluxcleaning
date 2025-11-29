@@ -428,8 +428,9 @@ export default function BookingOffer() {
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              90-Day Reset & Maintain Plan
+              🖤 BLACK FRIDAY: 90-Day Home Reset
             </h2>
+            <p className="text-sm font-semibold text-primary mb-1">Save $100 – Limited Time</p>
 
             {bookingData.promoCode === 'DEEPCLEAN60' && (
               <div className="mb-4">
@@ -439,6 +440,14 @@ export default function BookingOffer() {
                 </Badge>
               </div>
             )}
+
+            {/* Black Friday Badge */}
+            <div className="mb-4">
+              <Badge variant="default" className="flex items-center gap-1 w-fit bg-black text-white hover:bg-black/90">
+                <Tag className="w-3 h-3" />
+                $100 OFF with code CYBER90
+              </Badge>
+            </div>
 
             <div className="mb-6">
               <p className="text-sm text-muted-foreground mb-3">
