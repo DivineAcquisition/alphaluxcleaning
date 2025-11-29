@@ -84,15 +84,15 @@ export default function BookingZip() {
           <Card className="mb-6 border-success/30 bg-success/5 shadow-lg">
             <div className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-                <Badge className="bg-success text-success-foreground text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
-                  HOLIDAY SPECIAL
+                <Badge className="bg-black text-white text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
+                  🖤 BLACK FRIDAY
                 </Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Book with Just 25% Down Today! 
+                    Save $100 on Your 90-Day Home Reset!
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Get your home deep cleaned with flexible payment options
+                    Use code CYBER90 • Ends December 2nd
                   </p>
                 </div>
               </div>
@@ -106,13 +106,13 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              Book Your Deep Clean with Just 25% Down
+              🖤 BLACK FRIDAY: Save $100 on Your 90-Day Home Reset
               <span className="block text-primary mt-2">
-                Pay the Rest Later—Flexible & Easy!  
+                Use code CYBER90 at checkout • Limited Time Only
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your ZIP code to secure your holiday cleaning slot
+              Enter your ZIP code to get started
             </p>
           </div>
           
