@@ -84,9 +84,7 @@ export default function BookingZip() {
           <Card className="mb-6 border-success/30 bg-success/5 shadow-lg">
             <div className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-                <Badge className="bg-black text-white text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">
-                  🖤 BLACK FRIDAY
-                </Badge>
+                <Badge className="bg-black text-white text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">BLACK FRIDAY</Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
                     Save $100 on Your 90-Day Home Reset!
@@ -105,9 +103,8 @@ export default function BookingZip() {
           </div>
           
           <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              🖤 BLACK FRIDAY: Save $100 on Your 90-Day Home Reset
-              <span className="block text-primary mt-2">
+            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">BLACK FRIDAY: Save $100 On Your 90-Day Home Reset
+Use Code CYBER90 At Checkout<span className="block text-primary mt-2">
                 Use code CYBER90 at checkout • Limited Time Only
               </span>
             </h1>
