@@ -16,6 +16,9 @@ export const SMS_TEMPLATES: Record<string, (vars: TemplateVariables) => string> 
   
   referral_welcome_credit: (vars: TemplateVariables) =>
     `Welcome ${vars.first_name}! ${vars.referrer_name} referred you. Enjoy ${vars.amount} credit on your account! - AlphaLuxClean`,
+  
+  black_friday_cyber90: (vars: TemplateVariables) =>
+    `🖤 BLACK FRIDAY: Save $100 on your 90-Day Home Reset! Use code CYBER90 at checkout. Ends Dec 2nd. Book now: book.alphaluxclean.com?promo=CYBER90&source=sms - AlphaLuxClean`,
 };
 
 /**
