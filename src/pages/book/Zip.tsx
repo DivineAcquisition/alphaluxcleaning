@@ -81,16 +81,16 @@ export default function BookingZip() {
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="w-full max-w-2xl">
           {/* Promotional Banner */}
-          <Card className="mb-6 border-success/30 bg-success/5 shadow-lg">
+          <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
             <div className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-                <Badge className="bg-black text-white text-xl md:text-2xl px-4 md:px-6 py-2 md:py-3 whitespace-nowrap">BLACK FRIDAY</Badge>
+                <Badge className="bg-primary text-primary-foreground text-base md:text-lg px-4 md:px-5 py-2 whitespace-nowrap">New Clients Only</Badge>
                 <div>
                   <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Save $100 on Your 90-Day Home Reset!
+                    Get Your First Deep Clean at $199 (Up to 3 Bed / 2 Bath)
                   </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Use code CYBER90 • Ends December 2nd
+                    Limited spots this month • No contracts, no hidden fees
                   </p>
                 </div>
               </div>
@@ -103,13 +103,14 @@ export default function BookingZip() {
           </div>
           
           <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">BLACK FRIDAY: Save $100 On Your 90-Day Home Reset
-Use Code CYBER90 At Checkout<span className="block text-primary mt-2">
-                Use code CYBER90 at checkout • Limited Time Only
+            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+              Come Home to a Spotless House
+              <span className="block text-primary mt-2">
+                Without Sacrificing Your Weekends
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your ZIP code to get started
+              Enter your ZIP code to check availability in your area
             </p>
           </div>
           
