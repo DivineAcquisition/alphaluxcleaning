@@ -173,12 +173,29 @@ export default function BookingOffer() {
       <BookingProgressBar currentStep={3} totalSteps={6} />
 
       <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+        {/* Promotional Banner */}
+        <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
+          <div className="p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
+              <Badge className="bg-primary text-primary-foreground text-base md:text-lg px-4 md:px-5 py-2 whitespace-nowrap">New Clients Only</Badge>
+              <div>
+                <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
+                  Get Your First Deep Clean at $199 (Up to 3 Bed / 2 Bath)
+                </h2>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Limited spots this month • No contracts, no hidden fees
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Choose Your Plan
+            Your Home Deserves to Feel Guest-Ready, Every Day
           </h1>
           <p className="text-lg text-muted-foreground">
-            Start with a deep clean. Continue with regular maintenance (optional).
+            Select the plan that fits your lifestyle. No contracts, no hidden fees.
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -256,10 +273,10 @@ export default function BookingOffer() {
           {/* Tester Deep Clean - Only for homes ≤1,500 sq ft */}
           {isTesterEligible ? <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'tester_deep_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('tester_deep_clean', 'Home Reset Deep Clean (Tester)', testerPrice - (bookingData.promoDiscount || 0), 1, false)}>
               <div className="mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                  <Sparkles className="h-3 w-3" />
-                  Best for first-time customers
-                </span>
+                <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                  <Sparkles className="h-3 w-3 mr-1.5" />
+                  $199 New Client Special
+                </Badge>
               </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -336,8 +353,8 @@ export default function BookingOffer() {
               </span>
             </div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">BLACK FRIDAY: 90-Day Home Reset</h2>
-            <p className="text-sm font-semibold text-primary mb-1">Save $100 – Limited Time</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">90-Day Reset & Maintain Plan</h2>
+            <p className="text-sm text-muted-foreground mb-4">Lock in your clean home routine</p>
 
             {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
                 <Badge variant="default" className="flex items-center gap-1 w-fit">
@@ -345,14 +362,6 @@ export default function BookingOffer() {
                   $60 Discount Applied
                 </Badge>
               </div>}
-
-            {/* Black Friday Badge */}
-            <div className="mb-4">
-              <Badge variant="default" className="flex items-center gap-1 w-fit bg-black text-white hover:bg-black/90">
-                <Tag className="w-3 h-3" />
-                $100 OFF with code CYBER90
-              </Badge>
-            </div>
 
             <div className="mb-6">
               <p className="text-sm text-muted-foreground mb-3">
