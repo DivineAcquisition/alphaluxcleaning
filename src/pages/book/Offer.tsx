@@ -32,9 +32,18 @@ export default function BookingOffer() {
   const isTesterEligible = selectedHomeSize && selectedHomeSize.maxSqft <= 1499;
 
   // Use the new pre-calculated pricing fields
-  const testerPrice = selectedHomeSize?.deepPrice || 250;
+  const baseDeepPrice = selectedHomeSize?.deepPrice || 250;
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
   const ninetyDayPrice = selectedHomeSize?.ninetyDayPrice || 699;
+  
+  // NEW CLIENT SPECIAL: $199 for homes ≤1,499 sq ft, $51 discount for larger homes
+  const NEW_CLIENT_PROMO_PRICE = 199; // Base promotional price for small homes
+  const NEW_CLIENT_PROMO_DISCOUNT = 51; // Discount amount ($250 - $199)
+  
+  // Apply promotional pricing for tester deep clean
+  const testerPrice = isTesterEligible 
+    ? NEW_CLIENT_PROMO_PRICE  // Flat $199 for small homes (≤1,499 sq ft)
+    : baseDeepPrice - NEW_CLIENT_PROMO_DISCOUNT; // $51 off for larger homes
 
   // Calculate per-visit price for display
   const perVisitPrice = Math.round(ninetyDayPrice / 4);
@@ -202,7 +211,7 @@ export default function BookingOffer() {
           </div>
         </div>
 
-        <div className={`grid gap-6 md:gap-8 ${isTesterEligible ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
           {/* Standard Clean - Always available */}
           <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'standard_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('standard_clean', 'One-Time Standard Clean', maintenancePrice, 1, false)}>
             <div className="mb-4">
@@ -270,19 +279,19 @@ export default function BookingOffer() {
             </div>
           </Card>
 
-          {/* Tester Deep Clean - Only for homes ≤1,500 sq ft */}
-          {isTesterEligible ? <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'tester_deep_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('tester_deep_clean', 'Home Reset Deep Clean (Tester)', testerPrice - (bookingData.promoDiscount || 0), 1, false)}>
+          {/* Deep Clean - Always available with NEW CLIENT SPECIAL pricing */}
+          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'tester_deep_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('tester_deep_clean', 'Home Reset Deep Clean', testerPrice - (bookingData.promoDiscount || 0), 1, false)}>
               <div className="mb-4">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1">
                   <Sparkles className="h-3 w-3 mr-1.5" />
-                  $199 New Client Special
+                  {isTesterEligible ? '$199 New Client Special' : `$${NEW_CLIENT_PROMO_DISCOUNT} Off – New Clients`}
                 </Badge>
               </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
               Home Reset Deep Clean
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">(Tester)</p>
+            <p className="text-sm text-muted-foreground mb-4">Premium 40-point checklist</p>
 
             {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
                 <Badge variant="default" className="flex items-center gap-1 w-fit">
@@ -295,8 +304,12 @@ export default function BookingOffer() {
               <p className="text-sm text-muted-foreground mb-3">
                 Try our service risk-free
               </p>
+              {/* Show original price struck through to emphasize savings */}
+              <div className="text-sm text-muted-foreground line-through mb-1">
+                Regular: ${baseDeepPrice}
+              </div>
               {bookingData.promoCode === 'DEEPCLEAN60' && <div className="text-sm text-muted-foreground line-through mb-1">
-                  Regular: ${Math.round(testerPrice * 0.25)} today
+                  With promo: ${testerPrice}
                 </div>}
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
@@ -305,7 +318,7 @@ export default function BookingOffer() {
                 <span className="text-lg text-muted-foreground">today</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                for 1 deep clean visit
+                Total: ${testerPrice - (bookingData.promoDiscount || 0)} for 1 deep clean visit
               </p>
             </div>
 
@@ -337,7 +350,7 @@ export default function BookingOffer() {
                   What's Included?
                 </Button>
               </div>
-            </Card> : null}
+            </Card>
 
           {/* 90-Day Reset & Maintain Plan */}
           <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === '90_day_plan' ? 'border-primary shadow-lg' : 'border-primary/30 hover:border-primary'}`} onClick={() => handleSelectOffer('90_day_plan', '90-Day Reset & Maintain Plan', ninetyDayPrice - (bookingData.promoDiscount || 0), 4, true)}>
