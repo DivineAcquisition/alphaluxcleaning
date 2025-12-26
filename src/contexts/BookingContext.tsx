@@ -27,7 +27,7 @@ interface BookingData {
   homeType: 'house' | 'apartment' | 'condo';
   
   // Step 3: Offer Selection
-  offerType?: 'tester_deep_clean' | '90_day_plan' | 'standard_clean';
+  offerType?: 'tester_deep_clean' | '90_day_plan' | 'standard_clean' | 'deep_clean' | 'recurring';
   offerName?: string;
   basePrice?: number;
   visitCount?: number;
