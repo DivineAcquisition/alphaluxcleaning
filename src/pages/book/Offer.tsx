@@ -1,81 +1,54 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { Check, Sparkles, TrendingUp, Tag, Info } from 'lucide-react';
+import { Check, Sparkles, CalendarCheck, Info, Gift } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
-import { BundleSaveModal } from '@/components/booking/BundleSaveModal';
 import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
-import { toast } from 'sonner';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+
+// NEW YEAR SPECIAL PRICING
+const NEW_YEAR_PROMO = {
+  deepCleanDiscount: 50, // $50 off first deep clean
+  recurringDiscount: 0.15, // 15% off recurring service
+  expirationDate: '2025-01-07',
+};
+
 export default function BookingOffer() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const {
-    bookingData,
-    updateBookingData
-  } = useBooking();
+  const { bookingData, updateBookingData } = useBooking();
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
-  const [showUpsellModal, setShowUpsellModal] = useState(false);
-  const [promoApplied, setPromoApplied] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('standard');
+  const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('tester');
 
   // Find the selected home size range
   const selectedHomeSize = HOME_SIZE_RANGES.find(range => range.id === bookingData.homeSizeId);
 
-  // Check if Tester is eligible (only for homes ≤1,499 sq ft)
-  const isTesterEligible = selectedHomeSize && selectedHomeSize.maxSqft <= 1499;
-
   // Use the new pre-calculated pricing fields
   const baseDeepPrice = selectedHomeSize?.deepPrice || 250;
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
-  const ninetyDayPrice = selectedHomeSize?.ninetyDayPrice || 699;
   
-  // NEW CLIENT SPECIAL: $199 for homes ≤1,499 sq ft, $51 discount for larger homes
-  const NEW_CLIENT_PROMO_PRICE = 199; // Base promotional price for small homes
-  const NEW_CLIENT_PROMO_DISCOUNT = 51; // Discount amount ($250 - $199)
+  // NEW YEAR SPECIAL: $50 off deep clean
+  const deepCleanPrice = baseDeepPrice - NEW_YEAR_PROMO.deepCleanDiscount;
   
-  // Apply promotional pricing for tester deep clean
-  const testerPrice = isTesterEligible 
-    ? NEW_CLIENT_PROMO_PRICE  // Flat $199 for small homes (≤1,499 sq ft)
-    : baseDeepPrice - NEW_CLIENT_PROMO_DISCOUNT; // $51 off for larger homes
+  // NEW YEAR SPECIAL: 15% off recurring maintenance
+  const recurringPrice = Math.round(maintenancePrice * (1 - NEW_YEAR_PROMO.recurringDiscount));
+  const recurringSavings = maintenancePrice - recurringPrice;
 
-  // Calculate per-visit price for display
-  const perVisitPrice = Math.round(ninetyDayPrice / 4);
-
-  // Calculate savings vs. individual booking
-  const individualTotal = testerPrice + maintenancePrice * 3;
-  const savings = individualTotal - ninetyDayPrice;
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.homeSizeId) {
       navigate('/book');
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
 
-  // Check for promo code in URL params
-  useEffect(() => {
-    const promoCode = searchParams.get('promo');
-    const lockService = searchParams.get('lock_service');
-    if (promoCode === 'DEEPCLEAN60' && !promoApplied) {
-      updateBookingData({
-        promoCode: 'DEEPCLEAN60',
-        promoDiscount: 60
-      });
-      setPromoApplied(true);
-      toast.success('🎉 $60 Deep Clean Discount Applied!', {
-        description: 'Your discount will be shown at checkout'
-      });
-    }
-  }, [searchParams, promoApplied, updateBookingData]);
-
   // Handle custom quote requirement for large homes
   if (selectedHomeSize?.requiresEstimate) {
-    return <div className="min-h-screen bg-background">
+    return (
+      <div className="min-h-screen bg-background">
         <BookingProgressBar currentStep={3} totalSteps={6} />
         
         <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
@@ -89,12 +62,12 @@ export default function BookingOffer() {
               <h3 className="font-bold text-xl mb-4 text-center">Estimated Starting Prices:</h3>
               <ul className="space-y-2">
                 <li className="flex justify-between">
-                  <span>• Deep Clean (Tester):</span>
+                  <span>• Deep Clean:</span>
                   <span className="font-semibold">Starting at ${selectedHomeSize.deepPrice}</span>
                 </li>
                 <li className="flex justify-between">
-                  <span>• Custom 90-Day Plan:</span>
-                  <span className="font-semibold">Starting at ${selectedHomeSize.ninetyDayPrice}</span>
+                  <span>• Recurring Maintenance:</span>
+                  <span className="font-semibold">Starting at ${selectedHomeSize.maintenancePrice}/visit</span>
                 </li>
               </ul>
             </div>
@@ -113,25 +86,22 @@ export default function BookingOffer() {
             </div>
           </Card>
         </div>
-      </div>;
+      </div>
+    );
   }
-  const handleSelectOffer = (offerType: 'tester_deep_clean' | '90_day_plan' | 'standard_clean', offerName: string, basePrice: number, visitCount: number, isRecurring: boolean) => {
+
+  const handleSelectOffer = (
+    offerType: 'deep_clean' | 'recurring',
+    offerName: string,
+    basePrice: number,
+    visitCount: number,
+    isRecurring: boolean
+  ) => {
     setSelectedOffer(offerType);
 
-    // Show upsell modal for Standard Clean selection
-    if (offerType === 'standard_clean') {
-      setShowUpsellModal(true);
-      return;
-    }
-    let serviceType: 'regular' | 'deep' | 'move_in_out' = 'regular';
-    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = 'one_time';
-    if (offerType === 'tester_deep_clean') {
-      serviceType = 'deep';
-      frequency = 'one_time';
-    } else if (offerType === '90_day_plan') {
-      serviceType = 'deep';
-      frequency = 'weekly';
-    }
+    let serviceType: 'regular' | 'deep' | 'move_in_out' = offerType === 'deep_clean' ? 'deep' : 'regular';
+    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = offerType === 'deep_clean' ? 'one_time' : 'bi_weekly';
+
     updateBookingData({
       offerType,
       offerName,
@@ -139,7 +109,9 @@ export default function BookingOffer() {
       visitCount,
       isRecurring,
       serviceType,
-      frequency
+      frequency,
+      promoCode: 'NEWYEAR2025',
+      promoDiscount: offerType === 'deep_clean' ? NEW_YEAR_PROMO.deepCleanDiscount : recurringSavings
     });
 
     // Navigate after brief delay for visual feedback
@@ -147,100 +119,99 @@ export default function BookingOffer() {
       navigate('/book/checkout');
     }, 200);
   };
-  const handleUpgradeToBundle = () => {
-    setShowUpsellModal(false);
-    setSelectedOffer('90_day_plan');
-    updateBookingData({
-      offerType: '90_day_plan',
-      offerName: '90-Day Reset & Maintain Plan',
-      basePrice: ninetyDayPrice - (bookingData.promoDiscount || 0),
-      visitCount: 4,
-      isRecurring: true,
-      serviceType: 'deep',
-      frequency: 'weekly'
-    });
-    setTimeout(() => {
-      navigate('/book/checkout');
-    }, 200);
-  };
-  const handleContinueStandard = () => {
-    setShowUpsellModal(false);
-    updateBookingData({
-      offerType: 'standard_clean',
-      offerName: 'One-Time Standard Clean',
-      basePrice: maintenancePrice,
-      visitCount: 1,
-      isRecurring: false,
-      serviceType: 'regular',
-      frequency: 'one_time'
-    });
-    setTimeout(() => {
-      navigate('/book/checkout');
-    }, 200);
-  };
-  return <div className="min-h-screen bg-background">
-      <BookingProgressBar currentStep={3} totalSteps={6} />
 
-      <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
-        {/* Promotional Banner */}
-        <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
-          <div className="p-4 md:p-6">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-              <Badge className="bg-primary text-primary-foreground text-base md:text-lg px-4 md:px-5 py-2 whitespace-nowrap">New Clients Only</Badge>
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sticky New Year Special Banner */}
+      <div className="sticky top-0 z-50 w-full bg-[hsl(220,50%,15%)] border-b-2 border-[hsl(45,93%,47%)]">
+        <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-center md:text-left">
+              <Gift className="h-6 w-6 text-[hsl(45,93%,55%)] shrink-0 hidden md:block" />
               <div>
-                <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                  Get Your First Deep Clean at $199 (Up to 3 Bed / 2 Bath)
-                </h2>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Limited spots this month • No contracts, no hidden fees
+                <p className="text-[hsl(45,93%,55%)] font-bold text-sm md:text-base">
+                  New Year Special: $50 Off Your First Clean + 15% Off Recurring Service
+                </p>
+                <p className="text-[hsl(45,93%,75%)] text-xs md:text-sm">
+                  Book by Jan 7th to claim your discount
                 </p>
               </div>
             </div>
+            <Button 
+              onClick={() => document.getElementById('offers-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-[hsl(45,93%,47%)] hover:bg-[hsl(45,93%,40%)] text-[hsl(220,50%,15%)] font-bold px-6 whitespace-nowrap"
+            >
+              Claim My Discount
+            </Button>
           </div>
-        </Card>
+        </div>
+      </div>
 
+      <BookingProgressBar currentStep={3} totalSteps={6} />
+
+      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12" id="offers-section">
         <div className="text-center mb-8 md:mb-12">
+          <Badge className="mb-4 bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-4 py-1.5 text-sm font-bold">
+            <Sparkles className="h-4 w-4 mr-2" />
+            New Year Special — Ends Jan 7th
+          </Badge>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Your Home Deserves to Feel Guest-Ready, Every Day
+            Start 2025 With a Spotless Home
           </h1>
           <p className="text-lg text-muted-foreground">
-            Select the plan that fits your lifestyle. No contracts, no hidden fees.
+            Choose your service and lock in your New Year savings.
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
           </div>
         </div>
 
-        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
-          {/* Standard Clean - Always available */}
-          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'standard_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('standard_clean', 'One-Time Standard Clean', maintenancePrice, 1, false)}>
+        <div className="grid gap-6 md:gap-8 md:grid-cols-2">
+          {/* Deep Clean - One Time with $50 Off */}
+          <Card 
+            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
+              selectedOffer === 'deep_clean' 
+                ? 'border-primary shadow-lg' 
+                : 'border-border hover:border-primary/50'
+            }`} 
+            onClick={() => handleSelectOffer(
+              'deep_clean', 
+              'Deep Clean — New Year Special', 
+              deepCleanPrice, 
+              1, 
+              false
+            )}
+          >
             <div className="mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                Simple & Straightforward
-              </span>
+              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-3 py-1 font-bold">
+                <Gift className="h-3 w-3 mr-1.5" />
+                $50 Off — New Year Special
+              </Badge>
             </div>
 
             <h2 className="text-2xl font-bold text-foreground mb-2">
-              Standard Clean
+              Deep Clean
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">Keep your home guest-ready, always</p>
+            <p className="text-sm text-muted-foreground mb-4">One-time reset for your home</p>
 
             <div className="mb-6">
+              <div className="text-sm text-muted-foreground line-through mb-1">
+                Regular: ${baseDeepPrice}
+              </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round(maintenancePrice * 0.25)}
+                  ${deepCleanPrice}
                 </span>
-                <span className="text-lg text-muted-foreground">today</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                for 1 standard clean visit
+                Pay only ${Math.round(deepCleanPrice * 0.25)} today (25% deposit)
               </p>
             </div>
 
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Save 3+ hours every weekend</span>
+                <span className="text-foreground">40-point Deep Clean checklist</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -252,178 +223,100 @@ export default function BookingOffer() {
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Eco-friendly, pet-safe products</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Insured & bonded crews</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-foreground">48-hour re-clean guarantee</span>
               </li>
             </ul>
 
             <div className="space-y-2">
-              <Button className="w-full" size="lg" variant={selectedOffer === 'standard_clean' ? 'default' : 'outline'}>
-                Get Started - ${Math.round(maintenancePrice * 0.25)} Today
+              <Button 
+                className="w-full" 
+                size="lg" 
+                variant={selectedOffer === 'deep_clean' ? 'default' : 'outline'}
+              >
+                Get Started — ${Math.round(deepCleanPrice * 0.25)} Today
               </Button>
-              <Button onClick={e => {
-              e.stopPropagation();
-              setDetailsServiceType('standard');
-              setShowDetailsModal(true);
-            }} variant="ghost" size="sm" className="w-full">
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDetailsServiceType('tester');
+                  setShowDetailsModal(true);
+                }} 
+                variant="ghost" 
+                size="sm" 
+                className="w-full"
+              >
                 <Info className="h-4 w-4 mr-2" />
                 What's Included?
               </Button>
             </div>
           </Card>
 
-          {/* Deep Clean - Always available with NEW CLIENT SPECIAL pricing */}
-          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === 'tester_deep_clean' ? 'border-primary shadow-lg' : 'border-border hover:border-primary/50'}`} onClick={() => handleSelectOffer('tester_deep_clean', 'Home Reset Deep Clean', testerPrice - (bookingData.promoDiscount || 0), 1, false)}>
-              <div className="mb-4">
-                <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                  <Sparkles className="h-3 w-3 mr-1.5" />
-                  {isTesterEligible ? '$199 New Client Special' : `$${NEW_CLIENT_PROMO_DISCOUNT} Off – New Clients`}
-                </Badge>
-              </div>
-
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Home Reset Deep Clean
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">Premium 40-point checklist</p>
-
-            {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
-                <Badge variant="default" className="flex items-center gap-1 w-fit">
-                  <Tag className="w-3 h-3" />
-                  $60 Discount Applied
-                </Badge>
-              </div>}
-
-            <div className="mb-6">
-              <p className="text-sm text-muted-foreground mb-3">
-                Try our service risk-free
-              </p>
-              {/* Show original price struck through to emphasize savings */}
-              <div className="text-sm text-muted-foreground line-through mb-1">
-                Regular: ${baseDeepPrice}
-              </div>
-              {bookingData.promoCode === 'DEEPCLEAN60' && <div className="text-sm text-muted-foreground line-through mb-1">
-                  With promo: ${testerPrice}
-                </div>}
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)}
-                </span>
-                <span className="text-lg text-muted-foreground">today</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Total: ${testerPrice - (bookingData.promoDiscount || 0)} for 1 deep clean visit
-              </p>
-            </div>
-
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-foreground">40-point Deep Clean checklist</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-foreground">All supplies & equipment included</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <span className="text-foreground">48-hour re-clean guarantee</span>
-                </li>
-              </ul>
-
-              <div className="space-y-2">
-                <Button className="w-full" size="lg" variant={selectedOffer === 'tester_deep_clean' ? 'default' : 'outline'}>
-                  Get Started - ${Math.round((testerPrice - (bookingData.promoDiscount || 0)) * 0.25)} Today
-                </Button>
-                <Button onClick={e => {
-              e.stopPropagation();
-              setDetailsServiceType('tester');
-              setShowDetailsModal(true);
-            }} variant="ghost" size="sm" className="w-full">
-                  <Info className="h-4 w-4 mr-2" />
-                  What's Included?
-                </Button>
-              </div>
-            </Card>
-
-          {/* 90-Day Reset & Maintain Plan */}
-          <Card className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${selectedOffer === '90_day_plan' ? 'border-primary shadow-lg' : 'border-primary/30 hover:border-primary'}`} onClick={() => handleSelectOffer('90_day_plan', '90-Day Reset & Maintain Plan', ninetyDayPrice - (bookingData.promoDiscount || 0), 4, true)}>
+          {/* Recurring Maintenance - 15% Off */}
+          <Card 
+            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
+              selectedOffer === 'recurring' 
+                ? 'border-primary shadow-lg' 
+                : 'border-primary/30 hover:border-primary'
+            }`} 
+            onClick={() => handleSelectOffer(
+              'recurring', 
+              'Recurring Maintenance — 15% Off', 
+              recurringPrice, 
+              1, 
+              true
+            )}
+          >
             {/* Popular badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
               Most Popular
             </div>
 
             <div className="mb-4 mt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                <TrendingUp className="h-3 w-3" />
-                Best Value
-              </span>
+              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-3 py-1 font-bold">
+                <CalendarCheck className="h-3 w-3 mr-1.5" />
+                15% Off — Recurring Service
+              </Badge>
             </div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">90-Day Reset & Maintain Plan</h2>
-            <p className="text-sm text-muted-foreground mb-4">Lock in your clean home routine</p>
-
-            {bookingData.promoCode === 'DEEPCLEAN60' && <div className="mb-4">
-                <Badge variant="default" className="flex items-center gap-1 w-fit">
-                  <Tag className="w-3 h-3" />
-                  $60 Discount Applied
-                </Badge>
-              </div>}
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Recurring Maintenance
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">Keep your home guest-ready, always</p>
 
             <div className="mb-6">
-              <p className="text-sm text-muted-foreground mb-3">
-                Lock in your clean home routine
-              </p>
-              
-              {bookingData.promoCode === 'DEEPCLEAN60' && <div className="text-sm text-muted-foreground line-through mb-1">
-                  Regular: ${Math.round(ninetyDayPrice * 0.25 * 0.25)} today
-                </div>}
-              
-              {/* Deposit Amount */}
+              <div className="text-sm text-muted-foreground line-through mb-1">
+                Regular: ${maintenancePrice}/visit
+              </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25)}
+                  ${recurringPrice}
                 </span>
-                <span className="text-lg text-muted-foreground">today</span>
+                <span className="text-lg text-muted-foreground">/visit</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Starter deposit to secure your plan
+              <p className="text-sm text-[hsl(45,93%,40%)] font-medium mt-2">
+                You save ${recurringSavings} every visit!
               </p>
-              
-              {/* Monthly Payment */}
-              <div className="mt-4 p-3 bg-secondary/50 rounded-lg border border-border">
-                <p className="text-sm text-muted-foreground mb-1">
-                  After first service:
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-foreground">
-                    ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0) - (ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25) / 3)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/month</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-muted-foreground mt-3">
-                for 4 visits over 90 days
+              <p className="text-sm text-muted-foreground mt-1">
+                Pay only ${Math.round(recurringPrice * 0.25)} today (25% deposit)
               </p>
             </div>
 
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">
-                  1 Deep Clean + 3 Maintenance Visits
-                </span>
+                <span className="text-foreground">Bi-weekly or monthly scheduling</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Priority scheduling & member support</span>
+                <span className="text-foreground">Same trusted cleaning team</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">Priority scheduling & member perks</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground">Cancel or pause anytime</span>
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -432,14 +325,23 @@ export default function BookingOffer() {
             </ul>
 
             <div className="space-y-2">
-              <Button className="w-full" variant={selectedOffer === '90_day_plan' ? 'default' : 'outline'} size="lg">
-                Get Started - ${Math.round((ninetyDayPrice - (bookingData.promoDiscount || 0)) * 0.25 * 0.25)} Today
+              <Button 
+                className="w-full" 
+                size="lg"
+                variant={selectedOffer === 'recurring' ? 'default' : 'outline'}
+              >
+                Get Started — ${Math.round(recurringPrice * 0.25)} Today
               </Button>
-              <Button onClick={e => {
-              e.stopPropagation();
-              setDetailsServiceType('90day');
-              setShowDetailsModal(true);
-            }} variant="ghost" size="sm" className="w-full">
+              <Button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDetailsServiceType('standard');
+                  setShowDetailsModal(true);
+                }} 
+                variant="ghost" 
+                size="sm" 
+                className="w-full"
+              >
                 <Info className="h-4 w-4 mr-2" />
                 What's Included?
               </Button>
@@ -456,10 +358,12 @@ export default function BookingOffer() {
         <CleaningShowcaseCarousel />
       </div>
 
-      {/* Bundle & Save Upsell Modal */}
-      <BundleSaveModal open={showUpsellModal} onClose={() => setShowUpsellModal(false)} onUpgrade={handleUpgradeToBundle} onContinue={handleContinueStandard} standardPrice={maintenancePrice} bundlePrice={ninetyDayPrice - (bookingData.promoDiscount || 0)} savings={Math.round(maintenancePrice * 4 - (ninetyDayPrice - (bookingData.promoDiscount || 0)))} />
-
       {/* Service Details Modal */}
-      <ServiceDetailsModal open={showDetailsModal} onOpenChange={setShowDetailsModal} serviceType={detailsServiceType} />
-    </div>;
+      <ServiceDetailsModal 
+        open={showDetailsModal} 
+        onOpenChange={setShowDetailsModal} 
+        serviceType={detailsServiceType} 
+      />
+    </div>
+  );
 }
