@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Gift } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
@@ -77,23 +77,6 @@ export default function BookingZip() {
     }
   };
   return <div className="min-h-screen flex flex-col bg-background">
-      {/* Sticky New Year Special Banner */}
-      <div className="sticky top-0 z-50 w-full bg-[hsl(220,50%,15%)] border-b-2 border-[hsl(45,93%,47%)]">
-        <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center">
-            <Gift className="h-5 w-5 text-[hsl(45,93%,55%)] shrink-0 hidden md:block" />
-            <div>
-              <p className="text-[hsl(45,93%,55%)] font-bold text-sm md:text-base">
-                New Year Special: $50 Off Your First Clean + 15% Off Recurring Service
-              </p>
-              <p className="text-[hsl(45,93%,75%)] text-xs md:text-sm">
-                Book by Jan 7th to claim your discount
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <BookingProgressBar currentStep={1} totalSteps={6} />
       
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
@@ -105,13 +88,13 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              Come Home to a Spotless House
+              New Year Special: $50 Off Your First Clean
               <span className="block text-primary mt-2">
-                Without Sacrificing Your Weekends
+                + 15% Off Recurring Service
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your ZIP code to check availability in your area
+              Book by Jan 7th — Enter your ZIP to get started
             </p>
           </div>
           
