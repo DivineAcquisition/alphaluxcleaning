@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Gift } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+
 export default function BookingZip() {
   const navigate = useNavigate();
   const {
@@ -76,27 +77,27 @@ export default function BookingZip() {
     }
   };
   return <div className="min-h-screen flex flex-col bg-background">
+      {/* Sticky New Year Special Banner */}
+      <div className="sticky top-0 z-50 w-full bg-[hsl(220,50%,15%)] border-b-2 border-[hsl(45,93%,47%)]">
+        <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center">
+            <Gift className="h-5 w-5 text-[hsl(45,93%,55%)] shrink-0 hidden md:block" />
+            <div>
+              <p className="text-[hsl(45,93%,55%)] font-bold text-sm md:text-base">
+                New Year Special: $50 Off Your First Clean + 15% Off Recurring Service
+              </p>
+              <p className="text-[hsl(45,93%,75%)] text-xs md:text-sm">
+                Book by Jan 7th to claim your discount
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <BookingProgressBar currentStep={1} totalSteps={6} />
       
       <main className="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
         <div className="w-full max-w-2xl">
-          {/* Promotional Banner */}
-          <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
-            <div className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-                <Badge className="bg-primary text-primary-foreground text-base md:text-lg px-4 md:px-5 py-2 whitespace-nowrap">New Clients Only</Badge>
-                <div>
-                  <h2 className="font-bold text-lg md:text-xl text-foreground mb-1">
-                    Get Your First Deep Clean at $199 (Up to 3 Bed / 2 Bath)
-                  </h2>
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    Limited spots this month • No contracts, no hidden fees
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
           {/* Google Guaranteed Badge */}
           <div className="flex justify-center mb-6">
             <GoogleGuaranteedBadge variant="standard" />
