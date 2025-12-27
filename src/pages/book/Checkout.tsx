@@ -320,17 +320,19 @@ export default function BookingCheckout() {
       <BookingProgressBar currentStep={4} totalSteps={6} />
       
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Promotional Banner */}
-        <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
+        {/* New Year Special Banner */}
+        <Card className="mb-6 border-[hsl(45,93%,47%)] bg-[hsl(220,50%,15%)] shadow-lg">
           <div className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-              <Badge className="bg-primary text-primary-foreground text-sm md:text-base px-3 md:px-4 py-1.5 whitespace-nowrap">New Clients Only</Badge>
+              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] text-sm md:text-base px-3 md:px-4 py-1.5 whitespace-nowrap font-bold">
+                🎉 New Year Special
+              </Badge>
               <div>
-                <h2 className="font-bold text-base md:text-lg text-foreground mb-1">
-                  Limited spots this month • No contracts, no hidden fees
+                <h2 className="font-bold text-base md:text-lg text-[hsl(45,93%,55%)] mb-1">
+                  $50 Off Deep Clean + 15% Off Recurring Service
                 </h2>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  48-Hour Re-Clean Guarantee • Insured & Bonded Crews
+                <p className="text-xs md:text-sm text-[hsl(45,93%,75%)]">
+                  Book by Jan 7th • 48-Hour Re-Clean Guarantee • Insured & Bonded
                 </p>
               </div>
             </div>
@@ -339,7 +341,7 @@ export default function BookingCheckout() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            You're One Step Away From a Guest-Ready Home
+            Your New Year Discount is Applied!
           </h1>
           <p className="text-lg text-muted-foreground">
             Pay only 25% today to reserve your spot. No hidden fees, no contracts.
@@ -367,18 +369,19 @@ export default function BookingCheckout() {
               
               <Separator />
               
-              {bookingData.promoCode && bookingData.promoDiscount && (
+              {/* New Year Discount Display */}
+              {bookingData.promoCode && bookingData.promoDiscount && bookingData.promoDiscount > 0 && (
                 <>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="line-through">${bookingData.basePrice?.toFixed(2)}</span>
+                    <span className="text-muted-foreground">Original Price</span>
+                    <span className="line-through text-muted-foreground">${bookingData.basePrice?.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm text-primary font-semibold">
-                    <span className="flex items-center gap-1">
+                  <div className="flex justify-between text-sm bg-[hsl(45,93%,47%)]/10 p-2 rounded-lg border border-[hsl(45,93%,47%)]/30">
+                    <span className="flex items-center gap-1 text-[hsl(45,80%,40%)] font-semibold">
                       <Tag className="w-4 h-4" />
-                      {bookingData.promoCode} Discount
+                      🎉 New Year Special ({bookingData.offerType === 'recurring' ? '15% Off' : '$50 Off'})
                     </span>
-                    <span>-${bookingData.promoDiscount.toFixed(2)}</span>
+                    <span className="text-[hsl(45,80%,40%)] font-bold">-${bookingData.promoDiscount.toFixed(2)}</span>
                   </div>
                   <Separator />
                 </>
