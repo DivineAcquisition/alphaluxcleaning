@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/validation-utils';
+import { useUTMTracking } from '@/hooks/useUTMTracking';
 
 // Validation schema
 const leadSchema = z.object({
@@ -25,8 +26,8 @@ const leadSchema = z.object({
 
 export default function BookingZip() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { updateBookingData } = useBooking();
+  const { getTrackingData } = useUTMTracking();
   
   // ZIP state
   const [zipCode, setZipCode] = useState('');
@@ -42,24 +43,6 @@ export default function BookingZip() {
   const [phone, setPhone] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // UTM tracking
-  const [utmData, setUtmData] = useState({
-    utmCampaign: '',
-    utmContent: '',
-    utmSource: '',
-    utmMedium: '',
-  });
-
-  // Capture UTMs on mount
-  useEffect(() => {
-    setUtmData({
-      utmCampaign: searchParams.get('utm_campaign') || '',
-      utmContent: searchParams.get('utm_content') || '',
-      utmSource: searchParams.get('utm_source') || '',
-      utmMedium: searchParams.get('utm_medium') || '',
-    });
-  }, [searchParams]);
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 5);
@@ -150,8 +133,9 @@ export default function BookingZip() {
     
     try {
       const cleanPhone = phone.replace(/\D/g, '');
+      const trackingData = getTrackingData();
       
-      // Send to webhook
+      // Send to webhook with full tracking data
       const { data, error } = await supabase.functions.invoke('emit-lead-webhook', {
         body: {
           firstName,
@@ -161,8 +145,15 @@ export default function BookingZip() {
           zipCode,
           city: validatedLocation?.city,
           state: validatedLocation?.state,
-          landingPage: window.location.href,
-          ...utmData,
+          // Include all tracking data
+          landingPage: trackingData.landing_page || window.location.href,
+          referrer: trackingData.referrer,
+          timestamp: trackingData.first_visit_timestamp,
+          utmSource: trackingData.utm_source,
+          utmMedium: trackingData.utm_medium,
+          utmCampaign: trackingData.utm_campaign,
+          utmContent: trackingData.utm_content,
+          utmTerm: trackingData.utm_term,
         }
       });
       
