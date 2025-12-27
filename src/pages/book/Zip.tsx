@@ -15,6 +15,7 @@ import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge'
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/validation-utils';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { toast } from 'sonner';
 
 // Validation schema
 const leadSchema = z.object({
@@ -159,9 +160,12 @@ export default function BookingZip() {
       
       if (error) {
         console.error('Lead webhook error:', error);
-        // Don't block the user even if webhook fails
+        // Show error toast but don't block user
+        toast.error('There was an issue saving your information, but you can still continue.');
       } else {
         console.log('Lead captured successfully:', data);
+        // Show success toast
+        toast.success('Information saved! Taking you to the next step...');
       }
       
       // Update booking context with contact info
@@ -177,11 +181,21 @@ export default function BookingZip() {
         } as any
       });
       
-      // Navigate to next step
-      navigate('/book/sqft');
+      // Clear form fields (in case user comes back)
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhone('');
+      setFormErrors({});
+      
+      // Navigate to next step after brief delay for toast visibility
+      setTimeout(() => {
+        navigate('/book/sqft');
+      }, 500);
       
     } catch (err) {
       console.error('Error submitting lead:', err);
+      toast.error('Something went wrong, but you can still continue.');
       // Still navigate even if there's an error
       navigate('/book/sqft');
     } finally {
