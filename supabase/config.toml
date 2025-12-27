@@ -206,3 +206,7 @@ verify_jwt = false
 [functions.send-payment-link]
 verify_jwt = false
 
+# Lead Capture Webhook
+[functions.emit-lead-webhook]
+verify_jwt = false
+
