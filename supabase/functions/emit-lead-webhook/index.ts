@@ -16,10 +16,13 @@ interface LeadPayload {
   city?: string;
   state?: string;
   landingPage?: string;
-  utmCampaign?: string;
-  utmContent?: string;
+  referrer?: string;
+  timestamp?: string;
   utmSource?: string;
   utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
 }
 
 function logStep(step: string, details?: any) {
@@ -52,26 +55,34 @@ serve(async (req) => {
       );
     }
 
-    // Format the data for Zapier
+    // Format the data for Zapier - matching requested field names exactly
     const zapierPayload = {
+      // Core contact info
       date: new Date().toISOString(),
       name: `${payload.firstName} ${payload.lastName}`.trim(),
       first_name: payload.firstName,
       last_name: payload.lastName,
       email: payload.email,
       phone: payload.phone,
+      
+      // Location
       zip_code: payload.zipCode,
       city: payload.city || '',
       state: payload.state || '',
-      source_ad: payload.utmContent || '',
+      
+      // Attribution & UTM data
+      source_ad: payload.utmContent || '', // utm_content is the ad identifier
       landing_page: payload.landingPage || '',
-      utm_campaign: payload.utmCampaign || '',
-      utm_content: payload.utmContent || '',
+      referrer: payload.referrer || '',
+      first_visit_timestamp: payload.timestamp || '',
       utm_source: payload.utmSource || '',
       utm_medium: payload.utmMedium || '',
+      utm_campaign: payload.utmCampaign || '',
+      utm_content: payload.utmContent || '',
+      utm_term: payload.utmTerm || '',
     };
 
-    logStep('Sending to Zapier', { webhookUrl: ZAPIER_WEBHOOK_URL });
+    logStep('Formatted Zapier payload', zapierPayload);
 
     // Send to Zapier webhook
     const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {

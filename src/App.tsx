@@ -9,6 +9,7 @@ import { lazy, Suspense } from 'react';
 import { BookingProvider } from '@/contexts/BookingContext';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
 import { DomainRedirect } from '@/components/DomainRedirect';
+import { UTMTracker } from '@/components/UTMTracker';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
@@ -80,6 +81,7 @@ function App() {
         <BookingProvider>
           <Router>
           <DomainRedirect>
+            <UTMTracker />
             <TestModeBanner />
           <Routes>
             {/* Optimized Booking Flow */}
