@@ -1,4 +1,4 @@
-import { Phone } from 'lucide-react';
+import { Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
 
@@ -18,12 +18,20 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
           <a href="/" className="flex items-center">
             <img src={logo} alt="AlphaLux Clean" className="h-8 md:h-10" />
           </a>
-          <Button variant="outline" size="sm" asChild>
-            <a href="tel:+19725590223" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              <span className="hidden sm:inline">(972) 559-0223</span>
-            </a>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a href="https://alphaluxclean.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">Visit Website</span>
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href="tel:+19725590223" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                <span className="hidden sm:inline">(972) 559-0223</span>
+              </a>
+            </Button>
+          </div>
         </div>
         
         {/* Progress Bar */}
