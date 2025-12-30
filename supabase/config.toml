@@ -210,3 +210,19 @@ verify_jwt = false
 [functions.emit-lead-webhook]
 verify_jwt = false
 
+# Stripe Integration
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.get-stripe-config]
+verify_jwt = false
+
+[functions.create-payment-intent]
+verify_jwt = false
+
+[functions.create-90day-subscription]
+verify_jwt = false
+
+[functions.send-recurring-payment-confirmation]
+verify_jwt = false
+
