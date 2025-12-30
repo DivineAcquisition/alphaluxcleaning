@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
+import { StripePaymentForm } from '@/components/booking/StripePaymentForm';
 import { useTestMode } from '@/hooks/useTestMode';
 import { TestTube } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
-import { squarePromise } from '@/lib/square';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Lock, Tag, CheckCircle2, Clock, Star, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +20,10 @@ export default function BookingCheckout() {
   const { bookingData, depositAmount } = useBooking();
   const { isTestMode } = useTestMode();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCardReady, setIsCardReady] = useState(false);
-  const [cardInstance, setCardInstance] = useState<any>(null);
-  const isInitializing = useRef(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.basePrice) {
@@ -30,74 +31,25 @@ export default function BookingCheckout() {
     }
   }, [bookingData, navigate]);
 
-  useEffect(() => {
-    if (!isTestMode) {
-      initializeSquare();
-    } else {
-      setIsCardReady(true);
-    }
-    return () => {
-      if (cardInstance) {
-        cardInstance.destroy();
-      }
-    };
-  }, [isTestMode]);
+  // Calculate final amounts
+  const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
+  const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.25;
+  const finalDepositAmount = Math.round(finalPrice * depositPercentage);
+  const balanceDue = finalPrice - finalDepositAmount;
+  const monthlyPayment = Math.round(finalPrice * 0.25);
+  const totalMonthlyPayments = monthlyPayment * 3;
+  const firstCleanBalance = finalPrice - finalDepositAmount - totalMonthlyPayments;
+  
+  const individualServicePrice = bookingData.basePrice ? (bookingData.basePrice / 4) * 1.2 : 0;
+  const totalIndividualCost = individualServicePrice * 4;
+  const savings = Math.round(totalIndividualCost - finalPrice);
 
-  const initializeSquare = async () => {
-    if (isInitializing.current) return;
-    isInitializing.current = true;
-
-    try {
-      const square = await squarePromise;
-      if (!square?.payments) throw new Error('Square not loaded');
-
-      const card = await square.payments.card();
-      await card.attach('#square-card-container');
-      
-      setCardInstance(card);
-      setIsCardReady(true);
-      console.log('✅ Square card form ready');
-    } catch (error) {
-      console.error('Square initialization error:', error);
-      toast.error('Failed to load payment form');
-    } finally {
-      isInitializing.current = false;
-    }
-  };
-
-  const handlePayment = async () => {
-    if (!bookingData.basePrice || !depositAmount) {
-      toast.error('Payment information not available');
-      return;
-    }
-
-    if (!isTestMode && !cardInstance) {
-      toast.error('Payment form not ready');
-      return;
-    }
-
-    setIsProcessing(true);
+  const initializePayment = useCallback(async () => {
+    if (isInitializing || clientSecret) return;
+    setIsInitializing(true);
 
     try {
-      let token = null;
-      let details = null;
-
-      if (!isTestMode) {
-        const result = await cardInstance.tokenize();
-        if (result.status === 'OK') {
-          token = result.token;
-          details = result.details;
-        } else {
-          throw new Error(result.errors?.[0]?.message || 'Card tokenization failed');
-        }
-      }
-
-      // Calculate final price after promo discount
-      const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
-      const finalDepositAmount = Math.round(finalPrice * 0.25);
-      const finalBalanceDue = finalPrice - finalDepositAmount;
-
-      // Create customer
+      // Create customer first
       const { data: customer, error: customerError } = await supabase
         .from('customers')
         .upsert({
@@ -115,6 +67,7 @@ export default function BookingCheckout() {
         .single();
 
       if (customerError) throw customerError;
+      setCustomerId(customer.id);
 
       // Create booking
       const { data: booking, error: bookingError } = await supabase
@@ -129,11 +82,11 @@ export default function BookingCheckout() {
           est_price: finalPrice,
           deposit_amount: finalDepositAmount,
           base_price: finalPrice,
-          balance_due: finalBalanceDue,
+          balance_due: balanceDue,
           offer_name: bookingData.offerName,
           offer_type: bookingData.offerType,
           visit_count: bookingData.visitCount,
-          is_recurring: bookingData.isRecurring || false,
+          is_recurring: bookingData.offerType === '90_day_plan',
           status: 'payment_pending',
           payment_status: 'pending',
           promo_code: bookingData.promoCode || null,
@@ -142,115 +95,163 @@ export default function BookingCheckout() {
             basePrice: bookingData.basePrice || 0,
             promoCode: bookingData.promoCode,
             promoDiscount: bookingData.promoDiscount || 0,
-            finalPrice: finalPrice,
+            finalPrice,
             depositAmount: finalDepositAmount,
-            balanceDue: finalBalanceDue,
+            balanceDue,
+            monthlyAmount: monthlyPayment,
           },
         })
         .select()
         .single();
 
       if (bookingError) throw bookingError;
+      setBookingId(booking.id);
 
-      // Process payment
-      let paymentData: any = null;
-      
-      if (!isTestMode) {
-        const { data, error: paymentError } = await supabase.functions.invoke(
-          'create-square-payment',
-          {
-            body: {
-              amount: finalDepositAmount,
-              customerEmail: bookingData.contactInfo.email,
-              customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-              customerPhone: bookingData.contactInfo.phone,
-              bookingId: booking.id,
-              sourceId: token,
-              verificationToken: details?.verification_token,
-              saveCard: true,
-            },
-          }
-        );
-
-        if (paymentError) throw new Error(`Payment failed: ${paymentError.message}`);
-        if (!data?.success) throw new Error('Payment processing failed');
-
-        paymentData = data;
-
-        await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed',
-            square_payment_id: paymentData.payment_id,
-            paid_at: new Date().toISOString()
-          })
-          .eq('id', booking.id);
-      } else {
-        console.log('🧪 TEST MODE: Skipping payment');
-        paymentData = { success: true, payment_id: 'test_' + Date.now() };
-        
-        // Update booking status to confirmed with full payment details
-        await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed',
-            payment_status: 'paid',
-            square_payment_id: paymentData.payment_id,
-            paid_at: new Date().toISOString()
-          })
-          .eq('id', booking.id);
+      // For test mode, skip Stripe setup
+      if (isTestMode) {
+        console.log('🧪 TEST MODE: Skipping Stripe initialization');
+        return;
       }
 
-      // Send payment schedule email
+      // Create payment intent based on offer type
+      if (bookingData.offerType === '90_day_plan') {
+        // Use the 90-day subscription function
+        const { data, error } = await supabase.functions.invoke('create-90day-subscription', {
+          body: {
+            bookingId: booking.id,
+            customerId: customer.id,
+            customerEmail: bookingData.contactInfo.email,
+            customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+            customerPhone: bookingData.contactInfo.phone,
+            depositAmount: finalDepositAmount,
+            monthlyAmount: monthlyPayment,
+            totalAmount: finalPrice,
+            address: {
+              line1: bookingData.contactInfo.address1,
+              line2: bookingData.contactInfo.address2,
+              city: bookingData.contactInfo.city || bookingData.city,
+              state: bookingData.contactInfo.state || bookingData.state,
+              postal_code: bookingData.contactInfo.zip || bookingData.zipCode,
+            },
+          },
+        });
+
+        if (error) throw new Error(error.message);
+        if (!data?.clientSecret) throw new Error('Failed to create payment');
+
+        setClientSecret(data.clientSecret);
+      } else {
+        // Use regular payment intent for one-time payments
+        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+          body: {
+            amount: finalDepositAmount,
+            customerEmail: bookingData.contactInfo.email,
+            customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+            bookingId: booking.id,
+            metadata: {
+              booking_id: booking.id,
+              payment_type: 'deposit',
+              offer_type: bookingData.offerType,
+            },
+          },
+        });
+
+        if (error) throw new Error(error.message);
+        if (!data?.client_secret) throw new Error('Failed to create payment intent');
+
+        setClientSecret(data.client_secret);
+      }
+
+      console.log('✅ Payment initialized');
+    } catch (error: any) {
+      console.error('Failed to initialize payment:', error);
+      toast.error(error.message || 'Failed to initialize payment');
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [bookingData, finalPrice, finalDepositAmount, balanceDue, monthlyPayment, isTestMode, isInitializing, clientSecret]);
+
+  useEffect(() => {
+    if (bookingData.contactInfo?.email && !clientSecret && !isTestMode) {
+      initializePayment();
+    }
+  }, [bookingData.contactInfo?.email, isTestMode]);
+
+  const handlePaymentSuccess = async (paymentIntentId: string, subscriptionId?: string) => {
+    if (!bookingId) return;
+
+    try {
+      // Update booking with payment info
+      await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'deposit_paid',
+          stripe_payment_intent_id: paymentIntentId,
+          stripe_subscription_id: subscriptionId,
+          paid_at: new Date().toISOString(),
+        })
+        .eq('id', bookingId);
+
+      // Send confirmation email
       try {
         await supabase.functions.invoke('send-payment-schedule', {
           body: {
-            bookingId: booking.id,
+            bookingId,
             customerEmail: bookingData.contactInfo.email,
             customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
             offerType: bookingData.offerType || 'standard',
             totalPrice: finalPrice,
             depositAmount: finalDepositAmount,
-            firstCleanBalance: firstCleanBalance,
-            monthlyPayment: monthlyPayment,
+            firstCleanBalance,
+            monthlyPayment,
           },
         });
-        console.log('Payment schedule email sent');
       } catch (emailError) {
         console.error('Failed to send payment schedule email:', emailError);
-        // Don't block the booking flow if email fails
       }
 
-      toast.success('Deposit paid successfully! Check your email for payment details.');
-      navigate(`/book/details?booking_id=${booking.id}`);
+      toast.success('Deposit paid successfully!');
+      navigate(`/book/details?booking_id=${bookingId}`);
     } catch (error: any) {
-      console.error('Payment error:', error);
-      toast.error(error.message || 'Payment failed. Please try again.');
+      console.error('Error updating booking:', error);
+      toast.error('Payment recorded but failed to update booking');
+    }
+  };
+
+  const handleTestPayment = async () => {
+    if (!bookingId) {
+      await initializePayment();
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'deposit_paid',
+          stripe_payment_intent_id: 'test_' + Date.now(),
+          paid_at: new Date().toISOString(),
+        })
+        .eq('id', bookingId);
+
+      toast.success('Test payment successful!');
+      navigate(`/book/details?booking_id=${bookingId}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Test payment failed');
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const handleCancel = () => {
+    navigate('/book/contact');
+  };
+
   if (!bookingData.basePrice || !depositAmount) return null;
 
-  // Calculate final amounts with promo discount
-  const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
-  // For 90-day plan: 25% of monthly amount (6.25% of total), otherwise 25% of total
-  const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.25;
-  const finalDepositAmount = Math.round(finalPrice * depositPercentage);
-  const balanceDue = finalPrice - finalDepositAmount;
-
-  // For 90-day plan: calculate payment breakdown
-  const monthlyPayment = Math.round(finalPrice * 0.25);
-  const totalMonthlyPayments = monthlyPayment * 3;
-  const firstCleanBalance = finalPrice - finalDepositAmount - totalMonthlyPayments;
-  
-  // Calculate savings for 90-day plan (compare to 4 individual deep cleans at full price)
-  const individualServicePrice = bookingData.basePrice ? (bookingData.basePrice / 4) * 1.2 : 0;
-  const totalIndividualCost = individualServicePrice * 4;
-  const savings = Math.round(totalIndividualCost - finalPrice);
-
-  // Get service details based on service type
   const getServiceDetails = () => {
     const serviceType = bookingData.serviceType || 'standard';
     
@@ -423,7 +424,7 @@ export default function BookingCheckout() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-border/50">
-                          <span className="text-sm font-medium">Monthly Payment (3 months)</span>
+                          <span className="text-sm font-medium">Monthly Payment (3 months, auto-billed)</span>
                           <span className="text-lg font-bold text-primary">
                             ${monthlyPayment}/month
                           </span>
@@ -499,45 +500,55 @@ export default function BookingCheckout() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isTestMode && (
-                <Alert>
-                  <AlertDescription>
-                    🧪 TEST MODE: Payment processing is disabled
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {!isTestMode && (
-                <div>
-                  <div id="square-card-container" className="min-h-[200px]"></div>
-                  {!isCardReady && (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  )}
+              {isTestMode ? (
+                <>
+                  <Alert>
+                    <TestTube className="h-4 w-4" />
+                    <AlertDescription>
+                      🧪 TEST MODE: Payment processing is simulated
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    onClick={handleTestPayment}
+                    disabled={isProcessing}
+                    size="lg"
+                    className="w-full"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${finalDepositAmount.toFixed(2)} Deposit (Test)`
+                    )}
+                  </Button>
+                </>
+              ) : isInitializing ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Preparing secure checkout...</span>
+                </div>
+              ) : clientSecret ? (
+                <StripePaymentForm
+                  depositAmount={finalDepositAmount}
+                  totalAmount={finalPrice}
+                  monthlyAmount={bookingData.offerType === '90_day_plan' ? monthlyPayment : undefined}
+                  offerType={bookingData.offerType || 'standard'}
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={handleCancel}
+                  clientSecret={clientSecret}
+                  isProcessing={isProcessing}
+                  setIsProcessing={setIsProcessing}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Unable to load payment form.</p>
+                  <Button onClick={initializePayment} className="mt-4">
+                    Try Again
+                  </Button>
                 </div>
               )}
-
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                <span>Your payment information is secure and encrypted</span>
-              </div>
-
-              <Button
-                onClick={handlePayment}
-                disabled={!isCardReady || isProcessing}
-                size="lg"
-                className="w-full"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Pay $${depositAmount.toFixed(2)} Deposit`
-                )}
-              </Button>
             </CardContent>
           </Card>
 
