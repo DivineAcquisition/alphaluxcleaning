@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
+import { useBookingProgress } from '@/hooks/useBookingProgress';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Check, Sparkles, CalendarCheck, Info, Gift } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
@@ -21,6 +22,7 @@ const NEW_YEAR_PROMO = {
 export default function BookingOffer() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
+  const { trackStep } = useBookingProgress();
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('tester');
@@ -112,6 +114,13 @@ export default function BookingOffer() {
       frequency,
       promoCode: 'NEWYEAR2025',
       promoDiscount: offerType === 'deep_clean' ? NEW_YEAR_PROMO.deepCleanDiscount : recurringSavings
+    });
+
+    // Track progress for abandoned checkout
+    trackStep('offer_selected', { 
+      service_type: serviceType,
+      frequency,
+      base_price: basePrice
     });
 
     // Navigate after brief delay for visual feedback

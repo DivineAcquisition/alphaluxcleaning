@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
+import { useBookingProgress } from '@/hooks/useBookingProgress';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { Home, ArrowRight, CheckCircle } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
@@ -14,6 +15,7 @@ import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge'
 export default function BookingSquareFeet() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData, pricing } = useBooking();
+  const { trackStep } = useBookingProgress();
   const [selectedId, setSelectedId] = useState(bookingData.homeSizeId);
 
   useEffect(() => {
@@ -25,6 +27,9 @@ export default function BookingSquareFeet() {
   const handleSelect = (homeSizeId: string) => {
     setSelectedId(homeSizeId);
     updateBookingData({ homeSizeId });
+    
+    // Track progress for abandoned checkout
+    trackStep('home_size_selected', { home_size: homeSizeId });
     
     // Auto-navigate to offer after selection
     setTimeout(() => {
