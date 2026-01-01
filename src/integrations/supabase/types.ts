@@ -1043,6 +1043,92 @@ export type Database = {
           },
         ]
       }
+      partial_bookings: {
+        Row: {
+          base_price: number | null
+          city: string | null
+          completed_at: string | null
+          converted_booking_id: string | null
+          created_at: string
+          email: string
+          email_sent_1h: boolean | null
+          email_sent_24h: boolean | null
+          first_name: string | null
+          frequency: string | null
+          home_size: string | null
+          id: string
+          last_name: string | null
+          last_step: string
+          phone: string | null
+          preferred_date: string | null
+          preferred_time: string | null
+          service_type: string | null
+          session_id: string | null
+          state: string | null
+          updated_at: string
+          utms: Json | null
+          zip_code: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          city?: string | null
+          completed_at?: string | null
+          converted_booking_id?: string | null
+          created_at?: string
+          email: string
+          email_sent_1h?: boolean | null
+          email_sent_24h?: boolean | null
+          first_name?: string | null
+          frequency?: string | null
+          home_size?: string | null
+          id?: string
+          last_name?: string | null
+          last_step?: string
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          service_type?: string | null
+          session_id?: string | null
+          state?: string | null
+          updated_at?: string
+          utms?: Json | null
+          zip_code?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          city?: string | null
+          completed_at?: string | null
+          converted_booking_id?: string | null
+          created_at?: string
+          email?: string
+          email_sent_1h?: boolean | null
+          email_sent_24h?: boolean | null
+          first_name?: string | null
+          frequency?: string | null
+          home_size?: string | null
+          id?: string
+          last_name?: string | null
+          last_step?: string
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          service_type?: string | null
+          session_id?: string | null
+          state?: string | null
+          updated_at?: string
+          utms?: Json | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partial_bookings_converted_booking_id_fkey"
+            columns: ["converted_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_options: {
         Row: {
           active: boolean

@@ -136,7 +136,7 @@ export default function BookingZip() {
       const cleanPhone = phone.replace(/\D/g, '');
       const trackingData = getTrackingData();
       
-      // Send to webhook with full tracking data
+      // Send to webhook with full tracking data (also triggers lead_welcome email)
       const { data, error } = await supabase.functions.invoke('emit-lead-webhook', {
         body: {
           firstName,
@@ -167,6 +167,23 @@ export default function BookingZip() {
         // Show success toast
         toast.success('Information saved! Taking you to the next step...');
       }
+      
+      // Track booking progress for abandoned checkout detection
+      supabase.functions.invoke('track-booking-progress', {
+        body: {
+          email,
+          step: 'lead_captured',
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone: `+1${cleanPhone}`,
+            zip_code: zipCode,
+            city: validatedLocation?.city,
+            state: validatedLocation?.state,
+            utms: trackingData
+          }
+        }
+      }).catch(err => console.error('Error tracking progress:', err));
       
       // Update booking context with contact info
       updateBookingData({

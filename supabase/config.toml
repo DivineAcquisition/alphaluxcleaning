@@ -226,3 +226,10 @@ verify_jwt = false
 [functions.send-recurring-payment-confirmation]
 verify_jwt = false
 
+# Booking Progress Tracking & Abandoned Checkout
+[functions.track-booking-progress]
+verify_jwt = false
+
+[functions.process-abandoned-checkouts]
+verify_jwt = false
+

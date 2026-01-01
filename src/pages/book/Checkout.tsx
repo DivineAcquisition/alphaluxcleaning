@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { StripePaymentForm } from '@/components/booking/StripePaymentForm';
 import { useTestMode } from '@/hooks/useTestMode';
+import { useBookingProgress } from '@/hooks/useBookingProgress';
 import { TestTube } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,17 +20,27 @@ export default function BookingCheckout() {
   const navigate = useNavigate();
   const { bookingData, depositAmount } = useBooking();
   const { isTestMode } = useTestMode();
+  const { trackStep, markCompleted } = useBookingProgress();
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
 
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.basePrice) {
       navigate('/book/zip');
     }
   }, [bookingData, navigate]);
+
+  // Track checkout step when entering this page
+  useEffect(() => {
+    if (bookingData.contactInfo?.email && !hasTrackedCheckout) {
+      trackStep('checkout_started');
+      setHasTrackedCheckout(true);
+    }
+  }, [bookingData.contactInfo?.email, hasTrackedCheckout, trackStep]);
 
   // Calculate final amounts
   const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
@@ -193,6 +204,9 @@ export default function BookingCheckout() {
         })
         .eq('id', bookingId);
 
+      // Mark booking as completed in partial_bookings (stops abandoned emails)
+      markCompleted(bookingId);
+
       // Send confirmation email
       try {
         await supabase.functions.invoke('send-payment-schedule', {
@@ -236,6 +250,9 @@ export default function BookingCheckout() {
           paid_at: new Date().toISOString(),
         })
         .eq('id', bookingId);
+
+      // Mark booking as completed
+      markCompleted(bookingId);
 
       toast.success('Test payment successful!');
       navigate(`/book/details?booking_id=${bookingId}`);
