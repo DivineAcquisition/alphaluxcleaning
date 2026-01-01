@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,9 @@ const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/Lvvq87zxxbYF
 
 // Zapier webhook URL (backup/logging)
 const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/24603039/uaji3ls/';
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 interface LeadPayload {
   firstName: string;
@@ -136,6 +140,31 @@ serve(async (req) => {
       logStep('Zapier backup sent', { status: res.status });
     }).catch(err => {
       logStep('Zapier backup failed (non-critical)', { error: err.message });
+    });
+
+    // Send lead welcome email via send-email-system (non-blocking)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const appUrl = Deno.env.get("APP_URL") || "https://app.alphaluxclean.com";
+    
+    supabase.functions.invoke('send-email-system', {
+      body: {
+        template: 'lead_welcome',
+        to: payload.email,
+        data: {
+          first_name: payload.firstName,
+          email: payload.email,
+          app_url: appUrl
+        },
+        category: 'marketing'
+      }
+    }).then(res => {
+      if (res.error) {
+        logStep('Lead welcome email failed', { error: res.error.message });
+      } else {
+        logStep('Lead welcome email sent successfully', { data: res.data });
+      }
+    }).catch(err => {
+      logStep('Lead welcome email error', { error: err.message });
     });
 
     // Return based on GHL response
