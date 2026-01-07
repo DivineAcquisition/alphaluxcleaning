@@ -86,9 +86,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create email job record
     const emailJob = {
-      template,
+      template_name: template,
       to_email: to,
-      payload_json: { ...data, subject_variant },
+      payload: { ...data, subject_variant },
       category,
       event_id,
       status: 'sending'
@@ -130,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
       .update({ 
         status: 'sent', 
         sent_at: new Date().toISOString(),
-        message_id: emailResponse.data?.id 
+        provider_message_id: emailResponse.data?.id 
       })
       .eq('id', jobData.id);
 
@@ -143,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
         provider: 'resend',
         event: 'sent',
         message_id: emailResponse.data?.id,
-        metadata_json: { job_id: jobData.id, category }
+        meta: { job_id: jobData.id, category }
       });
 
     return new Response(JSON.stringify({ 
