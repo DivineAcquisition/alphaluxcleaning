@@ -23,7 +23,7 @@ import {
 
 export default function Careers() {
   const handleApply = () => {
-    window.open('https://forms.fillout.com/t/2LayVJBbus', '_blank');
+    window.open('https://forms.fillout.com/t/dnENPfCfewus', '_blank');
   };
 
   return (
