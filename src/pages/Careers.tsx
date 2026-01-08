@@ -29,7 +29,7 @@ export default function Careers() {
         description="Join AlphaLuxClean as a House Cleaner earning $20-$25/hr. Flexible scheduling, consistent work, and growth opportunities. Apply today!"
       />
       <div className="min-h-screen bg-background">
-        <Navigation />
+        <Navigation minimal />
         
         {/* Hero Section */}
         <section className="relative bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-16 md:py-24">
