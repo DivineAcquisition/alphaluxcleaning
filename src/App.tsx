@@ -45,6 +45,7 @@ import LearnMore from '@/pages/LearnMore';
 import RecurringServices from '@/pages/RecurringServices';
 import StartRecurring from '@/pages/StartRecurring';
 import Pricing from '@/pages/Pricing';
+import Careers from '@/pages/Careers';
 
 // Dev Test Pages
 import { DevTest } from '@/pages/DevTest';
@@ -136,6 +137,11 @@ function App() {
             
             {/* Pricing Page */}
             <Route path="/pricing" element={<Pricing />} />
+            
+            {/* Careers / Hiring Page */}
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/jobs" element={<Navigate to="/careers" replace />} />
+            <Route path="/hiring" element={<Navigate to="/careers" replace />} />
             
             {/* Printable Pricing Sheet */}
             <Route path="/pricing-sheet" element={

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Phone, Mail, Menu, HelpCircle, DollarSign, Home } from "lucide-react";
+import { Phone, Mail, Menu, HelpCircle, DollarSign, Home, Briefcase } from "lucide-react";
 import logo from "@/assets/logo.png";
 export function Navigation() {
   const handleTroubleBooking = () => {
@@ -30,6 +30,14 @@ export function Navigation() {
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Pricing
+              </Button>
+            </Link>
+            
+            {/* Careers Link - Desktop */}
+            <Link to="/careers" className="hidden md:block">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Careers
               </Button>
             </Link>
             
@@ -88,6 +96,14 @@ export function Navigation() {
                     <Link to="/pricing" className="flex items-center gap-3 py-3 cursor-pointer">
                       <DollarSign className="h-4 w-4" />
                       View Pricing
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  {/* Careers Link - Mobile */}
+                  <DropdownMenuItem asChild>
+                    <Link to="/careers" className="flex items-center gap-3 py-3 cursor-pointer">
+                      <Briefcase className="h-4 w-4" />
+                      We're Hiring
                     </Link>
                   </DropdownMenuItem>
                   
