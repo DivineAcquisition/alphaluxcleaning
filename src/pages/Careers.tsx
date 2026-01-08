@@ -14,7 +14,11 @@ import {
   Smartphone,
   Car,
   Heart,
-  Briefcase
+  Briefcase,
+  Leaf,
+  Shield,
+  Sparkles,
+  Home as HomeIcon
 } from "lucide-react";
 
 export default function Careers() {
@@ -95,17 +99,23 @@ export default function Careers() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-primary" />
-                    About AlphaLuxClean
+                    About AlphaLux Clean
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground space-y-4">
                   <p>
-                    AlphaLuxClean is a premium cleaning company focused on consistent quality, 
-                    professionalism, and 5-star client experiences.
+                    AlphaLux Clean is a locally owned and operated premium cleaning company 
+                    serving major cities in Texas & California. We deliver reliable, high-quality 
+                    cleaning services with a focus on detail and customer satisfaction.
                   </p>
                   <p>
                     We're hiring reliable cleaners who take pride in their work and want steady 
-                    hours with a respectful team.
+                    hours with a respectful team. Every job is handled with care, and every 
+                    team member is treated with respect.
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium text-foreground">Our Mission:</span> Experience a Higher Standard of Clean — 
+                    professionalism, precision, and care to every job.
                   </p>
                 </CardContent>
               </Card>
@@ -135,20 +145,111 @@ export default function Careers() {
           </div>
         </section>
 
-        {/* What You'll Do */}
+        {/* Why Work With Us - Company Values */}
         <section className="py-16 bg-muted/30">
+          <div className="container max-w-6xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Why Work With AlphaLux Clean?</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Join a team that values quality, respects your time, and invests in your growth.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-green-500/10 rounded-full w-fit mb-4">
+                    <Leaf className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Eco-Friendly Products</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We use safe, effective, and eco-friendly cleaning products that are tough on dirt 
+                    and gentle on your health. No harsh chemicals — just great results.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-blue-500/10 rounded-full w-fit mb-4">
+                    <Shield className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Trusted & Professional</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Our team is thoroughly trained, fully insured, and background-checked. 
+                    You'll be part of a team that clients trust and recommend.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-purple-500/10 rounded-full w-fit mb-4">
+                    <Sparkles className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Attention to Detail</h3>
+                  <p className="text-sm text-muted-foreground">
+                    From baseboards to blinds, we leave no area untouched. You'll learn the kind of 
+                    deep cleaning that truly transforms a space.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-orange-500/10 rounded-full w-fit mb-4">
+                    <HomeIcon className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Variety of Services</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Work on diverse projects — regular cleanings, deep cleans, move-in/move-out 
+                    services, and occasional office cleanings. Never a dull day.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
+                    <MapPin className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Texas & California</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We serve major cities across Texas (DFW, Dallas, Plano, Fort Worth) and 
+                    California (Los Angeles, Pasadena, Santa Monica). Work in your area.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="p-3 bg-pink-500/10 rounded-full w-fit mb-4">
+                    <Heart className="h-6 w-6 text-pink-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Respectful Culture</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We believe a clean space supports well-being — for clients and our team. 
+                    You'll be valued, heard, and respected every day.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* What You'll Do */}
+        <section className="py-16">
           <div className="container max-w-6xl mx-auto px-4">
             <h2 className="text-3xl font-bold text-center mb-10">What You'll Do</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
                 "Perform residential cleanings (standard, deep cleaning, move-in/move-out) and occasional small office cleanings",
-                "Follow AlphaLuxClean cleaning checklists + quality standards",
+                "Follow AlphaLux Clean cleaning checklists + quality standards",
                 "Clean kitchens, bathrooms, bedrooms, living areas (dusting, vacuuming, mopping, surfaces, etc.)",
                 "Handle trash removal, restocking basics, and job wrap-up photos/notes",
                 "Communicate clearly with the team about arrival, job status, and any issues",
                 "Maintain a professional appearance and respectful behavior in clients' homes"
               ].map((task, index) => (
-                <div key={index} className="flex gap-3 p-4 bg-background rounded-lg border">
+                <div key={index} className="flex gap-3 p-4 bg-muted/50 rounded-lg border">
                   <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span className="text-sm">{task}</span>
                 </div>
@@ -158,7 +259,7 @@ export default function Careers() {
         </section>
 
         {/* Requirements */}
-        <section className="py-16">
+        <section className="py-16 bg-muted/30">
           <div className="container max-w-6xl mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-8">
               <Card>
@@ -259,6 +360,45 @@ export default function Careers() {
           </div>
         </section>
 
+        {/* Client Testimonials - Show the impact */}
+        <section className="py-16 bg-muted/30">
+          <div className="container max-w-6xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">The Impact You'll Make</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Here's what clients say about our team. You could be part of creating these experiences.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  quote: "The team was punctual, friendly, and left my home looking and feeling fresh. It's a huge relief to know I can count on them every time.",
+                  name: "Tara M.",
+                  location: "Dallas, TX"
+                },
+                {
+                  quote: "My house has never looked better. They even managed to remove hard water stains I thought were permanent! Highly recommend.",
+                  name: "Jason K.",
+                  location: "Los Angeles, CA"
+                },
+                {
+                  quote: "They always show up on time, are respectful of our home, and the results are consistently impressive. It's clear they truly care about their work.",
+                  name: "Danielle S.",
+                  location: "Plano, TX"
+                }
+              ].map((testimonial, index) => (
+                <Card key={index} className="bg-background">
+                  <CardContent className="pt-6">
+                    <p className="text-sm text-muted-foreground italic mb-4">"{testimonial.quote}"</p>
+                    <p className="text-sm font-medium">{testimonial.name}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.location}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container max-w-4xl mx-auto px-4 text-center space-y-6">
@@ -276,7 +416,7 @@ export default function Careers() {
               Apply Now
             </Button>
             <p className="text-sm opacity-75 mt-8">
-              AlphaLuxClean is an equal opportunity employer.
+              AlphaLux Clean is an equal opportunity employer.
             </p>
           </div>
         </section>
