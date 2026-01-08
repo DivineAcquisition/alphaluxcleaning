@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Phone, Mail, Menu, HelpCircle, DollarSign, Home, Briefcase } from "lucide-react";
 import logo from "@/assets/logo.png";
-export function Navigation() {
+
+interface NavigationProps {
+  minimal?: boolean;
+}
+
+export function Navigation({ minimal = false }: NavigationProps) {
   const handleTroubleBooking = () => {
     window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
   };
@@ -15,7 +20,8 @@ export function Navigation() {
             <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-11 md:w-auto object-contain rounded-xl" />
           </Link>
 
-          {/* Right Section */}
+          {/* Right Section - Hidden in minimal mode */}
+          {!minimal && (
           <div className="flex items-center space-x-3">
             {/* Home Link - Desktop */}
             <Link to="/landing" className="hidden md:block">
@@ -133,6 +139,7 @@ export function Navigation() {
               </DropdownMenu>
             </div>
           </div>
+          )}
         </div>
       </div>
     </nav>;
