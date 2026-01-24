@@ -60,89 +60,104 @@ export default function BookingCheckout() {
     setIsInitializing(true);
 
     try {
-      // Create customer first
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .upsert({
-          email: bookingData.contactInfo.email,
-          first_name: bookingData.contactInfo.firstName,
-          last_name: bookingData.contactInfo.lastName,
-          phone: bookingData.contactInfo.phone,
-          address_line1: bookingData.contactInfo.address1,
-          address_line2: bookingData.contactInfo.address2,
-          city: bookingData.contactInfo.city || bookingData.city,
-          state: bookingData.contactInfo.state || bookingData.state,
-          postal_code: bookingData.contactInfo.zip || bookingData.zipCode,
-        }, { onConflict: 'email' })
-        .select()
-        .single();
+      // For test mode, create customer/booking directly via edge function but skip Stripe
+      const customerData = {
+        email: bookingData.contactInfo.email,
+        firstName: bookingData.contactInfo.firstName,
+        lastName: bookingData.contactInfo.lastName,
+        phone: bookingData.contactInfo.phone,
+        address1: bookingData.contactInfo.address1,
+        address2: bookingData.contactInfo.address2,
+        city: bookingData.contactInfo.city || bookingData.city,
+        state: bookingData.contactInfo.state || bookingData.state,
+        zip: bookingData.contactInfo.zip || bookingData.zipCode,
+      };
 
-      if (customerError) throw customerError;
-      setCustomerId(customer.id);
+      const bookingPayload = {
+        serviceType: bookingData.serviceType,
+        frequency: bookingData.frequency,
+        sqftOrBedrooms: `${bookingData.bedrooms}bed/${bookingData.bathrooms}bath`,
+        homeSize: bookingData.homeSizeId,
+        zipCode: bookingData.zipCode,
+        estPrice: finalPrice,
+        depositAmount: finalDepositAmount,
+        basePrice: finalPrice,
+        balanceDue: balanceDue,
+        offerName: bookingData.offerName,
+        offerType: bookingData.offerType,
+        visitCount: bookingData.visitCount,
+        isRecurring: bookingData.offerType === '90_day_plan',
+        promoCode: bookingData.promoCode || null,
+        promoDiscountCents: bookingData.promoDiscount ? Math.round(bookingData.promoDiscount * 100) : 0,
+        pricingBreakdown: {
+          basePrice: bookingData.basePrice || 0,
+          promoCode: bookingData.promoCode,
+          promoDiscount: bookingData.promoDiscount || 0,
+          finalPrice,
+          depositAmount: finalDepositAmount,
+          balanceDue,
+          monthlyAmount: monthlyPayment,
+        },
+      };
 
-      // Create booking
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          customer_id: customer.id,
-          service_type: bookingData.serviceType,
-          frequency: bookingData.frequency,
-          sqft_or_bedrooms: `${bookingData.bedrooms}bed/${bookingData.bathrooms}bath`,
-          home_size: bookingData.homeSizeId,
-          zip_code: bookingData.zipCode,
-          est_price: finalPrice,
-          deposit_amount: finalDepositAmount,
-          base_price: finalPrice,
-          balance_due: balanceDue,
-          offer_name: bookingData.offerName,
-          offer_type: bookingData.offerType,
-          visit_count: bookingData.visitCount,
-          is_recurring: bookingData.offerType === '90_day_plan',
-          status: 'payment_pending',
-          payment_status: 'pending',
-          promo_code: bookingData.promoCode || null,
-          promo_discount_cents: bookingData.promoDiscount ? Math.round(bookingData.promoDiscount * 100) : 0,
-          pricing_breakdown: {
-            basePrice: bookingData.basePrice || 0,
-            promoCode: bookingData.promoCode,
-            promoDiscount: bookingData.promoDiscount || 0,
-            finalPrice,
-            depositAmount: finalDepositAmount,
-            balanceDue,
-            monthlyAmount: monthlyPayment,
-          },
-        })
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
-      setBookingId(booking.id);
-
-      // For test mode, skip Stripe setup
+      // For test mode, skip Stripe but still need booking
       if (isTestMode) {
-        console.log('🧪 TEST MODE: Skipping Stripe initialization');
+        console.log('🧪 TEST MODE: Creating booking via edge function');
+        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+          body: {
+            amount: finalDepositAmount,
+            customerEmail: customerData.email,
+            customerName: `${customerData.firstName} ${customerData.lastName}`,
+            customerPhone: customerData.phone,
+            customerData,
+            bookingData: bookingPayload,
+            paymentType: 'deposit',
+          },
+        });
+
+        if (error) throw new Error(error.message);
+        setCustomerId(data.customerId);
+        setBookingId(data.bookingId);
+        console.log('🧪 TEST MODE: Booking created, skipping Stripe');
         return;
       }
 
       // Create payment intent based on offer type
       if (bookingData.offerType === '90_day_plan') {
-        // Use the 90-day subscription function
+        // First create customer/booking, then use 90-day subscription function
+        const { data: initData, error: initError } = await supabase.functions.invoke('create-payment-intent', {
+          body: {
+            amount: finalDepositAmount,
+            customerEmail: customerData.email,
+            customerName: `${customerData.firstName} ${customerData.lastName}`,
+            customerPhone: customerData.phone,
+            customerData,
+            bookingData: bookingPayload,
+            paymentType: 'deposit',
+          },
+        });
+
+        if (initError) throw new Error(initError.message);
+        setCustomerId(initData.customerId);
+        setBookingId(initData.bookingId);
+
+        // Now use the 90-day subscription function
         const { data, error } = await supabase.functions.invoke('create-90day-subscription', {
           body: {
-            bookingId: booking.id,
-            customerId: customer.id,
-            customerEmail: bookingData.contactInfo.email,
-            customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-            customerPhone: bookingData.contactInfo.phone,
+            bookingId: initData.bookingId,
+            customerId: initData.customerId,
+            customerEmail: customerData.email,
+            customerName: `${customerData.firstName} ${customerData.lastName}`,
+            customerPhone: customerData.phone,
             depositAmount: finalDepositAmount,
             monthlyAmount: monthlyPayment,
             totalAmount: finalPrice,
             address: {
-              line1: bookingData.contactInfo.address1,
-              line2: bookingData.contactInfo.address2,
-              city: bookingData.contactInfo.city || bookingData.city,
-              state: bookingData.contactInfo.state || bookingData.state,
-              postal_code: bookingData.contactInfo.zip || bookingData.zipCode,
+              line1: customerData.address1,
+              line2: customerData.address2,
+              city: customerData.city,
+              state: customerData.state,
+              postal_code: customerData.zip,
             },
           },
         });
@@ -152,25 +167,28 @@ export default function BookingCheckout() {
 
         setClientSecret(data.clientSecret);
       } else {
-        // Use regular payment intent for one-time payments
+        // Use the unified edge function for customer/booking/payment creation
         const { data, error } = await supabase.functions.invoke('create-payment-intent', {
           body: {
             amount: finalDepositAmount,
-            customerEmail: bookingData.contactInfo.email,
-            customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-            bookingId: booking.id,
+            customerEmail: customerData.email,
+            customerName: `${customerData.firstName} ${customerData.lastName}`,
+            customerPhone: customerData.phone,
+            customerData,
+            bookingData: bookingPayload,
+            paymentType: 'deposit',
             metadata: {
-              booking_id: booking.id,
-              payment_type: 'deposit',
               offer_type: bookingData.offerType,
             },
           },
         });
 
         if (error) throw new Error(error.message);
-        if (!data?.client_secret) throw new Error('Failed to create payment intent');
+        if (!data?.clientSecret && !data?.client_secret) throw new Error('Failed to create payment intent');
 
-        setClientSecret(data.client_secret);
+        setCustomerId(data.customerId);
+        setBookingId(data.bookingId);
+        setClientSecret(data.clientSecret || data.client_secret);
       }
 
       console.log('✅ Payment initialized');
