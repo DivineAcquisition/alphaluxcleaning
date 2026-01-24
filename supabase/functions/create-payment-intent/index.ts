@@ -173,7 +173,7 @@ serve(async (req) => {
           offer_type: bookingData.offerType,
           visit_count: bookingData.visitCount,
           is_recurring: bookingData.isRecurring || false,
-          status: 'payment_pending',
+          status: 'pending',
           payment_status: 'pending',
           promo_code: bookingData.promoCode,
           promo_discount_cents: bookingData.promoDiscountCents || 0,
