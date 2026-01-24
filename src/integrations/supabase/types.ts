@@ -283,6 +283,7 @@ export type Database = {
           square_customer_id: string | null
           square_payment_id: string | null
           status: Database["public"]["Enums"]["booking_status"] | null
+          stripe_balance_invoice_id: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
           stripe_subscription_id: string | null
@@ -361,6 +362,7 @@ export type Database = {
           square_customer_id?: string | null
           square_payment_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_balance_invoice_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_subscription_id?: string | null
@@ -439,6 +441,7 @@ export type Database = {
           square_customer_id?: string | null
           square_payment_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_balance_invoice_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_subscription_id?: string | null

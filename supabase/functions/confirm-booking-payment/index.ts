@@ -85,9 +85,34 @@ serve(async (req) => {
       console.error("Failed to trigger webhook:", webhookError);
     }
 
+    // Send balance invoice if there's a remaining balance (non-blocking)
+    const balanceDue = booking.balance_due || 0;
+    if (balanceDue > 0) {
+      console.log("Balance due detected, sending invoice:", balanceDue);
+      try {
+        supabase.functions.invoke('send-balance-invoice', {
+          body: {
+            bookingId: booking.id,
+            daysUntilDue: 7, // Due 7 days after booking confirmation
+          }
+        }).then((result) => {
+          if (result.error) {
+            console.error("Balance invoice error:", result.error);
+          } else {
+            console.log("Balance invoice sent successfully:", result.data);
+          }
+        });
+      } catch (invoiceError) {
+        console.error("Failed to trigger balance invoice:", invoiceError);
+      }
+    } else {
+      console.log("No balance due, skipping invoice");
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
-      booking: booking
+      booking: booking,
+      balanceInvoiceTriggered: balanceDue > 0,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -327,7 +327,77 @@ async function handleInvoicePaid(invoice: any, supabaseClient: any) {
   logStep("Invoice paid", { invoiceId: invoice.id, subscription: invoice.subscription });
   
   const subscriptionId = invoice.subscription;
-  if (!subscriptionId) return;
+  const invoiceType = invoice.metadata?.invoice_type;
+  const bookingIdFromMeta = invoice.metadata?.booking_id;
+
+  // Handle one-time balance invoice (not subscription)
+  if (!subscriptionId && invoiceType === 'balance_due' && bookingIdFromMeta) {
+    logStep("Processing one-time balance invoice", { bookingId: bookingIdFromMeta, invoiceId: invoice.id });
+
+    const { data: booking, error: bookingError } = await supabaseClient
+      .from('bookings')
+      .select('*, customers(*)')
+      .eq('id', bookingIdFromMeta)
+      .single();
+
+    if (bookingError || !booking) {
+      logStep("Booking not found for balance invoice", { bookingId: bookingIdFromMeta });
+      return;
+    }
+
+    const amountPaid = invoice.amount_paid / 100;
+
+    // Record the payment
+    await supabaseClient
+      .from('payments')
+      .insert({
+        booking_id: booking.id,
+        amount: amountPaid,
+        status: 'succeeded',
+        stripe_payment_id: invoice.payment_intent || invoice.id,
+        charge_type: 'balance',
+        currency: 'usd',
+        invoice_id: invoice.id,
+      });
+
+    // Update booking - balance is now paid
+    await supabaseClient
+      .from('bookings')
+      .update({
+        balance_due: 0,
+        payment_status: 'fully_paid',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', booking.id);
+
+    // Send confirmation email
+    try {
+      await supabaseClient.functions.invoke('send-recurring-payment-confirmation', {
+        body: {
+          bookingId: booking.id,
+          customerId: booking.customer_id,
+          customerEmail: booking.customers?.email,
+          customerName: booking.customers?.name || `${booking.customers?.first_name || ''} ${booking.customers?.last_name || ''}`.trim(),
+          amountPaid,
+          paymentNumber: 'Final',
+          totalPayments: 'Balance',
+          remainingBalance: 0,
+        }
+      });
+      logStep("Balance payment confirmation sent", { bookingId: booking.id });
+    } catch (emailError) {
+      logStep("Failed to send balance payment confirmation", { error: emailError.message });
+    }
+
+    logStep("Balance invoice payment processed", { bookingId: booking.id, amountPaid });
+    return;
+  }
+
+  // Handle subscription invoice
+  if (!subscriptionId) {
+    logStep("Invoice has no subscription and is not a balance invoice, skipping", { invoiceId: invoice.id });
+    return;
+  }
 
   // Get booking by subscription ID
   const { data: bookings } = await supabaseClient
