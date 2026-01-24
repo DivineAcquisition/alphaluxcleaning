@@ -7,12 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Bump this when debugging deployment mismatches
+const FUNCTION_VERSION = "2026-01-24-01";
+
 const logStep = (step: string, data?: any) => {
   console.log(`🔄 [create-payment-intent] ${step}`, data ? JSON.stringify(data, null, 2) : '');
 };
 
 serve(async (req) => {
-  logStep("Request received", { method: req.method, url: req.url });
+  logStep("Request received", { method: req.method, url: req.url, version: FUNCTION_VERSION });
   
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -155,6 +158,9 @@ serve(async (req) => {
     // === STEP 2: Create Booking if data provided ===
     if (bookingData && customerId) {
       logStep("Creating booking with service role", { customerId });
+
+      // booking_status enum does NOT include 'payment_pending'
+      const safeBookingStatus: "pending" = "pending";
       
       const { data: newBooking, error: bookingError } = await supabaseClient
         .from('bookings')
@@ -173,7 +179,7 @@ serve(async (req) => {
           offer_type: bookingData.offerType,
           visit_count: bookingData.visitCount,
           is_recurring: bookingData.isRecurring || false,
-          status: 'pending',
+          status: safeBookingStatus,
           payment_status: 'pending',
           promo_code: bookingData.promoCode,
           promo_discount_cents: bookingData.promoDiscountCents || 0,
