@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, TrendingDown } from 'lucide-react';
 import { SavingsCalculator } from './SavingsCalculator';
-import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
+import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 import { RecurringManualEntryForm } from './RecurringManualEntryForm';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -175,7 +175,7 @@ export function RecurringSignupForm({ booking, lastCleanedTimeline, acknowledged
             </div>
           </div>
 
-          <EmbeddedSquarePaymentForm
+          <EmbeddedStripePaymentForm
             paymentAmount={0.50}
             fullAmount={recurringPrice}
             paymentType="deposit"

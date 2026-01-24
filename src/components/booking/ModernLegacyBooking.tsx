@@ -22,7 +22,7 @@ import { EnhancedServiceTypeCards } from './EnhancedServiceTypeCards';
 import { PropertyDetailsSelector } from './PropertyDetailsSelector';
 import { PricingSummarySticky } from './PricingSummarySticky';
 import { EnhancedSchedulingStep } from './EnhancedSchedulingStep';
-import { EmbeddedSquarePaymentForm } from './EmbeddedSquarePaymentForm';
+import { EmbeddedStripePaymentForm } from './EmbeddedStripePaymentForm';
 import { PromoCodeInput } from './PromoCodeInput';
 import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
@@ -577,13 +577,13 @@ export function ModernLegacyBooking() {
           </Button>
         </div>
         
-        <EmbeddedSquarePaymentForm 
+        <EmbeddedStripePaymentForm 
           paymentAmount={selectedPaymentOption === '25_percent_with_discount' ? depositAmount : bookingData.totalPrice}
           fullAmount={bookingData.totalPrice}
           paymentType={selectedPaymentOption === '25_percent_with_discount' ? "deposit" : "full"}
           customerEmail={bookingData.customerEmail}
           customerName={bookingData.customerName}
-          customerPhone={bookingData.customerEmail}
+          customerPhone={bookingData.contactNumber}
           onSuccess={async (paymentId) => {
         console.log('Payment successful, creating order');
         setIsProcessingPayment(true);
@@ -595,7 +595,7 @@ export function ModernLegacyBooking() {
           } = await supabase.functions.invoke('create-order-with-deposit', {
             body: {
               bookingData,
-              paymentIntentId: paymentIntentId || '',
+              paymentIntentId: paymentIntentId || paymentId,
               depositAmount: bookingData.totalPrice * 0.2,
               totalAmount: bookingData.totalPrice,
               customerEmail: bookingData.customerEmail,
@@ -604,7 +604,7 @@ export function ModernLegacyBooking() {
           });
           if (orderError || !orderResult?.orderId) {
             console.error('Error creating order:', orderError);
-            navigate(`/order-status?session_id=${paymentIntentId}`);
+            navigate(`/order-status?session_id=${paymentIntentId || paymentId}`);
             return;
           }
           console.log('Order created successfully:', orderResult.orderId);
