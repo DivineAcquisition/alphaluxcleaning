@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
+import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 import { PaymentFormSkeleton } from '@/components/ui/loading-skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -38,7 +38,7 @@ export const InstantPaymentForm: React.FC<InstantPaymentFormProps> = (props) => 
         </Card>
       }
     >
-      <EmbeddedSquarePaymentForm {...props} />
+      <EmbeddedStripePaymentForm {...props} />
     </Suspense>
   );
 };

@@ -24,7 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { squarePromise } from '@/lib/square';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
+import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 
 interface BookingTier {
   id: string;
@@ -1371,13 +1371,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                          )}
                         </>
                         ) : (
-                          // Square Payment Form
+                          // Stripe Payment Form
                           <div className="bg-white rounded-lg p-4 border border-green-200">
                             <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
                               <Lock className="h-4 w-4" />
-                              Secure Payment with Square
+                              Secure Payment with Stripe
                             </h4>
-                            <EmbeddedSquarePaymentForm
+                            <EmbeddedStripePaymentForm
                               paymentAmount={calculatePaymentAmount(pricing.total, selectedPaymentOption as any)}
                               fullAmount={pricing.total}
                               paymentType={selectedPaymentOption === 'deposit' ? 'deposit' : 'full'}

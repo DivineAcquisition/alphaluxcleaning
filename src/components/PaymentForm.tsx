@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { ReferralCodeDialog } from "@/components/ReferralCodeDialog";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { useNavigate } from "react-router-dom";
-import { EmbeddedSquarePaymentForm } from "@/components/booking/EmbeddedSquarePaymentForm";
+import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 import { usePreloadedPayment } from "@/hooks/usePreloadedPayment";
 import { navigateToOrderConfirmation } from "@/utils/routing-helpers";
 import { PaymentFormSkeleton } from "@/components/ui/loading-skeleton";
@@ -527,7 +527,7 @@ export function PaymentForm({
 
           {/* Show embedded form for payment */}
           {showEmbeddedForm && preloadedClientSecret && (
-            <EmbeddedSquarePaymentForm
+            <EmbeddedStripePaymentForm
               paymentAmount={
                 paymentType === 'deposit' 
                   ? Math.round(getFinalPrice() * 0.2 * 100) / 100
@@ -587,7 +587,7 @@ export function PaymentForm({
                       paymentType: 'deposit_20',
                       customerEmail: customerInfo.email,
                       customerName: customerInfo.name,
-                      squarePaymentId: paymentId
+                      stripePaymentId: paymentId
                     }
                   });
 

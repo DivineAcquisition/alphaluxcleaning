@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { EmbeddedSquarePaymentForm } from '@/components/booking/EmbeddedSquarePaymentForm';
+import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 
 export default function CustomerPortalBilling() {
   const [balance, setBalance] = useState(60);
@@ -180,7 +180,7 @@ export default function CustomerPortalBilling() {
                 )}
               </div>
 
-              <EmbeddedSquarePaymentForm
+              <EmbeddedStripePaymentForm
                 paymentAmount={balance + tipAmount}
                 fullAmount={balance + tipAmount}
                 paymentType="full"
