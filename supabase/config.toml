@@ -237,3 +237,7 @@ verify_jwt = false
 [functions.confirm-booking-payment]
 verify_jwt = false
 
+# Balance Invoice
+[functions.send-balance-invoice]
+verify_jwt = false
+
