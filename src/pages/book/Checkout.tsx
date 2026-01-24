@@ -210,17 +210,20 @@ export default function BookingCheckout() {
     if (!bookingId) return;
 
     try {
-      // Update booking with payment info
-      await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_status: 'deposit_paid',
-          stripe_payment_intent_id: paymentIntentId,
-          stripe_subscription_id: subscriptionId,
-          paid_at: new Date().toISOString(),
-        })
-        .eq('id', bookingId);
+      // Use edge function to update booking (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('confirm-booking-payment', {
+        body: {
+          bookingId,
+          paymentIntentId,
+          subscriptionId,
+          paymentStatus: 'deposit_paid',
+        },
+      });
+
+      if (error) {
+        console.error('Error confirming booking payment:', error);
+        throw new Error(error.message);
+      }
 
       // Mark booking as completed in partial_bookings (stops abandoned emails)
       markCompleted(bookingId);
@@ -259,15 +262,16 @@ export default function BookingCheckout() {
 
     setIsProcessing(true);
     try {
-      await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_status: 'deposit_paid',
-          stripe_payment_intent_id: 'test_' + Date.now(),
-          paid_at: new Date().toISOString(),
-        })
-        .eq('id', bookingId);
+      // Use edge function to confirm booking (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('confirm-booking-payment', {
+        body: {
+          bookingId,
+          paymentIntentId: 'test_' + Date.now(),
+          paymentStatus: 'deposit_paid',
+        },
+      });
+
+      if (error) throw new Error(error.message);
 
       // Mark booking as completed
       markCompleted(bookingId);

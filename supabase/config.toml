@@ -233,3 +233,7 @@ verify_jwt = false
 [functions.process-abandoned-checkouts]
 verify_jwt = false
 
+# Booking Payment Confirmation
+[functions.confirm-booking-payment]
+verify_jwt = false
+

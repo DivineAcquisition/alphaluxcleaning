@@ -209,7 +209,7 @@ serve(async (req) => {
         offer_type: offerDetails.type,
         visit_count: offerDetails.visits,
         is_recurring: bookingData.offerType === '90_day',
-        status: bookingData.paymentMode === 'instant' ? 'pending' : 'payment_pending',
+        status: 'pending',
         payment_status: 'pending',
         source: 'csr_phone',
         created_by_user_id: user.id,
