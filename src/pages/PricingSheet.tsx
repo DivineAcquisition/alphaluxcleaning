@@ -16,13 +16,26 @@ const formatPrice = (price: number, multiplier: number = 1): string => {
   return `$${adjusted.toLocaleString()}`;
 };
 
+const formatRecurringPrice = (basePrice: number, discount: number, multiplier: number = 1): string => {
+  if (basePrice === 0) return "Custom";
+  const discounted = Math.round(basePrice * (1 - discount) * multiplier);
+  return `$${discounted}`;
+};
+
+const formatMonthlyTotal = (basePrice: number, discount: number, cleansPerMonth: number, multiplier: number = 1): string => {
+  if (basePrice === 0) return "—";
+  const discounted = Math.round(basePrice * (1 - discount) * multiplier);
+  const monthly = discounted * cleansPerMonth;
+  return `$${monthly}/mo`;
+};
+
 const PricingSheet = () => {
   const handlePrint = () => {
     window.print();
   };
 
   const states = DEFAULT_PRICING_CONFIG.states;
-  const frequencies = DEFAULT_PRICING_CONFIG.frequencies;
+  const frequencies = DEFAULT_PRICING_CONFIG.frequencies.filter(f => f.id !== 'one_time');
   
   // Filter out the last tier (5000+ sqft) for separate handling
   const standardTiers = HOME_SIZE_RANGES.filter(range => !range.requiresEstimate);
@@ -30,7 +43,7 @@ const PricingSheet = () => {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Print Button - Hidden when printing */}
         <div className="print:hidden mb-6 flex justify-end">
           <Button onClick={handlePrint} className="gap-2">
@@ -48,11 +61,11 @@ const PricingSheet = () => {
             <p className="text-sm text-muted-foreground mt-2">📞 (972) 559-0223 | 🌐 alphaluxclean.com | ✉️ support@alphaluxclean.com</p>
           </div>
 
-          {/* State Pricing Tables */}
+          {/* State Pricing Tables - One-Time Services */}
           {states.map((state) => (
             <section key={state.code} className="mb-8 page-break-inside-avoid">
               <h2 className="text-xl font-bold text-primary mb-3 border-b border-accent pb-2">
-                {state.name} Pricing {state.multiplier > 1 && `(+${Math.round((state.multiplier - 1) * 100)}%)`}
+                {state.name} — One-Time Service Pricing {state.multiplier > 1 && `(+${Math.round((state.multiplier - 1) * 100)}%)`}
               </h2>
               
               <div className="overflow-x-auto">
@@ -62,7 +75,6 @@ const PricingSheet = () => {
                       <TableHead className="text-primary-foreground font-bold">Home Size</TableHead>
                       <TableHead className="text-primary-foreground font-bold text-center">Deep Clean</TableHead>
                       <TableHead className="text-primary-foreground font-bold text-center">Maintenance</TableHead>
-                      <TableHead className="text-primary-foreground font-bold text-center">90-Day Plan</TableHead>
                       <TableHead className="text-primary-foreground font-bold text-center">Move-In/Out</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -79,9 +91,6 @@ const PricingSheet = () => {
                         <TableCell className="text-center font-semibold">
                           {formatPrice(tier.maintenancePrice, state.multiplier)}
                         </TableCell>
-                        <TableCell className="text-center font-semibold text-primary">
-                          {formatPrice(tier.ninetyDayPrice, state.multiplier)}
-                        </TableCell>
                         <TableCell className="text-center font-semibold">
                           {formatPrice(tier.moveInOutPrice, state.multiplier)}
                         </TableCell>
@@ -93,7 +102,7 @@ const PricingSheet = () => {
                           <div>{customTier.label}</div>
                           <div className="text-xs text-muted-foreground">{customTier.bedroomRange}</div>
                         </TableCell>
-                        <TableCell className="text-center font-semibold text-muted-foreground" colSpan={4}>
+                        <TableCell className="text-center font-semibold text-muted-foreground" colSpan={3}>
                           Call for Custom Quote — (972) 559-0223
                         </TableCell>
                       </TableRow>
@@ -104,9 +113,93 @@ const PricingSheet = () => {
             </section>
           ))}
 
+          {/* Recurring Maintenance Pricing Tables */}
+          <div className="page-break-before mt-10">
+            <h2 className="text-2xl font-bold text-primary mb-4 text-center border-b-2 border-primary pb-3">
+              Recurring Maintenance Pricing
+            </h2>
+            <p className="text-center text-muted-foreground mb-6">
+              Save up to 15% with recurring service plans. Prices shown are per clean with monthly totals.
+            </p>
+
+            {states.map((state) => (
+              <section key={`recurring-${state.code}`} className="mb-8 page-break-inside-avoid">
+                <h3 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">
+                  {state.name} — Recurring Rates {state.multiplier > 1 && `(+${Math.round((state.multiplier - 1) * 100)}%)`}
+                </h3>
+                
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-primary hover:bg-primary">
+                        <TableHead className="text-primary-foreground font-bold">Home Size</TableHead>
+                        <TableHead className="text-primary-foreground font-bold text-center">
+                          <div>Weekly</div>
+                          <div className="text-xs font-normal opacity-90">15% off • 4×/mo</div>
+                        </TableHead>
+                        <TableHead className="text-primary-foreground font-bold text-center">
+                          <div>Bi-Weekly</div>
+                          <div className="text-xs font-normal opacity-90">10% off • 2×/mo</div>
+                        </TableHead>
+                        <TableHead className="text-primary-foreground font-bold text-center">
+                          <div>Monthly</div>
+                          <div className="text-xs font-normal opacity-90">5% off • 1×/mo</div>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {standardTiers.map((tier, index) => (
+                        <TableRow key={tier.id} className={index % 2 === 1 ? "bg-muted/30" : ""}>
+                          <TableCell className="font-medium">
+                            <div>{tier.label}</div>
+                            <div className="text-xs text-muted-foreground">{tier.bedroomRange}</div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="font-semibold text-primary">
+                              {formatRecurringPrice(tier.maintenancePrice, 0.15, state.multiplier)}/clean
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatMonthlyTotal(tier.maintenancePrice, 0.15, 4, state.multiplier)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="font-semibold text-primary">
+                              {formatRecurringPrice(tier.maintenancePrice, 0.10, state.multiplier)}/clean
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatMonthlyTotal(tier.maintenancePrice, 0.10, 2, state.multiplier)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="font-semibold text-primary">
+                              {formatRecurringPrice(tier.maintenancePrice, 0.05, state.multiplier)}/clean
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatMonthlyTotal(tier.maintenancePrice, 0.05, 1, state.multiplier)}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {customTier && (
+                        <TableRow className="bg-accent/20">
+                          <TableCell className="font-medium">
+                            <div>{customTier.label}</div>
+                          </TableCell>
+                          <TableCell className="text-center font-semibold text-muted-foreground" colSpan={3}>
+                            Call for Custom Quote — (972) 559-0223
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </section>
+            ))}
+          </div>
+
           {/* Two Column Layout: Discounts + Service Descriptions */}
           <div className="grid md:grid-cols-2 gap-6 mb-8 page-break-inside-avoid">
-            {/* Recurring Discounts */}
+            {/* Recurring Discounts Summary */}
             <section>
               <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Recurring Service Discounts</h2>
               <Table>
@@ -117,24 +210,28 @@ const PricingSheet = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {frequencies.map((freq) => (
-                    <TableRow key={freq.id}>
-                      <TableCell className="font-medium">
-                        {freq.name}
-                        {freq.cleansPerMonth && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({freq.cleansPerMonth}×/mo)
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {freq.id === 'one_time' 
-                          ? '$50 flat' 
-                          : `${Math.round((freq.discount || 0) * 100)}% off`
-                        }
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Weekly <span className="text-xs text-muted-foreground ml-1">(4×/mo)</span>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">15% off</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Bi-Weekly <span className="text-xs text-muted-foreground ml-1">(2×/mo)</span>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">10% off</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Monthly <span className="text-xs text-muted-foreground ml-1">(1×/mo)</span>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">5% off</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">One-Time</TableCell>
+                    <TableCell className="text-right font-semibold">$50 flat discount</TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </section>
@@ -144,20 +241,20 @@ const PricingSheet = () => {
               <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Service Descriptions</h2>
               <div className="space-y-3 text-sm">
                 <div>
-                  <h3 className="font-semibold text-primary">🧹 Tester Deep Clean</h3>
+                  <h3 className="font-semibold text-primary">🧹 Deep Clean (Tester)</h3>
                   <p className="text-muted-foreground">Initial deep cleaning, 4-hour service, 40-point checklist</p>
                 </div>
                 <div>
                   <h3 className="font-semibold text-primary">✨ Standard Maintenance</h3>
-                  <p className="text-muted-foreground">Regular upkeep cleaning, 2-hour service</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-primary">📅 90-Day Reset Plan</h3>
-                  <p className="text-muted-foreground">1 deep clean + 3 maintenance visits, bundled savings</p>
+                  <p className="text-muted-foreground">Regular upkeep cleaning, 2-hour service, ideal for recurring</p>
                 </div>
                 <div>
                   <h3 className="font-semibold text-primary">🏠 Move-In/Out Clean</h3>
                   <p className="text-muted-foreground">Comprehensive top-to-bottom clean for moving</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-primary">🔄 Recurring Service</h3>
+                  <p className="text-muted-foreground">Scheduled maintenance at weekly, bi-weekly, or monthly intervals</p>
                 </div>
               </div>
             </section>
@@ -171,7 +268,7 @@ const PricingSheet = () => {
               <div className="flex items-start gap-3">
                 <span className="text-lg">💳</span>
                 <div>
-                  <h3 className="font-semibold text-primary">Standard & Deep Clean</h3>
+                  <h3 className="font-semibold text-primary">All Services</h3>
                   <p className="text-sm text-muted-foreground">
                     {Math.round(DEPOSIT_PERCENTAGE * 100)}% deposit at booking • {Math.round((1 - DEPOSIT_PERCENTAGE) * 100)}% balance invoiced after service
                   </p>
@@ -179,11 +276,11 @@ const PricingSheet = () => {
               </div>
               
               <div className="flex items-start gap-3">
-                <span className="text-lg">📆</span>
+                <span className="text-lg">🔄</span>
                 <div>
-                  <h3 className="font-semibold text-primary">90-Day Plan</h3>
+                  <h3 className="font-semibold text-primary">Recurring Services</h3>
                   <p className="text-sm text-muted-foreground">
-                    Starter deposit at booking • Balance split into 3 convenient monthly payments
+                    Same deposit structure per visit • Automatic scheduling • Cancel or pause anytime
                   </p>
                 </div>
               </div>
@@ -199,24 +296,27 @@ const PricingSheet = () => {
                   <TableHead className="font-bold">Home Size</TableHead>
                   <TableHead className="font-bold text-center">Deep Clean</TableHead>
                   <TableHead className="font-bold text-center">Deposit (25%)</TableHead>
-                  <TableHead className="font-bold text-center">90-Day Plan</TableHead>
+                  <TableHead className="font-bold text-center">Bi-Weekly</TableHead>
                   <TableHead className="font-bold text-center">Deposit (25%)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {standardTiers.slice(0, 4).map((tier, index) => (
-                  <TableRow key={tier.id} className={index % 2 === 1 ? "bg-muted/30" : ""}>
-                    <TableCell className="font-medium">{tier.label}</TableCell>
-                    <TableCell className="text-center">${tier.deepPrice}</TableCell>
-                    <TableCell className="text-center font-semibold text-primary">
-                      ${Math.round(tier.deepPrice * DEPOSIT_PERCENTAGE)}
-                    </TableCell>
-                    <TableCell className="text-center">${tier.ninetyDayPrice}</TableCell>
-                    <TableCell className="text-center font-semibold text-primary">
-                      ${Math.round(tier.ninetyDayPrice * DEPOSIT_PERCENTAGE)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {standardTiers.slice(0, 4).map((tier, index) => {
+                  const biWeeklyPrice = Math.round(tier.maintenancePrice * 0.90);
+                  return (
+                    <TableRow key={tier.id} className={index % 2 === 1 ? "bg-muted/30" : ""}>
+                      <TableCell className="font-medium">{tier.label}</TableCell>
+                      <TableCell className="text-center">${tier.deepPrice}</TableCell>
+                      <TableCell className="text-center font-semibold text-primary">
+                        ${Math.round(tier.deepPrice * DEPOSIT_PERCENTAGE)}
+                      </TableCell>
+                      <TableCell className="text-center">${biWeeklyPrice}/clean</TableCell>
+                      <TableCell className="text-center font-semibold text-primary">
+                        ${Math.round(biWeeklyPrice * DEPOSIT_PERCENTAGE)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </section>
@@ -255,6 +355,10 @@ const PricingSheet = () => {
           
           .page-break-inside-avoid {
             break-inside: avoid;
+          }
+          
+          .page-break-before {
+            break-before: page;
           }
           
           section {
