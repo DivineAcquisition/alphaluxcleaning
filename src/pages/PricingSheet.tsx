@@ -1,10 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG, DEPOSIT_PERCENTAGE } from "@/lib/new-pricing-system";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+const formatPrice = (price: number, multiplier: number = 1): string => {
+  if (price === 0) return "Custom Quote";
+  const adjusted = Math.round(price * multiplier);
+  return `$${adjusted.toLocaleString()}`;
+};
 
 const PricingSheet = () => {
   const handlePrint = () => {
     window.print();
   };
+
+  const states = DEFAULT_PRICING_CONFIG.states;
+  const frequencies = DEFAULT_PRICING_CONFIG.frequencies;
+  
+  // Filter out the last tier (5000+ sqft) for separate handling
+  const standardTiers = HOME_SIZE_RANGES.filter(range => !range.requiresEstimate);
+  const customTier = HOME_SIZE_RANGES.find(range => range.requiresEstimate);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -18,230 +40,195 @@ const PricingSheet = () => {
         </div>
 
         {/* Printable Content */}
-        <div className="bg-white p-12 rounded-lg shadow-sm print:shadow-none">
+        <div className="bg-white p-12 rounded-lg shadow-sm print:shadow-none print:p-6">
           {/* Header */}
           <div className="text-center mb-8 pb-6 border-b-2 border-primary">
-            <h1 className="text-4xl font-bold text-primary mb-2">Alpha Lux Clean</h1>
-            <p className="text-xl text-muted-foreground">Professional Cleaning Services - Pricing Guide</p>
-            <p className="text-sm text-muted-foreground mt-2">972-559-0223 | alphaluxclean.com</p>
+            <h1 className="text-4xl font-bold text-primary mb-2">ALPHA LUX CLEAN</h1>
+            <p className="text-xl text-muted-foreground">Professional Cleaning Services — Pricing Guide</p>
+            <p className="text-sm text-muted-foreground mt-2">📞 (972) 559-0223 | 🌐 alphaluxclean.com | ✉️ support@alphaluxclean.com</p>
           </div>
 
-          {/* Base Pricing Table */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-primary mb-4 border-b border-accent pb-2">Base Pricing by Home Size</h2>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-primary text-primary-foreground">
-                    <th className="border border-border p-3 text-left">Home Size</th>
-                    <th className="border border-border p-3 text-right">Standard Clean</th>
-                    <th className="border border-border p-3 text-right">Deep Clean</th>
-                    <th className="border border-border p-3 text-right">90-Day Plan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-border p-3 font-medium">Studio/1BR (≤1,499 sqft)</td>
-                    <td className="border border-border p-3 text-right">$159</td>
-                    <td className="border border-border p-3 text-right">$199</td>
-                    <td className="border border-border p-3 text-right">$636</td>
-                  </tr>
-                  <tr className="bg-muted/30">
-                    <td className="border border-border p-3 font-medium">2BR (1,500-2,499 sqft)</td>
-                    <td className="border border-border p-3 text-right">$199</td>
-                    <td className="border border-border p-3 text-right">$249</td>
-                    <td className="border border-border p-3 text-right">$796</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-border p-3 font-medium">3BR (2,500-3,499 sqft)</td>
-                    <td className="border border-border p-3 text-right">$249</td>
-                    <td className="border border-border p-3 text-right">$299</td>
-                    <td className="border border-border p-3 text-right">$996</td>
-                  </tr>
-                  <tr className="bg-muted/30">
-                    <td className="border border-border p-3 font-medium">4BR (3,500-4,499 sqft)</td>
-                    <td className="border border-border p-3 text-right">$299</td>
-                    <td className="border border-border p-3 text-right">$349</td>
-                    <td className="border border-border p-3 text-right">$1,196</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-border p-3 font-medium">5BR+ (4,500+ sqft)</td>
-                    <td className="border border-border p-3 text-right">$349+</td>
-                    <td className="border border-border p-3 text-right">$399+</td>
-                    <td className="border border-border p-3 text-right">$1,396+</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Service Offerings */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-primary mb-4 border-b border-accent pb-2">Service Offerings</h2>
-            
-            <div className="space-y-6">
-              <div className="border border-border rounded-lg p-4">
-                <h3 className="text-lg font-bold text-primary mb-2">Standard Clean (One-Time)</h3>
-                <p className="text-sm text-muted-foreground mb-2">Perfect for regular maintenance</p>
-                <ul className="text-sm space-y-1 list-disc list-inside">
-                  <li>25% deposit at booking, 75% after service</li>
-                  <li>Professional 2-person crew</li>
-                  <li>Duration: 2 hours</li>
-                  <li>$50 flat discount for one-time bookings</li>
-                </ul>
+          {/* State Pricing Tables */}
+          {states.map((state) => (
+            <section key={state.code} className="mb-8 page-break-inside-avoid">
+              <h2 className="text-xl font-bold text-primary mb-3 border-b border-accent pb-2">
+                {state.name} Pricing {state.multiplier > 1 && `(+${Math.round((state.multiplier - 1) * 100)}%)`}
+              </h2>
+              
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-primary hover:bg-primary">
+                      <TableHead className="text-primary-foreground font-bold">Home Size</TableHead>
+                      <TableHead className="text-primary-foreground font-bold text-center">Deep Clean</TableHead>
+                      <TableHead className="text-primary-foreground font-bold text-center">Maintenance</TableHead>
+                      <TableHead className="text-primary-foreground font-bold text-center">90-Day Plan</TableHead>
+                      <TableHead className="text-primary-foreground font-bold text-center">Move-In/Out</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {standardTiers.map((tier, index) => (
+                      <TableRow key={tier.id} className={index % 2 === 1 ? "bg-muted/30" : ""}>
+                        <TableCell className="font-medium">
+                          <div>{tier.label}</div>
+                          <div className="text-xs text-muted-foreground">{tier.bedroomRange}</div>
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">
+                          {formatPrice(tier.deepPrice, state.multiplier)}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">
+                          {formatPrice(tier.maintenancePrice, state.multiplier)}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold text-primary">
+                          {formatPrice(tier.ninetyDayPrice, state.multiplier)}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold">
+                          {formatPrice(tier.moveInOutPrice, state.multiplier)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {customTier && (
+                      <TableRow className="bg-accent/20">
+                        <TableCell className="font-medium">
+                          <div>{customTier.label}</div>
+                          <div className="text-xs text-muted-foreground">{customTier.bedroomRange}</div>
+                        </TableCell>
+                        <TableCell className="text-center font-semibold text-muted-foreground" colSpan={4}>
+                          Call for Custom Quote — (972) 559-0223
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
+            </section>
+          ))}
 
-              <div className="border border-accent rounded-lg p-4 bg-accent/5">
-                <h3 className="text-lg font-bold text-primary mb-2">Tester Deep Clean</h3>
-                <p className="text-sm text-muted-foreground mb-2">Premium deep cleaning (≤1,499 sqft homes only)</p>
-                <ul className="text-sm space-y-1 list-disc list-inside">
-                  <li>25% deposit at booking, 75% after service</li>
-                  <li>Professional 2-person crew</li>
-                  <li>Duration: 4 hours</li>
-                  <li>40-point deep clean checklist</li>
-                  <li>Promo: DEEPCLEAN60 ($60 off)</li>
-                </ul>
-              </div>
+          {/* Two Column Layout: Discounts + Service Descriptions */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8 page-break-inside-avoid">
+            {/* Recurring Discounts */}
+            <section>
+              <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Recurring Service Discounts</h2>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-bold">Frequency</TableHead>
+                    <TableHead className="font-bold text-right">Discount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {frequencies.map((freq) => (
+                    <TableRow key={freq.id}>
+                      <TableCell className="font-medium">
+                        {freq.name}
+                        {freq.cleansPerMonth && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({freq.cleansPerMonth}×/mo)
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {freq.id === 'one_time' 
+                          ? '$50 flat' 
+                          : `${Math.round((freq.discount || 0) * 100)}% off`
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </section>
 
-              <div className="border border-primary rounded-lg p-4 bg-primary/5">
-                <h3 className="text-lg font-bold text-primary mb-2">90-Day Reset & Maintain Plan</h3>
-                <p className="text-sm text-muted-foreground mb-2">1 Deep Clean + 3 Standard Maintenance Visits</p>
-                <ul className="text-sm space-y-1 list-disc list-inside">
-                  <li>Deposit: 25% of monthly payment (~6.25% of total)</li>
-                  <li>Then 3 monthly payments of 25% of total each</li>
-                  <li>Example: $800 plan = $50 deposit + $200/mo × 3</li>
-                  <li>Professional 2-person crew</li>
-                  <li>Duration: 4 hours (first visit)</li>
-                </ul>
+            {/* Service Descriptions */}
+            <section>
+              <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Service Descriptions</h2>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <h3 className="font-semibold text-primary">🧹 Tester Deep Clean</h3>
+                  <p className="text-muted-foreground">Initial deep cleaning, 4-hour service, 40-point checklist</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-primary">✨ Standard Maintenance</h3>
+                  <p className="text-muted-foreground">Regular upkeep cleaning, 2-hour service</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-primary">📅 90-Day Reset Plan</h3>
+                  <p className="text-muted-foreground">1 deep clean + 3 maintenance visits, bundled savings</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-primary">🏠 Move-In/Out Clean</h3>
+                  <p className="text-muted-foreground">Comprehensive top-to-bottom clean for moving</p>
+                </div>
               </div>
-            </div>
-          </section>
-
-          {/* Discounts */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-primary mb-4 border-b border-accent pb-2">Discount Structure</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-3">Frequency Discounts</h3>
-                <table className="w-full text-sm border border-border">
-                  <tbody>
-                    <tr className="bg-muted/30">
-                      <td className="border border-border p-2">One-Time</td>
-                      <td className="border border-border p-2 text-right font-semibold">$50 flat</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-border p-2">Weekly</td>
-                      <td className="border border-border p-2 text-right font-semibold">15% off</td>
-                    </tr>
-                    <tr className="bg-muted/30">
-                      <td className="border border-border p-2">Bi-Weekly</td>
-                      <td className="border border-border p-2 text-right font-semibold">10% off</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-border p-2">Monthly</td>
-                      <td className="border border-border p-2 text-right font-semibold">5% off</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-primary mb-3">Promotional Codes</h3>
-                <table className="w-full text-sm border border-border">
-                  <tbody>
-                    <tr className="bg-muted/30">
-                      <td className="border border-border p-2 font-mono">DEEPCLEAN60</td>
-                      <td className="border border-border p-2 text-right font-semibold">$60 off</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-border p-2 font-mono">FIRST25</td>
-                      <td className="border border-border p-2 text-right font-semibold">25% off</td>
-                    </tr>
-                    <tr className="bg-muted/30">
-                      <td className="border border-border p-2 font-mono">SAVE10</td>
-                      <td className="border border-border p-2 text-right font-semibold">10% off</td>
-                    </tr>
-                    <tr>
-                      <td className="border border-border p-2">Referral</td>
-                      <td className="border border-border p-2 text-right font-semibold">15% off</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+            </section>
+          </div>
 
           {/* Payment Structure */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-primary mb-4 border-b border-accent pb-2">Payment Structure</h2>
+          <section className="mb-8 page-break-inside-avoid">
+            <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Payment Structure</h2>
             
-            <div className="bg-muted/20 rounded-lg p-6 space-y-4">
-              <div>
-                <h3 className="font-semibold text-primary mb-2">Standard & Deep Clean</h3>
-                <p className="text-sm">25% deposit at booking • 75% balance due after service completion</p>
+            <div className="bg-muted/20 rounded-lg p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="text-lg">💳</span>
+                <div>
+                  <h3 className="font-semibold text-primary">Standard & Deep Clean</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {Math.round(DEPOSIT_PERCENTAGE * 100)}% deposit at booking • {Math.round((1 - DEPOSIT_PERCENTAGE) * 100)}% balance invoiced after service
+                  </p>
+                </div>
               </div>
               
-              <div className="border-t border-border pt-4">
-                <h3 className="font-semibold text-primary mb-2">90-Day Plan Payment Schedule</h3>
-                <ul className="text-sm space-y-1 list-disc list-inside">
-                  <li><strong>Today:</strong> Starter deposit (25% of monthly payment)</li>
-                  <li><strong>After First Service:</strong> Remaining balance + Month 1 payment</li>
-                  <li><strong>Month 2:</strong> 25% of total plan price</li>
-                  <li><strong>Month 3:</strong> 25% of total plan price</li>
-                </ul>
+              <div className="flex items-start gap-3">
+                <span className="text-lg">📆</span>
+                <div>
+                  <h3 className="font-semibold text-primary">90-Day Plan</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Starter deposit at booking • Balance split into 3 convenient monthly payments
+                  </p>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Deposit Examples */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-primary mb-4 border-b border-accent pb-2">Deposit Examples</h2>
-            
-            <table className="w-full text-sm border border-border">
-              <thead>
-                <tr className="bg-primary text-primary-foreground">
-                  <th className="border border-border p-3 text-left">Service</th>
-                  <th className="border border-border p-3 text-left">Home Size</th>
-                  <th className="border border-border p-3 text-right">Total Price</th>
-                  <th className="border border-border p-3 text-right">Deposit (25%)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-border p-2">Standard Clean</td>
-                  <td className="border border-border p-2">2BR</td>
-                  <td className="border border-border p-2 text-right">$199</td>
-                  <td className="border border-border p-2 text-right font-semibold">$50</td>
-                </tr>
-                <tr className="bg-muted/30">
-                  <td className="border border-border p-2">Deep Clean</td>
-                  <td className="border border-border p-2">Studio/1BR</td>
-                  <td className="border border-border p-2 text-right">$199</td>
-                  <td className="border border-border p-2 text-right font-semibold">$50</td>
-                </tr>
-                <tr>
-                  <td className="border border-border p-2">90-Day Plan</td>
-                  <td className="border border-border p-2">2BR</td>
-                  <td className="border border-border p-2 text-right">$796</td>
-                  <td className="border border-border p-2 text-right font-semibold">$50</td>
-                </tr>
-                <tr className="bg-muted/30">
-                  <td className="border border-border p-2">90-Day Plan</td>
-                  <td className="border border-border p-2">4BR</td>
-                  <td className="border border-border p-2 text-right">$1,196</td>
-                  <td className="border border-border p-2 text-right font-semibold">$75</td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Quick Reference - Deposit Examples */}
+          <section className="mb-8 page-break-inside-avoid">
+            <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Quick Reference — Deposit Examples (Texas)</h2>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-bold">Home Size</TableHead>
+                  <TableHead className="font-bold text-center">Deep Clean</TableHead>
+                  <TableHead className="font-bold text-center">Deposit (25%)</TableHead>
+                  <TableHead className="font-bold text-center">90-Day Plan</TableHead>
+                  <TableHead className="font-bold text-center">Deposit (25%)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {standardTiers.slice(0, 4).map((tier, index) => (
+                  <TableRow key={tier.id} className={index % 2 === 1 ? "bg-muted/30" : ""}>
+                    <TableCell className="font-medium">{tier.label}</TableCell>
+                    <TableCell className="text-center">${tier.deepPrice}</TableCell>
+                    <TableCell className="text-center font-semibold text-primary">
+                      ${Math.round(tier.deepPrice * DEPOSIT_PERCENTAGE)}
+                    </TableCell>
+                    <TableCell className="text-center">${tier.ninetyDayPrice}</TableCell>
+                    <TableCell className="text-center font-semibold text-primary">
+                      ${Math.round(tier.ninetyDayPrice * DEPOSIT_PERCENTAGE)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </section>
 
           {/* Footer */}
-          <div className="text-center pt-6 border-t border-border">
-            <p className="text-sm text-muted-foreground mb-1">For questions or custom quotes, contact us:</p>
-            <p className="text-base font-semibold text-primary">📞 972-559-0223 | 📧 support@alphaluxclean.com</p>
-            <p className="text-xs text-muted-foreground mt-2">Prices effective as of {new Date().toLocaleDateString()}. Subject to change.</p>
+          <div className="text-center pt-6 border-t-2 border-primary">
+            <p className="text-sm text-muted-foreground mb-2">For questions or custom quotes, contact us:</p>
+            <p className="text-lg font-bold text-primary">📞 (972) 559-0223 | ✉️ support@alphaluxclean.com</p>
+            <p className="text-xs text-muted-foreground mt-3">
+              Prices effective as of {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. 
+              Subject to change. All services include a professional 2-person cleaning crew.
+            </p>
           </div>
         </div>
       </div>
@@ -254,7 +241,8 @@ const PricingSheet = () => {
           }
           
           @page {
-            margin: 0.5in;
+            margin: 0.4in;
+            size: letter;
           }
           
           .print\\:hidden {
@@ -263,6 +251,14 @@ const PricingSheet = () => {
           
           .print\\:shadow-none {
             box-shadow: none !important;
+          }
+          
+          .page-break-inside-avoid {
+            break-inside: avoid;
+          }
+          
+          section {
+            break-inside: avoid;
           }
         }
       `}</style>
