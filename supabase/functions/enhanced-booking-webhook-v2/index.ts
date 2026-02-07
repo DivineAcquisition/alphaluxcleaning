@@ -449,7 +449,48 @@ serve(async (req) => {
     }
 
     const results = [];
-    console.log(`📡 Found ${webhookConfigs.length} active webhook configuration(s)`);
+    
+    // HARDCODED GoHighLevel booking webhook - always send booking data here
+    const GHL_BOOKING_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/Lvvq87zxxbYFnaTEklYX/webhook-trigger/23d225e3-f4d6-4e0e-abf1-95c385b173ba';
+    
+    console.log(`📡 Sending to GoHighLevel booking webhook + ${webhookConfigs.length} configured webhook(s)`);
+    
+    // Send to GoHighLevel first
+    try {
+      const ghlStartTime = Date.now();
+      console.log('🚀 Sending booking data to GoHighLevel...');
+      
+      const ghlResponse = await fetch(GHL_BOOKING_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'AlphaLux-BookingWebhook/2.0'
+        },
+        body: payloadString
+      });
+      
+      const ghlResponseTime = Date.now() - ghlStartTime;
+      const ghlResponseText = await ghlResponse.text();
+      
+      console.log(`${ghlResponse.ok ? '✅' : '❌'} GoHighLevel: ${ghlResponse.status} (${ghlResponseTime}ms)`);
+      
+      results.push({
+        webhook: 'GoHighLevel_Bookings',
+        url: GHL_BOOKING_WEBHOOK_URL,
+        success: ghlResponse.ok,
+        status_code: ghlResponse.status,
+        response_time: ghlResponseTime,
+        response_preview: ghlResponseText.slice(0, 200)
+      });
+    } catch (ghlError) {
+      console.error('❌ GoHighLevel webhook failed:', ghlError.message);
+      results.push({
+        webhook: 'GoHighLevel_Bookings',
+        url: GHL_BOOKING_WEBHOOK_URL,
+        success: false,
+        error: ghlError.message
+      });
+    }
 
     // Send webhook to each configured endpoint
     for (const config of webhookConfigs) {
