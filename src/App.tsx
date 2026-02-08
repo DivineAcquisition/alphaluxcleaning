@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from 'sonner';
-import { useSquarePreloader } from '@/hooks/useSquarePreloader';
 import { CheckCircle } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { BookingProvider } from '@/contexts/BookingContext';
@@ -73,9 +72,6 @@ import React from 'react';
 const queryClient = new QueryClient();
 
 function App() {
-  // Preload Square for better performance
-  useSquarePreloader();
-  
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
