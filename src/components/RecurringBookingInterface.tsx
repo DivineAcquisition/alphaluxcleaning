@@ -22,7 +22,6 @@ import { ReferralCodeDialog } from '@/components/ReferralCodeDialog';
 import { ReferralCreditsDisplay } from '@/components/booking/ReferralCreditsDisplay';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { squarePromise } from '@/lib/square';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePaymentForm';
 
