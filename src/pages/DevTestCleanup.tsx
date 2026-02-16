@@ -24,7 +24,7 @@ interface TestBooking {
   offer_name: string;
   est_price: number;
   deposit_amount: number;
-  square_payment_id: string;
+  stripe_payment_intent_id: string;
   payment_status: string;
 }
 
@@ -44,8 +44,8 @@ export default function DevTestCleanup() {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, created_at, offer_name, est_price, deposit_amount, square_payment_id, payment_status')
-        .or('square_payment_id.like.test_%,square_payment_id.eq.test-mode-payment')
+        .select('id, created_at, offer_name, est_price, deposit_amount, stripe_payment_intent_id, payment_status')
+        .or('stripe_payment_intent_id.like.test_%,stripe_payment_intent_id.eq.test-mode-payment')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -85,7 +85,7 @@ export default function DevTestCleanup() {
       const { error } = await supabase
         .from('bookings')
         .delete()
-        .or('square_payment_id.like.test_%,square_payment_id.eq.test-mode-payment');
+        .or('stripe_payment_intent_id.like.test_%,stripe_payment_intent_id.eq.test-mode-payment');
 
       if (error) throw error;
       
@@ -188,7 +188,7 @@ export default function DevTestCleanup() {
                     </div>
                     <div>
                       <p className="text-muted-foreground mb-1">Payment ID</p>
-                      <p className="font-mono text-xs">{booking.square_payment_id}</p>
+                      <p className="font-mono text-xs">{booking.stripe_payment_intent_id}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground mb-1">Status</p>

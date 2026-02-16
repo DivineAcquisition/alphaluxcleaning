@@ -60,7 +60,7 @@ export default function PaymentLinkPage() {
           status: 'confirmed',
           payment_status: 'paid',
           paid_at: new Date().toISOString(),
-          square_payment_id: paymentId,
+          stripe_payment_intent_id: paymentId,
         })
         .eq('id', bookingId);
 
@@ -169,7 +169,7 @@ export default function PaymentLinkPage() {
         />
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>🔒 Secure payment powered by Square</p>
+          <p>🔒 Secure payment powered by Stripe</p>
           <p className="mt-2">Questions? Call us at (972) 559-0223</p>
         </div>
       </div>

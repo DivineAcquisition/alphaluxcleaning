@@ -160,7 +160,7 @@ export default function DemoBooking() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <span>No real payment processing - Square payment form bypassed</span>
+                <span>No real payment processing - Stripe payment form bypassed</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
@@ -172,7 +172,7 @@ export default function DemoBooking() {
               </li>
               <li className="flex items-start gap-2">
                 <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <span>Test bookings tagged with square_payment_id starting with "test_"</span>
+                <span>Test bookings tagged with stripe_payment_intent_id starting with "test_"</span>
               </li>
               <li className="flex items-start gap-2">
                 <Check className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
