@@ -26,7 +26,7 @@ export function TestModeBanner() {
       const { count } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .or('square_payment_id.like.test_%,square_payment_id.eq.test-mode-payment');
+        .or('stripe_payment_intent_id.like.test_%,stripe_payment_intent_id.eq.test-mode-payment');
       
       setTestBookingCount(count || 0);
     } catch (error) {

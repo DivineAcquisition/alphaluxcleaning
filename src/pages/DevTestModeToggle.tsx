@@ -29,7 +29,7 @@ export default function DevTestModeToggle() {
       const { count: totalCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .or('square_payment_id.like.test_%,square_payment_id.eq.test-mode-payment');
+        .or('stripe_payment_intent_id.like.test_%,stripe_payment_intent_id.eq.test-mode-payment');
       
       setTestBookingCount(totalCount || 0);
 
@@ -40,7 +40,7 @@ export default function DevTestModeToggle() {
       const { count: todayCount } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
-        .or('square_payment_id.like.test_%,square_payment_id.eq.test-mode-payment')
+        .or('stripe_payment_intent_id.like.test_%,stripe_payment_intent_id.eq.test-mode-payment')
         .gte('created_at', today.toISOString());
       
       setTodayBookingCount(todayCount || 0);
@@ -119,7 +119,7 @@ export default function DevTestModeToggle() {
                     <strong>Test Mode ENABLED ⚠️</strong>
                     <p className="mt-1 text-sm">
                       All bookings will be created WITHOUT processing payments. 
-                      Square payment forms will not appear. This is for testing only.
+                      Stripe payment forms will not appear. This is for testing only.
                     </p>
                   </AlertDescription>
                 </>
@@ -129,7 +129,7 @@ export default function DevTestModeToggle() {
                   <AlertDescription>
                     <strong>Test Mode DISABLED ✅</strong>
                     <p className="mt-1 text-sm">
-                      Normal operation mode. All payments will be processed through Square.
+                      Normal operation mode. All payments will be processed through Stripe.
                     </p>
                   </AlertDescription>
                 </>
@@ -215,12 +215,12 @@ export default function DevTestModeToggle() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              <strong>When ENABLED:</strong> Bookings are created with status "confirmed" 
-              without processing any payment through Square. The Square payment form will not load.
+               <strong>When ENABLED:</strong> Bookings are created with status "confirmed" 
+               without processing any payment through Stripe. The Stripe payment form will not load.
             </p>
             <p>
-              <strong>When DISABLED:</strong> Normal operation - all payments are processed 
-              through Square and bookings require valid payment.
+               <strong>When DISABLED:</strong> Normal operation - all payments are processed 
+               through Stripe and bookings require valid payment.
             </p>
             <p className="text-xs mt-4 p-3 bg-muted rounded">
               ⚠️ <strong>Important:</strong> Always disable test mode in production! 

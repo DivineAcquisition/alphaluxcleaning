@@ -30,7 +30,7 @@ export function usePaymentVerification(bookingId: string | null): PaymentVerific
       try {
         const { data, error } = await supabase
           .from('bookings')
-          .select('square_payment_id, status, paid_at')
+          .select('stripe_payment_intent_id, status, paid_at')
           .eq('id', bookingId)
           .single();
         
@@ -39,7 +39,7 @@ export function usePaymentVerification(bookingId: string | null): PaymentVerific
           setVerified(false);
           setDetails(null);
         } else {
-          const hasPaymentId = !!data?.square_payment_id;
+          const hasPaymentId = !!data?.stripe_payment_intent_id;
           const isConfirmed = data?.status === 'confirmed';
           
           setDetails({
@@ -49,14 +49,14 @@ export function usePaymentVerification(bookingId: string | null): PaymentVerific
           });
           
           // Booking is verified if it has a payment ID or is in test mode
-          setVerified(hasPaymentId || data?.square_payment_id?.startsWith('test_'));
+          setVerified(hasPaymentId || data?.stripe_payment_intent_id?.startsWith('test_'));
           
           // Log warning if booking is confirmed without payment ID
           if (isConfirmed && !hasPaymentId) {
             console.warn('⚠️ PAYMENT INTEGRITY ISSUE: Booking confirmed without payment ID', {
               bookingId,
               status: data?.status,
-              square_payment_id: data?.square_payment_id,
+              stripe_payment_intent_id: data?.stripe_payment_intent_id,
             });
           }
         }
