@@ -12,11 +12,10 @@ import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseC
 import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
-// NEW YEAR SPECIAL PRICING
-const NEW_YEAR_PROMO = {
-  deepCleanDiscount: 50, // $50 off first deep clean
-  recurringDiscount: 0.15, // 15% off recurring service
-  expirationDate: '2025-01-07',
+// NEW CUSTOMER SPECIAL PRICING
+const PROMO = {
+  deepCleanDiscount: 0.20, // 20% off first deep clean
+  recurringDiscount: 0.10, // 10% off recurring service
 };
 
 export default function BookingOffer() {
@@ -34,11 +33,11 @@ export default function BookingOffer() {
   const baseDeepPrice = selectedHomeSize?.deepPrice || 250;
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
   
-  // NEW YEAR SPECIAL: $50 off deep clean
-  const deepCleanPrice = baseDeepPrice - NEW_YEAR_PROMO.deepCleanDiscount;
+  // NEW CUSTOMER SPECIAL: 20% off deep clean
+  const deepCleanPrice = Math.round(baseDeepPrice * (1 - PROMO.deepCleanDiscount));
   
-  // NEW YEAR SPECIAL: 15% off recurring maintenance
-  const recurringPrice = Math.round(maintenancePrice * (1 - NEW_YEAR_PROMO.recurringDiscount));
+  // NEW CUSTOMER SPECIAL: 10% off recurring maintenance
+  const recurringPrice = Math.round(maintenancePrice * (1 - PROMO.recurringDiscount));
   const recurringSavings = maintenancePrice - recurringPrice;
 
   useEffect(() => {
@@ -112,8 +111,8 @@ export default function BookingOffer() {
       isRecurring,
       serviceType,
       frequency,
-      promoCode: 'NEWYEAR2025',
-      promoDiscount: offerType === 'deep_clean' ? NEW_YEAR_PROMO.deepCleanDiscount : recurringSavings
+      promoCode: 'WELCOME2025',
+      promoDiscount: offerType === 'deep_clean' ? (baseDeepPrice - deepCleanPrice) : recurringSavings
     });
 
     // Track progress for abandoned checkout
@@ -131,24 +130,24 @@ export default function BookingOffer() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky New Year Special Banner */}
-      <div className="sticky top-0 z-50 w-full bg-[hsl(220,50%,15%)] border-b-2 border-[hsl(45,93%,47%)]">
+      {/* Sticky New Customer Special Banner */}
+      <div className="sticky top-0 z-50 w-full bg-primary border-b-2 border-primary/80">
         <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-center md:text-left">
-              <Gift className="h-6 w-6 text-[hsl(45,93%,55%)] shrink-0 hidden md:block" />
+              <Gift className="h-6 w-6 text-primary-foreground shrink-0 hidden md:block" />
               <div>
-                <p className="text-[hsl(45,93%,55%)] font-bold text-sm md:text-base">
-                  New Year Special: $50 Off Your First Clean + 15% Off Recurring Service
+                <p className="text-primary-foreground font-bold text-sm md:text-base">
+                  New Customer Special: 20% OFF Your First Deep Clean + 10% OFF Recurring
                 </p>
-                <p className="text-[hsl(45,93%,75%)] text-xs md:text-sm">
-                  Book by Jan 7th to claim your discount
+                <p className="text-primary-foreground/75 text-xs md:text-sm">
+                  First-time customers only — claim your discount today
                 </p>
               </div>
             </div>
             <Button 
               onClick={() => document.getElementById('offers-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-[hsl(45,93%,47%)] hover:bg-[hsl(45,93%,40%)] text-[hsl(220,50%,15%)] font-bold px-6 whitespace-nowrap"
+              className="bg-primary-foreground hover:bg-primary-foreground/90 text-primary font-bold px-6 whitespace-nowrap"
             >
               Claim My Discount
             </Button>
@@ -160,15 +159,15 @@ export default function BookingOffer() {
 
       <div className="max-w-4xl mx-auto px-4 py-8 md:py-12" id="offers-section">
         <div className="text-center mb-8 md:mb-12">
-          <Badge className="mb-4 bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-4 py-1.5 text-sm font-bold">
+          <Badge className="mb-4 bg-primary/10 text-primary px-4 py-1.5 text-sm font-bold">
             <Sparkles className="h-4 w-4 mr-2" />
-            New Year Special — Ends Jan 7th
+            New Customer Special
           </Badge>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Start 2025 With a Spotless Home
+            Your First Clean, for Less
           </h1>
           <p className="text-lg text-muted-foreground">
-            Choose your service and lock in your New Year savings.
+            Choose your service and lock in your new customer savings.
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -176,7 +175,7 @@ export default function BookingOffer() {
         </div>
 
         <div className="grid gap-6 md:gap-8 md:grid-cols-2">
-          {/* Deep Clean - One Time with $50 Off */}
+          {/* Deep Clean - One Time with 20% Off */}
           <Card 
             className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
               selectedOffer === 'deep_clean' 
@@ -185,16 +184,16 @@ export default function BookingOffer() {
             }`} 
             onClick={() => handleSelectOffer(
               'deep_clean', 
-              'Deep Clean — New Year Special', 
+              'Deep Clean — New Customer Special', 
               deepCleanPrice, 
               1, 
               false
             )}
           >
             <div className="mb-4">
-              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-3 py-1 font-bold">
+              <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
                 <Gift className="h-3 w-3 mr-1.5" />
-                $50 Off — New Year Special
+                20% Off — New Customer Special
               </Badge>
             </div>
 
@@ -260,7 +259,7 @@ export default function BookingOffer() {
             </div>
           </Card>
 
-          {/* Recurring Maintenance - 15% Off */}
+          {/* Recurring Maintenance - 10% Off */}
           <Card 
             className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
               selectedOffer === 'recurring' 
@@ -269,7 +268,7 @@ export default function BookingOffer() {
             }`} 
             onClick={() => handleSelectOffer(
               'recurring', 
-              'Recurring Maintenance — 15% Off', 
+              'Recurring Maintenance — 10% Off', 
               recurringPrice, 
               1, 
               true
@@ -281,9 +280,9 @@ export default function BookingOffer() {
             </div>
 
             <div className="mb-4 mt-2">
-              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] px-3 py-1 font-bold">
+              <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
                 <CalendarCheck className="h-3 w-3 mr-1.5" />
-                15% Off — Recurring Service
+                10% Off — Recurring Service
               </Badge>
             </div>
 
@@ -302,7 +301,7 @@ export default function BookingOffer() {
                 </span>
                 <span className="text-lg text-muted-foreground">/visit</span>
               </div>
-              <p className="text-sm text-[hsl(45,93%,40%)] font-medium mt-2">
+              <p className="text-sm text-primary font-medium mt-2">
                 You save ${recurringSavings} every visit!
               </p>
               <p className="text-sm text-muted-foreground mt-1">

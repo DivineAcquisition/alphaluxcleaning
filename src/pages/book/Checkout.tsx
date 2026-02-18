@@ -361,18 +361,18 @@ export default function BookingCheckout() {
       
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* New Year Special Banner */}
-        <Card className="mb-6 border-[hsl(45,93%,47%)] bg-[hsl(220,50%,15%)] shadow-lg">
+         <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
           <div className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-              <Badge className="bg-[hsl(45,93%,47%)] text-[hsl(220,50%,15%)] text-sm md:text-base px-3 md:px-4 py-1.5 whitespace-nowrap font-bold">
-                🎉 New Year Special
+              <Badge className="bg-primary text-primary-foreground text-sm md:text-base px-3 md:px-4 py-1.5 whitespace-nowrap font-bold">
+                ✨ New Customer Special
               </Badge>
               <div>
-                <h2 className="font-bold text-base md:text-lg text-[hsl(45,93%,55%)] mb-1">
-                  $50 Off Deep Clean + 15% Off Recurring Service
+                <h2 className="font-bold text-base md:text-lg text-foreground mb-1">
+                  20% Off Deep Clean + 10% Off Recurring Service
                 </h2>
-                <p className="text-xs md:text-sm text-[hsl(45,93%,75%)]">
-                  Book by Jan 7th • 48-Hour Re-Clean Guarantee • Insured & Bonded
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  48-Hour Re-Clean Guarantee • Insured & Bonded
                 </p>
               </div>
             </div>
@@ -381,7 +381,7 @@ export default function BookingCheckout() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            Your New Year Discount is Applied!
+            Your Discount is Applied!
           </h1>
           <p className="text-lg text-muted-foreground">
             Pay only 25% today to reserve your spot. No hidden fees, no contracts.
@@ -416,12 +416,12 @@ export default function BookingCheckout() {
                     <span className="text-muted-foreground">Original Price</span>
                     <span className="line-through text-muted-foreground">${bookingData.basePrice?.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm bg-[hsl(45,93%,47%)]/10 p-2 rounded-lg border border-[hsl(45,93%,47%)]/30">
-                    <span className="flex items-center gap-1 text-[hsl(45,80%,40%)] font-semibold">
-                      <Tag className="w-4 h-4" />
-                      🎉 New Year Special ({bookingData.offerType === 'recurring' ? '15% Off' : '$50 Off'})
-                    </span>
-                    <span className="text-[hsl(45,80%,40%)] font-bold">-${bookingData.promoDiscount.toFixed(2)}</span>
+                   <div className="flex justify-between text-sm bg-primary/10 p-2 rounded-lg border border-primary/30">
+                     <span className="flex items-center gap-1 text-primary font-semibold">
+                       <Tag className="w-4 h-4" />
+                       ✨ New Customer Special ({bookingData.offerType === 'recurring' ? '10% Off' : '20% Off'})
+                     </span>
+                     <span className="text-primary font-bold">-${bookingData.promoDiscount.toFixed(2)}</span>
                   </div>
                   <Separator />
                 </>
