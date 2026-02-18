@@ -1,93 +1,85 @@
 
 
-# Deep Check: Post-Square Cleanup and Payment Flow Fixes
+# Replace Expired New Year Promo with "New Customer Special"
 
-## Issues Found
+## What's Changing
 
-### Critical Issues (Affect Live Payments)
+The New Year Special ($50 off deep clean + 15% off recurring, "Book by Jan 7th") is expired and needs to be replaced across the entire booking funnel and pricing page. We'll replace it with an evergreen **"New Customer Special"** promotion that aligns with the existing discount structure already used elsewhere in the app:
 
-**1. PaymentLinkPage.tsx - Writes to wrong column and shows wrong branding**
-- Line 63: Writes `square_payment_id: paymentId` instead of `stripe_payment_intent_id`
-- Line 172: Shows "Secure payment powered by Square" instead of Stripe
-- This means payments from payment links won't be properly tracked
+- **20% OFF** first Deep Clean (one-time)
+- **10% OFF** first Standard/Recurring Clean
 
-**2. usePaymentVerification.ts - Checks wrong column**
-- Queries `square_payment_id` to verify payment status instead of checking `stripe_payment_intent_id`
-- This means verified bookings paid via Stripe could show as "unverified"
-
-### Non-Critical Issues (Dev/Test Tools - Still Reference Square)
-
-**3. DevTestCleanup.tsx** - Queries `square_payment_id` for test bookings; should also check `stripe_payment_intent_id` starting with "test_"
-
-**4. DevTestModeToggle.tsx** - Same issue as above
-
-**5. TestModeBanner.tsx** - Same issue as above
-
-**6. DemoBooking.tsx** - Text says "square_payment_id starting with test_" (cosmetic)
-
-### Legacy Edge Functions (Unused but Deployed)
-
-**7. `create-square-payment` and `create-square-customer` edge functions** still exist in the codebase. They're unused but add confusion.
-
-**8. `get-square-config` edge function** - still deployed (we saw shutdown logs)
-
-**9. `square-webhook` edge function** - still deployed
-
-### Stripe Webhook - Minor Legacy Reference
-
-**10. `stripe-webhook/index.ts`** - Still has `create90DaySubscription` logic (lines 194-283). Since 90-Day Plan is deprecated per earlier changes, this is dead code but won't cause errors.
+This matches the discounts already shown on the landing page hero section and in other components like `PriceTeaserBanner`, `PricingSummaryCard`, and `PromotionalBanner`.
 
 ---
 
-## Proposed Fixes
+## Files to Update
 
-### File: `src/pages/PaymentLinkPage.tsx`
-- Change `square_payment_id: paymentId` to `stripe_payment_intent_id: paymentId`
-- Change "Secure payment powered by Square" to "Secure payment powered by Stripe"
+### 1. `src/pages/book/Zip.tsx` (Booking Entry Page)
+- Replace headline "New Year Special: $50 Off Your First Clean + 15% Off Recurring Service" with "New Customer Special: 20% OFF Your First Deep Clean"
+- Remove "Book by Jan 7th" deadline text
+- Replace "claim your New Year discount" with "claim your new customer discount"
 
-### File: `src/hooks/usePaymentVerification.ts`
-- Change query from `square_payment_id` to `stripe_payment_intent_id`
-- Update all variable references and log messages from "square" to "stripe"
+### 2. `src/pages/book/Offer.tsx` (Service Selection Page)
+- Replace `NEW_YEAR_PROMO` config with a new `PROMO` config:
+  - Deep clean: 20% off (calculated from base price) instead of flat $50 off
+  - Recurring: 10% off instead of 15% off
+- Update promo code from `NEWYEAR2025` to `WELCOME2025`
+- Replace the gold/navy "New Year Special" sticky banner with a clean primary-themed "New Customer Special" banner
+- Update all badge text, headings, and copy (remove "New Year", "Jan 7th", "Start 2025")
+- Update offer card labels ("20% Off -- New Customer Special" instead of "$50 Off -- New Year Special")
 
-### File: `src/pages/DevTestCleanup.tsx`
-- Update interface to use `stripe_payment_intent_id` instead of `square_payment_id`
-- Update query filter to check `stripe_payment_intent_id.like.test_%`
-- Update delete filter similarly
-- Update display label
+### 3. `src/pages/book/Checkout.tsx` (Payment Page)
+- Replace the gold/navy New Year banner with a primary-themed "New Customer Special" banner
+- Update heading from "Your New Year Discount is Applied!" to "Your Discount is Applied!"
+- Update the discount display label from "New Year Special" to "New Customer Special"
+- Remove "Book by Jan 7th" from the subtext
 
-### File: `src/pages/DevTestModeToggle.tsx`
-- Update both queries from `square_payment_id` to `stripe_payment_intent_id`
+### 4. `src/pages/Pricing.tsx` (Public Pricing Page)
+- Replace the "$50 OFF" flat discount with percentage-based discounts matching the booking flow:
+  - Standard Clean: 10% OFF (first booking)
+  - Deep Clean: 20% OFF (first booking)
+  - Move-In/Out: 20% OFF (first booking)
+- Update banner text from "$50 Off One-Time Cleanings" to "New Customer Special: Up to 20% OFF Your First Cleaning"
+- Update the Helmet meta description accordingly
 
-### File: `src/components/admin/TestModeBanner.tsx`
-- Update query from `square_payment_id` to `stripe_payment_intent_id`
+### 5. `src/components/landing/HeroSection.tsx`
+- Already shows "10% OFF Standard / 20% OFF Deep" -- no changes needed (already correct)
 
-### File: `src/pages/DemoBooking.tsx`
-- Update text from "square_payment_id" to "stripe_payment_intent_id"
+### 6. `src/components/booking/PromotionalBanner.tsx`
+- Already shows "20% OFF" new customer special -- no changes needed
 
-### Edge Functions to Delete
-- `supabase/functions/create-square-payment/` - unused legacy
-- `supabase/functions/create-square-customer/` - unused legacy
-- `supabase/functions/get-square-config/` - unused legacy
-- `supabase/functions/square-webhook/` - unused legacy
+---
+
+## Technical Details
+
+### New Promo Config (Offer.tsx)
+```typescript
+const PROMO = {
+  deepCleanDiscount: 0.20, // 20% off first deep clean
+  recurringDiscount: 0.10, // 10% off recurring service
+};
+
+// Pricing calculations
+const deepCleanPrice = Math.round(baseDeepPrice * (1 - PROMO.deepCleanDiscount));
+const recurringPrice = Math.round(maintenancePrice * (1 - PROMO.recurringDiscount));
+```
+
+### Pricing Page Discount Logic
+```typescript
+// Replace flat $50 off with percentage-based
+const regularDiscounted = Math.round(tier.regular * 0.90); // 10% off
+const deepDiscounted = Math.round(tier.deep * 0.80);       // 20% off
+const moveInOutDiscounted = Math.round(tier.moveInOut * 0.80); // 20% off
+```
+
+### Visual Style Change
+- Remove gold/navy holiday theme (`hsl(45,93%,47%)` / `hsl(220,50%,15%)`)
+- Use standard primary theme colors consistent with the rest of the app
 
 ### No Changes Needed
-- `create-payment-intent` edge function - working correctly with Stripe
-- `confirm-booking-payment` edge function - correctly uses `stripe_payment_intent_id`
-- `stripe-webhook` edge function - working correctly (90-day code is harmless dead code)
-- `EmbeddedStripePaymentForm.tsx` - working correctly
-- `src/lib/stripe.ts` - working correctly
-- Database columns `square_payment_id` and `square_customer_id` - kept for historical data; no schema changes needed
-
----
-
-## Summary
-
-| Category | Count |
-|----------|-------|
-| Critical payment flow bugs | 2 |
-| Dev tool fixes | 4 |
-| Legacy edge functions to delete | 4 |
-| Files working correctly | 5+ |
-
-The most important fix is in `PaymentLinkPage.tsx` -- it's writing the Stripe payment ID into the `square_payment_id` column, which means payment link payments aren't being tracked in the correct Stripe column.
-
+- `HeroSection.tsx` -- already shows correct percentages
+- `PromotionalBanner.tsx` -- already shows "20% OFF" new customer special
+- `QuickBenefitsBar.tsx` -- already shows "20% OFF first deep clean"
+- `PriceTeaserBanner.tsx` -- already uses percentage-based pricing
+- Edge functions / backend -- no promo logic changes needed
