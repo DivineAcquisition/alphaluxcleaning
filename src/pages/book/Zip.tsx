@@ -240,13 +240,13 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              New Year Special: $50 Off Your First Clean
+              New Customer Special: 20% OFF Your First Deep Clean
               <span className="block text-primary mt-2">
-                + 15% Off Recurring Service
+                + 10% Off Recurring Service
               </span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Book by Jan 7th — Enter your ZIP to get started
+              Enter your ZIP to get started and claim your discount
             </p>
           </div>
           
@@ -316,7 +316,7 @@ export default function BookingZip() {
                       Great news! We service {validatedLocation?.city}, {validatedLocation?.state}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Enter your details to claim your New Year discount
+                      Enter your details to claim your new customer discount
                     </p>
                   </div>
                 </div>

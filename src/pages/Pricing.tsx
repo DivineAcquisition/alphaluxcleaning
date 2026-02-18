@@ -24,10 +24,10 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>Transparent Cleaning Pricing | $50 OFF One-Time Cleaning Services</title>
+        <title>Transparent Cleaning Pricing | Up to 20% OFF First Cleaning</title>
         <meta 
           name="description" 
-          content="View our transparent pricing for house cleaning services. Get $50 off all one-time cleaning bookings. Serving TX, CA, and NY." 
+          content="View our transparent pricing for house cleaning services. New customers get up to 20% off their first cleaning. Serving TX, CA, and NY." 
         />
       </Helmet>
 
@@ -51,7 +51,7 @@ export default function Pricing() {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Professional cleaning services with upfront pricing. Get <span className="font-semibold text-success">$50 OFF</span> all one-time cleaning bookings.
+              Professional cleaning services with upfront pricing. New customers get <span className="font-semibold text-success">up to 20% OFF</span> their first cleaning.
             </p>
             
             <div className="flex flex-wrap gap-4 justify-center">
@@ -73,10 +73,10 @@ export default function Pricing() {
             <Card className="border-success/30 bg-success/5">
               <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-center md:text-left">
-                  <Badge className="bg-success text-success-foreground text-2xl px-6 py-3 whitespace-nowrap">$50 OFF</Badge>
-                  <div>
-                    <h3 className="font-bold text-xl md:text-2xl text-foreground mb-1">Limited Time Offer: $50 Off One-Time Cleanings!</h3>
-                    <p className="text-sm md:text-base text-muted-foreground">All one-time cleaning services now include $50 instant discount. Standard, Deep Clean, and Move-In/Out eligible.</p>
+                   <Badge className="bg-success text-success-foreground text-2xl px-6 py-3 whitespace-nowrap">Up to 20% OFF</Badge>
+                   <div>
+                     <h3 className="font-bold text-xl md:text-2xl text-foreground mb-1">New Customer Special: Up to 20% OFF Your First Cleaning!</h3>
+                     <p className="text-sm md:text-base text-muted-foreground">10% off Standard Clean, 20% off Deep Clean & Move-In/Out. First-time customers only.</p>
                   </div>
                 </div>
               </CardContent>
@@ -120,14 +120,14 @@ export default function Pricing() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {bookableTiers.map((tier) => {
-                      const regularOriginal = tier.regular;
-                      const regularDiscounted = tier.regular - 50;
-                      const deepOriginal = tier.deep;
-                      const deepDiscounted = tier.deep - 50;
-                      const moveInOutOriginal = tier.moveInOut;
-                      const moveInOutDiscounted = tier.moveInOut - 50;
-                      
+                     {bookableTiers.map((tier) => {
+                       const regularOriginal = tier.regular;
+                       const regularDiscounted = Math.round(tier.regular * 0.90);
+                       const deepOriginal = tier.deep;
+                       const deepDiscounted = Math.round(tier.deep * 0.80);
+                       const moveInOutOriginal = tier.moveInOut;
+                       const moveInOutDiscounted = Math.round(tier.moveInOut * 0.80);
+                       
                       return (
                         <TableRow key={tier.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
@@ -145,9 +145,9 @@ export default function Pricing() {
                                 <span className="text-lg font-bold text-success">
                                   {formatPrice(regularDiscounted)}
                                 </span>
-                                <Badge variant="secondary" className="bg-success/10 text-success text-xs">
-                                  $50 OFF
-                                </Badge>
+                                 <Badge variant="secondary" className="bg-success/10 text-success text-xs">
+                                   10% OFF
+                                 </Badge>
                               </div>
                             </div>
                           </TableCell>
@@ -160,9 +160,9 @@ export default function Pricing() {
                                 <span className="text-lg font-bold text-warning">
                                   {formatPrice(deepDiscounted)}
                                 </span>
-                                <Badge variant="secondary" className="bg-warning/10 text-warning text-xs">
-                                  $50 OFF
-                                </Badge>
+                                 <Badge variant="secondary" className="bg-warning/10 text-warning text-xs">
+                                   20% OFF
+                                 </Badge>
                               </div>
                             </div>
                           </TableCell>
@@ -175,9 +175,9 @@ export default function Pricing() {
                                 <span className="text-lg font-bold text-primary">
                                   {formatPrice(moveInOutDiscounted)}
                                 </span>
-                                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                  $50 OFF
-                                </Badge>
+                                 <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                   20% OFF
+                                 </Badge>
                               </div>
                             </div>
                           </TableCell>
