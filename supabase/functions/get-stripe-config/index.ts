@@ -13,10 +13,10 @@ serve(async (req: Request) => {
 
   try {
     // Get Stripe publishable key from environment
-    const publishableKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY");
+    const publishableKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY_ALPHALUX");
     
     if (!publishableKey) {
-      console.error("❌ STRIPE_PUBLISHABLE_KEY not configured");
+      console.error("❌ STRIPE_PUBLISHABLE_KEY_ALPHALUX not configured");
       return new Response(
         JSON.stringify({ 
           error: "Stripe not configured",
