@@ -27,9 +27,9 @@ serve(async (req) => {
 
     logStep("Processing invoice for booking", { bookingId, daysUntilDue });
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
     if (!stripeKey) {
-      throw new Error("Missing STRIPE_SECRET_KEY");
+      throw new Error("Missing STRIPE_SECRET_KEY_ALPHALUX");
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });

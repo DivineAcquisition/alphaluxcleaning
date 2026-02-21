@@ -20,8 +20,8 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_ALPHALUX");
     
     if (!stripeKey) {
       throw new Error("Missing Stripe secret key");

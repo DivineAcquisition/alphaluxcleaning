@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY_ALPHALUX');
     if (!stripeSecretKey) {
       throw new Error('Stripe secret key not configured');
     }

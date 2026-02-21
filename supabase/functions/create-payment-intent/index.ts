@@ -67,7 +67,7 @@ serve(async (req) => {
     }
 
     // Check Stripe configuration
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
     if (!stripeSecretKey) {
       logStep("Configuration error - missing Stripe key");
       return new Response(
