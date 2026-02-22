@@ -65,7 +65,7 @@ serve(async (req) => {
     );
 
     // Create welcome notification content for database storage
-    const welcomeTitle = `Welcome to Bay Area Cleaning Professionals!`;
+    const welcomeTitle = `Welcome to AlphaLux Clean!`;
     const welcomeMessage = `🎉 Congratulations ${fullName}! You've successfully joined our network with the ${plan.name} plan.
 
 Your Benefits:

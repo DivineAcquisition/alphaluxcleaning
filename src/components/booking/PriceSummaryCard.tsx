@@ -157,7 +157,7 @@ export function PriceSummaryCard({
           {/* Membership Discount */}
           {membershipDiscount > 0 && (
             <div className="flex justify-between text-green-600">
-              <span>BACP Club™ Discount</span>
+              <span>AlphaLux Club™ Discount</span>
               <span>-${membershipDiscount}</span>
             </div>
           )}
@@ -189,7 +189,7 @@ export function PriceSummaryCard({
           {/* Membership Fee */}
           {membershipFee > 0 && (
             <div className="flex justify-between">
-              <span>BACP Club™ Membership</span>
+              <span>AlphaLux Club™ Membership</span>
               <span>${membershipFee}</span>
             </div>
           )}

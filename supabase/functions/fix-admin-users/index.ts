@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Create a new user with a clean email
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: 'divine@alphaluxclean.com',
-        password: 'Bacp2025!-',
+        password: 'AlphaLux2025!-',
         email_confirm: true,
         user_metadata: {
           full_name: 'Divine Acquisition',
@@ -99,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
-          password: 'Bacp2025!-',
+          password: 'AlphaLux2025!-',
           email_confirm: true,
           user_metadata: {
             full_name: email === 'ellie@alphaluxclean.com' ? 'Ellie' : 'Admin User'

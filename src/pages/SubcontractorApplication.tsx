@@ -235,12 +235,12 @@ export default function SubcontractorApplication() {
             </h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
-            Become a professional cleaning contractor with Bay Area Cleaning Professionals. 
+            Become a professional cleaning contractor with AlphaLux Clean. 
             Build your own business with our support, established client base, and flexible revenue sharing plans.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
-              Bay Area Cleaning Professionals
+              AlphaLux Clean
             </Badge>
             <Badge variant="outline" className="bg-success/10 border-success/20 text-success">
               Now Hiring
@@ -645,7 +645,7 @@ export default function SubcontractorApplication() {
                     className="mt-1"
                   />
                   <label htmlFor="brand_shirt_consent" className="text-sm leading-relaxed">
-                    I agree to wear Bay Area Cleaning Professionals branded shirts during work *
+                    I agree to wear AlphaLux Clean branded shirts during work *
                   </label>
                 </div>
                 <div className="flex items-start space-x-3">

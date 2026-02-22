@@ -719,13 +719,13 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
         {/* Left: Form (2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
 
-          {/* Step 1: BACP Club Membership */}
+          {/* Step 1: AlphaLux Club Membership */}
           {!existingMember && (
             <Card className="border-primary/30 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Star className="h-5 w-5" />
-                  🌟 BACP Club™ Membership
+                  🌟 AlphaLux Club™ Membership
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Join today and save $20 on every cleaning service
@@ -734,7 +734,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div className="flex-1">
-                    <div className="font-semibold text-base sm:text-lg">BACP Club™ Membership</div>
+                    <div className="font-semibold text-base sm:text-lg">AlphaLux Club™ Membership</div>
                     <div className="text-sm text-muted-foreground">$39/month • Cancel anytime</div>
                   </div>
                   <div className="flex items-center gap-3 justify-end">
@@ -776,7 +776,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-green-800">
                   <CheckCircle className="h-5 w-5" />
-                  <span className="font-semibold">BACP Club™ Member</span>
+                  <span className="font-semibold">AlphaLux Club™ Member</span>
                   <Badge variant="secondary" className="bg-green-100 text-green-800 ml-auto">
                     Active
                   </Badge>

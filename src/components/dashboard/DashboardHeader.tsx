@@ -7,13 +7,13 @@ export function DashboardHeader() {
       {/* Main Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center mb-4">
-          <img src={logo} alt="Bay Area Cleaning Professionals" className="h-24 w-auto rounded-xl" />
+          <img src={logo} alt="AlphaLux Clean" className="h-24 w-auto rounded-xl" />
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Bay Area Cleaning Professionals
+          AlphaLux Clean
         </h1>
         <p className="text-xl text-muted-foreground">
-          Professional Cleaning Services in Baytown, TX - Get Your Instant Quote
+          Professional Cleaning Services - Get Your Instant Quote
         </p>
         <div className="flex flex-wrap justify-center gap-2 mt-4">
           <Badge variant="secondary" className="text-sm">
@@ -49,7 +49,7 @@ export function DashboardHeader() {
             </div>
             <div>
               <p className="text-lg font-bold text-foreground">Trusted Service</p>
-              <p className="text-sm text-muted-foreground">Serving Bay Area</p>
+              <p className="text-sm text-muted-foreground">Premium Cleaning Service</p>
             </div>
           </CardContent>
         </Card>

@@ -70,7 +70,7 @@ export default function ReviewsPortal() {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Customer Reviews</h1>
             <p className="text-xl opacity-90">
-              See what our customers say about Bay Area Cleaning Pros
+              See what our customers say about AlphaLux Clean
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function ReviewsPortal() {
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Experience Our Service?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join hundreds of satisfied customers across the Bay Area
+            Join hundreds of satisfied customers
           </p>
           <Button size="lg" asChild>
             <a href="https://app.alphaluxclean.com/booking">Book Your Cleaning</a>

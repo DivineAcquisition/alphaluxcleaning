@@ -436,7 +436,7 @@ serve(async (req) => {
               </div>
               
               <p style="color: #666; line-height: 1.6;">
-                Thank you for choosing Bay Area Cleaning Professionals! We hope you're satisfied with our service.
+                Thank you for choosing AlphaLux Clean! We hope you're satisfied with our service.
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
@@ -447,7 +447,7 @@ serve(async (req) => {
               </div>
               
               <p style="color: #999; font-size: 14px; text-align: center; margin-top: 30px;">
-                Bay Area Cleaning Professionals<br>
+                AlphaLux Clean<br>
                 Professional cleaning services you can trust
               </p>
             </div>

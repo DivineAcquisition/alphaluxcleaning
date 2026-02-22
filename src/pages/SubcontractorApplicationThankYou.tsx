@@ -43,7 +43,7 @@ export default function SubcontractorApplicationThankYou() {
                 Application Submitted Successfully!
               </CardTitle>
               <p className="text-muted-foreground text-lg">
-                Thank you for your interest in joining Bay Area Cleaning Professionals
+                Thank you for your interest in joining AlphaLux Clean
               </p>
             </div>
             {applicationId && (

@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Validate secret code if provided
     const ADMIN_SECRET_CODES = [
-      'BACP_ADMIN_2024_DIVINE',
+      'ALPHALUX_ADMIN_2024_DIVINE',
       'SUPER_SECURE_ADMIN_KEY_2024',
       'DIVINE_ACQUISITION_ADMIN_2024'
     ];

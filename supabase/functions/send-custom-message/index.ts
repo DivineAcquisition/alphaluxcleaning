@@ -52,16 +52,16 @@ serve(async (req) => {
           const emailResponse = await resend.emails.send({
             from: 'AlphaLuxClean <noreply@info.alphaluxclean.com>',
             to: [recipient],
-            subject: body.subject || 'Message from Bay Area Cleaning',
+            subject: body.subject || 'Message from AlphaLux Clean',
             html: `
               <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-                <h2 style="color: #333; margin-bottom: 20px;">Message from Bay Area Cleaning Professionals</h2>
+                <h2 style="color: #333; margin-bottom: 20px;">Message from AlphaLux Clean</h2>
                 <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                   ${body.content.replace(/\n/g, '<br>')}
                 </div>
                 <p style="color: #666; font-size: 14px;">
                   Best regards,<br>
-                  Bay Area Cleaning Professionals Team
+                  AlphaLux Clean Team
                 </p>
               </div>
             `,

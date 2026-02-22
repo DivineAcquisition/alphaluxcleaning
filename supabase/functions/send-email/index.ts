@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
           email: user.email,
           role: 'viewer',
           inviteUrl: `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`,
-          companyName: 'Bay Area Cleaning Professionals',
+          companyName: 'AlphaLux Clean',
         })
       );
 
@@ -69,10 +69,10 @@ const handler = async (req: Request): Promise<Response> => {
       const resetUrl = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
       
       emailContent = {
-        subject: 'Reset Your Admin Password - Bay Area Cleaning Professionals',
+        subject: 'Reset Your Admin Password - AlphaLux Clean',
         html: `
           <h1>Reset Your Password</h1>
-          <p>You requested to reset your password for Bay Area Cleaning Professionals admin access.</p>
+          <p>You requested to reset your password for AlphaLux Clean admin access.</p>
           <p><a href="${resetUrl}" style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Reset Password</a></p>
           <p>If you didn't request this, you can safely ignore this email.</p>
           <p>This link will expire in 1 hour.</p>
@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
       const confirmUrl = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
       
       emailContent = {
-        subject: 'Confirm Your Email - Bay Area Cleaning Professionals',
+        subject: 'Confirm Your Email - AlphaLux Clean',
         html: `
           <h1>Confirm Your Email</h1>
           <p>Please confirm your email address to complete your admin access setup.</p>

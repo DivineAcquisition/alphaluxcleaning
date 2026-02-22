@@ -52,7 +52,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
             </p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
-              Here's how you performed this month with Bay Area Cleaning!
+              Here's how you performed this month with AlphaLux Clean!
             </p>
             
             <!-- Stats Section -->
@@ -130,7 +130,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
                 Keep up the great work! Questions? Reply to this email.
               </p>
               <p style="color: #6b7280; font-size: 14px; margin: 8px 0;">
-                - The Bay Area Cleaning Team
+                - The AlphaLux Clean Team
               </p>
             </div>
           </div>

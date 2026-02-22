@@ -66,7 +66,7 @@ export default function CustomerPortalBookings() {
   const handleAddToCalendar = () => {
     // Generate ICS file
     const event = {
-      title: `${booking.service_type} - Bay Area Cleaning Pros`,
+      title: `${booking.service_type} - AlphaLux Clean`,
       start: new Date(`${booking.scheduled_date}T${booking.scheduled_time}`),
       description: `Cleaning service at ${booking.address}`,
       location: booking.address

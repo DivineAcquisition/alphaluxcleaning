@@ -22,7 +22,7 @@ interface PricingCalculatorProps {
   onPriceUpdate?: (data: PricingData, price: number, breakdown: any) => void;
 }
 
-// Bay Area Cleaning Professionals pricing structure - THESE ARE THE FINAL PRICES
+// AlphaLux Clean pricing structure - THESE ARE THE FINAL PRICES
 const pricingTiers = [
   { min: 0, max: 1000, weekly: 97.50, biweekly: 118.59, monthly: 171.26, oneTime: 225.31, deepClean: 305.05 },
   { min: 1001, max: 1400, weekly: 115.94, biweekly: 125.58, monthly: 186.59, oneTime: 235.09, deepClean: 327.77 },

@@ -49,7 +49,7 @@ export default function ConfirmationPreview() {
 
   const handleCopyDetails = async () => {
     const details = `
-Bay Area Cleaning Pros - Booking Preview
+AlphaLux Clean - Booking Preview
 
 📅 Service Date: ${new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -85,7 +85,7 @@ Questions? Call (281) 809-9901
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Bay Area Cleaning Pros - Preview Experience',
+          title: 'AlphaLux Clean - Preview Experience',
           text: `Check out our booking confirmation experience! Service scheduled for ${new Date(orderDetails.scheduled_date).toLocaleDateString()}`,
           url: window.location.href
         });

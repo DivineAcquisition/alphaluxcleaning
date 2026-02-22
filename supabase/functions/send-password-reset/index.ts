@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [email],
-      subject: "Reset Your Password - Bay Area Cleaning Professionals",
+      subject: "Reset Your Password - AlphaLux Clean",
       html: emailHtml,
     });
 

@@ -416,7 +416,7 @@ Questions? Call (857) 754-4557
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Bay Area Cleaning Pros - Booking Confirmed',
+          title: 'AlphaLux Clean - Booking Confirmed',
           text: `Service scheduled for ${new Date(serviceDate).toLocaleDateString()} at ${timeSlot}`,
           url: window.location.href
         });
@@ -496,7 +496,7 @@ Questions? Call (857) 754-4557
               Booking Confirmed
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Thank you for choosing Bay Area Cleaning Pros! Your cleaning service has been successfully booked.
+              Thank you for choosing AlphaLux Clean! Your cleaning service has been successfully booked.
             </p>
           </div>
 
