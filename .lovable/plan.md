@@ -1,67 +1,85 @@
 
 
-# Set Up Separate Stripe Secrets for AlphaLux Clean
+# Remove All "Bay Area Cleaning Pros" References
 
-Since both projects share the same Supabase, we need dedicated Stripe secret names so each project uses its own Stripe account.
+## Overview
+There are **55+ active source files** (excluding old migrations) that still contain references to "Bay Area Cleaning Professionals", "Bay Area Cleaning Pros", "BACP", or related branding. These need to be replaced with "AlphaLux Clean" branding throughout. The existing AlphaLux Stripe keys (`STRIPE_SECRET_KEY_ALPHALUX`, `STRIPE_PUBLISHABLE_KEY_ALPHALUX`, `STRIPE_WEBHOOK_SECRET_ALPHALUX`) will be retained as-is.
 
-## Step 1: Add New Secrets
+## What Changes
 
-Add two new Supabase secrets:
+All old brand references will be replaced as follows:
 
-- **STRIPE_SECRET_KEY_ALPHALUX** -- Your AlphaLux Stripe secret key (sk_live_...)
-- **STRIPE_PUBLISHABLE_KEY_ALPHALUX** -- `pk_live_51S6xTvEFKFvC92D7wCSKXNX71yE6nc4Kwv2ilwuq2PD7ZDDhdfxvK4OLaJpLNAB8CiKjiLSpNWpw9fugWOdP8Q2300jcYkIDjd`
+| Old Reference | New Reference |
+|---|---|
+| Bay Area Cleaning Professionals | AlphaLux Clean |
+| Bay Area Cleaning Pros | AlphaLux Clean |
+| Bay Area Cleaning | AlphaLux Clean |
+| BACP Club | AlphaLux Club |
+| Serving Bay Area | Premium Cleaning Service |
+| bayareacleaningpros.com emails | alphaluxclean.com emails |
+| Bacp2025!- (passwords) | AlphaLux2025!- |
+| SALT_BACP_2024 | SALT_ALPHALUX_2024 |
+| BACP_ADMIN_2024 | ALPHALUX_ADMIN_2024 |
+| Old Supabase logo URLs (kqoezqzogleaaupjzxch) | Updated or removed |
 
-You will also need a new **STRIPE_WEBHOOK_SECRET_ALPHALUX** if you set up a separate webhook endpoint in the new Stripe account.
+## Files to Update
 
-## Step 2: Update All Edge Functions
+### Frontend Components (src/)
+1. **src/components/dashboard/DashboardHeader.tsx** - Title, alt text, "Serving Bay Area"
+2. **src/components/HourlyBookingInterface.tsx** - "BACP Club" references (x4)
+3. **src/components/booking/PriceSummaryCard.tsx** - "BACP Club" references (x2)
+4. **src/components/booking/LegacyBookingFlow.tsx** - "BACP Club" reference
+5. **src/components/TermsOfServiceAgreement.tsx** - "BACP Club" terms
+6. **src/components/dashboard/PricingCalculator.tsx** - Comment about Bay Area pricing
+7. **src/pages/SubcontractorApplication.tsx** - Brand references (x3)
+8. **src/pages/SubcontractorApplicationThankYou.tsx** - Thank you text
+9. **src/pages/ContractorAuth.tsx** - Subtitle text
+10. **src/pages/CustomerPortalHome.tsx** - Subtitle text
+11. **src/pages/SubcontractorJobAcceptance.tsx** - Hardcoded old Supabase URLs
 
-Replace `STRIPE_SECRET_KEY` with `STRIPE_SECRET_KEY_ALPHALUX` and `STRIPE_PUBLISHABLE_KEY` with `STRIPE_PUBLISHABLE_KEY_ALPHALUX` in all 25 edge functions that reference them:
+### Edge Functions (supabase/functions/)
+12. **send-user-invite/index.ts** - Company name, email subject
+13. **send-custom-message/index.ts** - Email subject, heading, sign-off
+14. **send-application-response/index.ts** - Email subject
+15. **send-tier-upgrade-notification/index.ts** - Logo URL, footer text
+16. **send-assignment-invite/index.ts** - Footer text
+17. **send-monthly-performance-summary/index.ts** - Body text, sign-off
+18. **send-subcontractor-welcome/index.ts** - Welcome title
+19. **create-customer-account/index.ts** - Welcome notification, temp password
+20. **create-google-calendar-event/index.ts** - Description, display name
+21. **assignment-response/index.ts** - Footer text
+22. **create-membership-checkout/index.ts** - "BACP Club" product names
+23. **create-test-admin/index.ts** - Secret codes
+24. **create-subcontractor-direct/index.ts** - Salt string
+25. **fix-admin-users/index.ts** - Passwords
+26. **send-booking-transaction-to-zapier/index.ts** - "BACP Data" key
+27. **send-admin-job-notification/index.ts** - Hardcoded old Supabase URL
+28. **enhanced-job-assignment/index.ts** - Hardcoded old Supabase URL
+29. **_shared/email-templates/customer-feedback-notification.tsx** - Sign-off
 
-| # | Edge Function | Key Used |
-|---|--------------|----------|
-| 1 | `verify-payment-status` | SECRET_KEY |
-| 2 | `remove-payment-method` | SECRET_KEY |
-| 3 | `get-stripe-config` | PUBLISHABLE_KEY |
-| 4 | `process-recurring-billing` | SECRET_KEY |
-| 5 | `send-balance-invoice` | SECRET_KEY |
-| 6 | `create-membership-checkout` | SECRET_KEY |
-| 7 | `create-payment-intent` | SECRET_KEY |
-| 8 | `create-stripe-customer` | SECRET_KEY |
-| 9 | `customer-portal` | SECRET_KEY |
-| 10 | `create-90day-subscription` | SECRET_KEY |
-| 11 | `payment-retry-processor` | SECRET_KEY |
-| 12 | `create-subcontractor-subscription` | SECRET_KEY |
-| 13 | `get-payment-methods` | SECRET_KEY |
-| 14 | `process-subcontractor-payment` | SECRET_KEY |
-| 15 | `stripe-webhook` | SECRET_KEY + WEBHOOK_SECRET |
-| 16 | `process-auto-charge` | SECRET_KEY |
-| 17 | `payment-webhook-handler` | SECRET_KEY |
-| 18 | `set-default-payment-method` | SECRET_KEY |
-| 19 | `customer-payment-intent` | SECRET_KEY |
-| 20 | `customer-payment-webhook` | SECRET_KEY |
-| 21 | `process-refund` | SECRET_KEY |
-| 22 | `setup-payment-method` | SECRET_KEY |
-| 23 | `enhanced-payment-processor` | SECRET_KEY |
-| 24 | `send-payment-link` | SECRET_KEY |
-| 25 | `check-subscription` | SECRET_KEY |
+Plus any additional files found in the remaining 45 matches.
 
-Each function will have its `Deno.env.get("STRIPE_SECRET_KEY")` changed to `Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX")`, and similarly for the publishable key and webhook secret.
+### Database (migration needed)
+- Update `webhook_configurations.organization_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
+- Update `email_settings.from_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
+- Update any stored template text in `notification_templates` table
 
-The existing `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` secrets remain untouched for the other project sharing this Supabase.
+## What Will NOT Change
+- The AlphaLux Stripe keys remain as configured
+- All Supabase connection settings stay the same
+- Old migration files (read-only history, won't be touched)
+- The `supabase/config.toml` project ID stays as-is
 
-## Step 3: Update Webhook Secret
+## Technical Details
 
-In `stripe-webhook/index.ts`, change `STRIPE_WEBHOOK_SECRET` to `STRIPE_WEBHOOK_SECRET_ALPHALUX`. You will need to create a new webhook endpoint in the new Stripe dashboard pointing to the same edge function URL and save the new signing secret.
+### Approach
+- Batch-edit all frontend components first, then edge functions, then deploy all updated functions
+- Run a single database migration to update default values and any stored brand text
+- Replace hardcoded old Supabase project URLs (`kqoezqzogleaaupjzxch`) with dynamic references where possible
+- All edge functions referencing the old brand will be redeployed after updates
 
-## What You Need to Provide
-
-1. Your AlphaLux Stripe **secret key** (sk_live_...)
-2. A new **webhook signing secret** after creating the webhook endpoint in the new Stripe dashboard
-
-## Technical Notes
-
-- The old secrets (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`) stay in place for the other project
-- Error messages in the edge functions will be updated to reference the new secret names (e.g., "STRIPE_SECRET_KEY_ALPHALUX is not set")
-- No database changes required
-- All 25 edge functions will be redeployed after the update
+### Estimated Scope
+- ~30 files with text replacements
+- ~25 edge functions to redeploy
+- 1 database migration for stored defaults/templates
 
