@@ -55,7 +55,7 @@ export default function SubcontractorJobAcceptance() {
       console.log('Validating token:', { token, action });
 
       // Call the subcontractor-response function to validate and handle
-      const response = await fetch(`https://kqoezqzogleaaupjzxch.functions.supabase.co/subcontractor-response?token=${token}&action=${action}`);
+      const response = await fetch(`https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/subcontractor-response?token=${token}&action=${action}`);
       
       if (!response.ok) {
         // If it's an HTML response, it means the token was processed
@@ -90,7 +90,7 @@ export default function SubcontractorJobAcceptance() {
         notes: response.notes || undefined
       };
 
-      const res = await fetch('https://kqoezqzogleaaupjzxch.functions.supabase.co/subcontractor-response', {
+      const res = await fetch('https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/subcontractor-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ export default function SubcontractorJobAcceptance() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Home className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">Bay Area Cleaning Pros</h1>
+            <h1 className="text-2xl font-bold text-primary">AlphaLux Clean</h1>
           </div>
           <p className="text-muted-foreground">Job Response Portal</p>
         </div>
@@ -301,7 +301,7 @@ export default function SubcontractorJobAcceptance() {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Bay Area Cleaning Professionals</p>
+          <p>&copy; 2024 AlphaLux Clean</p>
         </div>
       </div>
     </div>

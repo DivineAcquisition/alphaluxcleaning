@@ -52,10 +52,10 @@ export const TermsOfServiceAgreement: React.FC<TermsOfServiceAgreementProps> = (
               {membershipSelected && (
                 <div>
                   <h4 className="font-semibold flex items-center gap-2 mb-2">
-                    BACP Club™ Membership Terms
+                    AlphaLux Club™ Membership Terms
                   </h4>
                   <p className="text-muted-foreground">
-                    By selecting the BACP Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
+                    By selecting the AlphaLux Club™ Membership, you agree to be billed $30/month on a recurring basis until canceled. A $20 discount is applied to each cleaning while the membership is active. You may cancel anytime from your customer portal or by contacting support. Credits roll over for 1 month and expire thereafter.
                   </p>
                 </div>
               )}

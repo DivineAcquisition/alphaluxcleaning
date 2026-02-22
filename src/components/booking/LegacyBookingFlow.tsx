@@ -732,7 +732,7 @@ export function LegacyBookingFlow() {
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <span className="text-2xl md:text-3xl font-bold text-yellow-300">20% OFF</span>
                   </div>
-                  <p className="text-sm md:text-base font-semibold">All Services + BACP Club™ Benefits</p>
+                  <p className="text-sm md:text-base font-semibold">All Services + AlphaLux Club™ Benefits</p>
                      <div className="bg-yellow-300/20 rounded-lg p-2 mt-3">
                       <p className="text-sm font-bold text-yellow-300">Save Up 75+ With Our Premium Cleanings</p>
                     </div>

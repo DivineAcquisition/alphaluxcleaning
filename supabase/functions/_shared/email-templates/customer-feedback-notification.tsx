@@ -117,7 +117,7 @@ export const CustomerFeedbackNotification = ({
 
         <Text style={text}>
           Best regards,<br />
-          Bay Area Cleaning Pros Team
+          AlphaLux Clean Team
         </Text>
       </Section>
     </EmailBase>

@@ -476,14 +476,14 @@ const SubcontractorDashboard = () => {
           <div className="flex items-center gap-4">
             <img 
               src="/lovable-uploads/dc717713-12d1-4d02-8524-1f775106da30.png" 
-              alt="Bay Area Cleaning Professionals" 
+              alt="AlphaLux Clean" 
               className="h-16 w-auto"
             />
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Welcome, {subcontractor.full_name}!
               </h1>
-              <p className="text-muted-foreground">Bay Area Cleaning Professionals</p>
+              <p className="text-muted-foreground">AlphaLux Clean</p>
             </div>
           </div>
           <Button variant="outline" onClick={handleSignOut}>

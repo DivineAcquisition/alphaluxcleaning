@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div class="footer">
-                <p style="margin: 0;">Bay Area Cleaning Professionals</p>
+                <p style="margin: 0;">AlphaLux Clean</p>
                 <p style="margin: 4px 0 0; font-size: 12px;">Professional cleaning services you can trust</p>
               </div>
             </div>

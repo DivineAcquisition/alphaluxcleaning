@@ -73,7 +73,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: `${bookingData.tier.hours}-Hour Cleaning Service`,
-              description: `${bookingData.paymentOption === 'half' ? '50% Payment' : bookingData.paymentOption === 'prepayment' ? '$150 Prepayment' : 'Full Payment'} • Professional cleaning service with BACP Club™ membership benefits${bookingData.pricing.addonMemberDiscount > 0 ? ` (10% addon discount: $${bookingData.pricing.addonMemberDiscount})` : ''}`
+              description: `${bookingData.paymentOption === 'half' ? '50% Payment' : bookingData.paymentOption === 'prepayment' ? '$150 Prepayment' : 'Full Payment'} • Professional cleaning service with AlphaLux Club™ membership benefits${bookingData.pricing.addonMemberDiscount > 0 ? ` (10% addon discount: $${bookingData.pricing.addonMemberDiscount})` : ''}`
             },
             unit_amount: serviceAmount,
           },
@@ -84,7 +84,7 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: "BACP Club™ Membership",
+              name: "AlphaLux Club™ Membership",
               description: "Monthly membership with $20 credit, priority booking, and exclusive perks"
             },
             unit_amount: membershipAmount,

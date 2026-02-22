@@ -184,7 +184,7 @@ export const generateIcsLink = async (bookingId: string) => {
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Bay Area Cleaning Pros//Booking//EN',
+      'PRODID:-//AlphaLux Clean//Booking//EN',
       'BEGIN:VEVENT',
       `UID:${bookingId}@alphaluxclean.com`,
       `DTSTART:${formatDateForICS(startDateTime)}`,

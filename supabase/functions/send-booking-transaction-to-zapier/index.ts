@@ -918,7 +918,7 @@ serve(async (req) => {
         ? { event_type: 'customer_booking_input', customer_input: customerInput }
         : {
             event_type: 'customer_data_collection',
-            'BACP Data': comprehensiveData,
+            'AlphaLux Data': comprehensiveData,
             metadata: {
               webhook_version: '1.0',
               sent_at: new Date().toISOString(),

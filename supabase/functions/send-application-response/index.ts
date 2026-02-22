@@ -70,7 +70,7 @@ serve(async (req) => {
     // Prepare email content based on decision
     const isApproved = decision === 'approved';
     const subject = isApproved 
-      ? "🎉 Welcome to Bay Area Cleaning Pros - Application Approved!" 
+      ? "🎉 Welcome to AlphaLux Clean - Application Approved!" 
       : "Thank you for your interest - Application Update";
 
     // Generate onboarding URL for approved applications

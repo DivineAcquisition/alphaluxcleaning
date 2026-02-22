@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const adminEmails = ["elliepangilinan17@gmail.com", "admin1@alphaluxclean.com"];
-    const assignmentUrl = `https://kqoezqzogleaaupjzxch.supabase.co/job-assignments?highlight=${booking_id || order_id}`;
+    const assignmentUrl = `https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/job-assignments?highlight=${booking_id || order_id}`;
 
     const emailHTML = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
-          <p>Bay Area Cleaning Pros - Job Management System</p>
+          <p>AlphaLux Clean - Job Management System</p>
         </div>
       </div>
     `;

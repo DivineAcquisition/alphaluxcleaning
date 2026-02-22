@@ -26,28 +26,28 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
         icon: Calendar
       },
       sub: {
-        title: 'Bay Area Cleaning Pros',
+        title: 'AlphaLux Clean',
         subtitle: 'Contractor Portal',
         ctaText: "Open Today's Jobs",
         ctaAction: () => window.location.href = '/today',
         icon: User
       },
       portal: {
-        title: 'Bay Area Cleaning Pros',
+        title: 'AlphaLux Clean',
         subtitle: 'Customer Portal',
         ctaText: 'Back to Home',
         ctaAction: () => window.location.href = '/portal',
         icon: Home
       },
       try: {
-        title: 'Bay Area Cleaning Pros',
+        title: 'AlphaLux Clean',
         subtitle: 'Get Started',
         ctaText: 'Sign Up Now',
         ctaAction: () => window.location.href = 'https://admin.alphaluxclean.com/signup',
         icon: LogIn
       },
       root: {
-        title: 'Bay Area Cleaning Pros',
+        title: 'AlphaLux Clean',
         subtitle: 'Professional Cleaning Services',
         ctaText: 'Get Started',
         ctaAction: () => window.location.href = 'https://app.alphaluxclean.com',

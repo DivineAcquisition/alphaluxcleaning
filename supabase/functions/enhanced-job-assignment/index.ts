@@ -199,7 +199,7 @@ async function sendNotifications({
   priority: string;
   supabase: any;
 }) {
-  const baseUrl = `https://kqoezqzogleaaupjzxch.supabase.co`;
+  const baseUrl = `https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1`;
   const acceptUrl = `${baseUrl}/subcontractor-response?token=${tokens.acceptToken}&action=accept`;
   const declineUrl = `${baseUrl}/subcontractor-response?token=${tokens.declineToken}&action=decline`;
 

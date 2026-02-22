@@ -95,7 +95,7 @@ serve(async (req) => {
       .from('customer_notifications')
       .insert({
         customer_id: newUser.user.id,
-        title: 'Welcome to Bay Area Cleaning Pros!',
+        title: 'Welcome to AlphaLux Clean!',
         message: `Your account has been created automatically. Your temporary password is: ${tempPassword}. Please log in to your customer portal at portal.alphaluxclean.com and change your password for security.`,
         action_url: 'https://portal.alphaluxclean.com',
         action_label: 'Access Customer Portal'
@@ -112,11 +112,11 @@ serve(async (req) => {
       const emailResponse = await resend.emails.send({
         from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [customerEmail],
-        subject: "Welcome to Bay Area Cleaning Pros - Your Account is Ready!",
+        subject: "Welcome to AlphaLux Clean - Your Account is Ready!",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin-bottom: 10px;">Welcome to Bay Area Cleaning Pros!</h1>
+              <h1 style="color: #2563eb; margin-bottom: 10px;">Welcome to AlphaLux Clean!</h1>
               <p style="color: #666; font-size: 16px;">Your account has been automatically created</p>
             </div>
             
@@ -159,7 +159,7 @@ serve(async (req) => {
             </div>
             
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #666; font-size: 14px;">
-              <p>Thank you for choosing Bay Area Cleaning Pros!</p>
+              <p>Thank you for choosing AlphaLux Clean!</p>
               <p>We're excited to provide you with exceptional cleaning services.</p>
             </div>
           </div>

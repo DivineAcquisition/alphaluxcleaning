@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
         email,
         role,
         inviteUrl: resetData.properties?.action_link || '',
-        companyName: 'Bay Area Cleaning Professionals',
+        companyName: 'AlphaLux Clean',
       })
     );
 
@@ -133,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [email],
-      subject: `Admin Access Invitation - Bay Area Cleaning Professionals`,
+      subject: `Admin Access Invitation - AlphaLux Clean`,
       html: emailHtml,
     });
 

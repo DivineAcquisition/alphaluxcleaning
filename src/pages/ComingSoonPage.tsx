@@ -7,8 +7,8 @@ export default function ComingSoonPage() {
   return (
     <>
       <SEOHead 
-        title="Customer Portal Coming Soon - Bay Area Cleaning Pros"
-        description="The Bay Area Cleaning Pros customer portal is coming soon. Manage your bookings, track services, and more."
+        title="Customer Portal Coming Soon - AlphaLux Clean"
+        description="The AlphaLux Clean customer portal is coming soon. Manage your bookings, track services, and more."
       />
       
       <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
@@ -77,7 +77,7 @@ export default function ComingSoonPage() {
           </div>
 
           <p className="text-xs text-muted-foreground mt-8">
-            © 2025 Bay Area Cleaning Pros. All rights reserved.
+            © 2025 AlphaLux Clean. All rights reserved.
           </p>
         </div>
       </div>

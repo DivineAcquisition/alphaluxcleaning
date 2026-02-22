@@ -159,7 +159,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-semibold">BACP Club™ Membership</h3>
+                  <h3 className="text-base sm:text-lg font-semibold">AlphaLux Club™ Membership</h3>
                   <Badge variant="secondary" className="w-fit">$30/month</Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">Save $20 on every cleaning + exclusive perks</p>
@@ -185,7 +185,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
             {membershipEnabled && (
               <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-muted-foreground/20">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  <strong>BACP Club™ Membership – $30/month</strong><br/>
+                  <strong>AlphaLux Club™ Membership – $30/month</strong><br/>
                   By selecting this option, you agree to be charged $30 today and every 30 days thereafter until canceled. 
                   Membership includes a $20 credit toward this booking, as well as future bookings, along with exclusive perks listed on the Membership page.
                   <br/><br/>
@@ -342,7 +342,7 @@ export const HourlyBookingInterface: React.FC<HourlyBookingInterfaceProps> = ({ 
               {membershipEnabled && (
                 <>
                   <div className="flex justify-between text-sm border-t pt-2">
-                    <span>BACP Club™ Membership</span>
+                    <span>AlphaLux Club™ Membership</span>
                     <span>$30</span>
                   </div>
                   <div className="bg-green-50 p-3 rounded-lg border border-green-200">

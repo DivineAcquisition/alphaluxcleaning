@@ -175,7 +175,7 @@ async function createCalendarEvent(accessToken: string, date: string, time: stri
   
   const eventData = {
     summary: `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Cleaning Service`,
-    description: `Professional ${serviceType} cleaning service appointment.\n\nService Details:\n- Type: ${serviceType}\n- Duration: ${duration} hours\n\nBooked through Bay Area Cleaning Pros website.`,
+    description: `Professional ${serviceType} cleaning service appointment.\n\nService Details:\n- Type: ${serviceType}\n- Duration: ${duration} hours\n\nBooked through AlphaLux Clean website.`,
     start: {
       dateTime: startTime.toISOString(),
       timeZone: 'America/Los_Angeles',
@@ -188,7 +188,7 @@ async function createCalendarEvent(accessToken: string, date: string, time: stri
     attendees: [
       {
         email: 'elitehousekeepers@gmail.com',
-        displayName: 'Bay Area Cleaning Pros'
+        displayName: 'AlphaLux Clean'
       }
     ],
     reminders: {
