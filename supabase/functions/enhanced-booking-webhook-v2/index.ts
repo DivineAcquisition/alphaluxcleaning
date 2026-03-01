@@ -348,7 +348,13 @@ serve(async (req) => {
         payment_method: "Stripe",
         payment_status: bookingData.status === 'confirmed' ? "Authorized" : "Pending",
         transaction_id: bookingData.stripe_payment_intent_id || bookingData.square_payment_id || '',
-        amount_paid: Math.round(baseAmount)
+        amount_paid: Math.round(baseAmount),
+        stripe_customer_id: customer?.stripe_customer_id || '',
+        stripe_balance_invoice_id: bookingData.stripe_balance_invoice_id || '',
+        balance_invoice_url: bookingData.stripe_balance_invoice_id 
+          ? `https://dashboard.stripe.com/invoices/${bookingData.stripe_balance_invoice_id}` 
+          : '',
+        receipt_url: bookingData.receipt_url || ''
       },
       
       // Offer details object
