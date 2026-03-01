@@ -162,15 +162,52 @@ serve(async (req) => {
     function parseTimeSlot(timeSlot: string): string {
       const match = timeSlot.match(/(\d+):(\d+)\s*(AM|PM)/i);
       if (!match) return '09:00';
-      
       let hours = parseInt(match[1]);
       const minutes = match[2];
       const period = match[3].toUpperCase();
-      
       if (period === 'PM' && hours !== 12) hours += 12;
       if (period === 'AM' && hours === 12) hours = 0;
-      
       return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    }
+
+    // GHL-friendly date: MM/DD/YYYY
+    function formatDateGHL(dateStr: string): string {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      if (!year || !month || !day) return dateStr;
+      return `${month}/${day}/${year}`;
+    }
+
+    // GHL-friendly time: h:mm AM/PM
+    function formatTimeGHL(timeSlot: string): string {
+      if (!timeSlot) return '';
+      const parts = timeSlot.split('-').map(t => t.trim());
+      return parts.map(t => {
+        const match = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+        if (!match) return t;
+        let hours = parseInt(match[1]);
+        const minutes = match[2];
+        if (match[3]) return `${match[1]}:${minutes} ${match[3].toUpperCase()}`;
+        const period = hours >= 12 ? 'PM' : 'AM';
+        if (hours === 0) hours = 12;
+        else if (hours > 12) hours -= 12;
+        return `${hours}:${minutes} ${period}`;
+      }).join(' - ');
+    }
+
+    // GHL-friendly datetime: MM/DD/YYYY h:mm AM/PM
+    function formatDateTimeGHL(isoStr: string): string {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const period = hours >= 12 ? 'PM' : 'AM';
+      if (hours === 0) hours = 12;
+      else if (hours > 12) hours -= 12;
+      return `${month}/${day}/${year} ${hours}:${minutes} ${period}`;
     }
 
     function calculateServiceStart(date: string, timeSlot: string): string {
@@ -331,10 +368,17 @@ serve(async (req) => {
         bedrooms: propertyDetails.bedrooms || parseInt(bookingData.sqft_or_bedrooms) || 3,
         bathrooms: propertyDetails.bathrooms || 2,
         notes: specialInstructions,
+        // ISO format (original)
         preferred_date: serviceDetails.date,
         preferred_time_window: serviceDetails.time,
         service_start_datetime: calculateServiceStart(serviceDetails.date, serviceDetails.time),
         service_end_datetime: calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours),
+        // GHL-friendly formats (MM/DD/YYYY, h:mm AM/PM)
+        preferred_date_ghl: formatDateGHL(serviceDetails.date),
+        preferred_time_ghl: formatTimeGHL(serviceDetails.time),
+        service_start_ghl: formatDateTimeGHL(calculateServiceStart(serviceDetails.date, serviceDetails.time)),
+        service_end_ghl: formatDateTimeGHL(calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours)),
+        recurring_start_date_ghl: formatDateGHL(bookingData.recurring_start_date || serviceDetails.date),
         est_duration_hours: parseFloat(estimatedHours.toFixed(1)),
         labor_rate_per_hour: 25,
         labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2)),
