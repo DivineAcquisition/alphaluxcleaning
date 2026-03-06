@@ -321,7 +321,7 @@ export function ServicePricing() {
                     <span className="font-medium text-accent">Ultimate Deep Clean:</span>
                     {tier.pricing.deepClean.original > 0 && (
                        <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
-                         20% OFF!
+                         $25 OFF!
                        </Badge>
                     )}
                   </div>
