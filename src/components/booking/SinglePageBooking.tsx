@@ -36,7 +36,7 @@ const serviceTypes = [
     name: 'Deep Cleaning',
     description: 'Comprehensive deep clean service',
     icon: Star,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     premium: 1.35, // 35% premium
     features: [
       'Everything in General Cleaning',
