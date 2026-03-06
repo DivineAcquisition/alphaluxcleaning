@@ -14,7 +14,7 @@ import { formatPrice } from '@/lib/pricing-utils';
 import { EnhancedSchedulingStep } from '@/components/EnhancedSchedulingStep';
 
 // Simplified service types with clear pricing
-// Service types with 20% discount applied to base price
+// Service types with $25 flat discount applied to base price
 const serviceTypes = [
   {
     id: 'general',
