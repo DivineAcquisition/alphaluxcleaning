@@ -444,7 +444,7 @@ serve(async (req) => {
         environment: "production",
         version: "2.0.0",
         querystring: bookingData.utms ? new URLSearchParams(bookingData.utms as any).toString() : ""
-      }
+      },
       // Pricing details object (comprehensive breakdown)
       pricing: {
         base_price: Number(bookingData.base_price) || 0,
