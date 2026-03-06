@@ -444,7 +444,26 @@ serve(async (req) => {
         environment: "production",
         version: "2.0.0",
         querystring: bookingData.utms ? new URLSearchParams(bookingData.utms as any).toString() : ""
-      }
+      },
+      // Pricing details object (comprehensive breakdown)
+      pricing: {
+        base_price: Number(bookingData.base_price) || 0,
+        est_price: Number(bookingData.est_price) || 0,
+        deposit_amount: Number(bookingData.deposit_amount) || 0,
+        balance_due: Number(bookingData.balance_due) || 0,
+        prepayment_discount_applied: bookingData.prepayment_discount_applied || false,
+        prepayment_discount_amount: bookingData.prepayment_discount_amount || 0,
+        promo_code: bookingData.promo_code || '',
+        promo_applied: bookingData.promo_applied || '',
+        promo_discount_cents: bookingData.promo_discount_cents || 0,
+        mrr: Number(bookingData.mrr) || 0,
+        arr: Number(bookingData.arr) || 0,
+        is_recurring: bookingData.is_recurring || false,
+        frequency: bookingData.frequency || '',
+        pricing_breakdown: bookingData.pricing_breakdown || {},
+        addons: bookingData.addons || [],
+        addons_total: addOnsTotal,
+      },
     };
     
     // Wrap in STANDARDIZED format matching test webhooks
