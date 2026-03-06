@@ -54,7 +54,7 @@ const serviceTypes = [
     name: 'Move-In Cleaning',
     description: 'Complete move-in preparation',
     icon: Sparkles,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     premium: 1.5, // 50% premium
     features: [
       'Everything in Deep Cleaning',
