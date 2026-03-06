@@ -425,7 +425,7 @@ export function ServicePricing() {
             </div>
             <div className="text-center p-4 bg-accent/10 rounded-lg">
               <h4 className="font-semibold text-accent mb-2">Premium Discount</h4>
-              <p className="text-sm text-muted-foreground">20% off Ultimate Deep Cleaning</p>
+              <p className="text-sm text-muted-foreground">$25 off Ultimate Deep Cleaning</p>
             </div>
             <div className="text-center p-4 bg-success/10 rounded-lg">
               <h4 className="font-semibold text-success mb-2">Recurring Benefits</h4>

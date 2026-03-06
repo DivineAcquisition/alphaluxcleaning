@@ -568,8 +568,8 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 
                 {priceBreakdown.hasDeepCleanDiscount && (
                   <div className="flex justify-between items-center py-2 text-green-600">
-                    <span>$75 One-Time Deep Cleaning Discount</span>
-                    <span>-$75.00</span>
+                    <span>$25 Deep Cleaning Discount</span>
+                    <span>-$25.00</span>
                   </div>
                 )}
 

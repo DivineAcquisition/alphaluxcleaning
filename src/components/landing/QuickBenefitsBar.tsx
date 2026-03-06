@@ -14,7 +14,7 @@ const benefits = [
   },
   {
     icon: Sparkles,
-    text: '20% OFF first deep clean',
+    text: '$25 OFF first deep clean',
     color: 'text-warning'
   },
   {

@@ -28,7 +28,7 @@ import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
 import { ChatWidget } from '@/components/chat/ChatWidget';
 
-// Original pricing matrix - 20% discount applied automatically in calculations
+// Original pricing matrix - $25 flat discount applied automatically in calculations
 const pricingMatrix = {
   'under-1000': {
     weekly: 97.50,

@@ -9,17 +9,17 @@ export interface PriceDisplayOptions {
 }
 
 /**
- * Apply 20% discount to price - current promotion
+ * Apply $25 flat discount to price - current promotion
  */
 export function applyGlobalDiscount(price: number): number {
-  return Math.round(price * 0.8 * 100) / 100; // 20% off, rounded to nearest cent
+  return Math.round((price - 25) * 100) / 100; // $25 off
 }
 
 /**
- * Calculate 20% discount amount
+ * Calculate $25 flat discount amount
  */
-export function calculateGlobalDiscountAmount(price: number): number {
-  return Math.round(price * 0.2 * 100) / 100; // 20% discount amount
+export function calculateGlobalDiscountAmount(_price: number): number {
+  return 25; // $25 flat discount
 }
 
 /**

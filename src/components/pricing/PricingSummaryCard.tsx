@@ -190,7 +190,7 @@ export function PricingSummaryCard({
             <div className="flex justify-between text-sm">
               <span className="text-blue-600 font-medium flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
-                Deep Clean Discount (20%)
+                Deep Clean Discount ($25)
               </span>
               <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscount)}</span>
             </div>

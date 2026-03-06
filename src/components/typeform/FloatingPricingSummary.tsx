@@ -214,7 +214,7 @@ export function FloatingPricingSummary({
                       </div>
                       <div className={`flex justify-between text-sm font-semibold ${serviceTypeId === 'deep' ? 'text-blue-600' : 'text-green-600'}`}>
                         <span>
-                          {serviceTypeId === 'deep' ? 'Deep Clean Discount (20%):' : 'First-Time Discount (10%):'}
+                          {serviceTypeId === 'deep' ? 'Deep Clean Discount ($25):' : 'First-Time Discount (10%):'}
                         </span>
                         <span>-{formatPrice(pricingResult.discountAmount)}</span>
                       </div>

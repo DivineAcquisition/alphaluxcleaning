@@ -10,7 +10,7 @@ import { HelpCircle } from 'lucide-react';
 const faqs = [
   {
     question: 'How is pricing calculated?',
-    answer: 'Our pricing is based on your home size (square footage), service type, and location. Standard cleaning starts at $171, Deep cleaning at $236, and Move-In/Out at $340. We offer 10% off Standard and 20% off Deep cleaning for new customers.'
+    answer: 'Our pricing is based on your home size (square footage), service type, and location. Standard cleaning starts at $171, Deep cleaning at $236, and Move-In/Out at $340. We offer 10% off Standard and $25 off Deep cleaning for new customers.'
   },
   {
     question: "What's the difference between regular and deep cleaning?",
