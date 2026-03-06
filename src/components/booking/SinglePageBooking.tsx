@@ -21,7 +21,7 @@ const serviceTypes = [
     name: 'General Cleaning',
     description: 'Perfect for regular maintenance cleaning',
     icon: Home,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     features: [
       'All surfaces dusted and wiped',
       'Floors vacuumed and mopped',
