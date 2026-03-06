@@ -63,8 +63,9 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
   const minPrice = getMinPrice();
   
   // Calculate discounted price
-  const discount = serviceType.id === 'regular' ? 0.10 : serviceType.id === 'deep' ? 0.20 : 0;
-  const discountedPrice = discount > 0 ? Math.round(minPrice * (1 - discount)) : minPrice;
+  const discount = serviceType.id === 'regular' ? 0.10 : 0;
+  const flatDiscount = serviceType.id === 'deep' ? 25 : 0;
+  const discountedPrice = flatDiscount > 0 ? minPrice - flatDiscount : (discount > 0 ? Math.round(minPrice * (1 - discount)) : minPrice);
 
   return (
     <Card 
