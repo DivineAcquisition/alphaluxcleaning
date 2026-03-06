@@ -126,10 +126,9 @@ const originalPricingTiers = [
   }
 ];
 
-// Apply maintenance discount (15%) and premium discount (20%)
+// Apply maintenance discount (15%) and premium discount ($25 flat)
 const pricingTiers = originalPricingTiers.map(tier => {
   const maintenanceDiscount = 0.15; // 15% for recurring services
-  const premiumDiscount = 0.20; // 20% for premium deep clean
   
   return {
     ...tier,
@@ -156,8 +155,8 @@ const pricingTiers = originalPricingTiers.map(tier => {
       },
       deepClean: {
         original: tier.originalPricing.deepClean,
-        discount: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * premiumDiscount * 100) / 100 : 0,
-        final: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * (1 - premiumDiscount) * 100) / 100 : 0
+        discount: tier.originalPricing.deepClean > 0 ? 25 : 0,
+        final: tier.originalPricing.deepClean > 0 ? tier.originalPricing.deepClean - 25 : 0
       }
     }
   };
