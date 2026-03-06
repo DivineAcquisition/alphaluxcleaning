@@ -359,7 +359,7 @@ export function ServicePricing() {
               {service.name === "Ultimate Deep Cleaning" && (
                 <div className="absolute top-2 right-2 z-10">
                   <Badge variant="destructive" className="animate-pulse bg-destructive text-destructive-foreground">
-                    20% OFF!
+                    $25 OFF!
                   </Badge>
                 </div>
               )}
