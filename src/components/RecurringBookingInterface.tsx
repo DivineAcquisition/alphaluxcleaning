@@ -871,7 +871,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                     </div>
                                     <div>
                                       <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
-                                      <span>${tier.id === 'premium' ? Math.round(tier.basePrice * 0.8) : Math.round(tier.basePrice * 0.85)}</span>
+                                      <span>${tier.id === 'premium' ? tier.basePrice - 25 : Math.round(tier.basePrice * 0.85)}</span>
                                     </div>
                                     <div className="text-xs font-normal text-green-600 mt-1">
                                       One-Time Discount!
