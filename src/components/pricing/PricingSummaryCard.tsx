@@ -155,7 +155,7 @@ export function PricingSummaryCard({
         {isDeepCleaning && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-blue-600">
-              ✨ Deep Cleaning Special: 20% OFF ✨
+              ✨ Deep Cleaning Special: $25 OFF ✨
             </p>
           </div>
         )}
