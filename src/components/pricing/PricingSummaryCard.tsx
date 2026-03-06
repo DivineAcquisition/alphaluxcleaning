@@ -126,9 +126,9 @@ export function PricingSummaryCard({
   const isDeepCleaning = serviceTypeId === 'deep';
 
   // Calculate deep clean discount if applicable
-  const deepCleanDiscount = isDeepCleaning ? pricingResult.discountedPrice * 0.20 : 0;
+  const deepCleanDiscount = isDeepCleaning ? 25 : 0;
   const priceBeforeDeepCleanDiscount = isDeepCleaning 
-    ? pricingResult.discountedPrice / 0.80  // Reverse the 20% discount
+    ? pricingResult.discountedPrice + 25  // Add back the $25 discount
     : pricingResult.discountedPrice;
 
   return (
