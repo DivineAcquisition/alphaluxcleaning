@@ -182,7 +182,7 @@ const serviceTypes = [
   },
     { 
     name: "Ultimate Deep Cleaning", 
-    description: "Premium deep clean - optimal for larger homes over 3,000 sq ft (20% off)",
+    description: "Premium deep clean - optimal for larger homes over 3,000 sq ft ($25 off)",
     icon: Star, 
     color: "text-accent",
     features: [
