@@ -866,7 +866,7 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                   <div>
                                     <div className="flex items-center justify-end gap-2 mb-1">
                                       <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                                        {tier.id === 'premium' ? '20% off' : '15% off'}
+                                        {tier.id === 'premium' ? '$25 off' : '15% off'}
                                       </Badge>
                                     </div>
                                     <div>
