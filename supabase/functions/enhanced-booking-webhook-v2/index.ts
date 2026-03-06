@@ -500,46 +500,54 @@ serve(async (req) => {
 
     const results = [];
     
-    // HARDCODED GoHighLevel booking webhook - always send booking data here
+    // HARDCODED webhook destinations - always send booking data here
     const GHL_BOOKING_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/Lvvq87zxxbYFnaTEklYX/webhook-trigger/23d225e3-f4d6-4e0e-abf1-95c385b173ba';
+    const ZAPIER_BOOKING_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/24603039/uxugxf1/';
     
-    console.log(`📡 Sending to GoHighLevel booking webhook + ${webhookConfigs.length} configured webhook(s)`);
+    const hardcodedWebhooks = [
+      { name: 'GoHighLevel_Bookings', url: GHL_BOOKING_WEBHOOK_URL },
+      { name: 'Zapier_Bookings', url: ZAPIER_BOOKING_WEBHOOK_URL },
+    ];
     
-    // Send to GoHighLevel first
-    try {
-      const ghlStartTime = Date.now();
-      console.log('🚀 Sending booking data to GoHighLevel...');
-      
-      const ghlResponse = await fetch(GHL_BOOKING_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'AlphaLux-BookingWebhook/2.0'
-        },
-        body: payloadString
-      });
-      
-      const ghlResponseTime = Date.now() - ghlStartTime;
-      const ghlResponseText = await ghlResponse.text();
-      
-      console.log(`${ghlResponse.ok ? '✅' : '❌'} GoHighLevel: ${ghlResponse.status} (${ghlResponseTime}ms)`);
-      
-      results.push({
-        webhook: 'GoHighLevel_Bookings',
-        url: GHL_BOOKING_WEBHOOK_URL,
-        success: ghlResponse.ok,
-        status_code: ghlResponse.status,
-        response_time: ghlResponseTime,
-        response_preview: ghlResponseText.slice(0, 200)
-      });
-    } catch (ghlError) {
-      console.error('❌ GoHighLevel webhook failed:', ghlError.message);
-      results.push({
-        webhook: 'GoHighLevel_Bookings',
-        url: GHL_BOOKING_WEBHOOK_URL,
-        success: false,
-        error: ghlError.message
-      });
+    console.log(`📡 Sending to ${hardcodedWebhooks.length} hardcoded webhook(s) + ${webhookConfigs.length} configured webhook(s)`);
+    
+    // Send to all hardcoded webhooks
+    for (const hw of hardcodedWebhooks) {
+      try {
+        const hwStartTime = Date.now();
+        console.log(`🚀 Sending booking data to ${hw.name}...`);
+        
+        const hwResponse = await fetch(hw.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'AlphaLux-BookingWebhook/2.0'
+          },
+          body: payloadString
+        });
+        
+        const hwResponseTime = Date.now() - hwStartTime;
+        const hwResponseText = await hwResponse.text();
+        
+        console.log(`${hwResponse.ok ? '✅' : '❌'} ${hw.name}: ${hwResponse.status} (${hwResponseTime}ms)`);
+        
+        results.push({
+          webhook: hw.name,
+          url: hw.url,
+          success: hwResponse.ok,
+          status_code: hwResponse.status,
+          response_time: hwResponseTime,
+          response_preview: hwResponseText.slice(0, 200)
+        });
+      } catch (hwError) {
+        console.error(`❌ ${hw.name} webhook failed:`, hwError.message);
+        results.push({
+          webhook: hw.name,
+          url: hw.url,
+          success: false,
+          error: hwError.message
+        });
+      }
     }
 
     // Send webhook to each configured endpoint
