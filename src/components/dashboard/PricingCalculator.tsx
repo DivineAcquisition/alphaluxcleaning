@@ -562,7 +562,7 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                 {priceBreakdown.hasDeepCleanDiscount && (
                   <div className="flex justify-between items-center py-2">
                     <span className="text-muted-foreground">Original Deep Clean Price</span>
-                    <span className="font-medium">${(priceBreakdown.basePrice + 75).toFixed(2)}</span>
+                    <span className="font-medium">${(priceBreakdown.basePrice + 25).toFixed(2)}</span>
                   </div>
                 )}
                 
