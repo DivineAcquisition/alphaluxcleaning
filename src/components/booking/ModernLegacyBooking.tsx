@@ -765,7 +765,7 @@ export function ModernLegacyBooking() {
                     }, 0))}</span>
                   </div>
                   <div className="flex justify-between text-success">
-                    <span>20% Savings Applied:</span>
+                    <span>$25 Savings Applied:</span>
                     <span>-{formatPrice(calculateGlobalDiscountAmount(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
                       const addOn = addOnServices.find(a => a.id === addOnId);
                       return total + (addOn?.price || 0);

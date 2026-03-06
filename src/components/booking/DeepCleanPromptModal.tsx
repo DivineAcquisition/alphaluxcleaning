@@ -95,7 +95,7 @@ export function DeepCleanPromptModal({
                     <h3 className="font-bold text-xl">🎁 3-Month {frequency === 'weekly' ? 'Weekly' : 'Bi-Weekly'} Bundle</h3>
                   </div>
                   <p className="text-lg font-semibold text-primary">
-                    Get 20% OFF Every Clean + FREE Deep Clean ($355 Value)
+                    Get $25 OFF Every Clean + FREE Deep Clean ($355 Value)
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Commit to 3 months of {frequency === 'weekly' ? 'weekly' : 'bi-weekly'} service and unlock massive savings.
