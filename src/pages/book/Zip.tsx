@@ -240,7 +240,7 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              New Customer Special: 20% OFF Your First Deep Clean
+              New Customer Special: $25 OFF Your First Deep Clean
               <span className="block text-primary mt-2">
                 + 10% Off Recurring Service
               </span>

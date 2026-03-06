@@ -14,14 +14,14 @@ import { formatPrice } from '@/lib/pricing-utils';
 import { EnhancedSchedulingStep } from '@/components/EnhancedSchedulingStep';
 
 // Simplified service types with clear pricing
-// Service types with 20% discount applied to base price
+// Service types with $25 flat discount applied to base price
 const serviceTypes = [
   {
     id: 'general',
     name: 'General Cleaning',
     description: 'Perfect for regular maintenance cleaning',
     icon: Home,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     features: [
       'All surfaces dusted and wiped',
       'Floors vacuumed and mopped',
@@ -36,7 +36,7 @@ const serviceTypes = [
     name: 'Deep Cleaning',
     description: 'Comprehensive deep clean service',
     icon: Star,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     premium: 1.35, // 35% premium
     features: [
       'Everything in General Cleaning',
@@ -54,7 +54,7 @@ const serviceTypes = [
     name: 'Move-In Cleaning',
     description: 'Complete move-in preparation',
     icon: Sparkles,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     premium: 1.5, // 50% premium
     features: [
       'Everything in Deep Cleaning',
@@ -71,7 +71,7 @@ const serviceTypes = [
     name: 'Move-Out Cleaning',
     description: 'Get your deposit back',
     icon: Sparkles,
-    basePrice: Math.round(180 * 0.8 * 100) / 100, // 20% discount applied
+    basePrice: 180 - 25, // $25 discount applied
     premium: 1.5, // 50% premium
     features: [
       'Everything in Deep Cleaning',

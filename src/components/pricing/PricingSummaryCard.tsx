@@ -126,9 +126,9 @@ export function PricingSummaryCard({
   const isDeepCleaning = serviceTypeId === 'deep';
 
   // Calculate deep clean discount if applicable
-  const deepCleanDiscount = isDeepCleaning ? pricingResult.discountedPrice * 0.20 : 0;
+  const deepCleanDiscount = isDeepCleaning ? 25 : 0;
   const priceBeforeDeepCleanDiscount = isDeepCleaning 
-    ? pricingResult.discountedPrice / 0.80  // Reverse the 20% discount
+    ? pricingResult.discountedPrice + 25  // Add back the $25 discount
     : pricingResult.discountedPrice;
 
   return (
@@ -155,7 +155,7 @@ export function PricingSummaryCard({
         {isDeepCleaning && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-blue-600">
-              ✨ Deep Cleaning Special: 20% OFF ✨
+              ✨ Deep Cleaning Special: $25 OFF ✨
             </p>
           </div>
         )}
@@ -190,7 +190,7 @@ export function PricingSummaryCard({
             <div className="flex justify-between text-sm">
               <span className="text-blue-600 font-medium flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
-                Deep Clean Discount (20%)
+                Deep Clean Discount ($25)
               </span>
               <span className="font-medium text-blue-600">-{formatPrice(deepCleanDiscount)}</span>
             </div>

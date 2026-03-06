@@ -866,12 +866,12 @@ export const RecurringBookingInterface: React.FC<RecurringBookingInterfaceProps>
                                   <div>
                                     <div className="flex items-center justify-end gap-2 mb-1">
                                       <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                                        {tier.id === 'premium' ? '20% off' : '15% off'}
+                                        {tier.id === 'premium' ? '$25 off' : '15% off'}
                                       </Badge>
                                     </div>
                                     <div>
                                       <span className="line-through text-muted-foreground text-sm mr-2">${tier.basePrice}</span>
-                                      <span>${tier.id === 'premium' ? Math.round(tier.basePrice * 0.8) : Math.round(tier.basePrice * 0.85)}</span>
+                                      <span>${tier.id === 'premium' ? tier.basePrice - 25 : Math.round(tier.basePrice * 0.85)}</span>
                                     </div>
                                     <div className="text-xs font-normal text-green-600 mt-1">
                                       One-Time Discount!

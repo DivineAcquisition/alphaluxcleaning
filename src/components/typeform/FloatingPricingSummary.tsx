@@ -110,7 +110,7 @@ export function FloatingPricingSummary({
                   {serviceTypeId === 'deep' && (
                     <div className="bg-blue-50 border border-blue-200 rounded px-2 py-1">
                       <p className="text-xs font-semibold text-blue-700 text-center">
-                        ✨ Deep Cleaning Special: 20% OFF
+                        ✨ Deep Cleaning Special: $25 OFF
                       </p>
                     </div>
                   )}
@@ -214,7 +214,7 @@ export function FloatingPricingSummary({
                       </div>
                       <div className={`flex justify-between text-sm font-semibold ${serviceTypeId === 'deep' ? 'text-blue-600' : 'text-green-600'}`}>
                         <span>
-                          {serviceTypeId === 'deep' ? 'Deep Clean Discount (20%):' : 'First-Time Discount (10%):'}
+                          {serviceTypeId === 'deep' ? 'Deep Clean Discount ($25):' : 'First-Time Discount (10%):'}
                         </span>
                         <span>-{formatPrice(pricingResult.discountAmount)}</span>
                       </div>

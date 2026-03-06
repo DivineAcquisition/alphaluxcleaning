@@ -28,7 +28,7 @@ import { toLocalDate, parseLocalDate } from '@/lib/date-helpers';
 import { scrollToStepContent } from '@/lib/scroll-utils';
 import { ChatWidget } from '@/components/chat/ChatWidget';
 
-// Original pricing matrix - 20% discount applied automatically in calculations
+// Original pricing matrix - $25 flat discount applied automatically in calculations
 const pricingMatrix = {
   'under-1000': {
     weekly: 97.50,
@@ -765,7 +765,7 @@ export function ModernLegacyBooking() {
                     }, 0))}</span>
                   </div>
                   <div className="flex justify-between text-success">
-                    <span>20% Savings Applied:</span>
+                    <span>$25 Savings Applied:</span>
                     <span>-{formatPrice(calculateGlobalDiscountAmount(bookingData.basePrice + bookingData.addOns.reduce((total, addOnId) => {
                       const addOn = addOnServices.find(a => a.id === addOnId);
                       return total + (addOn?.price || 0);

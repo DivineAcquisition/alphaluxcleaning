@@ -126,10 +126,9 @@ const originalPricingTiers = [
   }
 ];
 
-// Apply maintenance discount (15%) and premium discount (20%)
+// Apply maintenance discount (15%) and premium discount ($25 flat)
 const pricingTiers = originalPricingTiers.map(tier => {
   const maintenanceDiscount = 0.15; // 15% for recurring services
-  const premiumDiscount = 0.20; // 20% for premium deep clean
   
   return {
     ...tier,
@@ -156,8 +155,8 @@ const pricingTiers = originalPricingTiers.map(tier => {
       },
       deepClean: {
         original: tier.originalPricing.deepClean,
-        discount: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * premiumDiscount * 100) / 100 : 0,
-        final: tier.originalPricing.deepClean > 0 ? Math.round(tier.originalPricing.deepClean * (1 - premiumDiscount) * 100) / 100 : 0
+        discount: tier.originalPricing.deepClean > 0 ? 25 : 0,
+        final: tier.originalPricing.deepClean > 0 ? tier.originalPricing.deepClean - 25 : 0
       }
     }
   };
@@ -183,7 +182,7 @@ const serviceTypes = [
   },
     { 
     name: "Ultimate Deep Cleaning", 
-    description: "Premium deep clean - optimal for larger homes over 3,000 sq ft (20% off)",
+    description: "Premium deep clean - optimal for larger homes over 3,000 sq ft ($25 off)",
     icon: Star, 
     color: "text-accent",
     features: [
@@ -322,7 +321,7 @@ export function ServicePricing() {
                     <span className="font-medium text-accent">Ultimate Deep Clean:</span>
                     {tier.pricing.deepClean.original > 0 && (
                        <Badge variant="destructive" className="text-xs px-2 py-1 bg-destructive text-destructive-foreground animate-pulse">
-                         20% OFF!
+                         $25 OFF!
                        </Badge>
                     )}
                   </div>
@@ -360,7 +359,7 @@ export function ServicePricing() {
               {service.name === "Ultimate Deep Cleaning" && (
                 <div className="absolute top-2 right-2 z-10">
                   <Badge variant="destructive" className="animate-pulse bg-destructive text-destructive-foreground">
-                    20% OFF!
+                    $25 OFF!
                   </Badge>
                 </div>
               )}
@@ -426,7 +425,7 @@ export function ServicePricing() {
             </div>
             <div className="text-center p-4 bg-accent/10 rounded-lg">
               <h4 className="font-semibold text-accent mb-2">Premium Discount</h4>
-              <p className="text-sm text-muted-foreground">20% off Ultimate Deep Cleaning</p>
+              <p className="text-sm text-muted-foreground">$25 off Ultimate Deep Cleaning</p>
             </div>
             <div className="text-center p-4 bg-success/10 rounded-lg">
               <h4 className="font-semibold text-success mb-2">Recurring Benefits</h4>

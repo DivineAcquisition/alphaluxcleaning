@@ -63,8 +63,9 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
   const minPrice = getMinPrice();
   
   // Calculate discounted price
-  const discount = serviceType.id === 'regular' ? 0.10 : serviceType.id === 'deep' ? 0.20 : 0;
-  const discountedPrice = discount > 0 ? Math.round(minPrice * (1 - discount)) : minPrice;
+  const discount = serviceType.id === 'regular' ? 0.10 : 0;
+  const flatDiscount = serviceType.id === 'deep' ? 25 : 0;
+  const discountedPrice = flatDiscount > 0 ? minPrice - flatDiscount : (discount > 0 ? Math.round(minPrice * (1 - discount)) : minPrice);
 
   return (
     <Card 
@@ -78,7 +79,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
     >
       <CardContent className="p-4 md:p-6">
         {/* Discount Badge */}
-        {discount > 0 && (
+        {(discount > 0 || flatDiscount > 0) && (
           <div className="absolute top-3 right-3 md:top-4 md:right-4">
             {serviceType.id === 'regular' && (
               <div className="px-2 py-1 rounded-full bg-green-500 text-white text-[10px] md:text-xs font-bold shadow-sm">
@@ -87,7 +88,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
             )}
             {serviceType.id === 'deep' && (
               <div className="px-2 py-1 rounded-full bg-[#ECC98B] text-[#1A1F2C] text-[10px] md:text-xs font-bold shadow-sm">
-                20% OFF
+                $25 OFF
               </div>
             )}
           </div>
