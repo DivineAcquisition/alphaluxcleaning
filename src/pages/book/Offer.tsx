@@ -14,7 +14,7 @@ import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge'
 
 // NEW CUSTOMER SPECIAL PRICING
 const PROMO = {
-  deepCleanDiscount: 0.20, // 20% off first deep clean
+  deepCleanFlatDiscount: 25, // $25 off first deep clean
   recurringDiscount: 0.10, // 10% off recurring service
 };
 
@@ -34,7 +34,7 @@ export default function BookingOffer() {
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
   
   // NEW CUSTOMER SPECIAL: 20% off deep clean
-  const deepCleanPrice = Math.round(baseDeepPrice * (1 - PROMO.deepCleanDiscount));
+  const deepCleanPrice = baseDeepPrice - PROMO.deepCleanFlatDiscount;
   
   // NEW CUSTOMER SPECIAL: 10% off recurring maintenance
   const recurringPrice = Math.round(maintenancePrice * (1 - PROMO.recurringDiscount));
@@ -138,7 +138,7 @@ export default function BookingOffer() {
               <Gift className="h-6 w-6 text-primary-foreground shrink-0 hidden md:block" />
               <div>
                 <p className="text-primary-foreground font-bold text-sm md:text-base">
-                  New Customer Special: 20% OFF Your First Deep Clean + 10% OFF Recurring
+                  New Customer Special: $25 OFF Your First Deep Clean + 10% OFF Recurring
                 </p>
                 <p className="text-primary-foreground/75 text-xs md:text-sm">
                   First-time customers only — claim your discount today
@@ -193,7 +193,7 @@ export default function BookingOffer() {
             <div className="mb-4">
               <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
                 <Gift className="h-3 w-3 mr-1.5" />
-                20% Off — New Customer Special
+                $25 Off — New Customer Special
               </Badge>
             </div>
 
