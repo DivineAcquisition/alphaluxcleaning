@@ -138,7 +138,7 @@ export default function BookingOffer() {
               <Gift className="h-6 w-6 text-primary-foreground shrink-0 hidden md:block" />
               <div>
                 <p className="text-primary-foreground font-bold text-sm md:text-base">
-                  New Customer Special: 20% OFF Your First Deep Clean + 10% OFF Recurring
+                  New Customer Special: $25 OFF Your First Deep Clean + 10% OFF Recurring
                 </p>
                 <p className="text-primary-foreground/75 text-xs md:text-sm">
                   First-time customers only — claim your discount today
