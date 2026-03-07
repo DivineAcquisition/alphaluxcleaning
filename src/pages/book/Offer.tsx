@@ -14,7 +14,7 @@ import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge'
 
 // NEW CUSTOMER SPECIAL PRICING
 const PROMO = {
-  deepCleanDiscount: 0.20, // 20% off first deep clean
+  deepCleanFlatDiscount: 25, // $25 off first deep clean
   recurringDiscount: 0.10, // 10% off recurring service
 };
 
