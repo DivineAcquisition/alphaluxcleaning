@@ -34,7 +34,7 @@ export default function BookingOffer() {
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
   
   // NEW CUSTOMER SPECIAL: 20% off deep clean
-  const deepCleanPrice = Math.round(baseDeepPrice * (1 - PROMO.deepCleanDiscount));
+  const deepCleanPrice = baseDeepPrice - PROMO.deepCleanFlatDiscount;
   
   // NEW CUSTOMER SPECIAL: 10% off recurring maintenance
   const recurringPrice = Math.round(maintenancePrice * (1 - PROMO.recurringDiscount));
