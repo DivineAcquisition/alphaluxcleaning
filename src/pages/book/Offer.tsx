@@ -193,7 +193,7 @@ export default function BookingOffer() {
             <div className="mb-4">
               <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
                 <Gift className="h-3 w-3 mr-1.5" />
-                20% Off — New Customer Special
+                $25 Off — New Customer Special
               </Badge>
             </div>
 
