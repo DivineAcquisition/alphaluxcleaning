@@ -279,8 +279,8 @@ serve(async (req) => {
     };
 
     const addressInfo = {
-      line1: customer.address_line1 || customer.address || '',
-      line2: customer.address_line2 || '',
+      line1: bookingData.address_line1 || customer.address_line1 || customer.address || '',
+      line2: bookingData.address_line2 || customer.address_line2 || '',
       city: customer.city || '',
       state: customer.state || '',
       zip: customer.postal_code || ''
