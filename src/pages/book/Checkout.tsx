@@ -89,6 +89,14 @@ export default function BookingCheckout() {
         isRecurring: bookingData.offerType === '90_day_plan',
         promoCode: bookingData.promoCode || null,
         promoDiscountCents: bookingData.promoDiscount ? Math.round(bookingData.promoDiscount * 100) : 0,
+        // Additional fields for complete booking data
+        serviceDate: bookingData.date || null,
+        timeSlot: bookingData.timeSlot || null,
+        specialInstructions: bookingData.specialInstructions || null,
+        addressLine1: bookingData.contactInfo.address1 || null,
+        addressLine2: bookingData.contactInfo.address2 || null,
+        fullName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`.trim(),
+        source: 'customer_web',
         pricingBreakdown: {
           basePrice: bookingData.basePrice || 0,
           promoCode: bookingData.promoCode,

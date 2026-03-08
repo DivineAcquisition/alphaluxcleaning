@@ -223,6 +223,7 @@ export type Database = {
           at_risk: boolean | null
           attribution_method: string | null
           balance_due: number | null
+          balance_invoice_url: string | null
           base_price: number | null
           commitment_months: number | null
           conversion_status:
@@ -302,6 +303,7 @@ export type Database = {
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          balance_invoice_url?: string | null
           base_price?: number | null
           commitment_months?: number | null
           conversion_status?:
@@ -381,6 +383,7 @@ export type Database = {
           at_risk?: boolean | null
           attribution_method?: string | null
           balance_due?: number | null
+          balance_invoice_url?: string | null
           base_price?: number | null
           commitment_months?: number | null
           conversion_status?:

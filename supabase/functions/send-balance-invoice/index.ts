@@ -165,11 +165,12 @@ serve(async (req) => {
       hostedUrl: sentInvoice.hosted_invoice_url 
     });
 
-    // Update booking with invoice ID
+    // Update booking with invoice ID AND hosted URL
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
         stripe_balance_invoice_id: sentInvoice.id,
+        balance_invoice_url: sentInvoice.hosted_invoice_url,
         updated_at: new Date().toISOString(),
       })
       .eq('id', bookingId);
@@ -181,9 +182,24 @@ serve(async (req) => {
     logStep("Balance invoice sent successfully", {
       bookingId,
       invoiceId: sentInvoice.id,
+      hostedUrl: sentInvoice.hosted_invoice_url,
       amount: booking.balance_due,
       customerEmail: customer.email,
     });
+
+    // Trigger webhook so Zapier/GHL gets the invoice URL (fixes race condition)
+    try {
+      await supabase.functions.invoke('enhanced-booking-webhook-v2', {
+        body: {
+          booking_id: bookingId,
+          action: 'payment_invoice_created',
+          trigger_event: 'balance_invoice_sent',
+        }
+      });
+      logStep("Webhook triggered for invoice creation");
+    } catch (webhookError) {
+      logStep("Warning: Failed to trigger webhook after invoice", { error: webhookError });
+    }
 
     return new Response(JSON.stringify({ 
       success: true,

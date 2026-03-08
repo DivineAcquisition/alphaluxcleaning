@@ -403,9 +403,8 @@ serve(async (req) => {
         status: bookingData.status === 'confirmed' ? "Authorized" : "Pending",
         transaction_id: bookingData.stripe_payment_intent_id || bookingData.square_payment_id || '',
         receipt_url: bookingData.receipt_url || '',
-        balance_invoice_url: bookingData.stripe_balance_invoice_id 
-          ? `https://dashboard.stripe.com/invoices/${bookingData.stripe_balance_invoice_id}` 
-          : '',
+        balance_invoice_url: bookingData.balance_invoice_url || '',
+        balance_invoice_id: bookingData.stripe_balance_invoice_id || '',
         payment_plan: (bookingData.deposit_amount && bookingData.deposit_amount > 0) ? 'deposit_first' : 'full_payment',
       },
       
