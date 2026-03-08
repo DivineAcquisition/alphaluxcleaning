@@ -293,11 +293,9 @@ serve(async (req) => {
     // Extract and map property fields explicitly
     const propertyType = propertyDetails.dwelling_type || propertyDetails.dwellingType || '';
     const flooring = propertyDetails.flooring_type || propertyDetails.flooringType || '';
-
-    // Calculate pricing
-    const baseAmount = Number(bookingData.est_price) || 0;
     
-    // Parse add-ons
+    // Calculate financial values
+    let addOnsTotal = 0;
     const processedAddons = [];
     let addOnsTotal = 0;
     
@@ -314,10 +312,6 @@ serve(async (req) => {
       }
     }
     
-    // Calculate financial breakdown
-    const subtotalBeforeDiscount = baseAmount + (addOnsTotal * 0.25);
-    const discountAmount = subtotalBeforeDiscount > baseAmount ? subtotalBeforeDiscount * 0.15 : 0;
-    
     // Calculate estimated duration based on sqft
     const sqft = parseInt(bookingData.sqft_or_bedrooms) || 2000;
     const estimatedHours = Math.max(2, Math.ceil(sqft / 1000));
@@ -332,147 +326,132 @@ serve(async (req) => {
     // Check if this was an upgrade from one-time to recurring
     const wasUpgraded = bookingData.metadata?.upgraded_from_one_time || input.include_upgrade_metadata;
     
-    // Build the data payload (existing flat structure)
+    // Referral code (computed once)
+    const refCode = customer.referral_code || generateReferralCode(customer.name || 'Unknown', addressInfo.zip);
+    
+    // Service start/end (computed once)
+    const serviceStartISO = calculateServiceStart(serviceDetails.date, serviceDetails.time);
+    const serviceEndISO = calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours);
+
+    // Build the DEDUPLICATED webhook payload
     const webhookDataPayload = {
-      // Root-level fields
+      // ── Root-level identifiers ──
       booking_id: `BK-${bookingData.id.slice(0, 5).toUpperCase()}`,
-      state: (addressInfo.state || "TX") as "CA" | "TX" | "NY",
-      service_type: normalizeServiceType(serviceDetails.type),
-      sq_ft_range: formatSquareFootageRange(sqft),
+      booking_source: bookingData.source || 'customer_web',
+      type: normalizeServiceType(serviceDetails.type),
       frequency: normalizeFrequency(serviceDetails.frequency),
-      discount_applied: discountAmount > 0,
-      discount_rate: discountAmount > 0 ? 15 : 0,
-      price_before_discount: Math.round(subtotalBeforeDiscount),
-      price_after_discount: Math.round(baseAmount),
+      is_recurring: bookingData.is_recurring || false,
+      sq_ft_range: formatSquareFootageRange(sqft),
       
-      // Customer object
+      // ── Customer ──
       customer: {
         first_name: getFirstName(customer.name || 'Unknown'),
         last_name: getLastName(customer.name || 'Unknown'),
         email: customer.email || '',
-        phone: formatPhoneToE164(customer.phone || '')
+        phone: formatPhoneToE164(customer.phone || ''),
+        stripe_customer_id: customer?.stripe_customer_id || '',
       },
       
-      // Address object
+      // ── Address (includes property info) ──
       address: {
         street: addressInfo.line1 || '',
         city: addressInfo.city || '',
-        state: addressInfo.state || '',
-        zip: addressInfo.zip || ''
-      },
-      
-      // Job details object
-      job_details: {
+        state: addressInfo.state || 'TX',
+        zip: addressInfo.zip || '',
         property_type: propertyType,
         flooring: flooring,
-        bedrooms: propertyDetails.bedrooms || parseInt(bookingData.sqft_or_bedrooms) || 3,
-        bathrooms: propertyDetails.bathrooms || 2,
-        notes: specialInstructions,
-        // ISO format (original)
-        preferred_date: serviceDetails.date,
-        preferred_time_window: serviceDetails.time,
-        service_start_datetime: calculateServiceStart(serviceDetails.date, serviceDetails.time),
-        service_end_datetime: calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours),
-        // GHL-friendly formats (MM/DD/YYYY, h:mm AM/PM)
-        preferred_date_ghl: formatDateGHL(serviceDetails.date),
-        preferred_time_ghl: formatTimeGHL(serviceDetails.time),
-        service_start_ghl: formatDateTimeGHL(calculateServiceStart(serviceDetails.date, serviceDetails.time)),
-        service_end_ghl: formatDateTimeGHL(calculateServiceEnd(serviceDetails.date, serviceDetails.time, estimatedHours)),
-        recurring_start_date_ghl: formatDateGHL(bookingData.recurring_start_date || serviceDetails.date),
+      },
+      
+      // ── Schedule (all date/time in one place) ──
+      schedule: {
+        date: serviceDetails.date,
+        date_formatted: formatDateGHL(serviceDetails.date),
+        time_window: serviceDetails.time,
+        time_formatted: formatTimeGHL(serviceDetails.time),
+        start_datetime: serviceStartISO,
+        end_datetime: serviceEndISO,
+        start_formatted: formatDateTimeGHL(serviceStartISO),
+        end_formatted: formatDateTimeGHL(serviceEndISO),
         est_duration_hours: parseFloat(estimatedHours.toFixed(1)),
-        labor_rate_per_hour: 25,
-        labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2)),
-        is_recurring: serviceDetails.frequency !== 'one_time',
         recurring_start_date: bookingData.recurring_start_date || serviceDetails.date,
-        upgraded_from_onetime: wasUpgraded
+        recurring_start_date_formatted: formatDateGHL(bookingData.recurring_start_date || serviceDetails.date),
       },
       
-      // Payment object
-      payment: {
-        payment_method: "Stripe",
-        payment_status: bookingData.status === 'confirmed' ? "Authorized" : "Pending",
-        transaction_id: bookingData.stripe_payment_intent_id || bookingData.square_payment_id || '',
-        amount_paid: Math.round(baseAmount),
-        stripe_customer_id: customer?.stripe_customer_id || '',
-        stripe_balance_invoice_id: bookingData.stripe_balance_invoice_id || '',
-        balance_invoice_url: bookingData.stripe_balance_invoice_id 
-          ? `https://dashboard.stripe.com/invoices/${bookingData.stripe_balance_invoice_id}` 
-          : '',
-        receipt_url: bookingData.receipt_url || ''
-      },
-      
-      // Offer details object
-      offer_details: {
-        offer_name: bookingData.offer_name || 'Custom Service',
-        offer_type: bookingData.offer_type || 'one_time',
-        visit_count: bookingData.visit_count || 1,
-        is_recurring: bookingData.is_recurring || false,
-        base_price: Math.round(bookingData.base_price || baseAmount),
-        deposit_paid: Math.round(bookingData.deposit_amount || 0),
-        balance_due: Math.round(bookingData.balance_due || 0),
-        deposit_percentage: 25,
-        payment_plan: bookingData.deposit_amount && bookingData.deposit_amount > 0 ? 'deposit_first' : 'full_payment'
-      },
-      
-      // Marketing object
-      marketing: {
-        campaign: (bookingData.utms?.utm_campaign) || "Direct",
-        ad_id: (bookingData.utms?.utm_content) || "",
-        utm_source: (bookingData.utms?.utm_source) || "direct",
-        utm_campaign: (bookingData.utms?.utm_campaign) || ""
-      },
-      
-      // LTV metrics object
-      ltv_metrics: {
-        expected_ltv: calculateLTV(serviceDetails.frequency, baseAmount),
-        expected_recurring_frequency: normalizeFrequency(serviceDetails.frequency),
-        customer_segment: "Residential",
-        ltv_score: calculateLTVScore(bookingData.arr || 0)
-      },
-      
-      // Referral program object
-      referral_program: {
-        referral_code: customer.referral_code || generateReferralCode(customer.name || 'Unknown', addressInfo.zip),
-        referral_link: `https://book.alphaluxclean.com/referral?code=${customer.referral_code || generateReferralCode(customer.name || 'Unknown', addressInfo.zip)}`,
-        referral_incentive: "$50 off next cleaning per referral",
-        referral_tracking_id: `REF-${Date.now().toString().slice(-5)}`
-      },
-      
-      // System meta object
-      system_meta: {
-        origin: "lovable.io",
-        environment: "production",
-        version: "2.0.0",
-        querystring: bookingData.utms ? new URLSearchParams(bookingData.utms as any).toString() : ""
-      },
-      // Pricing details object (comprehensive breakdown)
+      // ── Pricing (single source of truth for all money fields) ──
       pricing: {
         base_price: Number(bookingData.base_price) || 0,
         est_price: Number(bookingData.est_price) || 0,
         deposit_amount: Number(bookingData.deposit_amount) || 0,
+        deposit_pct: 25,
         balance_due: Number(bookingData.balance_due) || 0,
-        prepayment_discount_applied: bookingData.prepayment_discount_applied || false,
-        prepayment_discount_amount: bookingData.prepayment_discount_amount || 0,
         promo_code: bookingData.promo_code || '',
         promo_applied: bookingData.promo_applied || '',
         promo_discount_cents: bookingData.promo_discount_cents || 0,
+        prepayment_discount_applied: bookingData.prepayment_discount_applied || false,
+        prepayment_discount_amount: bookingData.prepayment_discount_amount || 0,
+        addons: processedAddons,
+        addons_total: addOnsTotal,
         mrr: Number(bookingData.mrr) || 0,
         arr: Number(bookingData.arr) || 0,
-        is_recurring: bookingData.is_recurring || false,
-        frequency: bookingData.frequency || '',
+        expected_ltv: calculateLTV(serviceDetails.frequency, baseAmount),
+        ltv_score: calculateLTVScore(bookingData.arr || 0),
         pricing_breakdown: bookingData.pricing_breakdown || {},
-        addons: bookingData.addons || [],
-        addons_total: addOnsTotal,
+      },
+      
+      // ── Payment ──
+      payment: {
+        method: "Stripe",
+        status: bookingData.status === 'confirmed' ? "Authorized" : "Pending",
+        transaction_id: bookingData.stripe_payment_intent_id || bookingData.square_payment_id || '',
+        receipt_url: bookingData.receipt_url || '',
+        balance_invoice_url: bookingData.stripe_balance_invoice_id 
+          ? `https://dashboard.stripe.com/invoices/${bookingData.stripe_balance_invoice_id}` 
+          : '',
+        payment_plan: (bookingData.deposit_amount && bookingData.deposit_amount > 0) ? 'deposit_first' : 'full_payment',
+      },
+      
+      // ── Job (non-schedule work details) ──
+      job: {
+        bedrooms: propertyDetails.bedrooms || parseInt(bookingData.sqft_or_bedrooms) || 3,
+        bathrooms: propertyDetails.bathrooms || 2,
+        notes: specialInstructions,
+        labor_rate_per_hour: 25,
+        labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2)),
+        offer_name: bookingData.offer_name || 'Custom Service',
+        offer_type: bookingData.offer_type || 'one_time',
+        visit_count: bookingData.visit_count || 1,
+        upgraded_from_onetime: wasUpgraded,
+      },
+      
+      // ── Marketing ──
+      marketing: {
+        campaign: (bookingData.utms?.utm_campaign) || "Direct",
+        ad_id: (bookingData.utms?.utm_content) || "",
+        utm_source: (bookingData.utms?.utm_source) || "direct",
+        utm_campaign: (bookingData.utms?.utm_campaign) || "",
+      },
+      
+      // ── Referral ──
+      referral: {
+        code: refCode,
+        link: `https://book.alphaluxclean.com/referral?code=${refCode}`,
+        incentive: "$50 off next cleaning per referral",
+        tracking_id: `REF-${Date.now().toString().slice(-5)}`,
+      },
+      
+      // ── Meta ──
+      meta: {
+        origin: "lovable.io",
+        environment: "production",
+        version: "3.0.0",
+        timestamp: new Date().toISOString(),
       },
     };
     
     // Wrap in STANDARDIZED format matching test webhooks
     const webhookPayload = {
       type: webhookType,
-      data: {
-        ...webhookDataPayload,
-        booking_source: bookingData.source || 'customer_web', // NEW: Track booking origin (customer_web, csr_phone, admin_manual)
-      },
+      data: webhookDataPayload,
       timestamp: new Date().toISOString(),
       source: "alphalux_booking_system"
     };
@@ -481,15 +460,15 @@ serve(async (req) => {
     const payloadString = JSON.stringify(webhookPayload);
     const payloadSizeKb = Math.round(payloadString.length / 1024 * 100) / 100;
     
-    console.log('📦 Webhook payload generated (standardized format):', {
+    console.log('📦 Webhook payload generated (v3 deduplicated):', {
       type: webhookPayload.type,
       booking_id: webhookPayload.data.booking_id,
       customer: webhookPayload.data.customer.email,
-      service_type: webhookPayload.data.service_type,
+      service_type: webhookPayload.data.type,
       frequency: webhookPayload.data.frequency,
-      is_recurring: webhookPayload.data.job_details.is_recurring,
-      upgraded: webhookPayload.data.job_details.upgraded_from_onetime,
-      amount: webhookPayload.data.price_after_discount,
+      is_recurring: webhookPayload.data.is_recurring,
+      upgraded: webhookPayload.data.job.upgraded_from_onetime,
+      est_price: webhookPayload.data.pricing.est_price,
       payload_size_kb: payloadSizeKb,
       generation_time_ms: payloadGenerationTime
     });
@@ -679,70 +658,3 @@ serve(async (req) => {
     });
   }
 });
-
-// Helper function to get tier name
-function getTierName(tierLevel: number): string {
-  const tiers = {
-    1: "Entry",
-    2: "Professional", 
-    3: "Expert",
-    4: "Master"
-  };
-  return tiers[tierLevel] || "Professional";
-}
-
-// Helper function to generate cleaner assignments
-function generateCleanerAssignments(numberOfCleaners: number, estimatedHours: number) {
-  const cleaners = [
-    { 
-      id: "sub_001", 
-      name: "Maria Garcia", 
-      email: "maria.garcia@alphalux.com", 
-      phone: "(281) 809-9901", 
-      hourly_rate: 18, 
-      tier_level: 2, 
-      tier_name: "Professional" 
-    },
-    { 
-      id: "sub_005", 
-      name: "Ana Rodriguez", 
-      email: "ana.rodriguez@alphalux.com",
-      phone: "(281) 809-9902",
-      hourly_rate: 16, 
-      tier_level: 1, 
-      tier_name: "Standard" 
-    },
-    { 
-      id: "sub_006", 
-      name: "Carlos Martinez", 
-      email: "carlos.martinez@alphalux.com",
-      phone: "(281) 809-9903",
-      hourly_rate: 17, 
-      tier_level: 2, 
-      tier_name: "Professional" 
-    }
-  ];
-  
-  return cleaners.slice(0, numberOfCleaners).map((cleaner, index) => {
-    const isLead = index === 0;
-    const basePay = cleaner.hourly_rate * estimatedHours;
-    const efficiencyBonus = basePay * 0.15;
-    
-    return {
-      cleaner_number: index + 1,
-      cleaner_id: cleaner.id,
-      name: cleaner.name,
-      email: cleaner.email,
-      phone: cleaner.phone,
-      role: isLead ? "team_lead" : "cleaner",
-      is_lead: isLead,
-      hourly_rate: cleaner.hourly_rate,
-      hours_assigned: estimatedHours,
-      base_pay: parseFloat(basePay.toFixed(2)),
-      efficiency_bonus: parseFloat(efficiencyBonus.toFixed(2)),
-      total_job_pay: parseFloat((basePay + efficiencyBonus).toFixed(2)),
-      tier_level: cleaner.tier_level,
-      tier_name: cleaner.tier_name
-    };
-  });
-}

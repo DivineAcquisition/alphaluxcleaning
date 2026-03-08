@@ -1,102 +1,85 @@
 
 
-## Plan: Deduplicate and Restructure Webhook Payload
+# Remove All "Bay Area Cleaning Pros" References
 
-### Problem
+## Overview
+There are **55+ active source files** (excluding old migrations) that still contain references to "Bay Area Cleaning Professionals", "Bay Area Cleaning Pros", "BACP", or related branding. These need to be replaced with "AlphaLux Clean" branding throughout. The existing AlphaLux Stripe keys (`STRIPE_SECRET_KEY_ALPHALUX`, `STRIPE_PUBLISHABLE_KEY_ALPHALUX`, `STRIPE_WEBHOOK_SECRET_ALPHALUX`) will be retained as-is.
 
-The current `webhookDataPayload` in `enhanced-booking-webhook-v2/index.ts` has significant duplication across its 10 nested objects. Key examples:
+## What Changes
 
-| Data Point | Duplicated In |
+All old brand references will be replaced as follows:
+
+| Old Reference | New Reference |
 |---|---|
-| frequency | root, `pricing.frequency`, `ltv_metrics.expected_recurring_frequency` |
-| is_recurring | `job_details`, `offer_details`, `pricing` |
-| base_price / est_price | root (`price_before/after_discount`), `offer_details.base_price`, `pricing.base_price`, `pricing.est_price`, `payment.amount_paid` |
-| deposit / balance_due | `offer_details.deposit_paid`, `offer_details.balance_due`, `pricing.deposit_amount`, `pricing.balance_due` |
-| service dates | ISO + GHL format duplicated for every date field (6 fields → 12) |
-| addons | `pricing.addons` AND `pricing.addons_total` alongside processed addons |
-| discount info | root `discount_applied/rate` AND `pricing.prepayment_discount_*` |
+| Bay Area Cleaning Professionals | AlphaLux Clean |
+| Bay Area Cleaning Pros | AlphaLux Clean |
+| Bay Area Cleaning | AlphaLux Clean |
+| BACP Club | AlphaLux Club |
+| Serving Bay Area | Premium Cleaning Service |
+| bayareacleaningpros.com emails | alphaluxclean.com emails |
+| Bacp2025!- (passwords) | AlphaLux2025!- |
+| SALT_BACP_2024 | SALT_ALPHALUX_2024 |
+| BACP_ADMIN_2024 | ALPHALUX_ADMIN_2024 |
+| Old Supabase logo URLs (kqoezqzogleaaupjzxch) | Updated or removed |
 
-### Proposed Clean Structure
+## Files to Update
 
-Collapse from 10 objects to 6 logical groups with zero duplication:
+### Frontend Components (src/)
+1. **src/components/dashboard/DashboardHeader.tsx** - Title, alt text, "Serving Bay Area"
+2. **src/components/HourlyBookingInterface.tsx** - "BACP Club" references (x4)
+3. **src/components/booking/PriceSummaryCard.tsx** - "BACP Club" references (x2)
+4. **src/components/booking/LegacyBookingFlow.tsx** - "BACP Club" reference
+5. **src/components/TermsOfServiceAgreement.tsx** - "BACP Club" terms
+6. **src/components/dashboard/PricingCalculator.tsx** - Comment about Bay Area pricing
+7. **src/pages/SubcontractorApplication.tsx** - Brand references (x3)
+8. **src/pages/SubcontractorApplicationThankYou.tsx** - Thank you text
+9. **src/pages/ContractorAuth.tsx** - Subtitle text
+10. **src/pages/CustomerPortalHome.tsx** - Subtitle text
+11. **src/pages/SubcontractorJobAcceptance.tsx** - Hardcoded old Supabase URLs
 
-```text
-data
-├── booking_id
-├── booking_source
-├── type (service type)
-├── frequency
-├── is_recurring
-├── sq_ft_range
-│
-├── customer
-│   ├── first_name, last_name, email, phone
-│   └── stripe_customer_id
-│
-├── address
-│   ├── street, city, state, zip
-│   └── property_type, flooring
-│
-├── schedule
-│   ├── date, time_window (ISO)
-│   ├── date_formatted, time_formatted (GHL MM/DD/YYYY)
-│   ├── start_datetime, end_datetime
-│   ├── est_duration_hours
-│   └── recurring_start_date
-│
-├── pricing
-│   ├── base_price, est_price (final)
-│   ├── deposit_amount, balance_due, deposit_pct
-│   ├── promo_code, promo_discount_cents
-│   ├── prepayment_discount_applied, prepayment_discount_amount
-│   ├── addons (array), addons_total
-│   ├── mrr, arr, expected_ltv, ltv_score
-│   └── pricing_breakdown (raw JSONB)
-│
-├── payment
-│   ├── method, status, transaction_id
-│   ├── receipt_url, balance_invoice_url
-│   └── payment_plan
-│
-├── job
-│   ├── bedrooms, bathrooms
-│   ├── notes (special instructions)
-│   ├── labor_rate_per_hour, labor_cost_total
-│   └── upgraded_from_onetime
-│
-├── marketing
-│   ├── utm_source, utm_campaign, ad_id
-│   └── campaign
-│
-├── referral
-│   ├── code, link, incentive, tracking_id
-│
-└── meta
-    ├── origin, environment, version
-    └── timestamp
-```
+### Edge Functions (supabase/functions/)
+12. **send-user-invite/index.ts** - Company name, email subject
+13. **send-custom-message/index.ts** - Email subject, heading, sign-off
+14. **send-application-response/index.ts** - Email subject
+15. **send-tier-upgrade-notification/index.ts** - Logo URL, footer text
+16. **send-assignment-invite/index.ts** - Footer text
+17. **send-monthly-performance-summary/index.ts** - Body text, sign-off
+18. **send-subcontractor-welcome/index.ts** - Welcome title
+19. **create-customer-account/index.ts** - Welcome notification, temp password
+20. **create-google-calendar-event/index.ts** - Description, display name
+21. **assignment-response/index.ts** - Footer text
+22. **create-membership-checkout/index.ts** - "BACP Club" product names
+23. **create-test-admin/index.ts** - Secret codes
+24. **create-subcontractor-direct/index.ts** - Salt string
+25. **fix-admin-users/index.ts** - Passwords
+26. **send-booking-transaction-to-zapier/index.ts** - "BACP Data" key
+27. **send-admin-job-notification/index.ts** - Hardcoded old Supabase URL
+28. **enhanced-job-assignment/index.ts** - Hardcoded old Supabase URL
+29. **_shared/email-templates/customer-feedback-notification.tsx** - Sign-off
 
-### Changes
+Plus any additional files found in the remaining 45 matches.
 
-**Single file**: `supabase/functions/enhanced-booking-webhook-v2/index.ts`
+### Database (migration needed)
+- Update `webhook_configurations.organization_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
+- Update `email_settings.from_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
+- Update any stored template text in `notification_templates` table
 
-1. **Remove** `offer_details` object entirely (merged into `pricing`)
-2. **Remove** `ltv_metrics` object (LTV fields moved into `pricing`)
-3. **Merge** `referral_program` → `referral` (shorter key)
-4. **Merge** `system_meta` → `meta`
-5. **Remove** root-level `discount_applied`, `discount_rate`, `price_before_discount`, `price_after_discount` (all in `pricing`)
-6. **Create** `schedule` object from `job_details` date/time fields
-7. **Create** `job` object with only non-date job fields (bedrooms, bathrooms, notes, labor)
-8. **Remove** duplicate `frequency` and `is_recurring` from nested objects — keep only at root
-9. **Move** `stripe_customer_id` into `customer`, remove from `payment`
-10. **Move** `property_type` and `flooring` into `address`
-11. **Deduplicate** date fields: keep one ISO + one GHL-formatted version per date (not both scattered across objects)
+## What Will NOT Change
+- The AlphaLux Stripe keys remain as configured
+- All Supabase connection settings stay the same
+- Old migration files (read-only history, won't be touched)
+- The `supabase/config.toml` project ID stays as-is
 
-### Backward Compatibility Note
+## Technical Details
 
-This is a breaking change for any existing Zapier/GHL mappings. After deploying, the Zapier zap field mappings will need to be updated to match the new structure. The GHL webhook will also need remapping.
+### Approach
+- Batch-edit all frontend components first, then edge functions, then deploy all updated functions
+- Run a single database migration to update default values and any stored brand text
+- Replace hardcoded old Supabase project URLs (`kqoezqzogleaaupjzxch`) with dynamic references where possible
+- All edge functions referencing the old brand will be redeployed after updates
 
-### Deployment
-
-Redeploy the edge function after editing via `supabase--deploy_edge_functions`.
+### Estimated Scope
+- ~30 files with text replacements
+- ~25 edge functions to redeploy
+- 1 database migration for stored defaults/templates
 
