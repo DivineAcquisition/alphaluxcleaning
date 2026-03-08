@@ -294,8 +294,7 @@ serve(async (req) => {
     const propertyType = propertyDetails.dwelling_type || propertyDetails.dwellingType || '';
     const flooring = propertyDetails.flooring_type || propertyDetails.flooringType || '';
     
-    // Calculate financial values
-    let addOnsTotal = 0;
+    // Parse add-ons
     const processedAddons = [];
     let addOnsTotal = 0;
     
