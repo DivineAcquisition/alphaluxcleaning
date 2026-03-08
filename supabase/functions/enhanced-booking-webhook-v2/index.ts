@@ -294,8 +294,7 @@ serve(async (req) => {
     const propertyType = propertyDetails.dwelling_type || propertyDetails.dwellingType || '';
     const flooring = propertyDetails.flooring_type || propertyDetails.flooringType || '';
     
-    // Calculate financial values
-    let addOnsTotal = 0;
+    // Parse add-ons
     const processedAddons = [];
     let addOnsTotal = 0;
     
@@ -393,7 +392,7 @@ serve(async (req) => {
         addons_total: addOnsTotal,
         mrr: Number(bookingData.mrr) || 0,
         arr: Number(bookingData.arr) || 0,
-        expected_ltv: calculateLTV(serviceDetails.frequency, baseAmount),
+        expected_ltv: calculateLTV(serviceDetails.frequency, Number(bookingData.est_price) || 0),
         ltv_score: calculateLTVScore(bookingData.arr || 0),
         pricing_breakdown: bookingData.pricing_breakdown || {},
       },
