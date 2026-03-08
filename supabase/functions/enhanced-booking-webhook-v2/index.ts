@@ -293,11 +293,9 @@ serve(async (req) => {
     // Extract and map property fields explicitly
     const propertyType = propertyDetails.dwelling_type || propertyDetails.dwellingType || '';
     const flooring = propertyDetails.flooring_type || propertyDetails.flooringType || '';
-
-    // Calculate pricing
-    const baseAmount = Number(bookingData.est_price) || 0;
     
-    // Parse add-ons
+    // Calculate financial values
+    let addOnsTotal = 0;
     const processedAddons = [];
     let addOnsTotal = 0;
     
