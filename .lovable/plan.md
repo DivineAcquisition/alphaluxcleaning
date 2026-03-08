@@ -1,85 +1,48 @@
 
 
-# Remove All "Bay Area Cleaning Pros" References
+## Plan: Capture All Missing Data Points in Webhook Payload
 
-## Overview
-There are **55+ active source files** (excluding old migrations) that still contain references to "Bay Area Cleaning Professionals", "Bay Area Cleaning Pros", "BACP", or related branding. These need to be replaced with "AlphaLux Clean" branding throughout. The existing AlphaLux Stripe keys (`STRIPE_SECRET_KEY_ALPHALUX`, `STRIPE_PUBLISHABLE_KEY_ALPHALUX`, `STRIPE_WEBHOOK_SECRET_ALPHALUX`) will be retained as-is.
+### Root Causes
 
-## What Changes
+There are **3 distinct problems** causing missing data in the Zapier webhook:
 
-All old brand references will be replaced as follows:
+**1. Address is empty on the booking row**
+The `create-payment-intent` function saves address to the **customer** table (`address_line1`, `city`, `state`, `postal_code`) but does NOT save it to the **booking** row (which has `address_line1`, `address_line2` columns). The webhook reads from customer, which works — but the customer record created by `create-booking` (legacy flow) stores address in the old `address` column, not `address_line1`. The webhook tries `customer.address_line1 || customer.address` but one is always null depending on which flow created the customer.
 
-| Old Reference | New Reference |
-|---|---|
-| Bay Area Cleaning Professionals | AlphaLux Clean |
-| Bay Area Cleaning Pros | AlphaLux Clean |
-| Bay Area Cleaning | AlphaLux Clean |
-| BACP Club | AlphaLux Club |
-| Serving Bay Area | Premium Cleaning Service |
-| bayareacleaningpros.com emails | alphaluxclean.com emails |
-| Bacp2025!- (passwords) | AlphaLux2025!- |
-| SALT_BACP_2024 | SALT_ALPHALUX_2024 |
-| BACP_ADMIN_2024 | ALPHALUX_ADMIN_2024 |
-| Old Supabase logo URLs (kqoezqzogleaaupjzxch) | Updated or removed |
+**2. Stripe balance invoice URL is never stored**
+The `send-balance-invoice` function creates the Stripe invoice and has access to `sentInvoice.hosted_invoice_url` (the customer-facing payment link) but only stores `sentInvoice.id` (the Stripe invoice ID) in the `stripe_balance_invoice_id` column. The webhook then constructs a **Stripe dashboard URL** (admin-only) instead of the customer payment link. Additionally, there's no column to store the hosted URL.
 
-## Files to Update
+**3. Race condition: webhook fires before invoice exists**
+The `confirm-booking-payment` function triggers the webhook AND the balance invoice **simultaneously** (both non-blocking). The webhook fires before the invoice is created, so `stripe_balance_invoice_id` is always null at webhook time.
 
-### Frontend Components (src/)
-1. **src/components/dashboard/DashboardHeader.tsx** - Title, alt text, "Serving Bay Area"
-2. **src/components/HourlyBookingInterface.tsx** - "BACP Club" references (x4)
-3. **src/components/booking/PriceSummaryCard.tsx** - "BACP Club" references (x2)
-4. **src/components/booking/LegacyBookingFlow.tsx** - "BACP Club" reference
-5. **src/components/TermsOfServiceAgreement.tsx** - "BACP Club" terms
-6. **src/components/dashboard/PricingCalculator.tsx** - Comment about Bay Area pricing
-7. **src/pages/SubcontractorApplication.tsx** - Brand references (x3)
-8. **src/pages/SubcontractorApplicationThankYou.tsx** - Thank you text
-9. **src/pages/ContractorAuth.tsx** - Subtitle text
-10. **src/pages/CustomerPortalHome.tsx** - Subtitle text
-11. **src/pages/SubcontractorJobAcceptance.tsx** - Hardcoded old Supabase URLs
+**4. Missing booking-level fields**
+The `create-payment-intent` function doesn't save `service_date`, `time_slot`, `special_instructions`, `property_details`, `addons`, or `source` to the booking. These are available in the booking context but not passed through.
 
-### Edge Functions (supabase/functions/)
-12. **send-user-invite/index.ts** - Company name, email subject
-13. **send-custom-message/index.ts** - Email subject, heading, sign-off
-14. **send-application-response/index.ts** - Email subject
-15. **send-tier-upgrade-notification/index.ts** - Logo URL, footer text
-16. **send-assignment-invite/index.ts** - Footer text
-17. **send-monthly-performance-summary/index.ts** - Body text, sign-off
-18. **send-subcontractor-welcome/index.ts** - Welcome title
-19. **create-customer-account/index.ts** - Welcome notification, temp password
-20. **create-google-calendar-event/index.ts** - Description, display name
-21. **assignment-response/index.ts** - Footer text
-22. **create-membership-checkout/index.ts** - "BACP Club" product names
-23. **create-test-admin/index.ts** - Secret codes
-24. **create-subcontractor-direct/index.ts** - Salt string
-25. **fix-admin-users/index.ts** - Passwords
-26. **send-booking-transaction-to-zapier/index.ts** - "BACP Data" key
-27. **send-admin-job-notification/index.ts** - Hardcoded old Supabase URL
-28. **enhanced-job-assignment/index.ts** - Hardcoded old Supabase URL
-29. **_shared/email-templates/customer-feedback-notification.tsx** - Sign-off
+### Changes
 
-Plus any additional files found in the remaining 45 matches.
+**File 1: Database migration** — Add `balance_invoice_url` column to bookings
+```sql
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS balance_invoice_url text;
+```
 
-### Database (migration needed)
-- Update `webhook_configurations.organization_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
-- Update `email_settings.from_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
-- Update any stored template text in `notification_templates` table
+**File 2: `supabase/functions/send-balance-invoice/index.ts`**
+- Store `sentInvoice.hosted_invoice_url` in the new `balance_invoice_url` column alongside the existing `stripe_balance_invoice_id`
+- After successfully storing the invoice, trigger `enhanced-booking-webhook-v2` with a `payment_invoice_created` action so Zapier gets the complete data including the invoice link
 
-## What Will NOT Change
-- The AlphaLux Stripe keys remain as configured
-- All Supabase connection settings stay the same
-- Old migration files (read-only history, won't be touched)
-- The `supabase/config.toml` project ID stays as-is
+**File 3: `supabase/functions/create-payment-intent/index.ts`**
+- Add missing fields to the booking insert: `service_date`, `time_slot`, `special_instructions`, `property_details`, `addons`, `source`, `address_line1`, `address_line2`
+- These fields are already available in the booking context on the frontend but never passed through
 
-## Technical Details
+**File 4: `src/pages/book/Checkout.tsx`**
+- Add the missing fields to `bookingPayload`: `serviceDate`, `timeSlot`, `specialInstructions`, `propertyDetails`, `addons`, `source`
 
-### Approach
-- Batch-edit all frontend components first, then edge functions, then deploy all updated functions
-- Run a single database migration to update default values and any stored brand text
-- Replace hardcoded old Supabase project URLs (`kqoezqzogleaaupjzxch`) with dynamic references where possible
-- All edge functions referencing the old brand will be redeployed after updates
+**File 5: `supabase/functions/enhanced-booking-webhook-v2/index.ts`**
+- Update `payment.balance_invoice_url` to read from the new `balance_invoice_url` column (the customer-facing link) instead of constructing a dashboard URL
+- Ensure address fallback chain: try `bookingData.address_line1` first, then `customer.address_line1`, then `customer.address`
 
-### Estimated Scope
-- ~30 files with text replacements
-- ~25 edge functions to redeploy
-- 1 database migration for stored defaults/templates
+### Result
+- Every booking will have address, service date, property details, and addons stored directly on the booking row
+- The customer-facing Stripe invoice payment link will be captured and sent to Zapier
+- A second webhook fires after the invoice is created, ensuring Zapier always gets the invoice URL
+- No more empty fields in the Zapier payload for live bookings
 
