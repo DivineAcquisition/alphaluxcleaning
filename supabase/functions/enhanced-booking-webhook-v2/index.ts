@@ -447,27 +447,27 @@ serve(async (req) => {
       },
     };
     
-    // Wrap in STANDARDIZED format matching test webhooks
+    // Flat payload — no wrapping `data` object so Zapier/GHL see clean field names
     const webhookPayload = {
-      type: webhookType,
-      data: webhookDataPayload,
-      timestamp: new Date().toISOString(),
-      source: "alphalux_booking_system"
+      webhook_type: webhookType,
+      webhook_timestamp: new Date().toISOString(),
+      webhook_source: "alphalux_booking_system",
+      ...webhookDataPayload,
     };
 
     const payloadGenerationTime = Date.now() - payloadGenerationStart;
     const payloadString = JSON.stringify(webhookPayload);
     const payloadSizeKb = Math.round(payloadString.length / 1024 * 100) / 100;
     
-    console.log('📦 Webhook payload generated (v3 deduplicated):', {
-      type: webhookPayload.type,
-      booking_id: webhookPayload.data.booking_id,
-      customer: webhookPayload.data.customer.email,
-      service_type: webhookPayload.data.type,
-      frequency: webhookPayload.data.frequency,
-      is_recurring: webhookPayload.data.is_recurring,
-      upgraded: webhookPayload.data.job.upgraded_from_onetime,
-      est_price: webhookPayload.data.pricing.est_price,
+    console.log('📦 Webhook payload generated (v3 flat):', {
+      webhook_type: webhookPayload.webhook_type,
+      booking_id: webhookPayload.booking_id,
+      customer: webhookPayload.customer.email,
+      service_type: webhookPayload.type,
+      frequency: webhookPayload.frequency,
+      is_recurring: webhookPayload.is_recurring,
+      upgraded: webhookPayload.job.upgraded_from_onetime,
+      est_price: webhookPayload.pricing.est_price,
       payload_size_kb: payloadSizeKb,
       generation_time_ms: payloadGenerationTime
     });
