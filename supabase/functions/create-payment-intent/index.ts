@@ -184,6 +184,16 @@ serve(async (req) => {
           promo_code: bookingData.promoCode,
           promo_discount_cents: bookingData.promoDiscountCents || 0,
           pricing_breakdown: bookingData.pricingBreakdown,
+          // Additional fields previously missing
+          service_date: bookingData.serviceDate || null,
+          time_slot: bookingData.timeSlot || null,
+          special_instructions: bookingData.specialInstructions || null,
+          property_details: bookingData.propertyDetails || null,
+          addons: bookingData.addons || null,
+          address_line1: bookingData.addressLine1 || null,
+          address_line2: bookingData.addressLine2 || null,
+          full_name: bookingData.fullName || null,
+          source: bookingData.source || 'customer_web',
         })
         .select()
         .single();
