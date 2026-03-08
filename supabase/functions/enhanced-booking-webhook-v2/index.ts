@@ -312,10 +312,6 @@ serve(async (req) => {
       }
     }
     
-    // Calculate financial breakdown
-    const subtotalBeforeDiscount = baseAmount + (addOnsTotal * 0.25);
-    const discountAmount = subtotalBeforeDiscount > baseAmount ? subtotalBeforeDiscount * 0.15 : 0;
-    
     // Calculate estimated duration based on sqft
     const sqft = parseInt(bookingData.sqft_or_bedrooms) || 2000;
     const estimatedHours = Math.max(2, Math.ceil(sqft / 1000));
