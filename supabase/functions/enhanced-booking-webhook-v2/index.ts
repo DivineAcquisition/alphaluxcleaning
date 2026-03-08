@@ -392,7 +392,7 @@ serve(async (req) => {
         addons_total: addOnsTotal,
         mrr: Number(bookingData.mrr) || 0,
         arr: Number(bookingData.arr) || 0,
-        expected_ltv: calculateLTV(serviceDetails.frequency, baseAmount),
+        expected_ltv: calculateLTV(serviceDetails.frequency, Number(bookingData.est_price) || 0),
         ltv_score: calculateLTVScore(bookingData.arr || 0),
         pricing_breakdown: bookingData.pricing_breakdown || {},
       },
