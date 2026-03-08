@@ -457,10 +457,7 @@ serve(async (req) => {
     // Wrap in STANDARDIZED format matching test webhooks
     const webhookPayload = {
       type: webhookType,
-      data: {
-        ...webhookDataPayload,
-        booking_source: bookingData.source || 'customer_web', // NEW: Track booking origin (customer_web, csr_phone, admin_manual)
-      },
+      data: webhookDataPayload,
       timestamp: new Date().toISOString(),
       source: "alphalux_booking_system"
     };
@@ -469,15 +466,15 @@ serve(async (req) => {
     const payloadString = JSON.stringify(webhookPayload);
     const payloadSizeKb = Math.round(payloadString.length / 1024 * 100) / 100;
     
-    console.log('📦 Webhook payload generated (standardized format):', {
+    console.log('📦 Webhook payload generated (v3 deduplicated):', {
       type: webhookPayload.type,
       booking_id: webhookPayload.data.booking_id,
       customer: webhookPayload.data.customer.email,
-      service_type: webhookPayload.data.service_type,
+      service_type: webhookPayload.data.type,
       frequency: webhookPayload.data.frequency,
-      is_recurring: webhookPayload.data.job_details.is_recurring,
-      upgraded: webhookPayload.data.job_details.upgraded_from_onetime,
-      amount: webhookPayload.data.price_after_discount,
+      is_recurring: webhookPayload.data.is_recurring,
+      upgraded: webhookPayload.data.job.upgraded_from_onetime,
+      est_price: webhookPayload.data.pricing.est_price,
       payload_size_kb: payloadSizeKb,
       generation_time_ms: payloadGenerationTime
     });
