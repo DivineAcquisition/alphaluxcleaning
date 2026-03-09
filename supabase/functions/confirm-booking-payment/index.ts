@@ -67,41 +67,39 @@ serve(async (req) => {
 
     console.log("Booking confirmed successfully:", booking.id);
 
-    // Trigger webhook for integrations (non-blocking)
+    // Trigger webhook for integrations (awaited to prevent isolate termination)
     try {
-      supabase.functions.invoke('enhanced-booking-webhook-v2', {
+      const webhookResult = await supabase.functions.invoke('enhanced-booking-webhook-v2', {
         body: {
           booking_id: booking.id,
           action: 'payment_confirmed'
         }
-      }).then((result) => {
-        if (result.error) {
-          console.error("Webhook trigger error:", result.error);
-        } else {
-          console.log("Webhook triggered successfully");
-        }
       });
+      if (webhookResult.error) {
+        console.error("Webhook trigger error:", webhookResult.error);
+      } else {
+        console.log("Webhook triggered successfully");
+      }
     } catch (webhookError) {
       console.error("Failed to trigger webhook:", webhookError);
     }
 
-    // Send balance invoice if there's a remaining balance (non-blocking)
+    // Send balance invoice if there's a remaining balance (awaited to ensure completion)
     const balanceDue = booking.balance_due || 0;
     if (balanceDue > 0) {
       console.log("Balance due detected, sending invoice:", balanceDue);
       try {
-        supabase.functions.invoke('send-balance-invoice', {
+        const invoiceResult = await supabase.functions.invoke('send-balance-invoice', {
           body: {
             bookingId: booking.id,
-            daysUntilDue: 7, // Due 7 days after booking confirmation
-          }
-        }).then((result) => {
-          if (result.error) {
-            console.error("Balance invoice error:", result.error);
-          } else {
-            console.log("Balance invoice sent successfully:", result.data);
+            daysUntilDue: 7,
           }
         });
+        if (invoiceResult.error) {
+          console.error("Balance invoice error:", invoiceResult.error);
+        } else {
+          console.log("Balance invoice sent successfully:", invoiceResult.data);
+        }
       } catch (invoiceError) {
         console.error("Failed to trigger balance invoice:", invoiceError);
       }
