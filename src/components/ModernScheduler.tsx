@@ -74,7 +74,7 @@ const ModernScheduler: React.FC<ModernSchedulerProps> = ({
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error' | 'checking'>('checking');
   const [useAdvancedView, setUseAdvancedView] = useState(false);
-  const [conflictCheckInterval, setConflictCheckInterval] = useState<NodeJS.Timeout | null>(null);
+  const [conflictCheckInterval, setConflictCheckInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   const timeSlots = [
     { value: '8:00 AM', label: '8:00 AM', range: '8:00 - 10:00 AM' },
