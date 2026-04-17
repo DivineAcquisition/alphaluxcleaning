@@ -82,43 +82,30 @@ export default function BookingDetails() {
     setLoading(true);
 
     try {
-      // Update booking with address and scheduling details
-      const { error: bookingError } = await supabase
-        .from('bookings')
-        .update({
-          address_line1: addressLine1,
-          address_line2: addressLine2 || null,
-          service_date: preferredDate,
-          time_slot: preferredTimeBlock,
-          special_instructions: notes || null,
-          status: 'confirmed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', bookingId);
+      // Use service-role edge function so RLS doesn't block the update for anonymous users
+      const { data, error } = await supabase.functions.invoke('save-booking-details', {
+        body: {
+          bookingId,
+          addressLine1,
+          addressLine2: addressLine2 || null,
+          city,
+          state,
+          zipCode,
+          serviceDate: preferredDate,
+          timeSlot: preferredTimeBlock,
+          specialInstructions: notes || null,
+        },
+      });
 
-      if (bookingError) throw bookingError;
-
-      // Update customer with full address
-      if (bookingData?.customer_id) {
-        const { error: customerError } = await supabase
-          .from('customers')
-          .update({
-            address_line1: addressLine1,
-            address_line2: addressLine2 || null,
-            city,
-            state,
-            postal_code: zipCode,
-          })
-          .eq('id', bookingData.customer_id);
-
-        if (customerError) throw customerError;
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || 'Failed to save details');
       }
 
       toast.success('Booking confirmed!');
       navigate(`/book/confirmation?booking_id=${bookingId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating booking:', error);
-      toast.error('Failed to update booking details');
+      toast.error(error?.message || 'Failed to update booking details');
     } finally {
       setLoading(false);
     }

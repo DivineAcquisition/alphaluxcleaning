@@ -84,9 +84,10 @@ serve(async (req) => {
       console.error("Failed to trigger webhook:", webhookError);
     }
 
-    // Send balance invoice if there's a remaining balance (awaited to ensure completion)
+    // Send balance invoice if there's a remaining balance and one hasn't been created
+    // (Idempotency: stripe-webhook may race with us; send-balance-invoice also self-guards.)
     const balanceDue = booking.balance_due || 0;
-    if (balanceDue > 0) {
+    if (balanceDue > 0 && !booking.stripe_balance_invoice_id) {
       console.log("Balance due detected, sending invoice:", balanceDue);
       try {
         const invoiceResult = await supabase.functions.invoke('send-balance-invoice', {
@@ -104,7 +105,7 @@ serve(async (req) => {
         console.error("Failed to trigger balance invoice:", invoiceError);
       }
     } else {
-      console.log("No balance due, skipping invoice");
+      console.log("Skipping balance invoice", { balanceDue, alreadyInvoiced: !!booking.stripe_balance_invoice_id });
     }
 
     return new Response(JSON.stringify({ 
