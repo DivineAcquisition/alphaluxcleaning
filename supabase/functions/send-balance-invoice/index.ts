@@ -40,10 +40,10 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Fetch booking with customer data
+    // Fetch booking with customer data (disambiguate FK: bookings_customer_id_fkey)
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('*, customers(*)')
+      .select('*, customers!bookings_customer_id_fkey(*)')
       .eq('id', bookingId)
       .single();
 

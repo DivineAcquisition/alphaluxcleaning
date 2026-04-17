@@ -188,6 +188,34 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     logStep("Failed to send confirmation email", { error: emailError.message });
   }
 
+  // Trigger balance invoice if there's a remaining balance and one hasn't been created yet
+  // (Idempotent: confirm-booking-payment may also call this; send-balance-invoice short-circuits
+  // if stripe_balance_invoice_id is already set.)
+  try {
+    const { data: freshBooking } = await supabaseClient
+      .from('bookings')
+      .select('balance_due, stripe_balance_invoice_id')
+      .eq('id', booking.id)
+      .single();
+
+    const balanceDue = freshBooking?.balance_due || 0;
+    if (balanceDue > 0 && !freshBooking?.stripe_balance_invoice_id) {
+      logStep("Triggering balance invoice from webhook", { bookingId: booking.id, balanceDue });
+      const invoiceResult = await supabaseClient.functions.invoke('send-balance-invoice', {
+        body: { bookingId: booking.id, daysUntilDue: 7 }
+      });
+      if (invoiceResult.error) {
+        logStep("Balance invoice error", { error: invoiceResult.error });
+      } else {
+        logStep("Balance invoice triggered", { data: invoiceResult.data });
+      }
+    } else {
+      logStep("Skipping balance invoice", { balanceDue, hasInvoice: !!freshBooking?.stripe_balance_invoice_id });
+    }
+  } catch (invoiceError) {
+    logStep("Failed to trigger balance invoice", { error: (invoiceError as Error).message });
+  }
+
   logStep("Booking payment processed", { bookingId: booking.id });
 }
 

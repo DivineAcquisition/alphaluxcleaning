@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,7 +10,11 @@ import { Check, Sparkles, Loader2, TestTube } from 'lucide-react';
 import { useTestMode } from '@/hooks/useTestMode';
 
 export default function BookingConfirmation() {
-  const { bookingId } = useParams();
+  const params = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  // Support both /booking/:bookingId and /book/confirmation?booking_id=...
+  const bookingId = params.bookingId || searchParams.get('booking_id');
   const [booking, setBooking] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +23,10 @@ export default function BookingConfirmation() {
   useEffect(() => {
     if (bookingId) {
       fetchBookingDetails();
+    } else {
+      setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
   const fetchBookingDetails = async () => {
@@ -31,6 +38,21 @@ export default function BookingConfirmation() {
         .single();
 
       if (bookingError) throw bookingError;
+
+      // Routing guard: if deposit was paid but address/schedule are missing,
+      // send the user back to /book/details to complete their booking.
+      const paymentDone =
+        bookingData.payment_status === 'deposit_paid' ||
+        bookingData.payment_status === 'paid' ||
+        bookingData.payment_status === 'fully_paid';
+      const missingDetails =
+        !bookingData.address_line1 || !bookingData.service_date || !bookingData.time_slot;
+
+      if (paymentDone && missingDetails) {
+        navigate(`/book/details?booking_id=${bookingId}`, { replace: true });
+        return;
+      }
+
       setBooking(bookingData);
 
       if (bookingData.customer_id) {
