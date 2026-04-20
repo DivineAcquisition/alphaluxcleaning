@@ -391,7 +391,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
               <Input
                 id="phone"
                 type="tel"
-                placeholder="(555) 123-4567"
+                placeholder="(857) 754-4557"
                 value={bookingData.contactNumber}
                 onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
                 className="border-border focus:border-primary"

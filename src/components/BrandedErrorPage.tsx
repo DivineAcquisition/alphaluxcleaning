@@ -12,42 +12,42 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
   const getErrorConfig = () => {
     const configs = {
       admin: {
-        title: 'AlphaLux Clean Admin',
+        title: 'AlphaLux Cleaning Admin',
         subtitle: 'Administrative Portal',
         ctaText: 'Go to Login',
         ctaAction: () => window.location.href = '/auth',
         icon: LogIn
       },
       book: {
-        title: 'AlphaLux Clean',
+        title: 'AlphaLux Cleaning',
         subtitle: 'Book Your Cleaning Service',
         ctaText: 'Back to Booking',
         ctaAction: () => window.location.href = '/',
         icon: Calendar
       },
       sub: {
-        title: 'AlphaLux Clean',
+        title: 'AlphaLux Cleaning',
         subtitle: 'Contractor Portal',
         ctaText: "Open Today's Jobs",
         ctaAction: () => window.location.href = '/today',
         icon: User
       },
       portal: {
-        title: 'AlphaLux Clean',
+        title: 'AlphaLux Cleaning',
         subtitle: 'Customer Portal',
         ctaText: 'Back to Home',
         ctaAction: () => window.location.href = '/portal',
         icon: Home
       },
       try: {
-        title: 'AlphaLux Clean',
+        title: 'AlphaLux Cleaning',
         subtitle: 'Get Started',
         ctaText: 'Sign Up Now',
         ctaAction: () => window.location.href = 'https://admin.alphaluxclean.com/signup',
         icon: LogIn
       },
       root: {
-        title: 'AlphaLux Clean',
+        title: 'AlphaLux Cleaning',
         subtitle: 'Professional Cleaning Services',
         ctaText: 'Get Started',
         ctaAction: () => window.location.href = 'https://app.alphaluxclean.com',
@@ -145,7 +145,7 @@ export function BrandedErrorPage({ hostRole, brandColor, errorType }: BrandedErr
         </Button>
 
         <p className="text-xs text-muted-foreground mt-6">
-          © 2025 AlphaLux Clean. All rights reserved.
+          © 2025 AlphaLux Cleaning. All rights reserved.
         </p>
       </div>
     </div>

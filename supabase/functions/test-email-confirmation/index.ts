@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send test email using Resend
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [testEmail],
       subject: "🧪 Test - Booking Confirmation Email System",
       html: emailContent,

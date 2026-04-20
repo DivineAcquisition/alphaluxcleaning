@@ -22,7 +22,7 @@ export function SubcontractorUpdatesTest() {
       id: `test_subcontractor_${newCorrelationId}`,
       full_name: "Sarah Johnson",
       email: "sarah.johnson@example.com",
-      phone: "(555) 123-4567"
+      phone: "(857) 754-4557"
     };
 
     const baseIds = {
@@ -340,7 +340,7 @@ export function SubcontractorUpdatesTest() {
     "id": "uuid",
     "name": "Sarah Johnson",
     "email": "sarah.johnson@example.com",
-    "phone": "(555) 123-4567"
+    "phone": "(857) 754-4557"
   },
   "order": {
     "id": "uuid",

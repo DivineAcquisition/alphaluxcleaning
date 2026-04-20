@@ -84,7 +84,7 @@ const Success: React.FC = () => {
   const shareReferral = async () => {
     const shareData = {
       title: 'Get $50 off your first cleaning!',
-      text: `I use AlphaLuxClean and love it! Use my referral code ${referralCode} to get $50 off your first cleaning.`,
+      text: `I use AlphaLux Cleaning and love it! Use my referral code ${referralCode} to get $50 off your first cleaning.`,
       url: referralLink
     };
 

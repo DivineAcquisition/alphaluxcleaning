@@ -23,7 +23,7 @@ export const LeadWelcomeEmail = ({
     </Heading>
     
     <Text style={text}>
-      Thanks for your interest in AlphaLuxClean! We make booking premium house cleaning 
+      Thanks for your interest in AlphaLux Cleaning! We make booking premium house cleaning 
       as easy as ordering takeout.
     </Text>
 

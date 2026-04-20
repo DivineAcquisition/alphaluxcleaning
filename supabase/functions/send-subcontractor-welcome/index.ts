@@ -65,7 +65,7 @@ serve(async (req) => {
     );
 
     // Create welcome notification content for database storage
-    const welcomeTitle = `Welcome to AlphaLux Clean!`;
+    const welcomeTitle = `Welcome to AlphaLux Cleaning!`;
     const welcomeMessage = `🎉 Congratulations ${fullName}! You've successfully joined our network with the ${plan.name} plan.
 
 Your Benefits:
@@ -104,7 +104,7 @@ Welcome to the team!`;
 
     // Send welcome email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [email],
       subject: welcomeTitle,
       html: emailContent,

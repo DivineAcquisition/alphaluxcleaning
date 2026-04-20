@@ -151,7 +151,7 @@ serve(async (req) => {
       .insert({
         subcontractor_id: subcontractorData.id,
         user_id: userId,
-        title: 'Welcome to AlphaLux Clean!',
+        title: 'Welcome to AlphaLux Cleaning!',
         message: 'Welcome to our team! Your test account has been created successfully.',
         type: 'welcome',
         read: false

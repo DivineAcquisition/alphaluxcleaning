@@ -98,7 +98,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'AlphaLuxClean/1.0'
+        'User-Agent': 'AlphaLux Cleaning/1.0'
       },
       body: JSON.stringify(webhookPayload)
     });

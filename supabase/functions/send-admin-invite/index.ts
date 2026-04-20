@@ -125,15 +125,15 @@ const handler = async (req: Request): Promise<Response> => {
         email,
         role,
         inviteUrl: resetData.properties?.action_link || '',
-        companyName: 'AlphaLux Clean',
+        companyName: 'AlphaLux Cleaning',
       })
     );
 
     // Send the email using Resend
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [email],
-      subject: `Admin Access Invitation - AlphaLux Clean`,
+      subject: `Admin Access Invitation - AlphaLux Cleaning`,
       html: emailHtml,
     });
 

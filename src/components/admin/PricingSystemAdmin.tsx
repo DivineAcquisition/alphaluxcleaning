@@ -49,7 +49,7 @@ export function PricingSystemAdmin() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Universal Hybrid Pricing Model</h2>
           <p className="text-muted-foreground">
-            AlphaLuxClean fixed pricing with frequency-based discounts
+            AlphaLux Cleaning fixed pricing with frequency-based discounts
           </p>
         </div>
         <Button onClick={saveConfig} disabled={saving} className="gap-2">

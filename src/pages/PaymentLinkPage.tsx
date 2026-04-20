@@ -170,7 +170,7 @@ export default function PaymentLinkPage() {
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>🔒 Secure payment powered by Stripe</p>
-          <p className="mt-2">Questions? Call us at (972) 559-0223</p>
+          <p className="mt-2">Questions? Call us at (857) 754-4557</p>
         </div>
       </div>
     </div>

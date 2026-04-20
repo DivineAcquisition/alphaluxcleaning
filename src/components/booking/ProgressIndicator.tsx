@@ -21,7 +21,7 @@ export function ProgressIndicator({}: ProgressIndicatorProps) {
       <div className="flex items-center">
         {/* Logo placeholder */}
         <div className="text-xl font-bold text-primary">
-          AlphaLux Clean
+          AlphaLux Cleaning
         </div>
       </div>
 
@@ -61,9 +61,9 @@ export function ProgressIndicator({}: ProgressIndicatorProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
               <DropdownMenuItem asChild>
-                <a href="tel:+19725590223" className="flex items-center gap-3 w-full py-2">
+                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (972) 559-0223
+                  Call (857) 754-4557
                 </a>
               </DropdownMenuItem>
               
@@ -106,9 +106,9 @@ export function ProgressIndicator({}: ProgressIndicatorProps) {
               
               {/* Contact Options for Mobile */}
               <DropdownMenuItem asChild>
-                <a href="tel:+19725590223" className="flex items-center gap-3 w-full py-2">
+                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (972) 559-0223
+                  Call (857) 754-4557
                 </a>
               </DropdownMenuItem>
               

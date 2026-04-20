@@ -96,7 +96,7 @@ export default function BookingSquareFeet() {
             Home larger than 5,000 sq ft?
           </p>
           <Button variant="outline" asChild>
-            <a href="tel:+19725590223" className="flex items-center gap-2">
+            <a href="tel:+18577544557" className="flex items-center gap-2">
               Call for Custom Quote
               <ArrowRight className="h-4 w-4" />
             </a>

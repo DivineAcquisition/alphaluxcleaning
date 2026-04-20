@@ -122,7 +122,7 @@ export const JobAssignmentNotification = ({
 
         <Text style={text}>
           Best regards,<br />
-          The AlphaLux Clean Team
+          The AlphaLux Cleaning Team
         </Text>
       </Section>
     </EmailBase>

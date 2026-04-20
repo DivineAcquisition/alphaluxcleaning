@@ -58,7 +58,7 @@ export const AbandonedCheckoutEmail = ({
     </Section>
 
     <Section style={reassuranceSection}>
-      <Text style={reassuranceTitle}>Why choose AlphaLuxClean:</Text>
+      <Text style={reassuranceTitle}>Why choose AlphaLux Cleaning:</Text>
       <div style={reassuranceGrid}>
         <div style={reassuranceItem}>
           <Text style={reassuranceEmoji}>🛡️</Text>

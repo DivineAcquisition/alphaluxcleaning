@@ -119,7 +119,7 @@ serve(async (req) => {
     // Send customer confirmation email
     logStep("Sending customer confirmation email");
     const customerEmailResponse = await resend.emails.send({
-      from: "AlphaLux Clean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [booking.customer.email],
       subject: `✅ Booking Confirmed - ${formattedDate}`,
       html: customerEmailHtml,
@@ -194,7 +194,7 @@ serve(async (req) => {
 
     logStep("Sending admin notification email");
     const adminEmailResponse = await resend.emails.send({
-      from: "AlphaLux Bookings <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <bookings@info.alphaluxclean.com>",
       to: ["bookings@alphaluxclean.com"], // Admin email
       subject: `🔔 NEW BOOKING: ${serviceTypeLabels[booking.service_type]} - ${formattedDate}`,
       html: adminEmailHtml,

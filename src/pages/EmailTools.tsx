@@ -14,7 +14,7 @@ export const EmailTools = () => {
               📧 Email Testing Tools
             </h1>
             <p className="text-muted-foreground text-lg">
-              Test and debug email functionality for the AlphaLux Clean system.
+              Test and debug email functionality for the AlphaLux Cleaning system.
             </p>
           </div>
 

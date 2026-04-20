@@ -166,8 +166,8 @@ export const ReferralHub: React.FC = () => {
   const shareViaEmail = () => {
     if (!referralData?.referral_link) return;
     
-    const subject = encodeURIComponent('Get $50 off your first AlphaLuxClean service!');
-    const body = encodeURIComponent(`I love using AlphaLuxClean for my house cleaning and thought you might too! 
+    const subject = encodeURIComponent('Get $50 off your first AlphaLux Cleaning service!');
+    const body = encodeURIComponent(`I love using AlphaLux Cleaning for my house cleaning and thought you might too! 
 
 Use my referral link to get $50 off your first cleaning:
 ${referralData.referral_link}
@@ -182,7 +182,7 @@ Let me know what you think after you try them out.`);
   const shareViaSMS = () => {
     if (!referralData?.referral_link) return;
     
-    const message = encodeURIComponent(`Hey! Get $50 off your first AlphaLuxClean service with my link: ${referralData.referral_link}`);
+    const message = encodeURIComponent(`Hey! Get $50 off your first AlphaLux Cleaning service with my link: ${referralData.referral_link}`);
     window.open(`sms:?body=${message}`);
   };
 
@@ -226,7 +226,7 @@ Let me know what you think after you try them out.`);
               Set Up Your Referral Program
             </CardTitle>
             <CardDescription>
-              Start earning $50 for every friend you refer to AlphaLuxClean
+              Start earning $50 for every friend you refer to AlphaLux Cleaning
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">

@@ -150,7 +150,7 @@ export default function SubcontractorJobAcceptance() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Home className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">AlphaLux Clean</h1>
+            <h1 className="text-2xl font-bold text-primary">AlphaLux Cleaning</h1>
           </div>
           <p className="text-muted-foreground">Job Response Portal</p>
         </div>
@@ -291,8 +291,8 @@ export default function SubcontractorJobAcceptance() {
               {/* Help Text */}
               <div className="text-center text-sm text-muted-foreground">
                 Having trouble? Contact us at{' '}
-                <a href="mailto:support@alphaluxclean.com" className="text-primary hover:underline">
-                  support@alphaluxclean.com
+                <a href="mailto:support@alphaluxcleaning.com" className="text-primary hover:underline">
+                  support@alphaluxcleaning.com
                 </a>
               </div>
             </div>
@@ -301,7 +301,7 @@ export default function SubcontractorJobAcceptance() {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 AlphaLux Clean</p>
+          <p>&copy; 2024 AlphaLux Cleaning</p>
         </div>
       </div>
     </div>

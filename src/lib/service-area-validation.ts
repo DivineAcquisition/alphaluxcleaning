@@ -164,5 +164,5 @@ export const SERVICE_AREA_INFO = {
   centerCity: 'Texas, California & New York',
   radiusMiles: 0,
   contactPhone: '(281) 809-9901',
-  contactEmail: 'support@alphaluxclean.com'
+  contactEmail: 'support@alphaluxcleaning.com'
 };

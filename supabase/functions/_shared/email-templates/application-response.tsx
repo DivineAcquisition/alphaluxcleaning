@@ -43,7 +43,7 @@ export const ApplicationResponseEmail = ({
         {isApproved ? (
           <>
             <Text style={text}>
-              <strong>Congratulations!</strong> We're excited to inform you that your application to join AlphaLux Clean has been <strong>approved</strong>.
+              <strong>Congratulations!</strong> We're excited to inform you that your application to join AlphaLux Cleaning has been <strong>approved</strong>.
             </Text>
             
             <Text style={text}>
@@ -75,7 +75,7 @@ export const ApplicationResponseEmail = ({
         ) : (
           <>
             <Text style={text}>
-              Thank you for your interest in joining AlphaLux Clean. After careful review, we have decided not to move forward with your application at this time.
+              Thank you for your interest in joining AlphaLux Cleaning. After careful review, we have decided not to move forward with your application at this time.
             </Text>
             
             <Text style={text}>
@@ -101,7 +101,7 @@ export const ApplicationResponseEmail = ({
 
         <Text style={text}>
           Best regards,<br />
-          AlphaLux Clean Team
+          AlphaLux Cleaning Team
         </Text>
       </Section>
     </EmailBase>

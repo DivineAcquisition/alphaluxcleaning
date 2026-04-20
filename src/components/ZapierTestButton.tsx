@@ -21,7 +21,7 @@ export function ZapierTestButton() {
         transaction_id: `test_${Date.now()}`,
         customer_name: "John Smith",
         customer_email: "john.smith@example.com",
-        customer_phone: "(555) 123-4567",
+        customer_phone: "(857) 754-4557",
         service_date: "2024-08-15",
         service_time: "10:00 AM",
         cleaning_type: "complete_clean",

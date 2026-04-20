@@ -38,7 +38,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
           
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 40px; border-bottom: 1px solid #eaeaea; padding-bottom: 20px;">
-            <img src="https://app.alphaluxclean.com/logo.png" alt="AlphaLuxClean" style="width: 120px; height: 40px;">
+            <img src="https://app.alphaluxclean.com/logo.png" alt="AlphaLux Cleaning" style="width: 120px; height: 40px;">
           </div>
           
           <!-- Main Content -->
@@ -52,7 +52,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
             </p>
             
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
-              Here's how you performed this month with AlphaLux Clean!
+              Here's how you performed this month with AlphaLux Cleaning!
             </p>
             
             <!-- Stats Section -->
@@ -130,7 +130,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
                 Keep up the great work! Questions? Reply to this email.
               </p>
               <p style="color: #6b7280; font-size: 14px; margin: 8px 0;">
-                - The AlphaLux Clean Team
+                - The AlphaLux Cleaning Team
               </p>
             </div>
           </div>
@@ -139,16 +139,16 @@ const generateMonthlyPerformanceSummaryHtml = ({
           <div style="border-top: 1px solid #eaeaea; padding-top: 20px; margin-top: 40px; text-align: center;">
             <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
               <a href="https://app.alphaluxclean.com" style="color: #666666; text-decoration: underline;">
-                AlphaLuxClean
+                AlphaLux Cleaning
               </a><br>
               Premium cleaning services in Texas and California
             </p>
             <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
               <a href="tel:+15551234567" style="color: #666666; text-decoration: underline;">
-                (555) 123-4567
+                (857) 754-4557
               </a> • 
-              <a href="mailto:support@alphaluxclean.com" style="color: #666666; text-decoration: underline;">
-                support@alphaluxclean.com
+              <a href="mailto:support@alphaluxcleaning.com" style="color: #666666; text-decoration: underline;">
+                support@alphaluxcleaning.com
               </a>
             </p>
           </div>
@@ -292,7 +292,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send email
         const emailResponse = await resend.emails.send({
-          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+          from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
           to: [subcontractor.email],
           subject: `Your ${monthName} ${targetYear} Performance Summary - ${completedJobs.length} Jobs Completed`,
           html: emailHtml,

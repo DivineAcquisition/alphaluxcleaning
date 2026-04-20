@@ -143,7 +143,7 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     label: '5,000+ sq ft',
     minSqft: 5000,
     maxSqft: 999999,
-    bedroomRange: 'Custom Quote Required - Call (972) 559-0223',
+    bedroomRange: 'Custom Quote Required - Call (857) 754-4557',
     requiresEstimate: true,
     deepPrice: 550,              // Starting point for custom quotes
     maintenancePrice: 350,       // Starting point
@@ -202,7 +202,7 @@ export function calculateNewPricing(
       depositAmount: 0,
       mrrEstimate: 0,
       arrEstimate: 0,
-      savings: 'Custom Quote Required - Call (972) 559-0223',
+      savings: 'Custom Quote Required - Call (857) 754-4557',
       tierLabel: homeSize.label
     };
   }

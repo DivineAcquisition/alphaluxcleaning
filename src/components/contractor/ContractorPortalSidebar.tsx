@@ -116,7 +116,7 @@ export function ContractorPortalSidebar() {
               <h1 className="text-sm font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 Contractor Portal
               </h1>
-              <p className="text-xs text-muted-foreground font-medium">AlphaLux Clean</p>
+              <p className="text-xs text-muted-foreground font-medium">AlphaLux Cleaning</p>
             </div>
           )}
         </div>

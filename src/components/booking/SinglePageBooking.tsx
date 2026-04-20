@@ -636,7 +636,7 @@ export function SinglePageBooking() {
                         type="tel"
                         value={bookingData.customerPhone}
                         onChange={(e) => updateField('customerPhone', e.target.value)}
-                        placeholder="(555) 123-4567"
+                        placeholder="(857) 754-4557"
                       />
                     </div>
                     <div>

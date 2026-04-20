@@ -86,7 +86,7 @@ export const PaymentSucceededEmail = ({
     </Section>
 
     <Text style={thanksText}>
-      Thank you for choosing AlphaLuxClean! We can't wait to make your home sparkle. ✨
+      Thank you for choosing AlphaLux Cleaning! We can't wait to make your home sparkle. ✨
     </Text>
   </EmailBase>
 );

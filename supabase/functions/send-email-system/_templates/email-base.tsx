@@ -9,6 +9,7 @@ import {
   Section,
   Text,
   Img,
+  Hr,
 } from "npm:@react-email/components@0.0.22";
 import * as React from "npm:react@18.3.1";
 
@@ -18,62 +19,90 @@ interface EmailBaseProps {
   isMarketing?: boolean;
 }
 
-export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseProps) => (
+/**
+ * AlphaLux Cleaning — transactional email shell.
+ * Palette:
+ *  - Navy:       #0F2A44
+ *  - Navy Deep:  #1B314B
+ *  - Gold:       #A17938
+ *  - Gold Light: #ECC98B
+ *  - Gold Pale:  #F6DFA8
+ *  - Cream:      #FCFBF7
+ */
+export const EmailBase = ({
+  preview,
+  children,
+  isMarketing = false,
+}: EmailBaseProps) => (
   <Html>
     <Head />
     <Preview>{preview}</Preview>
     <Body style={main}>
-      <Container style={container}>
-        {/* Header */}
-        <Section style={header}>
-          <Link href="https://app.alphaluxclean.com">
-            <Img
-              src="https://app.alphaluxclean.com/logo.png"
-              width="120"
-              height="40"
-              alt="AlphaLuxClean"
-              style={logo}
-            />
-          </Link>
-        </Section>
-
-        {/* Main Content */}
-        <Section style={content}>
-          {children}
-        </Section>
-
-        {/* Footer */}
-        <Section style={footer}>
-          <Text style={footerText}>
-            <Link href="https://app.alphaluxclean.com" style={footerLink}>
-              AlphaLuxClean
+      <Container style={outer}>
+        <Section style={topBar} />
+        <Container style={container}>
+          {/* Header */}
+          <Section style={header}>
+            <Link href="https://alphaluxcleaning.com">
+              <Img
+                src="https://alphaluxcleaning.com/wp-content/uploads/2024/08/alphalux-logo.png"
+                width="180"
+                height="60"
+                alt="AlphaLux Cleaning"
+                style={logo}
+              />
             </Link>
-            <br />
-            Premium cleaning services in Texas and California
-          </Text>
-          
-          <Text style={footerText}>
-            <Link href="tel:+15551234567" style={footerLink}>
-              (555) 123-4567
-            </Link>
-            {" • "}
-            <Link href="mailto:support@alphaluxclean.com" style={footerLink}>
-              support@alphaluxclean.com
-            </Link>
-          </Text>
+            <Text style={tagline}>A Higher Standard of Clean</Text>
+          </Section>
 
-          {isMarketing && (
+          {/* Main Content */}
+          <Section style={content}>{children}</Section>
+
+          <Hr style={divider} />
+
+          {/* Footer */}
+          <Section style={footer}>
+            <Text style={brandName}>AlphaLux Cleaning</Text>
             <Text style={footerText}>
-              <Link href="{{UnsubscribeURL}}" style={footerLink}>
-                Unsubscribe
+              Premium Residential & Commercial Cleaning
+              <br />
+              Long Island, NY • New Jersey • Texas • California
+            </Text>
+
+            <Text style={footerText}>
+              <Link href="tel:+18577544557" style={footerLink}>
+                +1 (857) 754-4557
               </Link>
               {" • "}
-              <Link href="https://app.alphaluxclean.com/privacy" style={footerLink}>
-                Privacy Policy
+              <Link
+                href="mailto:support@alphaluxcleaning.com"
+                style={footerLink}
+              >
+                support@alphaluxcleaning.com
               </Link>
             </Text>
-          )}
-        </Section>
+
+            {isMarketing && (
+              <Text style={footerText}>
+                <Link href="{{UnsubscribeURL}}" style={footerLink}>
+                  Unsubscribe
+                </Link>
+                {" • "}
+                <Link
+                  href="https://alphaluxcleaning.com/privacy-policy"
+                  style={footerLink}
+                >
+                  Privacy Policy
+                </Link>
+              </Text>
+            )}
+
+            <Text style={copyright}>
+              © {new Date().getFullYear()} AlphaLux Cleaning. All rights
+              reserved.
+            </Text>
+          </Section>
+        </Container>
       </Container>
     </Body>
   </Html>
@@ -83,9 +112,21 @@ export const GoogleGuaranteedBadge = () => (
   <Section style={trustBadgeContainer}>
     <div style={trustBadge}>
       <div style={badgeIcon}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" fill="#4CAF50"/>
-          <path d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z" fill="white"/>
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z"
+            fill="#A17938"
+          />
+          <path
+            d="M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z"
+            fill="white"
+          />
         </svg>
       </div>
       <div style={badgeText}>
@@ -96,7 +137,15 @@ export const GoogleGuaranteedBadge = () => (
   </Section>
 );
 
-export const ActionButton = ({ href, children, style: customStyle }: { href: string; children: React.ReactNode; style?: any }) => (
+export const ActionButton = ({
+  href,
+  children,
+  style: customStyle,
+}: {
+  href: string;
+  children: React.ReactNode;
+  style?: any;
+}) => (
   <Link href={href} style={{ ...buttonStyle, ...customStyle }}>
     {children}
   </Link>
@@ -129,159 +178,264 @@ export const OrderSummary = ({ booking }: { booking: any }) => (
       )}
       <tr>
         <td style={tableCell}>Date & Time:</td>
-        <td style={tableCellValue}>{booking.service_date} ({booking.time_window})</td>
+        <td style={tableCellValue}>
+          {booking.service_date} ({booking.time_window})
+        </td>
       </tr>
       <tr>
         <td style={tableCell}>Address:</td>
         <td style={tableCellValue}>
-          {booking.address_line1}<br />
+          {booking.address_line1}
+          <br />
           {booking.city}, {booking.state} {booking.postal_code}
         </td>
       </tr>
       <tr style={totalRow}>
         <td style={tableCell}>Total:</td>
-        <td style={tableCellValue}><strong>${booking.price_final}</strong></td>
+        <td style={tableCellValue}>
+          <strong>${booking.price_final}</strong>
+        </td>
       </tr>
     </table>
   </Section>
 );
 
+// Shared brand styles for use by individual templates
+export const brandStyles = {
+  headingPrimary: {
+    color: "#0F2A44",
+    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontSize: "28px",
+    fontWeight: 700,
+    lineHeight: 1.2,
+    margin: "0 0 16px 0",
+  } as React.CSSProperties,
+  headingSecondary: {
+    color: "#0F2A44",
+    fontFamily: "Georgia, 'Times New Roman', serif",
+    fontSize: "20px",
+    fontWeight: 700,
+    margin: "0 0 12px 0",
+  } as React.CSSProperties,
+  paragraph: {
+    color: "#1B314B",
+    fontSize: "16px",
+    lineHeight: 1.6,
+    margin: "0 0 16px 0",
+  } as React.CSSProperties,
+  muted: {
+    color: "#5a6b7d",
+    fontSize: "14px",
+    lineHeight: 1.5,
+    margin: "0 0 12px 0",
+  } as React.CSSProperties,
+  callout: {
+    backgroundColor: "#FCFBF7",
+    border: "1px solid #ECC98B",
+    borderLeft: "4px solid #A17938",
+    borderRadius: "8px",
+    padding: "16px 20px",
+    margin: "20px 0",
+    color: "#0F2A44",
+    fontSize: "15px",
+    lineHeight: 1.6,
+  } as React.CSSProperties,
+};
+
 // Styles
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+const main: React.CSSProperties = {
+  backgroundColor: "#FCFBF7",
+  fontFamily:
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  margin: 0,
+  padding: 0,
 };
 
-const container = {
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  maxWidth: '600px',
+const outer: React.CSSProperties = {
+  maxWidth: "640px",
+  margin: "0 auto",
+  padding: 0,
 };
 
-const header = {
-  borderBottom: '1px solid #eaeaea',
-  paddingBottom: '20px',
-  marginBottom: '20px',
-  textAlign: 'center' as const,
+const topBar: React.CSSProperties = {
+  background:
+    "linear-gradient(135deg, #F6DFA8 0%, #ECC98B 40%, #A17938 100%)",
+  height: "6px",
+  width: "100%",
 };
 
-const logo = {
-  margin: '0 auto',
+const container: React.CSSProperties = {
+  margin: "0 auto",
+  padding: "0",
+  maxWidth: "600px",
+  backgroundColor: "#ffffff",
+  boxShadow: "0 2px 12px rgba(15, 42, 68, 0.06)",
 };
 
-const content = {
-  padding: '0 20px',
+const header: React.CSSProperties = {
+  borderBottom: "1px solid #F0E9D6",
+  padding: "32px 20px 20px 20px",
+  marginBottom: 0,
+  textAlign: "center" as const,
+  backgroundColor: "#ffffff",
 };
 
-const footer = {
-  borderTop: '1px solid #eaeaea',
-  paddingTop: '20px',
-  marginTop: '40px',
-  textAlign: 'center' as const,
+const logo: React.CSSProperties = {
+  margin: "0 auto",
 };
 
-const footerText = {
-  color: '#666666',
-  fontSize: '12px',
-  lineHeight: '16px',
-  margin: '4px 0',
+const tagline: React.CSSProperties = {
+  margin: "12px 0 0 0",
+  fontFamily: "Georgia, 'Times New Roman', serif",
+  fontSize: "13px",
+  fontStyle: "italic",
+  color: "#A17938",
+  letterSpacing: "0.06em",
+  textTransform: "uppercase" as const,
 };
 
-const footerLink = {
-  color: '#666666',
-  textDecoration: 'underline',
+const content: React.CSSProperties = {
+  padding: "36px 28px",
+  backgroundColor: "#ffffff",
 };
 
-const buttonStyle = {
-  backgroundColor: '#1A1A1A',
-  borderRadius: '6px',
-  color: '#ffffff !important',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  padding: '16px 32px',
-  margin: '16px 0',
+const divider: React.CSSProperties = {
+  border: 0,
+  borderTop: "1px solid #F0E9D6",
+  margin: "0",
+};
+
+const footer: React.CSSProperties = {
+  padding: "28px 24px 32px 24px",
+  textAlign: "center" as const,
+  backgroundColor: "#FCFBF7",
+};
+
+const brandName: React.CSSProperties = {
+  margin: "0 0 8px 0",
+  fontFamily: "Georgia, 'Times New Roman', serif",
+  fontSize: "16px",
+  fontWeight: 700,
+  color: "#0F2A44",
+  letterSpacing: "0.02em",
+};
+
+const footerText: React.CSSProperties = {
+  color: "#5a6b7d",
+  fontSize: "13px",
+  lineHeight: "1.55",
+  margin: "4px 0",
+};
+
+const footerLink: React.CSSProperties = {
+  color: "#A17938",
+  textDecoration: "none",
+  fontWeight: 600,
+};
+
+const copyright: React.CSSProperties = {
+  margin: "10px 0 0 0",
+  fontSize: "11px",
+  color: "#a5adb8",
+};
+
+const buttonStyle: React.CSSProperties = {
+  background:
+    "linear-gradient(135deg, #F6DFA8 0%, #ECC98B 45%, #A17938 100%)",
+  borderRadius: "999px",
+  color: "#0F2A44",
+  fontSize: "16px",
+  fontWeight: 700,
+  textDecoration: "none",
+  textAlign: "center" as const,
+  display: "inline-block",
+  padding: "14px 36px",
+  margin: "16px 0",
+  boxShadow: "0 6px 18px rgba(161, 121, 56, 0.35)",
+  letterSpacing: "0.02em",
 };
 
 // OrderSummary component styles
-const orderSummary = {
-  backgroundColor: '#f8f9fa',
-  padding: '24px',
-  borderRadius: '8px',
-  margin: '24px 0',
+const orderSummary: React.CSSProperties = {
+  backgroundColor: "#FCFBF7",
+  padding: "24px",
+  borderRadius: "12px",
+  margin: "24px 0",
+  border: "1px solid #F0E9D6",
 };
 
-const h2 = {
-  color: '#1A1A1A',
-  fontSize: '20px',
-  fontWeight: 'bold',
-  margin: '0 0 16px 0',
+const h2: React.CSSProperties = {
+  color: "#0F2A44",
+  fontFamily: "Georgia, 'Times New Roman', serif",
+  fontSize: "20px",
+  fontWeight: "bold",
+  margin: "0 0 16px 0",
+  borderBottom: "2px solid #ECC98B",
+  paddingBottom: "8px",
 };
 
-const table = {
-  width: '100%',
-  borderCollapse: 'collapse' as const,
+const table: React.CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse" as const,
 };
 
-const tableCell = {
-  padding: '8px 0',
-  fontSize: '14px',
-  color: '#666',
-  borderBottom: '1px solid #eee',
-  verticalAlign: 'top',
-  width: '40%',
+const tableCell: React.CSSProperties = {
+  padding: "10px 0",
+  fontSize: "14px",
+  color: "#5a6b7d",
+  borderBottom: "1px solid #EEE6D4",
+  verticalAlign: "top",
+  width: "40%",
 };
 
-const tableCellValue = {
-  padding: '8px 0',
-  fontSize: '14px',
-  color: '#1A1A1A',
-  borderBottom: '1px solid #eee',
-  fontWeight: '500',
+const tableCellValue: React.CSSProperties = {
+  padding: "10px 0",
+  fontSize: "14px",
+  color: "#0F2A44",
+  borderBottom: "1px solid #EEE6D4",
+  fontWeight: "500",
 };
 
-const totalRow = {
-  borderTop: '2px solid #1A1A1A',
+const totalRow: React.CSSProperties = {
+  borderTop: "2px solid #A17938",
 };
 
-// Google Guaranteed Badge Styles
-const trustBadgeContainer = {
-  textAlign: 'center' as const,
-  margin: '24px 0',
+// Google Guaranteed Badge Styles (branded gold)
+const trustBadgeContainer: React.CSSProperties = {
+  textAlign: "center" as const,
+  margin: "24px 0",
 };
 
-const trustBadge = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '12px',
-  backgroundColor: '#E8F5E9',
-  padding: '12px 24px',
-  borderRadius: '8px',
-  border: '1px solid #4CAF50',
+const trustBadge: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "12px",
+  backgroundColor: "#FCFBF7",
+  padding: "12px 24px",
+  borderRadius: "999px",
+  border: "1px solid #ECC98B",
 };
 
-const badgeIcon = {
-  display: 'flex',
-  alignItems: 'center',
+const badgeIcon: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
 };
 
-const badgeText = {
-  textAlign: 'left' as const,
+const badgeText: React.CSSProperties = {
+  textAlign: "left" as const,
 };
 
-const badgeTitle = {
-  fontSize: '14px',
-  fontWeight: 'bold',
-  color: '#2E7D32',
-  margin: '0',
-  lineHeight: '1.2',
+const badgeTitle: React.CSSProperties = {
+  fontSize: "14px",
+  fontWeight: "bold",
+  color: "#0F2A44",
+  margin: "0",
+  lineHeight: "1.2",
 };
 
-const badgeSubtitle = {
-  fontSize: '11px',
-  color: '#66BB6A',
-  margin: '2px 0 0 0',
-  lineHeight: '1.2',
+const badgeSubtitle: React.CSSProperties = {
+  fontSize: "11px",
+  color: "#A17938",
+  margin: "2px 0 0 0",
+  lineHeight: "1.2",
 };

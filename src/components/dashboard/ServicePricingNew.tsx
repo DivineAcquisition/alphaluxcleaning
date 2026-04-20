@@ -118,10 +118,10 @@ const ServicePricingNew = () => {
             <p className="text-muted-foreground mb-4">
               Contact us for a personalized quote
             </p>
-            <a href="tel:9725590223" className="inline-flex items-center gap-2">
+            <a href="tel:8577544557" className="inline-flex items-center gap-2">
               <Badge variant="outline" className="text-lg px-6 py-2 cursor-pointer hover:bg-primary/10">
                 <Phone className="h-4 w-4" />
-                (972) 559-0223
+                (857) 754-4557
               </Badge>
             </a>
           </CardContent>

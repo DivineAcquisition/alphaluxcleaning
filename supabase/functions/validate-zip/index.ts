@@ -164,7 +164,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           isValid: false,
-          message: `Sorry, we don't service ${zipCode} yet. Call (972) 559-0223 for options.`
+          message: `Sorry, we don't service ${zipCode} yet. Call (857) 754-4557 for options.`
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" }, 

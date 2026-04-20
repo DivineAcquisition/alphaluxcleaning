@@ -12,13 +12,13 @@ export const SMS_TEMPLATES: Record<string, (vars: TemplateVariables) => string> 
     `Hi ${vars.first_name}! Your ${vars.service_type} cleaning is confirmed for ${vars.service_date} (${vars.time_window}). Manage: ${vars.manage_link}`,
   
   referral_reward_earned: (vars: TemplateVariables) =>
-    `🎉 Great news ${vars.first_name}! ${vars.referred_name} just booked their first cleaning. You earned ${vars.amount} credit! - AlphaLuxClean`,
+    `🎉 Great news ${vars.first_name}! ${vars.referred_name} just booked their first cleaning. You earned ${vars.amount} credit! - AlphaLux Cleaning`,
   
   referral_welcome_credit: (vars: TemplateVariables) =>
-    `Welcome ${vars.first_name}! ${vars.referrer_name} referred you. Enjoy ${vars.amount} credit on your account! - AlphaLuxClean`,
+    `Welcome ${vars.first_name}! ${vars.referrer_name} referred you. Enjoy ${vars.amount} credit on your account! - AlphaLux Cleaning`,
   
   black_friday_cyber90: (vars: TemplateVariables) =>
-    `🖤 BLACK FRIDAY: Save $100 on your 90-Day Home Reset! Use code CYBER90 at checkout. Ends Dec 2nd. Book now: book.alphaluxclean.com?promo=CYBER90&source=sms - AlphaLuxClean`,
+    `🖤 BLACK FRIDAY: Save $100 on your 90-Day Home Reset! Use code CYBER90 at checkout. Ends Dec 2nd. Book now: book.alphaluxclean.com?promo=CYBER90&source=sms - AlphaLux Cleaning`,
 };
 
 /**

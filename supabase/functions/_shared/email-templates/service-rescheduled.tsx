@@ -71,12 +71,12 @@ export const ServiceRescheduledEmail = ({
         </Text>
 
         <Text style={text}>
-          Thank you for choosing AlphaLuxClean!
+          Thank you for choosing AlphaLux Cleaning!
         </Text>
 
         <Text style={text}>
           Best regards,<br />
-          The AlphaLuxClean Team
+          The AlphaLux Cleaning Team
         </Text>
       </Section>
     </EmailBase>

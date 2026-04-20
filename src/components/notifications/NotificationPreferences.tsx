@@ -160,7 +160,7 @@ const NotificationPreferences: React.FC = () => {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold">Notification Preferences</h1>
         <p className="text-muted-foreground mt-2">
-          Customize how and when you receive notifications from AlphaLux Clean
+          Customize how and when you receive notifications from AlphaLux Cleaning
         </p>
       </div>
 
@@ -212,7 +212,7 @@ const NotificationPreferences: React.FC = () => {
               <Input
                 id="phone-number"
                 type="tel"
-                placeholder="+1 (555) 123-4567"
+                placeholder="+1 (857) 754-4557"
                 value={preferences.phone_number || ''}
                 onChange={(e) => updatePreference('phone_number', e.target.value)}
               />

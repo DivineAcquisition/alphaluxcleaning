@@ -26,19 +26,19 @@ const benefits = [
 
 export function QuickBenefitsBar() {
   return (
-    <div className="py-8 bg-muted/30 border-y border-border/50">
+    <div className="py-10 bg-card border-y border-alx-gold/15">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 max-w-5xl mx-auto">
           {benefits.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
-              <div 
+              <div
                 key={index}
-                className="flex items-center gap-3 p-3 lg:p-4 bg-card rounded-lg border border-border/50 hover:border-primary/50 transition-all hover:shadow-md"
+                className="group flex items-center gap-3 p-4 rounded-xl border border-alx-gold/15 bg-gradient-card hover:border-alx-gold/50 transition-all hover:shadow-soft hover:-translate-y-0.5"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Icon className={`w-5 h-5 lg:w-6 lg:h-6 ${benefit.color}`} />
+                  <div className="w-11 h-11 lg:w-12 lg:h-12 rounded-full bg-alx-navy text-alx-gold-light group-hover:bg-gradient-gold group-hover:text-alx-navy-ink flex items-center justify-center transition-all shadow-soft">
+                    <Icon className="w-5 h-5 lg:w-6 lg:h-6" />
                   </div>
                 </div>
                 <p className="text-xs lg:text-sm font-semibold text-foreground leading-tight">

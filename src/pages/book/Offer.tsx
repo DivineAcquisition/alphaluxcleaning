@@ -74,11 +74,11 @@ export default function BookingOffer() {
             </div>
             
             <p className="mb-6 text-lg">
-              Call us at <strong className="text-primary">(972) 559-0223</strong> for a personalized quote.
+              Call us at <strong className="text-primary">(857) 754-4557</strong> for a personalized quote.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => window.location.href = 'tel:9725590223'}>
+              <Button size="lg" onClick={() => window.location.href = 'tel:8577544557'}>
                 📞 Call Now
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate('/book/sqft')}>

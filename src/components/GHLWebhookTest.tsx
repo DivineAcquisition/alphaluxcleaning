@@ -28,7 +28,7 @@ export const GHLWebhookTest = () => {
         customer: {
           name: 'Test Customer',
           email: 'test@example.com',
-          phone: '(555) 123-4567',
+          phone: '(857) 754-4557',
           address: {
             street: '123 Test Street',
             city: 'San Francisco',

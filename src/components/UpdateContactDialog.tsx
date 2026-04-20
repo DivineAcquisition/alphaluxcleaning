@@ -147,7 +147,7 @@ export const UpdateContactDialog = ({
                 type="tel"
                 value={newContact.phone}
                 onChange={(e) => setNewContact(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="(555) 123-4567"
+                placeholder="(857) 754-4557"
               />
             </div>
 

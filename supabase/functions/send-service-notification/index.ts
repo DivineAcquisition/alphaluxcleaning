@@ -123,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
             rewardAmount,
           })
         );
-        subject = "🎉 Referral Reward Earned! - AlphaLuxClean";
+        subject = "🎉 Referral Reward Earned! - AlphaLux Cleaning";
         break;
       case 'rescheduled':
         if (!oldDate || !oldTime || !newDate || !newTime) {
@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
             serviceAddress,
           })
         );
-        subject = "Service Rescheduled - AlphaLuxClean";
+        subject = "Service Rescheduled - AlphaLux Cleaning";
         break;
 
       case 'paused':
@@ -158,7 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
             lastServiceDate,
           })
         );
-        subject = "Service Paused - AlphaLuxClean";
+        subject = "Service Paused - AlphaLux Cleaning";
         break;
 
       case 'resumed':
@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
             serviceAddress,
           })
         );
-        subject = "Welcome Back! Service Resumed - AlphaLuxClean";
+        subject = "Welcome Back! Service Resumed - AlphaLux Cleaning";
         break;
 
       case 'cancelled':
@@ -190,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
             discountAccepted: discountAccepted || false,
           })
         );
-        subject = "Service Cancelled - AlphaLuxClean";
+        subject = "Service Cancelled - AlphaLux Cleaning";
         break;
 
       case 'discount_applied':
@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
             nextServiceTime,
           })
         );
-        subject = "🎉 Your 25% Discount is Active! - AlphaLuxClean";
+        subject = "🎉 Your 25% Discount is Active! - AlphaLux Cleaning";
         break;
 
       default:
@@ -222,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email
     const recipientEmail = (type === 'referral_reward' && referrerEmail) ? referrerEmail : customerEmail;
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [recipientEmail],
       subject,
       html: emailHtml,

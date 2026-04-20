@@ -12,20 +12,21 @@ export function Navigation({ minimal = false }: NavigationProps) {
   const handleTroubleBooking = () => {
     window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
   };
-  return <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+  return <nav className="sticky top-0 z-50 w-full border-b border-alx-gold/15 bg-alx-navy-ink/95 backdrop-blur supports-[backdrop-filter]:bg-alx-navy-ink/80 text-alx-gold-pale shadow-soft">
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
           <Link to="/" className="flex items-center justify-center space-x-3">
-            <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-11 md:w-auto object-contain rounded-xl" />
+            <img src={logo} alt="AlphaLux Cleaning" width="64" height="64" className="h-10 w-auto md:h-11 md:w-auto object-contain rounded-xl ring-1 ring-alx-gold/30" />
+            <span className="hidden sm:inline font-serif text-lg font-semibold tracking-wide text-alx-gold-light">AlphaLux Cleaning</span>
           </Link>
 
           {/* Right Section - Hidden in minimal mode */}
           {!minimal && (
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             {/* Home Link - Desktop */}
             <Link to="/landing" className="hidden md:block">
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-alx-gold-pale hover:text-alx-gold-light hover:bg-alx-gold/10">
                 <Home className="h-4 w-4" />
                 Home
               </Button>
@@ -33,7 +34,7 @@ export function Navigation({ minimal = false }: NavigationProps) {
             
             {/* Pricing Link - Desktop */}
             <Link to="/pricing" className="hidden md:block">
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-alx-gold-pale hover:text-alx-gold-light hover:bg-alx-gold/10">
                 <DollarSign className="h-4 w-4" />
                 Pricing
               </Button>
@@ -41,24 +42,35 @@ export function Navigation({ minimal = false }: NavigationProps) {
             
             {/* Careers Link - Desktop */}
             <Link to="/careers" className="hidden md:block">
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 text-alx-gold-pale hover:text-alx-gold-light hover:bg-alx-gold/10">
                 <Briefcase className="h-4 w-4" />
                 Careers
               </Button>
             </Link>
             
-            {/* Having Trouble Booking Button */}
+            {/* Book Now CTA */}
             <div className="hidden md:flex">
-              <Button variant="outline" className="flex items-center gap-2" onClick={handleTroubleBooking}>
+              <Button
+                size="sm"
+                className="btn-alx-gold rounded-full px-5 font-semibold border-0"
+                asChild
+              >
+                <Link to="/book/zip">Book Now</Link>
+              </Button>
+            </div>
+
+            {/* Having Trouble Booking Button */}
+            <div className="hidden lg:flex">
+              <Button variant="outline" size="sm" className="flex items-center gap-2 border-alx-gold/40 text-alx-gold-pale hover:bg-alx-gold/10 hover:text-alx-gold-light" onClick={handleTroubleBooking}>
                 <HelpCircle className="h-4 w-4" />
-                Having Trouble Booking?
+                Need Help?
               </Button>
             </div>
 
             {/* Contact Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden md:flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="hidden md:flex items-center gap-2 text-alx-gold-pale hover:text-alx-gold-light hover:bg-alx-gold/10">
                   <Phone className="h-4 w-4" />
                   Contact
                 </Button>
@@ -84,7 +96,7 @@ export function Navigation({ minimal = false }: NavigationProps) {
             <div className="md:hidden">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="text-alx-gold-pale hover:text-alx-gold-light hover:bg-alx-gold/10">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>

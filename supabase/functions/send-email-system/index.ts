@@ -108,12 +108,15 @@ const handler = async (req: Request): Promise<Response> => {
     const { html, subject } = await renderEmailTemplate(template, data, subject_variant);
 
     // Send email via Resend
+    const fromAddress = Deno.env.get("EMAIL_FROM") || "AlphaLux Cleaning <noreply@info.alphaluxclean.com>";
+    const replyTo = Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com";
+
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: fromAddress,
       to: [to],
       subject,
       html,
-      replyTo: "support@alphaluxclean.com",
+      replyTo,
       tags: [
         { name: "template", value: template },
         { name: "category", value: category }
@@ -170,8 +173,8 @@ const handler = async (req: Request): Promise<Response> => {
 async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 'B') {
   const templateProps = {
     ...data,
-    app_url: Deno.env.get("APP_URL") || "https://app.alphaluxclean.com",
-    support_phone: Deno.env.get("SUPPORT_PHONE") || "(555) 123-4567"
+    app_url: Deno.env.get("APP_URL") || "https://alphaluxcleaning.com",
+    support_phone: Deno.env.get("SUPPORT_PHONE") || "(857) 754-4557"
   };
 
   let emailComponent;

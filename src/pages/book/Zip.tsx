@@ -279,8 +279,8 @@ export default function BookingZip() {
                       {zipError}
                       {zipError.includes("don't service") && (
                         <div className="mt-2">
-                          <a href="tel:9725590223" className="font-medium underline">
-                            Call (972) 559-0223
+                          <a href="tel:8577544557" className="font-medium underline">
+                            Call (857) 754-4557
                           </a>
                           {' '}for options
                         </div>
@@ -442,7 +442,7 @@ export default function BookingZip() {
           <ReviewsWidget />
           
           <p className="text-sm text-center text-muted-foreground mt-6">
-            By booking you agree to AlphaLuxClean's terms & service policy
+            By booking you agree to AlphaLux Cleaning's terms & service policy
           </p>
         </div>
       </main>

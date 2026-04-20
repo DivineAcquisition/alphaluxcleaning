@@ -44,31 +44,34 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <div className="py-12 lg:py-16 bg-muted/20">
+    <div className="py-16 lg:py-24">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8 lg:mb-12">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <HelpCircle className="w-8 h-8 text-primary" />
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-                Frequently Asked Questions
-              </h2>
+          <div className="text-center mb-10 lg:mb-12">
+            <div className="inline-flex items-center gap-2 rounded-full border border-alx-gold/30 bg-alx-gold/5 px-4 py-1.5 mb-4">
+              <HelpCircle className="w-4 h-4 text-alx-gold" />
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-alx-gold">
+                FAQs
+              </span>
             </div>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground mb-3">
+              Frequently Asked Questions
+            </h2>
             <p className="text-base lg:text-lg text-muted-foreground">
               Everything you need to know about our cleaning services
             </p>
           </div>
 
           {/* Accordion */}
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion type="single" collapsible className="w-full space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-card border border-border/50 rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-card border border-alx-gold/15 rounded-xl px-6 shadow-soft hover:border-alx-gold/40 transition-all"
               >
-                <AccordionTrigger className="text-left text-base lg:text-lg font-semibold hover:text-primary">
+                <AccordionTrigger className="text-left text-base lg:text-lg font-semibold hover:text-alx-gold hover:no-underline">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-sm lg:text-base text-muted-foreground leading-relaxed pt-2">
@@ -79,14 +82,21 @@ export function FAQSection() {
           </Accordion>
 
           {/* Bottom CTA */}
-          <div className="mt-8 lg:mt-12 text-center p-6 bg-primary/5 border border-primary/20 rounded-lg">
-            <p className="text-base lg:text-lg text-foreground mb-2">
+          <div className="mt-12 text-center p-8 rounded-2xl bg-alx-hero text-alx-gold-pale relative overflow-hidden shadow-clean">
+            <div
+              aria-hidden
+              className="absolute -right-16 -bottom-16 w-48 h-48 rounded-full bg-gradient-gold opacity-20 blur-3xl"
+            />
+            <p className="font-serif text-xl lg:text-2xl font-semibold text-alx-gold-light mb-2">
               Still have questions?
             </p>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-alx-gold-pale/80 mb-4">
               Our team is here to help! Call us at{' '}
-              <a href="tel:+19725590223" className="text-primary font-semibold hover:underline">
-                (972) 559-0223
+              <a
+                href="tel:+18577544557"
+                className="text-alx-gold-light font-semibold hover:underline"
+              >
+                (857) 754-4557
               </a>
             </p>
           </div>

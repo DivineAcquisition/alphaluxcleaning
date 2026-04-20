@@ -8,7 +8,7 @@ export const Referrals: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Referral Program</h1>
           <p className="text-muted-foreground">
-            Earn $50 for every friend you refer to AlphaLuxClean
+            Earn $50 for every friend you refer to AlphaLux Cleaning
           </p>
         </div>
         

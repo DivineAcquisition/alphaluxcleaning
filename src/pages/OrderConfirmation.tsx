@@ -71,7 +71,7 @@ export default function OrderConfirmation() {
             customers: {
               name: 'Admin Preview User',
               email: 'admin@alphaluxclean.com',
-              phone: '(555) 123-4567'
+              phone: '(857) 754-4557'
             },
             service_details: {
               serviceAddress: {
@@ -416,7 +416,7 @@ Questions? Call (857) 754-4557
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'AlphaLux Clean - Booking Confirmed',
+          title: 'AlphaLux Cleaning - Booking Confirmed',
           text: `Service scheduled for ${new Date(serviceDate).toLocaleDateString()} at ${timeSlot}`,
           url: window.location.href
         });
@@ -496,7 +496,7 @@ Questions? Call (857) 754-4557
               Booking Confirmed
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Thank you for choosing AlphaLux Clean! Your cleaning service has been successfully booked.
+              Thank you for choosing AlphaLux Cleaning! Your cleaning service has been successfully booked.
             </p>
           </div>
 
@@ -852,7 +852,7 @@ Questions? Call (857) 754-4557
                 variant="outline" 
                 size="sm"
               >
-                <a href="mailto:support@alphaluxclean.com">
+                <a href="mailto:support@alphaluxcleaning.com">
                   <Mail className="h-4 w-4 mr-2" />
                   Email Us
                 </a>

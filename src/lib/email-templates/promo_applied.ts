@@ -76,12 +76,12 @@ export const promoAppliedTemplate = {
       </div>
       
       <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
-        Questions? Reply to this email or call us at (555) 123-4567
+        Questions? Reply to this email or call us at (857) 754-4557
       </p>
     </div>
     
     <div class="footer">
-      <p>AlphaLux Clean - Premium Cleaning Services</p>
+      <p>AlphaLux Cleaning - Premium Cleaning Services</p>
       <p>Texas & California</p>
       <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
         This is an automated confirmation email. Please do not reply directly to this message.
@@ -111,9 +111,9 @@ Your savings have been applied to your booking. We can't wait to provide you wit
 
 View your booking: https://app.alphaluxclean.com/order-status
 
-Questions? Reply to this email or call us at (555) 123-4567
+Questions? Reply to this email or call us at (857) 754-4557
 
 ---
-AlphaLux Clean - Premium Cleaning Services
+AlphaLux Cleaning - Premium Cleaning Services
 Texas & California`
 };

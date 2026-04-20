@@ -204,7 +204,7 @@ export function useDashboardData() {
         {
           id: 'sub-1',
           full_name: 'John Smith',
-          phone: '(555) 123-4567',
+          phone: '(857) 754-4557',
           email: 'john@example.com',
           is_available: true,
           reliability_score: 92,

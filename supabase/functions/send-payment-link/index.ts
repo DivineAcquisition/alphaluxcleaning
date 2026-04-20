@@ -34,9 +34,9 @@ serve(async (req) => {
 
     // Send email with payment link
     const { data, error } = await resend.emails.send({
-      from: 'AlphaLux Clean <booking@alphaluxclean.com>',
+      from: 'AlphaLux Cleaning <booking@info.alphaluxclean.com>',
       to: [customerEmail],
-      subject: 'Complete Your AlphaLux Clean Booking',
+      subject: 'Complete Your AlphaLux Cleaning Booking',
       html: `
         <!DOCTYPE html>
         <html>
@@ -47,7 +47,7 @@ serve(async (req) => {
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: hsl(211 41% 24%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; font-size: 28px;">AlphaLux Clean</h1>
+              <h1 style="margin: 0; font-size: 28px;">AlphaLux Cleaning</h1>
               <p style="margin: 10px 0 0; opacity: 0.9;">Premium Cleaning Services</p>
               <div style="margin-top: 12px;">
                 <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 16px; font-size: 12px;">
@@ -59,7 +59,7 @@ serve(async (req) => {
             <div style="background: #fff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
               <h2 style="color: #667eea; margin-top: 0;">Hi ${customerName},</h2>
               
-              <p>Thank you for booking with AlphaLux Clean! We're excited to serve you.</p>
+              <p>Thank you for booking with AlphaLux Cleaning! We're excited to serve you.</p>
               
               <p>To confirm your booking, please complete your payment by clicking the button below:</p>
               
@@ -81,13 +81,13 @@ serve(async (req) => {
               
               <p style="font-size: 14px; color: #666; margin-top: 30px;">
                 <strong>Need help?</strong><br>
-                Call us at <a href="tel:9725590223" style="color: hsl(211 41% 24%); text-decoration: none;">(972) 559-0223</a><br>
-                Email us at <a href="mailto:support@alphaluxclean.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxclean.com</a>
+                Call us at <a href="tel:8577544557" style="color: hsl(211 41% 24%); text-decoration: none;">(857) 754-4557</a><br>
+                Email us at <a href="mailto:support@alphaluxcleaning.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxcleaning.com</a>
               </p>
               
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; font-size: 12px; color: #999;">
                 <p>This payment link will remain active until you complete your payment.</p>
-                <p style="margin: 10px 0;">AlphaLux Clean | Premium Cleaning Services</p>
+                <p style="margin: 10px 0;">AlphaLux Cleaning | Premium Cleaning Services</p>
               </div>
             </div>
           </body>
