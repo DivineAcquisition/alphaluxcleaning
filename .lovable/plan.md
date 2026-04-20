@@ -1,85 +1,102 @@
 
 
-# Remove All "Bay Area Cleaning Pros" References
+## Plan: Create a Hub File Documenting the Booking Flow for Reverse-Engineering
 
-## Overview
-There are **55+ active source files** (excluding old migrations) that still contain references to "Bay Area Cleaning Professionals", "Bay Area Cleaning Pros", "BACP", or related branding. These need to be replaced with "AlphaLux Clean" branding throughout. The existing AlphaLux Stripe keys (`STRIPE_SECRET_KEY_ALPHALUX`, `STRIPE_PUBLISHABLE_KEY_ALPHALUX`, `STRIPE_WEBHOOK_SECRET_ALPHALUX`) will be retained as-is.
+You want a single reference document (call it the "Hub") that describes how AlphaLuxClean's booking flow works — both the **logical/architectural layer** and the **visual layout** — so you can rebuild it as a new app called **Selestial** with a closed calendar system, dedicated booking link, and embeddable widget component.
 
-## What Changes
+### Where the hub will live
 
-All old brand references will be replaced as follows:
+Create a single markdown file at:
+- `docs/SELESTIAL_BOOKING_HUB.md`
 
-| Old Reference | New Reference |
-|---|---|
-| Bay Area Cleaning Professionals | AlphaLux Clean |
-| Bay Area Cleaning Pros | AlphaLux Clean |
-| Bay Area Cleaning | AlphaLux Clean |
-| BACP Club | AlphaLux Club |
-| Serving Bay Area | Premium Cleaning Service |
-| bayareacleaningpros.com emails | alphaluxclean.com emails |
-| Bacp2025!- (passwords) | AlphaLux2025!- |
-| SALT_BACP_2024 | SALT_ALPHALUX_2024 |
-| BACP_ADMIN_2024 | ALPHALUX_ADMIN_2024 |
-| Old Supabase logo URLs (kqoezqzogleaaupjzxch) | Updated or removed |
+This is documentation only — no runtime code changes. It will be the canonical reference your team (or another AI) reads to recreate the flow.
 
-## Files to Update
+### What the hub will contain
 
-### Frontend Components (src/)
-1. **src/components/dashboard/DashboardHeader.tsx** - Title, alt text, "Serving Bay Area"
-2. **src/components/HourlyBookingInterface.tsx** - "BACP Club" references (x4)
-3. **src/components/booking/PriceSummaryCard.tsx** - "BACP Club" references (x2)
-4. **src/components/booking/LegacyBookingFlow.tsx** - "BACP Club" reference
-5. **src/components/TermsOfServiceAgreement.tsx** - "BACP Club" terms
-6. **src/components/dashboard/PricingCalculator.tsx** - Comment about Bay Area pricing
-7. **src/pages/SubcontractorApplication.tsx** - Brand references (x3)
-8. **src/pages/SubcontractorApplicationThankYou.tsx** - Thank you text
-9. **src/pages/ContractorAuth.tsx** - Subtitle text
-10. **src/pages/CustomerPortalHome.tsx** - Subtitle text
-11. **src/pages/SubcontractorJobAcceptance.tsx** - Hardcoded old Supabase URLs
+The document will be organized into 8 sections:
 
-### Edge Functions (supabase/functions/)
-12. **send-user-invite/index.ts** - Company name, email subject
-13. **send-custom-message/index.ts** - Email subject, heading, sign-off
-14. **send-application-response/index.ts** - Email subject
-15. **send-tier-upgrade-notification/index.ts** - Logo URL, footer text
-16. **send-assignment-invite/index.ts** - Footer text
-17. **send-monthly-performance-summary/index.ts** - Body text, sign-off
-18. **send-subcontractor-welcome/index.ts** - Welcome title
-19. **create-customer-account/index.ts** - Welcome notification, temp password
-20. **create-google-calendar-event/index.ts** - Description, display name
-21. **assignment-response/index.ts** - Footer text
-22. **create-membership-checkout/index.ts** - "BACP Club" product names
-23. **create-test-admin/index.ts** - Secret codes
-24. **create-subcontractor-direct/index.ts** - Salt string
-25. **fix-admin-users/index.ts** - Passwords
-26. **send-booking-transaction-to-zapier/index.ts** - "BACP Data" key
-27. **send-admin-job-notification/index.ts** - Hardcoded old Supabase URL
-28. **enhanced-job-assignment/index.ts** - Hardcoded old Supabase URL
-29. **_shared/email-templates/customer-feedback-notification.tsx** - Sign-off
+**1. Flow Overview (the 6-step funnel)**
+A high-level map of every route, in order:
+```text
+/book/zip      → ZIP validation + lead capture (name/email/phone)
+/book/sqft     → Home size selection (bedrooms / sqft buckets)
+/book/offer    → Offer cards: Deep Clean, Deep + Recurring, Tester
+/book/checkout → Stripe Payment Element (25% deposit)
+/book/details  → Address + preferred date/time + notes (post-payment)
+/book/confirmation → Receipt + reward summary + next steps
+```
+Plus a Mermaid flow diagram showing transitions, redirects (`/book/schedule → /book/details`), and the routing guard that bounces users back to `/book/details` when address/schedule are missing.
 
-Plus any additional files found in the remaining 45 matches.
+**2. State Management (BookingContext)**
+- The global `BookingData` shape (zip, homeSizeId, offerType, basePrice, contactInfo, etc.)
+- localStorage persistence key `alphalux-booking-flow`
+- Dynamic `depositAmount` = 25% of basePrice
+- Pricing recalculation triggers and the "skip if offerType set" rule
 
-### Database (migration needed)
-- Update `webhook_configurations.organization_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
-- Update `email_settings.from_name` default from 'Bay Area Cleaning Pros' to 'AlphaLux Clean'
-- Update any stored template text in `notification_templates` table
+**3. Pricing Logic**
+- `HOME_SIZE_RANGES` buckets (1000–1500 sqft … 5000+)
+- State multipliers (TX 1.20x, CA 1.10x, NY 1.15x)
+- Deep clean vs. recurring discount tiers (15/10/5%)
+- Promo: $25 off deep, 10% off recurring (`WELCOME2025`)
 
-## What Will NOT Change
-- The AlphaLux Stripe keys remain as configured
-- All Supabase connection settings stay the same
-- Old migration files (read-only history, won't be touched)
-- The `supabase/config.toml` project ID stays as-is
+**4. Visual Layout (per page)**
+For each of the 6 pages, a brief description of:
+- Hero/headline, primary CTA, trust elements (Google Guaranteed badge, reviews widget, showcase carousel)
+- Sidebar summary card behavior
+- Progress bar (`BookingProgressBar`) with phone number `972-559-0223`
+- Mobile vs. desktop layout breakpoints
+- ASCII wireframe of the key page (zip + offer + checkout)
 
-## Technical Details
+**5. Backend Architecture (Edge Functions)**
+The chain that powers a booking, with inputs/outputs:
+```text
+validate-zip            → city/state lookup
+emit-lead-webhook       → GHL/Zapier lead capture
+create-payment-intent   → creates customer + booking, returns clientSecret
+stripe-webhook          → payment_intent.succeeded → confirms booking
+confirm-booking-payment → client-side confirmation path
+save-booking-details    → writes address + schedule post-payment
+send-balance-invoice    → 75% balance invoice via Stripe
+enhanced-booking-webhook-v2 → fires GHL + Zapier sync
+```
 
-### Approach
-- Batch-edit all frontend components first, then edge functions, then deploy all updated functions
-- Run a single database migration to update default values and any stored brand text
-- Replace hardcoded old Supabase project URLs (`kqoezqzogleaaupjzxch`) with dynamic references where possible
-- All edge functions referencing the old brand will be redeployed after updates
+**6. Database Schema (the 4 tables that matter)**
+- `customers` — contact + address
+- `bookings` — the order (status, payment_status, deposit_amount, balance_due, service_date, time_slot)
+- `partial_bookings` — abandoned funnel tracking
+- `availability_schedule` — date/time_slot/booked_slots (this is the **closed calendar system** you asked about)
 
-### Estimated Scope
-- ~30 files with text replacements
-- ~25 edge functions to redeploy
-- 1 database migration for stored defaults/templates
+**7. Closed Calendar System (Selestial-relevant)**
+Dedicated section on how availability works:
+- `availability_schedule` table: `date + time_slot + zip_code + available_slots + booked_slots`
+- `get-available-slots` / `get-live-availability` / `check-calendar-availability` edge functions
+- How slots are decremented on confirmation
+- How to expose this as a public read-only API for your embed
+
+**8. Embed Component Blueprint**
+Pattern for shipping the flow as an `<iframe>` + JS SDK:
+- A dedicated `/embed/book` route that strips `Navigation` (uses `minimal` mode)
+- `postMessage` events for height auto-resize and `booking_completed` callback
+- URL params: `?zip=&utm_source=&theme=light` for parent-page integration
+- A snippet template:
+```html
+<script src="https://selestial.app/embed.js"></script>
+<div data-selestial-book data-zip="77001"></div>
+```
+
+### Diagram artifact
+
+Alongside the markdown, a Mermaid diagram of the full flow will be generated to `docs/selestial-booking-flow.mmd` and rendered as a visual artifact for download.
+
+### What this is NOT
+
+- Not a code port — no Selestial app code is written
+- Not a working embed — the embed section is a blueprint/spec, not a built feature
+- No changes to AlphaLuxClean runtime behavior
+
+### Deliverables
+
+1. `docs/SELESTIAL_BOOKING_HUB.md` — the full hub reference (~8 sections, ~600 lines)
+2. `docs/selestial-booking-flow.mmd` — Mermaid diagram of the flow
+3. Both linked at the bottom of the chat as downloadable artifacts
 
