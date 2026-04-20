@@ -3,9 +3,9 @@ import Script from "next/script";
 import "@/index.css";
 
 export const metadata: Metadata = {
-  title: "Book Here | AlphaLux Cleaning",
+  title: "Save 50% On Your First Cleaning | AlphaLux Cleaning",
   description:
-    "AlphaLux Cleaning — premium residential & commercial cleaning in Long Island, NY, New Jersey, Texas and California. Eco-friendly, insured, 5-star rated.",
+    "New customers save 50% on their first AlphaLux Cleaning with code ALC2026. Premium residential & commercial cleaning in Long Island, NY, New Jersey, Texas and California — eco-friendly, insured, 5-star rated.",
   authors: [{ name: "AlphaLux Cleaning" }],
   icons: {
     icon: [
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    title: "Book Here | AlphaLux Cleaning",
+    title: "Save 50% On Your First Cleaning | AlphaLux Cleaning",
     description:
-      "AlphaLux Cleaning — premium residential & commercial cleaning in NY, NJ, TX & CA. A higher standard of clean.",
+      "New customers save 50% with code ALC2026 — premium cleaning in NY, NJ, TX & CA. A higher standard of clean.",
     images: [
       "https://storage.googleapis.com/gpt-engineer-file-uploads/gKZdtAV5x1fAVy9ghNl5qNeLg112/social-images/social-1760931236601-Untitled design (2).png",
     ],
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@alphaluxclean",
-    title: "Book Here | AlphaLux Cleaning",
+    title: "Save 50% On Your First Cleaning | AlphaLux Cleaning",
     description:
-      "AlphaLux Cleaning — premium residential & commercial cleaning in NY, NJ, TX & CA. A higher standard of clean.",
+      "New customers save 50% with code ALC2026 — premium cleaning in NY, NJ, TX & CA. A higher standard of clean.",
     images: [
       "https://storage.googleapis.com/gpt-engineer-file-uploads/gKZdtAV5x1fAVy9ghNl5qNeLg112/social-images/social-1760931236601-Untitled design (2).png",
     ],
