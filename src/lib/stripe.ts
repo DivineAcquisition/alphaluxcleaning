@@ -106,11 +106,16 @@ const createStripePromise = (): Promise<Stripe | null> => {
       }
     }
 
-    // All attempts failed
+    // All attempts failed — clear the cached promise so a subsequent
+    // call (e.g. after the Supabase secret is added) can try again
+    // without the user having to hard-reload the page.
     console.error('🔴 All Stripe initialization attempts failed:', lastError);
+    stripeInstancePromise = null;
     if (typeof window !== 'undefined') {
       toast.error('Payment system unavailable. Please refresh the page.', {
-        description: lastError?.message || 'Failed to initialize payment processing'
+        description:
+          lastError?.message ||
+          'Failed to initialize payment processing. Check that STRIPE_PUBLISHABLE_KEY is set in Supabase secrets.',
       });
     }
     return null;

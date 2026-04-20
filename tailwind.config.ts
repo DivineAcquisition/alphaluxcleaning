@@ -18,45 +18,17 @@ export default {
     		}
     	},
     	extend: {
+    		/* AlphaLux Cleaning uses a single typeface: Inter.
+    		   `jakarta`, `inter`, `sans`, `serif`, and `mono` all resolve
+    		   to Inter so existing `font-jakarta` / `font-serif` /
+    		   `font-mono` utilities in the codebase still work but render
+    		   with one consistent voice. */
     		fontFamily: {
-    			jakarta: [
-    				'Plus Jakarta Sans',
-    				'sans-serif'
-    			],
-    			inter: [
-    				'Inter',
-    				'sans-serif'
-    			],
-    			sans: [
-    				'Poppins',
-    				'ui-sans-serif',
-    				'system-ui',
-    				'sans-serif',
-    				'Apple Color Emoji',
-    				'Segoe UI Emoji',
-    				'Segoe UI Symbol',
-    				'Noto Color Emoji'
-    			],
-    			serif: [
-    				'Merriweather',
-    				'ui-serif',
-    				'Georgia',
-    				'Cambria',
-    				'Times New Roman',
-    				'Times',
-    				'serif'
-    			],
-    			mono: [
-    				'JetBrains Mono',
-    				'ui-monospace',
-    				'SFMono-Regular',
-    				'Menlo',
-    				'Monaco',
-    				'Consolas',
-    				'Liberation Mono',
-    				'Courier New',
-    				'monospace'
-    			]
+    			jakarta: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    			inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    			sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    			serif: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    			mono: ['Inter', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace']
     		},
     		colors: {
     			border: 'hsl(var(--border))',

@@ -141,7 +141,7 @@ export function BundleSaveModal({
               </li>
               <li className="flex items-start gap-2 text-sm">
                 <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <span>48-hour re-clean guarantee on every visit</span>
+                <span>Same trusted AlphaLux team on every visit</span>
               </li>
             </ul>
           </div>

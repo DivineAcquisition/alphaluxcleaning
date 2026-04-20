@@ -86,24 +86,26 @@ function PaymentFormContent({
         </Alert>
       )}
 
-      <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+      <div className="rounded-xl border border-alx-gold/25 bg-alx-cream p-4 space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Deposit Amount</span>
-          <span className="font-bold text-primary">${depositAmount.toFixed(2)}</span>
+          <span className="text-foreground font-medium">Deposit Amount</span>
+          <span className="font-serif font-bold text-lg text-alx-gold">
+            ${depositAmount.toFixed(2)}
+          </span>
         </div>
         {offerType === '90_day_plan' && monthlyAmount && (
-          <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>Then ${monthlyAmount.toFixed(2)}/month for 3 months</span>
-            <span className="text-xs">(auto-billed)</span>
+            <span>(auto-billed)</span>
           </div>
         )}
-        <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t">
+        <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-alx-gold/15">
           <span>Total Plan Value</span>
           <span>${totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="border rounded-lg p-4">
+      <div className="rounded-xl border border-alx-gold/20 p-4 bg-background">
         <PaymentElement
           options={{
             layout: 'tabs',
@@ -112,9 +114,14 @@ function PaymentFormContent({
         />
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Lock className="h-4 w-4" />
-        <span>Your payment is secure and encrypted with Stripe</span>
+      <div className="flex items-center justify-between gap-3 border border-alx-gold/20 bg-alx-black-ink text-alx-gold-pale px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <Lock className="h-4 w-4 text-alx-gold-light" />
+          <span>Secure Payment via Stripe</span>
+        </div>
+        <span className="text-[10px] uppercase tracking-[0.18em] text-alx-gold">
+          256-bit TLS
+        </span>
       </div>
 
       <div className="flex gap-3">
@@ -130,7 +137,8 @@ function PaymentFormContent({
         <Button
           type="submit"
           disabled={!stripe || !elements || isProcessing}
-          className="flex-[2]"
+          className="flex-[2] btn-alx-gold rounded-full font-semibold uppercase tracking-wider"
+          size="lg"
         >
           {isProcessing ? (
             <>
@@ -161,15 +169,37 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
     );
   }
 
+  // Match the branded Stripe PaymentElement to the AlphaLux black+gold palette.
   const appearance = {
     theme: 'stripe' as const,
     variables: {
-      colorPrimary: 'hsl(220, 70%, 50%)',
-      colorBackground: 'hsl(0, 0%, 100%)',
-      colorText: 'hsl(222, 84%, 5%)',
+      colorPrimary: '#A17938', // Brand gold
+      colorBackground: '#ffffff',
+      colorText: '#15120F', // Alpha black
       colorDanger: 'hsl(0, 84%, 60%)',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      borderRadius: '8px',
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+      borderRadius: '12px',
+      fontSizeBase: '15px',
+    },
+    rules: {
+      '.Input': {
+        border: '1px solid #E5E7EB',
+      },
+      '.Input:focus': {
+        borderColor: '#A17938',
+        boxShadow: '0 0 0 2px rgba(161, 121, 56, 0.25)',
+      },
+      '.Label': {
+        fontWeight: '500',
+        color: '#15120F',
+      },
+      '.Tab': {
+        borderColor: '#ECC98B',
+      },
+      '.Tab--selected': {
+        borderColor: '#A17938',
+        backgroundColor: '#FCFBF7',
+      },
     },
   };
 
