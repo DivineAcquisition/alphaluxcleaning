@@ -108,7 +108,8 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
                 </button>
               </div>
               <p className="mt-3 text-xs text-alx-gold-pale/60">
-                Applied automatically at checkout. First-time customers only.
+                Applied automatically at checkout. Limit one redemption per
+                customer.
               </p>
             </div>
           </div>
