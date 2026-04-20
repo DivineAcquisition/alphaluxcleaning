@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Mail, Phone, Gift, Tag, AlertCircle, CheckCircle } from "lucide-react";
+import { CreditCard, User, Mail, Phone, Gift, Tag, AlertCircle, CheckCircle, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
 import { toast } from "sonner";
@@ -15,7 +15,6 @@ import { EmbeddedStripePaymentForm } from '@/components/booking/EmbeddedStripePa
 import { usePreloadedPayment } from "@/hooks/usePreloadedPayment";
 import { navigateToOrderConfirmation } from "@/utils/routing-helpers";
 import { PaymentFormSkeleton } from "@/components/ui/loading-skeleton";
-import { DeepCleaningPromoBanner } from "@/components/booking/DeepCleaningPromoBanner";
 import { applyDeepCleanDiscount } from "@/lib/pricing-utils";
 
 interface PaymentFormProps {
@@ -334,9 +333,12 @@ export function PaymentForm({
       </CardHeader>
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-6 text-center">
-          {/* Deep Cleaning Promo Banner */}
-          <DeepCleaningPromoBanner show={isDeepCleaning} />
-          
+          {/* Secure payment badge */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Lock className="h-3.5 w-3.5" />
+            <span>Secure payment via Stripe</span>
+          </div>
+
           {/* Payment Type Selection */}
           <div className="space-y-8">
             <div className="text-center space-y-2">

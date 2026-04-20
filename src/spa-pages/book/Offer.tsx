@@ -274,6 +274,7 @@ export default function BookingOffer() {
               'Dusting, vacuuming & mopping',
               'All supplies & equipment included',
               'Trained, insured AlphaLux team',
+              'Secure payment via Stripe',
             ]}
             ctaLabel={`Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
             onSelect={() =>
@@ -306,6 +307,7 @@ export default function BookingOffer() {
               '2-person professional team',
               'Baseboards, inside appliances & detail work',
               'Trained, insured AlphaLux team',
+              'Secure payment via Stripe',
             ]}
             ctaLabel={`Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
             onSelect={() =>

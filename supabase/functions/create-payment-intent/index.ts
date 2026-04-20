@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getStripeSecretKey } from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,8 +67,8 @@ serve(async (req) => {
       );
     }
 
-    // Check Stripe configuration
-    const stripeSecretKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
+    // Resolve Stripe secret key from any of the historical names.
+    const stripeSecretKey = getStripeSecretKey();
     if (!stripeSecretKey) {
       logStep("Configuration error - missing Stripe key");
       return new Response(

@@ -23,12 +23,23 @@ const PUBLISHABLE_KEY_CANDIDATES = [
   "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
 ];
 
-function resolvePublishableKey(): string | null {
+// Publishable keys are safe to expose publicly. When the Supabase secret
+// hasn't been set yet we fall back to the current AlphaLux live key so
+// the checkout form never blanks out on a cold project.
+const FALLBACK_PUBLISHABLE_KEY =
+  "pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat";
+
+function resolvePublishableKey(): { key: string | null; source: "env" | "fallback" | "none" } {
   for (const name of PUBLISHABLE_KEY_CANDIDATES) {
     const v = Deno.env.get(name);
-    if (v && typeof v === "string" && v.trim().length > 0) return v.trim();
+    if (v && typeof v === "string" && v.trim().length > 0) {
+      return { key: v.trim(), source: "env" };
+    }
   }
-  return null;
+  if (FALLBACK_PUBLISHABLE_KEY) {
+    return { key: FALLBACK_PUBLISHABLE_KEY, source: "fallback" };
+  }
+  return { key: null, source: "none" };
 }
 
 function isValidPublishableKey(key: string): boolean {
@@ -41,7 +52,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const publishableKey = resolvePublishableKey();
+    const { key: publishableKey, source } = resolvePublishableKey();
 
     if (!publishableKey) {
       console.error(
@@ -79,8 +90,7 @@ serve(async (req: Request) => {
     }
 
     console.log(
-      "✅ Stripe publishable key retrieved successfully (prefix:",
-      publishableKey.slice(0, 12) + "...)",
+      `✅ Stripe publishable key resolved from ${source} (prefix: ${publishableKey.slice(0, 12)}...)`,
     );
 
     return new Response(
