@@ -52,7 +52,7 @@ export default function SubcontractorOnboarding() {
   const applicationId = searchParams.get('application_id');
 
   useEffect(() => {
-    const isDevelopment = import.meta.env.DEV;
+    const isDevelopment = process.env.NODE_ENV !== 'production';
     
     if ((!token || !applicationId) && !isDevelopment) {
       toast.error("Invalid onboarding link");

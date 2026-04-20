@@ -447,7 +447,7 @@ export function TypeformBookingFlow({
           timestamp: new Date().toISOString()
         };
 
-        const webhookUrl = import.meta.env.VITE_ZAPIER_WEBHOOK_URL;
+        const webhookUrl = process.env.NEXT_PUBLIC_ZAPIER_WEBHOOK_URL;
         if (webhookUrl) {
           await fetch(webhookUrl, {
             method: 'POST',

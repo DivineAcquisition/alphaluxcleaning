@@ -184,7 +184,7 @@ export default function PaymentSuccess() {
         </div>
         
         {/* Debug info for development */}
-        {debugInfo && import.meta.env.DEV && (
+        {debugInfo && process.env.NODE_ENV !== 'production' && (
           <div className="bg-muted p-4 rounded-lg text-left text-xs">
             <h3 className="font-semibold mb-2">Debug Info:</h3>
             <pre>{JSON.stringify(debugInfo, null, 2)}</pre>

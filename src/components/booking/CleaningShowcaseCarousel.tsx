@@ -9,11 +9,11 @@ import {
 import { useEffect, useState } from 'react';
 import type { CarouselApi } from '@/components/ui/carousel';
 import Autoplay from 'embla-carousel-autoplay';
-import kitchenShowcase from '@/assets/showcase/kitchen-showcase.jpg';
-import fridgeShowcase from '@/assets/showcase/fridge-showcase.jpg';
-import bathroomShowcase from '@/assets/showcase/bathroom-showcase.jpg';
-import commercialShowcase from '@/assets/showcase/commercial-showcase.jpg';
-import roomShowcase from '@/assets/showcase/room-showcase.jpg';
+const kitchenShowcase = '/brand/showcase/kitchen-showcase.jpg';
+const fridgeShowcase = '/brand/showcase/fridge-showcase.jpg';
+const bathroomShowcase = '/brand/showcase/bathroom-showcase.jpg';
+const commercialShowcase = '/brand/showcase/commercial-showcase.jpg';
+const roomShowcase = '/brand/showcase/room-showcase.jpg';
 
 const showcaseImages = [
   {

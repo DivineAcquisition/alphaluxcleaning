@@ -54,11 +54,24 @@ npm run dev
 
 This project is built with:
 
-- Vite
+- Next.js (App Router) — hosts the SPA as a catch-all route
 - TypeScript
-- React
-- shadcn-ui
+- React + React Router (client-only routing inside the Next shell)
+- shadcn/ui
 - Tailwind CSS
+- Supabase + Stripe + Resend (via `supabase/functions`)
+
+## Architecture notes
+
+- `app/` is the Next.js App Router entry (`layout.tsx` + a
+  `[[...slug]]` catch-all page).
+- `app/ClientApp.tsx` dynamically imports the existing React SPA in
+  `src/App.tsx` with `ssr: false`, so React Router keeps handling all
+  client routes.
+- All legacy page components live in `src/spa-pages/` and are imported
+  by `src/App.tsx` / React Router — they are **not** Next.js routes.
+- Build locally with `npm run build` (which runs `next build`),
+  develop with `npm run dev` (`next dev`).
 
 ## How can I deploy this project?
 

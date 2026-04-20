@@ -61,9 +61,9 @@ const createStripePromise = (): Promise<Stripe | null> => {
         console.log(`🚀 Starting Stripe initialization (attempt ${attempt}/${maxRetries})...`);
         
         // Try local sources first (for development)
-        let publishableKey = (
-          typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY
-        ) || (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_STRIPE_PUBLISHABLE_KEY);
+        let publishableKey =
+          (typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY) ||
+          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
         if (publishableKey) {
           console.log('🔑 Found local publishable key');

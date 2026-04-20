@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Phone, Mail, Menu, HelpCircle, DollarSign, Home, Briefcase } from "lucide-react";
-import logo from "@/assets/logo.png";
+const logo = "/brand/logo.png";
 
 interface NavigationProps {
   minimal?: boolean;

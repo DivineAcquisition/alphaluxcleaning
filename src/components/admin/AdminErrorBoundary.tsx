@@ -83,7 +83,7 @@ export class AdminErrorBoundary extends React.Component<Props, State> {
                 </Button>
               </div>
 
-              {import.meta.env.DEV && this.state.errorInfo && (
+              {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
                 <details className="mt-4">
                   <summary className="cursor-pointer text-sm font-medium">Technical Details</summary>
                   <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">

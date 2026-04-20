@@ -12,61 +12,61 @@ import { UTMTracker } from '@/components/UTMTracker';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
-import { Landing } from '@/pages/Landing';
+import { Landing } from '@/spa-pages/Landing';
 
 // Lazy load booking flow pages
-const BookZip = lazy(() => import('@/pages/book/Zip'));
-const BookSquareFeet = lazy(() => import('@/pages/book/SquareFeet'));
-const BookOffer = lazy(() => import('@/pages/book/Offer'));
-const BookCheckout = lazy(() => import('@/pages/book/Checkout'));
-const BookDetails = lazy(() => import('@/pages/book/Details'));
-const BookConfirmation = lazy(() => import('@/pages/book/Confirmation'));
-const BookSuccess = lazy(() => import('@/pages/book/Success')); // Keep for old bookings
-import OrderStatus from '@/pages/OrderStatus';
-import OrderConfirmation from '@/pages/OrderConfirmation';
-import ConfirmationPreview from '@/pages/ConfirmationPreview';
-import PaymentSuccess from '@/pages/PaymentSuccess';
-import { WebhookTest } from '@/pages/WebhookTest';
-import AdminLogin from '@/pages/AdminLogin';
-import AdminOTPLogin from '@/pages/AdminOTPLogin';
-import AdminAuthLogin from '@/pages/AdminAuthLogin';
-import AdminStatus from '@/pages/AdminStatus';
-import AdminEmailTemplates from '@/pages/AdminEmailTemplates';
-import AdminEmailLogs from '@/pages/AdminEmailLogs';
-import AdminEmailEvents from '@/pages/AdminEmailEvents';
-import AdminUsers from '@/pages/AdminUsers';
-import AdminDashboard from '@/pages/AdminDashboard';
+const BookZip = lazy(() => import('@/spa-pages/book/Zip'));
+const BookSquareFeet = lazy(() => import('@/spa-pages/book/SquareFeet'));
+const BookOffer = lazy(() => import('@/spa-pages/book/Offer'));
+const BookCheckout = lazy(() => import('@/spa-pages/book/Checkout'));
+const BookDetails = lazy(() => import('@/spa-pages/book/Details'));
+const BookConfirmation = lazy(() => import('@/spa-pages/book/Confirmation'));
+const BookSuccess = lazy(() => import('@/spa-pages/book/Success')); // Keep for old bookings
+import OrderStatus from '@/spa-pages/OrderStatus';
+import OrderConfirmation from '@/spa-pages/OrderConfirmation';
+import ConfirmationPreview from '@/spa-pages/ConfirmationPreview';
+import PaymentSuccess from '@/spa-pages/PaymentSuccess';
+import { WebhookTest } from '@/spa-pages/WebhookTest';
+import AdminLogin from '@/spa-pages/AdminLogin';
+import AdminOTPLogin from '@/spa-pages/AdminOTPLogin';
+import AdminAuthLogin from '@/spa-pages/AdminAuthLogin';
+import AdminStatus from '@/spa-pages/AdminStatus';
+import AdminEmailTemplates from '@/spa-pages/AdminEmailTemplates';
+import AdminEmailLogs from '@/spa-pages/AdminEmailLogs';
+import AdminEmailEvents from '@/spa-pages/AdminEmailEvents';
+import AdminUsers from '@/spa-pages/AdminUsers';
+import AdminDashboard from '@/spa-pages/AdminDashboard';
 import { AdminRoute } from '@/components/AdminRoute';
-import { ReferralLanding } from '@/pages/ReferralLanding';
-import { Referrals } from '@/pages/Referrals';
-import GetReferral from '@/pages/GetReferral';
-import LearnMore from '@/pages/LearnMore';
-import RecurringServices from '@/pages/RecurringServices';
-import StartRecurring from '@/pages/StartRecurring';
-import Pricing from '@/pages/Pricing';
-import Careers from '@/pages/Careers';
+import { ReferralLanding } from '@/spa-pages/ReferralLanding';
+import { Referrals } from '@/spa-pages/Referrals';
+import GetReferral from '@/spa-pages/GetReferral';
+import LearnMore from '@/spa-pages/LearnMore';
+import RecurringServices from '@/spa-pages/RecurringServices';
+import StartRecurring from '@/spa-pages/StartRecurring';
+import Pricing from '@/spa-pages/Pricing';
+import Careers from '@/spa-pages/Careers';
 
 // Dev Test Pages
-import { DevTest } from '@/pages/DevTest';
-import { DevTestScenarios } from '@/pages/DevTestScenarios';
-import { DevTestDatabase } from '@/pages/DevTestDatabase';
-import { DevTestPayments } from '@/pages/DevTestPayments';
-import { DevTestWebhooks } from '@/pages/DevTestWebhooks';
-import DevTestModeToggle from '@/pages/DevTestModeToggle';
-import BookingDebug from '@/pages/BookingDebug';
-import EmailTools from '@/pages/EmailTools';
-import HousecallProSettings from '@/pages/admin/HousecallProSettings';
-import HousecallProLogs from '@/pages/admin/HousecallProLogs';
-import HCPTestSuite from '@/pages/admin/HCPTestSuite';
-import PromoCodes from '@/pages/admin/PromoCodes';
-import BookingMonitor from '@/pages/admin/BookingMonitor';
-import BookingTester from '@/pages/admin/BookingTester';
-import DatabaseWatcher from '@/pages/admin/DatabaseWatcher';
-import ConversionOptimization from '@/pages/admin/ConversionOptimization';
-import Waitlist from '@/pages/Waitlist';
-import CallPage from '@/pages/CallPage';
+import { DevTest } from '@/spa-pages/DevTest';
+import { DevTestScenarios } from '@/spa-pages/DevTestScenarios';
+import { DevTestDatabase } from '@/spa-pages/DevTestDatabase';
+import { DevTestPayments } from '@/spa-pages/DevTestPayments';
+import { DevTestWebhooks } from '@/spa-pages/DevTestWebhooks';
+import DevTestModeToggle from '@/spa-pages/DevTestModeToggle';
+import BookingDebug from '@/spa-pages/BookingDebug';
+import EmailTools from '@/spa-pages/EmailTools';
+import HousecallProSettings from '@/spa-pages/admin/HousecallProSettings';
+import HousecallProLogs from '@/spa-pages/admin/HousecallProLogs';
+import HCPTestSuite from '@/spa-pages/admin/HCPTestSuite';
+import PromoCodes from '@/spa-pages/admin/PromoCodes';
+import BookingMonitor from '@/spa-pages/admin/BookingMonitor';
+import BookingTester from '@/spa-pages/admin/BookingTester';
+import DatabaseWatcher from '@/spa-pages/admin/DatabaseWatcher';
+import ConversionOptimization from '@/spa-pages/admin/ConversionOptimization';
+import Waitlist from '@/spa-pages/Waitlist';
+import CallPage from '@/spa-pages/CallPage';
 
-import NotFound from '@/pages/NotFound';
+import NotFound from '@/spa-pages/NotFound';
 import React from 'react';
 
 const queryClient = new QueryClient();
@@ -124,7 +124,7 @@ function App() {
             {/* Call Page */}
             <Route path="/call" element={
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/CallPage')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/CallPage')))}
               </Suspense>
             } />
             
@@ -142,7 +142,7 @@ function App() {
             {/* Printable Pricing Sheet */}
             <Route path="/pricing-sheet" element={
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/PricingSheet')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/PricingSheet')))}
               </Suspense>
             } />
             
@@ -166,7 +166,7 @@ function App() {
           <Route path="/admin/csr-booking" element={
             <AdminRoute requiredRole="ops">
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/admin/CSRBookingForm')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/CSRBookingForm')))}
               </Suspense>
             </AdminRoute>
           } />
@@ -199,7 +199,7 @@ function App() {
             {/* Payment Link Public Page */}
             <Route path="/pay/:bookingId" element={
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/PaymentLinkPage')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/PaymentLinkPage')))}
               </Suspense>
             } />
             
@@ -212,12 +212,12 @@ function App() {
             <Route path="/dev-test/test-mode" element={<DevTestModeToggle />} />
             <Route path="/dev-test/cleanup" element={
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/DevTestCleanup')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/DevTestCleanup')))}
               </Suspense>
             } />
             <Route path="/demo-booking" element={
               <Suspense fallback={<div>Loading...</div>}>
-                {React.createElement(React.lazy(() => import('./pages/DemoBooking')))}
+                {React.createElement(React.lazy(() => import('./spa-pages/DemoBooking')))}
               </Suspense>
             } />
             <Route path="/booking-debug" element={<BookingDebug />} />
