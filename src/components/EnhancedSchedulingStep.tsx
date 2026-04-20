@@ -74,7 +74,7 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
       updateBookingData({
         address: {
           ...bookingData.address,
-          state: bookingData.address?.state || 'TX',
+          state: bookingData.address?.state || 'NY',
           zipCode: '78704'
         }
       });
@@ -448,7 +448,7 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
                   <Label htmlFor="city">City *</Label>
                   <Input
                     id="city"
-                    placeholder="San Francisco"
+                    placeholder="New York"
                     value={bookingData.address.city}
                     onChange={(e) => updateBookingData({
                       address: { ...bookingData.address, city: e.target.value }
@@ -460,7 +460,7 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
                 <div className="space-y-2">
                   <Label htmlFor="state">State *</Label>
                   <Select 
-                    value={bookingData.address?.state || 'TX'} 
+                    value={bookingData.address?.state || 'NY'} 
                     onValueChange={(value) => updateBookingData({
                       address: { ...bookingData.address, state: value }
                     })}

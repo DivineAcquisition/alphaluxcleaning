@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 
 export function QuickQuoteWidget() {
   const navigate = useNavigate();
-  const [selectedState, setSelectedState] = useState('TX');
+  const [selectedState, setSelectedState] = useState('NY');
   const [selectedHomeSize, setSelectedHomeSize] = useState('');
   const [selectedServiceType, setSelectedServiceType] = useState('');
   const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null);

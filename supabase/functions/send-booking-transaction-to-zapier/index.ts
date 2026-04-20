@@ -513,7 +513,7 @@ serve(async (req) => {
           id: "booking-sample-456",
           service_date: "2025-08-03",
           service_time: "10:00 AM",
-          service_address: "123 Oak Street, San Francisco, CA 94102",
+          service_address: "123 Oak Street, New York, NY 10001",
           status: "completed",
           priority: "normal",
           estimated_duration: 180, // 3 hours
@@ -621,7 +621,7 @@ serve(async (req) => {
         address: {
           street: "123 Oak Street",
           apartment: "Apt 2B",
-          city: "San Francisco",
+          city: "New York",
           state: "CA",
           zip_code: "94102",
           dwelling_type: "apartment",

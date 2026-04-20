@@ -218,7 +218,7 @@ export function formatPricingForGHL(pricing: PricingBreakdown, customerInfo: any
       phone: customerInfo.phone || '',
       address1: customerInfo.address || '',
       city: customerInfo.city || '',
-      state: customerInfo.state || 'TX',
+      state: customerInfo.state || 'NY',
       postalCode: customerInfo.zipCode || ''
     },
     

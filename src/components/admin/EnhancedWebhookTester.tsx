@@ -88,7 +88,7 @@ export function EnhancedWebhookTester() {
       address: {
         line1: "456 Oak Avenue",
         line2: "Suite 100",
-        city: "Houston",
+        city: "New York",
         state: "TX",
         postalCode: "77002"
       }

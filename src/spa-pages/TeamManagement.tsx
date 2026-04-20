@@ -123,9 +123,13 @@ export default function TeamManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Areas</SelectItem>
-                <SelectItem value="sf">San Francisco</SelectItem>
-                <SelectItem value="oakland">Oakland</SelectItem>
-                <SelectItem value="berkeley">Berkeley</SelectItem>
+                <SelectItem value="manhattan">Manhattan</SelectItem>
+                <SelectItem value="brooklyn">Brooklyn</SelectItem>
+                <SelectItem value="queens">Queens</SelectItem>
+                <SelectItem value="bronx">Bronx</SelectItem>
+                <SelectItem value="staten-island">Staten Island</SelectItem>
+                <SelectItem value="long-island">Long Island</SelectItem>
+                <SelectItem value="westchester">Westchester</SelectItem>
               </SelectContent>
             </Select>
           </div>

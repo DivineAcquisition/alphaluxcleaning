@@ -262,14 +262,12 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(bookingData.addOns || []);
   const [zipCodeValid, setZipCodeValid] = useState(false);
 
-  // Validate ZIP code for Texas and California
+  // Validate ZIP code for New York State (service area is NY-only).
   const validateZipCode = (zipCode: string) => {
     const zip = parseInt(zipCode);
-    // Texas ZIP codes: 73301-79999, 75001-79999
-    const isTexas = (zip >= 73301 && zip <= 79999) || (zip >= 75001 && zip <= 79999);
-    // California ZIP codes: 90001-96162
-    const isCalifornia = zip >= 90001 && zip <= 96162;
-    return isTexas || isCalifornia;
+    // NY prefixes: 10000-14999 cover NYC, Long Island, Westchester,
+    // Hudson Valley, Capital Region, Central NY, and Western NY.
+    return zip >= 10001 && zip <= 14999;
   };
 
   // Check existing ZIP code on mount
@@ -357,7 +355,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <p className="text-muted-foreground">
-                We provide professional cleaning services throughout Cali & Texas. Enter your ZIP code to get started.
+                We provide professional cleaning services throughout New York State. Enter your ZIP code to get started.
               </p>
               <div className="flex gap-3">
                 <Input
@@ -377,7 +375,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
               </div>
               {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
                 <p className="text-destructive text-sm">
-                  Sorry, we currently only service Texas and California. Please contact us at (281) 809-9901 for other locations.
+                  Sorry, we currently only service New York. Please contact us at (281) 809-9901 for other locations.
                 </p>
               )}
               {zipCodeValid && (

@@ -154,10 +154,10 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
 ];
 
 // Universal Hybrid Pricing Configuration
+// AlphaLux Cleaning only operates in New York State, so the pricing
+// system is configured for a single NY multiplier.
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   states: [
-    { code: 'TX', name: 'Texas', multiplier: 1.0 },
-    { code: 'CA', name: 'California', multiplier: 1.10 },
     { code: 'NY', name: 'New York', multiplier: 1.15 }
   ],
   serviceTypes: [

@@ -158,7 +158,7 @@ export const UpdateAddressDialog = ({
                   id="city"
                   value={newAddress.city}
                   onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="San Francisco"
+                  placeholder="New York"
                 />
               </div>
               <div className="space-y-2">

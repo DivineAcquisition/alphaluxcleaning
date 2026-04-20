@@ -55,7 +55,7 @@ export function OrderEntryWebhookTest() {
         customer_name: "Webhook Test Customer",
         customer_email: `webhook-test-${Date.now()}@example.com`,
         customer_phone: "(555) 987-6543",
-        service_address: "456 Webhook Lane, San Jose, CA 95110",
+        service_address: "456 Webhook Lane, New York, NY 10001",
         service_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days from now
         service_time: "2:00 PM - 4:00 PM",
         special_instructions: "Webhook test - focus on kitchen and living room",
@@ -136,7 +136,7 @@ export function OrderEntryWebhookTest() {
           service_details: {
             serviceAddress: {
               street: "456 Webhook Lane",
-              city: "San Jose",
+              city: "New York",
               state: "CA", 
               zipCode: "95110"
             },

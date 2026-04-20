@@ -11,12 +11,12 @@ interface BookingNotification {
 }
 
 const mockBookings: BookingNotification[] = [
-  { name: 'Sarah M.', location: 'Dallas, TX', service: 'Deep Clean', timeAgo: '2 hours ago' },
-  { name: 'Michael R.', location: 'Los Angeles, CA', service: 'Standard Clean', timeAgo: '3 hours ago' },
-  { name: 'Jennifer L.', location: 'Houston, TX', service: 'Move-In Clean', timeAgo: '4 hours ago' },
-  { name: 'David K.', location: 'San Diego, CA', service: 'Standard Clean', timeAgo: '5 hours ago' },
-  { name: 'Emily T.', location: 'Austin, TX', service: 'Deep Clean', timeAgo: '6 hours ago' },
-  { name: 'Robert P.', location: 'San Francisco, CA', service: 'Standard Clean', timeAgo: '7 hours ago' },
+  { name: 'Sarah M.', location: 'Manhattan, NY', service: 'Deep Clean', timeAgo: '2 hours ago' },
+  { name: 'Michael R.', location: 'Brooklyn, NY', service: 'Standard Clean', timeAgo: '3 hours ago' },
+  { name: 'Jennifer L.', location: 'Queens, NY', service: 'Move-In Clean', timeAgo: '4 hours ago' },
+  { name: 'David K.', location: 'Long Island, NY', service: 'Standard Clean', timeAgo: '5 hours ago' },
+  { name: 'Emily T.', location: 'Staten Island, NY', service: 'Deep Clean', timeAgo: '6 hours ago' },
+  { name: 'Robert P.', location: 'Bronx, NY', service: 'Standard Clean', timeAgo: '7 hours ago' },
 ];
 
 export function LiveBookingNotification() {

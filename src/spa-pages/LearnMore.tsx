@@ -292,7 +292,7 @@ export default function LearnMore() {
 
           {/* Service Areas */}
           <div className="text-center text-sm text-muted-foreground">
-            <p>Serving Texas, California, and New York • Licensed, Bonded & Insured</p>
+            <p>Serving New York • Licensed, Bonded & Insured</p>
           </div>
         </div>
       </div>

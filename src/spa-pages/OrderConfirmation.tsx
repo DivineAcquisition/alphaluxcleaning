@@ -77,7 +77,7 @@ export default function OrderConfirmation() {
               serviceAddress: {
                 street: '123 Admin Street',
                 apartment: 'Unit 4B',
-                city: 'San Francisco',
+                city: 'New York',
                 state: 'CA',
                 zipCode: '94102'
               },

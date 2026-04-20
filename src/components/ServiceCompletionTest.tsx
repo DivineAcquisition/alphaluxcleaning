@@ -140,7 +140,7 @@ export function ServiceCompletionTest() {
       customer_email: "sarah.johnson@example.com",
       customer_phone: "(281) 809-9901",
       street_address: "123 Oak Street",
-      city: "San Francisco",
+      city: "New York",
       state: "CA",
       zip_code: "94102",
       country: "USA",

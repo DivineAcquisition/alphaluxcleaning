@@ -105,7 +105,7 @@ export default function Careers() {
                 <CardContent className="text-muted-foreground space-y-4">
                   <p>
                     AlphaLux Cleaning is a locally owned and operated premium cleaning company 
-                    serving major cities in Texas & California. We deliver reliable, high-quality 
+                    serving major cities in New York. We deliver reliable, high-quality 
                     cleaning services with a focus on detail and customer satisfaction.
                   </p>
                   <p>
@@ -212,10 +212,12 @@ export default function Careers() {
                   <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
                     <MapPin className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="font-semibold mb-2">Texas & California</h3>
+                  <h3 className="font-semibold mb-2">New York</h3>
                   <p className="text-sm text-muted-foreground">
-                    We serve major cities across Texas (DFW, Dallas, Plano, Fort Worth) and 
-                    California (Los Angeles, Pasadena, Santa Monica). Work in your area.
+                    We serve customers across New York State — New York City
+                    (Manhattan, Brooklyn, Queens, the Bronx, Staten Island),
+                    Long Island (Nassau & Suffolk), Westchester, the Hudson
+                    Valley, and upstate. Work in your area.
                   </p>
                 </CardContent>
               </Card>
@@ -374,17 +376,17 @@ export default function Careers() {
                 {
                   quote: "The team was punctual, friendly, and left my home looking and feeling fresh. It's a huge relief to know I can count on them every time.",
                   name: "Tara M.",
-                  location: "Dallas, TX"
+                  location: "Manhattan, NY"
                 },
                 {
-                  quote: "My house has never looked better. They even managed to remove hard water stains I thought were permanent! Highly recommend.",
+                  quote: "My apartment has never looked better. They even managed to remove hard water stains I thought were permanent! Highly recommend.",
                   name: "Jason K.",
-                  location: "Los Angeles, CA"
+                  location: "Brooklyn, NY"
                 },
                 {
                   quote: "They always show up on time, are respectful of our home, and the results are consistently impressive. It's clear they truly care about their work.",
                   name: "Danielle S.",
-                  location: "Plano, TX"
+                  location: "Long Island, NY"
                 }
               ].map((testimonial, index) => (
                 <Card key={index} className="bg-background">

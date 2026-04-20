@@ -27,7 +27,7 @@ export default function DemoBooking() {
     // Pre-configure booking data
     updateBookingData({
       zipCode: '75201',
-      city: 'Dallas',
+      city: 'New York',
       state: 'TX',
       homeSizeId: '1000-1499',
       sqft: 1200,

@@ -23,37 +23,37 @@ export function DevTestScenarios() {
 
   const testScenarios = [
     {
-      id: 'regular-small-tx',
-      title: 'Regular Cleaning - Small Home (TX)',
-      description: 'Weekly regular cleaning for 1000-1500 sq ft home in Texas',
+      id: 'regular-small-nyc',
+      title: 'Regular Cleaning - Small Home (NYC)',
+      description: 'Weekly regular cleaning for 1000-1500 sq ft home in NYC',
       icon: Home,
       color: 'bg-blue-500',
       data: {
         serviceType: 'regular',
         frequency: 'weekly',
         homeSize: '1000-1500',
-        zipCode: '75001',
-        state: 'TX',
+        zipCode: '10001',
+        state: 'NY',
         estimate: false
       }
     },
     {
-      id: 'deep-large-ca',
-      title: 'Deep Cleaning - Large Home (CA)',
-      description: 'One-time deep cleaning for 3000+ sq ft home in California',
+      id: 'deep-large-li',
+      title: 'Deep Cleaning - Large Home (Long Island)',
+      description: 'One-time deep cleaning for 3000+ sq ft home on Long Island',
       icon: Zap,
       color: 'bg-purple-500',
       data: {
         serviceType: 'deep',
         frequency: 'one_time',
         homeSize: '3001-4000',
-        zipCode: '90210',
-        state: 'CA',
+        zipCode: '11501',
+        state: 'NY',
         estimate: false
       }
     },
     {
-      id: 'moveout-medium-tx',
+      id: 'moveout-medium-queens',
       title: 'Move-Out Cleaning - Medium Home',
       description: 'Move-out cleaning for 2000-2500 sq ft home',
       icon: Users,
@@ -62,14 +62,14 @@ export function DevTestScenarios() {
         serviceType: 'move_out',
         frequency: 'one_time',
         homeSize: '2001-2500',
-        zipCode: '78701',
-        state: 'TX',
+        zipCode: '11101',
+        state: 'NY',
         estimate: false
       }
     },
     {
-      id: 'regular-biweekly-ca',
-      title: 'Bi-Weekly Regular (CA)',
+      id: 'regular-biweekly-bk',
+      title: 'Bi-Weekly Regular (Brooklyn)',
       description: 'Bi-weekly regular cleaning with discount pricing',
       icon: Calendar,
       color: 'bg-cyan-500',
@@ -77,8 +77,8 @@ export function DevTestScenarios() {
         serviceType: 'regular',
         frequency: 'biweekly',
         homeSize: '1501-2000',
-        zipCode: '90401',
-        state: 'CA',
+        zipCode: '11201',
+        state: 'NY',
         estimate: false
       }
     },
@@ -92,8 +92,8 @@ export function DevTestScenarios() {
         serviceType: 'regular',
         frequency: 'monthly',
         homeSize: '5001+',
-        zipCode: '75205',
-        state: 'TX',
+        zipCode: '10024',
+        state: 'NY',
         estimate: true
       }
     },
@@ -107,8 +107,8 @@ export function DevTestScenarios() {
         serviceType: 'deep',
         frequency: 'one_time',
         homeSize: '2501-3000',
-        zipCode: '90210',
-        state: 'CA',
+        zipCode: '10001',
+        state: 'NY',
         paymentType: 'full',
         estimate: false
       }

@@ -31,8 +31,8 @@ export const GHLWebhookTest = () => {
           phone: '(857) 754-4557',
           address: {
             street: '123 Test Street',
-            city: 'San Francisco',
-            state: 'CA',
+            city: 'New York',
+            state: 'NY',
             zipCode: '94102'
           }
         },

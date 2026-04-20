@@ -6,15 +6,15 @@ const testimonials = [
   {
     id: 1,
     name: "Michael Chen",
-    location: "Dallas, TX",
+    location: "Manhattan, NY",
     rating: 5,
-    text: "Amazing service! They're always on time, professional, and my house sparkles. The online booking makes it so easy.",
+    text: "Amazing service! They're always on time, professional, and my apartment sparkles. The online booking makes it so easy.",
     avatar: "👨‍💼"
   },
   {
     id: 2,
     name: "Jennifer Rodriguez",
-    location: "Plano, TX", 
+    location: "Garden City, NY",
     text: "I was hesitant at first, but AlphaLux Cleaning has proven to be trustworthy and thorough. Fair pricing too.",
     rating: 5,
     avatar: "👩‍🏫"
@@ -22,7 +22,7 @@ const testimonials = [
   {
     id: 3,
     name: "Sarah Martinez",
-    location: "Irving, TX",
+    location: "Brooklyn, NY",
     text: "Love that I get the same team every time. They know exactly how I like things done.",
     rating: 5,
     avatar: "👩‍⚕️"

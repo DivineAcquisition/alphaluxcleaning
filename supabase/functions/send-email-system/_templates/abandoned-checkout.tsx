@@ -52,7 +52,7 @@ export const AbandonedCheckoutEmail = ({
         ⭐⭐⭐⭐⭐ Join 1,000+ happy customers
       </Text>
       <Text style={testimonial}>
-        "Best cleaning service in Dallas! They're always on time and do an 
+        "Best cleaning service in New York! They're always on time and do an 
         incredible job. My house has never looked better." - Sarah M.
       </Text>
     </Section>

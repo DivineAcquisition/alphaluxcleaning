@@ -240,7 +240,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 14px;">
               <p>AlphaLux Cleaning - Premium Cleaning Services</p>
-              <p>Texas & California</p>
+              <p>New York</p>
             </div>
           </div>
         `;

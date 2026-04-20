@@ -4,7 +4,7 @@ export interface WebhookPayload {
   booking_id: string;
   timestamp: string;
   source: string;
-  state: "CA" | "TX" | "NY";
+  state: "NY";
   service_type: string;
   sq_ft_range: string;
   frequency: string;
@@ -261,7 +261,7 @@ export function createWebhookPayload(
     booking_id: bookingId || `BK-${Date.now().toString().slice(-5)}`,
     timestamp: new Date().toISOString(),
     source: "lovable-booking-ui",
-    state: bookingData.customerInfo.address.state as "CA" | "TX" | "NY",
+    state: bookingData.customerInfo.address.state as "NY",
     service_type: normalizedServiceType,
     sq_ft_range: getSquareFootageRange(bookingData.serviceDetails.squareFootage),
     frequency: normalizedFrequency,

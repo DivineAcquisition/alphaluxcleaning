@@ -398,16 +398,9 @@ export function ModernLegacyBooking() {
       frequencyId = 'one_time';
     }
 
-    // Derive state code from ZIP if possible, otherwise use address state or default to TX
-    const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
-    const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
-    let stateCode = (bookingData.address?.state || '').toUpperCase();
-    const isTexasZip = (z: number) => z === 73301 || z >= 75001 && z <= 79999 || z >= 88510 && z <= 88595;
-    const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
-    if ((!stateCode || stateCode !== 'TX' && stateCode !== 'CA') && !isNaN(zip)) {
-      if (isTexasZip(zip)) stateCode = 'TX';else if (isCaliforniaZip(zip)) stateCode = 'CA';
-    }
-    if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
+    // AlphaLux Cleaning only operates in New York State; state code is
+    // always 'NY' regardless of address state or ZIP derivation.
+    const stateCode = 'NY';
     const result = calculateNewPricing(homeSizeRange.id, serviceTypeId, frequencyId, stateCode);
     
     // Return full pricing breakdown
@@ -838,7 +831,7 @@ export function ModernLegacyBooking() {
                           </p>
                         </div> : bookingData.zipCode.length === 5 ? <p className="text-destructive text-sm flex items-center gap-2 justify-center">
                           <span className="w-4 h-4 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-xs">!</span>
-                          Sorry, we currently service Texas & California only
+                          Sorry, we currently service New York only
                         </p> : null}
                     </div>
                   </div>
@@ -961,16 +954,9 @@ export function ModernLegacyBooking() {
                   const approxSqft = sizeMidpoints[bookingData.homeSize] ?? 1500;
                   const homeSizeRange = getHomeSizeBySquareFootage(approxSqft);
 
-                  // Derive state code similar to main calculation
-                  const cleanZip = (bookingData.zipCode || '').replace(/[^\d]/g, '');
-                  const zip = /^\d{5}$/.test(cleanZip) ? parseInt(cleanZip, 10) : NaN;
-                  let stateCode = (bookingData.address?.state || '').toUpperCase();
-                  const isTexasZip = (z: number) => z === 73301 || z >= 75001 && z <= 79999 || z >= 88510 && z <= 88595;
-                  const isCaliforniaZip = (z: number) => z >= 90001 && z <= 96162;
-                  if ((!stateCode || stateCode !== 'TX' && stateCode !== 'CA') && !isNaN(zip)) {
-                    if (isTexasZip(zip)) stateCode = 'TX';else if (isCaliforniaZip(zip)) stateCode = 'CA';
-                  }
-                  if (stateCode !== 'TX' && stateCode !== 'CA') stateCode = 'TX';
+                  // AlphaLux Cleaning is NY-only, so pricing always uses the
+                  // New York state multiplier.
+                  const stateCode = 'NY';
 
                   // Map frequency id
                   const freqId = option.id === 'weekly' ? 'weekly' : option.id === 'biweekly' ? 'bi_weekly' : option.id === 'monthly' ? 'monthly' : 'one_time';
@@ -1270,7 +1256,7 @@ export function ModernLegacyBooking() {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Book Your Cleaning Service
             </h1>
-            <p className="text-muted-foreground text-lg">Premium cleaning services in Texas & California</p>
+            <p className="text-muted-foreground text-lg">Premium cleaning services in New York</p>
             <p className="text-sm text-success font-semibold mt-2">
               All prices already include 20% discount - Save big today!
             </p>
@@ -1280,7 +1266,7 @@ export function ModernLegacyBooking() {
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map(star => <Star key={star} className="w-4 h-4 fill-warning text-warning" />)}
               </div>
-              <span className="text-muted-foreground text-sm font-medium">Trusted by 150+ TX & CA families served</span>
+              <span className="text-muted-foreground text-sm font-medium">Trusted by 150+ NY families served</span>
             </div>
           </div>
 

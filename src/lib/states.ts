@@ -73,3 +73,18 @@ export const STATE_NAMES = US_STATES.map(state => state.name);
 
 // Export states as array of abbreviations (for components that need abbreviations)
 export const STATE_ABBREVIATIONS = US_STATES.map(state => state.abbreviation);
+
+/**
+ * AlphaLux Cleaning service area.
+ *
+ * The app presently only services New York State, so any address /
+ * service-area UI should use SERVICE_AREA_STATES instead of the full
+ * US_STATES list. US_STATES is kept as canonical reference data in
+ * case we need it for non-service use cases (shipping forms,
+ * subcontractor background-check workflows, etc.), but it should not
+ * be shown as options in a public-facing address or service-area
+ * picker.
+ */
+export const SERVICE_AREA_STATES: USState[] = US_STATES.filter(
+  (state) => state.abbreviation === 'NY',
+);

@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     question: 'What areas do you serve?',
-    answer: 'We serve major cities across Texas (Dallas, Houston, Austin, San Antonio), California (Los Angeles, San Diego, San Francisco), and New York. Enter your ZIP code during booking to confirm we service your area.'
+    answer: 'We serve major cities across New York (including NYC and Long Island). Enter your ZIP code during booking to confirm we service your area.'
   },
   {
     question: 'Can I book recurring cleaning services?',

@@ -41,7 +41,7 @@ export default function CustomerPortalBookings() {
           service_type: 'Deep Cleaning',
           scheduled_date: '2023-12-30',
           scheduled_time: '10:00 AM',
-          address: '123 Main St, San Francisco, CA 94102',
+          address: '123 Main St, New York, NY 10001',
           status: 'scheduled',
           total_amount: 180,
           payment_status: 'paid',

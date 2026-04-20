@@ -19,32 +19,44 @@ export const ZipCodeTester = () => {
   const testZipCode = () => {
     const validation = validateServiceAreaZipCode(zipCode, selectedState || undefined);
     const suggestions = !validation.isValid ? getNearestServiceableZipCodes(zipCode) : [];
-    
+
     setResult({
       isValid: validation.isValid,
       message: validation.message,
-      suggestions
+      suggestions,
     });
   };
 
   const testCommonZips = () => {
     const commonZips = [
-      { zip: "77521", name: "Baytown, TX" },
-      { zip: "75001", name: "Dallas, TX" },
-      { zip: "77001", name: "Houston, TX" },
-      { zip: "78701", name: "Austin, TX" },
-      { zip: "76001", name: "Fort Worth, TX" },
-      { zip: "90009", name: "Los Angeles, CA" },
-      { zip: "94102", name: "San Francisco, CA" },
-      { zip: "92101", name: "San Diego, CA" },
-      { zip: "10001", name: "New York, NY (should fail)" },
-      { zip: "60601", name: "Chicago, IL (should fail)" }
+      { zip: "10001", name: "Manhattan, NY" },
+      { zip: "11201", name: "Brooklyn, NY" },
+      { zip: "11101", name: "Queens, NY" },
+      { zip: "10451", name: "Bronx, NY" },
+      { zip: "10301", name: "Staten Island, NY" },
+      { zip: "11501", name: "Nassau County (Long Island), NY" },
+      { zip: "11701", name: "Suffolk County (Long Island), NY" },
+      { zip: "10601", name: "White Plains, NY" },
+      { zip: "10701", name: "Yonkers, NY" },
+      { zip: "12201", name: "Albany, NY" },
+      { zip: "14202", name: "Buffalo, NY" },
+      { zip: "14601", name: "Rochester, NY" },
+      { zip: "90210", name: "Beverly Hills, CA (should fail)" },
+      { zip: "75001", name: "Dallas, TX (should fail)" },
+      { zip: "60601", name: "Chicago, IL (should fail)" },
     ];
 
     console.log("=== ZIP Code Validation Test Results ===");
     commonZips.forEach(({ zip, name }) => {
       const validation = validateServiceAreaZipCode(zip, selectedState || undefined);
-      console.log(validation.isValid ? '✅ VALID' : '❌ INVALID', zip, '(', name, '):', validation.isValid ? 'VALID' : validation.message);
+      console.log(
+        validation.isValid ? "✅ VALID" : "❌ INVALID",
+        zip,
+        "(",
+        name,
+        "):",
+        validation.isValid ? "VALID" : validation.message,
+      );
     });
     console.log("===========================================");
   };
@@ -57,7 +69,7 @@ export const ZipCodeTester = () => {
           ZIP Code Validator & Tester
         </CardTitle>
         <CardDescription>
-          Test ZIP code validation for service area coverage (Texas & California)
+          Test ZIP code validation for service area coverage (New York State)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -72,8 +84,6 @@ export const ZipCodeTester = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Any State</SelectItem>
-                  <SelectItem value="TX">Texas</SelectItem>
-                  <SelectItem value="CA">California</SelectItem>
                   <SelectItem value="NY">New York</SelectItem>
                 </SelectContent>
               </Select>
@@ -112,7 +122,7 @@ export const ZipCodeTester = () => {
               )}
               {result.suggestions && result.suggestions.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm text-muted-foreground mb-1">Nearest serviceable areas:</p>
+                  <p className="text-sm text-muted-foreground mb-1">Nearest serviceable NY ZIPs:</p>
                   <div className="flex gap-1">
                     {result.suggestions.map(zip => (
                       <Badge key={zip} variant="secondary">{zip}</Badge>
@@ -130,30 +140,35 @@ export const ZipCodeTester = () => {
             Run Batch Test (Check Console)
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
-            Tests common ZIP codes from Texas, California, and out-of-service areas. Results will appear in the browser console.
+            Tests representative NY ZIP codes and a few out-of-service areas.
+            Results will appear in the browser console.
           </p>
         </div>
 
         {/* Service Area Info */}
         <div className="pt-4 border-t space-y-2">
-          <h4 className="font-medium text-sm">Covered Areas:</h4>
+          <h4 className="font-medium text-sm">New York Service Area Coverage:</h4>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <p className="font-medium text-muted-foreground">Texas Ranges:</p>
+              <p className="font-medium text-muted-foreground">NYC & Metro:</p>
               <ul className="text-xs space-y-1 mt-1">
-                <li>73000-73999 (Central/North TX)</li>
-                <li>75000-75999 (Dallas)</li>
-                <li>76000-76999 (Fort Worth)</li>
-                <li>77000-77999 (Houston)</li>
-                <li>78000-78999 (Austin/San Antonio)</li>
-                <li>79000-79999 (West Texas)</li>
-                <li>88500-88599 (El Paso)</li>
+                <li>10001-10299 (Manhattan)</li>
+                <li>10301-10314 (Staten Island)</li>
+                <li>10451-10475 (Bronx)</li>
+                <li>10501-10598 (Westchester)</li>
+                <li>10601-10710 (White Plains / Yonkers)</li>
+                <li>10801-10805 (New Rochelle)</li>
+                <li>10901-10998 (Rockland / Orange)</li>
+                <li>11001-11697 (Queens / Brooklyn)</li>
+                <li>11701-11980 (Long Island)</li>
               </ul>
             </div>
             <div>
-              <p className="font-medium text-muted-foreground">California Ranges:</p>
+              <p className="font-medium text-muted-foreground">Upstate NY:</p>
               <ul className="text-xs space-y-1 mt-1">
-                <li>90000-96199 (Entire state)</li>
+                <li>12000-12999 (Albany / Hudson Valley)</li>
+                <li>13000-13999 (Central / Northern NY)</li>
+                <li>14000-14999 (Western NY)</li>
               </ul>
             </div>
           </div>

@@ -66,7 +66,7 @@ export const EmailBase = ({
             <Text style={footerText}>
               Premium Residential & Commercial Cleaning
               <br />
-              Long Island, NY • New Jersey • Texas • California
+              Long Island, NY • New Jersey
             </Text>
 
             <Text style={footerText}>

@@ -23,7 +23,7 @@ export function Footer() {
             <p className="text-sm leading-relaxed text-alx-gold-pale/80">
               A higher standard of clean. Trusted, eco-friendly residential and
               commercial cleaning for homes and businesses across Long Island,
-              New Jersey, Texas and California.
+              New Jersey, New York.
             </p>
             <div className="rounded-lg border border-alx-gold/30 bg-alx-gold/5 px-3 py-2 text-xs text-alx-gold-pale/85">
               <span className="font-semibold text-alx-gold-light">
@@ -154,7 +154,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-alx-gold-light mt-0.5 flex-shrink-0" />
-                <span>Serving NY, NJ, TX & CA</span>
+                <span>Serving NY and NJ</span>
               </li>
             </ul>
           </div>

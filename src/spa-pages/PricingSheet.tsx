@@ -289,7 +289,7 @@ const PricingSheet = () => {
 
           {/* Quick Reference - Deposit Examples */}
           <section className="mb-8 page-break-inside-avoid">
-            <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Quick Reference — Deposit Examples (Texas)</h2>
+            <h2 className="text-lg font-bold text-primary mb-3 border-b border-accent pb-2">Quick Reference — Deposit Examples (New York)</h2>
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">

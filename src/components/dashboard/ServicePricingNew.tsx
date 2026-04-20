@@ -19,22 +19,22 @@ const ServicePricingNew = () => {
         </p>
       </div>
 
-      {/* Regional Pricing Notice */}
+      {/* Service Area Notice */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
         <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-3 text-center">📍 Regional Adjustments</h3>
+          <h3 className="text-lg font-semibold mb-3 text-center">📍 New York State Pricing</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-3 bg-background rounded-lg">
-              <p className="font-medium">Texas</p>
-              <p className="text-sm text-muted-foreground">Base pricing</p>
+              <p className="font-medium">NYC Boroughs</p>
+              <p className="text-sm text-muted-foreground">Manhattan, Brooklyn, Queens, Bronx, Staten Island</p>
             </div>
             <div className="text-center p-3 bg-background rounded-lg">
-              <p className="font-medium">California</p>
-              <p className="text-sm text-primary">+10%</p>
+              <p className="font-medium">Long Island</p>
+              <p className="text-sm text-muted-foreground">Nassau & Suffolk Counties</p>
             </div>
             <div className="text-center p-3 bg-background rounded-lg">
-              <p className="font-medium">New York</p>
-              <p className="text-sm text-primary">+15%</p>
+              <p className="font-medium">Upstate NY</p>
+              <p className="text-sm text-muted-foreground">Hudson Valley, Capital, Central & Western NY</p>
             </div>
           </div>
         </CardContent>

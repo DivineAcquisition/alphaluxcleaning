@@ -103,8 +103,8 @@ serve(async (req) => {
           subcontractor_id: "87654321-4321-4321-4321-210987654321",
           check_in_time: "2024-01-15T10:00:00Z",
           check_out_time: "2024-01-15T12:30:00Z",
-          check_in_location: "123 Main St, San Francisco, CA",
-          check_out_location: "123 Main St, San Francisco, CA",
+          check_in_location: "123 Main St, New York, NY",
+          check_out_location: "123 Main St, New York, NY",
           notes: "Completed deep clean, used customer's preferred products",
           photos: ["before.jpg", "after.jpg"]
         }
@@ -142,7 +142,7 @@ serve(async (req) => {
           subcontractor_id: "87654321-4321-4321-4321-210987654321",
           description: "Customer not home, no response after 15 minutes",
           reported_by: "87654321-4321-4321-4321-210987654321",
-          location: "123 Main St, San Francisco, CA",
+          location: "123 Main St, New York, NY",
           urgency: "high"
         }
       },

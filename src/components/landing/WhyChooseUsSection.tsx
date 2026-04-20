@@ -26,7 +26,7 @@ const benefits = [
   {
     icon: MapPin,
     title: "Local Business",
-    description: "Texas and California based company supporting local communities since 2020."
+    description: "New York based company supporting local communities since 2020."
   },
   {
     icon: Zap,
@@ -93,15 +93,15 @@ export function WhyChooseUsSection() {
               Service Areas
             </h3>
             <p className="text-sm md:text-base text-alx-gold-pale/85 mb-6 max-w-2xl mx-auto">
-              Proudly serving New York, New Jersey, Texas and California with
-              reliable, professional cleaning services.
+              Proudly serving New York State — New York City, Long Island, the
+              Hudson Valley, and across the rest of the Empire State.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               {[
-                { region: "New York", cities: "Long Island • NYC" },
-                { region: "New Jersey", cities: "Statewide" },
-                { region: "Texas", cities: "Houston • Dallas • Austin" },
-                { region: "California", cities: "LA • SF • San Diego" },
+                { region: "NYC Boroughs", cities: "Manhattan • Brooklyn • Queens" },
+                { region: "Long Island", cities: "Nassau • Suffolk" },
+                { region: "Hudson Valley", cities: "Westchester • Rockland" },
+                { region: "Upstate", cities: "Albany • Syracuse • Buffalo" },
               ].map((area) => (
                 <div
                   key={area.region}

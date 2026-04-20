@@ -81,7 +81,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
     phone: "",
     address: "",
     city: "",
-    state: "California",
+    state: "New York",
     zipCode: "",
     squareFootage: squareFootage,
     numberOfFloors: 1,

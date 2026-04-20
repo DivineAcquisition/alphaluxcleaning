@@ -68,7 +68,7 @@ export default function SubcontractorOnboarding() {
         email: 'test-subcontractor@example.com',
         phone: '555-0123',
         address: '123 Test Street',
-        city: 'San Francisco',
+        city: 'New York',
         state: 'CA',
         zip_code: '94102',
         status: 'approved'

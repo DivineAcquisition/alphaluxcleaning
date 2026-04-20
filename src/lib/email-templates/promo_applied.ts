@@ -82,7 +82,7 @@ export const promoAppliedTemplate = {
     
     <div class="footer">
       <p>AlphaLux Cleaning - Premium Cleaning Services</p>
-      <p>Texas & California</p>
+      <p>New York</p>
       <p style="font-size: 12px; color: #9ca3af; margin-top: 10px;">
         This is an automated confirmation email. Please do not reply directly to this message.
       </p>
@@ -115,5 +115,5 @@ Questions? Reply to this email or call us at (857) 754-4557
 
 ---
 AlphaLux Cleaning - Premium Cleaning Services
-Texas & California`
+New York`
 };
