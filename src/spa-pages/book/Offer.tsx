@@ -7,38 +7,55 @@ import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { useBookingProgress } from '@/hooks/useBookingProgress';
 import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
-import { Check, Sparkles, CalendarCheck, Info, Gift } from 'lucide-react';
+import {
+  NEW_CUSTOMER_PROMO_CODE,
+  NEW_CUSTOMER_PROMO_PERCENT,
+  previewPromoDiscount,
+} from '@/lib/promo';
+import {
+  Check,
+  Sparkles,
+  CalendarCheck,
+  Info,
+  Gift,
+  BadgePercent,
+  Home,
+} from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 
-// NEW CUSTOMER SPECIAL PRICING
-const PROMO = {
-  deepCleanFlatDiscount: 25, // $25 off first deep clean
-  recurringDiscount: 0.10, // 10% off recurring service
-};
+type OfferType = 'standard' | 'deep_clean' | 'recurring';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
   const { trackStep } = useBookingProgress();
-  const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<OfferType | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [detailsServiceType, setDetailsServiceType] = useState<'standard' | 'tester' | '90day'>('tester');
+  const [detailsServiceType, setDetailsServiceType] =
+    useState<'standard' | 'tester' | '90day'>('tester');
 
-  // Find the selected home size range
-  const selectedHomeSize = HOME_SIZE_RANGES.find(range => range.id === bookingData.homeSizeId);
+  const selectedHomeSize = HOME_SIZE_RANGES.find(
+    (range) => range.id === bookingData.homeSizeId,
+  );
 
-  // Use the new pre-calculated pricing fields
   const baseDeepPrice = selectedHomeSize?.deepPrice || 250;
   const maintenancePrice = selectedHomeSize?.maintenancePrice || 170;
-  
-  // NEW CUSTOMER SPECIAL: 20% off deep clean
-  const deepCleanPrice = baseDeepPrice - PROMO.deepCleanFlatDiscount;
-  
-  // NEW CUSTOMER SPECIAL: 10% off recurring maintenance
-  const recurringPrice = Math.round(maintenancePrice * (1 - PROMO.recurringDiscount));
-  const recurringSavings = maintenancePrice - recurringPrice;
+  // Legacy pricing model uses `regularPrice` for standard; fall back to
+  // maintenance price + a modest markup if regularPrice is missing.
+  const baseStandardPrice =
+    selectedHomeSize?.regularPrice || Math.round(maintenancePrice * 1.05);
+
+  // ALC2026 — new customer 50% off preview.
+  const standardPreview = previewPromoDiscount(baseStandardPrice);
+  const deepPreview = previewPromoDiscount(baseDeepPrice);
+  const recurringPreview = previewPromoDiscount(maintenancePrice);
+
+  const standardPrice = standardPreview.total;
+  const deepCleanPrice = deepPreview.total;
+  const recurringPrice = recurringPreview.total;
+  const recurringSavings = recurringPreview.amount;
 
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.homeSizeId) {
@@ -46,42 +63,65 @@ export default function BookingOffer() {
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
 
-  // Handle custom quote requirement for large homes
   if (selectedHomeSize?.requiresEstimate) {
     return (
       <div className="min-h-screen bg-background">
         <BookingProgressBar currentStep={3} totalSteps={6} />
-        
+
         <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
           <Card className="p-6 md:p-8 text-center">
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">Custom Quote Required</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-4">
+              Custom Quote Required
+            </h1>
             <p className="text-base md:text-lg text-muted-foreground mb-6">
-              Your home (5,000+ sq ft) requires a customized quote for the most accurate pricing.
+              Your home (5,000+ sq ft) requires a customized quote for the most
+              accurate pricing.
             </p>
-            
+
             <div className="bg-muted p-6 rounded-lg mb-6 text-left">
-              <h3 className="font-bold text-xl mb-4 text-center">Estimated Starting Prices:</h3>
+              <h3 className="font-bold text-xl mb-4 text-center">
+                Estimated Starting Prices:
+              </h3>
               <ul className="space-y-2">
                 <li className="flex justify-between">
+                  <span>• Standard Cleaning:</span>
+                  <span className="font-semibold">
+                    Starting at ${baseStandardPrice}
+                  </span>
+                </li>
+                <li className="flex justify-between">
                   <span>• Deep Clean:</span>
-                  <span className="font-semibold">Starting at ${selectedHomeSize.deepPrice}</span>
+                  <span className="font-semibold">
+                    Starting at ${selectedHomeSize.deepPrice}
+                  </span>
                 </li>
                 <li className="flex justify-between">
                   <span>• Recurring Maintenance:</span>
-                  <span className="font-semibold">Starting at ${selectedHomeSize.maintenancePrice}/visit</span>
+                  <span className="font-semibold">
+                    Starting at ${selectedHomeSize.maintenancePrice}/visit
+                  </span>
                 </li>
               </ul>
             </div>
-            
+
             <p className="mb-6 text-lg">
-              Call us at <strong className="text-primary">(857) 754-4557</strong> for a personalized quote.
+              Call us at{' '}
+              <strong className="text-primary">(857) 754-4557</strong> for a
+              personalized quote.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => window.location.href = 'tel:8577544557'}>
+              <Button
+                size="lg"
+                onClick={() => (window.location.href = 'tel:8577544557')}
+              >
                 📞 Call Now
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/book/sqft')}>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate('/book/sqft')}
+              >
                 ← Back
               </Button>
             </div>
@@ -92,16 +132,35 @@ export default function BookingOffer() {
   }
 
   const handleSelectOffer = (
-    offerType: 'deep_clean' | 'recurring',
+    offerType: OfferType,
     offerName: string,
     basePrice: number,
     visitCount: number,
-    isRecurring: boolean
+    isRecurring: boolean,
   ) => {
     setSelectedOffer(offerType);
 
-    let serviceType: 'regular' | 'deep' | 'move_in_out' = offerType === 'deep_clean' ? 'deep' : 'regular';
-    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' = offerType === 'deep_clean' ? 'one_time' : 'bi_weekly';
+    let serviceType: 'regular' | 'deep' | 'move_in_out';
+    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
+
+    if (offerType === 'deep_clean') {
+      serviceType = 'deep';
+      frequency = 'one_time';
+    } else if (offerType === 'recurring') {
+      serviceType = 'regular';
+      frequency = 'bi_weekly';
+    } else {
+      // standard one-time
+      serviceType = 'regular';
+      frequency = 'one_time';
+    }
+
+    const originalPrice =
+      offerType === 'deep_clean'
+        ? baseDeepPrice
+        : offerType === 'recurring'
+          ? maintenancePrice
+          : baseStandardPrice;
 
     updateBookingData({
       offerType,
@@ -111,18 +170,17 @@ export default function BookingOffer() {
       isRecurring,
       serviceType,
       frequency,
-      promoCode: 'WELCOME2025',
-      promoDiscount: offerType === 'deep_clean' ? (baseDeepPrice - deepCleanPrice) : recurringSavings
+      promoCode: NEW_CUSTOMER_PROMO_CODE,
+      promoDiscount: Math.max(0, originalPrice - basePrice),
     });
 
-    // Track progress for abandoned checkout
-    trackStep('offer_selected', { 
+    trackStep('offer_selected', {
       service_type: serviceType,
       frequency,
-      base_price: basePrice
+      base_price: basePrice,
+      promo_code: NEW_CUSTOMER_PROMO_CODE,
     });
 
-    // Navigate after brief delay for visual feedback
     setTimeout(() => {
       navigate('/book/checkout');
     }, 200);
@@ -130,24 +188,36 @@ export default function BookingOffer() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky New Customer Special Banner */}
-      <div className="sticky top-0 z-50 w-full bg-primary border-b-2 border-primary/80">
+      {/* Sticky Promo Banner */}
+      <div className="sticky top-0 z-50 w-full bg-alx-promo text-alx-gold-pale border-b border-alx-gold/20">
         <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-center md:text-left">
-              <Gift className="h-6 w-6 text-primary-foreground shrink-0 hidden md:block" />
+              <Gift className="h-6 w-6 text-alx-gold-light shrink-0 hidden md:block" />
               <div>
-                <p className="text-primary-foreground font-bold text-sm md:text-base">
-                  New Customer Special: $25 OFF Your First Deep Clean + 10% OFF Recurring
+                <p className="font-bold text-sm md:text-base">
+                  New Customer Special:{' '}
+                  <span className="text-alx-gold-light">
+                    {NEW_CUSTOMER_PROMO_PERCENT}% OFF
+                  </span>{' '}
+                  Any First Cleaning
                 </p>
-                <p className="text-primary-foreground/75 text-xs md:text-sm">
-                  First-time customers only — claim your discount today
+                <p className="text-alx-gold-pale/75 text-xs md:text-sm">
+                  Use code{' '}
+                  <span className="font-bold tracking-[0.14em] text-alx-gold-light">
+                    {NEW_CUSTOMER_PROMO_CODE}
+                  </span>{' '}
+                  — limit one redemption per customer.
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => document.getElementById('offers-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-primary-foreground hover:bg-primary-foreground/90 text-primary font-bold px-6 whitespace-nowrap"
+            <Button
+              onClick={() =>
+                document
+                  .getElementById('offers-section')
+                  ?.scrollIntoView({ behavior: 'smooth' })
+              }
+              className="btn-alx-gold rounded-full px-6 whitespace-nowrap font-bold"
             >
               Claim My Discount
             </Button>
@@ -157,204 +227,135 @@ export default function BookingOffer() {
 
       <BookingProgressBar currentStep={3} totalSteps={6} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8 md:py-12" id="offers-section">
+      <div
+        className="max-w-6xl mx-auto px-4 py-8 md:py-12"
+        id="offers-section"
+      >
         <div className="text-center mb-8 md:mb-12">
-          <Badge className="mb-4 bg-primary/10 text-primary px-4 py-1.5 text-sm font-bold">
+          <Badge className="mb-4 bg-alx-gold/15 text-alx-gold-light border border-alx-gold/40 px-4 py-1.5 text-sm font-bold">
             <Sparkles className="h-4 w-4 mr-2" />
-            New Customer Special
+            New Customer Special — {NEW_CUSTOMER_PROMO_PERCENT}% OFF
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Your First Clean, for Less
+          <h1 className="font-serif text-3xl md:text-5xl font-bold text-foreground mb-3 leading-tight">
+            Save{' '}
+            <span className="text-alx-gradient-gold">
+              {NEW_CUSTOMER_PROMO_PERCENT}%
+            </span>{' '}
+            On Your First Cleaning
           </h1>
+          <p className="text-sm md:text-base uppercase tracking-[0.22em] text-alx-gold font-semibold mb-2">
+            Code{' '}
+            <span className="text-alx-gold-light">
+              {NEW_CUSTOMER_PROMO_CODE}
+            </span>{' '}
+            applied automatically
+          </p>
           <p className="text-lg text-muted-foreground">
-            Choose your service and lock in your new customer savings.
+            Pick any service — the new-customer discount is locked in.
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
           </div>
         </div>
 
-        <div className="grid gap-6 md:gap-8 md:grid-cols-2">
-          {/* Deep Clean - One Time with 20% Off */}
-          <Card 
-            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-              selectedOffer === 'deep_clean' 
-                ? 'border-primary shadow-lg' 
-                : 'border-border hover:border-primary/50'
-            }`} 
-            onClick={() => handleSelectOffer(
-              'deep_clean', 
-              'Deep Clean — New Customer Special', 
-              deepCleanPrice, 
-              1, 
-              false
-            )}
-          >
-            <div className="mb-4">
-              <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
-                <Gift className="h-3 w-3 mr-1.5" />
-                $25 Off — New Customer Special
-              </Badge>
-            </div>
+        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
+          {/* Standard Clean — One Time */}
+          <OfferCard
+            selected={selectedOffer === 'standard'}
+            icon={Home}
+            title="Standard Clean"
+            description="One-time refresh of the spaces you use every day"
+            originalPrice={baseStandardPrice}
+            finalPrice={standardPrice}
+            priceSuffix=""
+            savingsLabel={`You save $${standardPreview.amount}`}
+            includes={[
+              'Kitchens, bathrooms, living areas & bedrooms',
+              'Dusting, vacuuming & mopping',
+              'All supplies & equipment included',
+              '48-hour re-clean guarantee',
+            ]}
+            ctaLabel={`Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
+            onSelect={() =>
+              handleSelectOffer(
+                'standard',
+                `Standard Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`,
+                standardPrice,
+                1,
+                false,
+              )
+            }
+            onViewDetails={() => {
+              setDetailsServiceType('standard');
+              setShowDetailsModal(true);
+            }}
+          />
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Deep Clean
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">One-time reset for your home</p>
+          {/* Deep Clean — One Time with 50% Off */}
+          <OfferCard
+            selected={selectedOffer === 'deep_clean'}
+            icon={Sparkles}
+            title="Deep Clean"
+            description="40-point reset for top-to-bottom freshness"
+            originalPrice={baseDeepPrice}
+            finalPrice={deepCleanPrice}
+            priceSuffix=""
+            savingsLabel={`You save $${deepPreview.amount}`}
+            includes={[
+              '40-point Deep Clean checklist',
+              '2-person professional team',
+              'Baseboards, inside appliances & detail work',
+              '48-hour re-clean guarantee',
+            ]}
+            ctaLabel={`Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
+            onSelect={() =>
+              handleSelectOffer(
+                'deep_clean',
+                `Deep Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`,
+                deepCleanPrice,
+                1,
+                false,
+              )
+            }
+            onViewDetails={() => {
+              setDetailsServiceType('tester');
+              setShowDetailsModal(true);
+            }}
+          />
 
-            <div className="mb-6">
-              <div className="text-sm text-muted-foreground line-through mb-1">
-                Regular: ${baseDeepPrice}
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${deepCleanPrice}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Pay only ${Math.round(deepCleanPrice * 0.25)} today (25% deposit)
-              </p>
-            </div>
-
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">40-point Deep Clean checklist</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">2-person professional team</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">All supplies & equipment included</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">48-hour re-clean guarantee</span>
-              </li>
-            </ul>
-
-            <div className="space-y-2">
-              <Button 
-                className="w-full" 
-                size="lg" 
-                variant={selectedOffer === 'deep_clean' ? 'default' : 'outline'}
-              >
-                Get Started — ${Math.round(deepCleanPrice * 0.25)} Today
-              </Button>
-              <Button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDetailsServiceType('tester');
-                  setShowDetailsModal(true);
-                }} 
-                variant="ghost" 
-                size="sm" 
-                className="w-full"
-              >
-                <Info className="h-4 w-4 mr-2" />
-                What's Included?
-              </Button>
-            </div>
-          </Card>
-
-          {/* Recurring Maintenance - 10% Off */}
-          <Card 
-            className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-              selectedOffer === 'recurring' 
-                ? 'border-primary shadow-lg' 
-                : 'border-primary/30 hover:border-primary'
-            }`} 
-            onClick={() => handleSelectOffer(
-              'recurring', 
-              'Recurring Maintenance — 10% Off', 
-              recurringPrice, 
-              1, 
-              true
-            )}
-          >
-            {/* Popular badge */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
-              Most Popular
-            </div>
-
-            <div className="mb-4 mt-2">
-              <Badge className="bg-primary/10 text-primary px-3 py-1 font-bold">
-                <CalendarCheck className="h-3 w-3 mr-1.5" />
-                10% Off — Recurring Service
-              </Badge>
-            </div>
-
-            <h2 className="text-2xl font-bold text-foreground mb-2">
-              Recurring Maintenance
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">Keep your home guest-ready, always</p>
-
-            <div className="mb-6">
-              <div className="text-sm text-muted-foreground line-through mb-1">
-                Regular: ${maintenancePrice}/visit
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl md:text-5xl font-bold text-primary">
-                  ${recurringPrice}
-                </span>
-                <span className="text-lg text-muted-foreground">/visit</span>
-              </div>
-              <p className="text-sm text-primary font-medium mt-2">
-                You save ${recurringSavings} every visit!
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Pay only ${Math.round(recurringPrice * 0.25)} today (25% deposit)
-              </p>
-            </div>
-
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Bi-weekly or monthly scheduling</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Same trusted cleaning team</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Priority scheduling & member perks</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">Cancel or pause anytime</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground">48-hour re-clean guarantee</span>
-              </li>
-            </ul>
-
-            <div className="space-y-2">
-              <Button 
-                className="w-full" 
-                size="lg"
-                variant={selectedOffer === 'recurring' ? 'default' : 'outline'}
-              >
-                Get Started — ${Math.round(recurringPrice * 0.25)} Today
-              </Button>
-              <Button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDetailsServiceType('standard');
-                  setShowDetailsModal(true);
-                }} 
-                variant="ghost" 
-                size="sm" 
-                className="w-full"
-              >
-                <Info className="h-4 w-4 mr-2" />
-                What's Included?
-              </Button>
-            </div>
-          </Card>
+          {/* Recurring Maintenance — 50% off first visit */}
+          <OfferCard
+            selected={selectedOffer === 'recurring'}
+            highlighted
+            icon={CalendarCheck}
+            title="Recurring Maintenance"
+            description="Keep your home guest-ready, always"
+            originalPrice={maintenancePrice}
+            finalPrice={recurringPrice}
+            priceSuffix="first visit"
+            savingsLabel={`You save $${recurringSavings} on visit 1`}
+            includes={[
+              `${NEW_CUSTOMER_PROMO_PERCENT}% off your first visit with ${NEW_CUSTOMER_PROMO_CODE}`,
+              'Bi-weekly or monthly scheduling',
+              'Same trusted cleaning team',
+              'Priority scheduling & member perks',
+              'Cancel or pause anytime',
+            ]}
+            ctaLabel={`Start Recurring — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
+            onSelect={() =>
+              handleSelectOffer(
+                'recurring',
+                `Recurring Maintenance — ${NEW_CUSTOMER_PROMO_PERCENT}% Off First Visit`,
+                recurringPrice,
+                1,
+                true,
+              )
+            }
+            onViewDetails={() => {
+              setDetailsServiceType('standard');
+              setShowDetailsModal(true);
+            }}
+          />
         </div>
 
         <div className="mt-8 text-center">
@@ -362,16 +363,132 @@ export default function BookingOffer() {
             ← Back to Home Size
           </Button>
         </div>
-        
+
         <CleaningShowcaseCarousel />
       </div>
 
-      {/* Service Details Modal */}
-      <ServiceDetailsModal 
-        open={showDetailsModal} 
-        onOpenChange={setShowDetailsModal} 
-        serviceType={detailsServiceType} 
+      <ServiceDetailsModal
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        serviceType={detailsServiceType}
       />
     </div>
+  );
+}
+
+interface OfferCardProps {
+  selected: boolean;
+  highlighted?: boolean;
+  icon: typeof Home;
+  title: string;
+  description: string;
+  originalPrice: number;
+  finalPrice: number;
+  priceSuffix?: string;
+  savingsLabel: string;
+  includes: string[];
+  ctaLabel: string;
+  onSelect: () => void;
+  onViewDetails: () => void;
+}
+
+function OfferCard({
+  selected,
+  highlighted,
+  icon: Icon,
+  title,
+  description,
+  originalPrice,
+  finalPrice,
+  priceSuffix,
+  savingsLabel,
+  includes,
+  ctaLabel,
+  onSelect,
+  onViewDetails,
+}: OfferCardProps) {
+  const depositToday = Math.max(1, Math.round(finalPrice * 0.25));
+  return (
+    <Card
+      className={`relative p-6 md:p-8 cursor-pointer transition-all duration-200 hover:shadow-clean border-2 ${
+        selected
+          ? 'border-alx-gold shadow-clean'
+          : highlighted
+            ? 'border-alx-gold/50 hover:border-alx-gold'
+            : 'border-border hover:border-alx-gold/50'
+      }`}
+      onClick={onSelect}
+    >
+      {highlighted && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-gold text-alx-black-ink rounded-full text-xs font-semibold shadow-gold uppercase tracking-wider">
+          Most Popular
+        </div>
+      )}
+
+      <div className="mb-4 mt-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-xl bg-alx-black text-alx-gold-light flex items-center justify-center shadow-soft">
+            <Icon className="h-5 w-5" />
+          </div>
+          <Badge className="bg-alx-gold/10 text-alx-gold border border-alx-gold/30 px-3 py-1 font-bold">
+            <BadgePercent className="h-3 w-3 mr-1.5" />
+            {NEW_CUSTOMER_PROMO_PERCENT}% OFF · {NEW_CUSTOMER_PROMO_CODE}
+          </Badge>
+        </div>
+      </div>
+
+      <h2 className="text-2xl font-bold text-foreground mb-1">{title}</h2>
+      <p className="text-sm text-muted-foreground mb-4">{description}</p>
+
+      <div className="mb-6">
+        <div className="text-sm text-muted-foreground line-through mb-1">
+          Regular: ${originalPrice}
+          {priceSuffix ? `/${priceSuffix}` : ''}
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="font-serif text-4xl md:text-5xl font-bold text-alx-gradient-gold">
+            ${finalPrice}
+          </span>
+          {priceSuffix && (
+            <span className="text-lg text-muted-foreground">
+              /{priceSuffix}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-alx-gold font-semibold mt-2">
+          {savingsLabel}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Pay only ${depositToday} today (25% deposit)
+        </p>
+      </div>
+
+      <ul className="space-y-3 mb-6">
+        {includes.map((line, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm">
+            <Check className="h-5 w-5 text-alx-gold shrink-0 mt-0.5" />
+            <span className="text-foreground">{line}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="space-y-2">
+        <Button className="w-full btn-alx-gold rounded-full font-semibold" size="lg">
+          {ctaLabel}
+        </Button>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetails();
+          }}
+          variant="ghost"
+          size="sm"
+          className="w-full"
+        >
+          <Info className="h-4 w-4 mr-2" />
+          What's Included?
+        </Button>
+      </div>
+    </Card>
   );
 }

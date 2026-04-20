@@ -12,6 +12,10 @@ import { Loader2, CheckCircle2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+import {
+  NEW_CUSTOMER_PROMO_CODE,
+  NEW_CUSTOMER_PROMO_PERCENT,
+} from '@/lib/promo';
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/validation-utils';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
@@ -240,13 +244,21 @@ export default function BookingZip() {
           
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              New Customer Special: $25 OFF Your First Deep Clean
-              <span className="block text-primary mt-2">
-                + 10% Off Recurring Service
-              </span>
+              Save{' '}
+              <span className="text-alx-gradient-gold">
+                {NEW_CUSTOMER_PROMO_PERCENT}%
+              </span>{' '}
+              On Your First Cleaning
             </h1>
+            <p className="text-sm md:text-base uppercase tracking-[0.22em] text-alx-gold font-semibold mb-3">
+              Use code{' '}
+              <span className="text-alx-gold-light">
+                {NEW_CUSTOMER_PROMO_CODE}
+              </span>
+            </p>
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your ZIP to get started and claim your discount
+              Enter your New York ZIP to start — the offer is applied
+              automatically at checkout.
             </p>
           </div>
           
@@ -263,7 +275,7 @@ export default function BookingZip() {
                     type="text"
                     inputMode="numeric"
                     maxLength={5}
-                    placeholder="75001"
+                    placeholder="10001"
                     value={zipCode}
                     onChange={handleZipChange}
                     onKeyPress={handleZipKeyPress}
@@ -392,7 +404,7 @@ export default function BookingZip() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="(972) 555-0123"
+                    placeholder="(212) 555-0123"
                     value={phone}
                     onChange={handlePhoneChange}
                     onKeyPress={handleFormKeyPress}
