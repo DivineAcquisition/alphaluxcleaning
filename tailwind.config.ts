@@ -65,12 +65,19 @@ export default {
     			background: 'hsl(var(--background))',
     			foreground: 'hsl(var(--foreground))',
     			alx: {
-    				navy: 'hsl(var(--alx-navy))',
-    				'navy-deep': 'hsl(var(--alx-navy-deep))',
-    				'navy-ink': 'hsl(var(--alx-navy-ink))',
+    				black: 'hsl(var(--alx-black))',
+    				'black-deep': 'hsl(var(--alx-black-deep))',
+    				'black-ink': 'hsl(var(--alx-black-ink))',
+    				'black-warm': 'hsl(var(--alx-black-warm))',
+    				'black-elev': 'hsl(var(--alx-black-elev))',
+    				/* Legacy navy aliases → now resolve to black tokens */
+    				navy: 'hsl(var(--alx-black))',
+    				'navy-deep': 'hsl(var(--alx-black-deep))',
+    				'navy-ink': 'hsl(var(--alx-black-ink))',
     				gold: 'hsl(var(--alx-gold))',
     				'gold-light': 'hsl(var(--alx-gold-light))',
     				'gold-pale': 'hsl(var(--alx-gold-pale))',
+    				'gold-deep': 'hsl(var(--alx-gold-deep))',
     				amber: 'hsl(var(--alx-amber))',
     				cream: 'hsl(var(--alx-cream))'
     			},
@@ -139,7 +146,8 @@ export default {
     			'gradient-gold': 'var(--gradient-gold)',
     			'gradient-card': 'var(--gradient-card)',
     			'gradient-hero': 'var(--gradient-hero)',
-    			'gradient-dark': 'var(--gradient-dark)'
+    			'gradient-dark': 'var(--gradient-dark)',
+    			'gradient-promo': 'var(--gradient-promo)'
     		},
     		boxShadow: {
     			'clean': 'var(--shadow-clean)',

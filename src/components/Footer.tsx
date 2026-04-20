@@ -1,25 +1,39 @@
-import { Phone, Mail, MapPin, Sparkles } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  NEW_CUSTOMER_PROMO_CODE,
+  NEW_CUSTOMER_PROMO_PERCENT,
+} from "@/lib/promo";
 
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="section-alx-navy mt-auto">
+    <footer className="section-alx-black mt-auto border-t border-alx-gold/15">
       <div className="container mx-auto px-4 py-12 lg:py-16">
         <div className="grid gap-10 lg:gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand column */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-alx-gold-light" />
-              <span className="font-serif text-xl font-semibold text-alx-gold-light">
-                AlphaLux Cleaning
-              </span>
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/brand/alphalux-logo.png"
+                alt="AlphaLux Cleaning"
+                className="h-10 w-auto object-contain drop-shadow-[0_0_18px_rgba(161,121,56,0.35)]"
+              />
             </Link>
             <p className="text-sm leading-relaxed text-alx-gold-pale/80">
               A higher standard of clean. Trusted, eco-friendly residential and
               commercial cleaning for homes and businesses across Long Island,
               New Jersey, Texas and California.
             </p>
+            <div className="rounded-lg border border-alx-gold/30 bg-alx-gold/5 px-3 py-2 text-xs text-alx-gold-pale/85">
+              <span className="font-semibold text-alx-gold-light">
+                New customer?
+              </span>{" "}
+              Save {NEW_CUSTOMER_PROMO_PERCENT}% with code{" "}
+              <span className="font-bold tracking-[0.12em] text-alx-gold-light">
+                {NEW_CUSTOMER_PROMO_CODE}
+              </span>
+            </div>
           </div>
 
           {/* Services */}
