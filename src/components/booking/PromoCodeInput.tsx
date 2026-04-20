@@ -9,6 +9,10 @@ import { X, Tag } from 'lucide-react';
 interface PromoCodeInputProps {
   subtotalCents: number;
   bookingType?: string;
+  /** Logged-in customer id (if known) — used to block duplicate redemptions. */
+  customerId?: string | null;
+  /** Customer email — used as a secondary duplicate-redemption guard. */
+  customerEmail?: string | null;
   onApply: (code: string, discountCents: number) => void;
   onRemove: () => void;
   appliedCode?: string;
@@ -18,6 +22,8 @@ interface PromoCodeInputProps {
 export function PromoCodeInput({
   subtotalCents,
   bookingType = 'ONE_TIME',
+  customerId,
+  customerEmail,
   onApply,
   onRemove,
   appliedCode,
@@ -40,7 +46,9 @@ export function PromoCodeInput({
           action: 'validate',
           code: code.trim(),
           subtotal_cents: subtotalCents,
-          booking_type: bookingType
+          booking_type: bookingType,
+          customer_id: customerId ?? null,
+          email: customerEmail ?? null
         }
       });
 
@@ -50,6 +58,11 @@ export function PromoCodeInput({
         onApply(data.code, data.discount_cents);
         toast.success(data.display);
         setExpanded(false);
+      } else if (data.already_redeemed) {
+        toast.error(
+          data.reason ||
+            'This promo code has already been used on your account. It can only be used once per customer.'
+        );
       } else {
         toast.error(data.reason || 'Invalid promo code');
       }
