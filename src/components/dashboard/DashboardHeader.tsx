@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
-const logo = "/brand/logo.png";
+const logo = "/brand/alphalux-logo.png";
 export function DashboardHeader() {
   return <div className="space-y-6">
       {/* Main Header */}
