@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { QuickBenefitsBar } from '@/components/landing/QuickBenefitsBar';
 import { QuickQuoteWidget } from '@/components/booking/QuickQuoteWidget';
@@ -10,27 +11,33 @@ import { LiveBookingNotification } from '@/components/social-proof/LiveBookingNo
 
 export function Landing() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      
-      {/* Hero Section - Compelling above-the-fold content */}
-      <HeroSection bookingFlowUrl="/book/home-details" />
-      
-      {/* Quick Benefits Bar */}
-      <QuickBenefitsBar />
-      
-      {/* Quick Quote Widget - Simplified 4-field form */}
-      <QuickQuoteWidget />
-      
-      {/* Trust & Social Proof Sections */}
-      <TestimonialSection />
-      <WhyChooseUsSection />
-      
-      {/* FAQ Section */}
-      <FAQSection />
-      
-      {/* Live Booking Notifications */}
-      <LiveBookingNotification />
+
+      <main className="flex-1">
+        {/* Hero Section */}
+        <HeroSection bookingFlowUrl="/book/zip" />
+
+        {/* Quick Benefits Bar */}
+        <QuickBenefitsBar />
+
+        {/* Quick Quote Widget */}
+        <QuickQuoteWidget />
+
+        {/* Why Choose Us */}
+        <WhyChooseUsSection />
+
+        {/* Testimonials */}
+        <TestimonialSection />
+
+        {/* FAQ Section */}
+        <FAQSection />
+
+        {/* Live Booking Notifications */}
+        <LiveBookingNotification />
+      </main>
+
+      <Footer />
     </div>
   );
 }

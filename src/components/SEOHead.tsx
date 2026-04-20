@@ -9,8 +9,8 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({ title, description, canonical, noindex }: SEOHeadProps) {
-  const defaultTitle = 'Book Your Cleaning Service - AlphaLuxClean';
-  const defaultDescription = 'Book professional residential cleaning services with AlphaLuxClean. Quick, reliable, and affordable cleaning solutions.';
+  const defaultTitle = 'Book Your Cleaning Service - AlphaLux Cleaning';
+  const defaultDescription = 'Book professional residential cleaning services with AlphaLux Cleaning. Quick, reliable, and affordable cleaning solutions.';
   
   const canonicalUrl = canonical || window.location.href;
 
@@ -43,7 +43,7 @@ export function SEOHead({ title, description, canonical, noindex }: SEOHeadProps
       <meta property="og:description" content={description || defaultDescription} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="AlphaLuxClean" />
+      <meta property="og:site_name" content="AlphaLux Cleaning" />
       
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />

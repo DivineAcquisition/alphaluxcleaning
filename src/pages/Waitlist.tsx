@@ -72,7 +72,7 @@ export default function Waitlist() {
     return (
       <>
         <SEOHead
-          title="Waitlist Confirmation - AlphaLux Clean"
+          title="Waitlist Confirmation - AlphaLux Cleaning"
           description="You're on our waitlist! We'll remind you when you're ready to book."
         />
         <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 flex items-center justify-center p-4">
@@ -104,7 +104,7 @@ export default function Waitlist() {
   return (
     <>
       <SEOHead
-        title="Join Our Waitlist - AlphaLux Clean"
+        title="Join Our Waitlist - AlphaLux Cleaning"
         description="Not ready to book? Join our waitlist and get $60 off your first deep clean when you're ready."
       />
       <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">

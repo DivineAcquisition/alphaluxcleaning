@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Home, Building, Star, Clock } from "lucide-react";
 
-// AlphaLux Clean original pricing structure
+// AlphaLux Cleaning original pricing structure
 const originalPricingTiers = [
   {
     range: "Under 1,000 sq ft",

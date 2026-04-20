@@ -369,7 +369,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                       type="tel"
                       value={formData.customerPhone}
                       onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                      placeholder="(555) 123-4567"
+                      placeholder="(857) 754-4557"
                       className="text-sm sm:text-base"
                     />
                   </div>

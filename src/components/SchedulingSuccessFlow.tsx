@@ -57,7 +57,7 @@ const SchedulingSuccessFlow: React.FC<SchedulingSuccessFlowProps> = ({
 
   const handleCopyDetails = async () => {
     const details = `
-AlphaLux Clean - Service Scheduled
+AlphaLux Cleaning - Service Scheduled
 
 📅 Date: ${formatDate(scheduledDate)}
 ⏰ Time: ${scheduledTime}
@@ -82,7 +82,7 @@ Questions? Call (281) 809-9901
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'AlphaLux Clean - Service Scheduled',
+          title: 'AlphaLux Cleaning - Service Scheduled',
           text: `Service scheduled for ${formatDate(scheduledDate)} at ${scheduledTime}`,
           url: window.location.href
         });

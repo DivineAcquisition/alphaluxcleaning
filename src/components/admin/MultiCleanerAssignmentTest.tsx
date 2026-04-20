@@ -29,7 +29,7 @@ export function MultiCleanerAssignmentTest() {
       const testBooking = {
         customer_name: "Multi-Cleaner Test Customer",
         customer_email: `test-${Date.now()}@example.com`,
-        customer_phone: "(555) 123-4567",
+        customer_phone: "(857) 754-4557",
         service_address: "123 Test Street, San Francisco, CA 94102",
         service_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
         service_time: "10:00 AM - 12:00 PM",

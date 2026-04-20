@@ -235,12 +235,12 @@ export default function SubcontractorApplication() {
             </h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg leading-relaxed">
-            Become a professional cleaning contractor with AlphaLux Clean. 
+            Become a professional cleaning contractor with AlphaLux Cleaning. 
             Build your own business with our support, established client base, and flexible revenue sharing plans.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
-              AlphaLux Clean
+              AlphaLux Cleaning
             </Badge>
             <Badge variant="outline" className="bg-success/10 border-success/20 text-success">
               Now Hiring
@@ -309,7 +309,7 @@ export default function SubcontractorApplication() {
                       const formatted = formatPhoneNumber(e.target.value);
                       handleInputChange('phone', formatted);
                     }}
-                    placeholder="(555) 123-4567"
+                    placeholder="(857) 754-4557"
                     className={hasError('phone') ? 'border-destructive' : ''}
                   />
                   <FormFieldError error={getError('phone')} />
@@ -474,7 +474,7 @@ export default function SubcontractorApplication() {
                       const formatted = formatPhoneNumber(e.target.value);
                       handleInputChange('emergency_contact_phone', formatted);
                     }}
-                    placeholder="(555) 123-4567"
+                    placeholder="(857) 754-4557"
                     className={hasError('emergency_contact_phone') ? 'border-destructive' : ''}
                   />
                   <FormFieldError error={getError('emergency_contact_phone')} />
@@ -645,7 +645,7 @@ export default function SubcontractorApplication() {
                     className="mt-1"
                   />
                   <label htmlFor="brand_shirt_consent" className="text-sm leading-relaxed">
-                    I agree to wear AlphaLux Clean branded shirts during work *
+                    I agree to wear AlphaLux Cleaning branded shirts during work *
                   </label>
                 </div>
                 <div className="flex items-start space-x-3">

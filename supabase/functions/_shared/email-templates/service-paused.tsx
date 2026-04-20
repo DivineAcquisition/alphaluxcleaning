@@ -64,7 +64,7 @@ export const ServicePausedEmail = ({
         </Section>
 
         <Text style={footer}>
-          Thank you for choosing <Link href="https://alphaluxclean.com" style={link}>AlphaLuxClean</Link>
+          Thank you for choosing <Link href="https://alphaluxclean.com" style={link}>AlphaLux Cleaning</Link>
         </Text>
       </Container>
     </Body>

@@ -201,8 +201,8 @@ const AdminAuthLogin = () => {
   return (
     <>
       <Helmet>
-        <title>Admin Login | AlphaLuxClean</title>
-        <meta name="description" content="Secure admin portal login for AlphaLuxClean management system" />
+        <title>Admin Login | AlphaLux Cleaning</title>
+        <meta name="description" content="Secure admin portal login for AlphaLux Cleaning management system" />
       </Helmet>
 
       <div className="min-h-screen flex items-center justify-center bg-background p-4">

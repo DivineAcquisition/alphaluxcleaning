@@ -27,7 +27,7 @@ export const TermsOfServiceAgreement: React.FC<TermsOfServiceAgreementProps> = (
         <ScrollArea className="h-64 w-full border rounded-lg p-4 bg-muted/30">
           <div className="space-y-4 text-sm leading-relaxed">
             <p className="font-medium">
-              By booking a service with AlphaLux Clean, you agree to the following terms:
+              By booking a service with AlphaLux Cleaning, you agree to the following terms:
             </p>
             
             <div className="space-y-3">

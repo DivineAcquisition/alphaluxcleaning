@@ -467,7 +467,7 @@ export function TypeformBookingFlow({
       
     } catch (error) {
       console.error('❌ Final submission error:', error);
-      toast.error('Failed to complete booking. Please contact support at (555) 123-4567', { duration: 10000 });
+      toast.error('Failed to complete booking. Please contact support at (857) 754-4557', { duration: 10000 });
     } finally {
       setIsProcessing(false);
     }
@@ -695,7 +695,7 @@ export function TypeformBookingFlow({
                 type="tel" 
                 value={bookingData.contactInfo.phone} 
                 onChange={e => updateField('contactInfo', { ...bookingData.contactInfo, phone: e.target.value })} 
-                placeholder="(555) 123-4567" 
+                placeholder="(857) 754-4557" 
                 className="mt-2" 
               />
             </div>

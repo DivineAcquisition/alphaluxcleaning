@@ -7,10 +7,10 @@ export function DashboardHeader() {
       {/* Main Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center mb-4">
-          <img src={logo} alt="AlphaLux Clean" className="h-24 w-auto rounded-xl" />
+          <img src={logo} alt="AlphaLux Cleaning" className="h-24 w-auto rounded-xl" />
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          AlphaLux Clean
+          AlphaLux Cleaning
         </h1>
         <p className="text-xl text-muted-foreground">
           Professional Cleaning Services - Get Your Instant Quote
@@ -25,7 +25,7 @@ export function DashboardHeader() {
           </Badge>
           
         </div>
-        <p className="text-sm text-muted-foreground">alphaluxclean.com • support@alphaluxclean.com</p>
+        <p className="text-sm text-muted-foreground">alphaluxclean.com • support@alphaluxcleaning.com</p>
       </div>
 
       {/* Service Highlights */}

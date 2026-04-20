@@ -70,7 +70,7 @@ serve(async (req) => {
     // Prepare email content based on decision
     const isApproved = decision === 'approved';
     const subject = isApproved 
-      ? "🎉 Welcome to AlphaLux Clean - Application Approved!" 
+      ? "🎉 Welcome to AlphaLux Cleaning - Application Approved!" 
       : "Thank you for your interest - Application Update";
 
     // Generate onboarding URL for approved applications
@@ -90,7 +90,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
       to: [application.email],
       subject: subject,
       html: emailContent,

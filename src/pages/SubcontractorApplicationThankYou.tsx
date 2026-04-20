@@ -43,7 +43,7 @@ export default function SubcontractorApplicationThankYou() {
                 Application Submitted Successfully!
               </CardTitle>
               <p className="text-muted-foreground text-lg">
-                Thank you for your interest in joining AlphaLux Clean
+                Thank you for your interest in joining AlphaLux Cleaning
               </p>
             </div>
             {applicationId && (
@@ -99,7 +99,7 @@ export default function SubcontractorApplicationThankYou() {
                     Email: careers@alphaluxclean.com
                   </Badge>
                   <Badge variant="outline" className="px-4 py-2">
-                    Phone: (555) 123-4567
+                    Phone: (857) 754-4557
                   </Badge>
                 </div>
               </div>

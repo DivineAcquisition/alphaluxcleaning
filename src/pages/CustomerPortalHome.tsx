@@ -120,7 +120,7 @@ export default function CustomerPortalHome() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Customer Portal</h1>
-            <p className="text-muted-foreground">AlphaLux Clean</p>
+            <p className="text-muted-foreground">AlphaLux Cleaning</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate('/portal/settings')}>

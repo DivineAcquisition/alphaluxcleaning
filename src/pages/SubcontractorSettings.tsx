@@ -24,7 +24,7 @@ export default function SubcontractorSettings() {
   const [profile, setProfile] = useState({
     full_name: 'John Doe',
     email: 'john.doe@email.com',
-    phone: '(555) 123-4567',
+    phone: '(857) 754-4557',
     avatar_url: ''
   });
 
@@ -341,7 +341,7 @@ export default function SubcontractorSettings() {
               <div className="text-left">
                 <div className="font-medium">Contact Support</div>
                 <div className="text-sm text-muted-foreground">
-                  support@alphaluxclean.com
+                  support@alphaluxcleaning.com
                 </div>
               </div>
             </Button>

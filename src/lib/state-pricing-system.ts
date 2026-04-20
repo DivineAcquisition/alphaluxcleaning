@@ -1,5 +1,5 @@
 /**
- * State-Level Hybrid Pricing System for AlphaLuxClean
+ * State-Level Hybrid Pricing System for AlphaLux Cleaning
  * Supports Texas, California (LA), and New York
  * Automatic 15% discount applied to all services
  */

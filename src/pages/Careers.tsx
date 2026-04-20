@@ -29,8 +29,8 @@ export default function Careers() {
   return (
     <>
       <SEOHead 
-        title="Join Our Team | AlphaLuxClean Careers"
-        description="Join AlphaLuxClean as a House Cleaner earning $20-$25/hr. Flexible scheduling, consistent work, and growth opportunities. Apply today!"
+        title="Join Our Team | AlphaLux Cleaning Careers"
+        description="Join AlphaLux Cleaning as a House Cleaner earning $20-$25/hr. Flexible scheduling, consistent work, and growth opportunities. Apply today!"
       />
       <div className="min-h-screen bg-background">
         <Navigation minimal />
@@ -99,12 +99,12 @@ export default function Careers() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-primary" />
-                    About AlphaLux Clean
+                    About AlphaLux Cleaning
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground space-y-4">
                   <p>
-                    AlphaLux Clean is a locally owned and operated premium cleaning company 
+                    AlphaLux Cleaning is a locally owned and operated premium cleaning company 
                     serving major cities in Texas & California. We deliver reliable, high-quality 
                     cleaning services with a focus on detail and customer satisfaction.
                   </p>
@@ -149,7 +149,7 @@ export default function Careers() {
         <section className="py-16 bg-muted/30">
           <div className="container max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Why Work With AlphaLux Clean?</h2>
+              <h2 className="text-3xl font-bold mb-4">Why Work With AlphaLux Cleaning?</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Join a team that values quality, respects your time, and invests in your growth.
               </p>
@@ -243,7 +243,7 @@ export default function Careers() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
                 "Perform residential cleanings (standard, deep cleaning, move-in/move-out) and occasional small office cleanings",
-                "Follow AlphaLux Clean cleaning checklists + quality standards",
+                "Follow AlphaLux Cleaning cleaning checklists + quality standards",
                 "Clean kitchens, bathrooms, bedrooms, living areas (dusting, vacuuming, mopping, surfaces, etc.)",
                 "Handle trash removal, restocking basics, and job wrap-up photos/notes",
                 "Communicate clearly with the team about arrival, job status, and any issues",
@@ -416,7 +416,7 @@ export default function Careers() {
               Apply Now
             </Button>
             <p className="text-sm opacity-75 mt-8">
-              AlphaLux Clean is an equal opportunity employer.
+              AlphaLux Cleaning is an equal opportunity employer.
             </p>
           </div>
         </section>

@@ -70,7 +70,7 @@ export default function ReviewsPortal() {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Customer Reviews</h1>
             <p className="text-xl opacity-90">
-              See what our customers say about AlphaLux Clean
+              See what our customers say about AlphaLux Cleaning
             </p>
           </div>
         </div>

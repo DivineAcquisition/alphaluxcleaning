@@ -103,7 +103,7 @@ export default function HCPTestSuite() {
         first_name: 'Test',
         last_name: `Customer${Date.now()}`,
         email: `test${Date.now()}@example.com`,
-        phone: '(555) 123-4567',
+        phone: '(857) 754-4557',
         address: '123 Test Street',
         address_line1: '123 Test Street',
         city: 'San Francisco',

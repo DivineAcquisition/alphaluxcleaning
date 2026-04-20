@@ -16,7 +16,7 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
         {/* Logo and Call Button Header */}
         <div className="flex items-center justify-between mb-4">
           <a href="/" className="flex items-center">
-            <img src={logo} alt="AlphaLux Clean" className="h-8 md:h-10" />
+            <img src={logo} alt="AlphaLux Cleaning" className="h-8 md:h-10" />
           </a>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
@@ -26,9 +26,9 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <a href="tel:+19725590223" className="flex items-center gap-2">
+              <a href="tel:+18577544557" className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">(972) 559-0223</span>
+                <span className="hidden sm:inline">(857) 754-4557</span>
               </a>
             </Button>
           </div>

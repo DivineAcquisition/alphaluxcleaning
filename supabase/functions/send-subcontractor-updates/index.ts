@@ -89,7 +89,7 @@ serve(async (req) => {
         bookings: {
           customer_name: "John Smith",
           customer_email: "john.smith@example.com",
-          customer_phone: "(555) 123-4567",
+          customer_phone: "(857) 754-4557",
           service_address: "1234 Main Street, San Francisco, CA 94102",
           service_date: new Date().toISOString().split('T')[0],
           service_time: "10:00 AM"

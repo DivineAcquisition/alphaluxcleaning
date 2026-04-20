@@ -104,14 +104,14 @@ export default function LearnMore() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-primary" />
-                Why Choose AlphaLuxClean?
+                Why Choose AlphaLux Cleaning?
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <p className="text-muted-foreground leading-relaxed">
-                    AlphaLuxClean provides premium residential cleaning services with a focus on professionalism, 
+                    AlphaLux Cleaning provides premium residential cleaning services with a focus on professionalism, 
                     reliability, and customer satisfaction. Our background-checked, bonded, and insured teams 
                     deliver consistent, high-quality results that exceed expectations.
                   </p>
@@ -375,7 +375,7 @@ export default function LearnMore() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="(555) 123-4567"
+                  placeholder="(857) 754-4557"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required

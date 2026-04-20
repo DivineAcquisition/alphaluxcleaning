@@ -59,7 +59,7 @@ export const WaitlistConfirmationEmail = ({
             Hey {firstName},
           </Text>
           <Text style={text}>
-            Thanks for joining our waitlist! We'll send you a friendly reminder when you're ready to experience the AlphaLux Clean difference.
+            Thanks for joining our waitlist! We'll send you a friendly reminder when you're ready to experience the AlphaLux Cleaning difference.
           </Text>
 
           {/* Promo Offer Section - Navy Blue Theme */}
@@ -90,11 +90,11 @@ export const WaitlistConfirmationEmail = ({
         </Section>
 
           <Text style={text}>
-            Questions? Just reply to this email or call us at <strong>(972) 559-0223</strong>
+            Questions? Just reply to this email or call us at <strong>(857) 754-4557</strong>
           </Text>
 
           <Text style={footer}>
-            AlphaLux Clean - Premium Home Cleaning Services
+            AlphaLux Cleaning - Premium Home Cleaning Services
             <br />
             Not interested? <a href="#" style={link}>Unsubscribe</a>
           </Text>
@@ -145,7 +145,7 @@ const text = {
 // Navy Blue Theme for Promo Box
 const promoBox = {
   backgroundColor: "#EDF5FF",
-  border: "2px solid #2C5282",
+  border: "2px solid #0F2A44",
   borderRadius: "8px",
   padding: "32px",
   margin: "32px 48px",
@@ -153,14 +153,14 @@ const promoBox = {
 };
 
 const promoHeading = {
-  color: "#2C5282",
+  color: "#0F2A44",
   fontSize: "18px",
   fontWeight: "bold",
   margin: "0 0 12px",
 };
 
 const promoAmount = {
-  color: "#2C5282",
+  color: "#0F2A44",
   fontSize: "36px",
   fontWeight: "bold",
   margin: "16px 0 8px",
@@ -218,7 +218,7 @@ const footer = {
 };
 
 const link = {
-  color: "#2C5282",
+  color: "#0F2A44",
   textDecoration: "underline",
 };
 

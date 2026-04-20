@@ -22,7 +22,7 @@ export default function ConfirmationPreview() {
     balance_due: 16250, // $162.50 in cents
     customer_name: 'Sarah Johnson',
     customer_email: 'sarah.johnson@example.com',
-    customer_phone: '(555) 123-4567',
+    customer_phone: '(857) 754-4557',
     scheduled_date: '2024-01-15',
     scheduled_time: '10:00 AM - 12:00 PM',
     service_details: {
@@ -49,7 +49,7 @@ export default function ConfirmationPreview() {
 
   const handleCopyDetails = async () => {
     const details = `
-AlphaLux Clean - Booking Preview
+AlphaLux Cleaning - Booking Preview
 
 📅 Service Date: ${new Date(orderDetails.scheduled_date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -85,7 +85,7 @@ Questions? Call (281) 809-9901
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'AlphaLux Clean - Preview Experience',
+          title: 'AlphaLux Cleaning - Preview Experience',
           text: `Check out our booking confirmation experience! Service scheduled for ${new Date(orderDetails.scheduled_date).toLocaleDateString()}`,
           url: window.location.href
         });

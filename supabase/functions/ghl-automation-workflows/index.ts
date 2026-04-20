@@ -109,7 +109,7 @@ async function executeServiceLifecycleWorkflow(params: any, token: string, locat
     },
     'service_completed': {
       actions: [
-        { type: 'send_sms', message: `Your ${serviceType} is complete! Thank you for choosing AlphaLux Clean. How did we do?` },
+        { type: 'send_sms', message: `Your ${serviceType} is complete! Thank you for choosing AlphaLux Cleaning. How did we do?` },
         { type: 'send_email', subject: 'Service Complete - We Value Your Feedback', template: 'service_completion' },
         { type: 'add_tag', tag: 'service_completed' },
         { type: 'schedule_followup', hours: 24, action: 'request_review' },
@@ -314,7 +314,7 @@ async function executeAppointmentReminders(params: any, token: string, locationI
       urgency: 'high'
     },
     '30_minute': {
-      message: `We're on our way! Your cleaning team will arrive in 30 minutes. Thank you for choosing AlphaLux Clean! 🚗`,
+      message: `We're on our way! Your cleaning team will arrive in 30 minutes. Thank you for choosing AlphaLux Cleaning! 🚗`,
       urgency: 'urgent'
     }
   };
@@ -454,7 +454,7 @@ async function sendAutomatedEmail(customerEmail: string, subject: string, templa
   
   const emailTemplates = {
     'booking_confirmation': `Your cleaning service has been confirmed! We'll arrive on time and make your space sparkle.`,
-    'service_completion': `Thank you for choosing AlphaLux Clean! We hope you love your clean space. Please rate our service!`
+    'service_completion': `Thank you for choosing AlphaLux Cleaning! We hope you love your clean space. Please rate our service!`
   };
 
   const emailBody = emailTemplates[template as keyof typeof emailTemplates] || 'Thank you for your business!';

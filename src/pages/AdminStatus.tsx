@@ -88,7 +88,7 @@ const AdminStatus = () => {
   return (
     <>
       <Helmet>
-        <title>Admin Status | AlphaLuxClean</title>
+        <title>Admin Status | AlphaLux Cleaning</title>
       </Helmet>
 
       <div className="min-h-screen bg-background p-6">

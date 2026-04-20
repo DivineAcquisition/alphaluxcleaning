@@ -429,7 +429,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                     const formatted = formatPhoneNumber(e.target.value);
                     setFormData(prev => ({ ...prev, phone: formatted }));
                   }}
-                  placeholder="(555) 123-4567"
+                  placeholder="(857) 754-4557"
                   required
                 />
               </div>

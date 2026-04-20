@@ -15,7 +15,7 @@ const testimonials = [
     id: 2,
     name: "Jennifer Rodriguez",
     location: "Plano, TX", 
-    text: "I was hesitant at first, but AlphaLux Clean has proven to be trustworthy and thorough. Fair pricing too.",
+    text: "I was hesitant at first, but AlphaLux Cleaning has proven to be trustworthy and thorough. Fair pricing too.",
     rating: 5,
     avatar: "👩‍🏫"
   },
@@ -43,56 +43,77 @@ export function TestimonialSection() {
   }, []);
 
   return (
-    <div className="py-8 lg:py-12 bg-gradient-to-r from-card to-muted/10">
+    <div className="py-16 lg:py-20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-6">
-          <h2 className="mobile-subheadline lg:text-2xl font-bold text-foreground mb-2">What Our Dallas Customers Say</h2>
-          <p className="mobile-body text-muted-foreground">Real feedback from satisfied local customers</p>
+        <div className="text-center mb-10 max-w-2xl mx-auto">
+          <p className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-alx-gold mb-3">
+            Testimonials
+          </p>
+          <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-3">
+            What Our Clients Say
+          </h2>
+          <p className="text-muted-foreground">
+            Real feedback from homeowners and businesses we serve.
+          </p>
         </div>
-        
+
         <div className="max-w-2xl mx-auto">
-          {/* Mobile-Optimized Testimonial Card */}
-          <Card className="bg-card border shadow-soft">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="text-3xl lg:text-4xl flex-shrink-0">{currentTestimonial.avatar}</div>
+          <Card className="relative overflow-hidden border-alx-gold/20 bg-card shadow-clean">
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1 bg-gradient-gold"
+            />
+            <CardContent className="p-6 lg:p-8">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-gold flex items-center justify-center text-2xl shadow-gold flex-shrink-0">
+                  {currentTestimonial.avatar}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-foreground text-base lg:text-lg">{currentTestimonial.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{currentTestimonial.location}</p>
+                  <h3 className="font-serif font-semibold text-foreground text-lg">
+                    {currentTestimonial.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {currentTestimonial.location}
+                  </p>
                   <div className="flex gap-1">
                     {Array.from({ length: 5 }, (_, i) => (
                       <Star
                         key={i}
                         className={`w-4 h-4 ${
-                          i < currentTestimonial.rating 
-                            ? 'text-warning fill-warning' 
-                            : 'text-muted-foreground'
+                          i < currentTestimonial.rating
+                            ? "text-alx-gold fill-alx-gold"
+                            : "text-muted-foreground/40"
                         }`}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              
-              <blockquote className="mobile-body lg:text-lg text-foreground leading-relaxed">
+
+              <blockquote className="text-base lg:text-lg text-foreground leading-relaxed italic border-l-2 border-alx-gold pl-4">
                 "{currentTestimonial.text}"
               </blockquote>
             </CardContent>
           </Card>
-          
-          {/* Mobile-Friendly Navigation Dots */}
-          <div className="flex justify-center gap-3 mt-6">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentTestimonial(testimonials[index])}
-                className={`mobile-touch-target w-4 h-4 rounded-full transition-all duration-200 ${
-                  index === testimonials.findIndex(t => t.id === currentTestimonial.id)
-                    ? 'bg-primary scale-110' 
-                    : 'bg-muted hover:bg-muted-foreground/50'
-                }`}
-              />
-            ))}
+
+          <div className="flex justify-center gap-2 mt-6">
+            {testimonials.map((_, index) => {
+              const active =
+                index ===
+                testimonials.findIndex((t) => t.id === currentTestimonial.id);
+              return (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTestimonial(testimonials[index])}
+                  aria-label={`View testimonial ${index + 1}`}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    active
+                      ? "bg-alx-gold w-8"
+                      : "bg-muted w-2 hover:bg-alx-gold/40"
+                  }`}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

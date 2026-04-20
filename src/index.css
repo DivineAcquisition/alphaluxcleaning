@@ -16,60 +16,79 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 240 4% 95%;
-    --foreground: 240 5% 10%;
+    /* AlphaLux Cleaning Brand System
+       Navy: #0F2A44 (primary), #1B314B (deep), #0A0F1A (ink)
+       Gold: #A17938 (gold), #ECC98B (light gold), #F6DFA8 (pale), #C89B3C (amber)
+       Cream: #FCFBF7 / #F3F3F3
+    */
+    --background: 45 56% 98%;
+    --foreground: 213 54% 10%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 240 5% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 54% 10%;
 
-    --popover: 240 5% 90%;
-    --popover-foreground: 240 5% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 54% 10%;
 
-    --primary: 211 41% 24%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 210 64% 16%;
+    --primary-foreground: 40 81% 92%;
 
-    --secondary: 240 5% 33%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 36 49% 43%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 4% 83%;
-    --muted-foreground: 240 5% 10%;
+    --muted: 40 30% 94%;
+    --muted-foreground: 212 20% 35%;
 
-    --accent: 211 41% 95%;
-    --accent-foreground: 211 41% 24%;
+    --accent: 36 73% 74%;
+    --accent-foreground: 210 64% 16%;
 
-    --destructive: 211 40.9836% 23.9216%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 4% 83%;
-    --input: 240 4% 83%;
-    --ring: 215 19.3182% 34.5098%;
+    --border: 40 25% 88%;
+    --input: 40 25% 88%;
+    --ring: 36 49% 43%;
 
-    --success: 160 85% 35%;
+    --success: 160 72% 35%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 36 73% 55%;
+    --warning-foreground: 210 64% 16%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(211 41% 24%), hsl(211 41% 35%));
-    --gradient-card: linear-gradient(135deg, hsl(48 67% 97%), hsl(48 50% 92%));
-    
-    /* New Year Special Banner Colors */
-    --promo-gold: 45 93% 47%;
-    --promo-gold-foreground: 220 50% 15%;
-    --promo-navy: 220 50% 15%;
-    --promo-navy-foreground: 45 93% 60%;
+    /* AlphaLux Brand Tokens */
+    --alx-navy: 210 64% 16%;
+    --alx-navy-deep: 212 48% 12%;
+    --alx-navy-ink: 213 54% 8%;
+    --alx-gold: 36 49% 43%;
+    --alx-gold-light: 36 73% 74%;
+    --alx-gold-pale: 40 81% 92%;
+    --alx-amber: 41 59% 51%;
+    --alx-cream: 45 56% 98%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(210 64% 16%) 0%, hsl(212 48% 22%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(40 81% 85%) 0%, hsl(36 73% 74%) 45%, hsl(36 49% 43%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(45 56% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(213 54% 10%) 0%, hsl(210 64% 16%) 55%, hsl(212 48% 22%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(213 54% 8%) 0%, hsl(210 64% 14%) 100%);
+
+    /* Promo Banner Colors (navy + gold) */
+    --promo-gold: 36 73% 55%;
+    --promo-gold-foreground: 213 54% 10%;
+    --promo-navy: 213 54% 10%;
+    --promo-navy-foreground: 40 81% 85%;
 
     /* Service Card Themes */
-    --service-regular: 211 41% 95%;
-    --service-regular-foreground: 211 41% 24%;
-    --service-deep: 211 30% 92%;
-    --service-deep-foreground: 211 41% 20%;
-    --service-moveout: 48 50% 90%;
-    --service-moveout-foreground: 211 41% 24%;
+    --service-regular: 40 60% 96%;
+    --service-regular-foreground: 210 64% 16%;
+    --service-deep: 210 40% 94%;
+    --service-deep-foreground: 210 64% 16%;
+    --service-moveout: 36 60% 92%;
+    --service-moveout-foreground: 210 64% 16%;
 
-    --shadow-clean: 0 4px 20px -4px hsl(211 41% 24% / 0.15);
-    --shadow-soft: 0 2px 10px -2px hsl(211 41% 24% / 0.1);
-    --shadow-glow: 0 0 30px hsl(211 41% 24% / 0.2);
+    --shadow-clean: 0 10px 30px -10px hsl(210 64% 16% / 0.25);
+    --shadow-soft: 0 4px 16px -4px hsl(210 64% 16% / 0.12);
+    --shadow-glow: 0 0 40px hsl(36 49% 43% / 0.35);
+    --shadow-gold: 0 8px 24px -8px hsl(36 49% 43% / 0.4);
 
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
@@ -77,39 +96,28 @@ All colors MUST be HSL.
     --safe-area-inset-bottom: env(safe-area-inset-bottom);
     --safe-area-inset-left: env(safe-area-inset-left);
 
-    --radius: 1.5rem;
+    --radius: 0.75rem;
 
     /* Enhanced animations for payment UI */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 48 67% 97%;
+    --sidebar-background: 210 64% 16%;
+    --sidebar-foreground: 40 81% 92%;
+    --sidebar-primary: 36 49% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 212 48% 22%;
+    --sidebar-accent-foreground: 40 81% 92%;
+    --sidebar-border: 212 40% 25%;
+    --sidebar-ring: 36 73% 74%;
 
-    --sidebar-foreground: 240 5% 10%;
+    --chart-1: 210 64% 24%;
+    --chart-2: 36 49% 43%;
+    --chart-3: 36 73% 74%;
+    --chart-4: 212 48% 40%;
+    --chart-5: 40 30% 60%;
 
-    --sidebar-primary: 211 41% 24%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 5% 33%;
-
-    --sidebar-accent-foreground: 0 0% 98%;
-
-    --sidebar-border: 240 4% 83%;
-
-    --sidebar-ring: 211 41% 24%;
-
-    --chart-1: 215 19.3182% 34.5098%;
-
-    --chart-2: 211 40.9836% 23.9216%;
-
-    --chart-3: 215 20.2247% 65.098%;
-
-    --chart-4: 215 20.2247% 65.098%;
-
-    --chart-5: 240 3% 46%;
-
-    --sidebar: 0 0% 98%;
+    --sidebar: 210 64% 16%;
 
     --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 
@@ -139,53 +147,53 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 240 5% 10%;
-    --foreground: 0 0% 98%;
+    --background: 213 54% 8%;
+    --foreground: 40 81% 92%;
 
-    --card: 240 3% 15%;
-    --card-foreground: 0 0% 98%;
+    --card: 212 48% 12%;
+    --card-foreground: 40 81% 92%;
 
-    --popover: 240 5% 26%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 212 48% 12%;
+    --popover-foreground: 40 81% 92%;
 
-    --primary: 211 41% 35%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 36 73% 74%;
+    --primary-foreground: 213 54% 8%;
 
-    --secondary: 240 3% 46%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 36 49% 43%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 3% 46%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 212 40% 18%;
+    --muted-foreground: 40 30% 70%;
 
-    --accent: 211 30% 20%;
-    --accent-foreground: 211 41% 70%;
+    --accent: 36 49% 43%;
+    --accent-foreground: 213 54% 8%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 85% 50%;
+    --success: 160 72% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 45 93% 60%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 36 73% 60%;
+    --warning-foreground: 213 54% 8%;
 
-    --border: 240 5% 33%;
-    --input: 240 5% 33%;
-    --ring: 328 85% 70%;
-    --sidebar-background: 211 41% 15%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 211 41% 35%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 211 41% 50%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 5% 33%;
-    --sidebar-ring: 211 41% 35%;
-    --chart-1: 327 87% 81%;
-    --chart-2: 352 95% 81%;
-    --chart-3: 328 85% 70%;
-    --chart-4: 351 94% 71%;
-    --chart-5: 240 5% 33%;
-    --sidebar: 240 3% 15%;
+    --border: 212 40% 22%;
+    --input: 212 40% 22%;
+    --ring: 36 73% 74%;
+    --sidebar-background: 213 54% 8%;
+    --sidebar-foreground: 40 81% 92%;
+    --sidebar-primary: 36 49% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 64% 16%;
+    --sidebar-accent-foreground: 40 81% 92%;
+    --sidebar-border: 212 40% 22%;
+    --sidebar-ring: 36 73% 74%;
+    --chart-1: 36 73% 74%;
+    --chart-2: 36 49% 43%;
+    --chart-3: 40 81% 85%;
+    --chart-4: 212 48% 40%;
+    --chart-5: 40 30% 50%;
+    --sidebar: 213 54% 8%;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -291,7 +299,60 @@ All colors MUST be HSL.
   }
 
   .shadow-clean {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    box-shadow: var(--shadow-clean);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
+  /* AlphaLux branded utility classes */
+  .bg-alx-hero {
+    background-image: var(--gradient-hero);
+  }
+
+  .bg-alx-gold {
+    background-image: var(--gradient-gold);
+  }
+
+  .text-alx-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .border-alx-gold {
+    border-color: hsl(var(--alx-gold));
+  }
+
+  .btn-alx-gold {
+    background-image: var(--gradient-gold);
+    color: hsl(var(--alx-navy-ink));
+    box-shadow: var(--shadow-gold);
+    transition: var(--transition-smooth);
+  }
+
+  .btn-alx-gold:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+
+  .section-alx-navy {
+    background-color: hsl(var(--alx-navy));
+    color: hsl(var(--alx-gold-pale));
+  }
+
+  .glass-card {
+    background: hsla(0, 0%, 100%, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsla(var(--alx-gold), 0.15);
   }
 
   .safe-area-pt {

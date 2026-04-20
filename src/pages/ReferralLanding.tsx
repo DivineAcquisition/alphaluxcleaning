@@ -105,7 +105,7 @@ export const ReferralLanding: React.FC = () => {
           </CardHeader>
           <CardContent className="text-center">
             <Button onClick={() => navigate('/')} className="w-full">
-              Visit AlphaLuxClean
+              Visit AlphaLux Cleaning
             </Button>
           </CardContent>
         </Card>
@@ -123,7 +123,7 @@ export const ReferralLanding: React.FC = () => {
               <Gift className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2">AlphaLuxClean</h1>
+          <h1 className="text-4xl font-bold mb-2">AlphaLux Cleaning</h1>
           <Badge variant="secondary" className="text-lg px-4 py-1">
             Exclusive Referral Offer
           </Badge>

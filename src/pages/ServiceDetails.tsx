@@ -72,7 +72,7 @@ const ServiceDetails = () => {
             ...prev,
             customerName: "Admin Preview User",
             customerEmail: "admin@alphaluxclean.com",
-            customerPhone: "(555) 123-4567",
+            customerPhone: "(857) 754-4557",
             streetAddress: "123 Admin Street",
             city: "San Francisco",
             state: "CA",
@@ -443,7 +443,7 @@ const ServiceDetails = () => {
                           type="tel"
                           value={formData.customerPhone}
                           onChange={(e) => handleInputChange("customerPhone", e.target.value)}
-                          placeholder="(555) 123-4567"
+                          placeholder="(857) 754-4557"
                           className="h-12 text-base"
                         />
                       </div>

@@ -41,7 +41,7 @@ serve(async (req) => {
             id: "test_order_diagnostics",
             customer_name: "Test Customer",
             customer_email: "test@example.com",
-            customer_phone: "(555) 123-4567",
+            customer_phone: "(857) 754-4557",
             street_address: "123 Test Street",
             city: "Test City",
             state: "CA",
@@ -119,7 +119,7 @@ serve(async (req) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'User-Agent': 'AlphaLuxClean-Diagnostics/1.0',
+              'User-Agent': 'AlphaLux Cleaning-Diagnostics/1.0',
               'X-Webhook-Version': 'diagnostics-test',
               'X-Test-Mode': 'true'
             },

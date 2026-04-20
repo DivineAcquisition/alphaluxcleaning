@@ -56,13 +56,13 @@ export const BookingConfirmationEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Your AlphaLux Clean booking is confirmed! 🎉</Preview>
+      <Preview>Your AlphaLux Cleaning booking is confirmed! 🎉</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Navy Blue Header */}
           <Section style={header}>
             <Heading style={headerTitle}>Booking Confirmed! ✨</Heading>
-            <Text style={headerSubtitle}>Thank you for choosing AlphaLux Clean</Text>
+            <Text style={headerSubtitle}>Thank you for choosing AlphaLux Cleaning</Text>
           </Section>
 
           <Section style={content}>
@@ -118,17 +118,17 @@ export const BookingConfirmationEmail = ({
             </Section>
 
             <Text style={text}>
-              You'll receive a reminder 24 hours before your scheduled service. If you need to make any changes, just click the button above or call us at <strong>(972) 559-0223</strong>.
+              You'll receive a reminder 24 hours before your scheduled service. If you need to make any changes, just click the button above or call us at <strong>(857) 754-4557</strong>.
             </Text>
           </Section>
 
           <Section style={footer}>
             <Text style={footerText}>
-              AlphaLux Clean - Premium Cleaning Services
+              AlphaLux Cleaning - Premium Cleaning Services
               <br />
-              <Link href="tel:9725590223" style={footerLink}>(972) 559-0223</Link>
+              <Link href="tel:8577544557" style={footerLink}>(857) 754-4557</Link>
               {" • "}
-              <Link href="mailto:support@alphaluxclean.com" style={footerLink}>support@alphaluxclean.com</Link>
+              <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>support@alphaluxcleaning.com</Link>
             </Text>
           </Section>
         </Container>
@@ -151,7 +151,7 @@ const container = {
 };
 
 const header = {
-  backgroundColor: "#2C5282",
+  backgroundColor: "#0F2A44",
   padding: "40px 20px",
   textAlign: "center" as const,
 };
@@ -198,7 +198,7 @@ const detailsCard = {
 const cardHeading = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#2C5282",
+  color: "#0F2A44",
   margin: "0 0 16px 0",
 };
 
@@ -227,7 +227,7 @@ const totalRow = {
   justifyContent: "space-between",
   padding: "16px 0 0 0",
   marginTop: "8px",
-  borderTop: "2px solid #2C5282",
+  borderTop: "2px solid #0F2A44",
 };
 
 const totalLabel = {
@@ -239,7 +239,7 @@ const totalLabel = {
 
 const totalValue = {
   fontSize: "20px",
-  color: "#2C5282",
+  color: "#0F2A44",
   fontWeight: "bold",
   margin: "0",
 };
@@ -275,7 +275,7 @@ const footerText = {
 };
 
 const footerLink = {
-  color: "#2C5282",
+  color: "#0F2A44",
   textDecoration: "none",
 };
 

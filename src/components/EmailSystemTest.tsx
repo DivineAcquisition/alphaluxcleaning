@@ -86,7 +86,7 @@ const EMAIL_TEMPLATES = [
       first_name: "Test Customer",
       service_type: "Standard Cleaning",
       time_window: "10:00 AM - 12:00 PM",
-      support_phone: "(555) 123-4567",
+      support_phone: "(857) 754-4557",
       address_line1: "123 Test St, San Francisco, CA"
     }
   }

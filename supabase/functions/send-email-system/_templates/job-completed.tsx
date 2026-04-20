@@ -83,7 +83,7 @@ export const JobCompletedEmail = ({
     </Section>
 
     <Text style={thanksText}>
-      Thank you for trusting AlphaLuxClean with your home! 🏠✨
+      Thank you for trusting AlphaLux Cleaning with your home! 🏠✨
     </Text>
   </EmailBase>
 );

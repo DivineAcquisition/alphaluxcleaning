@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { SEOHead } from "@/components/SEOHead";
 
 export default function CallPage() {
-  const phoneNumber = "(972) 559-0223";
-  const phoneLink = "tel:+19725590223";
-  const smsLink = "sms:+19725590223";
+  const phoneNumber = "(857) 754-4557";
+  const phoneLink = "tel:+18577544557";
+  const smsLink = "sms:+18577544557";
 
   return (
     <>
       <SEOHead 
-        title="Call Us - AlphaLux Clean"
-        description="Call AlphaLux Clean to book your cleaning service or get answers to your questions. Our team is ready to help."
+        title="Call Us - AlphaLux Cleaning"
+        description="Call AlphaLux Cleaning to book your cleaning service or get answers to your questions. Our team is ready to help."
       />
       
       <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4">
@@ -19,7 +19,7 @@ export default function CallPage() {
           {/* Logo/Brand */}
           <div>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              AlphaLux Clean
+              AlphaLux Cleaning
             </h1>
             <p className="text-xl text-muted-foreground">
               Premium Cleaning Services

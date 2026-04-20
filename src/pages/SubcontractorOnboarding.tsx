@@ -195,7 +195,7 @@ export default function SubcontractorOnboarding() {
           <div className="flex items-center justify-center gap-3">
             <UserCheck className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-              Welcome to AlphaLux Clean!
+              Welcome to AlphaLux Cleaning!
             </h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">

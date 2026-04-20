@@ -290,7 +290,7 @@ export default function BookingConfirmation() {
           )}
           
           <p className="text-sm text-center text-muted-foreground mt-6">
-            Need help? Call <strong>(972) 559-0223</strong> or reply to your confirmation email
+            Need help? Call <strong>(857) 754-4557</strong> or reply to your confirmation email
           </p>
           
           <div className="mt-6 text-center">

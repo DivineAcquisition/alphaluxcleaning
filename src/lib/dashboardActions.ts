@@ -184,7 +184,7 @@ export const generateIcsLink = async (bookingId: string) => {
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//AlphaLux Clean//Booking//EN',
+      'PRODID:-//AlphaLux Cleaning//Booking//EN',
       'BEGIN:VEVENT',
       `UID:${bookingId}@alphaluxclean.com`,
       `DTSTART:${formatDateForICS(startDateTime)}`,
@@ -234,7 +234,7 @@ export const seedDemoData = async () => {
         id: '550e8400-e29b-41d4-a716-446655440001',
         full_name: 'Alice Johnson',
         email: 'alice.johnson@example.com',
-        phone: '(555) 123-4567',
+        phone: '(857) 754-4557',
         is_available: true,
         reliability_score: 4.8
       },

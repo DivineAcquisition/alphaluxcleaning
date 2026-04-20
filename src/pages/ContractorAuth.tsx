@@ -69,7 +69,7 @@ export default function ContractorAuth() {
               Contractor Portal
             </CardTitle>
             <CardDescription className="text-muted-foreground">
-              AlphaLux Clean - Admin Access
+              AlphaLux Cleaning - Admin Access
             </CardDescription>
           </div>
         </CardHeader>

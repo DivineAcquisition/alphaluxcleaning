@@ -147,7 +147,7 @@ function generateInvoiceHTML(invoiceData: any): string {
     </head>
     <body>
         <div class="header">
-            <h1>AlphaLux Clean</h1>
+            <h1>AlphaLux Cleaning</h1>
             <h2>Invoice</h2>
         </div>
         
@@ -166,7 +166,7 @@ function generateInvoiceHTML(invoiceData: any): string {
             </div>
             <div>
                 <h3>From:</h3>
-                <p>AlphaLux Clean</p>
+                <p>AlphaLux Cleaning</p>
                 <p>Professional Cleaning Services</p>
             </div>
         </div>
@@ -197,8 +197,8 @@ function generateInvoiceHTML(invoiceData: any): string {
         </div>
         
         <div style="margin-top: 40px; font-size: 14px; color: #666;">
-            <p>Thank you for choosing AlphaLux Clean!</p>
-            <p>Questions? Contact us at support@alphaluxclean.com</p>
+            <p>Thank you for choosing AlphaLux Cleaning!</p>
+            <p>Questions? Contact us at support@alphaluxcleaning.com</p>
         </div>
     </body>
     </html>

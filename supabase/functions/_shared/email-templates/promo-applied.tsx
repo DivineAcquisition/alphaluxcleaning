@@ -128,17 +128,17 @@ export const PromoAppliedEmail = ({
             </Section>
 
             <Text style={helpText}>
-              Questions? Reply to this email or call us at <strong>(972) 559-0223</strong>
+              Questions? Reply to this email or call us at <strong>(857) 754-4557</strong>
             </Text>
           </Section>
 
           <Section style={footer}>
             <Text style={footerText}>
-              AlphaLux Clean - Premium Cleaning Services
+              AlphaLux Cleaning - Premium Cleaning Services
               <br />
-              <Link href="tel:9725590223" style={footerLink}>(972) 559-0223</Link>
+              <Link href="tel:8577544557" style={footerLink}>(857) 754-4557</Link>
               {" • "}
-              <Link href="mailto:support@alphaluxclean.com" style={footerLink}>support@alphaluxclean.com</Link>
+              <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>support@alphaluxcleaning.com</Link>
             </Text>
           </Section>
         </Container>
@@ -161,7 +161,7 @@ const container = {
 };
 
 const header = {
-  background: "linear-gradient(135deg, #2C5282 0%, #1A365D 100%)",
+  background: "linear-gradient(135deg, #0F2A44 0%, #1A365D 100%)",
   padding: "40px 20px",
   textAlign: "center" as const,
 };
@@ -244,7 +244,7 @@ const summaryCard = {
 const cardHeading = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#2C5282",
+  color: "#0F2A44",
   margin: "0 0 16px 0",
 };
 
@@ -288,7 +288,7 @@ const totalRow = {
   justifyContent: "space-between",
   padding: "16px 0 0 0",
   marginTop: "8px",
-  borderTop: "2px solid #2C5282",
+  borderTop: "2px solid #0F2A44",
 };
 
 const totalLabel = {
@@ -343,7 +343,7 @@ const footerText = {
 };
 
 const footerLink = {
-  color: "#2C5282",
+  color: "#0F2A44",
   textDecoration: "none",
 };
 

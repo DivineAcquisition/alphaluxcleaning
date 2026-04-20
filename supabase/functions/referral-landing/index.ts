@@ -91,7 +91,7 @@ function generateLandingPage(referrer: any, refCode: string, utmParams: any) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$25 Off Your First Clean - AlphaLuxClean</title>
+    <title>$25 Off Your First Clean - AlphaLux Cleaning</title>
     <style>
         * {
             margin: 0;
@@ -220,7 +220,7 @@ function generateLandingPage(referrer: any, refCode: string, utmParams: any) {
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">AlphaLuxClean</div>
+            <div class="logo">AlphaLux Cleaning</div>
             <div class="discount">$25 OFF</div>
             <div>Your First Professional Cleaning</div>
         </div>
@@ -281,7 +281,7 @@ function generateErrorPage(title: string, message: string) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title} - AlphaLuxClean</title>
+    <title>${title} - AlphaLux Cleaning</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -331,7 +331,7 @@ function generateErrorPage(title: string, message: string) {
         <div class="title">${title}</div>
         <div class="message">${message}</div>
         <a href="https://app.alphaluxclean.com" class="cta-button">
-            Visit AlphaLuxClean
+            Visit AlphaLux Cleaning
         </a>
     </div>
 </body>

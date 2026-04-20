@@ -15,7 +15,7 @@ export const validatePhoneNumber = (phone: string): { isValid: boolean; message?
   } else {
     return { 
       isValid: false, 
-      message: 'Please enter a valid US phone number (e.g., (555) 123-4567)' 
+      message: 'Please enter a valid US phone number (e.g., (857) 754-4557)' 
     };
   }
 };

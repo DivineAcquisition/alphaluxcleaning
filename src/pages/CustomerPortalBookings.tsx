@@ -46,7 +46,7 @@ export default function CustomerPortalBookings() {
           total_amount: 180,
           payment_status: 'paid',
           cleaner_name: 'Maria Rodriguez',
-          cleaner_phone: '(555) 123-4567',
+          cleaner_phone: '(857) 754-4557',
           special_instructions: 'Please focus on the kitchen and bathrooms',
           receipts: [
             {
@@ -66,7 +66,7 @@ export default function CustomerPortalBookings() {
   const handleAddToCalendar = () => {
     // Generate ICS file
     const event = {
-      title: `${booking.service_type} - AlphaLux Clean`,
+      title: `${booking.service_type} - AlphaLux Cleaning`,
       start: new Date(`${booking.scheduled_date}T${booking.scheduled_time}`),
       description: `Cleaning service at ${booking.address}`,
       location: booking.address
