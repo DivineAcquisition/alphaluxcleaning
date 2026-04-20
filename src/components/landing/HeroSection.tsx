@@ -51,17 +51,31 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
             </div>
           </div>
 
-          {/* Main Headline */}
+          {/* Main Headline — mirrors the ALC2026 new-customer promo */}
           <h1 className="font-serif text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-bold mb-4 lg:mb-6 leading-[1.05] tracking-tight">
-            A Higher Standard of{" "}
-            <span className="text-alx-gradient-gold">Clean</span>
+            Save{" "}
+            <span className="text-alx-gradient-gold">
+              {NEW_CUSTOMER_PROMO_PERCENT}%
+            </span>{" "}
+            On Your First Cleaning
           </h1>
+          <p className="text-sm sm:text-base lg:text-lg uppercase tracking-[0.24em] text-alx-gold font-semibold mb-5">
+            A Higher Standard of Clean
+          </p>
 
           {/* Subheadline */}
           <p className="text-base sm:text-lg lg:text-xl text-alx-gold-pale/85 mb-6 lg:mb-8 max-w-3xl mx-auto leading-relaxed">
             Premium residential & commercial cleaning across Long Island, NY,
-            New Jersey, Texas and California. Eco-friendly, insured, and built
-            around you.
+            New Jersey, Texas and California — eco-friendly, insured, and built
+            around you. New customers unlock{" "}
+            <span className="text-alx-gold-light font-semibold">
+              {NEW_CUSTOMER_PROMO_PERCENT}% off
+            </span>{" "}
+            with code{" "}
+            <span className="text-alx-gold-light font-bold tracking-[0.12em]">
+              {NEW_CUSTOMER_PROMO_CODE}
+            </span>
+            .
           </p>
 
           {/* New-customer promo card */}
