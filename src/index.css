@@ -16,31 +16,37 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* AlphaLux Cleaning Brand System
-       Navy: #0F2A44 (primary), #1B314B (deep), #0A0F1A (ink)
-       Gold: #A17938 (gold), #ECC98B (light gold), #F6DFA8 (pale), #C89B3C (amber)
-       Cream: #FCFBF7 / #F3F3F3
+    /* AlphaLux Cleaning Brand System — Black & Gold
+       Black / Ink: #0A0A0B (ink), #111113 (black), #1A1410 (warm black), #1F1B16 (elevated)
+       Gold:        #A17938 (primary gold), #ECC98B (light gold), #F6DFA8 (pale gold),
+                    #C89B3C (amber), #9a7a08 / #b8940a (deep gold)
+       Cream:       #FCFBF7 / #F3F3F3
+       Accent dark: neutral-900 (#0C0C0E) for subtle stratification
+
+       Design intent: the site is predominantly black with warm gold as the
+       accent and CTA color — mirroring alphaluxcleaning.com's header and
+       hero treatment. Navy has been fully retired.
     */
     --background: 45 56% 98%;
-    --foreground: 213 54% 10%;
+    --foreground: 30 12% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 213 54% 10%;
+    --card-foreground: 30 12% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 213 54% 10%;
+    --popover-foreground: 30 12% 8%;
 
-    --primary: 210 64% 16%;
+    --primary: 30 12% 8%;
     --primary-foreground: 40 81% 92%;
 
     --secondary: 36 49% 43%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 40 30% 94%;
-    --muted-foreground: 212 20% 35%;
+    --muted-foreground: 30 8% 35%;
 
     --accent: 36 73% 74%;
-    --accent-foreground: 210 64% 16%;
+    --accent-foreground: 30 12% 8%;
 
     --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
@@ -53,42 +59,52 @@ All colors MUST be HSL.
     --success-foreground: 0 0% 100%;
 
     --warning: 36 73% 55%;
-    --warning-foreground: 210 64% 16%;
+    --warning-foreground: 30 12% 8%;
 
-    /* AlphaLux Brand Tokens */
-    --alx-navy: 210 64% 16%;
-    --alx-navy-deep: 212 48% 12%;
-    --alx-navy-ink: 213 54% 8%;
+    /* AlphaLux Brand Tokens — Black & Gold */
+    --alx-black: 30 12% 8%;            /* #15120F — brand black */
+    --alx-black-deep: 24 18% 5%;       /* #0E0A07 — near-black */
+    --alx-black-ink: 240 4% 4%;        /* #0A0A0B — pure ink */
+    --alx-black-warm: 25 22% 9%;       /* #1A1410 — warm black (from brand gradient) */
+    --alx-black-elev: 30 16% 14%;      /* #272017 — elevated surface */
     --alx-gold: 36 49% 43%;
     --alx-gold-light: 36 73% 74%;
     --alx-gold-pale: 40 81% 92%;
+    --alx-gold-deep: 41 88% 38%;       /* #b8940a */
     --alx-amber: 41 59% 51%;
     --alx-cream: 45 56% 98%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(210 64% 16%) 0%, hsl(212 48% 22%) 100%);
+    /* Backwards-compat aliases so legacy code that still references
+       --alx-navy keeps working but now resolves to the new black palette. */
+    --alx-navy: var(--alx-black);
+    --alx-navy-deep: var(--alx-black-deep);
+    --alx-navy-ink: var(--alx-black-ink);
+
+    --gradient-primary: linear-gradient(135deg, hsl(30 12% 8%) 0%, hsl(30 16% 14%) 100%);
     --gradient-gold: linear-gradient(135deg, hsl(40 81% 85%) 0%, hsl(36 73% 74%) 45%, hsl(36 49% 43%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(45 56% 98%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(213 54% 10%) 0%, hsl(210 64% 16%) 55%, hsl(212 48% 22%) 100%);
-    --gradient-dark: linear-gradient(135deg, hsl(213 54% 8%) 0%, hsl(210 64% 14%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 45%, hsl(30 16% 14%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 100%);
+    --gradient-promo: linear-gradient(135deg, hsl(25 22% 9%) 0%, hsl(30 12% 8%) 50%, hsl(36 49% 30%) 100%);
 
-    /* Promo Banner Colors (navy + gold) */
+    /* Promo Banner Colors (black + gold) */
     --promo-gold: 36 73% 55%;
-    --promo-gold-foreground: 213 54% 10%;
-    --promo-navy: 213 54% 10%;
+    --promo-gold-foreground: 30 12% 8%;
+    --promo-navy: 30 12% 8%;
     --promo-navy-foreground: 40 81% 85%;
 
     /* Service Card Themes */
     --service-regular: 40 60% 96%;
-    --service-regular-foreground: 210 64% 16%;
-    --service-deep: 210 40% 94%;
-    --service-deep-foreground: 210 64% 16%;
+    --service-regular-foreground: 30 12% 8%;
+    --service-deep: 30 8% 92%;
+    --service-deep-foreground: 30 12% 8%;
     --service-moveout: 36 60% 92%;
-    --service-moveout-foreground: 210 64% 16%;
+    --service-moveout-foreground: 30 12% 8%;
 
-    --shadow-clean: 0 10px 30px -10px hsl(210 64% 16% / 0.25);
-    --shadow-soft: 0 4px 16px -4px hsl(210 64% 16% / 0.12);
+    --shadow-clean: 0 10px 30px -10px hsl(30 12% 8% / 0.35);
+    --shadow-soft: 0 4px 16px -4px hsl(30 12% 8% / 0.18);
     --shadow-glow: 0 0 40px hsl(36 49% 43% / 0.35);
-    --shadow-gold: 0 8px 24px -8px hsl(36 49% 43% / 0.4);
+    --shadow-gold: 0 8px 24px -8px hsl(36 49% 43% / 0.5);
 
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
@@ -102,22 +118,22 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 210 64% 16%;
+    --sidebar-background: 30 12% 8%;
     --sidebar-foreground: 40 81% 92%;
     --sidebar-primary: 36 49% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 212 48% 22%;
+    --sidebar-accent: 30 16% 14%;
     --sidebar-accent-foreground: 40 81% 92%;
-    --sidebar-border: 212 40% 25%;
+    --sidebar-border: 30 12% 20%;
     --sidebar-ring: 36 73% 74%;
 
-    --chart-1: 210 64% 24%;
+    --chart-1: 30 12% 8%;
     --chart-2: 36 49% 43%;
     --chart-3: 36 73% 74%;
-    --chart-4: 212 48% 40%;
+    --chart-4: 30 16% 22%;
     --chart-5: 40 30% 60%;
 
-    --sidebar: 210 64% 16%;
+    --sidebar: 30 12% 8%;
 
     --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 
@@ -147,26 +163,26 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 213 54% 8%;
+    --background: 240 4% 4%;
     --foreground: 40 81% 92%;
 
-    --card: 212 48% 12%;
+    --card: 30 12% 8%;
     --card-foreground: 40 81% 92%;
 
-    --popover: 212 48% 12%;
+    --popover: 30 12% 8%;
     --popover-foreground: 40 81% 92%;
 
     --primary: 36 73% 74%;
-    --primary-foreground: 213 54% 8%;
+    --primary-foreground: 30 12% 8%;
 
     --secondary: 36 49% 43%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 212 40% 18%;
+    --muted: 30 10% 15%;
     --muted-foreground: 40 30% 70%;
 
     --accent: 36 49% 43%;
-    --accent-foreground: 213 54% 8%;
+    --accent-foreground: 30 12% 8%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -175,25 +191,25 @@ All colors MUST be HSL.
     --success-foreground: 0 0% 100%;
 
     --warning: 36 73% 60%;
-    --warning-foreground: 213 54% 8%;
+    --warning-foreground: 30 12% 8%;
 
-    --border: 212 40% 22%;
-    --input: 212 40% 22%;
+    --border: 30 12% 20%;
+    --input: 30 12% 20%;
     --ring: 36 73% 74%;
-    --sidebar-background: 213 54% 8%;
+    --sidebar-background: 240 4% 4%;
     --sidebar-foreground: 40 81% 92%;
     --sidebar-primary: 36 49% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 64% 16%;
+    --sidebar-accent: 30 12% 8%;
     --sidebar-accent-foreground: 40 81% 92%;
-    --sidebar-border: 212 40% 22%;
+    --sidebar-border: 30 12% 20%;
     --sidebar-ring: 36 73% 74%;
     --chart-1: 36 73% 74%;
     --chart-2: 36 49% 43%;
     --chart-3: 40 81% 85%;
-    --chart-4: 212 48% 40%;
+    --chart-4: 30 16% 22%;
     --chart-5: 40 30% 50%;
-    --sidebar: 213 54% 8%;
+    --sidebar: 240 4% 4%;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -319,6 +335,18 @@ All colors MUST be HSL.
     background-image: var(--gradient-gold);
   }
 
+  .bg-alx-black {
+    background-color: hsl(var(--alx-black));
+  }
+
+  .bg-alx-black-ink {
+    background-color: hsl(var(--alx-black-ink));
+  }
+
+  .bg-alx-promo {
+    background-image: var(--gradient-promo);
+  }
+
   .text-alx-gradient-gold {
     background: var(--gradient-gold);
     -webkit-background-clip: text;
@@ -333,9 +361,10 @@ All colors MUST be HSL.
 
   .btn-alx-gold {
     background-image: var(--gradient-gold);
-    color: hsl(var(--alx-navy-ink));
+    color: hsl(var(--alx-black-ink));
     box-shadow: var(--shadow-gold);
     transition: var(--transition-smooth);
+    border: 1px solid hsla(var(--alx-gold), 0.4);
   }
 
   .btn-alx-gold:hover {
@@ -343,8 +372,23 @@ All colors MUST be HSL.
     transform: translateY(-1px);
   }
 
-  .section-alx-navy {
-    background-color: hsl(var(--alx-navy));
+  .btn-alx-outline-gold {
+    background: transparent;
+    color: hsl(var(--alx-gold-light));
+    border: 1.5px solid hsl(var(--alx-gold));
+    transition: var(--transition-smooth);
+  }
+
+  .btn-alx-outline-gold:hover {
+    background-color: hsla(var(--alx-gold), 0.12);
+    color: hsl(var(--alx-gold-light));
+    transform: translateY(-1px);
+  }
+
+  /* Backwards-compat: .section-alx-navy now paints black */
+  .section-alx-navy,
+  .section-alx-black {
+    background-color: hsl(var(--alx-black));
     color: hsl(var(--alx-gold-pale));
   }
 
@@ -353,6 +397,35 @@ All colors MUST be HSL.
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid hsla(var(--alx-gold), 0.15);
+  }
+
+  .glass-card-dark {
+    background: hsla(30, 12%, 8%, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsla(var(--alx-gold), 0.2);
+    color: hsl(var(--alx-gold-pale));
+  }
+
+  /* Gold shimmer used on promotional banners */
+  .promo-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .promo-shimmer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      hsla(var(--alx-gold-light), 0.25) 50%,
+      transparent 80%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+    pointer-events: none;
   }
 
   .safe-area-pt {

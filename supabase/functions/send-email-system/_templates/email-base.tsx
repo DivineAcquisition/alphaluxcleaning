@@ -274,10 +274,10 @@ const container: React.CSSProperties = {
 
 const header: React.CSSProperties = {
   borderBottom: "1px solid #F0E9D6",
-  padding: "32px 20px 20px 20px",
+  padding: "28px 20px 24px 20px",
   marginBottom: 0,
   textAlign: "center" as const,
-  backgroundColor: "#ffffff",
+  backgroundColor: "#0A0A0B",
 };
 
 const logo: React.CSSProperties = {
@@ -289,8 +289,8 @@ const tagline: React.CSSProperties = {
   fontFamily: "Georgia, 'Times New Roman', serif",
   fontSize: "13px",
   fontStyle: "italic",
-  color: "#A17938",
-  letterSpacing: "0.06em",
+  color: "#ECC98B",
+  letterSpacing: "0.12em",
   textTransform: "uppercase" as const,
 };
 
@@ -308,7 +308,8 @@ const divider: React.CSSProperties = {
 const footer: React.CSSProperties = {
   padding: "28px 24px 32px 24px",
   textAlign: "center" as const,
-  backgroundColor: "#FCFBF7",
+  backgroundColor: "#0A0A0B",
+  color: "#F6DFA8",
 };
 
 const brandName: React.CSSProperties = {
@@ -316,19 +317,19 @@ const brandName: React.CSSProperties = {
   fontFamily: "Georgia, 'Times New Roman', serif",
   fontSize: "16px",
   fontWeight: 700,
-  color: "#0F2A44",
-  letterSpacing: "0.02em",
+  color: "#ECC98B",
+  letterSpacing: "0.04em",
 };
 
 const footerText: React.CSSProperties = {
-  color: "#5a6b7d",
+  color: "rgba(246, 223, 168, 0.8)",
   fontSize: "13px",
   lineHeight: "1.55",
   margin: "4px 0",
 };
 
 const footerLink: React.CSSProperties = {
-  color: "#A17938",
+  color: "#ECC98B",
   textDecoration: "none",
   fontWeight: 600,
 };
@@ -336,23 +337,24 @@ const footerLink: React.CSSProperties = {
 const copyright: React.CSSProperties = {
   margin: "10px 0 0 0",
   fontSize: "11px",
-  color: "#a5adb8",
+  color: "rgba(246, 223, 168, 0.55)",
 };
 
 const buttonStyle: React.CSSProperties = {
   background:
     "linear-gradient(135deg, #F6DFA8 0%, #ECC98B 45%, #A17938 100%)",
   borderRadius: "999px",
-  color: "#0F2A44",
-  fontSize: "16px",
+  color: "#0A0A0B",
+  fontSize: "15px",
   fontWeight: 700,
+  textTransform: "uppercase" as const,
   textDecoration: "none",
   textAlign: "center" as const,
   display: "inline-block",
   padding: "14px 36px",
   margin: "16px 0",
-  boxShadow: "0 6px 18px rgba(161, 121, 56, 0.35)",
-  letterSpacing: "0.02em",
+  boxShadow: "0 8px 20px rgba(161, 121, 56, 0.45)",
+  letterSpacing: "0.1em",
 };
 
 // OrderSummary component styles
@@ -365,7 +367,7 @@ const orderSummary: React.CSSProperties = {
 };
 
 const h2: React.CSSProperties = {
-  color: "#0F2A44",
+  color: "#15120F",
   fontFamily: "Georgia, 'Times New Roman', serif",
   fontSize: "20px",
   fontWeight: "bold",
@@ -382,7 +384,7 @@ const table: React.CSSProperties = {
 const tableCell: React.CSSProperties = {
   padding: "10px 0",
   fontSize: "14px",
-  color: "#5a6b7d",
+  color: "#5a5348",
   borderBottom: "1px solid #EEE6D4",
   verticalAlign: "top",
   width: "40%",
@@ -391,7 +393,7 @@ const tableCell: React.CSSProperties = {
 const tableCellValue: React.CSSProperties = {
   padding: "10px 0",
   fontSize: "14px",
-  color: "#0F2A44",
+  color: "#15120F",
   borderBottom: "1px solid #EEE6D4",
   fontWeight: "500",
 };
@@ -428,7 +430,7 @@ const badgeText: React.CSSProperties = {
 const badgeTitle: React.CSSProperties = {
   fontSize: "14px",
   fontWeight: "bold",
-  color: "#0F2A44",
+  color: "#15120F",
   margin: "0",
   lineHeight: "1.2",
 };

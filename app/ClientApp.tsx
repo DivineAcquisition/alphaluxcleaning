@@ -19,7 +19,7 @@ const App = dynamic(() => import("@/App"), {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "linear-gradient(135deg, hsl(213 54% 10%) 0%, hsl(210 64% 16%) 55%, hsl(212 48% 22%) 100%)",
+          "linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 45%, hsl(30 16% 14%) 100%)",
         color: "#F6DFA8",
         fontFamily: "Georgia, serif",
         letterSpacing: "0.04em",

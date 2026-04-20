@@ -22,10 +22,11 @@ interface EmailBaseProps {
 
 /**
  * AlphaLux Cleaning — branded email shell.
- * Palette:
- *  - Navy Ink:   #0A0F1A
- *  - Navy:       #0F2A44
- *  - Navy Deep:  #1B314B
+ * Palette (black & gold):
+ *  - Ink:        #0A0A0B
+ *  - Black:      #15120F
+ *  - Warm Black: #1A1410
+ *  - Elev Black: #272017
  *  - Gold:       #A17938
  *  - Gold Light: #ECC98B
  *  - Gold Pale:  #F6DFA8
@@ -138,7 +139,7 @@ export const ActionButton = ({
 // Shared section styles exported for per-template use
 export const brandStyles = {
   headingPrimary: {
-    color: "#0F2A44",
+    color: "#15120F",
     fontFamily: "Georgia, 'Times New Roman', serif",
     fontSize: "28px",
     fontWeight: 700,
@@ -146,20 +147,20 @@ export const brandStyles = {
     margin: "0 0 16px 0",
   } as React.CSSProperties,
   headingSecondary: {
-    color: "#0F2A44",
+    color: "#15120F",
     fontFamily: "Georgia, 'Times New Roman', serif",
     fontSize: "20px",
     fontWeight: 700,
     margin: "0 0 12px 0",
   } as React.CSSProperties,
   paragraph: {
-    color: "#1B314B",
+    color: "#1A1410",
     fontSize: "16px",
     lineHeight: 1.6,
     margin: "0 0 16px 0",
   } as React.CSSProperties,
   muted: {
-    color: "#5a6b7d",
+    color: "#5a5348",
     fontSize: "14px",
     lineHeight: 1.5,
     margin: "0 0 12px 0",
@@ -171,15 +172,27 @@ export const brandStyles = {
     borderRadius: "8px",
     padding: "16px 20px",
     margin: "20px 0",
-    color: "#0F2A44",
+    color: "#15120F",
     fontSize: "15px",
     lineHeight: 1.6,
+  } as React.CSSProperties,
+  promoBadge: {
+    display: "inline-block",
+    background:
+      "linear-gradient(135deg, #F6DFA8 0%, #ECC98B 45%, #A17938 100%)",
+    color: "#0A0A0B",
+    borderRadius: "999px",
+    padding: "6px 14px",
+    fontSize: "13px",
+    fontWeight: 700,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase" as const,
   } as React.CSSProperties,
   detailRow: {
     padding: "10px 0",
     borderBottom: "1px solid #EEE6D4",
     fontSize: "15px",
-    color: "#1B314B",
+    color: "#1A1410",
   } as React.CSSProperties,
 };
 
@@ -214,10 +227,10 @@ const container: React.CSSProperties = {
 };
 
 const header: React.CSSProperties = {
-  padding: "32px 20px 20px 20px",
+  padding: "28px 20px 24px 20px",
   borderBottom: "1px solid #F0E9D6",
   textAlign: "center" as const,
-  backgroundColor: "#ffffff",
+  backgroundColor: "#0A0A0B",
 };
 
 const logo: React.CSSProperties = {
@@ -230,8 +243,8 @@ const tagline: React.CSSProperties = {
   fontFamily: "Georgia, 'Times New Roman', serif",
   fontSize: "13px",
   fontStyle: "italic",
-  color: "#A17938",
-  letterSpacing: "0.06em",
+  color: "#ECC98B",
+  letterSpacing: "0.12em",
   textTransform: "uppercase" as const,
 };
 
@@ -249,7 +262,8 @@ const divider: React.CSSProperties = {
 const footer: React.CSSProperties = {
   padding: "28px 24px 32px 24px",
   textAlign: "center" as const,
-  backgroundColor: "#FCFBF7",
+  backgroundColor: "#0A0A0B",
+  color: "#F6DFA8",
 };
 
 const brandName: React.CSSProperties = {
@@ -257,31 +271,31 @@ const brandName: React.CSSProperties = {
   fontFamily: "Georgia, 'Times New Roman', serif",
   fontSize: "16px",
   fontWeight: 700,
-  color: "#0F2A44",
-  letterSpacing: "0.02em",
+  color: "#ECC98B",
+  letterSpacing: "0.04em",
 };
 
 const footerText: React.CSSProperties = {
   margin: "0 0 14px 0",
   fontSize: "13px",
   lineHeight: 1.55,
-  color: "#5a6b7d",
+  color: "rgba(246, 223, 168, 0.8)",
 };
 
 const footerLinks: React.CSSProperties = {
   margin: "0 0 14px 0",
   fontSize: "12px",
-  color: "#8a96a3",
+  color: "rgba(246, 223, 168, 0.65)",
 };
 
 const copyright: React.CSSProperties = {
   margin: "8px 0 0 0",
   fontSize: "11px",
-  color: "#a5adb8",
+  color: "rgba(246, 223, 168, 0.55)",
 };
 
 const link: React.CSSProperties = {
-  color: "#A17938",
+  color: "#ECC98B",
   textDecoration: "none",
   fontWeight: 600,
 };
@@ -290,14 +304,15 @@ const button: React.CSSProperties = {
   background:
     "linear-gradient(135deg, #F6DFA8 0%, #ECC98B 45%, #A17938 100%)",
   borderRadius: "999px",
-  color: "#0F2A44",
-  fontSize: "16px",
+  color: "#0A0A0B",
+  fontSize: "15px",
   fontWeight: 700,
+  textTransform: "uppercase" as const,
   textDecoration: "none",
   textAlign: "center" as const,
   display: "inline-block",
   padding: "14px 36px",
   margin: "20px 0",
-  boxShadow: "0 6px 18px rgba(161, 121, 56, 0.35)",
-  letterSpacing: "0.02em",
+  boxShadow: "0 8px 20px rgba(161, 121, 56, 0.45)",
+  letterSpacing: "0.1em",
 };

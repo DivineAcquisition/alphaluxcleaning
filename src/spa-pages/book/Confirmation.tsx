@@ -29,6 +29,78 @@ export default function BookingConfirmation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
+  // Fire the confirmation/receipt email exactly once when both booking
+  // and customer are loaded. The edge function is idempotent via event_id.
+  useEffect(() => {
+    if (!booking || !customer?.email) return;
+    const storageKey = `alx:confirmation-email:${booking.id}`;
+    if (typeof window !== 'undefined' && window.sessionStorage?.getItem(storageKey)) {
+      return;
+    }
+
+    const servicePretty =
+      serviceTypeLabels[booking.service_type] ||
+      booking.offer_name ||
+      'Cleaning Service';
+
+    const servicePrice = Number(booking.est_price || 0);
+    const depositPaid = Number(booking.deposit_amount || 0);
+    const balance = Math.max(0, servicePrice - depositPaid);
+
+    const payload = {
+      template: 'booking_confirmed',
+      to: customer.email,
+      category: 'transactional' as const,
+      event_id: `booking_confirmed_${booking.id}`,
+      data: {
+        first_name: customer.first_name || '',
+        customer_name:
+          [customer.first_name, customer.last_name].filter(Boolean).join(' ') ||
+          customer.email,
+        booking_id: booking.id,
+        booking_short_id: booking.id.slice(0, 8).toUpperCase(),
+        service_type: servicePretty,
+        service_date: booking.service_date
+          ? new Date(booking.service_date).toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : 'To be scheduled',
+        time_window: booking.time_slot || 'To be scheduled',
+        address: [
+          customer.address_line1,
+          customer.address_line2,
+          [customer.city, customer.state, booking.zip_code]
+            .filter(Boolean)
+            .join(', '),
+        ]
+          .filter(Boolean)
+          .join(', '),
+        total_amount: servicePrice.toFixed(2),
+        deposit_paid: depositPaid.toFixed(2),
+        balance_due: balance.toFixed(2),
+        manage_url: `${window.location.origin}/order-status?booking=${booking.id}`,
+      },
+    };
+
+    supabase.functions
+      .invoke('send-email-system', { body: payload })
+      .then(({ error }) => {
+        if (error) {
+          console.warn('Confirmation email dispatch failed', error);
+          return;
+        }
+        try {
+          window.sessionStorage?.setItem(storageKey, '1');
+        } catch {
+          /* ignore storage errors */
+        }
+      })
+      .catch((err) => console.warn('Confirmation email dispatch error', err));
+  }, [booking, customer]);
+
   const fetchBookingDetails = async () => {
     try {
       const { data: bookingData, error: bookingError } = await supabase

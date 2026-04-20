@@ -193,11 +193,13 @@ serve(async (req) => {
     `;
 
     logStep("Sending admin notification email");
+    const adminInbox = Deno.env.get("ADMIN_BOOKINGS_EMAIL") || "bookings@alphaluxcleaning.com";
     const adminEmailResponse = await resend.emails.send({
       from: "AlphaLux Cleaning <bookings@info.alphaluxclean.com>",
-      to: ["bookings@alphaluxclean.com"], // Admin email
+      to: [adminInbox],
       subject: `🔔 NEW BOOKING: ${serviceTypeLabels[booking.service_type]} - ${formattedDate}`,
       html: adminEmailHtml,
+      replyTo: Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com",
     });
 
     logStep("Admin email sent", { messageId: adminEmailResponse.data?.id });

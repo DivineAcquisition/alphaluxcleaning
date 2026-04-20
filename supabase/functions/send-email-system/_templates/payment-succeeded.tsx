@@ -38,7 +38,7 @@ export const PaymentSucceededEmail = ({
     </Text>
 
     <Section style={paymentSection}>
-      <Text style={paymentTitle}>✅ Payment Summary</Text>
+      <Text style={paymentTitle}>PAYMENT RECEIPT</Text>
       <Text style={amountText}>${amount}</Text>
       <Text style={paymentSubtext}>
         Processed successfully • {new Date().toLocaleDateString()}
@@ -113,31 +113,33 @@ const text = {
 };
 
 const paymentSection = {
-  backgroundColor: "#e8f5e8",
+  backgroundColor: "#0A0A0B",
   padding: "32px",
-  borderRadius: "8px",
+  borderRadius: "12px",
   textAlign: "center" as const,
-  border: "2px solid #4caf50",
+  border: "1px solid #A17938",
   margin: "24px 0",
 };
 
 const paymentTitle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#1A1A1A",
+  fontSize: "12px",
+  fontWeight: 800,
+  color: "#ECC98B",
+  letterSpacing: "0.25em",
   margin: "0 0 16px 0",
 };
 
 const amountText = {
-  fontSize: "36px",
+  fontSize: "40px",
   fontWeight: "bold",
-  color: "#4caf50",
+  color: "#ECC98B",
+  fontFamily: "Georgia, 'Times New Roman', serif",
   margin: "0 0 8px 0",
 };
 
 const paymentSubtext = {
-  fontSize: "14px",
-  color: "#666",
+  fontSize: "13px",
+  color: "rgba(246, 223, 168, 0.7)",
   margin: "0",
 };
 
@@ -171,7 +173,7 @@ const referralBox = {
 
 const referralCodeTitle = {
   fontSize: "14px",
-  color: "#666",
+  color: "#5a5348",
   margin: "0 0 8px 0",
 };
 
@@ -191,7 +193,7 @@ const buttonRow = {
 };
 
 const referralButton = {
-  backgroundColor: "#4caf50",
+  backgroundColor: "#A17938",
   margin: "8px",
 };
 

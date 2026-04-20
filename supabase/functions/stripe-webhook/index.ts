@@ -178,7 +178,7 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     await create90DaySubscription(booking, paymentIntent, supabaseClient, stripe);
   }
 
-  // Send confirmation email
+  // Send confirmation email (branded AlphaLux template)
   try {
     await supabaseClient.functions.invoke('send-booking-confirmation', {
       body: { bookingId: booking.id }
@@ -186,6 +186,51 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     logStep("Confirmation email sent", { bookingId: booking.id });
   } catch (emailError) {
     logStep("Failed to send confirmation email", { error: emailError.message });
+  }
+
+  // Also dispatch a branded payment receipt via the unified email system.
+  // This is idempotent: send-email-system short-circuits on duplicate event_id.
+  try {
+    const { data: customerRow } = await supabaseClient
+      .from('customers')
+      .select('email, first_name, last_name, referral_code')
+      .eq('id', booking.customer_id)
+      .single();
+
+    if (customerRow?.email) {
+      const amountCents = paymentIntent.amount_received || paymentIntent.amount || 0;
+      const amountDollars = (amountCents / 100).toFixed(2);
+      const appUrl = Deno.env.get("APP_URL") || "https://alphaluxcleaning.com";
+
+      await supabaseClient.functions.invoke('send-email-system', {
+        body: {
+          template: 'payment_succeeded',
+          to: customerRow.email,
+          category: 'transactional',
+          event_id: `payment_succeeded_${paymentIntent.id}`,
+          data: {
+            first_name: customerRow.first_name || 'there',
+            amount: amountDollars,
+            service_type: booking.service_type || 'Cleaning Service',
+            service_date: booking.service_date
+              ? new Date(booking.service_date).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
+              : 'To be scheduled',
+            receipt_link: `${appUrl}/order-status?booking=${booking.id}`,
+            referral_code: customerRow.referral_code || '',
+            referral_link: `${appUrl}/referrals`,
+            app_url: appUrl,
+          },
+        },
+      });
+      logStep("Payment receipt email dispatched", { bookingId: booking.id });
+    }
+  } catch (receiptError) {
+    logStep("Failed to send payment receipt", { error: (receiptError as Error).message });
   }
 
   // Trigger balance invoice if there's a remaining balance and one hasn't been created yet

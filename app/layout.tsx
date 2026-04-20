@@ -8,7 +8,12 @@ export const metadata: Metadata = {
     "AlphaLux Cleaning — premium residential & commercial cleaning in Long Island, NY, New Jersey, Texas and California. Eco-friendly, insured, 5-star rated.",
   authors: [{ name: "AlphaLux Cleaning" }],
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/brand/favicon.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+    shortcut: "/brand/favicon.png",
   },
   openGraph: {
     type: "website",
@@ -34,7 +39,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0F2A44",
+  themeColor: "#0A0A0B",
 };
 
 export default function RootLayout({
