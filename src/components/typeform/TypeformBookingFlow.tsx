@@ -231,7 +231,7 @@ export function TypeformBookingFlow({
         return;
       }
       if (!zipValidation?.isValid) {
-        toast.error('Please enter a valid ZIP code in TX, CA, or NY');
+        toast.error('Please enter a valid ZIP code in NY, or NY');
         return;
       }
     }
@@ -828,7 +828,7 @@ export function TypeformBookingFlow({
                 <Input id="city" value={bookingData.address.city} onChange={e => updateField('address', {
                 ...bookingData.address,
                 city: e.target.value
-              })} placeholder="Austin" className="mt-2" />
+              })} placeholder="New York" className="mt-2" />
               </div>
               <div>
                 <Label htmlFor="zipCode">ZIP Code</Label>

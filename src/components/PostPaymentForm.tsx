@@ -440,7 +440,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
-                  placeholder="San Francisco"
+                  placeholder="New York"
                   className="text-sm sm:text-base"
                   required
                 />
@@ -454,7 +454,7 @@ export function PostPaymentForm({ sessionId, onComplete }: PostPaymentFormProps)
                   id="state"
                   value={formData.state}
                   onChange={(e) => handleInputChange("state", e.target.value)}
-                  placeholder="CA"
+                  placeholder="NY"
                   className="text-sm sm:text-base"
                 />
               </div>

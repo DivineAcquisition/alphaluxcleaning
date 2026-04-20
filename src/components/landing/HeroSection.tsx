@@ -66,7 +66,7 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
           {/* Subheadline */}
           <p className="text-base sm:text-lg lg:text-xl text-alx-gold-pale/85 mb-6 lg:mb-8 max-w-3xl mx-auto leading-relaxed">
             Premium residential & commercial cleaning across Long Island, NY,
-            New Jersey, Texas and California — eco-friendly, insured, and built
+            New Jersey, New York — eco-friendly, insured, and built
             around you. New customers unlock{" "}
             <span className="text-alx-gold-light font-semibold">
               {NEW_CUSTOMER_PROMO_PERCENT}% off
@@ -139,7 +139,7 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
               { icon: Shield, label: "Bonded & Insured" },
               { icon: Award, label: "Eco-Friendly Clean" },
               { icon: Clock, label: "Same-Day Available" },
-              { icon: MapPin, label: "NY • NJ • TX • CA" },
+              { icon: MapPin, label: "NY • NJ" },
             ].map(({ icon: Icon, label }) => (
               <div
                 key={label}
@@ -159,7 +159,7 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
           </div>
 
           <p className="text-sm text-alx-gold-pale/70 mt-6">
-            Trusted by 1,000+ homeowners & businesses across NY, NJ, TX and CA
+            Trusted by 1,000+ homeowners & businesses across NY and NJ
           </p>
         </div>
       </div>

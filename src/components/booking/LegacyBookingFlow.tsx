@@ -348,7 +348,7 @@ export function LegacyBookingFlow() {
   const contactRef = useRef<HTMLDivElement>(null);
   
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({
-    address: { street: '', city: '', state: 'CA', zipCode: '' }
+    address: { street: '', city: '', state: 'NY', zipCode: '' }
   });
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [zipCodeValid, setZipCodeValid] = useState(false);
@@ -381,7 +381,7 @@ export function LegacyBookingFlow() {
     }, delay);
   };
 
-  // Validate ZIP code using Texas and California service areas
+  // Validate ZIP code using New York service areas
   const validateZipCode = (zipCode: string) => {
     const validation = validateServiceAreaZipCode(zipCode, bookingData.address.state);
     return validation.isValid;
@@ -782,7 +782,7 @@ export function LegacyBookingFlow() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <p className="text-muted-foreground">
-                    We provide cleaning services throughout Cali & Texas. Enter your ZIP code to get started.
+                    We provide cleaning services throughout New York State. Enter your ZIP code to get started.
                   </p>
                   <div className="flex gap-3">
                     <Input
@@ -808,7 +808,7 @@ export function LegacyBookingFlow() {
                       {bookingData.serviceZipCode && bookingData.serviceZipCode.startsWith('7') && (
                         <div className="bg-muted/50 p-3 rounded-lg">
                           <p className="text-sm text-muted-foreground mb-2">
-                            We're expanding throughout Texas! Join our waitlist to be notified when we reach your area:
+                            We're expanding across New York State! Join our waitlist to be notified when we reach your area:
                           </p>
                           <Button 
                             variant="outline" 
@@ -1480,7 +1480,7 @@ export function LegacyBookingFlow() {
                     <div className="space-y-2">
                       <Label htmlFor="state" className="text-sm font-medium">State</Label>
                       <Select 
-                        value={bookingData.address?.state || 'CA'} 
+                        value={bookingData.address?.state || 'NY'} 
                         onValueChange={(value) => updateBookingData({ 
                           address: { ...bookingData.address, state: value } 
                         })}
@@ -1489,8 +1489,7 @@ export function LegacyBookingFlow() {
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="CA">California</SelectItem>
-                          <SelectItem value="TX">Texas</SelectItem>
+                          <SelectItem value="NY">New York</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -181,7 +181,7 @@ export const useBookingWebhook = () => {
           phone: data.customerInfo?.phone || data.contactNumber || '',
           address: data.address?.street || data.customerInfo?.address || '',
           city: data.address?.city || data.customerInfo?.city || '',
-          state: data.address?.state || data.customerInfo?.state || 'TX',
+          state: data.address?.state || data.customerInfo?.state || 'NY',
           zipCode: data.address?.zipCode || data.customerInfo?.zipCode || ''
         },
         {
@@ -272,7 +272,7 @@ export const useBookingWebhook = () => {
           phone: data.customerInfo?.phone || data.contactNumber || '',
           address: data.address?.street || data.customerInfo?.address || '',
           city: data.address?.city || data.customerInfo?.city || '',
-          state: data.address?.state || data.customerInfo?.state || 'TX',
+          state: data.address?.state || data.customerInfo?.state || 'NY',
           zipCode: data.address?.zipCode || data.customerInfo?.zipCode || ''
         },
         
@@ -336,7 +336,7 @@ export const useBookingWebhook = () => {
           phone: data.customerInfo?.phone || data.contactNumber || '',
           street_address: data.address?.street || data.customerInfo?.address || '',
           city: data.address?.city || data.customerInfo?.city || '',
-          state: data.address?.state || data.customerInfo?.state || 'TX',
+          state: data.address?.state || data.customerInfo?.state || 'NY',
           zip_code: data.address?.zipCode || data.customerInfo?.zipCode || '',
           square_footage: data.squareFootage || null,
           bedrooms: data.bedrooms || null,

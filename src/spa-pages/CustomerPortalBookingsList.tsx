@@ -44,7 +44,7 @@ export default function CustomerPortalBookingsList() {
             service_type: 'Deep Cleaning',
             scheduled_date: '2024-01-15',
             scheduled_time: '10:00 AM',
-            address: '123 Main St, San Francisco, CA',
+            address: '123 Main St, New York, NY',
             status: 'scheduled',
             total_amount: 180,
             payment_status: 'paid'
@@ -54,7 +54,7 @@ export default function CustomerPortalBookingsList() {
             service_type: 'Regular Cleaning',
             scheduled_date: '2023-12-28',
             scheduled_time: '2:00 PM',
-            address: '123 Main St, San Francisco, CA',
+            address: '123 Main St, New York, NY',
             status: 'completed',
             total_amount: 120,
             payment_status: 'paid'
@@ -64,7 +64,7 @@ export default function CustomerPortalBookingsList() {
             service_type: 'Move-out Cleaning',
             scheduled_date: '2024-02-01',
             scheduled_time: '9:00 AM',
-            address: '456 Oak Ave, San Francisco, CA',
+            address: '456 Oak Ave, Brooklyn, NY',
             status: 'confirmed',
             total_amount: 250,
             payment_status: 'deposit_paid'

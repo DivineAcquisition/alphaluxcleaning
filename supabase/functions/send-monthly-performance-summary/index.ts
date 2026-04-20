@@ -141,7 +141,7 @@ const generateMonthlyPerformanceSummaryHtml = ({
               <a href="https://app.alphaluxclean.com" style="color: #666666; text-decoration: underline;">
                 AlphaLux Cleaning
               </a><br>
-              Premium cleaning services in Texas and California
+              Premium cleaning services in New York
             </p>
             <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
               <a href="tel:+15551234567" style="color: #666666; text-decoration: underline;">

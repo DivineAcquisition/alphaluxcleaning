@@ -332,7 +332,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                     </Label>
                     <Input
                       id="city"
-                      placeholder="San Francisco"
+                      placeholder="New York"
                       value={bookingData.address.city}
                       onChange={(e) => handleAddressChange('city', e.target.value)}
                       className="border-border focus:border-primary"
@@ -346,7 +346,7 @@ export function BookingDetailsPage({ bookingData, updateBookingData, onNext, onB
                       onValueChange={(value) => handleAddressChange('state', value)}
                     >
                       <SelectTrigger className="min-h-[48px]">
-                        <SelectValue placeholder="CA" />
+                        <SelectValue placeholder="NY" />
                       </SelectTrigger>
                       <SelectContent>
                         {US_STATES.map(state => (

@@ -62,7 +62,7 @@ function renderBrandedAuthEmail({
               <div style="font-family:Georgia,serif;font-weight:700;color:#0F2A44;margin-bottom:6px;">AlphaLux Cleaning</div>
               <div style="font-size:12px;color:#5a6b7d;line-height:1.55;">
                 Premium Residential & Commercial Cleaning<br/>
-                Long Island, NY • New Jersey • Texas • California
+                Long Island, NY • New Jersey
               </div>
               <div style="font-size:11px;color:#a5adb8;margin-top:10px;">© ${new Date().getFullYear()} AlphaLux Cleaning. All rights reserved.</div>
             </td>

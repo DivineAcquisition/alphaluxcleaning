@@ -56,7 +56,7 @@ export default function CustomerPortalHome() {
           service_date: '2024-01-15',
           service_time: '10:00 AM',
           status: 'confirmed',
-          service_address: '123 Main St, San Francisco, CA',
+          service_address: '123 Main St, New York, NY',
           payment_status: 'deposit_paid',
           price_calc_meta: { total: 120, deposit: 60 }
         });

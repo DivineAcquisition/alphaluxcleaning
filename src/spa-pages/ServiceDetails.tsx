@@ -74,7 +74,7 @@ const ServiceDetails = () => {
             customerEmail: "admin@alphaluxclean.com",
             customerPhone: "(857) 754-4557",
             streetAddress: "123 Admin Street",
-            city: "San Francisco",
+            city: "New York",
             state: "CA",
             zipCode: "94102",
             flooringTypes: ["hardwood", "carpet"],
@@ -487,7 +487,7 @@ const ServiceDetails = () => {
                           id="city"
                           value={formData.city}
                           onChange={(e) => handleInputChange("city", e.target.value)}
-                          placeholder="San Francisco"
+                          placeholder="New York"
                           required
                           className="h-12 text-base"
                         />

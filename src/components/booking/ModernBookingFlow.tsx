@@ -158,13 +158,9 @@ export function ModernBookingFlow({
     });
   };
 
-  // Helper function to get a representative zip code for a state
-  const getZipCodeFromState = (stateCode: string): string => {
-    switch (stateCode) {
-      case 'TX': return '77001'; // Houston area
-      case 'CA': return '90210'; // LA area
-      default: return '77001';
-    }
+  // Helper function to get a representative NY ZIP code.
+  const getZipCodeFromState = (_stateCode: string): string => {
+    return '10001'; // NYC area — AlphaLux Cleaning is NY-only
   };
 
   const canProceed = () => {

@@ -98,7 +98,7 @@ export const ServiceDetailsDialog = ({
 
           <div className="pt-4 border-t text-center">
             <p className="text-sm text-muted-foreground">alphaluxclean | (281) 809-9901</p>
-            <p className="text-sm text-muted-foreground">Cali & Texas | support@alphaluxcleaning.com</p>
+            <p className="text-sm text-muted-foreground">New York State | support@alphaluxcleaning.com</p>
           </div>
         </div>
       </DialogContent>

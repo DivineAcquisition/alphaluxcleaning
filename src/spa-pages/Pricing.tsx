@@ -11,7 +11,8 @@ import { Sparkles, Check, Phone, ArrowRight, Home, Droplets, Zap } from 'lucide-
 import { STATE_CONFIGS, type StateCode, calculateRecurringPricing, formatPrice } from '@/lib/state-pricing-system';
 
 export default function Pricing() {
-  const [selectedState, setSelectedState] = useState<StateCode>('TX');
+  // AlphaLux Cleaning only operates in New York State.
+  const [selectedState, setSelectedState] = useState<StateCode>('NY');
   const navigate = useNavigate();
   
   const stateConfig = STATE_CONFIGS.find(s => s.code === selectedState);
@@ -27,7 +28,7 @@ export default function Pricing() {
         <title>Transparent Cleaning Pricing | Up to 20% OFF First Cleaning</title>
         <meta 
           name="description" 
-          content="View our transparent pricing for house cleaning services. New customers get up to 20% off their first cleaning. Serving TX, CA, and NY." 
+          content="View our transparent pricing for house cleaning services across New York State. New customers save 50% on their first cleaning with code ALC2026." 
         />
       </Helmet>
 
@@ -84,24 +85,15 @@ export default function Pricing() {
           </div>
         </section>
 
-        {/* State Selector */}
+        {/* Service Area */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              Select Your Location
+              Serving New York State
             </h2>
-            <div className="flex gap-2">
-              {STATE_CONFIGS.map((state) => (
-                <Button
-                  key={state.code}
-                  variant={selectedState === state.code ? 'default' : 'outline'}
-                  onClick={() => setSelectedState(state.code)}
-                  className="min-w-[80px]"
-                >
-                  {state.code}
-                </Button>
-              ))}
-            </div>
+            <Badge variant="outline" className="px-4 py-2 text-sm font-semibold">
+              NYC • Long Island • Hudson Valley • Upstate
+            </Badge>
           </div>
         </section>
 

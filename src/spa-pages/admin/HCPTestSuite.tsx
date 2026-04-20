@@ -106,7 +106,7 @@ export default function HCPTestSuite() {
         phone: '(857) 754-4557',
         address: '123 Test Street',
         address_line1: '123 Test Street',
-        city: 'San Francisco',
+        city: 'New York',
         state: 'CA',
         postal_code: '94102'
       })

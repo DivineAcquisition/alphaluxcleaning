@@ -276,7 +276,7 @@ export function useSubcontractorEarnings() {
               job_details: {
                 service_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
                 customer_name: 'John Doe',
-                service_address: '123 Main St, San Francisco, CA'
+                service_address: '123 Main St, New York, NY'
               }
             }
           ]

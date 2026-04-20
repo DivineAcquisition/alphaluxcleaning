@@ -164,7 +164,7 @@ const initialBookingData: BookingData = {
   address: {
     street: '',
     city: '',
-    state: 'TX',
+    state: 'NY',
     zipCode: ''
   },
   bedrooms: '',
@@ -318,7 +318,7 @@ export function SinglePageBooking() {
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-muted-foreground">
-                    We serve Cali & Texas.
+                    We serve New York State.
                   </p>
                   <div className="flex gap-3">
                     <Input

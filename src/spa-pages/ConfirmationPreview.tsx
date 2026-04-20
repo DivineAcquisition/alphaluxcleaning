@@ -29,7 +29,7 @@ export default function ConfirmationPreview() {
       serviceAddress: {
         street: '123 Preview Street',
         apartment: 'Unit 2B',
-        city: 'San Francisco',
+        city: 'New York',
         state: 'CA',
         zipCode: '94105'
       },

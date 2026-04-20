@@ -68,7 +68,7 @@ export function SubcontractorUpdatesTest() {
           ...baseIds,
           subcontractor_id: mockSubcontractor.id,
           location: {
-            address: "1234 Main Street, San Francisco, CA 94102",
+            address: "1234 Main Street, New York, NY 10001",
             latitude: 37.7749,
             longitude: -122.4194
           },
@@ -103,7 +103,7 @@ export function SubcontractorUpdatesTest() {
           ...baseIds,
           subcontractor_id: mockSubcontractor.id,
           location: {
-            address: "1234 Main Street, San Francisco, CA 94102",
+            address: "1234 Main Street, New York, NY 10001",
             latitude: 37.7749,
             longitude: -122.4194
           },

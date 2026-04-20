@@ -47,7 +47,7 @@ export function WebhookTestingInterface() {
       email: 'test@example.com',
       phone: '(857) 754-4557',
       address: '123 Test Street',
-      city: 'San Francisco',
+      city: 'New York',
       state: 'CA',
       zipCode: '94102'
     },

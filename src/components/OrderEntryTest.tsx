@@ -82,8 +82,8 @@ export function OrderEntryTest() {
 
     const baseAddress = {
       street: "123 Oak Street",
-      city: "San Francisco",
-      state: "CA",
+      city: "New York",
+      state: "NY",
       zip_code: "94102",
       country: "USA"
     };
@@ -202,7 +202,7 @@ export function OrderEntryTest() {
       ? (subtotal_before_discount * scenarioData.discount_percentage / 100)
       : scenarioData.discount_amount_cash;
     const discounted_subtotal = subtotal_before_discount - discount_amount_cash;
-    const tax_rate = 8.75; // California tax rate
+    const tax_rate = 8.75; // New York tax rate
     const tax_amount = discounted_subtotal * (tax_rate / 100);
     const final_cost = discounted_subtotal + tax_amount;
     const total_savings = discount_amount_cash;
@@ -452,8 +452,8 @@ export function OrderEntryTest() {
       customer_email: "sarah.johnson@example.com",
       customer_phone: "(281) 809-9901",
       street_address: "123 Oak Street",
-      city: "San Francisco",
-      state: "CA",
+      city: "New York",
+      state: "NY",
       zip_code: "94102",
       country: "USA",
       service_type: orderScenario.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),

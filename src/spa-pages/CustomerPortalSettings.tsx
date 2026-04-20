@@ -44,14 +44,14 @@ export default function CustomerPortalSettings() {
     {
       id: '1',
       device: 'iPhone 12 Pro',
-      location: 'San Francisco, CA',
+      location: 'New York, NY',
       lastActive: '2 minutes ago',
       current: true
     },
     {
       id: '2',
       device: 'MacBook Pro',
-      location: 'San Francisco, CA', 
+      location: 'New York, NY', 
       lastActive: '1 hour ago',
       current: false
     }
@@ -75,7 +75,7 @@ export default function CustomerPortalSettings() {
           email: 'john.smith@example.com',
           phone: '(857) 754-4557',
           address: '123 Main Street',
-          city: 'San Francisco',
+          city: 'New York',
           state: 'CA',
           zipCode: '94102'
         });

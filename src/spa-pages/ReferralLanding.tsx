@@ -198,8 +198,8 @@ export const ReferralLanding: React.FC = () => {
               <span className="ml-2 text-lg font-semibold">4.9/5</span>
             </div>
             <blockquote className="text-center italic text-lg mb-2">
-              "Best cleaning service in Dallas! They're always on time and do an 
-              incredible job. My house has never looked better."
+              "Best cleaning service in New York! They're always on time and do an
+              incredible job. My home has never looked better."
             </blockquote>
             <p className="text-center text-muted-foreground">- Sarah M., Verified Customer</p>
           </CardContent>

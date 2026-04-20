@@ -42,7 +42,7 @@ const demoJobs: Job[] = [
     job_date: new Date().toISOString().split('T')[0], // Today
     time_window: 'morning',
     duration_est_mins: 120,
-    address_json: { address: '123 Main St, San Francisco, CA 94102' },
+    address_json: { address: '123 Main St, New York, NY 10001' },
     special_instructions: 'Focus on kitchen and bathrooms',
     price_cents: 15000,
     status: 'unassigned',
@@ -65,7 +65,7 @@ const demoJobs: Job[] = [
     job_date: new Date().toISOString().split('T')[0], // Today
     time_window: 'afternoon',
     duration_est_mins: 90,
-    address_json: { address: '456 Oak Ave, San Francisco, CA 94103' },
+    address_json: { address: '456 Oak Ave, Brooklyn, NY 11201' },
     price_cents: 12000,
     status: 'offered',
     assigned_cleaner_id: 'cleaner-1',
@@ -95,7 +95,7 @@ const demoJobs: Job[] = [
     job_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
     time_window: 'morning',
     duration_est_mins: 180,
-    address_json: { address: '789 Pine St, San Francisco, CA 94104' },
+    address_json: { address: '789 Pine St, Queens, NY 11101' },
     special_instructions: 'Empty apartment, need deep clean for security deposit',
     price_cents: 25000,
     status: 'accepted',
@@ -126,7 +126,7 @@ const demoJobs: Job[] = [
     job_date: new Date().toISOString().split('T')[0], // Today
     time_window: 'evening',
     duration_est_mins: 90,
-    address_json: { address: '321 Elm St, San Francisco, CA 94105' },
+    address_json: { address: '321 Elm St, Long Island, NY 11501' },
     price_cents: 11000,
     status: 'in_progress',
     assigned_cleaner_id: 'cleaner-3',
@@ -156,7 +156,7 @@ const demoJobs: Job[] = [
     job_date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
     time_window: 'morning',
     duration_est_mins: 150,
-    address_json: { address: '654 Maple Dr, San Francisco, CA 94106' },
+    address_json: { address: '654 Maple Dr, Bronx, NY 10451' },
     price_cents: 18000,
     status: 'completed',
     assigned_cleaner_id: 'cleaner-1',

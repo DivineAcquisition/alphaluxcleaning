@@ -331,7 +331,7 @@ export default function SubcontractorApplication() {
                     id="city"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                    placeholder="San Francisco"
+                    placeholder="New York"
                   />
                 </div>
                 <div className="space-y-2">

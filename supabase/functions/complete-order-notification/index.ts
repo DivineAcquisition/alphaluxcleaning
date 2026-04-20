@@ -151,7 +151,7 @@ serve(async (req) => {
           customer_phone: '(415) 555-0123',
           address: {
             street_address: '123 Oak Street',
-            city: 'San Francisco',
+            city: 'New York',
             state: 'CA',
             zip_code: '94102',
             country: 'USA'

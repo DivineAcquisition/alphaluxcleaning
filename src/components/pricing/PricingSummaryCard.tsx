@@ -141,12 +141,11 @@ export function PricingSummaryCard({
       </CardHeader>
       <CardContent className="pt-6 space-y-3">
 
-        {/* Regional Adjustment Notice */}
-        {stateCode && stateCode !== 'TX' && (
+        {/* Service Area Notice */}
+        {stateCode === 'NY' && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
             <p className="text-xs text-blue-700 font-medium">
-              {stateCode === 'CA' && '📍 California pricing: Base rate +10%'}
-              {stateCode === 'NY' && '📍 New York pricing: Base rate +15%'}
+              📍 New York pricing applies for all service areas across New York State.
             </p>
           </div>
         )}

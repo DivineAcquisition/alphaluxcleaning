@@ -41,8 +41,8 @@ export function DemoDataHelper({ onFill, fields }: DemoDataHelperProps) {
     if (fields.includes('address')) {
       demoData.address1 = '123 Main Street';
       demoData.address2 = 'Suite 100';
-      demoData.city = 'Dallas';
-      demoData.state = 'TX';
+      demoData.city = 'New York';
+      demoData.state = 'NY';
       demoData.zip = '75201';
     }
     

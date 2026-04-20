@@ -71,7 +71,7 @@ export const EmailBase = ({
             <Text style={footerText}>
               Premium Residential & Commercial Cleaning
               <br />
-              Serving Long Island, NY • New Jersey • Texas • California
+              Serving Long Island, NY • New Jersey
               <br />
               Phone:{" "}
               <Link href="tel:+18577544557" style={link}>

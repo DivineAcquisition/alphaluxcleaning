@@ -117,7 +117,7 @@ export const BulkZapierSender = () => {
     // Parse address
     const addressParts = booking.address.split(', ');
     const [line1, city, stateZip] = addressParts;
-    const [state] = stateZip?.split(' ') || ['TX'];
+    const [state] = stateZip?.split(' ') || ['NY'];
     
     // Extract square footage from sqft_or_bedrooms field
     const sqftMatch = booking.sqft_or_bedrooms.match(/(\d+)/);
@@ -135,8 +135,8 @@ export const BulkZapierSender = () => {
         phone: booking.customer_phone,
         address: {
           line1: line1 || booking.address,
-          city: city || 'Houston',
-          state: state || 'TX',
+          city: city || 'New York',
+          state: state || 'NY',
           postalCode: booking.zip_code,
         }
       },
