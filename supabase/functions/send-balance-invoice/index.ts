@@ -27,9 +27,9 @@ serve(async (req) => {
 
     logStep("Processing invoice for booking", { bookingId, daysUntilDue });
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
+    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
     if (!stripeKey) {
-      throw new Error("Missing STRIPE_SECRET_KEY_ALPHALUX");
+      throw new Error("Stripe secret key is not configured (set STRIPE_SECRET_KEY in Supabase secrets)");
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });

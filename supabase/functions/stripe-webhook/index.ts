@@ -20,7 +20,7 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
+    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_ALPHALUX");
     
     if (!stripeKey) {

@@ -26,8 +26,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY_ALPHALUX is not set");
+    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
+    if (!stripeKey) throw new Error("Stripe secret key is not configured (set STRIPE_SECRET_KEY in Supabase secrets)");
     logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");

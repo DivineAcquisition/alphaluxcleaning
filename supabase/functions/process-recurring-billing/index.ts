@@ -20,8 +20,8 @@ serve(async (req) => {
   try {
     logStep("Recurring billing process started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY_ALPHALUX is not set");
+    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
+    if (!stripeKey) throw new Error("Stripe secret key is not configured (set STRIPE_SECRET_KEY in Supabase secrets)");
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

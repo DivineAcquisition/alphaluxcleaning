@@ -3,11 +3,9 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Sparkles, Loader2, TestTube } from 'lucide-react';
-import { useTestMode } from '@/hooks/useTestMode';
+import { Check, Loader2 } from 'lucide-react';
 
 export default function BookingConfirmation() {
   const params = useParams();
@@ -18,7 +16,6 @@ export default function BookingConfirmation() {
   const [booking, setBooking] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isTestMode } = useTestMode();
 
   useEffect(() => {
     if (bookingId) {
@@ -185,15 +182,6 @@ export default function BookingConfirmation() {
     <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-background">
       <Card className="max-w-2xl w-full">
         <CardContent className="pt-8">
-          {isTestMode && (
-            <Alert className="mb-4 border-orange-500 bg-orange-50 dark:bg-orange-950/30">
-              <TestTube className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Demo Mode Active</strong> - This was a test booking. No real charges were made.
-              </AlertDescription>
-            </Alert>
-          )}
-          
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="h-8 w-8 text-success" />
@@ -350,16 +338,6 @@ export default function BookingConfirmation() {
               )}
             </ul>
           </div>
-          
-          {customer?.referral_code && (
-            <Alert className="mt-6">
-              <Sparkles className="h-4 w-4" />
-              <AlertTitle>Earn $50 for Every Friend</AlertTitle>
-              <AlertDescription>
-                Share your referral code <strong>{customer.referral_code}</strong> and get $50 credit when friends book!
-              </AlertDescription>
-            </Alert>
-          )}
           
           <p className="text-sm text-center text-muted-foreground mt-6">
             Need help? Call <strong>(857) 754-4557</strong> or reply to your confirmation email

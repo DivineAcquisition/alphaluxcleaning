@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "npm:stripe@14.0.0";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX") as string, {
+const stripe = new Stripe((Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX")) as string, {
   apiVersion: "2023-10-16"
 });
 
