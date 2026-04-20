@@ -1,0 +1,46 @@
+flowchart TD
+    Start([User lands on /book]) --> Zip[/book/zip<br/>ZIP + Lead Capture/]
+    Zip -->|validate-zip OK| ZipForm[Capture name, email, phone]
+    ZipForm -->|emit-lead-webhook| Sqft[/book/sqft<br/>Home Size/]
+    Sqft --> Offer[/book/offer<br/>Offer Cards/]
+
+    Offer --> OfferA[Tester Deep Clean]
+    Offer --> OfferB[Deep + 90-Day Plan<br/>Bundle Reward]
+    Offer --> OfferC[Standard Deep Clean]
+
+    OfferA --> Checkout[/book/checkout<br/>Stripe 25% Deposit/]
+    OfferB --> Checkout
+    OfferC --> Checkout
+
+    Checkout -->|create-payment-intent| Stripe{{Stripe Payment Element}}
+    Stripe -->|3DS / confirm| PayResult{Payment OK?}
+    PayResult -->|No| Checkout
+    PayResult -->|Yes| Race{Confirmation Race}
+
+    Race -->|server-side| Webhook[stripe-webhook<br/>payment_intent.succeeded]
+    Race -->|client-side| ClientConfirm[confirm-booking-payment]
+
+    Webhook --> Idempotent{stripe_balance_invoice_id<br/>already set?}
+    ClientConfirm --> Idempotent
+    Idempotent -->|No| BalanceInvoice[send-balance-invoice<br/>75% remaining]
+    Idempotent -->|Yes| SkipInvoice[Skip - already invoiced]
+
+    BalanceInvoice --> Details[/book/details<br/>Address + Schedule/]
+    SkipInvoice --> Details
+
+    Details --> Calendar[Closed Calendar Picker<br/>availability_schedule]
+    Calendar -->|save-booking-details| SlotCheck{Slot still open?}
+    SlotCheck -->|No| Details
+    SlotCheck -->|Yes| Webhook2[enhanced-booking-webhook-v2<br/>GHL + Zapier sync]
+
+    Webhook2 --> Confirmation[/book/confirmation<br/>Receipt + Reward/]
+
+    Schedule[/book/schedule<br/>legacy alias/] -.redirect.-> Details
+    Confirmation -.guard: missing address?.-> Details
+
+    classDef edge fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e
+    classDef page fill:#fef3c7,stroke:#b45309,color:#78350f
+    classDef decision fill:#fce7f3,stroke:#be185d,color:#831843
+    class Webhook,ClientConfirm,BalanceInvoice,Webhook2 edge
+    class Zip,Sqft,Offer,Checkout,Details,Confirmation,Schedule page
+    class PayResult,Race,Idempotent,SlotCheck decision
