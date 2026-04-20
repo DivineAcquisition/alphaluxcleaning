@@ -66,8 +66,12 @@ serve(async (req) => {
       );
     }
 
-    // Check Stripe configuration
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX");
+    // Check Stripe configuration - tolerate multiple env var names so the
+    // key can be rotated / renamed without re-deploying every function.
+    const stripeSecretKey =
+      Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX") ||
+      Deno.env.get("STRIPE_SECRET_KEY") ||
+      Deno.env.get("STRIPE_RESTRICTED_KEY_ALPHALUX");
     if (!stripeSecretKey) {
       logStep("Configuration error - missing Stripe key");
       return new Response(

@@ -2,7 +2,12 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 import { createClient } from '@supabase/supabase-js';
 
-// Dynamic Stripe loader that fetches publishable key from Supabase
+// Dynamic Stripe loader that fetches publishable key from Supabase.
+// A hard-coded fallback publishable key is safe to include in client code
+// (it is intentionally public) and lets the payment form initialize even if
+// the `get-stripe-config` edge function is unreachable.
+const FALLBACK_PUBLISHABLE_KEY =
+  'pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat';
 
 declare global {
   interface Window {
@@ -72,7 +77,17 @@ const createStripePromise = (): Promise<Stripe | null> => {
         // If no local key, fetch from Supabase
         if (!publishableKey || !isValidKey(publishableKey)) {
           console.log('⬇️ No valid local key, fetching from Supabase...');
-          publishableKey = await fetchStripeKey();
+          try {
+            publishableKey = await fetchStripeKey() || undefined;
+          } catch (err) {
+            console.warn('⚠️ fetchStripeKey threw, will fall back to bundled key', err);
+          }
+        }
+
+        // Final fallback – the publishable key is safe to ship to the client.
+        if (!publishableKey || !isValidKey(publishableKey)) {
+          console.warn('⚠️ No remote Stripe key available, using bundled fallback publishable key');
+          publishableKey = FALLBACK_PUBLISHABLE_KEY;
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {

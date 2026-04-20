@@ -11,16 +11,22 @@ serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Publishable keys are safe to expose publicly, so we bundle the current
+  // AlphaLux live key as a fallback. The environment variable takes
+  // precedence so the key can still be rotated via Supabase secrets.
+  const FALLBACK_PUBLISHABLE_KEY =
+    "pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat";
+
   try {
-    // Get Stripe publishable key from environment
-    const publishableKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY_ALPHALUX");
-    
+    const envKey = Deno.env.get("STRIPE_PUBLISHABLE_KEY_ALPHALUX");
+    const publishableKey = envKey || FALLBACK_PUBLISHABLE_KEY;
+
     if (!publishableKey) {
-      console.error("❌ STRIPE_PUBLISHABLE_KEY_ALPHALUX not configured");
+      console.error("❌ Stripe publishable key not configured");
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Stripe not configured",
-          publishableKey: null 
+          publishableKey: null,
         }),
         {
           status: 200,
@@ -32,7 +38,11 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log("✅ Stripe publishable key retrieved successfully");
+    console.log(
+      envKey
+        ? "✅ Stripe publishable key retrieved from environment"
+        : "✅ Stripe publishable key retrieved from bundled fallback"
+    );
     
     return new Response(
       JSON.stringify({ 

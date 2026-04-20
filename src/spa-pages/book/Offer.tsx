@@ -273,7 +273,7 @@ export default function BookingOffer() {
               'Kitchens, bathrooms, living areas & bedrooms',
               'Dusting, vacuuming & mopping',
               'All supplies & equipment included',
-              '48-hour re-clean guarantee',
+              'Secure payment via Stripe',
             ]}
             ctaLabel={`Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
             onSelect={() =>
@@ -305,7 +305,7 @@ export default function BookingOffer() {
               '40-point Deep Clean checklist',
               '2-person professional team',
               'Baseboards, inside appliances & detail work',
-              '48-hour re-clean guarantee',
+              'Secure payment via Stripe',
             ]}
             ctaLabel={`Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`}
             onSelect={() =>

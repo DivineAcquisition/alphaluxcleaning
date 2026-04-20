@@ -368,25 +368,6 @@ export default function BookingCheckout() {
       <BookingProgressBar currentStep={4} totalSteps={6} />
       
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* New Year Special Banner */}
-         <Card className="mb-6 border-primary/30 bg-primary/5 shadow-lg">
-          <div className="p-4 md:p-6">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-3 text-center md:text-left">
-              <Badge className="bg-primary text-primary-foreground text-sm md:text-base px-3 md:px-4 py-1.5 whitespace-nowrap font-bold">
-                ✨ New Customer Special
-              </Badge>
-              <div>
-                <h2 className="font-bold text-base md:text-lg text-foreground mb-1">
-                  20% Off Deep Clean + 10% Off Recurring Service
-                </h2>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  48-Hour Re-Clean Guarantee • Insured & Bonded
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Your Discount is Applied!
@@ -602,14 +583,10 @@ export default function BookingCheckout() {
           {/* Trust Badges */}
           <Card className="border-primary/20">
             <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center text-sm mb-4">
                 <div>
                   <Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
-                  <p className="font-medium">Secure Payment</p>
-                </div>
-                <div>
-                  <ShieldCheck className="h-6 w-6 mx-auto mb-2 text-primary" />
-                  <p className="font-medium">48-Hr Re-Clean</p>
+                  <p className="font-medium">Secure payment via Stripe</p>
                 </div>
                 <div>
                   <Lock className="h-6 w-6 mx-auto mb-2 text-primary" />

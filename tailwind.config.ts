@@ -18,46 +18,47 @@ export default {
     		}
     	},
     	extend: {
-    		fontFamily: {
-    			jakarta: [
-    				'Plus Jakarta Sans',
-    				'sans-serif'
-    			],
-    			inter: [
-    				'Inter',
-    				'sans-serif'
-    			],
-    			sans: [
-    				'Poppins',
-    				'ui-sans-serif',
-    				'system-ui',
-    				'sans-serif',
-    				'Apple Color Emoji',
-    				'Segoe UI Emoji',
-    				'Segoe UI Symbol',
-    				'Noto Color Emoji'
-    			],
-    			serif: [
-    				'Merriweather',
-    				'ui-serif',
-    				'Georgia',
-    				'Cambria',
-    				'Times New Roman',
-    				'Times',
-    				'serif'
-    			],
-    			mono: [
-    				'JetBrains Mono',
-    				'ui-monospace',
-    				'SFMono-Regular',
-    				'Menlo',
-    				'Monaco',
-    				'Consolas',
-    				'Liberation Mono',
-    				'Courier New',
-    				'monospace'
-    			]
-    		},
+    	fontFamily: {
+    		jakarta: [
+    			'Plus Jakarta Sans',
+    			'sans-serif'
+    		],
+    		inter: [
+    			'Plus Jakarta Sans',
+    			'sans-serif'
+    		],
+    		sans: [
+    			'Plus Jakarta Sans',
+    			'ui-sans-serif',
+    			'system-ui',
+    			'-apple-system',
+    			'Segoe UI',
+    			'sans-serif',
+    			'Apple Color Emoji',
+    			'Segoe UI Emoji',
+    			'Segoe UI Symbol',
+    			'Noto Color Emoji'
+    		],
+    		serif: [
+    			'Plus Jakarta Sans',
+    			'ui-serif',
+    			'Georgia',
+    			'Cambria',
+    			'Times New Roman',
+    			'Times',
+    			'serif'
+    		],
+    		mono: [
+    			'ui-monospace',
+    			'SFMono-Regular',
+    			'Menlo',
+    			'Monaco',
+    			'Consolas',
+    			'Liberation Mono',
+    			'Courier New',
+    			'monospace'
+    		]
+    	},
     		colors: {
     			border: 'hsl(var(--border))',
     			input: 'hsl(var(--input))',

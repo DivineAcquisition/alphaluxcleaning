@@ -3,11 +3,12 @@
  * Static pricing that doesn't vary by square footage - same price for all home sizes
  */
 
-// Static flat pricing - same for all home sizes
+// Static flat pricing - the "small home" baseline from the AlphaLux
+// pricing spreadsheet (2026-04-20 update).
 export const FLAT_PRICING = {
   regular: 200,
-  deep: 265,
-  moveInOut: 275
+  deep: 200,
+  moveInOut: 225,
 } as const;
 
 // Frequency multipliers for recurring services

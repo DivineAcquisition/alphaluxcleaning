@@ -168,7 +168,7 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
       colorBackground: 'hsl(0, 0%, 100%)',
       colorText: 'hsl(222, 84%, 5%)',
       colorDanger: 'hsl(0, 84%, 60%)',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily: 'Plus Jakarta Sans, system-ui, -apple-system, sans-serif',
       borderRadius: '8px',
     },
   };
