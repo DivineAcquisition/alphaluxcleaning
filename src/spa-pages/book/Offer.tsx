@@ -309,8 +309,6 @@ export default function BookingOffer() {
             timeSlot={scheduledTimeSlot}
             onDateChange={setScheduledDate}
             onTimeSlotChange={setScheduledTimeSlot}
-            days={14}
-            minLeadDays={1}
           />
         </Card>
 

@@ -1,55 +1,136 @@
 import { useMemo, useState } from 'react';
 import {
   CalendarDays,
+  Sunrise,
   Sun,
+  CloudSun,
   Sunset,
   Moon,
+  Star,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export type TimeSlotId = 'morning' | 'afternoon' | 'evening';
+/**
+ * Arrival window ids. Values match what we persist on the booking row
+ * (bookings.time_slot) and what /api/create-job converts to
+ * scheduled_start / scheduled_end for Housecall Pro.
+ *
+ * The "morning" / "afternoon" / "evening" ids are kept for backwards
+ * compatibility with existing bookings.
+ */
+export type TimeSlotId =
+  | 'early_morning'
+  | 'morning'
+  | 'late_morning'
+  | 'afternoon'
+  | 'late_afternoon'
+  | 'evening';
 
-export const TIME_SLOTS: Array<{
+export interface TimeSlotDefinition {
   id: TimeSlotId;
   label: string;
   window: string;
   helper: string;
+  /** Start hour (24h) used to derive the ISO schedule. */
+  startHour: number;
+  startMinute?: number;
+  /** End hour (24h) used to derive the ISO schedule. */
+  endHour: number;
+  endMinute?: number;
   icon: typeof Sun;
-}> = [
+}
+
+export const TIME_SLOTS: TimeSlotDefinition[] = [
+  {
+    id: 'early_morning',
+    label: 'Early Morning',
+    window: '7 AM – 9 AM',
+    helper: 'Beat the commute',
+    startHour: 7,
+    endHour: 9,
+    icon: Sunrise,
+  },
   {
     id: 'morning',
     label: 'Morning',
-    window: '8 AM – 11 AM',
+    window: '9 AM – 11 AM',
     helper: 'Start fresh, head out clean',
+    startHour: 9,
+    endHour: 11,
     icon: Sun,
+  },
+  {
+    id: 'late_morning',
+    label: 'Late Morning',
+    window: '11 AM – 1 PM',
+    helper: 'Wrap up before the lunch rush',
+    startHour: 11,
+    endHour: 13,
+    icon: CloudSun,
   },
   {
     id: 'afternoon',
     label: 'Afternoon',
-    window: '12 PM – 3 PM',
-    helper: 'Popular lunch-hour window',
+    window: '1 PM – 3 PM',
+    helper: 'Popular mid-afternoon window',
+    startHour: 13,
+    endHour: 15,
+    icon: Sunset,
+  },
+  {
+    id: 'late_afternoon',
+    label: 'Late Afternoon',
+    window: '3 PM – 5 PM',
+    helper: 'Home by the time you are',
+    startHour: 15,
+    endHour: 17,
     icon: Sunset,
   },
   {
     id: 'evening',
     label: 'Evening',
-    window: '3 PM – 6 PM',
-    helper: 'Home by the time you are',
+    window: '5 PM – 7 PM',
+    helper: 'Great for after-work resets',
+    startHour: 17,
+    endHour: 19,
     icon: Moon,
   },
 ];
+
+export const DEFAULT_MIN_LEAD_DAYS = 3;
+export const DEFAULT_WINDOW_DAYS = 21;
+
+/**
+ * Convert a YYYY-MM-DD date + a TimeSlotId into ISO-8601 start/end
+ * timestamps (used by /api/create-job → HCP). Exposed as a helper so
+ * the rest of the codebase doesn't hard-code hour offsets per slot.
+ */
+export function timeSlotToIsoWindow(
+  dateYmd: string,
+  slot: TimeSlotId,
+): { start: string; end: string } {
+  const def = TIME_SLOTS.find((s) => s.id === slot) ?? TIME_SLOTS[1];
+  const [y, m, d] = dateYmd.split('-').map(Number);
+  const start = new Date(y, (m || 1) - 1, d || 1, def.startHour, def.startMinute ?? 0, 0);
+  const end = new Date(y, (m || 1) - 1, d || 1, def.endHour, def.endMinute ?? 0, 0);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
 
 interface OfferDateTimePickerProps {
   date: string; // YYYY-MM-DD
   timeSlot: TimeSlotId | '';
   onDateChange: (date: string) => void;
   onTimeSlotChange: (slot: TimeSlotId) => void;
-  /** Days to show starting at today. Defaults to 14. */
+  /** Days to show in the window. Defaults to DEFAULT_WINDOW_DAYS. */
   days?: number;
-  /** Skip today (useful when next-day lead time is enforced). */
+  /**
+   * Earliest bookable day, counted as "today + N days". AlphaLux
+   * requires at least 3 days of lead time so the ops team can
+   * schedule a crew.
+   */
   minLeadDays?: number;
 }
 
@@ -80,36 +161,46 @@ function formatMonthRange(start: Date, days: number): string {
 
 /**
  * Weekly calendar chip picker (like Calendly / Novara's scheduler)
- * with a horizontally scrollable row of days and a 3-card time-block
+ * with a horizontally scrollable row of days and a 6-card time-block
  * selector underneath.
  *
- * - Renders a 14-day window by default.
- * - First paged view starts today (or today+`minLeadDays` if set).
- * - Weekends are allowed; the picker is purely UI — business hours
- *   come from the `TIME_SLOTS` table above.
+ * Defaults:
+ *   - Minimum lead time of 3 days (AlphaLux ops requirement) so days
+ *     0..2 can't be clicked, and the visible window starts at the
+ *     earliest bookable day.
+ *   - 21-day rolling window, paged ±7 days via chevrons.
+ *   - Weekends are allowed by the picker; business hours live in
+ *     the `TIME_SLOTS` table above.
  */
 export function OfferDateTimePicker({
   date,
   timeSlot,
   onDateChange,
   onTimeSlotChange,
-  days = 14,
-  minLeadDays = 0,
+  days = DEFAULT_WINDOW_DAYS,
+  minLeadDays = DEFAULT_MIN_LEAD_DAYS,
 }: OfferDateTimePickerProps) {
-  const [pageStartIso, setPageStartIso] = useState<string>(() => {
+  // The very earliest a customer can book. Everything before this in
+  // the visible strip is shown as disabled so it's obvious why Mon /
+  // Tue / Wed (etc.) aren't clickable.
+  const earliestBookable = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() + minLeadDays);
-    return toYMD(d);
-  });
+    return d;
+  }, [minLeadDays]);
+  const earliestBookableIso = useMemo(() => toYMD(earliestBookable), [earliestBookable]);
+
+  const [pageStartIso, setPageStartIso] = useState<string>(() => earliestBookableIso);
 
   const windowDays = useMemo(() => {
     const start = new Date(pageStartIso + 'T00:00:00');
     return Array.from({ length: days }, (_, idx) => {
       const d = new Date(start);
       d.setDate(start.getDate() + idx);
+      const iso = toYMD(d);
       return {
-        iso: toYMD(d),
+        iso,
         weekday: new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d),
         day: d.getDate(),
         monthShort: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(d),
@@ -119,18 +210,16 @@ export function OfferDateTimePicker({
           day: 'numeric',
         }).format(d),
         dateObj: d,
+        disabled: iso < earliestBookableIso,
       };
     });
-  }, [pageStartIso, days]);
+  }, [pageStartIso, days, earliestBookableIso]);
 
   const handleShiftWindow = (delta: number) => {
     const base = new Date(pageStartIso + 'T00:00:00');
     base.setDate(base.getDate() + delta);
-    const todayFloor = new Date();
-    todayFloor.setHours(0, 0, 0, 0);
-    todayFloor.setDate(todayFloor.getDate() + minLeadDays);
-    if (base < todayFloor) {
-      setPageStartIso(toYMD(todayFloor));
+    if (base < earliestBookable) {
+      setPageStartIso(earliestBookableIso);
     } else {
       setPageStartIso(toYMD(base));
     }
@@ -147,10 +236,27 @@ export function OfferDateTimePicker({
     }).format(d);
   }, [date]);
 
+  const earliestBookableLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      }).format(earliestBookable),
+    [earliestBookable],
+  );
+
+  const leadDaysLabel =
+    minLeadDays === 0
+      ? 'Same-day booking available'
+      : minLeadDays === 1
+        ? 'Next-day booking · need 24 hr lead time'
+        : `Need ${minLeadDays}-day lead time (earliest: ${earliestBookableLabel})`;
+
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold">Pick a date</h3>
@@ -182,25 +288,44 @@ export function OfferDateTimePicker({
           </div>
         </div>
 
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+          <Star className="h-3 w-3" />
+          {leadDaysLabel}
+        </div>
+
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scroll-smooth snap-x">
           {windowDays.map((d) => {
             const isSelected = date === d.iso;
             const todayFloor = new Date();
             todayFloor.setHours(0, 0, 0, 0);
             const isToday = toYMD(todayFloor) === d.iso;
+            const isEarliest = d.iso === earliestBookableIso;
             return (
               <button
                 key={d.iso}
                 type="button"
-                onClick={() => onDateChange(d.iso)}
+                onClick={() => !d.disabled && onDateChange(d.iso)}
+                disabled={d.disabled}
                 className={cn(
-                  'flex flex-col items-center justify-center min-w-[72px] rounded-2xl border-2 px-3 py-3 transition-all snap-start',
-                  isSelected
-                    ? 'border-primary bg-primary text-primary-foreground shadow-clean'
-                    : 'border-border hover:border-primary/60',
+                  'flex flex-col items-center justify-center min-w-[76px] rounded-2xl border-2 px-3 py-3 transition-all snap-start',
+                  d.disabled
+                    ? 'border-border/60 bg-muted/30 text-muted-foreground/60 cursor-not-allowed line-through decoration-muted-foreground/40'
+                    : isSelected
+                      ? 'border-primary bg-primary text-primary-foreground shadow-clean'
+                      : 'border-border hover:border-primary/60',
                 )}
                 aria-pressed={isSelected}
-                aria-label={d.full}
+                aria-disabled={d.disabled}
+                aria-label={
+                  d.disabled
+                    ? `${d.full} (unavailable — need ${minLeadDays}-day lead time)`
+                    : d.full
+                }
+                title={
+                  d.disabled
+                    ? `Earliest booking is ${earliestBookableLabel}`
+                    : undefined
+                }
               >
                 <span
                   className={cn(
@@ -221,10 +346,14 @@ export function OfferDateTimePicker({
                 <span
                   className={cn(
                     'text-[10px] uppercase tracking-wider',
-                    isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground',
+                    isSelected
+                      ? 'text-primary-foreground/90'
+                      : isEarliest
+                        ? 'text-primary font-semibold'
+                        : 'text-muted-foreground',
                   )}
                 >
-                  {isToday ? 'Today' : d.monthShort}
+                  {isToday ? 'Today' : isEarliest ? 'Earliest' : d.monthShort}
                 </span>
               </button>
             );
@@ -237,7 +366,11 @@ export function OfferDateTimePicker({
           <Sun className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-semibold">Pick an arrival window</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <p className="text-xs text-muted-foreground mb-3">
+          Each window is a 2-hour arrival range — our crew lands anywhere in
+          the window and works around your day.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {TIME_SLOTS.map((slot) => {
             const Icon = slot.icon;
             const isSelected = timeSlot === slot.id;
