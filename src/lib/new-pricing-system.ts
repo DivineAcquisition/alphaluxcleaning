@@ -68,25 +68,18 @@ export const DEPOSIT_PERCENTAGE = 0.25; // 25% deposit required
 // Source of truth: AlphaLux pricing spreadsheet (Deep Clean, Move-Out
 // calculators). See `src/lib/alphalux-pricing.ts` for the spreadsheet
 // helpers used by the standalone calculator.
+//
+// NOTE: tier `id`s are deliberately kept stable across code revisions so
+// that the value persisted in a customer's localStorage on a previous
+// visit still resolves on the next. When the pricing spreadsheet is
+// refreshed we update the numbers in place rather than renaming the IDs.
 export const HOME_SIZE_RANGES: HomeSizeRange[] = [
   {
-    id: 'under_1100',
-    label: 'Up to 1,100 sq ft',
+    id: '1000_1500',
+    label: 'Up to 1,500 sq ft',
     minSqft: 0,
-    maxSqft: 1100,
-    bedroomRange: 'Studio / 1 BR',
-    deepPrice: 200,
-    maintenancePrice: 150,
-    ninetyDayPrice: 599,
-    regularPrice: 150,
-    moveInOutPrice: 225,
-  },
-  {
-    id: '1100_1500',
-    label: '1,100 – 1,500 sq ft',
-    minSqft: 1100,
     maxSqft: 1500,
-    bedroomRange: '1–2 BR condos/homes',
+    bedroomRange: 'Studio – 2 BR',
     deepPrice: 275,
     maintenancePrice: 185,
     ninetyDayPrice: 749,
@@ -94,7 +87,7 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 300,
   },
   {
-    id: '1500_2000',
+    id: '1501_2000',
     label: '1,500 – 2,000 sq ft',
     minSqft: 1500,
     maxSqft: 2000,
@@ -106,10 +99,10 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 350,
   },
   {
-    id: '2000_2200',
-    label: '2,000 – 2,200 sq ft',
+    id: '2001_2500',
+    label: '2,000 – 2,500 sq ft',
     minSqft: 2000,
-    maxSqft: 2200,
+    maxSqft: 2500,
     bedroomRange: '3 BR homes',
     deepPrice: 345,
     maintenancePrice: 235,
@@ -118,10 +111,10 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 385,
   },
   {
-    id: '2200_2800',
-    label: '2,200 – 2,800 sq ft',
-    minSqft: 2200,
-    maxSqft: 2800,
+    id: '2501_3000',
+    label: '2,500 – 3,000 sq ft',
+    minSqft: 2500,
+    maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
     deepPrice: 395,
     maintenancePrice: 265,
@@ -130,10 +123,10 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 445,
   },
   {
-    id: '2800_3600',
-    label: '2,800 – 3,600 sq ft',
-    minSqft: 2800,
-    maxSqft: 3600,
+    id: '3001_4000',
+    label: '3,000 – 4,000 sq ft',
+    minSqft: 3000,
+    maxSqft: 4000,
     bedroomRange: '4 BR homes',
     deepPrice: 465,
     maintenancePrice: 300,
@@ -142,9 +135,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 525,
   },
   {
-    id: '3600_5000',
-    label: '3,600 – 5,000 sq ft',
-    minSqft: 3600,
+    id: '4001_5000',
+    label: '4,000 – 5,000 sq ft',
+    minSqft: 4000,
     maxSqft: 5000,
     bedroomRange: '4–5 BR homes',
     deepPrice: 540,
@@ -167,6 +160,29 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     moveInOutPrice: 0,
   },
 ];
+
+// Legacy/alias home size IDs map to current tiers so older persisted
+// bookingData doesn't blow up `calculateNewPricing`.
+const HOME_SIZE_ID_ALIASES: Record<string, string> = {
+  under_1100: '1000_1500',
+  '1100_1500': '1000_1500',
+  '1500_2000': '1501_2000',
+  '2000_2200': '2001_2500',
+  '2200_2800': '2501_3000',
+  '2800_3600': '3001_4000',
+  '3600_5000': '4001_5000',
+  '3001_3500': '3001_4000',
+  '3501_4000': '3001_4000',
+  '4001_4500': '4001_5000',
+  '4501_5000': '4001_5000',
+  '5000_plus': '5001_plus',
+};
+
+export function resolveHomeSizeId(id: string | undefined | null): string {
+  if (!id) return '2001_2500';
+  if (HOME_SIZE_RANGES.some((tier) => tier.id === id)) return id;
+  return HOME_SIZE_ID_ALIASES[id] || '2001_2500';
+}
 
 // Universal Hybrid Pricing Configuration
 // AlphaLux Cleaning only operates in New York State, so the pricing
@@ -198,13 +214,34 @@ export function calculateNewPricing(
   stateCode: string,
   config: PricingConfig = DEFAULT_PRICING_CONFIG
 ): PricingResult {
-  const homeSize = HOME_SIZE_RANGES.find(h => h.id === homeSizeId);
+  // Be forgiving with unknown/legacy IDs so we never blank the booking
+  // flow because of a stale localStorage value.
+  const resolvedHomeSizeId = resolveHomeSizeId(homeSizeId);
+  const homeSize = HOME_SIZE_RANGES.find(h => h.id === resolvedHomeSizeId);
   const serviceType = config.serviceTypes.find(s => s.id === serviceTypeId);
   const frequency = config.frequencies.find(f => f.id === frequencyId);
-  const state = config.states.find(s => s.code === stateCode);
+  const state =
+    config.states.find(s => s.code === stateCode) || config.states[0];
 
   if (!homeSize || !serviceType || !frequency || !state) {
-    throw new Error('Invalid pricing parameters');
+    console.warn('[calculateNewPricing] falling back — unknown params', {
+      homeSizeId,
+      resolvedHomeSizeId,
+      serviceTypeId,
+      frequencyId,
+      stateCode,
+    });
+    return {
+      basePrice: 0,
+      discountAmount: 0,
+      discountedPrice: 0,
+      finalPrice: 0,
+      depositAmount: 0,
+      mrrEstimate: 0,
+      arrEstimate: 0,
+      savings: '',
+      tierLabel: homeSize?.label || 'Custom',
+    };
   }
 
   // Handle custom quote for 5,000+ sq ft
