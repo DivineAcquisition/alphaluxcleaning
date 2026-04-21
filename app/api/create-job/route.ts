@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
 
     // ---- 2. Create the customer if missing -----------------------------
     if (!hcpCustomerId) {
-      const createCustomerBody = {
+      const createCustomerBody: Record<string, any> = {
         first_name: firstName || "Customer",
         last_name: lastName || "",
         email: customerEmail,
@@ -256,8 +256,12 @@ export async function POST(req: NextRequest) {
         },
         tags: ["AlphaLux_Web", body.service.type].filter(Boolean),
         notifications_enabled: true,
-        lead_source: "website",
       };
+      // `lead_source` must match an existing HCP lead source on the
+      // account. Omit it unless the caller supplies a known value.
+      if ((body as any).lead_source) {
+        createCustomerBody.lead_source = (body as any).lead_source;
+      }
 
       const create = await hcpFetch(
         "/customers",
