@@ -96,47 +96,101 @@ export default function BookingDetails() {
 
   const fetchBookingData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*, customers(*)')
-        .eq('id', bookingId)
-        .single();
-
-      if (error) throw error;
-
-      const ok = ['deposit_paid', 'paid', 'fully_paid'].includes(
-        data?.payment_status ?? '',
-      );
-
-      if (!data || !ok) {
-        toast.error('Payment not confirmed');
-        navigate('/book/zip');
+      // Preferred: hit the service-role edge function so guest users
+      // (no Supabase auth session) can still load their booking + the
+      // customer row after paying the deposit.
+      const edge = await supabase.functions.invoke('get-booking-details', {
+        body: { booking_id: bookingId },
+      });
+      if (!edge.error && edge.data?.success && edge.data?.booking) {
+        applyBooking(edge.data.booking);
         return;
       }
 
-      setBookingData(data);
-
-      // Pre-fill address from customer / booking
-      setAddressLine1(
-        data.address_line1 || data.customers?.address_line1 || data.customers?.address || '',
+      console.warn(
+        '[book/details] get-booking-details edge function missed, falling back to direct select',
+        edge.error,
       );
-      setAddressLine2(data.address_line2 || data.customers?.address_line2 || '');
-      setCity(data.customers?.city || '');
-      setState(data.customers?.state || 'NY');
-      setZipCode(data.zip_code || data.customers?.postal_code || '');
-      if (data.property_details?.dwelling_type) {
-        setDwellingType(data.property_details.dwelling_type as DwellingType);
+
+      // Fallback: direct select. `bookings` has two FKs to `customers`
+      // (customer_id + referrer_customer_id) so PostgREST refuses to
+      // embed `customers(*)` without disambiguation (PGRST201). Use
+      // the pinned FK, and if RLS on `customers` hides the row, fall
+      // back again to a two-step fetch.
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*, customers:customers!bookings_customer_id_fkey(*)')
+        .eq('id', bookingId)
+        .maybeSingle();
+
+      if (error || !data) {
+        const { data: bookingOnly, error: bookingErr } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('id', bookingId)
+          .maybeSingle();
+        if (bookingErr || !bookingOnly) {
+          throw bookingErr || new Error('Booking not found');
+        }
+        let customer: any = null;
+        if (bookingOnly.customer_id) {
+          const { data: cust } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('id', bookingOnly.customer_id)
+            .maybeSingle();
+          customer = cust || null;
+        }
+        applyBooking({ ...bookingOnly, customers: customer });
+        return;
       }
-      if (data.property_details?.bedrooms) {
-        setBedrooms(String(data.property_details.bedrooms));
-      }
-      if (data.property_details?.bathrooms) {
-        setBathrooms(String(data.property_details.bathrooms));
-      }
-    } catch (error) {
+
+      applyBooking(data);
+    } catch (error: any) {
       console.error('Error fetching booking:', error);
-      toast.error('Failed to load booking data');
+      toast.error(
+        error?.message ? `Couldn't load booking: ${error.message}` : 'Failed to load booking data',
+      );
       navigate('/book/zip');
+    }
+  };
+
+  const applyBooking = (data: any) => {
+    // Accept any of the post-deposit payment states. Guests who
+    // haven't paid yet can still see /book/details without being
+    // bounced — we just skip the "payment required" gate instead of
+    // crashing if the status isn't a known enum value.
+    const paidStates = ['deposit_paid', 'paid', 'fully_paid'];
+    const isPaid = paidStates.includes(data?.payment_status ?? '');
+    if (!isPaid) {
+      toast.error('Deposit not confirmed yet — please finish checkout.');
+      navigate(`/book/checkout`);
+      return;
+    }
+
+    setBookingData(data);
+
+    // Pre-fill address from customer / booking
+    setAddressLine1(
+      data.address_line1 ||
+        data.customers?.address_line1 ||
+        data.customers?.address ||
+        '',
+    );
+    setAddressLine2(
+      data.address_line2 || data.customers?.address_line2 || '',
+    );
+    setCity(data.customers?.city || '');
+    setState(data.customers?.state || 'NY');
+    setZipCode(data.zip_code || data.customers?.postal_code || '');
+    if (data.property_details?.dwelling_type) {
+      setDwellingType(data.property_details.dwelling_type as DwellingType);
+    }
+    if (data.property_details?.bedrooms) {
+      setBedrooms(String(data.property_details.bedrooms));
+    }
+    if (data.property_details?.bathrooms) {
+      setBathrooms(String(data.property_details.bathrooms));
     }
   };
 
