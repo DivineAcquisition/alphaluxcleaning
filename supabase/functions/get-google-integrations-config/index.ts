@@ -14,9 +14,14 @@ const corsHeaders = {
  * requirement, we never show a half-working Google feature to a
  * customer. If any required env var is missing we report
  * `configured: false` and the UI falls back to the plain input.
+ *
+ * Calendar additionally has a master kill-switch:
+ *   GOOGLE_CALENDAR_ENABLED=true
+ * must be set before the Calendar CTA can render, even when the
+ * credentials are present. Default = disabled.
  */
 
-function hasNonEmpty(name: string): boolean {
+function present(name: string): boolean {
   const v = Deno.env.get(name);
   return !!(v && v.trim().length > 0);
 }
@@ -29,41 +34,59 @@ function firstPresent(...names: string[]): string | null {
   return null;
 }
 
+function flagOn(name: string): boolean {
+  const v = (Deno.env.get(name) || "").trim().toLowerCase();
+  return v === "true" || v === "1" || v === "yes" || v === "on";
+}
+
 function calendarConfig() {
+  // Master kill-switch. Ops must explicitly set
+  // GOOGLE_CALENDAR_ENABLED=true before the Calendar CTA can render —
+  // even if credentials are present. Default = disabled.
+  const enabled = flagOn("GOOGLE_CALENDAR_ENABLED");
+
   const serviceAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_KEY");
+  const missing: string[] = [];
+
+  if (!enabled) {
+    missing.push("GOOGLE_CALENDAR_ENABLED=true (kill-switch)");
+  }
+
+  let credsValid = false;
+  let method: string = "missing";
+
   if (serviceAccount) {
     try {
       const parsed = JSON.parse(serviceAccount);
-      const ok = !!(parsed?.client_email && parsed?.private_key);
-      return {
-        configured: ok,
-        method: ok ? "service_account" : "invalid_service_account",
-        calendar_id: firstPresent("GOOGLE_CALENDAR_ID") || "primary",
-      };
+      credsValid = !!(parsed?.client_email && parsed?.private_key);
+      method = credsValid ? "service_account" : "invalid_service_account";
+      if (!credsValid) missing.push("GOOGLE_SERVICE_ACCOUNT_KEY(invalid)");
     } catch {
-      return {
-        configured: false,
-        method: "invalid_service_account",
-        calendar_id: firstPresent("GOOGLE_CALENDAR_ID") || "primary",
-      };
+      credsValid = false;
+      method = "invalid_service_account";
+      missing.push("GOOGLE_SERVICE_ACCOUNT_KEY(unparseable)");
+    }
+  } else {
+    const hasId = present("GOOGLE_OAUTH_CLIENT_ID");
+    const hasSecret = present("GOOGLE_OAUTH_CLIENT_SECRET");
+    credsValid = hasId && hasSecret;
+    method = credsValid ? "oauth" : "missing";
+    if (!credsValid) {
+      missing.push("GOOGLE_SERVICE_ACCOUNT_KEY");
+      if (!hasId) missing.push("GOOGLE_OAUTH_CLIENT_ID");
+      if (!hasSecret) missing.push("GOOGLE_OAUTH_CLIENT_SECRET");
     }
   }
-  const oauthOk =
-    hasNonEmpty("GOOGLE_OAUTH_CLIENT_ID") &&
-    hasNonEmpty("GOOGLE_OAUTH_CLIENT_SECRET");
+
   return {
-    configured: oauthOk,
-    method: oauthOk ? "oauth" : "missing",
+    configured: enabled && credsValid,
+    method,
     calendar_id: firstPresent("GOOGLE_CALENDAR_ID") || "primary",
+    missing,
   };
 }
 
 function placesConfig() {
-  // The browser needs a client-exposable Maps JS key; the edge
-  // function itself doesn't need a key. Ops is expected to set both
-  // `GOOGLE_PLACES_API_KEY` (restricted, server-side, used by any
-  // server-side geocoding) and `GOOGLE_MAPS_PUBLISHABLE_KEY`
-  // (referrer-restricted, OK to ship to the client).
   const serverKey = firstPresent("GOOGLE_PLACES_API_KEY");
   const publishable = firstPresent(
     "GOOGLE_MAPS_PUBLISHABLE_KEY",
@@ -71,9 +94,17 @@ function placesConfig() {
     "GOOGLE_MAPS_PUBLIC_KEY",
   );
   const configured = !!(serverKey && publishable);
+  const missing: string[] = [];
+  if (!serverKey) missing.push("GOOGLE_PLACES_API_KEY");
+  if (!publishable) {
+    missing.push(
+      "GOOGLE_MAPS_PUBLISHABLE_KEY (or GOOGLE_MAPS_BROWSER_KEY / GOOGLE_MAPS_PUBLIC_KEY)",
+    );
+  }
   return {
     configured,
     publishable_key: configured ? publishable : null,
+    missing,
   };
 }
 
