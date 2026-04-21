@@ -346,12 +346,31 @@ All colors MUST be HSL.
     background-image: var(--gradient-promo);
   }
 
+  /* Gradient-clipped text was rendering inconsistently across browsers
+     (especially on iOS Safari and on gradients with low contrast against
+     the background), so we now ship a solid gold fill. Gradients are
+     preserved on CTA buttons via `.btn-alx-gold`. */
   .text-alx-gradient-gold {
-    background: var(--gradient-gold);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: hsl(var(--alx-gold));
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  /* Global override: turn off "gradient text" anywhere in the app.
+     Tailwind's `bg-clip-text text-transparent` pattern (used on many
+     page headings) was inconsistent across browsers and looked washed
+     out on some backgrounds. We keep gradients on CTA buttons via
+     `.btn-alx-gold`, but headings should render as solid text. */
+  .bg-clip-text.text-transparent,
+  .bg-clip-text[class*="text-transparent"] {
+    background: none !important;
+    background-image: none !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+    -webkit-text-fill-color: currentColor !important;
+    color: hsl(var(--foreground)) !important;
   }
 
   .border-alx-gold {

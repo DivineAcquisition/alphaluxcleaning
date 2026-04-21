@@ -302,7 +302,7 @@ export function PaymentForm({
     console.log("PaymentForm: Invalid calculatedPrice:", calculatedPrice);
     return (
       <Card className="shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-muted to-accent/20 rounded-t-lg">
+        <CardHeader className="bg-muted/40 rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
             Book Your Service
@@ -322,8 +322,8 @@ export function PaymentForm({
 
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-primary to-accent text-white rounded-t-lg text-center">
-        <CardTitle className="flex items-center justify-center gap-2 text-xl">
+      <CardHeader className="bg-primary text-primary-foreground rounded-t-lg text-center">
+        <CardTitle className="flex items-center justify-center gap-2 text-xl text-primary-foreground">
           <CreditCard className="h-6 w-6" />
           Book Your Service
         </CardTitle>

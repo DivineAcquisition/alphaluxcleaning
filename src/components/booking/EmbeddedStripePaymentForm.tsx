@@ -67,7 +67,7 @@ function PaymentFormContent({
       const { error: submitError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: window.location.href,
+          return_url: `${window.location.origin}${window.location.pathname}`,
         },
         redirect: 'if_required',
       });

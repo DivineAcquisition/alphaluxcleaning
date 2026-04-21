@@ -47,7 +47,10 @@ function PaymentFormContent({
       const { error: submitError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: window.location.href,
+          // Strip any existing query params so Stripe can re-attach its own
+          // (payment_intent, payment_intent_client_secret, redirect_status)
+          // if the card requires 3-D Secure redirect.
+          return_url: `${window.location.origin}${window.location.pathname}`,
         },
         redirect: 'if_required',
       });
