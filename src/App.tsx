@@ -17,6 +17,7 @@ import { Landing } from '@/spa-pages/Landing';
 // Lazy load booking flow pages
 const BookZip = lazy(() => import('@/spa-pages/book/Zip'));
 const BookSquareFeet = lazy(() => import('@/spa-pages/book/SquareFeet'));
+const BookPricing = lazy(() => import('@/spa-pages/book/Pricing'));
 const BookOffer = lazy(() => import('@/spa-pages/book/Offer'));
 const BookCheckout = lazy(() => import('@/spa-pages/book/Checkout'));
 const BookDetails = lazy(() => import('@/spa-pages/book/Details'));
@@ -85,6 +86,7 @@ function App() {
             <Route path="/book" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
             <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
             <Route path="/book/sqft" element={<Suspense fallback={<div>Loading...</div>}><BookSquareFeet /></Suspense>} />
+            <Route path="/book/pricing" element={<Suspense fallback={<div>Loading...</div>}><BookPricing /></Suspense>} />
             <Route path="/book/offer" element={<Suspense fallback={<div>Loading...</div>}><BookOffer /></Suspense>} />
             <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
             <Route path="/book/details" element={<Suspense fallback={<div>Loading...</div>}><BookDetails /></Suspense>} />
@@ -96,6 +98,9 @@ function App() {
             <Route path="/book/frequency" element={<Navigate to="/book/offer" replace />} />
             <Route path="/book/schedule" element={<Navigate to="/book/details" replace />} />
             <Route path="/book/summary" element={<Navigate to="/book/offer" replace />} />
+
+            {/* Public pricing calculator alias */}
+            <Route path="/pricing-calculator" element={<Navigate to="/book/pricing" replace />} />
               
               {/* Landing page with marketing content */}
               <Route path="/landing" element={<Landing />} />

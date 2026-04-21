@@ -361,10 +361,19 @@ export default function BookingOffer() {
           />
         </div>
 
-        <div className="mt-8 text-center">
-          <Button variant="ghost" onClick={() => navigate('/book/sqft')}>
-            ← Back to Home Size
+        <div className="mt-8 text-center space-y-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/book/pricing')}
+            className="border-alx-gold/50 text-alx-gold hover:bg-alx-gold/10"
+          >
+            Need a custom quote? Open pricing calculator →
           </Button>
+          <div>
+            <Button variant="ghost" onClick={() => navigate('/book/sqft')}>
+              ← Back to Home Size
+            </Button>
+          </div>
         </div>
 
         <CleaningShowcaseCarousel />
