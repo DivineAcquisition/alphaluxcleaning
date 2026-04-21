@@ -4,223 +4,153 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, data?: any) => {
-  console.log(`[send-balance-invoice] ${step}`, data ? JSON.stringify(data, null, 2) : '');
-};
+const log = (step: string, data?: any) =>
+  console.log(`[send-balance-invoice] ${step}`, data ? JSON.stringify(data) : "");
 
+/**
+ * Creates + finalizes + emails a Stripe invoice for the remaining
+ * balance on a booking. The invoice item is explicitly bound to the
+ * invoice id to avoid the "pending items pool" race that was
+ * finalizing invoices at $0.
+ */
 serve(async (req) => {
-  logStep("Request received", { method: req.method });
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { bookingId, daysUntilDue = 7 } = await req.json();
+    if (!bookingId) throw new Error("Missing required field: bookingId");
 
-    if (!bookingId) {
-      throw new Error("Missing required field: bookingId");
-    }
-
-    logStep("Processing invoice for booking", { bookingId, daysUntilDue });
-
-    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
-    if (!stripeKey) {
-      throw new Error("Stripe secret key is not configured (set STRIPE_SECRET_KEY in Supabase secrets)");
-    }
+    const stripeKey =
+      Deno.env.get("STRIPE_SECRET_KEY") ||
+      Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX") ||
+      Deno.env.get("STRIPE_RESTRICTED_KEY");
+    if (!stripeKey) throw new Error("Stripe secret key not configured");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
-    // Fetch booking with customer data (disambiguate FK: bookings_customer_id_fkey)
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .select('*, customers!bookings_customer_id_fkey(*)')
-      .eq('id', bookingId)
+    const { data: booking, error } = await supabase
+      .from("bookings")
+      .select("*, customers!bookings_customer_id_fkey(*)")
+      .eq("id", bookingId)
       .single();
-
-    if (bookingError || !booking) {
-      throw new Error(`Booking not found: ${bookingError?.message || 'Unknown error'}`);
+    if (error || !booking) {
+      throw new Error(`Booking not found: ${error?.message || "unknown"}`);
     }
 
-    logStep("Booking fetched", { 
-      bookingId: booking.id, 
-      balanceDue: booking.balance_due,
-      customerId: booking.customer_id 
-    });
-
-    // Skip if no balance due
     if (!booking.balance_due || booking.balance_due <= 0) {
-      logStep("No balance due, skipping invoice", { balanceDue: booking.balance_due });
-      return new Response(JSON.stringify({ 
-        success: true, 
-        skipped: true,
-        message: "No balance due" 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, message: "No balance due" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
     }
 
-    // Check if invoice already exists
     if (booking.stripe_balance_invoice_id) {
-      logStep("Invoice already exists", { invoiceId: booking.stripe_balance_invoice_id });
-      return new Response(JSON.stringify({ 
-        success: true, 
-        skipped: true,
-        message: "Invoice already created",
-        invoiceId: booking.stripe_balance_invoice_id
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          invoiceId: booking.stripe_balance_invoice_id,
+          hostedInvoiceUrl: booking.balance_invoice_url,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
     }
 
     const customer = booking.customers;
-    if (!customer) {
-      throw new Error("Customer data not found for booking");
-    }
+    if (!customer) throw new Error("Customer data not found for booking");
 
-    // Get or create Stripe customer
     let stripeCustomerId = customer.stripe_customer_id;
-
     if (!stripeCustomerId) {
-      logStep("Creating new Stripe customer", { email: customer.email });
-      
-      const stripeCustomer = await stripe.customers.create({
+      const sc = await stripe.customers.create({
         email: customer.email,
-        name: customer.name || `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
+        name:
+          customer.name ||
+          `${customer.first_name || ""} ${customer.last_name || ""}`.trim(),
         phone: customer.phone,
-        metadata: {
-          customer_id: customer.id,
-        }
+        metadata: { customer_id: customer.id },
       });
-
-      stripeCustomerId = stripeCustomer.id;
-
-      // Update customer record with Stripe ID
+      stripeCustomerId = sc.id;
       await supabase
-        .from('customers')
+        .from("customers")
         .update({ stripe_customer_id: stripeCustomerId })
-        .eq('id', customer.id);
-
-      logStep("Stripe customer created", { stripeCustomerId });
+        .eq("id", customer.id);
     }
 
-    // Create invoice item for the remaining balance
-    const balanceAmountCents = Math.round(booking.balance_due * 100);
-    const serviceDescription = `Remaining balance for ${booking.service_type || 'cleaning'} service - Booking #${booking.id.substring(0, 8)}`;
-    
-    logStep("Creating invoice item", { 
-      amount: balanceAmountCents, 
-      description: serviceDescription 
-    });
+    const balanceCents = Math.round(Number(booking.balance_due) * 100);
 
-    const invoiceItem = await stripe.invoiceItems.create({
-      customer: stripeCustomerId,
-      amount: balanceAmountCents,
-      currency: 'usd',
-      description: serviceDescription,
-      metadata: {
-        booking_id: bookingId,
-        customer_id: customer.id,
-        invoice_type: 'balance_due',
-      }
-    });
-
-    logStep("Invoice item created", { invoiceItemId: invoiceItem.id });
-
-    // Create the invoice
+    // Create the invoice FIRST so we can bind the invoice item to it
+    // explicitly. Relying on Stripe's "pending items pool" flow is
+    // racy — if `auto_advance` fires before the item attaches the
+    // invoice can finalize at $0.
     const invoice = await stripe.invoices.create({
       customer: stripeCustomerId,
-      collection_method: 'send_invoice',
+      collection_method: "send_invoice",
       days_until_due: daysUntilDue,
-      auto_advance: true,
+      auto_advance: false,
       metadata: {
         booking_id: bookingId,
         customer_id: customer.id,
-        invoice_type: 'balance_due',
+        invoice_type: "balance_due",
       },
-      description: `Balance due for your cleaning service on ${booking.service_date || 'scheduled date'}`,
+      description: `Balance due for your cleaning service on ${booking.service_date || "scheduled date"}`,
     });
 
-    logStep("Invoice created", { invoiceId: invoice.id });
-
-    // Finalize the invoice
-    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-    logStep("Invoice finalized", { invoiceId: finalizedInvoice.id });
-
-    // Send the invoice
-    const sentInvoice = await stripe.invoices.sendInvoice(invoice.id);
-    logStep("Invoice sent", { 
-      invoiceId: sentInvoice.id, 
-      hostedUrl: sentInvoice.hosted_invoice_url 
+    await stripe.invoiceItems.create({
+      customer: stripeCustomerId,
+      invoice: invoice.id,
+      amount: balanceCents,
+      currency: "usd",
+      description: `Remaining balance for ${booking.service_type || "cleaning"} service - Booking #${booking.id.substring(0, 8)}`,
+      metadata: {
+        booking_id: bookingId,
+        customer_id: customer.id,
+        invoice_type: "balance_due",
+      },
     });
 
-    // Update booking with invoice ID AND hosted URL
-    const { error: updateError } = await supabase
-      .from('bookings')
+    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+    if (finalized.total === 0) {
+      await stripe.invoices.voidInvoice(invoice.id).catch(() => {});
+      throw new Error(
+        `Invoice finalized at $0 — the invoice item did not attach. Booking id ${bookingId}.`,
+      );
+    }
+
+    const sent = await stripe.invoices.sendInvoice(invoice.id);
+
+    await supabase
+      .from("bookings")
       .update({
-        stripe_balance_invoice_id: sentInvoice.id,
-        balance_invoice_url: sentInvoice.hosted_invoice_url,
+        stripe_balance_invoice_id: sent.id,
+        balance_invoice_url: sent.hosted_invoice_url,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', bookingId);
+      .eq("id", bookingId);
 
-    if (updateError) {
-      logStep("Warning: Failed to update booking with invoice ID", { error: updateError.message });
-    }
-
-    logStep("Balance invoice sent successfully", {
-      bookingId,
-      invoiceId: sentInvoice.id,
-      hostedUrl: sentInvoice.hosted_invoice_url,
-      amount: booking.balance_due,
-      customerEmail: customer.email,
-    });
-
-    // Trigger webhook so Zapier/GHL gets the invoice URL (fixes race condition)
-    try {
-      await supabase.functions.invoke('enhanced-booking-webhook-v2', {
-        body: {
-          booking_id: bookingId,
-          action: 'payment_invoice_created',
-          trigger_event: 'balance_invoice_sent',
-        }
-      });
-      logStep("Webhook triggered for invoice creation");
-    } catch (webhookError) {
-      logStep("Warning: Failed to trigger webhook after invoice", { error: webhookError });
-    }
-
-    return new Response(JSON.stringify({ 
-      success: true,
-      invoiceId: sentInvoice.id,
-      hostedInvoiceUrl: sentInvoice.hosted_invoice_url,
-      amount: booking.balance_due,
-      customerEmail: customer.email,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        invoiceId: sent.id,
+        hostedInvoiceUrl: sent.hosted_invoice_url,
+        amount: booking.balance_due,
+        customerEmail: customer.email,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    
-    return new Response(JSON.stringify({ 
-      error: errorMessage,
-      success: false
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    const msg = error instanceof Error ? error.message : String(error);
+    log("ERROR", { msg });
+    return new Response(
+      JSON.stringify({ error: msg, success: false }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
+    );
   }
 });
