@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useBooking } from '@/contexts/BookingContext';
 import { useBookingProgress } from '@/hooks/useBookingProgress';
-import { HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
+import { HOME_SIZE_RANGES, resolveHomeSizeId } from '@/lib/new-pricing-system';
 import {
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
@@ -36,8 +36,9 @@ export default function BookingOffer() {
   const [detailsServiceType, setDetailsServiceType] =
     useState<'standard' | 'tester' | '90day'>('tester');
 
+  const resolvedHomeSizeId = resolveHomeSizeId(bookingData.homeSizeId);
   const selectedHomeSize = HOME_SIZE_RANGES.find(
-    (range) => range.id === bookingData.homeSizeId,
+    (range) => range.id === resolvedHomeSizeId,
   );
 
   const baseDeepPrice = selectedHomeSize?.deepPrice || 250;
