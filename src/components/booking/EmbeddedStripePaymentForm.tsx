@@ -115,9 +115,9 @@ function PaymentFormContent({
           <span>${fullAmount.toFixed(2)}</span>
         </div>
         
-        {deepCleanDiscount?.applied && (
+        {deepCleanDiscount?.applied && deepCleanDiscount.amount > 0 && (
           <div className="flex justify-between text-sm text-green-600">
-            <span>Deep Clean Discount (20%)</span>
+            <span>Deep Clean Discount</span>
             <span>-${deepCleanDiscount.amount.toFixed(2)}</span>
           </div>
         )}

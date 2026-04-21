@@ -12,14 +12,11 @@ import { Switch } from '@/components/ui/switch';
 import {
   BedDouble,
   Bath,
-  Sofa,
   Maximize2,
   Sparkles,
   MoveHorizontal,
-  Clock,
   Plus,
   Minus,
-  Info,
   CheckCircle2,
 } from 'lucide-react';
 import { useBooking } from '@/contexts/BookingContext';
@@ -28,21 +25,22 @@ import {
   calculateQuote,
   DEEP_CLEAN_DISPLAY_TABLE,
   MOVE_OUT_DISPLAY_TABLE,
-  HOURLY_DISPLAY_TABLE,
   BEDROOM_SURCHARGE,
   BATHROOM_SURCHARGE,
   WINDOW_PRICE_PER_WINDOW,
-  HOURLY_MIN_HOURS,
   type ServiceType,
 } from '@/lib/alphalux-pricing';
 import {
+  NEW_CUSTOMER_PROMO_ACTIVE,
   NEW_CUSTOMER_PROMO_CODE,
-  NEW_CUSTOMER_PROMO_PERCENT,
   previewPromoDiscount,
 } from '@/lib/promo';
 
-type UiServiceType = 'deep' | 'moveout' | 'hourly';
+type UiServiceType = 'deep' | 'moveout';
 
+// Hourly quoting isn't a self-serve option right now — customers book
+// one of the two flat-price service types and our team quotes anything
+// custom by phone.
 const SERVICE_OPTIONS: Array<{
   id: UiServiceType;
   title: string;
@@ -61,25 +59,17 @@ const SERVICE_OPTIONS: Array<{
     subtitle: 'Empty-home detail clean on your move date',
     icon: MoveHorizontal,
   },
-  {
-    id: 'hourly',
-    title: 'Hourly Standard',
-    subtitle: 'Flexible hourly rate, you pick the focus',
-    icon: Clock,
-  },
 ];
 
 // Match UI service type -> persistent BookingContext service type.
-const TO_BOOKING_SERVICE_TYPE: Record<UiServiceType, 'deep' | 'move_in_out' | 'regular'> = {
+const TO_BOOKING_SERVICE_TYPE: Record<UiServiceType, 'deep' | 'move_in_out'> = {
   deep: 'deep',
   moveout: 'move_in_out',
-  hourly: 'regular',
 };
 
-const TO_OFFER_TYPE: Record<UiServiceType, 'deep_clean' | 'standard_clean'> = {
+const TO_OFFER_TYPE: Record<UiServiceType, 'deep_clean'> = {
   deep: 'deep_clean',
   moveout: 'deep_clean',
-  hourly: 'standard_clean',
 };
 
 function Stepper({
@@ -150,7 +140,6 @@ export default function BookingPricing() {
 
   const [serviceType, setServiceType] = useState<UiServiceType>(() => {
     if (bookingData.serviceType === 'move_in_out') return 'moveout';
-    if (bookingData.serviceType === 'regular') return 'hourly';
     return 'deep';
   });
 
@@ -159,10 +148,7 @@ export default function BookingPricing() {
   );
   const [bedrooms, setBedrooms] = useState<number>(bookingData.bedrooms || 2);
   const [bathrooms, setBathrooms] = useState<number>(bookingData.bathrooms || 2);
-  const [kitchens, setKitchens] = useState<number>(1);
-  const [otherRooms, setOtherRooms] = useState<number>(0);
   const [windowCount, setWindowCount] = useState<number>(0);
-  const [includeWindows, setIncludeWindows] = useState<boolean>(false);
   const [extraBedrooms, setExtraBedrooms] = useState<number>(0);
   const [extraBathrooms, setExtraBathrooms] = useState<number>(0);
 
@@ -183,24 +169,18 @@ export default function BookingPricing() {
         sqft,
         bedrooms,
         bathrooms,
-        otherRooms,
-        kitchens,
         windowCount,
         extraBedrooms,
         extraBathrooms,
-        includeWindows,
       }),
     [
       serviceType,
       sqft,
       bedrooms,
       bathrooms,
-      otherRooms,
-      kitchens,
       windowCount,
       extraBedrooms,
       extraBathrooms,
-      includeWindows,
     ],
   );
 
@@ -214,11 +194,9 @@ export default function BookingPricing() {
     const serviceKey = TO_BOOKING_SERVICE_TYPE[serviceType];
     const offerKey = TO_OFFER_TYPE[serviceType];
     const serviceLabel =
-      serviceType === 'deep'
-        ? 'Deep Clean'
-        : serviceType === 'moveout'
-          ? 'Move In / Move Out Clean'
-          : 'Standard Hourly Clean';
+      serviceType === 'deep' ? 'Deep Clean' : 'Move In / Move Out Clean';
+
+    const promoSavings = Math.max(0, quote.total - promoTotal);
 
     updateBookingData({
       sqft,
@@ -227,16 +205,17 @@ export default function BookingPricing() {
       serviceType: serviceKey,
       frequency: 'one_time',
       offerType: offerKey,
-      offerName: `${serviceLabel} — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`,
+      offerName: serviceLabel,
       // Checkout computes finalPrice = basePrice - promoDiscount, so
-      // store the *pre-promo* total as basePrice and the savings as
-      // promoDiscount. This keeps the strike-through line on Checkout
-      // accurate.
+      // store the pre-promo total as basePrice and the actual savings
+      // as promoDiscount. Promo is only attached if it's actually
+      // enabled (otherwise promoSavings is 0 and we leave the code
+      // blank so nothing shows on the confirmation screen).
       basePrice: quote.total,
       visitCount: 1,
       isRecurring: false,
-      promoCode: NEW_CUSTOMER_PROMO_CODE,
-      promoDiscount: Math.max(0, quote.total - promoTotal),
+      promoCode: NEW_CUSTOMER_PROMO_ACTIVE && promoSavings > 0 ? NEW_CUSTOMER_PROMO_CODE : '',
+      promoDiscount: NEW_CUSTOMER_PROMO_ACTIVE ? promoSavings : 0,
     });
 
     trackStep('pricing_calculator_submitted', {
@@ -262,7 +241,7 @@ export default function BookingPricing() {
         <div className="text-center space-y-3">
           <Badge className="bg-alx-gold/15 text-alx-gold-light border border-alx-gold/40 px-4 py-1.5 text-sm font-bold inline-flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            Transparent Pricing — {NEW_CUSTOMER_PROMO_PERCENT}% OFF First Clean
+            Transparent Pricing
           </Badge>
           <h1 className="text-3xl md:text-4xl font-bold">
             Build Your Quote
@@ -274,7 +253,7 @@ export default function BookingPricing() {
         </div>
 
         {/* Service selector */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {SERVICE_OPTIONS.map((option) => {
             const isSelected = option.id === serviceType;
             const Icon = option.icon;
@@ -379,27 +358,6 @@ export default function BookingPricing() {
                   max={8}
                   icon={Bath}
                 />
-                {serviceType === 'hourly' && (
-                  <>
-                    <Stepper
-                      label="Kitchens"
-                      value={kitchens}
-                      onChange={setKitchens}
-                      min={0}
-                      max={4}
-                      helper="Kitchens are the heaviest rooms — 1 hr each"
-                    />
-                    <Stepper
-                      label="Other rooms (living / office / etc.)"
-                      value={otherRooms}
-                      onChange={setOtherRooms}
-                      min={0}
-                      max={8}
-                      icon={Sofa}
-                      helper="Adds 45 min per room to the estimate"
-                    />
-                  </>
-                )}
               </CardContent>
             </Card>
 
@@ -421,11 +379,7 @@ export default function BookingPricing() {
                       size="icon"
                       variant="outline"
                       className="h-8 w-8 rounded-full"
-                      onClick={() => {
-                        const next = Math.max(0, windowCount - 1);
-                        setWindowCount(next);
-                        if (next === 0) setIncludeWindows(false);
-                      }}
+                      onClick={() => setWindowCount(Math.max(0, windowCount - 1))}
                       disabled={windowCount <= 0}
                       aria-label="Decrease windows"
                     >
@@ -439,32 +393,13 @@ export default function BookingPricing() {
                       size="icon"
                       variant="outline"
                       className="h-8 w-8 rounded-full"
-                      onClick={() => {
-                        setWindowCount(windowCount + 1);
-                        setIncludeWindows(true);
-                      }}
+                      onClick={() => setWindowCount(windowCount + 1)}
                       aria-label="Increase windows"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-
-                {serviceType === 'hourly' && windowCount > 0 && (
-                  <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Info className="h-4 w-4 text-primary" />
-                      <span>
-                        Windows add <strong>1 hour</strong> to hourly estimates.
-                      </span>
-                    </div>
-                    <Switch
-                      checked={includeWindows}
-                      onCheckedChange={setIncludeWindows}
-                      aria-label="Include 1 hour for windows"
-                    />
-                  </div>
-                )}
 
                 <Stepper
                   label="Extra bedrooms (beyond base plan)"
@@ -493,47 +428,18 @@ export default function BookingPricing() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <SelectedIcon className="h-5 w-5 text-primary" />
-                    {serviceType === 'deep'
-                      ? 'Deep Clean Quote'
-                      : serviceType === 'moveout'
-                        ? 'Move-Out Quote'
-                        : 'Hourly Standard Quote'}
+                    {serviceType === 'deep' ? 'Deep Clean Quote' : 'Move-Out Quote'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {serviceType === 'hourly' && quote.hourlyEstimate ? (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Estimated time
-                        </span>
-                        <span className="font-semibold">
-                          {quote.hourlyEstimate.hours} hrs
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Cleaners</span>
-                        <span className="font-semibold">
-                          {quote.hourlyEstimate.cleaners} ×
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Rate</span>
-                        <span className="font-semibold">
-                          ${quote.hourlyEstimate.ratePerHour}/hr
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {serviceType === 'deep' ? 'Deep Clean base' : 'Move-Out base'}
-                      </span>
-                      <span className="font-semibold">
-                        ${quote.basePrice.toFixed(0)}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {serviceType === 'deep' ? 'Deep Clean base' : 'Move-Out base'}
+                    </span>
+                    <span className="font-semibold">
+                      ${quote.basePrice.toFixed(0)}
+                    </span>
+                  </div>
 
                   {quote.windowsSurcharge > 0 && (
                     <div className="flex justify-between text-sm">
@@ -559,33 +465,37 @@ export default function BookingPricing() {
 
                   <Separator />
 
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground line-through">
-                      Regular
-                    </span>
-                    <span className="line-through text-muted-foreground">
-                      ${quote.total.toFixed(0)}
-                      {quote.totalLow && quote.totalHigh ? (
-                        <span className="ml-1 text-[10px] uppercase tracking-widest">
-                          est.
+                  {NEW_CUSTOMER_PROMO_ACTIVE && promoSavings > 0 ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground line-through">
+                          Regular
                         </span>
-                      ) : null}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-sm text-primary font-semibold">
-                      {NEW_CUSTOMER_PROMO_CODE} Applied
-                    </span>
-                    <span className="font-bold text-3xl text-primary">
-                      ${promoTotal.toFixed(0)}
-                    </span>
-                  </div>
-                  {promoSavings > 0 && (
-                    <div className="text-xs text-alx-gold font-semibold">
-                      You save ${promoSavings.toFixed(0)}
+                        <span className="line-through text-muted-foreground">
+                          ${quote.total.toFixed(0)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-sm text-primary font-semibold">
+                          {NEW_CUSTOMER_PROMO_CODE} Applied
+                        </span>
+                        <span className="font-bold text-3xl text-primary">
+                          ${promoTotal.toFixed(0)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-alx-gold font-semibold">
+                        You save ${promoSavings.toFixed(0)}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-semibold">Total</span>
+                      <span className="font-bold text-3xl text-primary">
+                        ${quote.total.toFixed(0)}
+                      </span>
                     </div>
                   )}
+
                   <div className="text-xs text-muted-foreground">
                     Pay only{' '}
                     <strong className="text-foreground">
@@ -642,7 +552,7 @@ export default function BookingPricing() {
               reflects your selections.
             </p>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-3 gap-6">
+          <CardContent className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -676,29 +586,6 @@ export default function BookingPricing() {
                   </li>
                 ))}
               </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                Hourly Standard
-              </h3>
-              <ul className="text-sm space-y-1">
-                {HOURLY_DISPLAY_TABLE.map((row) => (
-                  <li
-                    key={row.label}
-                    className="flex justify-between border-b border-border/60 last:border-0 py-1"
-                  >
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className="font-semibold">
-                      ${row.ratePerHour}/hr · {row.cleaners} cleaner
-                      {row.cleaners > 1 ? 's' : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-xs text-muted-foreground mt-2">
-                Minimum {HOURLY_MIN_HOURS} hrs. Windows add 1 hr.
-              </p>
             </div>
           </CardContent>
         </Card>
