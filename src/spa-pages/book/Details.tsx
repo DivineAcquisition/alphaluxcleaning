@@ -192,6 +192,18 @@ export default function BookingDetails() {
     if (data.property_details?.bathrooms) {
       setBathrooms(String(data.property_details.bathrooms));
     }
+    // Pre-fill date + arrival window from whatever the customer
+    // picked on /book/offer (they'll persist across the checkout and
+    // show up here so the customer can confirm or change them).
+    const preSelectedDate = data.service_date || data.preferred_date || '';
+    if (preSelectedDate) {
+      // Supabase `date` type comes back as YYYY-MM-DD already.
+      setPreferredDate(String(preSelectedDate).slice(0, 10));
+    }
+    const preSelectedTime = data.time_slot || data.preferred_time_block || '';
+    if (preSelectedTime) {
+      setPreferredTimeBlock(String(preSelectedTime));
+    }
   };
 
   const customerName = useMemo(() => {
