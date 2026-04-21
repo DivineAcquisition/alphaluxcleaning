@@ -18,6 +18,11 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useGoogleIntegrations } from '@/hooks/useGoogleIntegrations';
+import {
+  GooglePlacesAddressInput,
+  type ParsedPlace,
+} from '@/components/booking/GooglePlacesAddressInput';
 
 type DwellingType =
   | 'house'
@@ -78,6 +83,7 @@ export default function BookingDetails() {
     | { kind: 'success'; jobId?: string }
   >({ kind: 'idle' });
   const { isTestMode } = useTestMode();
+  const googleIntegrations = useGoogleIntegrations();
 
   const [addressLine1, setAddressLine1] = useState('');
   const [addressLine2, setAddressLine2] = useState('');
@@ -404,13 +410,31 @@ export default function BookingDetails() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="address1">Address Line 1 *</Label>
-                <Input
-                  id="address1"
-                  value={addressLine1}
-                  onChange={(e) => setAddressLine1(e.target.value)}
-                  placeholder="123 Main Street"
-                  required
-                />
+                {googleIntegrations.places.configured &&
+                googleIntegrations.places.publishable_key ? (
+                  <GooglePlacesAddressInput
+                    id="address1"
+                    value={addressLine1}
+                    onChange={setAddressLine1}
+                    onPlaceSelected={(parsed: ParsedPlace) => {
+                      if (parsed.addressLine1) setAddressLine1(parsed.addressLine1);
+                      if (parsed.city) setCity(parsed.city);
+                      if (parsed.state) setState(parsed.state);
+                      if (parsed.zipCode) setZipCode(parsed.zipCode);
+                    }}
+                    publishableKey={googleIntegrations.places.publishable_key}
+                    placeholder="Start typing an address…"
+                    required
+                  />
+                ) : (
+                  <Input
+                    id="address1"
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
+                    placeholder="123 Main Street"
+                    required
+                  />
+                )}
               </div>
 
               <div>

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { scrollToConfirmation } from "@/lib/scroll-utils";
+import { AddToGoogleCalendarButton } from "@/components/booking/AddToGoogleCalendarButton";
 
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
@@ -641,6 +642,31 @@ Questions? Call (857) 754-4557
                 <p className="text-lg font-semibold text-foreground">
                   {timeSlot}
                 </p>
+              </div>
+              <div className="pt-2">
+                <AddToGoogleCalendarButton
+                  serviceDateYmd={serviceDate}
+                  timeSlot={timeSlot}
+                  serviceName={
+                    orderDetails.service_type?.replace(/_/g, ' ') ||
+                    'AlphaLux Cleaning'
+                  }
+                  address={[
+                    orderDetails.address_line1,
+                    orderDetails.city,
+                    orderDetails.state,
+                    orderDetails.zip_code,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                  customerEmail={
+                    orderDetails.customer_email ||
+                    orderDetails.customers?.email ||
+                    undefined
+                  }
+                  sessionId={sessionId || undefined}
+                  orderId={orderDetails.id}
+                />
               </div>
             </div>
           </div>

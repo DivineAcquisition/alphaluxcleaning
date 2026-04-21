@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
   Gift,
   BadgePercent,
   Home,
+  ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
@@ -42,15 +43,16 @@ export default function BookingOffer() {
   const [detailsServiceType, setDetailsServiceType] =
     useState<'standard' | 'tester' | '90day'>('tester');
 
-  // Date + time are picked on this page now, then carried into
-  // /book/checkout alongside the offer so the customer can reserve a
-  // specific slot before they ever see the payment form.
+  // Date + time appear *after* a service is selected. They're the
+  // final gate before /book/checkout so the customer always reserves
+  // a specific slot before seeing the payment form.
   const [scheduledDate, setScheduledDate] = useState<string>(
     bookingData.date || '',
   );
   const [scheduledTimeSlot, setScheduledTimeSlot] = useState<TimeSlotId | ''>(
     (bookingData.timeSlot as TimeSlotId) || '',
   );
+  const pickerRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedHomeSizeId = resolveHomeSizeId(bookingData.homeSizeId);
   const selectedHomeSize = HOME_SIZE_RANGES.find(
@@ -148,6 +150,28 @@ export default function BookingOffer() {
     );
   }
 
+  /**
+   * Descriptor for the offer the customer is currently reviewing. We
+   * cache the full set of metadata on click so the commit step below
+   * doesn't need the button's closures.
+   */
+  type SelectedOfferState = {
+    offerType: OfferType;
+    offerName: string;
+    basePrice: number;
+    visitCount: number;
+    isRecurring: boolean;
+  };
+  const [pendingOffer, setPendingOffer] = useState<SelectedOfferState | null>(
+    null,
+  );
+
+  /**
+   * Clicking a service card only *selects* the card and reveals the
+   * date / time picker. It does NOT navigate — that happens when the
+   * customer hits the "Continue to Payment" CTA which lives inside
+   * the newly-revealed picker panel below.
+   */
   const handleSelectOffer = (
     offerType: OfferType,
     offerName: string,
@@ -155,16 +179,42 @@ export default function BookingOffer() {
     visitCount: number,
     isRecurring: boolean,
   ) => {
+    setSelectedOffer(offerType);
+    setPendingOffer({
+      offerType,
+      offerName,
+      basePrice,
+      visitCount,
+      isRecurring,
+    });
+
+    // Give React a tick to mount the panel before scrolling to it.
+    setTimeout(() => {
+      pickerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 60);
+  };
+
+  /**
+   * Commits the selected service + date + time to the booking
+   * context and navigates to the checkout page. Called by the CTA
+   * inside the reveal panel.
+   */
+  const handleConfirmSchedule = () => {
+    if (!pendingOffer) return;
     if (!scheduledDate || !scheduledTimeSlot) {
       toast.error('Pick a date and arrival window first.');
-      // Smooth-scroll the picker into view so the customer knows why.
-      document
-        .getElementById('date-time-picker')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pickerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
       return;
     }
 
-    setSelectedOffer(offerType);
+    const { offerType, offerName, basePrice, visitCount, isRecurring } =
+      pendingOffer;
 
     let serviceType: 'regular' | 'deep' | 'move_in_out';
     let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
@@ -176,7 +226,6 @@ export default function BookingOffer() {
       serviceType = 'regular';
       frequency = 'bi_weekly';
     } else {
-      // standard one-time
       serviceType = 'regular';
       frequency = 'one_time';
     }
@@ -199,7 +248,10 @@ export default function BookingOffer() {
       frequency,
       date: scheduledDate,
       timeSlot: scheduledTimeSlot,
-      promoCode: NEW_CUSTOMER_PROMO_ACTIVE && promoSavings > 0 ? NEW_CUSTOMER_PROMO_CODE : '',
+      promoCode:
+        NEW_CUSTOMER_PROMO_ACTIVE && promoSavings > 0
+          ? NEW_CUSTOMER_PROMO_CODE
+          : '',
       promoDiscount: NEW_CUSTOMER_PROMO_ACTIVE ? promoSavings : 0,
     });
 
@@ -212,9 +264,7 @@ export default function BookingOffer() {
       promo_code: NEW_CUSTOMER_PROMO_ACTIVE ? NEW_CUSTOMER_PROMO_CODE : '',
     });
 
-    setTimeout(() => {
-      navigate('/book/checkout');
-    }, 200);
+    navigate('/book/checkout');
   };
 
   return (
@@ -245,7 +295,7 @@ export default function BookingOffer() {
               <Button
                 onClick={() =>
                   document
-                    .getElementById('date-time-picker')
+                    .getElementById('service-cards')
                     ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }
                 className="btn-alx-gold rounded-full px-6 whitespace-nowrap font-bold"
@@ -300,19 +350,7 @@ export default function BookingOffer() {
           </div>
         </div>
 
-        <Card
-          id="date-time-picker"
-          className="p-5 md:p-6 mb-8 border-primary/20 shadow-soft"
-        >
-          <OfferDateTimePicker
-            date={scheduledDate}
-            timeSlot={scheduledTimeSlot}
-            onDateChange={setScheduledDate}
-            onTimeSlotChange={setScheduledTimeSlot}
-          />
-        </Card>
-
-        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
+        <div id="service-cards" className="grid gap-6 md:gap-8 md:grid-cols-3">
           {/* Standard Clean — One Time */}
           <OfferCard
             selected={selectedOffer === 'standard'}
@@ -445,6 +483,57 @@ export default function BookingOffer() {
             }}
           />
         </div>
+
+        {pendingOffer && (
+          <Card
+            ref={pickerRef}
+            id="date-time-picker"
+            className="mt-8 p-5 md:p-6 border-alx-gold/40 shadow-clean animate-in fade-in slide-in-from-top-4 duration-300"
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-alx-gold font-semibold mb-1">
+                  Selected Service
+                </p>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                  {pendingOffer.offerName}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Pick a date and arrival window to finish booking.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPendingOffer(null);
+                  setSelectedOffer(null);
+                }}
+              >
+                Change
+              </Button>
+            </div>
+
+            <OfferDateTimePicker
+              date={scheduledDate}
+              timeSlot={scheduledTimeSlot}
+              onDateChange={setScheduledDate}
+              onTimeSlotChange={setScheduledTimeSlot}
+            />
+
+            <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+              <Button
+                size="lg"
+                className="btn-alx-gold rounded-full font-semibold px-8"
+                onClick={handleConfirmSchedule}
+                disabled={!scheduledDate || !scheduledTimeSlot}
+              >
+                Continue to Payment
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </Card>
+        )}
 
         <div className="mt-8 text-center space-y-3">
           <Button
