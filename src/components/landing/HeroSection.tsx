@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import {
+  NEW_CUSTOMER_PROMO_ACTIVE,
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
 } from '@/lib/promo';
@@ -51,68 +52,78 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
             </div>
           </div>
 
-          {/* Main Headline — mirrors the ALC2026 new-customer promo */}
+          {/* Main Headline */}
           <h1 className="font-serif text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-bold mb-4 lg:mb-6 leading-[1.05] tracking-tight">
-            Save{" "}
-            <span className="text-alx-gradient-gold">
-              {NEW_CUSTOMER_PROMO_PERCENT}%
-            </span>{" "}
-            On Your First Cleaning
+            {NEW_CUSTOMER_PROMO_ACTIVE ? (
+              <>
+                Save{' '}
+                <span className="text-alx-gradient-gold">
+                  {NEW_CUSTOMER_PROMO_PERCENT}%
+                </span>{' '}
+                On Your First Cleaning
+              </>
+            ) : (
+              'A Higher Standard of Clean'
+            )}
           </h1>
           <p className="text-sm sm:text-base lg:text-lg uppercase tracking-[0.24em] text-alx-gold font-semibold mb-5">
-            A Higher Standard of Clean
+            Premium cleaning across New York
           </p>
 
           {/* Subheadline */}
           <p className="text-base sm:text-lg lg:text-xl text-alx-gold-pale/85 mb-6 lg:mb-8 max-w-3xl mx-auto leading-relaxed">
-            Premium residential & commercial cleaning across Long Island, NY,
-            New Jersey, New York — eco-friendly, insured, and built
-            around you. New customers unlock{" "}
-            <span className="text-alx-gold-light font-semibold">
-              {NEW_CUSTOMER_PROMO_PERCENT}% off
-            </span>{" "}
-            with code{" "}
-            <span className="text-alx-gold-light font-bold tracking-[0.12em]">
-              {NEW_CUSTOMER_PROMO_CODE}
-            </span>
-            .
+            Premium residential & commercial cleaning across New York State —
+            eco-friendly, insured, and built around you.
+            {NEW_CUSTOMER_PROMO_ACTIVE && (
+              <>
+                {' '}New customers unlock{' '}
+                <span className="text-alx-gold-light font-semibold">
+                  {NEW_CUSTOMER_PROMO_PERCENT}% off
+                </span>{' '}
+                with code{' '}
+                <span className="text-alx-gold-light font-bold tracking-[0.12em]">
+                  {NEW_CUSTOMER_PROMO_CODE}
+                </span>
+                .
+              </>
+            )}
           </p>
 
           {/* New-customer promo card */}
-          <div className="mx-auto mb-8 lg:mb-10 max-w-xl">
-            <div className="relative rounded-2xl border border-alx-gold/40 bg-alx-black-elev/60 backdrop-blur-sm p-5 text-center shadow-gold overflow-hidden promo-shimmer">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-alx-gold font-semibold mb-1">
-                New Customer Offer
-              </p>
-              <p className="font-serif text-2xl md:text-3xl font-bold text-alx-gold-light">
-                {NEW_CUSTOMER_PROMO_PERCENT}% OFF Your First Cleaning
-              </p>
-              <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
-                <span className="text-sm text-alx-gold-pale/80">
-                  Use code:
-                </span>
-                <button
-                  type="button"
-                  onClick={copyPromo}
-                  className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-1.5 text-sm font-bold text-alx-black-ink shadow-gold hover:brightness-105 transition"
-                  aria-label={`Copy promo code ${NEW_CUSTOMER_PROMO_CODE}`}
-                >
-                  <span className="tracking-[0.12em]">
-                    {NEW_CUSTOMER_PROMO_CODE}
-                  </span>
-                  {copied ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4 opacity-80 group-hover:opacity-100" />
-                  )}
-                </button>
+          {NEW_CUSTOMER_PROMO_ACTIVE && (
+            <div className="mx-auto mb-8 lg:mb-10 max-w-xl">
+              <div className="relative rounded-2xl border border-alx-gold/40 bg-alx-black-elev/60 backdrop-blur-sm p-5 text-center shadow-gold overflow-hidden promo-shimmer">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-alx-gold font-semibold mb-1">
+                  New Customer Offer
+                </p>
+                <p className="font-serif text-2xl md:text-3xl font-bold text-alx-gold-light">
+                  {NEW_CUSTOMER_PROMO_PERCENT}% OFF Your First Cleaning
+                </p>
+                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                  <span className="text-sm text-alx-gold-pale/80">Use code:</span>
+                  <button
+                    type="button"
+                    onClick={copyPromo}
+                    className="group inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-1.5 text-sm font-bold text-alx-black-ink shadow-gold hover:brightness-105 transition"
+                    aria-label={`Copy promo code ${NEW_CUSTOMER_PROMO_CODE}`}
+                  >
+                    <span className="tracking-[0.12em]">
+                      {NEW_CUSTOMER_PROMO_CODE}
+                    </span>
+                    {copied ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4 opacity-80 group-hover:opacity-100" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-3 text-xs text-alx-gold-pale/60">
+                  Applied automatically at checkout. Limit one redemption per
+                  customer.
+                </p>
               </div>
-              <p className="mt-3 text-xs text-alx-gold-pale/60">
-                Applied automatically at checkout. Limit one redemption per
-                customer.
-              </p>
             </div>
-          </div>
+          )}
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 lg:mb-14">
@@ -121,7 +132,15 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
               className="w-full sm:w-auto text-base lg:text-lg px-8 py-6 btn-alx-gold rounded-full font-semibold uppercase tracking-wider"
               asChild
             >
-              <Link to={`${bookingFlowUrl}?promo=${NEW_CUSTOMER_PROMO_CODE}`}>Book Now</Link>
+              <Link
+                to={
+                  NEW_CUSTOMER_PROMO_ACTIVE
+                    ? `${bookingFlowUrl}?promo=${NEW_CUSTOMER_PROMO_CODE}`
+                    : bookingFlowUrl
+                }
+              >
+                Book Now
+              </Link>
             </Button>
             <Button
               size="lg"

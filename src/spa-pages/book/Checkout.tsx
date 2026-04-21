@@ -489,8 +489,14 @@ export default function BookingCheckout() {
 
   const serviceDetails = getServiceDetails();
 
-  const promoLabelSuffix =
-    bookingData.offerType === 'recurring' ? '10% Off' : '20% Off';
+  // Show the applied discount as a real percent of the pre-promo price
+  // rather than a hard-coded "20% Off" label. If no promo is applied,
+  // the discount line hides entirely.
+  const promoPercent =
+    bookingData.promoDiscount && bookingData.basePrice
+      ? Math.round((bookingData.promoDiscount / bookingData.basePrice) * 100)
+      : 0;
+  const promoLabelSuffix = promoPercent > 0 ? `${promoPercent}% Off` : 'Discount';
   const depositPercentLabel =
     bookingData.offerType === '90_day_plan' ? '6.25% Deposit' : '20% Deposit';
 

@@ -13,6 +13,7 @@ import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseC
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import {
+  NEW_CUSTOMER_PROMO_ACTIVE,
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
 } from '@/lib/promo';
@@ -49,10 +50,24 @@ export default function BookingZip() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // NY State ZIP codes are all in the 100–149 prefix range.
+  // (NYC is 100–119, Long Island is 115/117/118/119, upstate is 120–149.)
+  const isLikelyNyZip = (value: string) => {
+    if (value.length < 3) return true; // still typing
+    const prefix = parseInt(value.slice(0, 3), 10);
+    return prefix >= 100 && prefix <= 149;
+  };
+
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 5);
     setZipCode(value);
-    setZipError('');
+    if (value.length >= 3 && !isLikelyNyZip(value)) {
+      setZipError(
+        "We only service New York State (including NYC and Long Island). Please enter a NY ZIP (100xx–149xx).",
+      );
+    } else {
+      setZipError('');
+    }
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +83,13 @@ export default function BookingZip() {
       setZipError('Please enter a valid 5-digit ZIP code');
       return;
     }
-    
+    if (!isLikelyNyZip(zipCode)) {
+      setZipError(
+        "We only service New York State (including NYC and Long Island). Please enter a NY ZIP (100xx–149xx).",
+      );
+      return;
+    }
+
     setIsValidatingZip(true);
     setZipError('');
     
@@ -243,22 +264,30 @@ export default function BookingZip() {
           </div>
           
           <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
-              Save{' '}
-              <span className="text-alx-gradient-gold">
-                {NEW_CUSTOMER_PROMO_PERCENT}%
-              </span>{' '}
-              On Your First Cleaning
-            </h1>
-            <p className="text-sm md:text-base uppercase tracking-[0.22em] text-alx-gold font-semibold mb-3">
-              Use code{' '}
-              <span className="text-alx-gold-light">
-                {NEW_CUSTOMER_PROMO_CODE}
-              </span>
-            </p>
+            {NEW_CUSTOMER_PROMO_ACTIVE ? (
+              <>
+                <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+                  Save{' '}
+                  <span className="text-alx-gradient-gold">
+                    {NEW_CUSTOMER_PROMO_PERCENT}%
+                  </span>{' '}
+                  On Your First Cleaning
+                </h1>
+                <p className="text-sm md:text-base uppercase tracking-[0.22em] text-alx-gold font-semibold mb-3">
+                  Use code{' '}
+                  <span className="text-alx-gold-light">
+                    {NEW_CUSTOMER_PROMO_CODE}
+                  </span>
+                </p>
+              </>
+            ) : (
+              <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+                Book Your New York Cleaning
+              </h1>
+            )}
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your New York ZIP to start — the offer is applied
-              automatically at checkout.
+              Enter your New York ZIP to get started. We only service NY State —
+              NYC, Long Island, Westchester, and upstate metros.
             </p>
           </div>
           
@@ -274,15 +303,24 @@ export default function BookingZip() {
                     id="zip"
                     type="text"
                     inputMode="numeric"
+                    pattern="1[0-4][0-9]{3}"
                     maxLength={5}
                     placeholder="10001"
                     value={zipCode}
                     onChange={handleZipChange}
                     onKeyPress={handleZipKeyPress}
                     className="text-lg md:text-2xl text-center h-12 md:h-16 tracking-wider"
+                    aria-describedby="zip-helper"
                     autoFocus
                     disabled={isValidatingZip}
                   />
+                  <p
+                    id="zip-helper"
+                    className="text-xs text-muted-foreground mt-2 text-center"
+                  >
+                    We only service New York State — NYC, Long Island, Westchester,
+                    and upstate NY.
+                  </p>
                 </div>
                 
                 {zipError && (
@@ -305,7 +343,11 @@ export default function BookingZip() {
                   size="lg"
                   className="w-full h-14 text-lg"
                   onClick={handleCheckAvailability}
-                  disabled={isValidatingZip || zipCode.length !== 5}
+                  disabled={
+                    isValidatingZip ||
+                    zipCode.length !== 5 ||
+                    !isLikelyNyZip(zipCode)
+                  }
                 >
                   {isValidatingZip ? (
                     <>

@@ -1,36 +1,52 @@
 /**
  * AlphaLux Cleaning — Promotional code constants.
  *
- * Shared by the hero section, navbar banner, booking checkout, and the
- * confirmation / receipt emails so every surface shows the same offer.
+ * To re-enable an automatic new-customer discount, flip
+ * `NEW_CUSTOMER_PROMO_ACTIVE` to true and set the percent you want.
+ * When `active` is false, every surface that uses `previewPromoDiscount`
+ * will render "no discount" and the checkout / confirmation screens
+ * won't show a strike-through line for the auto-promo.
  *
- * To change the active promotion, update the values here and (for
- * Supabase-backed promo lookup) the `promo_codes` table / the
- * `promo-system` edge function.
+ * Specific campaign codes stored in the `promo_codes` table (e.g.
+ * `DEEPCLEAN60`) are unaffected — they continue to validate / redeem
+ * server-side via the `promo-system` edge function.
  */
+export const NEW_CUSTOMER_PROMO_ACTIVE = false;
 export const NEW_CUSTOMER_PROMO_CODE = "ALC2026";
-export const NEW_CUSTOMER_PROMO_PERCENT = 50;
-export const NEW_CUSTOMER_PROMO_LABEL =
-  `${NEW_CUSTOMER_PROMO_PERCENT}% OFF your first cleaning`;
-export const NEW_CUSTOMER_PROMO_DESCRIPTION =
-  `New customers save ${NEW_CUSTOMER_PROMO_PERCENT}% on their first AlphaLux Cleaning with code ${NEW_CUSTOMER_PROMO_CODE}.`;
+export const NEW_CUSTOMER_PROMO_PERCENT = NEW_CUSTOMER_PROMO_ACTIVE ? 50 : 0;
+export const NEW_CUSTOMER_PROMO_LABEL = NEW_CUSTOMER_PROMO_ACTIVE
+  ? `${NEW_CUSTOMER_PROMO_PERCENT}% OFF your first cleaning`
+  : "";
+export const NEW_CUSTOMER_PROMO_DESCRIPTION = NEW_CUSTOMER_PROMO_ACTIVE
+  ? `New customers save ${NEW_CUSTOMER_PROMO_PERCENT}% on their first AlphaLux Cleaning with code ${NEW_CUSTOMER_PROMO_CODE}.`
+  : "";
 
 /**
  * Small helper used by checkout flows to compute a preview discount.
- * The real discount is always re-computed and redeemed server-side by
- * the `promo-system` Supabase edge function, which enforces the
- * once-per-customer rule against the `promo_redemptions` table.
+ * Returns a zero-discount result when the auto-promo is turned off so
+ * we never show a phantom strike-through price on the confirmation
+ * screen.
  */
 export function previewPromoDiscount(subtotal: number): {
   percent: number;
   amount: number;
   total: number;
   code: string;
+  active: boolean;
 } {
+  if (!NEW_CUSTOMER_PROMO_ACTIVE || NEW_CUSTOMER_PROMO_PERCENT <= 0) {
+    return {
+      percent: 0,
+      amount: 0,
+      total: Math.max(0, Math.round(subtotal * 100) / 100),
+      code: NEW_CUSTOMER_PROMO_CODE,
+      active: false,
+    };
+  }
   const percent = NEW_CUSTOMER_PROMO_PERCENT;
   const amount = Math.max(0, Math.round(subtotal * (percent / 100) * 100) / 100);
   const total = Math.max(0, Math.round((subtotal - amount) * 100) / 100);
-  return { percent, amount, total, code: NEW_CUSTOMER_PROMO_CODE };
+  return { percent, amount, total, code: NEW_CUSTOMER_PROMO_CODE, active: true };
 }
 
 import { supabase } from "@/integrations/supabase/client";

@@ -87,14 +87,12 @@ export function PaymentForm({
     return finalPrice;
   };
 
-  // Detect deep cleaning service type (discount already applied in calculator)
-  const isDeepCleaning = pricingData.cleaningType === 'deep';
-  
-  // Calculate deep clean discount for display (20% was already applied in calculatedPrice)
-  const deepCleanDiscount = isDeepCleaning ? {
-    applied: true,
-    amount: Math.round(getFinalPrice() * 0.25 * 100) / 100 // 20% off means discounted price is 80%, so discount = price * (20/80) = price * 0.25
-  } : null;
+  // Deep Clean used to carry a baked-in 20% discount that we surfaced
+  // to the Stripe form as a phantom line item. The promo is no longer
+  // running, so we always report "no auto-applied discount" here.
+  // Customer-entered codes still flow through the regular Supabase
+  // `promo-system` redemption path.
+  const deepCleanDiscount = null;
   
   // Preloaded payment hook for instant form loading
   const {
