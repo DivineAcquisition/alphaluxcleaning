@@ -9,13 +9,18 @@ import { NextRequest, NextResponse } from "next/server";
  * browser. Docs: https://docs.housecallpro.com
  *
  * Flow:
- *   1. Look up the customer by email (GET /customers?q={email}).
- *   2. If not found, create the customer (POST /customers).
- *   3. Create the job (POST /jobs) with the resolved customer id,
- *      address, line items, and schedule window.
+ *   1. GET /customers?q={email} to find an existing customer.
+ *   2. If one is found, make sure a matching service address exists
+ *      on that customer (POST /customers/{id}/addresses when missing).
+ *   3. If no customer is found, POST /customers with an `addresses[]`
+ *      array so the address is persisted in the same round-trip.
+ *   4. POST /jobs with the customer id, a specific address id, a rich
+ *      line-item name that HCP surfaces as the job's `description`
+ *      field (service + sqft + bed/bath + dwelling), and a notes
+ *      string that holds the full operational summary.
  *
  * Returns:
- *   { success: true,  job_id: "job_xxx", customer_id: "cus_xxx" }
+ *   { success: true,  job_id: "job_xxx", customer_id: "cus_xxx", address_id: "adr_xxx" }
  *   { success: false, error: "..." }
  */
 
@@ -48,46 +53,48 @@ interface CreateJobBody {
     notes?: string | null;
   };
   schedule: {
-    /** ISO-8601 scheduled start (e.g. "2026-05-01T14:00:00-04:00"). */
+    /** ISO-8601 scheduled start. */
     start: string;
     /** Optional ISO-8601 scheduled end. Defaults to start + 4 hours. */
     end?: string | null;
-    /** Optional arrival window in minutes before/after the start. */
+    /** Optional arrival window in minutes. Defaults to 30. */
     arrival_window_minutes?: number | null;
   };
   line_items?: Array<{
     name: string;
     description?: string | null;
-    /** Unit price in dollars. */
+    /** Unit price in dollars. Converted to cents before hitting HCP. */
     unit_price: number;
     quantity?: number | null;
     kind?: "labor" | "materials" | "discount";
   }>;
-  /** Passed straight through to HCP as job.notes. */
+  /** Extra context the ops team should see on the HCP job. */
   notes?: string | null;
   /** AlphaLux booking UUID, surfaced as a tag on the HCP job for traceability. */
   booking_id?: string | null;
+  /**
+   * Optional HCP lead_source. Must match an existing source configured
+   * on the HCP account; otherwise HCP returns `"Lead source not found"`.
+   */
+  lead_source?: string;
 }
 
+/* --------------------------- HCP auth + fetch --------------------------- */
+
 function getHcpApiKey(): string | null {
-  const fromEnv =
+  return (
     process.env.HCP_API_KEY ||
     process.env.HOUSECALL_PRO_API_KEY ||
-    // The user asked that we look up the key from
-    // `process.env.cde81b515f914598ac156b335a226adb`. Node refuses
-    // to expose env vars whose names are not upper-snake-case on
-    // some platforms, so we also accept the mangled name verbatim
-    // plus uppercase/token-suffixed fallbacks.
     (process.env as Record<string, string | undefined>)[
       "cde81b515f914598ac156b335a226adb"
     ] ||
-    process.env.HCP_LIVE_API_KEY;
-  return fromEnv || null;
+    process.env.HCP_LIVE_API_KEY ||
+    null
+  );
 }
 
 function hcpHeaders(apiKey: string): HeadersInit {
   return {
-    // HCP's documented auth header shape for their public API.
     Authorization: `Token token=${apiKey}`,
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -104,7 +111,6 @@ async function hcpFetch(
     ...init,
     headers: { ...hcpHeaders(apiKey), ...(init.headers || {}) },
   });
-
   const text = await res.text();
   let body: any = null;
   if (text) {
@@ -116,6 +122,8 @@ async function hcpFetch(
   }
   return { status: res.status, body, ok: res.ok };
 }
+
+/* --------------------------- Utilities --------------------------- */
 
 function splitName(full?: string): { first_name: string; last_name: string } {
   if (!full) return { first_name: "Customer", last_name: "" };
@@ -132,11 +140,334 @@ function addHours(iso: string, hours: number): string {
   return d.toISOString();
 }
 
+/** Map internal service codes to the label we want HCP dispatchers to see. */
+function prettyService(type: string): string {
+  const mapping: Record<string, string> = {
+    deep: "Deep Clean",
+    move_in_out: "Move In / Move Out Clean",
+    moveout: "Move In / Move Out Clean",
+    regular: "Standard Cleaning",
+    standard: "Standard Cleaning",
+    recurring: "Recurring Maintenance",
+  };
+  return mapping[type] || "Cleaning Service";
+}
+
+/** "apartment" -> "Apartment", "single_family" -> "Single Family". */
+function prettyDwelling(v?: string | null): string | null {
+  if (!v) return null;
+  const lower = String(v).trim().toLowerCase();
+  if (!lower) return null;
+  const mapping: Record<string, string> = {
+    house: "House",
+    single_family: "Single Family",
+    apartment: "Apartment",
+    condo: "Condo",
+    townhouse: "Townhouse",
+    studio: "Studio",
+    other: "Other",
+  };
+  return (
+    mapping[lower] ||
+    lower
+      .split(/[_\s]+/)
+      .filter(Boolean)
+      .map((w) => w[0].toUpperCase() + w.slice(1))
+      .join(" ")
+  );
+}
+
+function formatSqft(v?: number | string | null): string | null {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).replace(/[^0-9.]/g, ""));
+  if (!Number.isFinite(n) || n <= 0) {
+    const s = String(v).trim();
+    return s || null;
+  }
+  return n.toLocaleString() + " sq ft";
+}
+
+/**
+ * Compose the short label we send as the first line-item name. HCP
+ * surfaces this string as `job.description` — the prominent header
+ * the ops team sees on the job card. We pack the service type, sqft,
+ * bed/bath count, and dwelling type into it.
+ */
+function buildJobDescription(service: CreateJobBody["service"]): string {
+  const serviceLabel = service.description || prettyService(service.type);
+  const parts: string[] = [serviceLabel];
+  const sqft = formatSqft(service.sqft);
+  if (sqft) parts.push(sqft);
+
+  const br =
+    service.bedrooms != null && Number(service.bedrooms) >= 0
+      ? `${service.bedrooms} BR`
+      : null;
+  const ba =
+    service.bathrooms != null && Number(service.bathrooms) >= 0
+      ? `${service.bathrooms} BA`
+      : null;
+  const bedBath =
+    br && ba ? `${br} / ${ba}` : br || ba;
+  if (bedBath) parts.push(bedBath);
+
+  const dwelling = prettyDwelling(service.dwelling_type);
+  if (dwelling) parts.push(dwelling);
+
+  return parts.join(" · ");
+}
+
+/** Long-form summary for the HCP notes field. */
+function buildNotes(
+  body: CreateJobBody,
+  descriptionLine: string,
+): string {
+  const lines: string[] = [];
+  lines.push(descriptionLine);
+  const parts: string[] = [];
+  parts.push(`Service: ${prettyService(body.service.type)}`);
+  if (body.service.sqft != null && body.service.sqft !== "") {
+    const sqft = formatSqft(body.service.sqft);
+    if (sqft) parts.push(`Sqft: ${sqft}`);
+  }
+  if (body.service.bedrooms != null) parts.push(`Bedrooms: ${body.service.bedrooms}`);
+  if (body.service.bathrooms != null) parts.push(`Bathrooms: ${body.service.bathrooms}`);
+  const dwelling = prettyDwelling(body.service.dwelling_type);
+  if (dwelling) parts.push(`Dwelling: ${dwelling}`);
+  lines.push(parts.join(" · "));
+
+  if (body.service.notes) lines.push(`Customer notes: ${body.service.notes}`);
+  if (body.notes) lines.push(body.notes);
+  if (body.booking_id) lines.push(`AlphaLux booking: ${body.booking_id}`);
+
+  return lines.filter(Boolean).join("\n");
+}
+
+/* ----------------- HCP customer helpers ----------------- */
+
+type HcpAddressInput = {
+  type?: "service" | "billing";
+  street: string;
+  street_line_2?: string | null;
+  city: string;
+  state: string;
+  zip: string;
+  country?: string;
+};
+
+function buildHcpAddress(a: CreateJobBody["address"]): HcpAddressInput {
+  return {
+    type: "service",
+    street: a.street,
+    street_line_2: a.street_line_2 || null,
+    city: a.city,
+    state: a.state,
+    zip: a.zip,
+    country: "US",
+  };
+}
+
+function addressesMatch(
+  a: HcpAddressInput,
+  b: any,
+): boolean {
+  if (!b) return false;
+  const norm = (v: any) => String(v ?? "").trim().toLowerCase();
+  return (
+    norm(a.street) === norm(b.street) &&
+    norm(a.city) === norm(b.city) &&
+    norm(a.state) === norm(b.state) &&
+    norm(a.zip) === norm(b.zip)
+  );
+}
+
+async function ensureCustomer(
+  body: CreateJobBody,
+  customerEmail: string,
+  apiKey: string,
+): Promise<{ customerId: string; addressId: string }> {
+  const { first_name: derivedFirst, last_name: derivedLast } = splitName(
+    body.customer.name,
+  );
+  const firstName = body.customer.first_name || derivedFirst;
+  const lastName = body.customer.last_name || derivedLast;
+  const phone = body.customer.phone?.replace(/\s+/g, "") || undefined;
+  const wantedAddress = buildHcpAddress(body.address);
+
+  // ---- 1. Look up by email -----------------------------------
+  const lookup = await hcpFetch(
+    `/customers?q=${encodeURIComponent(customerEmail)}`,
+    { method: "GET" },
+    apiKey,
+  );
+  if (!lookup.ok && lookup.status !== 404) {
+    throw Object.assign(
+      new Error(`HCP customer lookup returned ${lookup.status}`),
+      { details: lookup.body, httpStatus: 502 },
+    );
+  }
+
+  const candidates: any[] = Array.isArray(lookup.body)
+    ? lookup.body
+    : lookup.body?.customers ||
+      lookup.body?.data ||
+      lookup.body?.results ||
+      [];
+
+  const matched = candidates.find((c) => {
+    const email = (c?.email || c?.primary_email || "").toLowerCase();
+    if (email === customerEmail) return true;
+    if (Array.isArray(c?.emails)) {
+      return c.emails.some((e: any) =>
+        typeof e === "string"
+          ? e.toLowerCase() === customerEmail
+          : (e?.address || e?.email || "").toLowerCase() === customerEmail,
+      );
+    }
+    return false;
+  });
+
+  if (matched?.id) {
+    // ---- 2a. Customer exists. Make sure service address is on file. ----
+    const existingAddrs: any[] =
+      matched.addresses && Array.isArray(matched.addresses)
+        ? matched.addresses
+        : [];
+    let existingAddr = existingAddrs.find((a) => addressesMatch(wantedAddress, a));
+
+    if (!existingAddr) {
+      // Fall back to pulling the full addresses list — /customers?q
+      // responses don't always inline them.
+      const addrList = await hcpFetch(
+        `/customers/${matched.id}/addresses`,
+        { method: "GET" },
+        apiKey,
+      );
+      if (addrList.ok) {
+        const listed: any[] = Array.isArray(addrList.body)
+          ? addrList.body
+          : addrList.body?.addresses || addrList.body?.data || [];
+        existingAddr = listed.find((a) => addressesMatch(wantedAddress, a));
+      }
+    }
+
+    let addressId: string | undefined = existingAddr?.id;
+    if (!addressId) {
+      const createAddr = await hcpFetch(
+        `/customers/${matched.id}/addresses`,
+        {
+          method: "POST",
+          body: JSON.stringify(wantedAddress),
+        },
+        apiKey,
+      );
+      if (!createAddr.ok) {
+        throw Object.assign(
+          new Error(`HCP address creation returned ${createAddr.status}`),
+          { details: createAddr.body, httpStatus: 502 },
+        );
+      }
+      addressId =
+        createAddr.body?.id ||
+        createAddr.body?.address?.id ||
+        createAddr.body?.data?.id;
+      if (!addressId) {
+        throw Object.assign(
+          new Error("HCP did not return an address id on create"),
+          { details: createAddr.body, httpStatus: 502 },
+        );
+      }
+    }
+
+    return { customerId: matched.id, addressId };
+  }
+
+  // ---- 2b. Create a new customer with the address inline ----
+  const createCustomerBody: Record<string, any> = {
+    first_name: firstName || "Customer",
+    last_name: lastName || "",
+    email: customerEmail,
+    mobile_number: phone,
+    notifications_enabled: true,
+    // HCP accepts the `addresses` array here and persists it; the
+    // older `address: { line1, postal_code }` shape silently drops
+    // the address on the floor.
+    addresses: [wantedAddress],
+    tags: ["AlphaLux_Web", body.service.type].filter(Boolean),
+  };
+  if (body.lead_source) createCustomerBody.lead_source = body.lead_source;
+
+  const create = await hcpFetch(
+    "/customers",
+    { method: "POST", body: JSON.stringify(createCustomerBody) },
+    apiKey,
+  );
+
+  if (!create.ok) {
+    throw Object.assign(
+      new Error(`HCP customer creation returned ${create.status}`),
+      { details: create.body, httpStatus: 502 },
+    );
+  }
+
+  const customerId =
+    create.body?.id ||
+    create.body?.customer?.id ||
+    create.body?.data?.id ||
+    null;
+  if (!customerId) {
+    throw Object.assign(
+      new Error("HCP did not return a customer id on create"),
+      { details: create.body, httpStatus: 502 },
+    );
+  }
+
+  const newAddresses: any[] = Array.isArray(create.body?.addresses)
+    ? create.body.addresses
+    : [];
+  let addressId =
+    newAddresses.find((a) => addressesMatch(wantedAddress, a))?.id ||
+    newAddresses[0]?.id;
+
+  if (!addressId) {
+    // Rare: HCP created the customer without the address. Fall back
+    // to an explicit address POST so the job still gets a real address.
+    const createAddr = await hcpFetch(
+      `/customers/${customerId}/addresses`,
+      {
+        method: "POST",
+        body: JSON.stringify(wantedAddress),
+      },
+      apiKey,
+    );
+    if (!createAddr.ok) {
+      throw Object.assign(
+        new Error(`HCP address creation returned ${createAddr.status}`),
+        { details: createAddr.body, httpStatus: 502 },
+      );
+    }
+    addressId =
+      createAddr.body?.id ||
+      createAddr.body?.address?.id ||
+      createAddr.body?.data?.id;
+    if (!addressId) {
+      throw Object.assign(
+        new Error("HCP did not return an address id on create (fallback)"),
+        { details: createAddr.body, httpStatus: 502 },
+      );
+    }
+  }
+
+  return { customerId, addressId };
+}
+
+/* --------------------------- Route handler --------------------------- */
+
 export async function POST(req: NextRequest) {
   let body: CreateJobBody;
   try {
     body = (await req.json()) as CreateJobBody;
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Invalid JSON body" },
       { status: 400 },
@@ -156,16 +487,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ---- Input validation --------------------------------------------------
+  // ---- Input validation ---------------------------------------------
   if (!body?.customer?.email) {
     return NextResponse.json(
       { success: false, error: "customer.email is required" },
       { status: 400 },
     );
   }
-  if (!body?.address?.street || !body.address?.city || !body.address?.state || !body.address?.zip) {
+  if (
+    !body?.address?.street ||
+    !body.address?.city ||
+    !body.address?.state ||
+    !body.address?.zip
+  ) {
     return NextResponse.json(
-      { success: false, error: "address (street, city, state, zip) is required" },
+      {
+        success: false,
+        error: "address (street, city, state, zip) is required",
+      },
       { status: 400 },
     );
   }
@@ -183,187 +522,68 @@ export async function POST(req: NextRequest) {
   }
 
   const customerEmail = body.customer.email.trim().toLowerCase();
-  const { first_name: derivedFirst, last_name: derivedLast } = splitName(
-    body.customer.name,
-  );
-  const firstName = body.customer.first_name || derivedFirst;
-  const lastName = body.customer.last_name || derivedLast;
-  const phone = body.customer.phone?.replace(/\s+/g, "") || undefined;
 
   try {
-    // ---- 1. Look up the customer by email ------------------------------
-    let hcpCustomerId: string | null = null;
+    // 1. Find or create the HCP customer + service address.
+    const { customerId, addressId } = await ensureCustomer(
+      body,
+      customerEmail,
+      apiKey,
+    );
 
-    const lookupPath = `/customers?q=${encodeURIComponent(customerEmail)}`;
-    const lookup = await hcpFetch(lookupPath, { method: "GET" }, apiKey);
-
-    if (!lookup.ok && lookup.status !== 404) {
-      console.error(
-        "[create-job] HCP customer lookup failed",
-        lookup.status,
-        lookup.body,
-      );
-      return NextResponse.json(
-        {
-          success: false,
-          error: `HCP customer lookup returned ${lookup.status}`,
-          details: lookup.body,
-        },
-        { status: 502 },
-      );
-    }
-
-    // Some HCP deployments wrap the results in { customers: [...] }, others
-    // return the array at the top level. Handle both.
-    const candidates: any[] = Array.isArray(lookup.body)
-      ? lookup.body
-      : lookup.body?.customers ||
-        lookup.body?.data ||
-        lookup.body?.results ||
-        [];
-
-    const matched = candidates.find((c) => {
-      const email = (c?.email || c?.primary_email || "").toLowerCase();
-      if (email === customerEmail) return true;
-      if (Array.isArray(c?.emails)) {
-        return c.emails.some(
-          (e: any) =>
-            typeof e === "string"
-              ? e.toLowerCase() === customerEmail
-              : (e?.address || e?.email || "").toLowerCase() === customerEmail,
-        );
-      }
-      return false;
-    });
-
-    hcpCustomerId = matched?.id || null;
-
-    // ---- 2. Create the customer if missing -----------------------------
-    if (!hcpCustomerId) {
-      const createCustomerBody: Record<string, any> = {
-        first_name: firstName || "Customer",
-        last_name: lastName || "",
-        email: customerEmail,
-        mobile_number: phone,
-        phones: phone ? [phone] : [],
-        emails: [customerEmail],
-        address: {
-          line1: body.address.street,
-          line2: body.address.street_line_2 || "",
-          city: body.address.city,
-          state: body.address.state,
-          postal_code: body.address.zip,
-        },
-        tags: ["AlphaLux_Web", body.service.type].filter(Boolean),
-        notifications_enabled: true,
-      };
-      // `lead_source` must match an existing HCP lead source on the
-      // account. Omit it unless the caller supplies a known value.
-      if ((body as any).lead_source) {
-        createCustomerBody.lead_source = (body as any).lead_source;
-      }
-
-      const create = await hcpFetch(
-        "/customers",
-        { method: "POST", body: JSON.stringify(createCustomerBody) },
-        apiKey,
-      );
-
-      if (!create.ok) {
-        console.error(
-          "[create-job] HCP customer creation failed",
-          create.status,
-          create.body,
-        );
-        return NextResponse.json(
-          {
-            success: false,
-            error: `HCP customer creation returned ${create.status}`,
-            details: create.body,
-          },
-          { status: 502 },
-        );
-      }
-
-      hcpCustomerId =
-        create.body?.id ||
-        create.body?.customer?.id ||
-        create.body?.data?.id ||
-        null;
-
-      if (!hcpCustomerId) {
-        console.error(
-          "[create-job] HCP create returned 2xx but no customer id",
-          create.body,
-        );
-        return NextResponse.json(
-          {
-            success: false,
-            error: "HCP did not return a customer id on create",
-            details: create.body,
-          },
-          { status: 502 },
-        );
-      }
-    }
-
-    // ---- 3. Create the job ---------------------------------------------
+    // 2. Build the job payload.
     const scheduleStart = body.schedule.start;
     const scheduleEnd = body.schedule.end || addHours(scheduleStart, 4);
     const arrivalWindowMinutes = body.schedule.arrival_window_minutes ?? 30;
 
-    const serviceLabel = body.service.description || prettyService(body.service.type);
-    const notesParts = [
-      body.service.sqft ? `Square footage: ${body.service.sqft}` : null,
-      body.service.bedrooms != null ? `Bedrooms: ${body.service.bedrooms}` : null,
-      body.service.bathrooms != null ? `Bathrooms: ${body.service.bathrooms}` : null,
-      body.service.dwelling_type ? `Dwelling: ${body.service.dwelling_type}` : null,
-      body.service.notes ? `Notes: ${body.service.notes}` : null,
-      body.notes,
-    ].filter(Boolean);
+    // HCP uses the first line-item's `name` as the visible `description`
+    // on the job. Pack service + sqft + BR/BA + dwelling into it so
+    // dispatchers can eyeball what they're sending a crew to.
+    const descriptionLine = buildJobDescription(body.service);
+    const longNotes = buildNotes(body, descriptionLine);
+
+    const defaultLineItem = {
+      name: descriptionLine,
+      description: longNotes,
+      unit_price: 0, // in cents
+      quantity: 1,
+      kind: "labor" as const,
+    };
 
     const lineItems =
       body.line_items && body.line_items.length > 0
-        ? body.line_items.map((li) => ({
-            name: li.name,
-            description: li.description || "",
-            unit_price: Math.round((li.unit_price || 0) * 100), // HCP expects cents
+        ? body.line_items.map((li, idx) => ({
+            // Replace the first line-item name with the rich description
+            // so HCP surfaces it on the job card. Subsequent items keep
+            // their user-supplied names (e.g. promo discount rows).
+            name: idx === 0 ? descriptionLine : li.name,
+            description: li.description || (idx === 0 ? longNotes : ""),
+            unit_price: Math.round((li.unit_price || 0) * 100),
             quantity: li.quantity ?? 1,
             kind: li.kind || "labor",
           }))
-        : [
-            {
-              name: serviceLabel,
-              description: serviceLabel,
-              unit_price: 0,
-              quantity: 1,
-              kind: "labor",
-            },
-          ];
+        : [defaultLineItem];
 
-    const jobPayload = {
-      customer_id: hcpCustomerId,
-      address: {
-        line1: body.address.street,
-        line2: body.address.street_line_2 || "",
-        city: body.address.city,
-        state: body.address.state,
-        postal_code: body.address.zip,
-      },
+    const jobPayload: Record<string, any> = {
+      customer_id: customerId,
+      address_id: addressId,
       schedule: {
         scheduled_start: scheduleStart,
         scheduled_end: scheduleEnd,
         arrival_window: arrivalWindowMinutes,
       },
       line_items: lineItems,
-      work_status: "needs_scheduling",
-      notes: notesParts.join("\n") || undefined,
+      // "scheduled" puts the job straight on the dispatch board. The
+      // HCP web app rejects "needs_scheduling" in some accounts.
+      work_status: "scheduled",
+      notes: longNotes,
       tags: [
         "AlphaLux_Web",
         body.service.type,
         body.booking_id ? `booking:${body.booking_id}` : null,
       ].filter(Boolean),
     };
+    if (body.lead_source) jobPayload.lead_source = body.lead_source;
 
     const createJob = await hcpFetch(
       "/jobs",
@@ -392,7 +612,6 @@ export async function POST(req: NextRequest) {
       createJob.body?.job?.id ||
       createJob.body?.data?.id ||
       null;
-
     if (!jobId) {
       console.error(
         "[create-job] HCP job creation 2xx but no id in body",
@@ -411,25 +630,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       job_id: jobId,
-      customer_id: hcpCustomerId,
+      customer_id: customerId,
+      address_id: addressId,
+      job_description: descriptionLine,
     });
-  } catch (err) {
+  } catch (err: any) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[create-job] Unexpected failure:", message);
+    const httpStatus =
+      (typeof err?.httpStatus === "number" && err.httpStatus) || 500;
+    console.error("[create-job] Unexpected failure:", message, err?.details);
     return NextResponse.json(
-      { success: false, error: message || "Unexpected server error" },
-      { status: 500 },
+      {
+        success: false,
+        error: message || "Unexpected server error",
+        details: err?.details,
+      },
+      { status: httpStatus },
     );
   }
-}
-
-function prettyService(type: string): string {
-  const mapping: Record<string, string> = {
-    deep: "Deep Clean",
-    move_in_out: "Move In / Move Out Clean",
-    regular: "Standard Cleaning",
-    standard: "Standard Cleaning",
-    recurring: "Recurring Maintenance",
-  };
-  return mapping[type] || "Cleaning Service";
 }
