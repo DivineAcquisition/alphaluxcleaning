@@ -41,18 +41,27 @@ const DWELLING_OPTIONS: Array<{ value: DwellingType; label: string; icon: typeof
  * "evening") into an ISO-8601 scheduled_start and scheduled_end that
  * Housecall Pro can consume.
  */
-function timeBlockToIsoWindow(dateStr: string, block: string) {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const window =
-    block === 'morning'
-      ? { startH: 8, startM: 0, endH: 11, endM: 0 }
-      : block === 'afternoon'
-        ? { startH: 12, startM: 0, endH: 15, endM: 0 }
-        : { startH: 15, startM: 0, endH: 18, endM: 0 };
+import {
+  TIME_SLOTS,
+  DEFAULT_MIN_LEAD_DAYS,
+  timeSlotToIsoWindow,
+  type TimeSlotId,
+} from '@/components/booking/OfferDateTimePicker';
 
-  const start = new Date(year, (month || 1) - 1, day || 1, window.startH, window.startM, 0);
-  const end = new Date(year, (month || 1) - 1, day || 1, window.endH, window.endM, 0);
-  return { start: start.toISOString(), end: end.toISOString() };
+function timeBlockToIsoWindow(dateStr: string, block: string) {
+  // Legacy helper kept for call sites that still pass strings — the
+  // canonical implementation now lives in OfferDateTimePicker.
+  return timeSlotToIsoWindow(dateStr, (block as TimeSlotId) || 'morning');
+}
+
+function computeEarliestBookableYmd(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + DEFAULT_MIN_LEAD_DAYS);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export default function BookingDetails() {
@@ -535,9 +544,14 @@ export default function BookingDetails() {
                   type="date"
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={computeEarliestBookableYmd()}
                   required
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {DEFAULT_MIN_LEAD_DAYS === 0
+                    ? 'Same-day booking available.'
+                    : `${DEFAULT_MIN_LEAD_DAYS}-day minimum lead time.`}
+                </p>
               </div>
 
               <div>
@@ -550,11 +564,16 @@ export default function BookingDetails() {
                     <SelectValue placeholder="Select a time window" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="morning">Morning (8–11 AM)</SelectItem>
-                    <SelectItem value="afternoon">Afternoon (12–3 PM)</SelectItem>
-                    <SelectItem value="evening">Evening (3–6 PM)</SelectItem>
+                    {TIME_SLOTS.map((slot) => (
+                      <SelectItem key={slot.id} value={slot.id}>
+                        {slot.label} ({slot.window})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Our crew lands anywhere in the 2-hour window.
+                </p>
               </div>
             </div>
           </Card>
