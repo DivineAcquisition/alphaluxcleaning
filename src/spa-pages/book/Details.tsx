@@ -1,18 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { useTestMode } from '@/hooks/useTestMode';
-import { TestTube } from 'lucide-react';
+import { Loader2, Calendar, Home as HomeIcon, Building2, Building } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Calendar } from 'lucide-react';
+
+type DwellingType =
+  | 'house'
+  | 'apartment'
+  | 'condo'
+  | 'townhouse'
+  | 'studio'
+  | 'other';
+
+const DWELLING_OPTIONS: Array<{ value: DwellingType; label: string; icon: typeof HomeIcon }> = [
+  { value: 'house', label: 'Single-family house', icon: HomeIcon },
+  { value: 'apartment', label: 'Apartment', icon: Building2 },
+  { value: 'condo', label: 'Condo', icon: Building },
+  { value: 'townhouse', label: 'Townhouse', icon: HomeIcon },
+  { value: 'studio', label: 'Studio', icon: Building2 },
+  { value: 'other', label: 'Other', icon: HomeIcon },
+];
+
+/**
+ * Convert a date (YYYY-MM-DD) + time block ("morning"/"afternoon"/
+ * "evening") into an ISO-8601 scheduled_start and scheduled_end that
+ * Housecall Pro can consume.
+ */
+function timeBlockToIsoWindow(dateStr: string, block: string) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const window =
+    block === 'morning'
+      ? { startH: 8, startM: 0, endH: 11, endM: 0 }
+      : block === 'afternoon'
+        ? { startH: 12, startM: 0, endH: 15, endM: 0 }
+        : { startH: 15, startM: 0, endH: 18, endM: 0 };
+
+  const start = new Date(year, (month || 1) - 1, day || 1, window.startH, window.startM, 0);
+  const end = new Date(year, (month || 1) - 1, day || 1, window.endH, window.endM, 0);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
 
 export default function BookingDetails() {
   const navigate = useNavigate();
@@ -21,13 +62,23 @@ export default function BookingDetails() {
 
   const [loading, setLoading] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
+  const [submitState, setSubmitState] = useState<
+    | { kind: 'idle' }
+    | { kind: 'submitting' }
+    | { kind: 'error'; message: string }
+    | { kind: 'success'; jobId?: string }
+  >({ kind: 'idle' });
   const { isTestMode } = useTestMode();
-  
+
   const [addressLine1, setAddressLine1] = useState('');
   const [addressLine2, setAddressLine2] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
+  const [dwellingType, setDwellingType] = useState<DwellingType>('house');
+  const [bedrooms, setBedrooms] = useState('');
+  const [bathrooms, setBathrooms] = useState('');
+  const [hasPets, setHasPets] = useState('');
   const [preferredDate, setPreferredDate] = useState('');
   const [preferredTimeBlock, setPreferredTimeBlock] = useState('');
   const [notes, setNotes] = useState('');
@@ -40,6 +91,7 @@ export default function BookingDetails() {
     }
 
     fetchBookingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId, navigate]);
 
   const fetchBookingData = async () => {
@@ -52,18 +104,35 @@ export default function BookingDetails() {
 
       if (error) throw error;
 
-      if (!data || data.payment_status !== 'paid') {
+      const ok = ['deposit_paid', 'paid', 'fully_paid'].includes(
+        data?.payment_status ?? '',
+      );
+
+      if (!data || !ok) {
         toast.error('Payment not confirmed');
         navigate('/book/zip');
         return;
       }
 
       setBookingData(data);
-      
-      // Pre-fill city, state, zip from booking
+
+      // Pre-fill address from customer / booking
+      setAddressLine1(
+        data.address_line1 || data.customers?.address_line1 || data.customers?.address || '',
+      );
+      setAddressLine2(data.address_line2 || data.customers?.address_line2 || '');
       setCity(data.customers?.city || '');
-      setState(data.customers?.state || '');
-      setZipCode(data.zip_code || '');
+      setState(data.customers?.state || 'NY');
+      setZipCode(data.zip_code || data.customers?.postal_code || '');
+      if (data.property_details?.dwelling_type) {
+        setDwellingType(data.property_details.dwelling_type as DwellingType);
+      }
+      if (data.property_details?.bedrooms) {
+        setBedrooms(String(data.property_details.bedrooms));
+      }
+      if (data.property_details?.bathrooms) {
+        setBathrooms(String(data.property_details.bathrooms));
+      }
     } catch (error) {
       console.error('Error fetching booking:', error);
       toast.error('Failed to load booking data');
@@ -71,41 +140,148 @@ export default function BookingDetails() {
     }
   };
 
+  const customerName = useMemo(() => {
+    if (!bookingData) return '';
+    const c = bookingData.customers;
+    if (c?.name) return c.name;
+    return [c?.first_name, c?.last_name].filter(Boolean).join(' ');
+  }, [bookingData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!addressLine1 || !city || !state || !zipCode || !preferredDate || !preferredTimeBlock) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     setLoading(true);
+    setSubmitState({ kind: 'submitting' });
+
+    const propertyDetails = {
+      dwelling_type: dwellingType,
+      bedrooms: bedrooms ? Number(bedrooms) : null,
+      bathrooms: bathrooms ? Number(bathrooms) : null,
+      pets: hasPets,
+    };
 
     try {
-      // Use service-role edge function so RLS doesn't block the update for anonymous users
-      const { data, error } = await supabase.functions.invoke('save-booking-details', {
-        body: {
-          bookingId,
-          addressLine1,
-          addressLine2: addressLine2 || null,
-          city,
-          state,
-          zipCode,
-          serviceDate: preferredDate,
-          timeSlot: preferredTimeBlock,
-          specialInstructions: notes || null,
+      // 1. Persist the service address + schedule on the booking row.
+      const { data, error } = await supabase.functions.invoke(
+        'save-booking-details',
+        {
+          body: {
+            bookingId,
+            addressLine1,
+            addressLine2: addressLine2 || null,
+            city,
+            state,
+            zipCode,
+            serviceDate: preferredDate,
+            timeSlot: preferredTimeBlock,
+            specialInstructions: notes || null,
+            propertyDetails,
+          },
         },
-      });
+      );
 
       if (error || !data?.success) {
         throw new Error(data?.error || error?.message || 'Failed to save details');
+      }
+
+      // 2. Push the job into Housecall Pro. If HCP is unavailable the
+      //    customer still gets a confirmation — the ops team retries
+      //    out-of-band via `retry-failed-hcp-syncs`.
+      try {
+        const schedule = timeBlockToIsoWindow(preferredDate, preferredTimeBlock);
+        const resp = await fetch('/api/create-job', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer: {
+              name: customerName,
+              first_name: bookingData.customers?.first_name,
+              last_name: bookingData.customers?.last_name,
+              email: bookingData.customers?.email,
+              phone: bookingData.customers?.phone,
+            },
+            address: {
+              street: addressLine1,
+              street_line_2: addressLine2 || null,
+              city,
+              state,
+              zip: zipCode,
+            },
+            service: {
+              type: bookingData.service_type || 'deep',
+              description:
+                bookingData.offer_name ||
+                bookingData.service_type ||
+                'Cleaning service',
+              sqft: bookingData.home_size || bookingData.sqft_or_bedrooms || null,
+              dwelling_type: dwellingType,
+              bedrooms: propertyDetails.bedrooms,
+              bathrooms: propertyDetails.bathrooms,
+              notes: notes || null,
+            },
+            schedule: {
+              start: schedule.start,
+              end: schedule.end,
+              arrival_window_minutes: 30,
+            },
+            line_items: [
+              {
+                name: bookingData.offer_name || 'Cleaning service',
+                unit_price: Number(bookingData.est_price || 0),
+                quantity: 1,
+                kind: 'labor',
+              },
+              bookingData.promo_discount_cents && bookingData.promo_discount_cents > 0
+                ? {
+                    name: `Promo ${bookingData.promo_code || 'discount'}`,
+                    unit_price: -(bookingData.promo_discount_cents / 100),
+                    quantity: 1,
+                    kind: 'discount' as const,
+                  }
+                : null,
+            ].filter(Boolean) as any,
+            notes: `Deposit paid: $${Number(bookingData.deposit_amount || 0).toFixed(
+              2,
+            )} · Balance due: $${Number(bookingData.balance_due || 0).toFixed(2)}`,
+            booking_id: bookingData.id,
+          }),
+        });
+
+        const payload = await resp.json().catch(() => ({}));
+
+        if (resp.ok && payload?.success && payload?.job_id) {
+          // Record the HCP job id on the booking row so support can
+          // open it in the HCP dashboard.
+          await supabase
+            .from('bookings')
+            .update({
+              hcp_job_id: payload.job_id,
+              hcp_customer_id: payload.customer_id || null,
+            })
+            .eq('id', bookingData.id);
+          setSubmitState({ kind: 'success', jobId: payload.job_id });
+        } else {
+          console.warn('HCP job creation failed:', payload);
+          // Still succeed the booking — ops can retry.
+          setSubmitState({ kind: 'success' });
+        }
+      } catch (hcpErr) {
+        console.error('HCP create-job threw:', hcpErr);
+        setSubmitState({ kind: 'success' });
       }
 
       toast.success('Booking confirmed!');
       navigate(`/book/confirmation?booking_id=${bookingId}`);
     } catch (error: any) {
       console.error('Error updating booking:', error);
-      toast.error(error?.message || 'Failed to update booking details');
+      const message = error?.message || 'Failed to update booking details';
+      setSubmitState({ kind: 'error', message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -115,7 +291,7 @@ export default function BookingDetails() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading booking details...</p>
         </div>
       </div>
@@ -129,18 +305,27 @@ export default function BookingDetails() {
       <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Almost Done! Let's Schedule Your Clean
+            Almost done — tell us about your home
           </h1>
           <p className="text-lg text-muted-foreground">
-            We have your payment. Now let's get your home details.
+            Your deposit is secured. Finalize your address, home details, and
+            scheduling window to confirm the booking.
           </p>
         </div>
+
+        {submitState.kind === 'error' && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{submitState.message}</AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Service Address */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Service Address</h2>
-            
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              Service Address
+            </h2>
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="address1">Address Line 1 *</Label>
@@ -154,7 +339,7 @@ export default function BookingDetails() {
               </div>
 
               <div>
-                <Label htmlFor="address2">Address Line 2</Label>
+                <Label htmlFor="address2">Apt / Suite / Unit</Label>
                 <Input
                   id="address2"
                   value={addressLine2}
@@ -197,13 +382,85 @@ export default function BookingDetails() {
             </div>
           </Card>
 
+          {/* Home details */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              Home Details
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="dwellingType">Dwelling type *</Label>
+                <Select
+                  value={dwellingType}
+                  onValueChange={(v) => setDwellingType(v as DwellingType)}
+                >
+                  <SelectTrigger id="dwellingType">
+                    <SelectValue placeholder="Select a dwelling type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DWELLING_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="bedrooms">Bedrooms</Label>
+                  <Input
+                    id="bedrooms"
+                    type="number"
+                    min={0}
+                    max={12}
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    placeholder="e.g. 3"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bathrooms">Bathrooms</Label>
+                  <Input
+                    id="bathrooms"
+                    type="number"
+                    min={0}
+                    max={12}
+                    step="0.5"
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                    placeholder="e.g. 2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="pets">Any pets on site?</Label>
+                <Select value={hasPets} onValueChange={setHasPets}>
+                  <SelectTrigger id="pets">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No pets</SelectItem>
+                    <SelectItem value="dog">Dog(s)</SelectItem>
+                    <SelectItem value="cat">Cat(s)</SelectItem>
+                    <SelectItem value="both">Both dogs and cats</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
+
           {/* Scheduling */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5" />
               Preferred Scheduling
             </h2>
-            
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="date">Preferred Date *</Label>
@@ -219,14 +476,17 @@ export default function BookingDetails() {
 
               <div>
                 <Label htmlFor="timeBlock">Preferred Time Block *</Label>
-                <Select value={preferredTimeBlock} onValueChange={setPreferredTimeBlock} required>
+                <Select
+                  value={preferredTimeBlock}
+                  onValueChange={setPreferredTimeBlock}
+                >
                   <SelectTrigger id="timeBlock">
                     <SelectValue placeholder="Select a time window" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="morning">Morning (8-11 AM)</SelectItem>
-                    <SelectItem value="afternoon">Afternoon (12-3 PM)</SelectItem>
-                    <SelectItem value="evening">Evening (3-6 PM)</SelectItem>
+                    <SelectItem value="morning">Morning (8–11 AM)</SelectItem>
+                    <SelectItem value="afternoon">Afternoon (12–3 PM)</SelectItem>
+                    <SelectItem value="evening">Evening (3–6 PM)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -235,27 +495,47 @@ export default function BookingDetails() {
 
           {/* Additional Notes */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Additional Notes</h2>
-            
+            <h2 className="text-xl font-semibold text-foreground mb-4">
+              Additional Notes
+            </h2>
+
             <div>
-              <Label htmlFor="notes">Anything we should know before arriving?</Label>
+              <Label htmlFor="notes">
+                Anything we should know before arriving?
+              </Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Gate code, pets, parking instructions, special requests..."
+                placeholder="Gate code, parking instructions, special requests, areas to prioritize..."
                 rows={4}
                 className="mt-2"
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                Optional: Let us know about pets, access codes, or any special instructions
-              </p>
             </div>
           </Card>
 
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading ? 'Completing Booking...' : 'Complete Booking'}
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={loading || submitState.kind === 'submitting'}
+          >
+            {loading || submitState.kind === 'submitting' ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Completing Booking…
+              </>
+            ) : (
+              'Complete Booking'
+            )}
           </Button>
+
+          {isTestMode && (
+            <p className="text-xs text-center text-muted-foreground">
+              Test mode is on — no real HCP job is created, the API route is
+              still called for smoke-testing.
+            </p>
+          )}
         </form>
       </div>
     </div>

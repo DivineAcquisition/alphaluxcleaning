@@ -75,6 +75,19 @@ export default function BookingCheckout() {
     }
   }, [hasContact, hasTrackedCheckout, trackStep]);
 
+  // ---- Promo code (customer-entered, not auto-applied) ----
+  // We start from whatever is already stored on the booking context
+  // (e.g. a code carried over via ?promo=ALC2026 deep link) and let
+  // the customer type a new code if they have one.
+  const [promoInput, setPromoInput] = useState(bookingData.promoCode || '');
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoDisplay, setPromoDisplay] = useState<string | null>(
+    bookingData.promoCode && bookingData.promoDiscount
+      ? `Code ${bookingData.promoCode.toUpperCase()} applied`
+      : null,
+  );
+
   // Calculate final amounts
   const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
   const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.2;
@@ -278,6 +291,75 @@ export default function BookingCheckout() {
     }
   }, [hasContact, clientSecret, isTestMode, isInitializing, initializePayment]);
 
+  const handleApplyPromo = async () => {
+    const trimmed = promoInput.trim().toUpperCase();
+    if (!trimmed) {
+      setPromoError('Enter a promo code to apply.');
+      return;
+    }
+    if (!bookingData.basePrice || bookingData.basePrice <= 0) {
+      setPromoError('Please complete your selection before applying a code.');
+      return;
+    }
+
+    setPromoApplying(true);
+    setPromoError(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('promo-system', {
+        body: {
+          action: 'validate',
+          code: trimmed,
+          subtotal_cents: Math.round((bookingData.basePrice || 0) * 100),
+          booking_type: bookingData.offerType === '90_day_plan' ? 'ANY' : 'ONE_TIME',
+          email: bookingData.contactInfo?.email || null,
+        },
+      });
+
+      if (error) {
+        setPromoError(error.message || 'Failed to validate promo code');
+        return;
+      }
+
+      if (!data?.valid) {
+        setPromoError(data?.reason || 'This code is not valid right now.');
+        return;
+      }
+
+      const discountDollars =
+        (data.discount_cents ?? 0) / 100;
+
+      if (discountDollars <= 0) {
+        setPromoError('This code does not discount this order.');
+        return;
+      }
+
+      updateBookingData({
+        promoCode: trimmed,
+        promoDiscount: discountDollars,
+      });
+      setPromoDisplay(data.display || `Code ${trimmed} applied`);
+      // Force Stripe to re-initialize so the payment intent uses the
+      // new deposit amount.
+      setClientSecret(null);
+      setBookingId(null);
+      toast.success(data.display || `Promo ${trimmed} applied`);
+    } catch (err: any) {
+      setPromoError(err?.message || 'Could not validate promo code');
+    } finally {
+      setPromoApplying(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    updateBookingData({ promoCode: '', promoDiscount: 0 });
+    setPromoInput('');
+    setPromoDisplay(null);
+    setPromoError(null);
+    setClientSecret(null);
+    setBookingId(null);
+  };
+
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setContactFormError(null);
@@ -333,6 +415,45 @@ export default function BookingCheckout() {
 
       markCompleted(bookingId);
 
+      // Redeem the promo server-side if one was applied — this enforces
+      // the once-per-customer rule and stamps the booking with the
+      // final discount.
+      if (bookingData.promoCode && bookingData.promoDiscount && bookingData.promoDiscount > 0) {
+        try {
+          await supabase.functions.invoke('promo-system', {
+            body: {
+              action: 'redeem',
+              code: bookingData.promoCode,
+              booking_id: bookingId,
+              customer_id: customerId,
+              subtotal_cents: Math.round((bookingData.basePrice || 0) * 100),
+              booking_type:
+                bookingData.offerType === '90_day_plan' ? 'ANY' : 'ONE_TIME',
+              email: bookingData.contactInfo?.email || null,
+            },
+          });
+        } catch (promoErr) {
+          console.error('Failed to redeem promo server-side:', promoErr);
+        }
+      }
+
+      // Send the Stripe invoice for the remaining balance (fire-and-
+      // forget — we don't block the booking flow on invoice delivery).
+      if (balanceDue > 0.5 && bookingData.offerType !== '90_day_plan') {
+        supabase.functions
+          .invoke('send-balance-invoice', {
+            body: { bookingId, daysUntilDue: 7 },
+          })
+          .then(({ error: invoiceError }) => {
+            if (invoiceError) {
+              console.error('Balance invoice failed:', invoiceError);
+            } else {
+              console.log('Balance invoice queued for booking', bookingId);
+            }
+          })
+          .catch((err) => console.error('Balance invoice threw:', err));
+      }
+
       try {
         await supabase.functions.invoke('send-payment-schedule', {
           body: {
@@ -350,7 +471,7 @@ export default function BookingCheckout() {
         console.error('Failed to send payment schedule email:', emailError);
       }
 
-      toast.success('Deposit paid successfully!');
+      toast.success('Deposit paid! Let\'s finalize your booking.');
       navigate(`/book/details?booking_id=${bookingId}`);
     } catch (error: any) {
       console.error('Error updating booking:', error);
@@ -683,6 +804,86 @@ export default function BookingCheckout() {
                   ))}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Promo code */}
+          <Card className="border-alx-gold/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-primary" />
+                Promo Code
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {promoDisplay ? (
+                <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="flex-1 text-sm">
+                    <div className="font-semibold text-primary">
+                      {promoDisplay}
+                    </div>
+                    {bookingData.promoDiscount ? (
+                      <div className="text-xs text-muted-foreground">
+                        Savings: ${bookingData.promoDiscount.toFixed(2)}
+                      </div>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleRemovePromo}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Have a code? Enter it here to unlock your discount — promo codes
+                    are validated and redeemed one-time per customer.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      aria-label="Promo code"
+                      placeholder="e.g. ALC2026"
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value.toUpperCase());
+                        setPromoError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleApplyPromo();
+                        }
+                      }}
+                      className="uppercase tracking-wider"
+                      disabled={promoApplying}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={promoApplying || !promoInput.trim()}
+                    >
+                      {promoApplying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Checking…
+                        </>
+                      ) : (
+                        'Apply'
+                      )}
+                    </Button>
+                  </div>
+                  {promoError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{promoError}</AlertDescription>
+                    </Alert>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
 
