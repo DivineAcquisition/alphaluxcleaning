@@ -27,6 +27,7 @@ serve(async (req) => {
       serviceDate,
       timeSlot,
       specialInstructions,
+      propertyDetails,
     } = body;
 
     if (!bookingId) throw new Error("Missing bookingId");
@@ -46,20 +47,26 @@ serve(async (req) => {
     );
 
     // Update booking with full details
+    const updatePayload: Record<string, any> = {
+      address_line1: addressLine1,
+      address_line2: addressLine2 || null,
+      zip_code: zipCode,
+      service_date: serviceDate,
+      time_slot: timeSlot,
+      preferred_date: serviceDate,
+      preferred_time_block: timeSlot,
+      special_instructions: specialInstructions || null,
+      status: 'confirmed',
+      updated_at: new Date().toISOString(),
+    };
+
+    if (propertyDetails && typeof propertyDetails === 'object') {
+      updatePayload.property_details = propertyDetails;
+    }
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .update({
-        address_line1: addressLine1,
-        address_line2: addressLine2 || null,
-        zip_code: zipCode,
-        service_date: serviceDate,
-        time_slot: timeSlot,
-        preferred_date: serviceDate,
-        preferred_time_block: timeSlot,
-        special_instructions: specialInstructions || null,
-        status: 'confirmed',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', bookingId)
       .select('customer_id')
       .single();

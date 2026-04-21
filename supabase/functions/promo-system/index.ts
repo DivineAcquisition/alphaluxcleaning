@@ -36,6 +36,19 @@ const jsonResponse = (body: unknown, status = 200) =>
   });
 
 /**
+ * Promo-code rules like `once_per_customer` and `new_customers_only`
+ * live inside the JSONB `metadata` column for legacy rows, but newer
+ * rows may promote them to first-class columns. Normalize access so
+ * the rest of the function doesn't care which shape it's dealing with.
+ */
+function promoFlag(promo: any, key: string): boolean {
+  if (promo == null) return false;
+  if (key in promo && typeof promo[key] === "boolean") return promo[key];
+  const fromMeta = promo.metadata?.[key];
+  return fromMeta === true || fromMeta === "true";
+}
+
+/**
  * Compute the per-booking discount (in cents) given a promo row and
  * the current subtotal. Supports FIXED (flat cents) and PERCENT codes
  * with optional metadata.max_discount_cents ceiling.
@@ -151,7 +164,9 @@ serve(async (req) => {
       }
 
       // --- Once-per-customer enforcement (also enforced by DB trigger) ---
-      if (promo.once_per_customer) {
+      const oncePerCustomer = promoFlag(promo, "once_per_customer");
+      const newCustomersOnly = promoFlag(promo, "new_customers_only");
+      if (oncePerCustomer) {
         const lookups: Array<{ column: string; value: string }> = [];
         if (customer_id) lookups.push({ column: "customer_id", value: customer_id });
         if (normalizedEmail) {
@@ -178,7 +193,7 @@ serve(async (req) => {
         }
 
         // Also treat "new customers only" as a prior-booking check.
-        if (promo.new_customers_only && (customer_id || normalizedEmail)) {
+        if (newCustomersOnly && (customer_id || normalizedEmail)) {
           const prior = customer_id
             ? await supabase
                 .from("bookings")
@@ -214,8 +229,8 @@ serve(async (req) => {
         code: normalizedCode,
         type: promo.type,
         percent_off: promo.percent_off ?? null,
-        once_per_customer: !!promo.once_per_customer,
-        new_customers_only: !!promo.new_customers_only,
+        once_per_customer: oncePerCustomer,
+        new_customers_only: newCustomersOnly,
       });
     }
 
@@ -306,7 +321,9 @@ serve(async (req) => {
       }
 
       // --- App-layer once-per-customer check (DB trigger is the final guard) ---
-      if (promo.once_per_customer) {
+      const oncePerCustomer = promoFlag(promo, "once_per_customer");
+      const newCustomersOnly = promoFlag(promo, "new_customers_only");
+      if (oncePerCustomer) {
         const duplicateChecks = [];
         if (customer_id) {
           duplicateChecks.push(
@@ -342,7 +359,7 @@ serve(async (req) => {
           }
         }
 
-        if (promo.new_customers_only && customer_id) {
+        if (newCustomersOnly && customer_id) {
           const { count } = await supabase
             .from("bookings")
             .select("id", { count: "exact", head: true })
