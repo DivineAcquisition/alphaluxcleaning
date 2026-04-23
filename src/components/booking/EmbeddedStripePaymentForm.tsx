@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { getStripePromise, getStripeForKey } from '@/lib/stripe';
 import { supabase } from '@/integrations/supabase/client';
@@ -374,6 +374,17 @@ export function EmbeddedStripePaymentForm({
     },
   };
 
+  // Memoize the Stripe promise so re-renders of the parent don't
+  // hand a fresh Promise to <Elements> on every cycle (which would
+  // tear down and re-mount the PaymentElement).
+  const stripePromise = useMemo(
+    () =>
+      accountPublishableKey
+        ? getStripeForKey(accountPublishableKey)
+        : getStripePromise(),
+    [accountPublishableKey],
+  );
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -384,11 +395,7 @@ export function EmbeddedStripePaymentForm({
       </CardHeader>
       <CardContent>
         <Elements
-          stripe={
-            accountPublishableKey
-              ? getStripeForKey(accountPublishableKey)
-              : getStripePromise()
-          }
+          stripe={stripePromise}
           options={{
             clientSecret,
             appearance,

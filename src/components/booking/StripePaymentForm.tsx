@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { getStripePromise, getStripeForKey } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,19 @@ function PaymentFormContent({
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
   const [elementReady, setElementReady] = useState(false);
+  // Bail-out gate: if Stripe's PaymentElement.onReady never fires
+  // (network throttle, content blocker, etc.), we still want the
+  // form to be usable. After ~4s we drop the "Loading…" placeholder
+  // and let the user submit anyway — Stripe's own internal retry
+  // takes over from there.
+  const [loaderTimedOut, setLoaderTimedOut] = useState(false);
   const redirectHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (elementReady) return;
+    const t = setTimeout(() => setLoaderTimedOut(true), 4000);
+    return () => clearTimeout(t);
+  }, [elementReady]);
 
   // If Stripe bounced the customer back here after a 3-D Secure
   // redirect we'll have `?payment_intent=...&redirect_status=...` in
@@ -176,7 +188,7 @@ function PaymentFormContent({
       </div>
 
       <div className="rounded-xl border border-border p-4 bg-card">
-        {!elementReady && (
+        {!elementReady && !loaderTimedOut && (
           <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
             Loading secure card form…
@@ -184,6 +196,16 @@ function PaymentFormContent({
         )}
         <PaymentElement
           onReady={() => setElementReady(true)}
+          onLoadError={(e) => {
+            // Surface real Stripe load failures instead of leaving
+            // the form stuck on "Loading…".
+            console.error('[StripePaymentForm] PaymentElement load error', e);
+            const msg =
+              (e?.error as any)?.message ||
+              'Could not load the secure card form. Refresh the page or try again.';
+            setError(msg);
+            setLoaderTimedOut(true);
+          }}
           options={{
             layout: 'tabs',
             paymentMethodOrder: ['card'],
@@ -213,7 +235,15 @@ function PaymentFormContent({
         </Button>
         <Button
           type="submit"
-          disabled={!stripe || !elements || !elementReady || isProcessing}
+          disabled={
+            !stripe || !elements || isProcessing ||
+            // Only block on the readiness flag while the loader is
+            // still showing the placeholder. Once we time out the
+            // loader, let the user attempt the payment — Stripe will
+            // raise a real error inline if the form really isn't
+            // mounted.
+            (!elementReady && !loaderTimedOut)
+          }
           className="flex-[2] rounded-lg font-semibold"
           size="lg"
         >
@@ -247,7 +277,7 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
   }
 
   // Match the branded Stripe PaymentElement to the AlphaLux Clean
-  // palette: navy text, bright-blue focus, warm-gold accent borders.
+  // palette: navy text, bright-blue focus, blue accent borders.
   // Hex values are intentionally inlined because Stripe's Elements
   // appearance API does not read CSS variables.
   const appearance = {
@@ -278,23 +308,32 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
         color: '#1B314B',
       },
       '.Tab': {
-        borderColor: '#ECC98B',
-        backgroundColor: '#F8F8F7',
+        borderColor: '#DBE3EC',
+        backgroundColor: '#F8FAFC',
       },
       '.Tab:hover': {
-        borderColor: '#A17938',
+        borderColor: '#0F77CC',
       },
       '.Tab--selected': {
-        borderColor: '#A17938',
-        backgroundColor: '#F8F3E8',
+        borderColor: '#0F77CC',
+        backgroundColor: '#EFF7FE',
         color: '#1B314B',
       },
     },
   };
 
+  // Memoize the Stripe promise so re-renders of the parent don't
+  // hand a fresh Promise to <Elements> on every cycle (which would
+  // tear down and re-mount the PaymentElement and trigger the "stuck
+  // loading" symptom).
+  const stripePromise = useMemo(
+    () => (publishableKey ? getStripeForKey(publishableKey) : getStripePromise()),
+    [publishableKey],
+  );
+
   return (
     <Elements
-      stripe={publishableKey ? getStripeForKey(publishableKey) : getStripePromise()}
+      stripe={stripePromise}
       options={{
         clientSecret,
         appearance,
