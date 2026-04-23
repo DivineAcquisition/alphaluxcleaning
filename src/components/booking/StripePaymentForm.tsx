@@ -247,44 +247,47 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
   }
 
   // Match the branded Stripe PaymentElement to the AlphaLux Clean
-  // blue/white SaaS palette (adopted from texas.alphaluxclean.com).
+  // palette: navy text, bright-blue focus, warm-gold accent borders.
+  // Hex values are intentionally inlined because Stripe's Elements
+  // appearance API does not read CSS variables.
   const appearance = {
     theme: 'stripe' as const,
     variables: {
-      colorPrimary: '#1E5FD9',
+      colorPrimary: '#0F77CC',          // bright blue CTA + focus
       colorBackground: '#ffffff',
-      colorText: '#0F172A',
-      colorTextSecondary: '#475569',
-      colorDanger: 'hsl(0, 72%, 51%)',
-      fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+      colorText: '#1B314B',             // brand navy for body copy
+      colorTextSecondary: '#5B6B80',
+      colorDanger: 'hsl(0, 68%, 46%)',
+      fontFamily:
+        'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
       borderRadius: '10px',
       fontSizeBase: '15px',
       spacingUnit: '4px',
     },
     rules: {
       '.Input': {
-        border: '1px solid #E2E8F0',
-        boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+        border: '1px solid #DBE3EC',
+        boxShadow: '0 1px 2px 0 rgba(27, 49, 75, 0.05)',
       },
       '.Input:focus': {
-        borderColor: '#1E5FD9',
-        boxShadow: '0 0 0 3px rgba(30, 95, 217, 0.18)',
+        borderColor: '#0F77CC',
+        boxShadow: '0 0 0 3px rgba(15, 119, 204, 0.18)',
       },
       '.Label': {
         fontWeight: '500',
-        color: '#0F172A',
+        color: '#1B314B',
       },
       '.Tab': {
-        borderColor: '#E2E8F0',
-        backgroundColor: '#F8FAFC',
+        borderColor: '#ECC98B',
+        backgroundColor: '#F8F8F7',
       },
       '.Tab:hover': {
-        borderColor: '#60A5FA',
+        borderColor: '#A17938',
       },
       '.Tab--selected': {
-        borderColor: '#1E5FD9',
-        backgroundColor: '#EFF6FF',
-        color: '#1D3F94',
+        borderColor: '#A17938',
+        backgroundColor: '#F8F3E8',
+        color: '#1B314B',
       },
     },
   };

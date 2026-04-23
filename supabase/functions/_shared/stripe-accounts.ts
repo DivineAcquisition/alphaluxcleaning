@@ -33,10 +33,35 @@ export interface StripeAccountCredentials {
   displayName: string;
 }
 
+/**
+ * Read the first env var that holds a non-empty value, normalizing
+ * common copy-paste damage along the way:
+ *   - surrounding whitespace (newlines from a heredoc, tabs, spaces)
+ *   - trailing punctuation (period, comma, semicolon, quotes, backtick)
+ *     that Supabase's secrets UI can pick up from a pasted value
+ *   - matched surrounding single/double quotes
+ * Without this guard, a key stored as `rk_live_...25dh.` (observed in
+ * production) gets rejected by Stripe as "Invalid API Key" and the
+ * whole payment flow 500s even though the key itself is valid.
+ */
+function normalizeSecret(raw: string): string {
+  let s = raw.trim();
+  // Strip matched surrounding quotes.
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  // Strip trailing punctuation / whitespace the UI may have swallowed.
+  s = s.replace(/[\s.,;:`'"]+$/g, "");
+  return s;
+}
+
 function firstEnv(...names: string[]): string | null {
   for (const n of names) {
     const v = Deno.env.get(n);
-    if (v && typeof v === "string" && v.trim().length > 0) return v.trim();
+    if (v && typeof v === "string") {
+      const cleaned = normalizeSecret(v);
+      if (cleaned.length > 0) return cleaned;
+    }
   }
   return null;
 }
@@ -124,11 +149,18 @@ export function isSharedAccountMode(): boolean {
 }
 
 function credsForNy(): StripeAccountCredentials | null {
+  // Candidate order matters: we try each name and return the first
+  // non-empty value. Order is ops-configurable by renaming secrets,
+  // but the default preference below puts the restricted live key
+  // above the full secret key because restricted keys are safer and
+  // (historically) tend to be the freshly-rotated ones on this
+  // account. If a specific `STRIPE_SECRET_KEY_NY` is set it wins.
   const secretKey = firstEnv(
     "STRIPE_SECRET_KEY_NY",
+    "STRIPE_RESTRICTED_KEY",
+    "STRIPE_RESTRICTED_KEY_ALPHALUX",
     "STRIPE_SECRET_KEY",
     "STRIPE_SECRET_KEY_ALPHALUX",
-    "STRIPE_RESTRICTED_KEY",
   );
   if (!secretKey) return null;
   return {
