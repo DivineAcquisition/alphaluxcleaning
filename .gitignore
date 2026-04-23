@@ -27,3 +27,4 @@ next-env.d.ts
 *.sln
 *.sw?
 tsconfig.tsbuildinfo
+supabase/.temp/

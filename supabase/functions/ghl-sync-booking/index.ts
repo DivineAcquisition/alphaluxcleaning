@@ -54,15 +54,17 @@ serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    // 1. Load the booking + customer.
+    // 1. Load the booking + customer. The `bookings` table has two FKs
+    //    into `customers` (customer_id and referrer_customer_id), so
+    //    PostgREST can't disambiguate the embed without a hint.
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('*, customers(*)')
+      .select('*, customer:customers!bookings_customer_id_fkey(*)')
       .eq('id', bookingId)
       .single();
     if (bookingError) throw new Error(`Booking not found: ${bookingError.message}`);
 
-    const customer = booking.customers || {};
+    const customer = (booking as any).customer || {};
     const email: string | null =
       customer.email || booking.full_name || null;
     if (!email) {

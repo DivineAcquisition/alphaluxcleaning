@@ -107,6 +107,37 @@ serve(async (req) => {
       log("Webhook trigger warning", { error: (webhookErr as Error).message });
     }
 
+    // Kick off the email + CRM fan-out in parallel (best-effort — each
+    // step logs its own failure but never blocks the booking flow).
+    //   1. send-booking-confirmation: customer-facing "you're booked"
+    //      email + internal ops notification.
+    //   2. ghl-sync-booking: push contact + custom fields + booked-stage
+    //      opportunity into GoHighLevel.
+    //   3. queue-booking-reminders: schedule the 24h + 2h reminder
+    //      emails in the email_jobs table so the worker can pick them
+    //      up at the right moment.
+    const fanOut: Promise<any>[] = [];
+    fanOut.push(
+      supabase.functions
+        .invoke('send-booking-confirmation', { body: { bookingId } })
+        .then((r) => log('send-booking-confirmation', { ok: !r.error, err: r.error?.message }))
+        .catch((e) => log('send-booking-confirmation threw', { err: (e as Error).message })),
+    );
+    fanOut.push(
+      supabase.functions
+        .invoke('ghl-sync-booking', { body: { booking_id: bookingId } })
+        .then((r) => log('ghl-sync-booking', { ok: !r.error, err: r.error?.message }))
+        .catch((e) => log('ghl-sync-booking threw', { err: (e as Error).message })),
+    );
+    fanOut.push(
+      supabase.functions
+        .invoke('queue-booking-reminders', { body: { booking_id: bookingId } })
+        .then((r) => log('queue-booking-reminders', { ok: !r.error, err: r.error?.message }))
+        .catch((e) => log('queue-booking-reminders threw', { err: (e as Error).message })),
+    );
+    // Fire-and-forget — we don't block the response on external sends.
+    Promise.allSettled(fanOut);
+
     log("Saved successfully", { bookingId });
 
     return new Response(JSON.stringify({ success: true }), {
