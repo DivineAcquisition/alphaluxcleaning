@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
-          <p>AlphaLux Cleaning - Job Management System</p>
+          <p>AlphaLux Clean - Job Management System</p>
         </div>
       </div>
     `;
@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send emails to both admin addresses
     const emailPromises = adminEmails.map(email => 
       resend.emails.send({
-        from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [email],
         subject: `🔔 Job Assignment Required - ${booking.customer_name}`,
         html: emailHTML

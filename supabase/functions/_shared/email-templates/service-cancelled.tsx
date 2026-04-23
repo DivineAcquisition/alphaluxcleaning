@@ -67,7 +67,7 @@ export const ServiceCancelledEmail = ({
         </Section>
 
         <Text style={footer}>
-          Thank you for choosing <Link href="https://alphaluxclean.com" style={link}>AlphaLux Cleaning</Link>
+          Thank you for choosing <Link href="https://alphaluxclean.com" style={link}>AlphaLuxClean</Link>
         </Text>
       </Container>
     </Body>

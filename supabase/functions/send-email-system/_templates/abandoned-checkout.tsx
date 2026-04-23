@@ -52,13 +52,13 @@ export const AbandonedCheckoutEmail = ({
         ⭐⭐⭐⭐⭐ Join 1,000+ happy customers
       </Text>
       <Text style={testimonial}>
-        "Best cleaning service in New York! They're always on time and do an 
+        "Best cleaning service in Dallas! They're always on time and do an 
         incredible job. My house has never looked better." - Sarah M.
       </Text>
     </Section>
 
     <Section style={reassuranceSection}>
-      <Text style={reassuranceTitle}>Why choose AlphaLux Cleaning:</Text>
+      <Text style={reassuranceTitle}>Why choose AlphaLuxClean:</Text>
       <div style={reassuranceGrid}>
         <div style={reassuranceItem}>
           <Text style={reassuranceEmoji}>🛡️</Text>

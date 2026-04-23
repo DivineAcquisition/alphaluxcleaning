@@ -104,6 +104,25 @@ export function isSlugEnabled(slug: StripeAccountSlug): boolean {
   return true;
 }
 
+/**
+ * "Shared account" mode. When on, every ZIP and every slug resolves
+ * to the NY account regardless of credential presence. Used as a
+ * deliberate ops lever for the rollout phase where a single Stripe
+ * account handles NY + CA + TX bookings, before the CA/TX account
+ * gets fully split out.
+ *
+ * Set `STRIPE_ACCOUNT_SHARED=true` on Supabase secrets to opt in.
+ *
+ * This is distinct from `isSlugEnabled`:
+ * - `isSlugEnabled=false` + shared=false → CA/TX ZIPs should be
+ *   rejected upstream in validate-zip.
+ * - `shared=true` → CA/TX ZIPs are accepted AND they route to NY.
+ *   This is what ops wants while operating out of one Stripe account.
+ */
+export function isSharedAccountMode(): boolean {
+  return flagOn("STRIPE_ACCOUNT_SHARED");
+}
+
 function credsForNy(): StripeAccountCredentials | null {
   const secretKey = firstEnv(
     "STRIPE_SECRET_KEY_NY",
@@ -165,6 +184,8 @@ export function getCredentials(
  * Resolve an account for a booking based on its service ZIP.
  *
  * Resolution order:
+ *   0. If STRIPE_ACCOUNT_SHARED is on, always return NY. This is the
+ *      "single-account-for-now" mode and is deliberate.
  *   1. Use the ZIP's state to pick a slug.
  *   2. If the slug is gated off (kill-switch), fall back to NY.
  *   3. If credentials for the target slug are missing, fall back to NY.
@@ -175,6 +196,10 @@ export function getCredentials(
 export function resolveAccountForZip(
   zipRaw: string | number | null | undefined,
 ): StripeAccountCredentials | null {
+  if (isSharedAccountMode()) {
+    return getCredentials("alphalux_ny");
+  }
+
   const targetSlug = resolveSlugForZip(zipRaw) ?? "alphalux_ny";
 
   if (!isSlugEnabled(targetSlug)) {
@@ -198,6 +223,7 @@ export function resolveAccountForZip(
 export function resolveAccountBySlug(
   slug: string | null | undefined,
 ): StripeAccountCredentials | null {
+  if (isSharedAccountMode()) return getCredentials("alphalux_ny");
   if (!slug) return getCredentials("alphalux_ny");
   if (slug === "alphalux_ny" || slug === "alphalux_catx") {
     return getCredentials(slug);

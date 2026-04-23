@@ -145,7 +145,49 @@ serve(async (req) => {
     // Send lead welcome email via send-email-system (non-blocking)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const appUrl = Deno.env.get("APP_URL") || "https://app.alphaluxclean.com";
-    
+
+    // Assign the per-customer ALCxxx promo code. Idempotent on email, so
+    // repeat form fills (or refreshes) will always return the same code.
+    // We invoke this inline (not fire-and-forget) so the lead webhook
+    // can include the assigned code in the response payload.
+    let assignedPromo: {
+      code?: string;
+      is_new?: boolean;
+      ghl_contact_id?: string | null;
+    } = {};
+    try {
+      const promoRes = await supabase.functions.invoke('assign-lead-promo', {
+        body: {
+          email: payload.email,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          phone: payload.phone,
+          zipCode: payload.zipCode,
+          city: payload.city,
+          state: payload.state,
+          utms: {
+            utm_source: payload.utmSource,
+            utm_medium: payload.utmMedium,
+            utm_campaign: payload.utmCampaign,
+            utm_content: payload.utmContent,
+            utm_term: payload.utmTerm,
+            landing_page: payload.landingPage,
+            referrer: payload.referrer,
+          },
+        },
+      });
+      if (promoRes.error) {
+        logStep('assign-lead-promo error', { error: promoRes.error.message });
+      } else {
+        assignedPromo = (promoRes.data as any) || {};
+        logStep('promo assigned', assignedPromo);
+      }
+    } catch (err) {
+      logStep('assign-lead-promo call failed', {
+        error: (err as Error).message,
+      });
+    }
+
     supabase.functions.invoke('send-email-system', {
       body: {
         template: 'lead_welcome',
@@ -153,7 +195,8 @@ serve(async (req) => {
         data: {
           first_name: payload.firstName,
           email: payload.email,
-          app_url: appUrl
+          app_url: appUrl,
+          promo_code: assignedPromo.code || ''
         },
         category: 'marketing'
       }
@@ -183,10 +226,11 @@ serve(async (req) => {
     logStep('Lead webhook sent successfully to GHL');
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Lead captured and sent to GoHighLevel',
-        ghlStatus: ghlStatus
+        ghlStatus: ghlStatus,
+        promo: assignedPromo,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

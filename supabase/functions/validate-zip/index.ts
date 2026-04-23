@@ -61,7 +61,13 @@ function flagOn(name: string): boolean {
 }
 
 function catxEnabled(): boolean {
-  return flagOn("STRIPE_ACCOUNT_CATX_ENABLED");
+  // Either the standalone CA/TX Stripe account is activated, OR ops
+  // is running in "shared account" mode where one Stripe account
+  // handles all three states.
+  return (
+    flagOn("STRIPE_ACCOUNT_CATX_ENABLED") ||
+    flagOn("STRIPE_ACCOUNT_SHARED")
+  );
 }
 
 // --- City labels -----------------------------------------------------------

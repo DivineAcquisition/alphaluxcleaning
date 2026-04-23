@@ -119,7 +119,7 @@ serve(async (req) => {
     // Send customer confirmation email
     logStep("Sending customer confirmation email");
     const customerEmailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+      from: "AlphaLux Clean <noreply@info.alphaluxclean.com>",
       to: [booking.customer.email],
       subject: `✅ Booking Confirmed - ${formattedDate}`,
       html: customerEmailHtml,
@@ -193,13 +193,11 @@ serve(async (req) => {
     `;
 
     logStep("Sending admin notification email");
-    const adminInbox = Deno.env.get("ADMIN_BOOKINGS_EMAIL") || "bookings@alphaluxcleaning.com";
     const adminEmailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <bookings@info.alphaluxclean.com>",
-      to: [adminInbox],
+      from: "AlphaLux Bookings <noreply@info.alphaluxclean.com>",
+      to: ["bookings@alphaluxclean.com"], // Admin email
       subject: `🔔 NEW BOOKING: ${serviceTypeLabels[booking.service_type]} - ${formattedDate}`,
       html: adminEmailHtml,
-      replyTo: Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com",
     });
 
     logStep("Admin email sent", { messageId: adminEmailResponse.data?.id });

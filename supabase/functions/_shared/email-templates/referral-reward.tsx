@@ -46,7 +46,7 @@ export const ReferralRewardEmail = ({
         </Section>
 
         <Text style={text}>
-          This reward will be automatically applied to your next service. Thank you for spreading the word about AlphaLux Cleaning!
+          This reward will be automatically applied to your next service. Thank you for spreading the word about AlphaLuxClean!
         </Text>
 
         <Section style={shareSection}>
@@ -63,7 +63,7 @@ export const ReferralRewardEmail = ({
         </Section>
 
         <Text style={footer}>
-          Thank you for being a valued customer of <Link href="https://alphaluxclean.com" style={link}>AlphaLux Cleaning</Link>
+          Thank you for being a valued customer of <Link href="https://alphaluxclean.com" style={link}>AlphaLuxClean</Link>
         </Text>
       </Container>
     </Body>

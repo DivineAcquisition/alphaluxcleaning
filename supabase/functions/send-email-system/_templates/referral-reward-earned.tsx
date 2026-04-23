@@ -26,7 +26,7 @@ export const ReferralRewardEarnedEmail = ({
     
     <Text style={text}>
       Great news, {first_name}! {referred_name} just booked their first 
-      cleaning with AlphaLux Cleaning using your referral link.
+      cleaning with AlphaLuxClean using your referral link.
     </Text>
 
     <Section style={rewardSection}>
@@ -57,7 +57,7 @@ export const ReferralRewardEarnedEmail = ({
     </Section>
 
     <Text style={footerText}>
-      Thanks for spreading the word about AlphaLux Cleaning! ✨
+      Thanks for spreading the word about AlphaLuxClean! ✨
     </Text>
   </EmailBase>
 );

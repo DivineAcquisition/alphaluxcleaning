@@ -38,7 +38,7 @@ const SubcontractorWelcomeEmail = ({
       React.createElement(
         'h1',
         { style: { color: '#2563eb', borderBottom: '2px solid #2563eb', paddingBottom: '10px' } },
-        'Welcome to AlphaLux Cleaning!'
+        'Welcome to AlphaLux Clean!'
       ),
       React.createElement(
         'p',
@@ -115,7 +115,7 @@ const SubcontractorWelcomeEmail = ({
         { style: { fontSize: '14px', color: '#666' } },
         'Best regards,',
         React.createElement('br'),
-        'AlphaLux Cleaning Team'
+        'AlphaLux Clean Team'
       )
     )
   )
@@ -317,9 +317,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       const { error: emailError } = await resend.emails.send({
-        from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
         to: [application.email],
-        subject: "Welcome to AlphaLux Cleaning - Account Activated!",
+        subject: "Welcome to AlphaLux Clean - Account Activated!",
         html: emailHtml,
       });
 
