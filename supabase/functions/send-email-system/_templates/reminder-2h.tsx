@@ -57,7 +57,7 @@ export const Reminder2hEmail = ({
     </Section>
 
     <Text style={footerText}>
-      Thanks for choosing AlphaLux Cleaning! ✨
+      Thanks for choosing AlphaLuxClean! ✨
     </Text>
   </EmailBase>
 );

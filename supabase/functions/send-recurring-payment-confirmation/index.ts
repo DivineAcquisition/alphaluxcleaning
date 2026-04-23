@@ -116,12 +116,12 @@ serve(async (req) => {
           `}
           
           <p style="font-size: 14px; color: #64748b; margin-top: 30px;">
-            Questions? Reply to this email or call us at (857) 754-4557
+            Questions? Reply to this email or call us at (972) 559-0223
           </p>
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
             <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-              AlphaLux Cleaning | Professional Cleaning Services
+              AlphaLux Clean | Professional Cleaning Services
             </p>
           </div>
         </div>

@@ -51,7 +51,7 @@ export const BookingConfirmationEmail = ({
 }: BookingConfirmationEmailProps) => (
   <Html>
     <Head />
-    <Preview>Your AlphaLux Cleaning booking is confirmed! 🎉</Preview>
+    <Preview>Your AlphaLux Clean booking is confirmed! 🎉</Preview>
     <Body style={main}>
       <Container style={container}>
         {/* Header */}
@@ -74,7 +74,7 @@ export const BookingConfirmationEmail = ({
         <Section style={content}>
           <Text style={greeting}>Hi {customerName}!</Text>
           <Text style={text}>
-            Great news! Your AlphaLux Cleaning booking is confirmed and locked in. 
+            Great news! Your AlphaLux Clean booking is confirmed and locked in. 
             We can't wait to make your home sparkle! ✨
           </Text>
 
@@ -138,8 +138,8 @@ export const BookingConfirmationEmail = ({
 
           {/* Call Button */}
           <Section style={buttonContainer}>
-            <Link href="tel:8577544557" style={button}>
-              📞 Call Us: (857) 754-4557
+            <Link href="tel:9725590223" style={button}>
+              📞 Call Us: (972) 559-0223
             </Link>
           </Section>
 
@@ -154,13 +154,13 @@ export const BookingConfirmationEmail = ({
           <Text style={text}>
             Have questions? Just reply to this email or call us anytime!
           </Text>
-          <Text style={text}>Thanks for choosing AlphaLux Cleaning! 💎</Text>
+          <Text style={text}>Thanks for choosing AlphaLux Clean! 💎</Text>
         </Section>
 
         {/* Footer */}
         <Section style={footer}>
-          <Text style={footerText}>AlphaLux Cleaning | Professional Cleaning Services</Text>
-          <Text style={footerText}>(857) 754-4557 | info@alphaluxclean.com</Text>
+          <Text style={footerText}>AlphaLux Clean | Professional Cleaning Services</Text>
+          <Text style={footerText}>(972) 559-0223 | info@alphaluxclean.com</Text>
         </Section>
       </Container>
     </Body>

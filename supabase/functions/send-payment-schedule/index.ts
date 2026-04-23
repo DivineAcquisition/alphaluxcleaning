@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -148,12 +148,12 @@ const handler = async (req: Request): Promise<Response> => {
               <p>We're here to help! Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
                 <li>📞 Call or Text: <strong>972-559-0223</strong></li>
-                <li>📧 Email: <strong>support@alphaluxcleaning.com</strong></li>
+                <li>📧 Email: <strong>support@alphaluxclean.com</strong></li>
               </ul>
             </div>
 
             <div class="footer">
-              <p><strong>AlphaLux Cleaning</strong></p>
+              <p><strong>AlphaLux Clean</strong></p>
               <p>Professional cleaning services you can trust</p>
               <p style="font-size: 12px; margin-top: 20px;">
                 This is an automated email. Please do not reply directly to this message.
@@ -218,12 +218,12 @@ const handler = async (req: Request): Promise<Response> => {
               <p>Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
                 <li>📞 <strong>972-559-0223</strong></li>
-                <li>📧 <strong>support@alphaluxcleaning.com</strong></li>
+                <li>📧 <strong>support@alphaluxclean.com</strong></li>
               </ul>
             </div>
 
             <div class="footer">
-              <p><strong>AlphaLux Cleaning</strong></p>
+              <p><strong>AlphaLux Clean</strong></p>
               <p>Professional cleaning services you can trust</p>
             </div>
           </div>
@@ -233,7 +233,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <onboarding@resend.dev>",
+      from: "AlphaLux Clean <onboarding@resend.dev>",
       to: [customerEmail],
       subject: subject,
       html: emailHtml,

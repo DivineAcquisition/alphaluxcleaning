@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine email content based on template
     let subject: string;
     let html: string;
-    let fromAddress = "AlphaLux Cleaning <info@alphaluxclean.com>";
+    let fromAddress = "AlphaLux Clean <info@alphaluxclean.com>";
 
     switch (templateKey) {
       case 'booking_confirmation':
@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Hi ${variables.customer_name},</p>
             <p>Your cleaning service has been confirmed for <strong>${variables.service_date}</strong> at <strong>${variables.service_time}</strong>.</p>
             ${variables.portal_url ? `<p><a href="${variables.portal_url}" style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Manage Booking</a></p>` : ''}
-            <p>Thank you for choosing AlphaLux Cleaning!</p>
+            <p>Thank you for choosing AlphaLux Clean!</p>
           </div>
         `;
         break;
@@ -70,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Hi ${variables.customer_name},</p>
             <p>This is a friendly reminder that your cleaning service is scheduled for <strong>tomorrow (${variables.service_date})</strong> at <strong>${variables.service_time}</strong>.</p>
             <p>Our team will arrive as scheduled. Please ensure someone is available to let us in.</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Hi ${variables.customer_name},</p>
             <p>Your cleaning service will begin in approximately 1 hour at <strong>${variables.service_time}</strong>.</p>
             <p>Our team will be there soon!</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Hi ${variables.customer_name},</p>
             <p>Thank you for your payment of <strong>$${variables.amount}</strong> for your cleaning service on ${variables.service_date}.</p>
             <p><strong>Transaction ID:</strong> ${variables.transaction_id}</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Click the link below to access your customer portal:</p>
             <p><a href="${variables.magic_link}" style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Access Portal</a></p>
             <p>This link will expire in 24 hours.</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -121,7 +121,7 @@ const handler = async (req: Request): Promise<Response> => {
             <h1 style="color: #333;">Login Code</h1>
             <p>Your login code is: <strong style="font-size: 24px; color: #007bff;">${variables.code}</strong></p>
             <p>This code will expire in 10 minutes.</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -142,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
               <a href="${variables.accept_url}" style="background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-right: 10px;">Accept Job</a>
               <a href="${variables.decline_url}" style="background: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Decline</a>
             </p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -156,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Reminder: You have a cleaning job at <strong>${variables.service_time}</strong></p>
             <p><strong>Customer:</strong> ${variables.customer_name}</p>
             <p><strong>Address:</strong> ${variables.address}</p>
-            <p>AlphaLux Cleaning</p>
+            <p>AlphaLux Clean</p>
           </div>
         `;
         break;
@@ -168,11 +168,11 @@ const handler = async (req: Request): Promise<Response> => {
             email: to,
             role: variables.role || 'viewer',
             inviteUrl: variables.invite_url,
-            companyName: 'AlphaLux Cleaning',
+            companyName: 'AlphaLux Clean',
           })
         );
-        subject = 'Admin Access Invitation - AlphaLux Cleaning';
-        fromAddress = "AlphaLux Cleaning <info@alphaluxclean.com>";
+        subject = 'Admin Access Invitation - AlphaLux Clean';
+        fromAddress = "AlphaLux Clean <info@alphaluxclean.com>";
         break;
 
       case 'promo_applied':
@@ -234,13 +234,13 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
-                Questions? Reply to this email or call us at (857) 754-4557
+                Questions? Reply to this email or call us at (555) 123-4567
               </p>
             </div>
             
             <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 14px;">
-              <p>AlphaLux Cleaning - Premium Cleaning Services</p>
-              <p>New York</p>
+              <p>AlphaLux Clean - Premium Cleaning Services</p>
+              <p>Texas & California</p>
             </div>
           </div>
         `;

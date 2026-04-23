@@ -140,7 +140,7 @@ serve(async (req) => {
     <html>
     <head>
         <meta charset="utf-8">
-        <title>Welcome to AlphaLux Cleaning</title>
+        <title>Welcome to AlphaLux Clean</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -150,7 +150,7 @@ serve(async (req) => {
         <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #2c3e50; margin-top: 0;">Hello ${requestData.full_name}!</h2>
             
-            <p>Congratulations! You've been added to our AlphaLux Cleaning network as a <strong>${tierConfig.tier_name}</strong> subcontractor.</p>
+            <p>Congratulations! You've been added to our AlphaLux Clean network as a <strong>${tierConfig.tier_name}</strong> subcontractor.</p>
             
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
                 <h3 style="margin-top: 0; color: #2c3e50;">Your Benefits Package:</h3>
@@ -184,7 +184,7 @@ serve(async (req) => {
             
             <p style="margin-bottom: 0;">
                 Welcome to the team!<br>
-                <strong>AlphaLux Cleaning</strong>
+                <strong>AlphaLux Clean</strong>
             </p>
         </div>
     </body>
@@ -192,9 +192,9 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [requestData.email],
-      subject: `Welcome to AlphaLux Cleaning - ${tierConfig.tier_name} Subcontractor`,
+      subject: `Welcome to AlphaLux Clean - ${tierConfig.tier_name} Subcontractor`,
       html: onboardingEmail,
     });
 

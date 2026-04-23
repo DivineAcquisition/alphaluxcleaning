@@ -28,7 +28,7 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const stripe = new Stripe((Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX")) || "", {
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX") || "", {
       apiVersion: "2023-10-16",
     });
 

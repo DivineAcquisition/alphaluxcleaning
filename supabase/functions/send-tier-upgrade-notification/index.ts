@@ -57,7 +57,7 @@ serve(async (req) => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://yltvknkqnzdeiqckqjha.supabase.co/storage/v1/object/public/images/alphalux-logo.png" alt="AlphaLux Cleaning" style="height: 60px;">
+            <img src="https://yltvknkqnzdeiqckqjha.supabase.co/storage/v1/object/public/images/alphalux-logo.png" alt="AlphaLux Clean" style="height: 60px;">
           </div>
           
           <h1 style="color: #2563eb; text-align: center; margin-bottom: 20px;">🎉 Congratulations on Your Tier Upgrade!</h1>
@@ -99,8 +99,8 @@ serve(async (req) => {
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
           
           <div style="text-align: center; color: #666; font-size: 14px;">
-            <p>AlphaLux Cleaning</p>
-            <p>📞 (281) 201-6112 | 📧 support@alphaluxcleaning.com</p>
+            <p>AlphaLux Clean</p>
+            <p>📞 (281) 201-6112 | 📧 support@alphaluxclean.com</p>
             <p>Visit us at <a href="https://alphaluxclean.com" style="color: #2563eb;">alphaluxclean.com</a></p>
           </div>
         </div>
@@ -108,7 +108,7 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [email],
       subject: `🎉 Tier Upgrade: Welcome to ${tierNames[newTier]} Status!`,
       html: emailContent,

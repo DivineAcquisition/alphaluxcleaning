@@ -25,12 +25,12 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <info@info.alphaluxclean.com>",
+      from: "AlphaLux Clean <info@alphaluxclean.com>",
       to: [testEmail],
-      subject: "Test Email - AlphaLux Cleaning",
+      subject: "Test Email - AlphaLux Clean",
       html: `
         <h1>Test Email Successful! ✅</h1>
-        <p>This is a test email from AlphaLux Cleaning.</p>
+        <p>This is a test email from AlphaLux Clean.</p>
         <p>If you received this, your email configuration is working correctly.</p>
         <p>Sent at: ${new Date().toISOString()}</p>
       `,

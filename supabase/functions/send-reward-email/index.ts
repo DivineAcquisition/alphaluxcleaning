@@ -39,7 +39,7 @@ serve(async (req) => {
     const bookingUrl = `${appUrl}/guest-booking?promo=${rewardCode}&service=deep-clean&utm_source=email&utm_medium=reward`;
 
     const emailResponse = await resend.emails.send({
-      from: 'AlphaLux Cleaning <noreply@info.alphaluxclean.com>',
+      from: 'AlphaLuxClean <no-reply@info.alphaluxclean.com>',
       to: [customerEmail],
       subject: 'Your 30% Deep Clean Reward',
       html: `
@@ -62,7 +62,7 @@ serve(async (req) => {
               <p style="font-size: 16px;">Hi ${customerName},</p>
               
               <p style="font-size: 16px;">
-                Thanks for starting a <strong>${frequency === 'weekly' ? 'Weekly' : 'Bi-Weekly'}</strong> plan with AlphaLux Cleaning!
+                Thanks for starting a <strong>${frequency === 'weekly' ? 'Weekly' : 'Bi-Weekly'}</strong> plan with AlphaLuxClean!
               </p>
 
               <p style="font-size: 16px;">
@@ -113,7 +113,7 @@ serve(async (req) => {
             <!-- Footer -->
             <div style="text-align: center; padding: 20px 0; border-top: 1px solid #e0e0e0; margin-top: 30px;">
               <p style="font-size: 14px; color: #999; margin: 0;">
-                AlphaLux Cleaning - Premium Cleaning Services<br>
+                AlphaLuxClean - Premium Cleaning Services<br>
                 <a href="https://alphaluxclean.com" style="color: #ECC98B; text-decoration: none;">alphaluxclean.com</a>
               </p>
             </div>
