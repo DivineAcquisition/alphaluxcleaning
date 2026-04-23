@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -38,6 +39,7 @@ export default function BookingOffer() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData } = useBooking();
   const { trackStep } = useBookingProgress();
+  const { trackViewContent, trackAddToCart } = useFacebookPixel();
   const [selectedOffer, setSelectedOffer] = useState<OfferType | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsServiceType, setDetailsServiceType] =
@@ -81,6 +83,26 @@ export default function BookingOffer() {
       navigate('/book');
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
+
+  // Meta Pixel — fire ViewContent once when the service menu is
+  // visible to the customer. We use the smallest non-zero price on
+  // the page as the event value so it isn't ambiguous to Meta's
+  // attribution model while still being conservative.
+  useEffect(() => {
+    if (!selectedHomeSize || selectedHomeSize?.requiresEstimate) return;
+    const value = Math.min(
+      baseStandardPrice || Infinity,
+      baseDeepPrice || Infinity,
+      maintenancePrice || Infinity,
+    );
+    trackViewContent({
+      content_name: 'Cleaning Service Menu',
+      content_type: 'service',
+      value: Number.isFinite(value) ? value : undefined,
+      currency: 'USD',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedHomeSize?.id]);
 
   if (selectedHomeSize?.requiresEstimate) {
     return (
@@ -186,6 +208,15 @@ export default function BookingOffer() {
       basePrice,
       visitCount,
       isRecurring,
+    });
+
+    // Meta Pixel — service selected. Fires before the date/time
+    // gate so Meta sees clear intent even when the customer hasn't
+    // yet picked a slot.
+    trackAddToCart({
+      content_name: offerName,
+      value: basePrice,
+      currency: 'USD',
     });
 
     // Give React a tick to mount the panel before scrolling to it.

@@ -20,6 +20,7 @@ import {
 import { z } from 'zod';
 import { formatPhoneNumber } from '@/lib/validation-utils';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 import { toast } from 'sonner';
 
 // Validation schema
@@ -34,6 +35,7 @@ export default function BookingZip() {
   const navigate = useNavigate();
   const { updateBookingData } = useBooking();
   const { getTrackingData } = useUTMTracking();
+  const { trackLead } = useFacebookPixel();
   
   // ZIP state
   const [zipCode, setZipCode] = useState('');
@@ -233,6 +235,12 @@ export default function BookingZip() {
           zip: zipCode,
         } as any
       });
+
+      // Meta Pixel — Lead event after contact info is captured at
+      // the top of the funnel. Valueless at this stage, but the
+      // `content_name` keeps it distinguishable from commercial /
+      // estimate leads in Events Manager.
+      trackLead('Residential Booking Lead');
       
       // Clear form fields (in case user comes back)
       setFirstName('');
