@@ -273,17 +273,27 @@ export default function BookingCheckout() {
           },
         );
 
-        // Surface the server's structured error payload when present
-        // (edge function returns { success:false, error, code, details }
-        // on 5xx). supabase-js sets `error` on non-2xx, but the JSON
-        // body still gives us a much friendlier message than
-        // "FunctionsHttpError: Edge Function returned a non-2xx status".
-        const serverError = (data as any)?.error;
-        const serverCode = (data as any)?.code;
+        // Surface the server's structured error payload. supabase-js
+        // sets a FunctionsHttpError on non-2xx but doesn't always
+        // surface the JSON body, so we also peek at error.context.
+        let serverError = (data as any)?.error;
+        let serverCode = (data as any)?.code;
+        if (error && !serverError) {
+          try {
+            const ctxRes: Response | undefined = (error as any)?.context;
+            if (ctxRes && typeof ctxRes.json === 'function') {
+              const body = await ctxRes.clone().json();
+              serverError = body?.error || serverError;
+              serverCode = body?.code || serverCode;
+            }
+          } catch {
+            // ignore — fall through to generic error below
+          }
+        }
         if (error || serverError) {
           const friendly =
             serverCode === 'stripe_auth_error'
-              ? 'Our payment processor is temporarily unavailable. Please try again in a moment or reach out to support — we\'ll still honor your quote.'
+              ? "Our payment processor is temporarily unavailable. Please try again in a moment or reach out to support — we'll still honor your quote."
               : serverError || error?.message || 'Failed to create payment';
           throw new Error(friendly);
         }

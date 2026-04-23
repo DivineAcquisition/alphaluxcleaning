@@ -72,8 +72,8 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
       className={cn(
         "relative cursor-pointer transition-all duration-200 hover:shadow-md border-2",
         isSelected 
-          ? "border-[#1E5FD9] bg-[#1E5FD9]/5 shadow-md" 
-          : "border-border hover:border-[#1E5FD9]/50"
+          ? "border-[#A17938] bg-[#A17938]/5 shadow-md" 
+          : "border-border hover:border-[#A17938]/50"
       )}
       onClick={onSelect}
     >
@@ -87,7 +87,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
               </div>
             )}
             {serviceType.id === 'deep' && (
-              <div className="px-2 py-1 rounded-full bg-[#1E5FD9] text-[#FFFFFF] text-[10px] md:text-xs font-bold shadow-sm">
+              <div className="px-2 py-1 rounded-full bg-[#A17938] text-[#FFFFFF] text-[10px] md:text-xs font-bold shadow-sm">
                 $25 OFF
               </div>
             )}
@@ -98,18 +98,18 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
           <div className="flex items-center justify-between pr-12 md:pr-16">
             <Icon className={cn(
               "h-5 w-5 md:h-6 md:w-6",
-              isSelected ? "text-[#1E5FD9]" : "text-muted-foreground"
+              isSelected ? "text-[#A17938]" : "text-muted-foreground"
             )} />
             
             {isSelected && (
-              <div className="w-2 h-2 rounded-full bg-[#1E5FD9]" />
+              <div className="w-2 h-2 rounded-full bg-[#A17938]" />
             )}
           </div>
           
           <div className="space-y-2">
             <h3 className={cn(
               "font-semibold text-base md:text-lg",
-              isSelected ? "text-[#1E5FD9]" : "text-foreground"
+              isSelected ? "text-[#A17938]" : "text-foreground"
             )}>
               {serviceType.name}
             </h3>
@@ -119,7 +119,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
                 variant={isSelected ? "default" : "secondary"}
                 className={cn(
                   "text-xs w-fit",
-                  isSelected && "bg-[#1E5FD9] text-[#1E5FD9]-foreground hover:bg-[#1E5FD9]/80"
+                  isSelected && "bg-[#A17938] text-[#A17938]-foreground hover:bg-[#A17938]/80"
                 )}
               >
                 {recurringText}
@@ -134,7 +134,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
                     </p>
                     <p className={cn(
                       "text-xl md:text-2xl font-bold",
-                      isSelected ? "text-[#1E5FD9]" : "text-foreground"
+                      isSelected ? "text-[#A17938]" : "text-foreground"
                     )}>
                       ${discountedPrice}
                     </p>
@@ -142,7 +142,7 @@ function ServiceTypeCard({ serviceType, isSelected, onSelect }: ServiceTypeCardP
                 ) : (
                   <p className={cn(
                     "text-xl md:text-2xl font-bold",
-                    isSelected ? "text-[#1E5FD9]" : "text-foreground"
+                    isSelected ? "text-[#A17938]" : "text-foreground"
                   )}>
                     ${minPrice}
                   </p>

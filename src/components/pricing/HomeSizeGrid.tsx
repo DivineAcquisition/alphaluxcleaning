@@ -156,8 +156,8 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
       className={cn(
         "cursor-pointer transition-all duration-200 hover:shadow-md border-2 touch-manipulation",
         isSelected 
-          ? "border-[#1E5FD9] bg-[#1E5FD9]/5 shadow-md" 
-          : "border-border hover:border-[#1E5FD9]/50"
+          ? "border-[#A17938] bg-[#A17938]/5 shadow-md" 
+          : "border-border hover:border-[#A17938]/50"
       )}
       onClick={onSelect}
     >
@@ -166,7 +166,7 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
           <div className="space-y-1">
             <h3 className={cn(
               "font-semibold text-base md:text-lg",
-              isSelected ? "text-[#1E5FD9]" : "text-foreground"
+              isSelected ? "text-[#A17938]" : "text-foreground"
             )}>
               {range.label}
             </h3>
@@ -177,7 +177,7 @@ function HomeSizeCard({ range, isSelected, onSelect }: HomeSizeCardProps) {
           
           <div className="flex items-center justify-end">
             {isSelected && (
-              <div className="w-2 h-2 rounded-full bg-[#1E5FD9]" />
+              <div className="w-2 h-2 rounded-full bg-[#A17938]" />
             )}
           </div>
         </div>
