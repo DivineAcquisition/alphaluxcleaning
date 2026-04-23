@@ -216,7 +216,15 @@ export default function BookingCheckout() {
             },
           });
 
-        if (initError) throw new Error(initError.message);
+        const initServerError = (initData as any)?.error;
+        const initServerCode = (initData as any)?.code;
+        if (initError || initServerError) {
+          const friendly =
+            initServerCode === 'stripe_auth_error'
+              ? 'Our payment processor is temporarily unavailable. Please try again shortly.'
+              : initServerError || initError?.message || 'Failed to create payment';
+          throw new Error(friendly);
+        }
         setCustomerId(initData.customerId);
         setBookingId(initData.bookingId);
 
@@ -265,7 +273,20 @@ export default function BookingCheckout() {
           },
         );
 
-        if (error) throw new Error(error.message);
+        // Surface the server's structured error payload when present
+        // (edge function returns { success:false, error, code, details }
+        // on 5xx). supabase-js sets `error` on non-2xx, but the JSON
+        // body still gives us a much friendlier message than
+        // "FunctionsHttpError: Edge Function returned a non-2xx status".
+        const serverError = (data as any)?.error;
+        const serverCode = (data as any)?.code;
+        if (error || serverError) {
+          const friendly =
+            serverCode === 'stripe_auth_error'
+              ? 'Our payment processor is temporarily unavailable. Please try again in a moment or reach out to support — we\'ll still honor your quote.'
+              : serverError || error?.message || 'Failed to create payment';
+          throw new Error(friendly);
+        }
         const secret = data?.clientSecret || data?.client_secret;
         if (!secret) throw new Error('Failed to create payment intent');
 

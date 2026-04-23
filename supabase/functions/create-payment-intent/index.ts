@@ -13,7 +13,20 @@ const corsHeaders = {
 };
 
 // Bump this when debugging deployment mismatches
-const FUNCTION_VERSION = "2026-01-24-01";
+const FUNCTION_VERSION = "2026-04-23-blue-theme";
+
+/**
+ * `bookings.source` has a CHECK constraint that only accepts a small
+ * fixed set of values. Any other source (e.g. `probe`, `typeform`,
+ * `recurring_upgrade`) previously caused the booking insert to fail
+ * and the whole payment flow to 500. We coerce anything outside the
+ * allow-list down to `customer_web` so the booking goes through.
+ */
+const ALLOWED_SOURCES = new Set(["customer_web", "csr_phone", "admin_manual"]);
+function safeSource(raw: unknown): string {
+  if (typeof raw !== "string") return "customer_web";
+  return ALLOWED_SOURCES.has(raw) ? raw : "customer_web";
+}
 
 const logStep = (step: string, data?: any) => {
   console.log(`🔄 [create-payment-intent] ${step}`, data ? JSON.stringify(data, null, 2) : '');
@@ -206,7 +219,7 @@ serve(async (req) => {
         address_line1: bookingData.addressLine1 || null,
         address_line2: bookingData.addressLine2 || null,
         full_name: bookingData.fullName || null,
-        source: bookingData.source || 'customer_web',
+        source: safeSource(bookingData.source),
         stripe_account_slug: resolvedSlug,
       };
 
@@ -249,31 +262,57 @@ serve(async (req) => {
     // === STEP 3: Find or Create Stripe Customer ===
     const name = customerName || (customerData ? `${customerData.firstName} ${customerData.lastName}`.trim() : '');
     const phone = customerPhone || customerData?.phone;
-    
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    
-    if (customers.data.length > 0) {
-      stripeCustomerId = customers.data[0].id;
-      logStep("Found existing Stripe customer", { stripeCustomerId });
-    } else {
-      const customer = await stripe.customers.create({
-        email,
-        name,
-        phone,
-        metadata: {
-          supabase_customer_id: customerId || '',
-        }
-      });
-      stripeCustomerId = customer.id;
-      logStep("Created new Stripe customer", { stripeCustomerId });
 
-      // Update customer record with Stripe ID
-      if (customerId) {
-        await supabaseClient
-          .from('customers')
-          .update({ stripe_customer_id: stripeCustomerId })
-          .eq('id', customerId);
+    try {
+      const customers = await stripe.customers.list({ email, limit: 1 });
+
+      if (customers.data.length > 0) {
+        stripeCustomerId = customers.data[0].id;
+        logStep("Found existing Stripe customer", { stripeCustomerId });
+      } else {
+        const customer = await stripe.customers.create({
+          email,
+          name,
+          phone,
+          metadata: {
+            supabase_customer_id: customerId || '',
+          }
+        });
+        stripeCustomerId = customer.id;
+        logStep("Created new Stripe customer", { stripeCustomerId });
+
+        // Update customer record with Stripe ID
+        if (customerId) {
+          await supabaseClient
+            .from('customers')
+            .update({ stripe_customer_id: stripeCustomerId })
+            .eq('id', customerId);
+        }
       }
+    } catch (stripeErr: any) {
+      const msg = stripeErr?.message || String(stripeErr);
+      const code = stripeErr?.code || stripeErr?.raw?.code;
+      const isAuthIssue =
+        code === "api_key_expired" ||
+        code === "authentication_required" ||
+        /expired api key|invalid api key|authentication/i.test(msg);
+      logStep("Stripe customers.list/create failed", { code, message: msg, isAuthIssue });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: isAuthIssue
+            ? "Our payment processor is temporarily unavailable. Please try again in a moment or contact support."
+            : `Payment could not be initialized: ${msg}`,
+          code: isAuthIssue ? "stripe_auth_error" : (code || "stripe_error"),
+          details: isAuthIssue
+            ? "The Stripe API key configured on the server is expired or invalid. Ops needs to rotate STRIPE_SECRET_KEY in Supabase secrets."
+            : msg,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: isAuthIssue ? 503 : 502,
+        },
+      );
     }
 
     // === STEP 4: Create Payment Intent ===
@@ -291,21 +330,52 @@ serve(async (req) => {
     }
 
     logStep("Creating PaymentIntent", { amount: paymentAmount });
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(paymentAmount * 100), // Convert to cents
-      currency: 'usd',
-      customer: stripeCustomerId,
-      payment_method_types: ['card'],
-      capture_method: 'automatic',
-      metadata: {
-        booking_id: bookingId || '',
-        customer_id: customerId || '',
-        customer_email: email,
-        payment_type: paymentType || 'deposit',
-        stripe_account_slug: resolvedSlug,
-        ...(metadata || {})
-      }
-    });
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(paymentAmount * 100), // Convert to cents
+        currency: 'usd',
+        customer: stripeCustomerId,
+        payment_method_types: ['card'],
+        capture_method: 'automatic',
+        metadata: {
+          booking_id: bookingId || '',
+          customer_id: customerId || '',
+          customer_email: email,
+          payment_type: paymentType || 'deposit',
+          stripe_account_slug: resolvedSlug,
+          ...(metadata || {})
+        }
+      });
+    } catch (stripeErr: any) {
+      const msg = stripeErr?.message || String(stripeErr);
+      const code = stripeErr?.code || stripeErr?.raw?.code;
+      // Expired or revoked secret key is an ops-only issue (we can't
+      // fix it from the client) but we want the UI to show a clear
+      // "payment system temporarily unavailable" message instead of a
+      // generic 500 with a raw Stripe error string.
+      const isAuthIssue =
+        code === "api_key_expired" ||
+        code === "authentication_required" ||
+        /expired api key|invalid api key|authentication/i.test(msg);
+      logStep("Stripe paymentIntents.create failed", { code, message: msg, isAuthIssue });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: isAuthIssue
+            ? "Our payment processor is temporarily unavailable. Please try again in a moment or contact support."
+            : `Payment could not be initialized: ${msg}`,
+          code: isAuthIssue ? "stripe_auth_error" : (code || "stripe_error"),
+          details: isAuthIssue
+            ? "The Stripe API key configured on the server is expired or invalid. Ops needs to rotate STRIPE_SECRET_KEY in Supabase secrets."
+            : msg,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: isAuthIssue ? 503 : 502,
+        },
+      );
+    }
     
     logStep("PaymentIntent created", { id: paymentIntent.id, amount: paymentIntent.amount });
 

@@ -511,10 +511,10 @@ Questions? Call (857) 754-4557
           {/* Reward Code Display - Show if booking has reward */}
           {orderDetails.reward_code_issued && (
             <div className="mb-8">
-              <Card className="border-[#ECC98B]/30 bg-gradient-to-br from-[#ECC98B]/10 to-transparent shadow-lg max-w-2xl mx-auto">
+              <Card className="border-[#1E5FD9]/30 bg-gradient-to-br from-[#1E5FD9]/10 to-transparent shadow-lg max-w-2xl mx-auto">
                 <CardHeader>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-[#ECC98B]" />
+                    <Sparkles className="h-5 w-5 text-[#1E5FD9]" />
                     <CardTitle>🎉 Reward Unlocked!</CardTitle>
                   </div>
                 </CardHeader>
@@ -523,8 +523,8 @@ Questions? Call (857) 754-4557
                     <p className="text-muted-foreground">
                       Your 30% OFF Deep Clean Reward Code
                     </p>
-                    <div className="bg-background border-2 border-[#ECC98B]/50 rounded-lg px-6 py-4">
-                      <p className="text-2xl font-mono font-bold tracking-wider text-[#ECC98B]">
+                    <div className="bg-background border-2 border-[#1E5FD9]/50 rounded-lg px-6 py-4">
+                      <p className="text-2xl font-mono font-bold tracking-wider text-[#1E5FD9]">
                         {orderDetails.reward_code_issued}
                       </p>
                     </div>
@@ -542,7 +542,7 @@ Questions? Call (857) 754-4557
                           toast.error('Failed to copy code');
                         }
                       }}
-                      className="border-[#ECC98B]/50"
+                      className="border-[#1E5FD9]/50"
                     >
                       <Copy className="h-4 w-4 mr-2" />
                       Copy Code

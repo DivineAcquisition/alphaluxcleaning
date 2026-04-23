@@ -101,12 +101,17 @@ function App() {
 
             {/* Public pricing calculator alias */}
             <Route path="/pricing-calculator" element={<Navigate to="/book/pricing" replace />} />
-              
-              {/* Landing page with marketing content */}
-              <Route path="/landing" element={<Landing />} />
-              
-              {/* Main booking route - redirect to booking flow */}
-              <Route path="/" element={<Navigate to="/book/zip" replace />} />
+
+            {/* Every public entry point funnels into a single flow starting
+                at /book/zip. Keep /landing as an internal preview of the
+                marketing page but route the root + common deep-links
+                straight into the booking wizard. */}
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/" element={<Navigate to="/book/zip" replace />} />
+            <Route path="/book-now" element={<Navigate to="/book/zip" replace />} />
+            <Route path="/get-started" element={<Navigate to="/book/zip" replace />} />
+            <Route path="/quote" element={<Navigate to="/book/zip" replace />} />
+            <Route path="/start" element={<Navigate to="/book/zip" replace />} />
             
             {/* Essential booking confirmation and status pages */}
             <Route path="/order-status" element={<OrderStatus />} />

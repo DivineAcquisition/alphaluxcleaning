@@ -1,7 +1,8 @@
 /* AlphaLux Cleaning uses a single typeface across the whole site.
-   Inter is loaded in a full weight range and serves as body, UI,
-   headings, serif callouts, and monospace. One family = one voice. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+   Inter (the SaaS-standard UI font used by Stripe, Linear, Vercel, etc.)
+   is loaded in a full weight range and serves as body, UI, headings,
+   serif callouts, and monospace. One family = one voice. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,95 +14,110 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* AlphaLux Cleaning Brand System — Black & Gold
-       Black / Ink: #0A0A0B (ink), #111113 (black), #1A1410 (warm black), #1F1B16 (elevated)
-       Gold:        #A17938 (primary gold), #ECC98B (light gold), #F6DFA8 (pale gold),
-                    #C89B3C (amber), #9a7a08 / #b8940a (deep gold)
-       Cream:       #FCFBF7 / #F3F3F3
-       Accent dark: neutral-900 (#0C0C0E) for subtle stratification
+    /* AlphaLux Clean — Blue/White SaaS System
+       (Adopted from texas.alphaluxclean.com)
 
-       Design intent: the site is predominantly black with warm gold as the
-       accent and CTA color — mirroring alphaluxcleaning.com's header and
-       hero treatment. Navy has been fully retired.
+       Primary blue:    #1E5FD9  — SaaS-standard trust blue used for CTAs,
+                                    links, focus rings, progress states.
+       Deep blue:       #1D4ED8  — hover / pressed; blue-700.
+       Accent cyan:     #0EA5E9  — secondary accents, pills, highlights.
+       Ink:             #0F172A  — headlines, body text on light.
+       Slate-muted:     #475569  — subtitles, tertiary text.
+       Paper:           #FFFFFF  — cards, primary surfaces.
+       Background:      #F8FAFC  — page background (very light blue-gray).
+       Border:          #E2E8F0  — hairlines, dividers.
+
+       Every legacy `--alx-*` and `--alx-gold*` token is re-mapped to
+       the new palette so existing utility classes (bg-alx-black,
+       text-alx-gold, btn-alx-gold, border-alx-gold/25, etc.) render
+       in the blue/white system without touching markup.
     */
-    --background: 45 56% 98%;
-    --foreground: 30 12% 8%;
+    --background: 210 40% 98%;         /* #F8FAFC */
+    --foreground: 222 47% 11%;         /* #0F172A */
 
     --card: 0 0% 100%;
-    --card-foreground: 30 12% 8%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 30 12% 8%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 30 12% 8%;
-    --primary-foreground: 40 81% 92%;
+    --primary: 220 75% 48%;            /* #1E5FD9 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 49% 43%;
+    --secondary: 199 89% 48%;          /* #0EA5E9 */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 30% 94%;
-    --muted-foreground: 30 8% 35%;
+    --muted: 210 40% 96%;              /* #F1F5F9 */
+    --muted-foreground: 215 16% 47%;   /* #64748B */
 
-    --accent: 36 73% 74%;
-    --accent-foreground: 30 12% 8%;
+    --accent: 214 95% 93%;             /* #DBEAFE */
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 72% 45%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 25% 88%;
-    --input: 40 25% 88%;
-    --ring: 36 49% 43%;
+    --border: 214 32% 91%;             /* #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 220 75% 48%;
 
     --success: 160 72% 35%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 73% 55%;
-    --warning-foreground: 30 12% 8%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
 
-    /* AlphaLux Brand Tokens — Black & Gold */
-    --alx-black: 30 12% 8%;            /* #15120F — brand black */
-    --alx-black-deep: 24 18% 5%;       /* #0E0A07 — near-black */
-    --alx-black-ink: 240 4% 4%;        /* #0A0A0B — pure ink */
-    --alx-black-warm: 25 22% 9%;       /* #1A1410 — warm black (from brand gradient) */
-    --alx-black-elev: 30 16% 14%;      /* #272017 — elevated surface */
-    --alx-gold: 36 49% 43%;
-    --alx-gold-light: 36 73% 74%;
-    --alx-gold-pale: 40 81% 92%;
-    --alx-gold-deep: 41 88% 38%;       /* #b8940a */
-    --alx-amber: 41 59% 51%;
-    --alx-cream: 45 56% 98%;
+    /* AlphaLux Brand Tokens — remapped to the blue/white SaaS palette.
+       Names are preserved (alx-black, alx-gold, alx-navy, …) so legacy
+       utility classes still render; what they point at is now blue. */
+    --alx-black: 222 47% 11%;          /* #0F172A — deep slate ink */
+    --alx-black-deep: 222 47% 8%;      /* #0B1120 */
+    --alx-black-ink: 222 47% 6%;       /* #070B14 */
+    --alx-black-warm: 215 28% 17%;     /* #1F2937 — elevated dark */
+    --alx-black-elev: 215 25% 27%;     /* #334155 — slate */
 
-    /* Backwards-compat aliases so legacy code that still references
-       --alx-navy keeps working but now resolves to the new black palette. */
+    /* Gold tokens now resolve to the blue scale:
+       alx-gold       = primary blue
+       alx-gold-light = sky blue tint
+       alx-gold-pale  = blue-50 surface
+       alx-gold-deep  = blue-800 pressed
+       alx-amber      = cyan-500 accent */
+    --alx-gold: 220 75% 48%;           /* #1E5FD9 primary */
+    --alx-gold-light: 213 94% 68%;     /* #60A5FA */
+    --alx-gold-pale: 214 95% 93%;      /* #DBEAFE */
+    --alx-gold-deep: 224 76% 33%;      /* #1D3F94 */
+    --alx-amber: 199 89% 48%;          /* #0EA5E9 cyan */
+    --alx-cream: 210 40% 98%;          /* #F8FAFC page */
+
+    /* Backwards-compat aliases — navy now points to the actual navy */
     --alx-navy: var(--alx-black);
     --alx-navy-deep: var(--alx-black-deep);
     --alx-navy-ink: var(--alx-black-ink);
 
-    --gradient-primary: linear-gradient(135deg, hsl(30 12% 8%) 0%, hsl(30 16% 14%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(40 81% 85%) 0%, hsl(36 73% 74%) 45%, hsl(36 49% 43%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(45 56% 98%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 45%, hsl(30 16% 14%) 100%);
-    --gradient-dark: linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 100%);
-    --gradient-promo: linear-gradient(135deg, hsl(25 22% 9%) 0%, hsl(30 12% 8%) 50%, hsl(36 49% 30%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(220 75% 48%) 0%, hsl(224 76% 33%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(213 94% 68%) 0%, hsl(220 75% 48%) 55%, hsl(224 76% 33%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(224 76% 33%) 55%, hsl(220 75% 48%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(222 47% 6%) 0%, hsl(215 28% 17%) 100%);
+    --gradient-promo: linear-gradient(135deg, hsl(220 75% 48%) 0%, hsl(199 89% 48%) 100%);
 
-    /* Promo Banner Colors (black + gold) */
-    --promo-gold: 36 73% 55%;
-    --promo-gold-foreground: 30 12% 8%;
-    --promo-navy: 30 12% 8%;
-    --promo-navy-foreground: 40 81% 85%;
+    /* Promo Banner Colors (blue + cyan) */
+    --promo-gold: 199 89% 48%;
+    --promo-gold-foreground: 0 0% 100%;
+    --promo-navy: 222 47% 11%;
+    --promo-navy-foreground: 0 0% 100%;
 
-    /* Service Card Themes */
-    --service-regular: 40 60% 96%;
-    --service-regular-foreground: 30 12% 8%;
-    --service-deep: 30 8% 92%;
-    --service-deep-foreground: 30 12% 8%;
-    --service-moveout: 36 60% 92%;
-    --service-moveout-foreground: 30 12% 8%;
+    /* Service Card Themes — all light-blue neutrals */
+    --service-regular: 210 40% 98%;
+    --service-regular-foreground: 222 47% 11%;
+    --service-deep: 214 95% 93%;
+    --service-deep-foreground: 222 47% 11%;
+    --service-moveout: 199 95% 92%;
+    --service-moveout-foreground: 222 47% 11%;
 
-    --shadow-clean: 0 10px 30px -10px hsl(30 12% 8% / 0.35);
-    --shadow-soft: 0 4px 16px -4px hsl(30 12% 8% / 0.18);
-    --shadow-glow: 0 0 40px hsl(36 49% 43% / 0.35);
-    --shadow-gold: 0 8px 24px -8px hsl(36 49% 43% / 0.5);
+    --shadow-clean: 0 10px 30px -10px hsl(220 75% 48% / 0.25);
+    --shadow-soft: 0 4px 16px -4px hsl(222 47% 11% / 0.12);
+    --shadow-glow: 0 0 40px hsl(220 75% 48% / 0.28);
+    --shadow-gold: 0 8px 24px -8px hsl(220 75% 48% / 0.45);
 
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
@@ -115,22 +131,22 @@ All colors MUST be HSL.
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 30 12% 8%;
-    --sidebar-foreground: 40 81% 92%;
-    --sidebar-primary: 36 49% 43%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 220 75% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 16% 14%;
-    --sidebar-accent-foreground: 40 81% 92%;
-    --sidebar-border: 30 12% 20%;
-    --sidebar-ring: 36 73% 74%;
+    --sidebar-accent: 215 28% 17%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 215 28% 22%;
+    --sidebar-ring: 213 94% 68%;
 
-    --chart-1: 30 12% 8%;
-    --chart-2: 36 49% 43%;
-    --chart-3: 36 73% 74%;
-    --chart-4: 30 16% 22%;
-    --chart-5: 40 30% 60%;
+    --chart-1: 220 75% 48%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 213 94% 68%;
+    --chart-4: 224 76% 33%;
+    --chart-5: 215 16% 47%;
 
-    --sidebar: 30 12% 8%;
+    --sidebar: 222 47% 11%;
 
     /* One typeface everywhere — Inter */
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -159,26 +175,26 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 240 4% 4%;
-    --foreground: 40 81% 92%;
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
 
-    --card: 30 12% 8%;
-    --card-foreground: 40 81% 92%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 30 12% 8%;
-    --popover-foreground: 40 81% 92%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 36 73% 74%;
-    --primary-foreground: 30 12% 8%;
+    --primary: 213 94% 68%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 36 49% 43%;
+    --secondary: 199 89% 48%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 30 10% 15%;
-    --muted-foreground: 40 30% 70%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 36 49% 43%;
-    --accent-foreground: 30 12% 8%;
+    --accent: 220 75% 48%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -186,26 +202,26 @@ All colors MUST be HSL.
     --success: 160 72% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 73% 60%;
-    --warning-foreground: 30 12% 8%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
 
-    --border: 30 12% 20%;
-    --input: 30 12% 20%;
-    --ring: 36 73% 74%;
-    --sidebar-background: 240 4% 4%;
-    --sidebar-foreground: 40 81% 92%;
-    --sidebar-primary: 36 49% 43%;
+    --border: 215 28% 22%;
+    --input: 215 28% 22%;
+    --ring: 213 94% 68%;
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 220 75% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 12% 8%;
-    --sidebar-accent-foreground: 40 81% 92%;
-    --sidebar-border: 30 12% 20%;
-    --sidebar-ring: 36 73% 74%;
-    --chart-1: 36 73% 74%;
-    --chart-2: 36 49% 43%;
-    --chart-3: 40 81% 85%;
-    --chart-4: 30 16% 22%;
-    --chart-5: 40 30% 50%;
-    --sidebar: 240 4% 4%;
+    --sidebar-accent: 222 47% 11%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 215 28% 22%;
+    --sidebar-ring: 213 94% 68%;
+    --chart-1: 213 94% 68%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 220 75% 48%;
+    --chart-4: 224 76% 33%;
+    --chart-5: 215 20% 65%;
+    --sidebar: 222 47% 6%;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -225,7 +241,10 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: 'cv11', 'ss01', 'ss03', 'cv02';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   /* One typeface across the entire site. Headings just use a
@@ -233,6 +252,7 @@ All colors MUST be HSL.
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.02em;
+    font-weight: 700;
   }
 
   /* Mobile Typography Scales */
@@ -348,7 +368,7 @@ All colors MUST be HSL.
 
   /* Gradient-clipped text was rendering inconsistently across browsers
      (especially on iOS Safari and on gradients with low contrast against
-     the background), so we now ship a solid gold fill. Gradients are
+     the background), so we now ship a solid blue fill. Gradients are
      preserved on CTA buttons via `.btn-alx-gold`. */
   .text-alx-gradient-gold {
     color: hsl(var(--alx-gold));
@@ -379,10 +399,10 @@ All colors MUST be HSL.
 
   .btn-alx-gold {
     background-image: var(--gradient-gold);
-    color: hsl(var(--alx-black-ink));
+    color: #ffffff;
     box-shadow: var(--shadow-gold);
     transition: var(--transition-smooth);
-    border: 1px solid hsla(var(--alx-gold), 0.4);
+    border: 1px solid hsla(var(--alx-gold), 0.45);
   }
 
   .btn-alx-gold:hover {
@@ -392,37 +412,39 @@ All colors MUST be HSL.
 
   .btn-alx-outline-gold {
     background: transparent;
-    color: hsl(var(--alx-gold-light));
+    color: hsl(var(--alx-gold));
     border: 1.5px solid hsl(var(--alx-gold));
     transition: var(--transition-smooth);
   }
 
   .btn-alx-outline-gold:hover {
-    background-color: hsla(var(--alx-gold), 0.12);
-    color: hsl(var(--alx-gold-light));
+    background-color: hsla(var(--alx-gold), 0.10);
+    color: hsl(var(--alx-gold-deep));
     transform: translateY(-1px);
   }
 
-  /* Backwards-compat: .section-alx-navy now paints black */
+  /* Backwards-compat: the "black / navy" brand sections now paint the
+     deep slate that anchors the blue SaaS palette. */
   .section-alx-navy,
   .section-alx-black {
     background-color: hsl(var(--alx-black));
-    color: hsl(var(--alx-gold-pale));
+    color: #ffffff;
   }
 
   .glass-card {
-    background: hsla(0, 0%, 100%, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: hsla(0, 0%, 100%, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid hsla(var(--alx-gold), 0.15);
+    box-shadow: var(--shadow-soft);
   }
 
   .glass-card-dark {
-    background: hsla(30, 12%, 8%, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid hsla(var(--alx-gold), 0.2);
-    color: hsl(var(--alx-gold-pale));
+    background: hsla(222, 47%, 11%, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(var(--alx-gold-light), 0.25);
+    color: #ffffff;
   }
 
   /* Gold shimmer used on promotional banners */
