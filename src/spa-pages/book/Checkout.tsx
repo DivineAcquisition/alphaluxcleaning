@@ -33,6 +33,7 @@ export default function BookingCheckout() {
   const { trackStep, markCompleted } = useBookingProgress();
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [accountPublishableKey, setAccountPublishableKey] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -259,6 +260,11 @@ export default function BookingCheckout() {
         setCustomerId(data.customerId);
         setBookingId(data.bookingId);
         setClientSecret(secret);
+        // Multi-account: the server returns the publishable key bound
+        // to the Stripe account that owns this PaymentIntent (NY vs
+        // CA/TX). Stash it so <StripePaymentForm> boots Elements
+        // against the right account.
+        if (data.publishableKey) setAccountPublishableKey(data.publishableKey);
       }
 
       console.log('✅ Payment initialized');
@@ -342,6 +348,7 @@ export default function BookingCheckout() {
       // Force Stripe to re-initialize so the payment intent uses the
       // new deposit amount.
       setClientSecret(null);
+      setAccountPublishableKey(null);
       setBookingId(null);
       toast.success(data.display || `Promo ${trimmed} applied`);
     } catch (err: any) {
@@ -357,6 +364,7 @@ export default function BookingCheckout() {
     setPromoDisplay(null);
     setPromoError(null);
     setClientSecret(null);
+    setAccountPublishableKey(null);
     setBookingId(null);
   };
 
@@ -1017,6 +1025,7 @@ export default function BookingCheckout() {
                   onSuccess={handlePaymentSuccess}
                   onCancel={handleCancel}
                   clientSecret={clientSecret}
+                  publishableKey={accountPublishableKey}
                   isProcessing={isProcessing}
                   setIsProcessing={setIsProcessing}
                 />

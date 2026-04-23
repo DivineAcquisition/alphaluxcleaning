@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  getAllConfiguredAccounts,
+  resolveAccountBySlug,
+  type StripeAccountCredentials,
+} from "../_shared/stripe-accounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,11 +25,16 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const stripeKey = (Deno.env.get("STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY_ALPHALUX"));
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET_ALPHALUX");
-    
-    if (!stripeKey) {
-      throw new Error("Missing Stripe secret key");
+    // Every account this router knows about — each brings its own
+    // secret key + webhook signing secret. We try verifying the
+    // incoming signature against each account's signing secret until
+    // one succeeds, so a single Supabase endpoint can receive webhooks
+    // from both the NY and CA/TX Stripe accounts.
+    const accounts = getAllConfiguredAccounts();
+    if (accounts.length === 0) {
+      throw new Error(
+        "No Stripe account is configured. Set STRIPE_SECRET_KEY_NY (and STRIPE_SECRET_KEY_CATX if serving CA/TX).",
+      );
     }
 
     const supabaseClient = createClient(
@@ -33,30 +43,74 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
     // Get the raw body and signature
     const body = await req.text();
     const signature = req.headers.get('stripe-signature');
 
-    let event;
-    
-    // Verify webhook signature if secret is configured
-    if (webhookSecret && signature) {
-      try {
-        // Use async verification for Deno compatibility
-        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-      } catch (err) {
-        logStep("Webhook signature verification failed", { error: err.message });
-        return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    let event: any;
+    let matchedAccount: StripeAccountCredentials | null = null;
+
+    if (signature) {
+      let verificationErrors: string[] = [];
+      for (const candidate of accounts) {
+        if (!candidate.webhookSecret) continue;
+        try {
+          const candidateStripe = new Stripe(candidate.secretKey, {
+            apiVersion: "2023-10-16",
+          });
+          event = await candidateStripe.webhooks.constructEventAsync(
+            body,
+            signature,
+            candidate.webhookSecret,
+          );
+          matchedAccount = candidate;
+          logStep("Webhook signature verified", {
+            slug: candidate.slug,
+            account: candidate.displayName,
+          });
+          break;
+        } catch (err: any) {
+          verificationErrors.push(`${candidate.slug}: ${err?.message || err}`);
+        }
+      }
+
+      if (!event || !matchedAccount) {
+        logStep("Webhook signature verification failed for all accounts", {
+          errors: verificationErrors,
+        });
+        return new Response(
+          `Webhook Error: signature did not validate against any configured account (${verificationErrors.join("; ")})`,
+          { status: 400 },
+        );
       }
     } else {
-      // Parse event without verification (for development)
-      logStep("Warning: No webhook secret configured, parsing without verification");
+      // No signature header — development / replay scenario only.
+      // Never accepted in production; the Stripe dashboard always
+      // sends a signature.
+      logStep("Warning: No stripe-signature header, parsing without verification");
       event = JSON.parse(body);
+      matchedAccount = accounts[0];
     }
 
-    logStep("Event received", { type: event.type, id: event.id });
+    // Re-resolve the account by slug in case the event payload pins
+    // the booking to a specific account and that differs from the
+    // one whose signing secret matched (shouldn't happen in practice,
+    // but worth being correct).
+    const slugFromMetadata =
+      event?.data?.object?.metadata?.stripe_account_slug ||
+      null;
+    const accountForHandling =
+      resolveAccountBySlug(slugFromMetadata) || matchedAccount;
+    const stripe = new Stripe(accountForHandling.secretKey, {
+      apiVersion: "2023-10-16",
+    });
+
+    logStep("Event received", {
+      type: event.type,
+      id: event.id,
+      account: accountForHandling.displayName,
+      slug: accountForHandling.slug,
+    });
 
     // Handle different event types
     switch (event.type) {

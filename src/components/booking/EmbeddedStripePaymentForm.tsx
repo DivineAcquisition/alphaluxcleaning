@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { getStripePromise } from '@/lib/stripe';
+import { getStripePromise, getStripeForKey } from '@/lib/stripe';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -213,6 +213,7 @@ export function EmbeddedStripePaymentForm({
   onCancel,
 }: EmbeddedStripePaymentFormProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [accountPublishableKey, setAccountPublishableKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const initRef = useRef(false);
@@ -265,8 +266,19 @@ export function EmbeddedStripePaymentForm({
         throw new Error('No client secret received');
       }
 
-      console.log('✅ Payment intent created successfully');
+      console.log('✅ Payment intent created successfully', {
+        slug: data.stripeAccountSlug,
+        hasPublishableKey: !!data.publishableKey,
+      });
       setClientSecret(data.clientSecret);
+      // create-payment-intent returns the publishable key for the
+      // exact Stripe account that owns the PaymentIntent. We pass it
+      // to Elements below so stripe.js initialises against the right
+      // account — critical once CA/TX bookings route to a second
+      // Stripe account.
+      if (data.publishableKey) {
+        setAccountPublishableKey(data.publishableKey);
+      }
     } catch (err: any) {
       console.error('🔴 Error creating payment intent:', err);
       setError(err.message || 'Failed to initialize payment. Please try again.');
@@ -372,7 +384,11 @@ export function EmbeddedStripePaymentForm({
       </CardHeader>
       <CardContent>
         <Elements
-          stripe={getStripePromise()}
+          stripe={
+            accountPublishableKey
+              ? getStripeForKey(accountPublishableKey)
+              : getStripePromise()
+          }
           options={{
             clientSecret,
             appearance,

@@ -50,20 +50,31 @@ export default function BookingZip() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // NY State ZIP codes are all in the 100–149 prefix range.
-  // (NYC is 100–119, Long Island is 115/117/118/119, upstate is 120–149.)
-  const isLikelyNyZip = (value: string) => {
+  // Client pre-check accepts any ZIP in the states the server might
+  // be configured to accept (NY always, CA / TX only when the ops
+  // kill-switch is on — the server decides). We keep the client
+  // permissive so that toggling CA/TX on the server alone is enough
+  // to open the flow without shipping new client code.
+  const isLikelySupportedZip = (value: string) => {
     if (value.length < 3) return true; // still typing
-    const prefix = parseInt(value.slice(0, 3), 10);
-    return prefix >= 100 && prefix <= 149;
+    const prefix3 = parseInt(value.slice(0, 3), 10);
+    const prefix5 = parseInt(value.slice(0, 5), 10) || 0;
+    // NY: 100–149
+    if (prefix3 >= 100 && prefix3 <= 149) return true;
+    // CA: 900–961 (excluding 967xx Hawaii/territories handled server-side)
+    if (prefix3 >= 900 && prefix3 <= 961) return true;
+    // TX: 750–799 plus 73301 (IRS Austin)
+    if (prefix3 >= 750 && prefix3 <= 799) return true;
+    if (prefix5 === 73301) return true;
+    return false;
   };
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 5);
     setZipCode(value);
-    if (value.length >= 3 && !isLikelyNyZip(value)) {
+    if (value.length >= 3 && !isLikelySupportedZip(value)) {
       setZipError(
-        "We only service New York State (including NYC and Long Island). Please enter a NY ZIP (100xx–149xx).",
+        "Please enter a ZIP for a state we currently service (NY, CA, or TX).",
       );
     } else {
       setZipError('');
@@ -83,9 +94,9 @@ export default function BookingZip() {
       setZipError('Please enter a valid 5-digit ZIP code');
       return;
     }
-    if (!isLikelyNyZip(zipCode)) {
+    if (!isLikelySupportedZip(zipCode)) {
       setZipError(
-        "We only service New York State (including NYC and Long Island). Please enter a NY ZIP (100xx–149xx).",
+        "Please enter a ZIP for a state we currently service (NY, CA, or TX).",
       );
       return;
     }
@@ -346,7 +357,7 @@ export default function BookingZip() {
                   disabled={
                     isValidatingZip ||
                     zipCode.length !== 5 ||
-                    !isLikelyNyZip(zipCode)
+                    !isLikelySupportedZip(zipCode)
                   }
                 >
                   {isValidatingZip ? (

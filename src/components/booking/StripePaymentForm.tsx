@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { getStripePromise } from '@/lib/stripe';
+import { getStripePromise, getStripeForKey } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Lock, CreditCard, AlertCircle } from 'lucide-react';
@@ -14,6 +14,14 @@ interface StripePaymentFormProps {
   onSuccess: (paymentIntentId: string, subscriptionId?: string) => void;
   onCancel: () => void;
   clientSecret: string;
+  /**
+   * Publishable key returned by create-payment-intent alongside the
+   * client secret. When present, Elements is initialized against the
+   * Stripe account that actually owns this PaymentIntent (NY or CA/TX).
+   * Optional for backwards compatibility — falls back to the global
+   * cached promise when omitted.
+   */
+  publishableKey?: string | null;
   isProcessing: boolean;
   setIsProcessing: (processing: boolean) => void;
 }
@@ -161,7 +169,7 @@ function PaymentFormContent({
 }
 
 export function StripePaymentForm(props: StripePaymentFormProps) {
-  const { clientSecret, ...formProps } = props;
+  const { clientSecret, publishableKey, ...formProps } = props;
 
   if (!clientSecret) {
     return (
@@ -208,7 +216,7 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
 
   return (
     <Elements
-      stripe={getStripePromise()}
+      stripe={publishableKey ? getStripeForKey(publishableKey) : getStripePromise()}
       options={{
         clientSecret,
         appearance,
