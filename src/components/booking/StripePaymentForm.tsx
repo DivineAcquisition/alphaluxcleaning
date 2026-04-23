@@ -156,10 +156,10 @@ function PaymentFormContent({
         </Alert>
       )}
 
-      <div className="rounded-xl border border-alx-gold/25 bg-alx-cream p-4 space-y-2">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-foreground font-medium">Deposit Amount</span>
-          <span className="font-serif font-bold text-lg text-alx-gold">
+          <span className="font-bold text-lg text-primary">
             ${depositAmount.toFixed(2)}
           </span>
         </div>
@@ -169,16 +169,16 @@ function PaymentFormContent({
             <span>(auto-billed)</span>
           </div>
         )}
-        <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-alx-gold/15">
+        <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-primary/15">
           <span>Total Plan Value</span>
           <span>${totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="rounded-xl border border-alx-gold/20 p-4 bg-background">
+      <div className="rounded-xl border border-border p-4 bg-card">
         {!elementReady && (
           <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin text-alx-gold" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
             Loading secure card form…
           </div>
         )}
@@ -191,12 +191,12 @@ function PaymentFormContent({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3 border border-alx-gold/20 bg-alx-black-ink text-alx-gold-pale px-3 py-2 rounded-lg">
+      <div className="flex items-center justify-between gap-3 border border-primary/20 bg-primary/5 text-primary px-3 py-2 rounded-lg">
         <div className="flex items-center gap-2 text-xs font-medium">
-          <Lock className="h-4 w-4 text-alx-gold-light" />
+          <Lock className="h-4 w-4" />
           <span>Secure Payment via Stripe</span>
         </div>
-        <span className="text-[10px] uppercase tracking-[0.18em] text-alx-gold">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-primary/70">
           256-bit TLS
         </span>
       </div>
@@ -214,7 +214,7 @@ function PaymentFormContent({
         <Button
           type="submit"
           disabled={!stripe || !elements || !elementReady || isProcessing}
-          className="flex-[2] btn-alx-gold rounded-full font-semibold uppercase tracking-wider"
+          className="flex-[2] rounded-lg font-semibold"
           size="lg"
         >
           {isProcessing ? (
@@ -246,36 +246,45 @@ export function StripePaymentForm(props: StripePaymentFormProps) {
     );
   }
 
-  // Match the branded Stripe PaymentElement to the AlphaLux black+gold palette.
+  // Match the branded Stripe PaymentElement to the AlphaLux Clean
+  // blue/white SaaS palette (adopted from texas.alphaluxclean.com).
   const appearance = {
     theme: 'stripe' as const,
     variables: {
-      colorPrimary: '#A17938', // Brand gold
+      colorPrimary: '#1E5FD9',
       colorBackground: '#ffffff',
-      colorText: '#15120F', // Alpha black
-      colorDanger: 'hsl(0, 84%, 60%)',
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      borderRadius: '12px',
+      colorText: '#0F172A',
+      colorTextSecondary: '#475569',
+      colorDanger: 'hsl(0, 72%, 51%)',
+      fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+      borderRadius: '10px',
       fontSizeBase: '15px',
+      spacingUnit: '4px',
     },
     rules: {
       '.Input': {
-        border: '1px solid #E5E7EB',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
       },
       '.Input:focus': {
-        borderColor: '#A17938',
-        boxShadow: '0 0 0 2px rgba(161, 121, 56, 0.25)',
+        borderColor: '#1E5FD9',
+        boxShadow: '0 0 0 3px rgba(30, 95, 217, 0.18)',
       },
       '.Label': {
         fontWeight: '500',
-        color: '#15120F',
+        color: '#0F172A',
       },
       '.Tab': {
-        borderColor: '#ECC98B',
+        borderColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
+      },
+      '.Tab:hover': {
+        borderColor: '#60A5FA',
       },
       '.Tab--selected': {
-        borderColor: '#A17938',
-        backgroundColor: '#FCFBF7',
+        borderColor: '#1E5FD9',
+        backgroundColor: '#EFF6FF',
+        color: '#1D3F94',
       },
     },
   };
