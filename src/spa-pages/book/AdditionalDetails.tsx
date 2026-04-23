@@ -112,7 +112,7 @@ export default function AdditionalDetails() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <Home className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3">
             Just a few more details...
           </h1>
           <p className="text-lg text-muted-foreground">

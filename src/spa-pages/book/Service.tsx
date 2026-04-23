@@ -67,7 +67,7 @@ export default function BookingService() {
             ← Previous
           </Link>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3">
             Choose your clean
           </h1>
           <p className="text-muted-foreground text-lg mb-8">

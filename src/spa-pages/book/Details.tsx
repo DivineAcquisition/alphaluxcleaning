@@ -383,14 +383,14 @@ export default function BookingDetails() {
     <div className="min-h-screen bg-background">
       <BookingProgressBar currentStep={5} totalSteps={6} />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+      <div className="max-w-2xl mx-auto px-4 py-6 md:py-10">
+        <div className="text-center mb-6">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground mb-2">
             Almost done — tell us about your home
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Your deposit is secured. Finalize your address, home details, and
-            scheduling window to confirm the booking.
+          <p className="text-sm md:text-base text-muted-foreground">
+            Your deposit is secured. Finalize your address and home details
+            to confirm the booking.
           </p>
         </div>
 
@@ -553,54 +553,49 @@ export default function BookingDetails() {
             </div>
           </Card>
 
-          {/* Scheduling */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Preferred Scheduling
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="date">Preferred Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={preferredDate}
-                  onChange={(e) => setPreferredDate(e.target.value)}
-                  min={computeEarliestBookableYmd()}
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {DEFAULT_MIN_LEAD_DAYS === 0
-                    ? 'Same-day booking available.'
-                    : `${DEFAULT_MIN_LEAD_DAYS}-day minimum lead time.`}
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="timeBlock">Preferred Time Block *</Label>
-                <Select
-                  value={preferredTimeBlock}
-                  onValueChange={setPreferredTimeBlock}
+          {/* Scheduling summary (read-only — customer picked this on
+              /book/offer). Rendered only when a slot was actually
+              carried through; the form still requires preferredDate +
+              preferredTimeBlock to submit, which we seed from booking
+              context when the page loads. */}
+          {(preferredDate || preferredTimeBlock) && (
+            <Card className="p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-4 w-4 text-alx-gold mt-1" />
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-semibold">
+                      Scheduled
+                    </p>
+                    <p className="text-sm font-semibold text-foreground mt-0.5">
+                      {preferredDate
+                        ? new Date(preferredDate + 'T00:00:00').toLocaleDateString(
+                            'en-US',
+                            { weekday: 'long', month: 'long', day: 'numeric' },
+                          )
+                        : 'Date pending'}
+                      {preferredTimeBlock && (
+                        <>
+                          {' · '}
+                          {TIME_SLOTS.find((s) => s.id === preferredTimeBlock)
+                            ?.window || preferredTimeBlock}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-alx-gold hover:bg-alx-gold/10"
+                  onClick={() => navigate('/book/offer')}
                 >
-                  <SelectTrigger id="timeBlock">
-                    <SelectValue placeholder="Select a time window" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_SLOTS.map((slot) => (
-                      <SelectItem key={slot.id} value={slot.id}>
-                        {slot.label} ({slot.window})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Our crew lands anywhere in the 2-hour window.
-                </p>
+                  Change
+                </Button>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Additional Notes */}
           <Card className="p-6">

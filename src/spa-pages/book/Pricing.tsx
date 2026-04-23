@@ -243,7 +243,7 @@ export default function BookingPricing() {
             <Sparkles className="h-4 w-4" />
             Transparent Pricing
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold">
+          <h1 className="text-2xl md:text-3xl font-bold">
             Build Your Quote
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">

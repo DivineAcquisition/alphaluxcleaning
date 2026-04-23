@@ -285,7 +285,7 @@ export default function BookingZip() {
           <div className="text-center mb-8">
             {NEW_CUSTOMER_PROMO_ACTIVE ? (
               <>
-                <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+                <h1 className="text-xl md:text-3xl font-jakarta font-bold mb-2 leading-tight">
                   Save{' '}
                   <span className="text-alx-gradient-gold">
                     {NEW_CUSTOMER_PROMO_PERCENT}%
@@ -300,7 +300,7 @@ export default function BookingZip() {
                 </p>
               </>
             ) : (
-              <h1 className="text-2xl md:text-5xl font-jakarta font-bold mb-3 leading-tight">
+              <h1 className="text-xl md:text-3xl font-jakarta font-bold mb-2 leading-tight">
                 Book Your New York Cleaning
               </h1>
             )}

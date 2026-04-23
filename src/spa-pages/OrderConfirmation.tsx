@@ -487,17 +487,24 @@ Questions? Call (857) 754-4557
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* Hero Section */}
-          <div className="text-center mb-12 confirmation-hero" data-testid="booking-confirmed">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-6">
-              <CheckCircle className="h-8 w-8 text-primary-foreground" />
+          <div className="text-center mb-8 confirmation-hero" data-testid="booking-confirmed">
+            {/* AlphaLux brand lockup — gold ring + check mark */}
+            <div className="relative inline-flex items-center justify-center mb-4">
+              <div className="absolute inset-0 rounded-full bg-alx-gold/20 blur-xl" />
+              <div className="relative inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-alx-gold to-alx-gold-dark shadow-gold">
+                <CheckCircle className="h-7 w-7 text-alx-black-ink" />
+              </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <p className="text-[11px] uppercase tracking-[0.32em] text-alx-gold font-semibold mb-1">
+              AlphaLux Cleaning
+            </p>
+            <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground mb-2">
               Booking Confirmed
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Thank you for choosing AlphaLux Cleaning! Your cleaning service has been successfully booked.
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto">
+              Your cleaning is on the books. A full receipt is on its way to your inbox.
             </p>
           </div>
 
@@ -550,10 +557,10 @@ Questions? Call (857) 754-4557
         <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3 mb-12">
           
           {/* What's Next Card */}
-          <div className="lg:col-span-2 xl:col-span-3 bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <Calendar className="h-5 w-5 mr-2 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">What's Next?</h2>
+          <div className="lg:col-span-2 xl:col-span-3 bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <Calendar className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">What's Next?</h2>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="flex items-start space-x-3">
@@ -597,13 +604,13 @@ Questions? Call (857) 754-4557
           </div>
 
           {/* Payment Status Card */}
-          <div className="bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-              <h2 className="text-lg font-semibold text-foreground">Payment Confirmed</h2>
+          <div className="bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <CheckCircle className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">Payment Confirmed</h2>
             </div>
-            <div className="space-y-3">
-              <p className="text-3xl font-bold text-foreground">
+            <div className="space-y-2.5">
+              <p className="text-2xl font-bold text-foreground">
                 ${(orderDetails.est_price / 100).toFixed(2)}
               </p>
               <p className="text-sm text-green-600 font-medium">
@@ -620,15 +627,15 @@ Questions? Call (857) 754-4557
           </div>
 
           {/* Scheduled Service Card */}
-          <div className="bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <Clock className="h-5 w-5 mr-2 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Service Scheduled</h2>
+          <div className="bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <Clock className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">Service Scheduled</h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Date</p>
-                <p className="text-lg font-semibold text-foreground">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Date</p>
+                <p className="text-base font-semibold text-foreground">
                   {new Date(serviceDate).toLocaleDateString('en-US', {
                     weekday: 'long',
                     month: 'long',
@@ -638,8 +645,8 @@ Questions? Call (857) 754-4557
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground font-medium mb-1">Time Window</p>
-                <p className="text-lg font-semibold text-foreground">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">Arrival Window</p>
+                <p className="text-base font-semibold text-foreground">
                   {timeSlot}
                 </p>
               </div>
@@ -672,10 +679,10 @@ Questions? Call (857) 754-4557
           </div>
 
           {/* Service Details Card */}
-          <div className="bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <Home className="h-5 w-5 mr-2 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Service Details</h2>
+          <div className="bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <Home className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">Service Details</h2>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -715,10 +722,10 @@ Questions? Call (857) 754-4557
           </div>
 
           {/* Customer Information Card */}
-          <div className="bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <User className="h-5 w-5 mr-2 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Customer Information</h2>
+          <div className="bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <User className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">Customer Information</h2>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -744,60 +751,72 @@ Questions? Call (857) 754-4557
             </div>
           </div>
 
-          {/* Service Address Card */}
-          <div className="bg-card rounded-xl border p-6">
-            <div className="flex items-center mb-4">
-              <MapPin className="h-5 w-5 mr-2 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Service Address</h2>
+          {/* Service Address Card — the crew needs this and the
+              customer expects to see it on the confirmation. Checks
+              every source we might have stamped an address into:
+              - bookings.address_line1 / address_line2 / city / state / zip_code
+                (stamped by /book/details → save-booking-details).
+              - bookings.property_details.address (legacy shape).
+              - bookings.service_details.serviceAddress (legacy shape).
+              - customers row primary address (fallback). */}
+          <div className="bg-card rounded-xl border p-5">
+            <div className="flex items-center mb-3">
+              <MapPin className="h-4 w-4 mr-2 text-alx-gold" />
+              <h2 className="text-base font-semibold text-foreground">Service Address</h2>
             </div>
-            <div>
-              {(() => {
-                // Check multiple data sources for address
-                const propertyAddress = orderDetails.property_details?.address;
-                const serviceAddress = orderDetails.service_details?.serviceAddress;
-                const customerAddress = orderDetails.customers;
-                
-                if (propertyAddress) {
-                  return (
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">
-                        {propertyAddress.street || propertyAddress}
-                        {propertyAddress.apartment && `, ${propertyAddress.apartment}`}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {propertyAddress.city}, {propertyAddress.state} {propertyAddress.zipCode}
-                      </p>
-                    </div>
-                  );
-                } else if (serviceAddress) {
-                  return (
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">
-                        {serviceAddress.street}
-                        {serviceAddress.apartment && `, ${serviceAddress.apartment}`}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {serviceAddress.city}, {serviceAddress.state} {serviceAddress.zipCode}
-                      </p>
-                    </div>
-                  );
-                } else if (customerAddress?.address) {
-                  return (
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">
-                        {customerAddress.address}
-                        {customerAddress.address_line2 && `, ${customerAddress.address_line2}`}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {customerAddress.city}, {customerAddress.state} {customerAddress.postal_code}
-                      </p>
-                    </div>
-                  );
-                } else {
-                  return <p className="text-muted-foreground">Address not available</p>;
-                }
-              })()}
-            </div>
+            {(() => {
+              const line1 =
+                orderDetails.address_line1 ||
+                orderDetails.property_details?.address?.street ||
+                orderDetails.property_details?.address ||
+                orderDetails.service_details?.serviceAddress?.street ||
+                orderDetails.customers?.address_line1 ||
+                orderDetails.customers?.address ||
+                '';
+              const line2 =
+                orderDetails.address_line2 ||
+                orderDetails.property_details?.address?.apartment ||
+                orderDetails.service_details?.serviceAddress?.apartment ||
+                orderDetails.customers?.address_line2 ||
+                '';
+              const city =
+                orderDetails.city ||
+                orderDetails.property_details?.address?.city ||
+                orderDetails.service_details?.serviceAddress?.city ||
+                orderDetails.customers?.city ||
+                '';
+              const state =
+                orderDetails.state ||
+                orderDetails.property_details?.address?.state ||
+                orderDetails.service_details?.serviceAddress?.state ||
+                orderDetails.customers?.state ||
+                '';
+              const zip =
+                orderDetails.zip_code ||
+                orderDetails.property_details?.address?.zipCode ||
+                orderDetails.service_details?.serviceAddress?.zipCode ||
+                orderDetails.customers?.postal_code ||
+                orderDetails.customers?.zip_code ||
+                '';
+              const hasAny = line1 || city || state || zip;
+              if (!hasAny) {
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    We'll confirm the service address shortly — check your email.
+                  </p>
+                );
+              }
+              return (
+                <div className="text-sm leading-relaxed text-foreground">
+                  {line1 && <div className="font-semibold">{line1}</div>}
+                  {line2 && <div>{line2}</div>}
+                  <div className="text-muted-foreground">
+                    {[city, state].filter(Boolean).join(', ')}
+                    {zip ? ` ${zip}` : ''}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Special Instructions Card */}
@@ -805,7 +824,7 @@ Questions? Call (857) 754-4557
             <div className="lg:col-span-2 xl:col-span-3 bg-card rounded-xl border p-6">
               <div className="flex items-center mb-4">
                 <FileText className="h-5 w-5 mr-2 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">Special Instructions</h2>
+                <h2 className="text-base font-semibold text-foreground">Special Instructions</h2>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {orderDetails.service_details.instructions.access && (

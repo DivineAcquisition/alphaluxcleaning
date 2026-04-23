@@ -1,16 +1,23 @@
 import { useMemo, useState } from 'react';
 import {
-  CalendarDays,
+  CalendarIcon,
   Sunrise,
   Sun,
   CloudSun,
   Sunset,
   Moon,
-  Star,
-  ChevronLeft,
-  ChevronRight,
+  Clock3,
+  Check,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 /**
@@ -124,8 +131,6 @@ interface OfferDateTimePickerProps {
   timeSlot: TimeSlotId | '';
   onDateChange: (date: string) => void;
   onTimeSlotChange: (slot: TimeSlotId) => void;
-  /** Days to show in the window. Defaults to DEFAULT_WINDOW_DAYS. */
-  days?: number;
   /**
    * Earliest bookable day, counted as "today + N days". AlphaLux
    * requires at least 3 days of lead time so the ops team can
@@ -141,100 +146,41 @@ function toYMD(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function formatMonthRange(start: Date, days: number): string {
-  const end = new Date(start);
-  end.setDate(end.getDate() + days - 1);
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth();
-  const monthFmt = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
-  if (sameMonth) return monthFmt.format(start);
-  const shortMonthFmt = new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    year: 'numeric',
-  });
-  return `${shortMonthFmt.format(start)} – ${shortMonthFmt.format(end)}`;
+function parseYMD(ymd: string): Date | undefined {
+  if (!ymd) return undefined;
+  const [y, m, d] = ymd.split('-').map(Number);
+  if (!y || !m || !d) return undefined;
+  return new Date(y, m - 1, d);
 }
 
 /**
- * Weekly calendar chip picker (like Calendly / Novara's scheduler)
- * with a horizontally scrollable row of days and a 6-card time-block
- * selector underneath.
- *
- * Defaults:
- *   - Minimum lead time of 3 days (AlphaLux ops requirement) so days
- *     0..2 can't be clicked, and the visible window starts at the
- *     earliest bookable day.
- *   - 21-day rolling window, paged ±7 days via chevrons.
- *   - Weekends are allowed by the picker; business hours live in
- *     the `TIME_SLOTS` table above.
+ * Popover-calendar + toggle-group time-slot picker. Uses shadcn
+ * primitives (`Calendar`, `Popover`, `Separator`, `Badge`) so it
+ * matches the rest of the design system and gives customers a
+ * familiar month-grid interface instead of the previous horizontal
+ * date-strip.
  */
 export function OfferDateTimePicker({
   date,
   timeSlot,
   onDateChange,
   onTimeSlotChange,
-  days = DEFAULT_WINDOW_DAYS,
   minLeadDays = DEFAULT_MIN_LEAD_DAYS,
 }: OfferDateTimePickerProps) {
-  // The very earliest a customer can book. Everything before this in
-  // the visible strip is shown as disabled so it's obvious why Mon /
-  // Tue / Wed (etc.) aren't clickable.
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   const earliestBookable = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() + minLeadDays);
     return d;
   }, [minLeadDays]);
-  const earliestBookableIso = useMemo(() => toYMD(earliestBookable), [earliestBookable]);
 
-  const [pageStartIso, setPageStartIso] = useState<string>(() => earliestBookableIso);
-
-  const windowDays = useMemo(() => {
-    const start = new Date(pageStartIso + 'T00:00:00');
-    return Array.from({ length: days }, (_, idx) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + idx);
-      const iso = toYMD(d);
-      return {
-        iso,
-        weekday: new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d),
-        day: d.getDate(),
-        monthShort: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(d),
-        full: new Intl.DateTimeFormat('en-US', {
-          weekday: 'long',
-          month: 'long',
-          day: 'numeric',
-        }).format(d),
-        dateObj: d,
-        disabled: iso < earliestBookableIso,
-      };
-    });
-  }, [pageStartIso, days, earliestBookableIso]);
-
-  const handleShiftWindow = (delta: number) => {
-    const base = new Date(pageStartIso + 'T00:00:00');
-    base.setDate(base.getDate() + delta);
-    if (base < earliestBookable) {
-      setPageStartIso(earliestBookableIso);
-    } else {
-      setPageStartIso(toYMD(base));
-    }
-  };
-
-  const selectedDateLabel = useMemo(() => {
-    if (!date) return null;
-    const d = new Date(date + 'T00:00:00');
-    if (Number.isNaN(d.valueOf())) return null;
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-    }).format(d);
-  }, [date]);
+  const latestBookable = useMemo(() => {
+    const d = new Date(earliestBookable);
+    d.setDate(d.getDate() + 60);
+    return d;
+  }, [earliestBookable]);
 
   const earliestBookableLabel = useMemo(
     () =>
@@ -246,184 +192,157 @@ export function OfferDateTimePicker({
     [earliestBookable],
   );
 
+  const selectedDateLabel = useMemo(() => {
+    const parsed = parseYMD(date);
+    if (!parsed) return null;
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    }).format(parsed);
+  }, [date]);
+
   const leadDaysLabel =
     minLeadDays === 0
       ? 'Same-day booking available'
       : minLeadDays === 1
-        ? 'Next-day booking · need 24 hr lead time'
-        : `Need ${minLeadDays}-day lead time (earliest: ${earliestBookableLabel})`;
+        ? 'Next-day booking · 24 hr lead time'
+        : `${minLeadDays}-day lead time · earliest ${earliestBookableLabel}`;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Pick a date</h3>
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-[1.15fr_1fr] md:gap-5">
+        {/* Date column */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4 text-alx-gold" />
+              <span className="text-sm font-semibold text-foreground">
+                Service date
+              </span>
+            </div>
+            <Badge
+              variant="outline"
+              className="border-alx-gold/40 text-alx-gold text-[10px] font-semibold uppercase tracking-wider"
+            >
+              {leadDaysLabel}
+            </Badge>
           </div>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  'w-full justify-start rounded-xl border-2 border-border/80 bg-card px-4 py-6 text-left hover:border-alx-gold/60',
+                  !selectedDateLabel && 'text-muted-foreground',
+                )}
+                aria-haspopup="dialog"
+                aria-expanded={calendarOpen}
+              >
+                <CalendarIcon className="mr-3 h-5 w-5 text-alx-gold" />
+                <span className="flex-1 text-base font-medium">
+                  {selectedDateLabel || 'Pick a service date'}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={parseYMD(date)}
+                onSelect={(day) => {
+                  if (!day) return;
+                  onDateChange(toYMD(day));
+                  setCalendarOpen(false);
+                }}
+                disabled={(day) =>
+                  day < earliestBookable || day > latestBookable
+                }
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          {!selectedDateLabel && (
+            <p className="text-xs text-muted-foreground">
+              Crews ship within a 2-hour arrival window. Pick any day at
+              least {minLeadDays} days out.
+            </p>
+          )}
+        </div>
+
+        {/* Time column */}
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">
-              {formatMonthRange(new Date(pageStartIso + 'T00:00:00'), days)}
+            <Clock3 className="h-4 w-4 text-alx-gold" />
+            <span className="text-sm font-semibold text-foreground">
+              Arrival window
             </span>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 rounded-full"
-              onClick={() => handleShiftWindow(-7)}
-              aria-label="Earlier dates"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 rounded-full"
-              onClick={() => handleShiftWindow(7)}
-              aria-label="Later dates"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {TIME_SLOTS.map((slot) => {
+              const Icon = slot.icon;
+              const isSelected = timeSlot === slot.id;
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => onTimeSlotChange(slot.id)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    'group relative flex flex-col items-start gap-1 rounded-xl border-2 bg-card px-3 py-3 text-left transition-all',
+                    isSelected
+                      ? 'border-alx-gold bg-alx-gold/10 shadow-soft'
+                      : 'border-border/70 hover:border-alx-gold/50 hover:bg-alx-gold/5',
+                  )}
+                >
+                  {isSelected && (
+                    <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-alx-gold text-alx-black-ink">
+                      <Check className="h-3 w-3" />
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Icon
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        isSelected ? 'text-alx-gold' : 'text-muted-foreground',
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'text-sm font-semibold',
+                        isSelected ? 'text-foreground' : 'text-foreground/90',
+                      )}
+                    >
+                      {slot.label}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {slot.window}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
-
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-          <Star className="h-3 w-3" />
-          {leadDaysLabel}
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scroll-smooth snap-x">
-          {windowDays.map((d) => {
-            const isSelected = date === d.iso;
-            const todayFloor = new Date();
-            todayFloor.setHours(0, 0, 0, 0);
-            const isToday = toYMD(todayFloor) === d.iso;
-            const isEarliest = d.iso === earliestBookableIso;
-            return (
-              <button
-                key={d.iso}
-                type="button"
-                onClick={() => !d.disabled && onDateChange(d.iso)}
-                disabled={d.disabled}
-                className={cn(
-                  'flex flex-col items-center justify-center min-w-[76px] rounded-2xl border-2 px-3 py-3 transition-all snap-start',
-                  d.disabled
-                    ? 'border-border/60 bg-muted/30 text-muted-foreground/60 cursor-not-allowed line-through decoration-muted-foreground/40'
-                    : isSelected
-                      ? 'border-primary bg-primary text-primary-foreground shadow-clean'
-                      : 'border-border hover:border-primary/60',
-                )}
-                aria-pressed={isSelected}
-                aria-disabled={d.disabled}
-                aria-label={
-                  d.disabled
-                    ? `${d.full} (unavailable — need ${minLeadDays}-day lead time)`
-                    : d.full
-                }
-                title={
-                  d.disabled
-                    ? `Earliest booking is ${earliestBookableLabel}`
-                    : undefined
-                }
-              >
-                <span
-                  className={cn(
-                    'text-[10px] uppercase tracking-wider font-semibold',
-                    isSelected ? 'text-primary-foreground/90' : 'text-muted-foreground',
-                  )}
-                >
-                  {d.weekday}
-                </span>
-                <span
-                  className={cn(
-                    'text-2xl font-bold mt-0.5',
-                    isSelected ? 'text-primary-foreground' : 'text-foreground',
-                  )}
-                >
-                  {d.day}
-                </span>
-                <span
-                  className={cn(
-                    'text-[10px] uppercase tracking-wider',
-                    isSelected
-                      ? 'text-primary-foreground/90'
-                      : isEarliest
-                        ? 'text-primary font-semibold'
-                        : 'text-muted-foreground',
-                  )}
-                >
-                  {isToday ? 'Today' : isEarliest ? 'Earliest' : d.monthShort}
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Sun className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Pick an arrival window</h3>
-        </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Each window is a 2-hour arrival range — our crew lands anywhere in
-          the window and works around your day.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {TIME_SLOTS.map((slot) => {
-            const Icon = slot.icon;
-            const isSelected = timeSlot === slot.id;
-            return (
-              <button
-                key={slot.id}
-                type="button"
-                onClick={() => onTimeSlotChange(slot.id)}
-                className={cn(
-                  'rounded-2xl border-2 p-4 text-left transition-all',
-                  isSelected
-                    ? 'border-primary bg-primary/5 shadow-clean'
-                    : 'border-border hover:border-primary/50',
-                )}
-                aria-pressed={isSelected}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className={cn(
-                      'h-9 w-9 rounded-lg flex items-center justify-center',
-                      isSelected
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-foreground',
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="font-semibold">{slot.label}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {slot.window}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">{slot.helper}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {date && timeSlot && (
-        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-primary" />
-          <span>
-            Scheduled for{' '}
-            <strong>{selectedDateLabel}</strong>
-            {' · '}
-            <strong>
-              {TIME_SLOTS.find((s) => s.id === timeSlot)?.window}
-            </strong>
-          </span>
-        </div>
+      {selectedDateLabel && timeSlot && (
+        <>
+          <Separator />
+          <div className="flex items-start gap-3 rounded-xl bg-alx-gold/10 border border-alx-gold/25 p-3 text-sm">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-alx-gold" />
+            <div>
+              <p className="font-semibold text-foreground">
+                Slot reserved
+              </p>
+              <p className="text-muted-foreground">
+                {selectedDateLabel} · {
+                  TIME_SLOTS.find((s) => s.id === timeSlot)?.window
+                }
+              </p>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
