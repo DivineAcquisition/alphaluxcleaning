@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -80,7 +80,7 @@ function calculateChatPricing(params: {
     
     // Check for custom quote (5000+)
     if (homeSize.id === '5000_plus') {
-      return 'For homes 5,000+ sq ft, we provide custom quotes. Please call us at (857) 754-4557 or email hello@alphaluxclean.com';
+      return 'For homes 5,000+ sq ft, we provide custom quotes. Please call us at (555) 123-4567 or email hello@alphaluxclean.com';
     }
     
     // Get base price
@@ -146,7 +146,7 @@ async function checkAvailability(zipCode: string): Promise<string> {
   if (data) {
     return `Yes! We service ${data.city}, ${data.state} (${zipCode}).`;
   } else {
-    return `Unfortunately, we don't currently service ZIP code ${zipCode}. AlphaLux Cleaning is currently only servicing New York State (NYC, Long Island, Westchester, Hudson Valley, Capital Region, Central NY, and Western NY). Please check if you're in one of our service areas!`;
+    return `Unfortunately, we don't currently service ZIP code ${zipCode}. We serve areas in Texas (Houston, Austin, Dallas, San Antonio), California (Los Angeles, San Diego), and New York (NYC, Brooklyn). Please check if you're in one of our service areas!`;
   }
 }
 
@@ -189,7 +189,7 @@ Confirmation: INTERACTIVE:{"type":"confirmation","question":"...","confirmationD
 1. Service type (options: Regular Clean, Deep Clean, Move-In/Out)
 2. Home size (options: 1000-1500 sq ft, 1501-2000, etc.)
 3. Frequency (options: Weekly 15% off, Bi-Weekly 10% off, Monthly 5% off, One-Time)
-4. State (input: two-letter code like NY)
+4. State (input: two-letter code like TX, CA, NY)
 5. Show pricing (use calculate_price tool, display result in one sentence)
 6. First name (input)
 7. Last name (input)

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { getStripePromise, getStripeForKey } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,59 @@ function PaymentFormContent({
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
+  const [elementReady, setElementReady] = useState(false);
+  const redirectHandledRef = useRef(false);
+
+  // If Stripe bounced the customer back here after a 3-D Secure
+  // redirect we'll have `?payment_intent=...&redirect_status=...` in
+  // the URL. Pick that up, confirm with Stripe, and propagate success
+  // back to the checkout container (which advances to /book/details).
+  useEffect(() => {
+    if (!stripe || redirectHandledRef.current) return;
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const piSecret =
+      url.searchParams.get('payment_intent_client_secret') || undefined;
+    if (!piSecret) return;
+    redirectHandledRef.current = true;
+    setIsProcessing(true);
+    stripe
+      .retrievePaymentIntent(piSecret)
+      .then(({ paymentIntent, error: retrieveError }) => {
+        if (retrieveError) {
+          setError(retrieveError.message || 'Could not verify payment.');
+          toast.error(retrieveError.message || 'Could not verify payment');
+          setIsProcessing(false);
+          return;
+        }
+        if (!paymentIntent) {
+          setError('Payment status unavailable. Please try again.');
+          setIsProcessing(false);
+          return;
+        }
+        // Clean query params so a refresh won't retry confirmation.
+        url.searchParams.delete('payment_intent');
+        url.searchParams.delete('payment_intent_client_secret');
+        url.searchParams.delete('redirect_status');
+        window.history.replaceState({}, '', url.pathname + url.search);
+        if (paymentIntent.status === 'succeeded') {
+          toast.success('Payment successful!');
+          onSuccess(paymentIntent.id);
+          return;
+        }
+        if (paymentIntent.status === 'processing') {
+          toast.info("We're still processing your payment — hang tight.");
+          return;
+        }
+        setError('Payment was not completed. Please try again.');
+        setIsProcessing(false);
+      })
+      .catch((err) => {
+        console.error('retrievePaymentIntent error:', err);
+        setError('Could not verify payment. Please try again.');
+        setIsProcessing(false);
+      });
+  }, [stripe, onSuccess, setIsProcessing]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,9 +126,15 @@ function PaymentFormContent({
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Payment successful!');
         onSuccess(paymentIntent.id);
+      } else if (paymentIntent && paymentIntent.status === 'processing') {
+        toast.info("We're still processing your payment…");
       } else if (paymentIntent && paymentIntent.status === 'requires_action') {
-        // Handle 3D Secure authentication
-        toast.info('Additional verification required...');
+        // Stripe already handled the client-side action path above when
+        // `redirect: 'if_required'` is in play — hitting this means we
+        // couldn't finish authentication inline. Let the customer try
+        // again instead of leaving the button stuck on "Processing".
+        setError('Additional verification was cancelled. Please try again.');
+        setIsProcessing(false);
       } else {
         setError('Payment not completed. Please try again.');
         setIsProcessing(false);
@@ -117,7 +176,14 @@ function PaymentFormContent({
       </div>
 
       <div className="rounded-xl border border-alx-gold/20 p-4 bg-background">
+        {!elementReady && (
+          <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-alx-gold" />
+            Loading secure card form…
+          </div>
+        )}
         <PaymentElement
+          onReady={() => setElementReady(true)}
           options={{
             layout: 'tabs',
             paymentMethodOrder: ['card'],
@@ -147,7 +213,7 @@ function PaymentFormContent({
         </Button>
         <Button
           type="submit"
-          disabled={!stripe || !elements || isProcessing}
+          disabled={!stripe || !elements || !elementReady || isProcessing}
           className="flex-[2] btn-alx-gold rounded-full font-semibold uppercase tracking-wider"
           size="lg"
         >

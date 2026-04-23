@@ -59,7 +59,7 @@ export const RescheduledEmail = (props: RescheduledEmailProps) => (
     </Section>
 
     <Text style={footerText}>
-      Thanks for choosing AlphaLux Cleaning! We're flexible because life happens. 😊
+      Thanks for choosing AlphaLuxClean! We're flexible because life happens. 😊
     </Text>
   </EmailBase>
 );

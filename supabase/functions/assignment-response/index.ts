@@ -208,7 +208,7 @@ function generateResponsePage(title: string, message: string, type: 'success' | 
           </div>
           <div class="footer">
             <p class="footer-text">
-              <span class="logo">AlphaLux Cleaning</span><br>
+              <span class="logo">AlphaLux Clean</span><br>
               Professional cleaning services you can trust
             </p>
           </div>

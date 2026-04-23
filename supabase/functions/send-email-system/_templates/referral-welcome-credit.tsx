@@ -21,12 +21,12 @@ export const ReferralWelcomeCreditEmail = ({
 }: ReferralWelcomeCreditEmailProps) => (
   <EmailBase preview={`Welcome! ${amount} credit applied to your account`}>
     <Heading style={h1}>
-      Welcome to AlphaLux Cleaning, {first_name}! 🏠
+      Welcome to AlphaLuxClean, {first_name}! 🏠
     </Heading>
     
     <Text style={text}>
       Thanks to {referrer_name}'s referral, you've received a special welcome 
-      credit on your AlphaLux Cleaning account!
+      credit on your AlphaLuxClean account!
     </Text>
 
     <Section style={creditSection}>
@@ -39,7 +39,7 @@ export const ReferralWelcomeCreditEmail = ({
 
     <Text style={text}>
       This credit has been automatically applied and will be used toward your 
-      future cleaning services. Welcome to the AlphaLux Cleaning family!
+      future cleaning services. Welcome to the AlphaLuxClean family!
     </Text>
 
     <Section style={benefitsSection}>
@@ -63,7 +63,7 @@ export const ReferralWelcomeCreditEmail = ({
       <Text style={referralTitle}>💰 Start earning too!</Text>
       <Text style={referralText}>
         Love your clean? You can earn {amount} for every friend you refer to 
-        AlphaLux Cleaning. Check your account to get your personal referral link!
+        AlphaLuxClean. Check your account to get your personal referral link!
       </Text>
     </Section>
 

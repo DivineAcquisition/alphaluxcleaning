@@ -95,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
       to: [payment.subcontractor.email],
       subject: `Payment Received - $${parseFloat(payment.subcontractor_amount).toFixed(2)} for ${payment.booking.customer_name}`,
       html: emailHtml,

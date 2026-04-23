@@ -120,7 +120,7 @@ serve(async (req) => {
         email: requestData.email,
         phone: '555-0123',
         address: '123 Test Street',
-        city: 'New York',
+        city: 'San Francisco',
         state: 'CA',
         zip_code: '94102',
         split_tier: requestData.tier,
@@ -151,7 +151,7 @@ serve(async (req) => {
       .insert({
         subcontractor_id: subcontractorData.id,
         user_id: userId,
-        title: 'Welcome to AlphaLux Cleaning!',
+        title: 'Welcome to AlphaLux Clean!',
         message: 'Welcome to our team! Your test account has been created successfully.',
         type: 'welcome',
         read: false

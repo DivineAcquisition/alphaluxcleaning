@@ -28,7 +28,7 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const defaultCompanyId = '550e8400-e29b-41d4-a716-446655440000'; // AlphaLux Cleaning
+    const defaultCompanyId = '550e8400-e29b-41d4-a716-446655440000'; // AlphaLux Clean
     const targetCompanyId = companyId || defaultCompanyId;
 
     if (type === 'request') {

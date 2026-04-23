@@ -23,7 +23,7 @@ export const ReferralInviteEmail = ({
     </Heading>
     
     <Text style={text}>
-      Hi {first_name}! Ready to share the AlphaLux Cleaning experience? 
+      Hi {first_name}! Ready to share the AlphaLuxClean experience? 
       Your friends get $25 off their first cleaning, and you earn $25 
       for each successful referral.
     </Text>

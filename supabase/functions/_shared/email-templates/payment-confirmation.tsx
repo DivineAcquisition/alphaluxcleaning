@@ -82,7 +82,7 @@ export const PaymentConfirmation = ({
         
         <Text style={footer}>
           <Link href="https://alphaluxclean.com" style={link}>
-            AlphaLux Cleaning
+            AlphaLuxClean
           </Link>
         </Text>
       </Container>

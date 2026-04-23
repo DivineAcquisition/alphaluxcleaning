@@ -122,6 +122,13 @@ export default function BookingCheckout() {
     setInitError(null);
 
     try {
+      // If we already minted a booking on this page (e.g. the user
+      // applied a promo which forced a fresh PaymentIntent), reuse
+      // that booking row instead of letting the server insert a new
+      // one. Without this, every promo apply/remove creates a
+      // duplicate booking.
+      const reuseBookingId = bookingId;
+
       const customerData = {
         email: bookingData.contactInfo.email,
         firstName: bookingData.contactInfo.firstName,
@@ -184,6 +191,7 @@ export default function BookingCheckout() {
               customerData,
               bookingData: bookingPayload,
               paymentType: 'deposit',
+              bookingId: reuseBookingId,
             },
           },
         );
@@ -204,6 +212,7 @@ export default function BookingCheckout() {
               customerData,
               bookingData: bookingPayload,
               paymentType: 'deposit',
+              bookingId: reuseBookingId,
             },
           });
 
@@ -250,6 +259,7 @@ export default function BookingCheckout() {
               customerData,
               bookingData: bookingPayload,
               paymentType: 'deposit',
+              bookingId: reuseBookingId,
               metadata: { offer_type: bookingData.offerType },
             },
           },
@@ -299,6 +309,7 @@ export default function BookingCheckout() {
     isInitializing,
     clientSecret,
     hasContact,
+    bookingId,
   ]);
 
   // Kick off Stripe initialization as soon as we have a contact and
@@ -414,7 +425,18 @@ export default function BookingCheckout() {
     paymentIntentId: string,
     subscriptionId?: string,
   ) => {
-    if (!bookingId) return;
+    if (!bookingId) {
+      // We got a successful PaymentIntent but lost the bookingId (most
+      // likely a full-page reload between intent creation and 3DS
+      // return). Don't leave the user frozen — warn, reset, and ask
+      // them to refresh so we can pick the booking back up from
+      // storage.
+      toast.error(
+        'Payment succeeded but we lost your booking reference. Please refresh.',
+      );
+      setIsProcessing(false);
+      return;
+    }
 
     try {
       const { error } = await supabase.functions.invoke(
@@ -497,6 +519,7 @@ export default function BookingCheckout() {
     } catch (error: any) {
       console.error('Error updating booking:', error);
       toast.error('Payment recorded but failed to update booking');
+      setIsProcessing(false);
     }
   };
 

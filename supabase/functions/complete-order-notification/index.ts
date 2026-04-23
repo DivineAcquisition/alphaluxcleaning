@@ -151,7 +151,7 @@ serve(async (req) => {
           customer_phone: '(415) 555-0123',
           address: {
             street_address: '123 Oak Street',
-            city: 'New York',
+            city: 'San Francisco',
             state: 'CA',
             zip_code: '94102',
             country: 'USA'
@@ -436,18 +436,18 @@ serve(async (req) => {
               </div>
               
               <p style="color: #666; line-height: 1.6;">
-                Thank you for choosing AlphaLux Cleaning! We hope you're satisfied with our service.
+                Thank you for choosing AlphaLux Clean! We hope you're satisfied with our service.
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="mailto:support@alphaluxcleaning.com" 
+                <a href="mailto:support@alphaluxclean.com" 
                    style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                   Contact Support
                 </a>
               </div>
               
               <p style="color: #999; font-size: 14px; text-align: center; margin-top: 30px;">
-                AlphaLux Cleaning<br>
+                AlphaLux Clean<br>
                 Professional cleaning services you can trust
               </p>
             </div>
@@ -457,7 +457,7 @@ serve(async (req) => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "AlphaLux Cleaning <noreply@info.alphaluxclean.com>",
+          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
           to: [booking.customer_email],
           subject: "🎉 Your Cleaning Service is Complete!",
           html: emailHtml,
