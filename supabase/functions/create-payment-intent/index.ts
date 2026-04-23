@@ -176,57 +176,74 @@ serve(async (req) => {
       }
     }
 
-    // === STEP 2: Create Booking if data provided ===
+    // === STEP 2: Create or update Booking if data provided ===
     if (bookingData && customerId) {
-      logStep("Creating booking with service role", { customerId });
-
       // booking_status enum does NOT include 'payment_pending'
       const safeBookingStatus: "pending" = "pending";
-      
-      const { data: newBooking, error: bookingError } = await supabaseClient
-        .from('bookings')
-        .insert({
-          customer_id: customerId,
-          service_type: bookingData.serviceType || 'standard',
-          frequency: bookingData.frequency || 'one-time',
-          sqft_or_bedrooms: bookingData.sqftOrBedrooms || '',
-          home_size: bookingData.homeSize,
-          zip_code: bookingData.zipCode,
-          est_price: bookingData.estPrice || amount,
-          deposit_amount: bookingData.depositAmount || amount,
-          base_price: bookingData.basePrice || bookingData.estPrice || amount,
-          balance_due: bookingData.balanceDue,
-          offer_name: bookingData.offerName,
-          offer_type: bookingData.offerType,
-          visit_count: bookingData.visitCount,
-          is_recurring: bookingData.isRecurring || false,
-          status: safeBookingStatus,
-          payment_status: 'pending',
-          promo_code: bookingData.promoCode,
-          promo_discount_cents: bookingData.promoDiscountCents || 0,
-          pricing_breakdown: bookingData.pricingBreakdown,
-          // Additional fields previously missing
-          service_date: bookingData.serviceDate || null,
-          time_slot: bookingData.timeSlot || null,
-          special_instructions: bookingData.specialInstructions || null,
-          property_details: bookingData.propertyDetails || null,
-          addons: bookingData.addons || null,
-          address_line1: bookingData.addressLine1 || null,
-          address_line2: bookingData.addressLine2 || null,
-          full_name: bookingData.fullName || null,
-          source: bookingData.source || 'customer_web',
-          stripe_account_slug: resolvedSlug,
-        })
-        .select()
-        .single();
+      const bookingFields = {
+        customer_id: customerId,
+        service_type: bookingData.serviceType || 'standard',
+        frequency: bookingData.frequency || 'one-time',
+        sqft_or_bedrooms: bookingData.sqftOrBedrooms || '',
+        home_size: bookingData.homeSize,
+        zip_code: bookingData.zipCode,
+        est_price: bookingData.estPrice || amount,
+        deposit_amount: bookingData.depositAmount || amount,
+        base_price: bookingData.basePrice || bookingData.estPrice || amount,
+        balance_due: bookingData.balanceDue,
+        offer_name: bookingData.offerName,
+        offer_type: bookingData.offerType,
+        visit_count: bookingData.visitCount,
+        is_recurring: bookingData.isRecurring || false,
+        promo_code: bookingData.promoCode,
+        promo_discount_cents: bookingData.promoDiscountCents || 0,
+        pricing_breakdown: bookingData.pricingBreakdown,
+        service_date: bookingData.serviceDate || null,
+        time_slot: bookingData.timeSlot || null,
+        special_instructions: bookingData.specialInstructions || null,
+        property_details: bookingData.propertyDetails || null,
+        addons: bookingData.addons || null,
+        address_line1: bookingData.addressLine1 || null,
+        address_line2: bookingData.addressLine2 || null,
+        full_name: bookingData.fullName || null,
+        source: bookingData.source || 'customer_web',
+        stripe_account_slug: resolvedSlug,
+      };
 
-      if (bookingError) {
-        logStep("Booking creation error", { error: bookingError });
-        throw new Error(`Failed to create booking: ${bookingError.message}`);
+      // Reuse the booking row if the client passed one in (typical
+      // when the customer applies / removes a promo code and we need
+      // to recreate the PaymentIntent without duplicating the booking).
+      if (bookingId) {
+        logStep("Updating existing booking", { bookingId });
+        const { error: updateError } = await supabaseClient
+          .from('bookings')
+          .update(bookingFields)
+          .eq('id', bookingId);
+        if (updateError) {
+          logStep("Booking update error, will create new", { error: updateError });
+          bookingId = null;
+        }
       }
-      
-      bookingId = newBooking.id;
-      logStep("Booking created", { bookingId });
+
+      if (!bookingId) {
+        logStep("Creating booking with service role", { customerId });
+        const { data: newBooking, error: bookingError } = await supabaseClient
+          .from('bookings')
+          .insert({
+            ...bookingFields,
+            status: safeBookingStatus,
+            payment_status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (bookingError) {
+          logStep("Booking creation error", { error: bookingError });
+          throw new Error(`Failed to create booking: ${bookingError.message}`);
+        }
+        bookingId = newBooking.id;
+        logStep("Booking created", { bookingId });
+      }
     }
 
     // === STEP 3: Find or Create Stripe Customer ===

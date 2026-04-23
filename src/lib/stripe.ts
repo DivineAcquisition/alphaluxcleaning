@@ -182,8 +182,24 @@ export const hasStripeKey = async (): Promise<boolean> => {
   return stripe !== null;
 };
 
-// Export a function that returns the stripe promise (required by Elements component)
-export const getStripePromise = () => stripePromise;
+// Export a function that returns the stripe promise (required by Elements
+// component). If the previous initialization ended up resolving to null
+// (because the config fetch + fallback both failed) we kick off a fresh
+// attempt on subsequent calls — this lets the form self-heal once the
+// network or Supabase secrets come back, without forcing the user to
+// hard-reload the page.
+export const getStripePromise = (): Promise<Stripe | null> => {
+  if (!stripeInstancePromise) {
+    return createStripePromise();
+  }
+  return stripeInstancePromise.then((s) => {
+    if (s === null) {
+      stripeInstancePromise = null;
+      return createStripePromise();
+    }
+    return s;
+  });
+};
 
 /**
  * Multi-account helper. `create-payment-intent` returns a
@@ -200,9 +216,17 @@ export const getStripePromise = () => stripePromise;
 const stripeByKeyCache = new Map<string, Promise<Stripe | null>>();
 
 export const getStripeForKey = (key: string | null | undefined): Promise<Stripe | null> => {
-  if (!key || !isValidKey(key)) return stripePromise;
+  if (!key || !isValidKey(key)) return getStripePromise();
   const cached = stripeByKeyCache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    return cached.then((s) => {
+      if (s === null) {
+        stripeByKeyCache.delete(key);
+        return getStripeForKey(key);
+      }
+      return s;
+    });
+  }
   const p = loadStripe(key).catch((err) => {
     console.error('🔴 getStripeForKey failed to load Stripe with account key', err);
     stripeByKeyCache.delete(key);
