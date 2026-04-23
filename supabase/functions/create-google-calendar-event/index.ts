@@ -24,10 +24,29 @@ serve(async (req) => {
   try {
     console.log('Processing calendar event creation request...');
     const body = await req.json();
-    const { date, time, serviceType, sessionId, duration = 2 } = body;
-    
-    console.log('Event data:', { date, time, serviceType, sessionId, duration });
-    
+    const {
+      date,
+      time,
+      serviceType,
+      sessionId,
+      duration = 2,
+      start: startIso,
+      end: endIso,
+      address,
+      notes,
+      customerEmail,
+    } = body;
+
+    console.log('Event data:', {
+      date,
+      time,
+      serviceType,
+      sessionId,
+      duration,
+      startIso,
+      endIso,
+    });
+
     if (!date || !time) {
       throw new Error('Missing required fields: date and time');
     }
@@ -70,13 +89,24 @@ serve(async (req) => {
     
     // Create calendar event
     console.log('Creating calendar event...');
-    const eventData = await createCalendarEvent(accessToken, date, time, serviceType, duration);
+    const eventData = await createCalendarEvent(accessToken, {
+      date,
+      time,
+      serviceType,
+      duration,
+      startIso,
+      endIso,
+      address,
+      notes,
+      customerEmail,
+    });
     console.log('Calendar event created successfully:', eventData.id);
-    
-    return new Response(JSON.stringify({ 
+
+    return new Response(JSON.stringify({
       success: true,
       eventId: eventData.id,
-      eventLink: eventData.htmlLink
+      eventLink: eventData.htmlLink,
+      htmlLink: eventData.htmlLink,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -167,38 +197,75 @@ async function getAccessToken(credentials: any): Promise<string> {
   return tokenData.access_token;
 }
 
-async function createCalendarEvent(accessToken: string, date: string, time: string, serviceType: string, duration: number) {
-  const calendarId = 'elitehousekeepers@gmail.com';
-  
-  // Parse the time and create start/end times
-  const { startTime, endTime } = parseTimeSlot(date, time, duration);
-  
-  const eventData = {
+interface CreateEventArgs {
+  date: string;
+  time: string;
+  serviceType: string;
+  duration: number;
+  startIso?: string;
+  endIso?: string;
+  address?: string;
+  notes?: string;
+  customerEmail?: string;
+}
+
+async function createCalendarEvent(accessToken: string, args: CreateEventArgs) {
+  const calendarId =
+    Deno.env.get('GOOGLE_CALENDAR_ID') || 'primary';
+  const timeZone =
+    Deno.env.get('GOOGLE_CALENDAR_TIMEZONE') || 'America/New_York';
+
+  // Prefer explicit ISO window from the client when available (the
+  // booking flow computes this from the canonical TIME_SLOTS table so
+  // server and client always agree on the arrival window).
+  let start: Date;
+  let end: Date;
+  if (args.startIso && args.endIso) {
+    start = new Date(args.startIso);
+    end = new Date(args.endIso);
+  } else {
+    const parsed = parseTimeSlot(args.date, args.time, args.duration);
+    start = parsed.startTime;
+    end = parsed.endTime;
+  }
+
+  const serviceType = args.serviceType || 'AlphaLux Cleaning';
+  const descriptionLines = [
+    `Professional ${serviceType} appointment.`,
+    '',
+    `Service: ${serviceType}`,
+    `Arrival window: ${args.time}`,
+  ];
+  if (args.address) descriptionLines.push(`Address: ${args.address}`);
+  if (args.notes) descriptionLines.push('', `Notes: ${args.notes}`);
+  descriptionLines.push('', 'Booked through AlphaLux Cleaning.');
+
+  const attendees: Array<{ email: string; displayName?: string }> = [];
+  if (args.customerEmail) {
+    attendees.push({ email: args.customerEmail });
+  }
+
+  const eventData: Record<string, unknown> = {
     summary: `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Cleaning Service`,
-    description: `Professional ${serviceType} cleaning service appointment.\n\nService Details:\n- Type: ${serviceType}\n- Duration: ${duration} hours\n\nBooked through AlphaLux Cleaning website.`,
+    description: descriptionLines.join('\n'),
     start: {
-      dateTime: startTime.toISOString(),
-      timeZone: 'America/Los_Angeles',
+      dateTime: start.toISOString(),
+      timeZone,
     },
     end: {
-      dateTime: endTime.toISOString(),
-      timeZone: 'America/Los_Angeles',
+      dateTime: end.toISOString(),
+      timeZone,
     },
-    location: 'Customer Location (TBD)',
-    attendees: [
-      {
-        email: 'elitehousekeepers@gmail.com',
-        displayName: 'AlphaLux Cleaning'
-      }
-    ],
+    location: args.address || 'Customer Location (TBD)',
     reminders: {
       useDefault: false,
       overrides: [
-        { method: 'email', minutes: 24 * 60 }, // 1 day before
-        { method: 'email', minutes: 60 }, // 1 hour before
+        { method: 'email', minutes: 24 * 60 },
+        { method: 'email', minutes: 60 },
       ],
     },
   };
+  if (attendees.length) eventData.attendees = attendees;
 
   console.log('Creating event with data:', JSON.stringify(eventData, null, 2));
   

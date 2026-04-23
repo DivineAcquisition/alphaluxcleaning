@@ -34,7 +34,7 @@ export default function BookingHome() {
             ← Previous
           </Link>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3">
             Tell us about your home
           </h1>
           <p className="text-muted-foreground text-lg mb-8">

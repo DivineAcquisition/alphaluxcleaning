@@ -77,7 +77,7 @@ export default function BookingFrequency() {
             ← Previous
           </Link>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3">
             How often?
           </h1>
           <p className="text-muted-foreground text-lg mb-8">

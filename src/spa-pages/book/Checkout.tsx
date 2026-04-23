@@ -4,6 +4,7 @@ import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { StripePaymentForm } from '@/components/booking/StripePaymentForm';
 import { useTestMode } from '@/hooks/useTestMode';
 import { useBookingProgress } from '@/hooks/useBookingProgress';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 import { TestTube } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,8 +32,10 @@ export default function BookingCheckout() {
   const { bookingData, updateBookingData, depositAmount } = useBooking();
   const { isTestMode } = useTestMode();
   const { trackStep, markCompleted } = useBookingProgress();
+  const { trackInitiateCheckout } = useFacebookPixel();
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [accountPublishableKey, setAccountPublishableKey] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -259,7 +262,23 @@ export default function BookingCheckout() {
         setCustomerId(data.customerId);
         setBookingId(data.bookingId);
         setClientSecret(secret);
+        // Multi-account: the server returns the publishable key bound
+        // to the Stripe account that owns this PaymentIntent (NY vs
+        // CA/TX). Stash it so <StripePaymentForm> boots Elements
+        // against the right account.
+        if (data.publishableKey) setAccountPublishableKey(data.publishableKey);
       }
+
+      // Meta Pixel — InitiateCheckout fires once the PaymentIntent
+      // is live and the customer is staring at the card form. We
+      // report the deposit (what they're actually about to pay right
+      // now) as the event value — InitiateCheckout value in Meta is
+      // supposed to represent what the user is submitting, not the
+      // lifetime contract value.
+      trackInitiateCheckout({
+        value: finalDepositAmount,
+        currency: 'USD',
+      });
 
       console.log('✅ Payment initialized');
     } catch (error: any) {
@@ -342,6 +361,7 @@ export default function BookingCheckout() {
       // Force Stripe to re-initialize so the payment intent uses the
       // new deposit amount.
       setClientSecret(null);
+      setAccountPublishableKey(null);
       setBookingId(null);
       toast.success(data.display || `Promo ${trimmed} applied`);
     } catch (err: any) {
@@ -357,6 +377,7 @@ export default function BookingCheckout() {
     setPromoDisplay(null);
     setPromoError(null);
     setClientSecret(null);
+    setAccountPublishableKey(null);
     setBookingId(null);
   };
 
@@ -627,7 +648,7 @@ export default function BookingCheckout() {
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-3xl font-bold mb-3">
             Review & Reserve
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -1017,6 +1038,7 @@ export default function BookingCheckout() {
                   onSuccess={handlePaymentSuccess}
                   onCancel={handleCancel}
                   clientSecret={clientSecret}
+                  publishableKey={accountPublishableKey}
                   isProcessing={isProcessing}
                   setIsProcessing={setIsProcessing}
                 />

@@ -1,4 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import {
+  resolveAccountForZip,
+  getCredentials,
+} from "../_shared/stripe-accounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,40 +11,26 @@ const corsHeaders = {
 };
 
 /**
- * Returns the Stripe PUBLISHABLE key only.
+ * Returns the Stripe PUBLISHABLE key for the account that owns a
+ * given service ZIP. The caller passes the ZIP (either as a JSON body
+ * `{ zipCode }` or the `?zip=` query param); if it's missing we fall
+ * back to the NY account, which is the historical default.
  *
- * Never expose the secret key from an edge function — the SDK uses
- * the publishable key on the client and the secret key is only used
- * server-side inside Supabase Edge Functions (e.g. create-payment,
- * stripe-webhook). We accept any of the following env var names so
- * the function works whether the Supabase secret is stored as
- * `STRIPE_PUBLISHABLE_KEY` (conventional), `STRIPE_PUBLISHABLE_KEY_ALPHALUX`
- * (legacy), or just the project default.
+ * Never expose a secret key from this endpoint — it's always
+ * publishable only. The create-payment-intent function returns the
+ * publishable key inline with the client secret so in the common case
+ * the client doesn't even need to hit this endpoint anymore; this
+ * still exists for pages that want to boot stripe.js before knowing
+ * which booking/ZIP the session belongs to (e.g. a raw subscribe
+ * flow).
  */
-const PUBLISHABLE_KEY_CANDIDATES = [
-  "STRIPE_PUBLISHABLE_KEY",
-  "STRIPE_PUBLISHABLE_KEY_ALPHALUX",
-  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
-];
 
-// Publishable keys are safe to expose publicly. When the Supabase secret
-// hasn't been set yet we fall back to the current AlphaLux live key so
-// the checkout form never blanks out on a cold project.
-const FALLBACK_PUBLISHABLE_KEY =
+// The hardcoded fallback is the NY account's publishable key. It's
+// safe to bundle into the client since Stripe publishable keys are
+// designed to be public; this prevents the checkout form from
+// blanking out if the Supabase secret hasn't been rotated yet.
+const FALLBACK_NY_PUBLISHABLE_KEY =
   "pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat";
-
-function resolvePublishableKey(): { key: string | null; source: "env" | "fallback" | "none" } {
-  for (const name of PUBLISHABLE_KEY_CANDIDATES) {
-    const v = Deno.env.get(name);
-    if (v && typeof v === "string" && v.trim().length > 0) {
-      return { key: v.trim(), source: "env" };
-    }
-  }
-  if (FALLBACK_PUBLISHABLE_KEY) {
-    return { key: FALLBACK_PUBLISHABLE_KEY, source: "fallback" };
-  }
-  return { key: null, source: "none" };
-}
 
 function isValidPublishableKey(key: string): boolean {
   return key.startsWith("pk_live_") || key.startsWith("pk_test_");
@@ -52,17 +42,35 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { key: publishableKey, source } = resolvePublishableKey();
+    let zipCode: string | null = null;
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        zipCode = body?.zipCode || body?.zip || null;
+      } catch {
+        // Body optional — fine to continue without a ZIP.
+      }
+    } else {
+      const url = new URL(req.url);
+      zipCode = url.searchParams.get("zip") || url.searchParams.get("zipCode");
+    }
 
-    if (!publishableKey) {
-      console.error(
-        "❌ No Stripe publishable key configured. Set STRIPE_PUBLISHABLE_KEY in Supabase.",
+    // Resolve the account for this ZIP (NY if ZIP is missing or
+    // unmapped, or if the target account is disabled).
+    let account = resolveAccountForZip(zipCode);
+
+    // If we still don't have an account (ops hasn't set any Stripe
+    // secrets yet), fall back to the bundled NY publishable key so
+    // the UI never completely blanks.
+    if (!account) {
+      console.warn(
+        "[get-stripe-config] No Stripe account configured, returning bundled fallback",
       );
       return new Response(
         JSON.stringify({
-          error:
-            "Stripe is not configured. Add STRIPE_PUBLISHABLE_KEY to Supabase secrets.",
-          publishableKey: null,
+          publishableKey: FALLBACK_NY_PUBLISHABLE_KEY,
+          stripeAccountSlug: "alphalux_ny",
+          source: "bundled_fallback",
         }),
         {
           status: 200,
@@ -71,37 +79,34 @@ serve(async (req: Request) => {
       );
     }
 
-    if (!isValidPublishableKey(publishableKey)) {
-      // We accidentally stored a secret (sk_) or restricted (rk_) key — refuse to expose it.
-      console.error(
-        "❌ Stripe publishable key looks malformed or is not a publishable key",
-      );
-      return new Response(
-        JSON.stringify({
-          error:
-            "Stripe publishable key is malformed. It must start with pk_live_ or pk_test_.",
-          publishableKey: null,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        },
-      );
+    // Prefer the account-specific publishable key; if that slot is
+    // empty fall back to the NY publishable key (and then the bundled
+    // fallback) so stripe.js always has something to initialize with.
+    let publishableKey = account.publishableKey;
+    let source: "env" | "ny_fallback" | "bundled_fallback" = "env";
+    if (!publishableKey || !isValidPublishableKey(publishableKey)) {
+      const ny = getCredentials("alphalux_ny");
+      publishableKey = ny?.publishableKey ?? null;
+      source = "ny_fallback";
     }
-
-    console.log(
-      `✅ Stripe publishable key resolved from ${source} (prefix: ${publishableKey.slice(0, 12)}...)`,
-    );
+    if (!publishableKey || !isValidPublishableKey(publishableKey)) {
+      publishableKey = FALLBACK_NY_PUBLISHABLE_KEY;
+      source = "bundled_fallback";
+    }
 
     return new Response(
-      JSON.stringify({ publishableKey }),
+      JSON.stringify({
+        publishableKey,
+        stripeAccountSlug: account.slug,
+        source,
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       },
     );
   } catch (error: any) {
-    console.error("❌ Error in get-stripe-config:", error);
+    console.error("[get-stripe-config] Error:", error);
     return new Response(
       JSON.stringify({
         error: error.message ?? "Failed to resolve Stripe config",

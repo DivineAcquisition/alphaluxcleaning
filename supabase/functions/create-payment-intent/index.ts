@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { getStripeSecretKey } from "../_shared/stripe-env.ts";
+import {
+  resolveAccountForZip,
+  resolveSlugForZip,
+  getCredentials,
+} from "../_shared/stripe-accounts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,22 +71,38 @@ serve(async (req) => {
       );
     }
 
-    // Resolve Stripe secret key from any of the historical names.
-    const stripeSecretKey = getStripeSecretKey();
-    if (!stripeSecretKey) {
-      logStep("Configuration error - missing Stripe key");
+    // Resolve which Stripe account should receive this payment based
+    // on the service ZIP. Falls back to the NY account if the ZIP is
+    // unmapped or the target account isn't configured — the ZIP
+    // allow-list in `validate-zip` should stop foreign ZIPs upstream,
+    // but this is belt-and-suspenders.
+    const serviceZip =
+      bookingData?.zipCode ||
+      customerData?.zip ||
+      body.zipCode ||
+      body.serviceZip ||
+      null;
+    const account = resolveAccountForZip(serviceZip);
+    if (!account) {
+      logStep("Configuration error - no Stripe account configured", { serviceZip });
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Payment system not configured",
-          details: "Stripe secret key is missing from server configuration" 
+          details:
+            "No Stripe account is configured. Set STRIPE_SECRET_KEY_NY (and STRIPE_SECRET_KEY_CATX if serving CA/TX).",
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
       );
     }
+    const resolvedSlug = account.slug;
+    logStep("Resolved Stripe account for booking", {
+      serviceZip,
+      slug: resolvedSlug,
+      account: account.displayName,
+    });
 
-    // Initialize Stripe
-    logStep("Initializing Stripe");
-    const stripe = new Stripe(stripeSecretKey, {
+    // Initialize Stripe with the account-specific secret.
+    const stripe = new Stripe(account.secretKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -195,6 +215,7 @@ serve(async (req) => {
           address_line2: bookingData.addressLine2 || null,
           full_name: bookingData.fullName || null,
           source: bookingData.source || 'customer_web',
+          stripe_account_slug: resolvedSlug,
         })
         .select()
         .single();
@@ -264,19 +285,25 @@ serve(async (req) => {
         customer_id: customerId || '',
         customer_email: email,
         payment_type: paymentType || 'deposit',
+        stripe_account_slug: resolvedSlug,
         ...(metadata || {})
       }
     });
     
     logStep("PaymentIntent created", { id: paymentIntent.id, amount: paymentIntent.amount });
 
-    // Update booking with payment intent ID
+    // Update booking with payment intent ID and the resolved account
+    // slug, so every downstream flow (webhook, balance invoice,
+    // refund) hits the same Stripe account this PaymentIntent lives on.
     if (bookingId) {
       await supabaseClient
         .from('bookings')
-        .update({ stripe_payment_intent_id: paymentIntent.id })
+        .update({
+          stripe_payment_intent_id: paymentIntent.id,
+          stripe_account_slug: resolvedSlug,
+        })
         .eq('id', bookingId);
-      logStep("Booking updated with payment intent", { bookingId });
+      logStep("Booking updated with payment intent", { bookingId, slug: resolvedSlug });
     }
 
     return new Response(JSON.stringify({
@@ -288,6 +315,13 @@ serve(async (req) => {
       bookingId: bookingId,
       stripeCustomerId: stripeCustomerId,
       amount: paymentIntent.amount,
+      stripeAccountSlug: resolvedSlug,
+      // Publishable key is safe to return alongside the client secret —
+      // the client needs it to boot stripe.js against the correct
+      // account. Null only when the account row has no publishable
+      // key configured, in which case the client falls back to
+      // `/get-stripe-config` and its own hard-coded fallback.
+      publishableKey: account.publishableKey,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

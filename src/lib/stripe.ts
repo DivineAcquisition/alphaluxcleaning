@@ -20,13 +20,39 @@ const isValidKey = (k: string) => typeof k === 'string' && (k.startsWith('pk_tes
 // Use the existing Supabase client to avoid multiple instances
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to fetch Stripe publishable key from Supabase
+// Function to fetch Stripe publishable key from Supabase.
+// When the booking context has a ZIP locked in, we pass it through so
+// the server returns the publishable key for the Stripe account that
+// owns that ZIP's state (NY vs CA/TX). Falls back to the NY account
+// when no ZIP is available yet.
+function readZipFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    // Try the booking context first.
+    const ctx = window.localStorage.getItem('alphalux_booking');
+    if (ctx) {
+      const parsed = JSON.parse(ctx);
+      const zip = parsed?.zipCode || parsed?.zip || null;
+      if (typeof zip === 'string' && zip.length >= 5) return zip.slice(0, 5);
+    }
+    // Legacy single-field store.
+    const direct = window.localStorage.getItem('booking_zip');
+    if (direct && direct.length >= 5) return direct.slice(0, 5);
+  } catch {
+    // ignore — storage may be unavailable
+  }
+  return null;
+}
+
 const fetchStripeKey = async (): Promise<string | null> => {
   try {
     console.log('🔄 Fetching Stripe configuration from Supabase...');
     console.log('🔍 Using Supabase URL:', "https://yltvknkqnzdeiqckqjha.supabase.co");
-    
-    const { data, error } = await supabase.functions.invoke('get-stripe-config');
+
+    const zipCode = readZipFromStorage();
+    const { data, error } = await supabase.functions.invoke('get-stripe-config', {
+      body: zipCode ? { zipCode } : {},
+    });
     
     console.log('📡 Stripe config response:', { data, error });
     
@@ -158,6 +184,33 @@ export const hasStripeKey = async (): Promise<boolean> => {
 
 // Export a function that returns the stripe promise (required by Elements component)
 export const getStripePromise = () => stripePromise;
+
+/**
+ * Multi-account helper. `create-payment-intent` returns a
+ * `publishableKey` bound to the Stripe account that owns the
+ * PaymentIntent; the PaymentForm calls this helper to boot a
+ * dedicated Stripe.js instance against *that* account instead of
+ * re-using the cached global promise (which is always whichever key
+ * loaded first).
+ *
+ * Each distinct key gets its own cached Promise so that tab flips
+ * between two checkouts on different accounts don't re-download
+ * stripe.js or re-init Elements.
+ */
+const stripeByKeyCache = new Map<string, Promise<Stripe | null>>();
+
+export const getStripeForKey = (key: string | null | undefined): Promise<Stripe | null> => {
+  if (!key || !isValidKey(key)) return stripePromise;
+  const cached = stripeByKeyCache.get(key);
+  if (cached) return cached;
+  const p = loadStripe(key).catch((err) => {
+    console.error('🔴 getStripeForKey failed to load Stripe with account key', err);
+    stripeByKeyCache.delete(key);
+    return null;
+  });
+  stripeByKeyCache.set(key, p);
+  return p;
+};
 
 // Utility function to check if Stripe is ready
 export const checkStripeReady = async (): Promise<boolean> => {
