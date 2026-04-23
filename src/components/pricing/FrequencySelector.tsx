@@ -52,8 +52,8 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
       className={cn(
         "cursor-pointer transition-all duration-200 hover:shadow-md border-2 touch-manipulation",
         isSelected 
-          ? "border-[#A17938] bg-[#A17938]/5 shadow-md" 
-          : "border-border hover:border-[#A17938]/50"
+          ? "border-[#0F77CC] bg-[#0F77CC]/5 shadow-md" 
+          : "border-border hover:border-[#0F77CC]/50"
       )}
       onClick={onSelect}
     >
@@ -62,18 +62,18 @@ function FrequencyCard({ frequency, isSelected, onSelect }: FrequencyCardProps) 
           <div className="flex items-center justify-between">
             <Icon className={cn(
               "h-6 w-6 md:h-5 md:w-5",
-              isSelected ? "text-[#A17938]" : "text-muted-foreground"
+              isSelected ? "text-[#0F77CC]" : "text-muted-foreground"
             )} />
             
             {isSelected && (
-              <div className="w-2 h-2 rounded-full bg-[#A17938]" />
+              <div className="w-2 h-2 rounded-full bg-[#0F77CC]" />
             )}
           </div>
           
           <div className="space-y-2">
             <h3 className={cn(
               "font-medium text-sm md:text-base",
-              isSelected ? "text-[#A17938]" : "text-foreground"
+              isSelected ? "text-[#0F77CC]" : "text-foreground"
             )}>
               {frequency.name}
             </h3>

@@ -27,12 +27,12 @@ export function RewardSummaryCard({ rewardCode, expiryDate, className }: RewardS
   };
 
   return (
-    <Card className={`border-[#A17938]/30 bg-gradient-to-br from-[#A17938]/10 to-transparent shadow-lg ${className}`}>
+    <Card className={`border-[#0F77CC]/30 bg-gradient-to-br from-[#0F77CC]/10 to-transparent shadow-lg ${className}`}>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Gift className="h-5 w-5 text-[#A17938]" />
+          <Gift className="h-5 w-5 text-[#0F77CC]" />
           <CardTitle>Reward Unlocked</CardTitle>
-          <Badge className="bg-[#A17938] text-[#A17938]-foreground hover:bg-[#A17938]/80 ml-auto">
+          <Badge className="bg-[#0F77CC] text-[#0F77CC]-foreground hover:bg-[#0F77CC]/80 ml-auto">
             30% OFF
           </Badge>
         </div>
@@ -41,7 +41,7 @@ export function RewardSummaryCard({ rewardCode, expiryDate, className }: RewardS
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Your Reward Code</p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-background border-2 border-[#A17938]/50 rounded-lg px-4 py-3">
+            <div className="flex-1 bg-background border-2 border-[#0F77CC]/50 rounded-lg px-4 py-3">
               <p className="text-xl font-mono font-bold text-center tracking-wider">
                 {rewardCode}
               </p>
@@ -50,7 +50,7 @@ export function RewardSummaryCard({ rewardCode, expiryDate, className }: RewardS
               variant="outline"
               size="icon"
               onClick={handleCopy}
-              className="h-12 w-12 border-[#A17938]/50"
+              className="h-12 w-12 border-[#0F77CC]/50"
             >
               {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
             </Button>
