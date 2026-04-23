@@ -107,18 +107,53 @@ const handler = async (req: Request): Promise<Response> => {
     // Render email template
     const { html, subject } = await renderEmailTemplate(template, data, subject_variant);
 
-    // Send email via Resend
-    const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+    // Send email via Resend. `EMAIL_FROM` / `EMAIL_REPLY_TO` on the
+    // edge function's environment let ops pick a verified sender
+    // without redeploying. Fall back to the branded sender first, and
+    // only if Resend rejects it as unverified do we retry with the
+    // Resend onboarding domain so the email is never silently dropped.
+    const primaryFrom =
+      Deno.env.get("EMAIL_FROM") ||
+      "AlphaLuxClean <noreply@info.alphaluxclean.com>";
+    const replyTo =
+      Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxclean.com";
+
+    let emailResponse = await resend.emails.send({
+      from: primaryFrom,
       to: [to],
       subject,
       html,
-      replyTo: "support@alphaluxclean.com",
+      replyTo,
       tags: [
         { name: "template", value: template },
-        { name: "category", value: category }
-      ]
+        { name: "category", value: category },
+      ],
     });
+
+    if (
+      emailResponse.error &&
+      /domain.*is not verified|sending domain.*must be verified/i.test(
+        emailResponse.error.message || "",
+      )
+    ) {
+      const fallbackFrom = "AlphaLuxClean <onboarding@resend.dev>";
+      console.warn(
+        `[send-email-system] Primary sender ${primaryFrom} is unverified — retrying with ${fallbackFrom}. ` +
+          `Ops should verify the sender domain in Resend and (optionally) set EMAIL_FROM in Supabase secrets.`,
+      );
+      emailResponse = await resend.emails.send({
+        from: fallbackFrom,
+        to: [to],
+        subject,
+        html,
+        replyTo,
+        tags: [
+          { name: "template", value: template },
+          { name: "category", value: category },
+          { name: "sender_fallback", value: "true" },
+        ],
+      });
+    }
 
     if (emailResponse.error) {
       throw new Error(`Resend error: ${emailResponse.error.message}`);
