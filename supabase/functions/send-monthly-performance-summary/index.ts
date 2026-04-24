@@ -147,8 +147,8 @@ const generateMonthlyPerformanceSummaryHtml = ({
               <a href="tel:+15551234567" style="color: #666666; text-decoration: underline;">
                 (555) 123-4567
               </a> • 
-              <a href="mailto:support@alphaluxclean.com" style="color: #666666; text-decoration: underline;">
-                support@alphaluxclean.com
+              <a href="mailto:support@alphaluxcleaning.com" style="color: #666666; text-decoration: underline;">
+                support@alphaluxcleaning.com
               </a>
             </p>
           </div>
@@ -292,7 +292,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Send email
         const emailResponse = await resend.emails.send({
-          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+          from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
           to: [subcontractor.email],
           subject: `Your ${monthName} ${targetYear} Performance Summary - ${completedJobs.length} Jobs Completed`,
           html: emailHtml,

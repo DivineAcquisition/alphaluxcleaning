@@ -284,7 +284,7 @@ function generateResponsePage(title: string, message: string, type: 'success' | 
         <p>${message}</p>
         <div class="footer">
           AlphaLux Clean<br>
-          Questions? Contact us at support@alphaluxclean.com
+          Questions? Contact us at support@alphaluxcleaning.com
         </div>
       </div>
     </body>

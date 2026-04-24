@@ -317,7 +317,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       const { error: emailError } = await resend.emails.send({
-        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
         to: [application.email],
         subject: "Welcome to AlphaLux Clean - Account Activated!",
         html: emailHtml,

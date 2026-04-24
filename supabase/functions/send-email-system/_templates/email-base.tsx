@@ -57,8 +57,8 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
               (555) 123-4567
             </Link>
             {" • "}
-            <Link href="mailto:support@alphaluxclean.com" style={footerLink}>
-              support@alphaluxclean.com
+            <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>
+              support@alphaluxcleaning.com
             </Link>
           </Text>
 

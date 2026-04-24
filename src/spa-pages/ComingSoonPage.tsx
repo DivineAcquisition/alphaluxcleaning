@@ -60,7 +60,7 @@ export default function ComingSoonPage() {
               <Button 
                 variant="outline"
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = 'mailto:info@alphaluxclean.com'}
+                onClick={() => window.location.href = 'mailto:info@alphaluxcleaning.com'}
               >
                 <Mail className="w-4 h-4" />
                 Email Us

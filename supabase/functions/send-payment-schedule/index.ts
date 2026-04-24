@@ -148,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p>We're here to help! Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
                 <li>📞 Call or Text: <strong>972-559-0223</strong></li>
-                <li>📧 Email: <strong>support@alphaluxclean.com</strong></li>
+                <li>📧 Email: <strong>support@alphaluxcleaning.com</strong></li>
               </ul>
             </div>
 
@@ -218,7 +218,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p>Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
                 <li>📞 <strong>972-559-0223</strong></li>
-                <li>📧 <strong>support@alphaluxclean.com</strong></li>
+                <li>📧 <strong>support@alphaluxcleaning.com</strong></li>
               </ul>
             </div>
 

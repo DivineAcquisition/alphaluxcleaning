@@ -114,9 +114,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Resend onboarding domain so the email is never silently dropped.
     const primaryFrom =
       Deno.env.get("EMAIL_FROM") ||
-      "AlphaLuxClean <noreply@info.alphaluxclean.com>";
+      "AlphaLuxClean <noreply@info.alphaluxcleaning.com>";
     const replyTo =
-      Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxclean.com";
+      Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com";
 
     let emailResponse = await resend.emails.send({
       from: primaryFrom,
@@ -130,9 +130,19 @@ const handler = async (req: Request): Promise<Response> => {
       ],
     });
 
+    // Resend surfaces three different "your sender isn't usable for this
+    // recipient" patterns depending on account state:
+    //   1. "The X domain is not verified."  (sending domain has no DNS proof)
+    //   2. "Sending domain X must be verified."
+    //   3. "You can only send testing emails to your own email address (X).
+    //       To send emails to other recipients, please verify a domain..."
+    //      (account exists but no domain has ever been verified)
+    // All three mean "we can't send from this 'from' address right now" —
+    // fall back to onboarding@resend.dev so the customer email still goes
+    // out instead of bouncing.
     if (
       emailResponse.error &&
-      /domain.*is not verified|sending domain.*must be verified/i.test(
+      /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(
         emailResponse.error.message || "",
       )
     ) {
@@ -156,7 +166,36 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (emailResponse.error) {
-      throw new Error(`Resend error: ${emailResponse.error.message}`);
+      // If Resend is still rejecting the recipient (e.g. the account is
+      // in sandbox / no-domain-verified state and the recipient isn't
+      // the account owner), don't 500. Park the job as `bounced_provider`
+      // so ops can replay it later and return success so the booking
+      // flow isn't blocked. The rest of the funnel (Stripe, GHL, HCP)
+      // is unaffected.
+      const msg = emailResponse.error.message || "";
+      const isProviderRestriction =
+        /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(msg);
+      console.warn(`[send-email-system] Resend send failed: ${msg}`);
+      await supabase
+        .from('email_jobs')
+        .update({
+          status: isProviderRestriction ? 'bounced_provider' : 'failed',
+          last_error: msg,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', jobData.id);
+      if (isProviderRestriction) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            queued: true,
+            job_id: jobData.id,
+            warning: "Resend account is in sandbox mode for this recipient. Verify a sending domain at resend.com/domains so the email can be delivered.",
+          }),
+          { status: 202, headers: { "Content-Type": "application/json", ...corsHeaders } },
+        );
+      }
+      throw new Error(`Resend error: ${msg}`);
     }
 
     // Update job status to sent

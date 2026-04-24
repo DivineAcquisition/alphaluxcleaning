@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [assignment.subcontractor.email],
       subject: `Customer Feedback Received - ${rating} stars from ${assignment.booking.customer_name}`,
       html: emailHtml,

@@ -128,7 +128,7 @@ export const BookingConfirmationEmail = ({
               <br />
               <Link href="tel:9725590223" style={footerLink}>(972) 559-0223</Link>
               {" • "}
-              <Link href="mailto:support@alphaluxclean.com" style={footerLink}>support@alphaluxclean.com</Link>
+              <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>support@alphaluxcleaning.com</Link>
             </Text>
           </Section>
         </Container>

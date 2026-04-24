@@ -233,7 +233,7 @@ Questions? Call (281) 809-9901
                 asChild
                 className="flex items-center gap-2"
               >
-                <a href="mailto:info@alphaluxclean.com">
+                <a href="mailto:info@alphaluxcleaning.com">
                   <Mail className="h-4 w-4" />
                   Email
                 </a>

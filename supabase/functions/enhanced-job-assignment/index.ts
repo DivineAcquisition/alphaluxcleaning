@@ -288,7 +288,7 @@ async function sendEmailNotification({
   `;
 
   await resend.emails.send({
-    from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+    from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
     to: [subcontractor.email],
     subject,
     html: emailHtml,

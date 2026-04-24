@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send assignment email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [subcontractor.email],
       subject: `New Job Assignment - ${booking.service_date}`,
       html: `

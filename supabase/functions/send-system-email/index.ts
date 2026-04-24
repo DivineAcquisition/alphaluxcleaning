@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine email content based on template
     let subject: string;
     let html: string;
-    let fromAddress = "AlphaLux Clean <info@alphaluxclean.com>";
+    let fromAddress = "AlphaLux Clean <info@alphaluxcleaning.com>";
 
     switch (templateKey) {
       case 'booking_confirmation':
@@ -172,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
           })
         );
         subject = 'Admin Access Invitation - AlphaLux Clean';
-        fromAddress = "AlphaLux Clean <info@alphaluxclean.com>";
+        fromAddress = "AlphaLux Clean <info@alphaluxcleaning.com>";
         break;
 
       case 'promo_applied':

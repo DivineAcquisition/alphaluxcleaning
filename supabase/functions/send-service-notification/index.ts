@@ -222,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email
     const recipientEmail = (type === 'referral_reward' && referrerEmail) ? referrerEmail : customerEmail;
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [recipientEmail],
       subject,
       html: emailHtml,

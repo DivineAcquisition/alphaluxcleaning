@@ -70,7 +70,7 @@ export default function ProgressIndicator({ className = "" }: ProgressIndicatorP
               <DropdownMenuSeparator />
               
               <DropdownMenuItem asChild>
-                <a href="mailto:info@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                <a href="mailto:info@alphaluxcleaning.com" className="flex items-center gap-3 w-full py-2">
                   <Mail className="h-4 w-4" />
                   Email Support
                 </a>
@@ -113,7 +113,7 @@ export default function ProgressIndicator({ className = "" }: ProgressIndicatorP
               </DropdownMenuItem>
               
               <DropdownMenuItem asChild>
-                <a href="mailto:info@alphaluxclean.com" className="flex items-center gap-3 w-full py-2">
+                <a href="mailto:info@alphaluxcleaning.com" className="flex items-center gap-3 w-full py-2">
                   <Mail className="h-4 w-4" />
                   Email Support
                 </a>

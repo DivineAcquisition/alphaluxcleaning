@@ -111,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the email using Resend
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [email],
       subject: `You're invited to join AlphaLux Clean${role !== 'customer' ? ` as ${role}` : ''}`,
       html: emailHtml,
