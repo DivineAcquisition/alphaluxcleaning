@@ -56,7 +56,7 @@ export const AdminInviteEmail = ({ email, role, inviteUrl, companyName }: AdminI
 );
 
 const h1 = { 
-  color: "#1A1A1A", 
+  color: "#1B314B", 
   fontSize: "28px", 
   fontWeight: "bold", 
   margin: "0 0 24px 0",
@@ -64,14 +64,14 @@ const h1 = {
 };
 
 const h2 = { 
-  color: "#1A1A1A", 
+  color: "#1B314B", 
   fontSize: "20px", 
   fontWeight: "bold", 
   margin: "0 0 12px 0" 
 };
 
 const text = { 
-  color: "#1A1A1A", 
+  color: "#1B314B", 
   fontSize: "16px", 
   lineHeight: "1.6", 
   margin: "0 0 16px 0" 
@@ -90,7 +90,7 @@ const ctaSection = {
 };
 
 const roleSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "20px",
   borderRadius: "8px",
   margin: "24px 0",

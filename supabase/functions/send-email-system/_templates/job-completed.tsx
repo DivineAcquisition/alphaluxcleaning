@@ -89,28 +89,28 @@ export const JobCompletedEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const h3 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "20px",
   fontWeight: "bold",
   margin: "0 0 16px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
 };
 
 const feedbackSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "32px",
   borderRadius: "8px",
   textAlign: "center" as const,
@@ -120,7 +120,7 @@ const feedbackSection = {
 const feedbackTitle = {
   fontSize: "24px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 12px 0",
 };
 
@@ -138,7 +138,7 @@ const reviewButton = {
 };
 
 const upsellSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "32px",
   borderRadius: "8px",
   margin: "32px 0",
@@ -147,7 +147,7 @@ const upsellSection = {
 
 const upsellText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 24px 0",
   lineHeight: "1.6",
 };
@@ -162,7 +162,7 @@ const planGrid = {
 
 const planCard = {
   backgroundColor: "#ffffff",
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   borderRadius: "8px",
   padding: "16px",
   textAlign: "center" as const,
@@ -174,19 +174,19 @@ const planCard = {
 const planFreq = {
   fontSize: "16px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 8px 0",
 };
 
 const planDiscount = {
   fontSize: "14px",
-  color: "#ECC98B",
+  color: "#0F77CC",
   fontWeight: "bold",
   margin: "0",
 };
 
 const upsellButton = {
-  backgroundColor: "#ECC98B",
+  backgroundColor: "#0F77CC",
   margin: "24px 0 0 0",
 };
 
@@ -201,13 +201,13 @@ const socialSection = {
 const socialTitle = {
   fontSize: "20px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 12px 0",
 };
 
 const socialText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 20px 0",
   lineHeight: "1.6",
 };
@@ -218,7 +218,7 @@ const referralButton = {
 
 const thanksText = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   fontWeight: "500",
   margin: "32px 0 0 0",

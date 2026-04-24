@@ -18,6 +18,6 @@ export const PaymentFailedEmail = ({ first_name, service_date, app_url }: Paymen
   </EmailBase>
 );
 
-const h1 = { color: "#1A1A1A", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
-const text = { color: "#1A1A1A", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" };
+const h1 = { color: "#1B314B", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
+const text = { color: "#1B314B", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" };
 const ctaSection = { textAlign: "center" as const, margin: "32px 0" };

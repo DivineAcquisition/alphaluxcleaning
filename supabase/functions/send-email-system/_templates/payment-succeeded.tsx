@@ -92,21 +92,21 @@ export const PaymentSucceededEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const h3 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "20px",
   fontWeight: "bold",
   margin: "0 0 16px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
@@ -124,7 +124,7 @@ const paymentSection = {
 const paymentTitle = {
   fontSize: "20px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -147,7 +147,7 @@ const receiptSection = {
 };
 
 const referralSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "32px",
   borderRadius: "8px",
   margin: "32px 0",
@@ -156,7 +156,7 @@ const referralSection = {
 
 const referralText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 24px 0",
   lineHeight: "1.6",
 };
@@ -165,7 +165,7 @@ const referralBox = {
   backgroundColor: "#ffffff",
   padding: "20px",
   borderRadius: "8px",
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   margin: "0 0 24px 0",
 };
 
@@ -178,7 +178,7 @@ const referralCodeTitle = {
 const referralCodeText = {
   fontSize: "24px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontFamily: "monospace",
   margin: "0",
 };
@@ -197,8 +197,8 @@ const referralButton = {
 
 const secondaryButton = {
   backgroundColor: "transparent",
-  border: "2px solid #ECC98B",
-  color: "#1A1A1A",
+  border: "2px solid #0F77CC",
+  color: "#1B314B",
   margin: "8px",
 };
 
@@ -209,7 +209,7 @@ const nextStepsSection = {
 const nextStepsTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -220,14 +220,14 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
 
 const thanksText = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   fontWeight: "500",
   margin: "32px 0 0 0",

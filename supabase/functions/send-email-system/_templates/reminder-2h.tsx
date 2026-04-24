@@ -63,14 +63,14 @@ export const Reminder2hEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
@@ -88,13 +88,13 @@ const statusSection = {
 const statusTitle = {
   fontSize: "20px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 8px 0",
 };
 
 const statusText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
 };
 
@@ -105,7 +105,7 @@ const quickTipsSection = {
 const tipsTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -116,7 +116,7 @@ const list = {
 
 const listItem = {
   fontSize: "15px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
@@ -124,14 +124,14 @@ const listItem = {
 const contactSection = {
   textAlign: "center" as const,
   margin: "32px 0",
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "24px",
   borderRadius: "8px",
 };
 
 const contactText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 20px 0",
   fontWeight: "500",
 };
@@ -144,7 +144,7 @@ const phoneButton = {
 
 const footerText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   margin: "32px 0 0 0",
   fontWeight: "500",

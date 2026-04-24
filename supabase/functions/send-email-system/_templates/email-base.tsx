@@ -24,14 +24,14 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
     <Preview>{preview}</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header */}
+        {/* Header — navy band with the official AlphaLux Clean logo */}
         <Section style={header}>
           <Link href="https://app.alphaluxclean.com">
             <Img
-              src="https://app.alphaluxclean.com/logo.png"
-              width="120"
-              height="40"
-              alt="AlphaLuxClean"
+              src="https://app.alphaluxclean.com/brand/alphalux-logo.png"
+              width="180"
+              height="60"
+              alt="AlphaLux Clean"
               style={logo}
             />
           </Link>
@@ -146,78 +146,109 @@ export const OrderSummary = ({ booking }: { booking: any }) => (
   </Section>
 );
 
-// Styles
+// Brand palette — kept in sync with src/index.css token map.
+//   Navy ink:        #1B314B
+//   Deep navy:       #0E1C2E
+//   Bright blue:     #0F77CC
+//   Light blue:      #3DA0EB
+//   Pale blue:       #D7ECFA
+//   Cream bg:        #F8F8F7
+//   Slate body:      #5B6B80
+//   Border:          #DBE3EC
+const COLORS = {
+  navy: '#1B314B',
+  navyDeep: '#0E1C2E',
+  blue: '#0F77CC',
+  blueDeep: '#0C5FA6',
+  blueLight: '#3DA0EB',
+  bluePale: '#D7ECFA',
+  cream: '#F8F8F7',
+  body: '#5B6B80',
+  border: '#DBE3EC',
+};
+
 const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  backgroundColor: COLORS.cream,
+  fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  color: COLORS.navy,
 };
 
 const container = {
   margin: '0 auto',
-  padding: '20px 0 48px',
+  padding: '0 0 48px',
   maxWidth: '600px',
+  backgroundColor: '#ffffff',
+  borderRadius: '12px',
+  overflow: 'hidden',
+  boxShadow: '0 4px 16px -4px rgba(27, 49, 75, 0.12)',
 };
 
 const header = {
-  borderBottom: '1px solid #eaeaea',
-  paddingBottom: '20px',
-  marginBottom: '20px',
+  backgroundColor: COLORS.navy,
+  padding: '24px 20px',
+  marginBottom: '0',
   textAlign: 'center' as const,
 };
 
 const logo = {
   margin: '0 auto',
+  filter: 'drop-shadow(0 2px 8px rgba(15, 119, 204, 0.35))',
 };
 
 const content = {
-  padding: '0 20px',
+  padding: '24px 28px 8px',
 };
 
 const footer = {
-  borderTop: '1px solid #eaeaea',
+  borderTop: `1px solid ${COLORS.border}`,
   paddingTop: '20px',
-  marginTop: '40px',
+  paddingBottom: '20px',
+  marginTop: '32px',
   textAlign: 'center' as const,
+  backgroundColor: COLORS.cream,
 };
 
 const footerText = {
-  color: '#666666',
+  color: COLORS.body,
   fontSize: '12px',
-  lineHeight: '16px',
-  margin: '4px 0',
+  lineHeight: '18px',
+  margin: '4px 16px',
 };
 
 const footerLink = {
-  color: '#666666',
-  textDecoration: 'underline',
+  color: COLORS.blue,
+  textDecoration: 'none',
+  fontWeight: '500',
 };
 
 const buttonStyle = {
-  backgroundColor: '#1A1A1A',
-  borderRadius: '6px',
+  backgroundColor: COLORS.blue,
+  borderRadius: '8px',
   color: '#ffffff !important',
-  fontSize: '16px',
-  fontWeight: 'bold',
+  fontSize: '15px',
+  fontWeight: '600',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '16px 32px',
+  padding: '14px 32px',
   margin: '16px 0',
+  boxShadow: `0 4px 12px ${COLORS.blue}33`,
 };
 
-// OrderSummary component styles
 const orderSummary = {
-  backgroundColor: '#f8f9fa',
+  backgroundColor: COLORS.cream,
   padding: '24px',
-  borderRadius: '8px',
+  borderRadius: '10px',
   margin: '24px 0',
+  border: `1px solid ${COLORS.border}`,
 };
 
 const h2 = {
-  color: '#1A1A1A',
+  color: COLORS.navy,
   fontSize: '20px',
-  fontWeight: 'bold',
+  fontWeight: '700',
   margin: '0 0 16px 0',
+  letterSpacing: '-0.02em',
 };
 
 const table = {
@@ -226,24 +257,24 @@ const table = {
 };
 
 const tableCell = {
-  padding: '8px 0',
+  padding: '10px 0',
   fontSize: '14px',
-  color: '#666',
-  borderBottom: '1px solid #eee',
+  color: COLORS.body,
+  borderBottom: `1px solid ${COLORS.border}`,
   verticalAlign: 'top',
   width: '40%',
 };
 
 const tableCellValue = {
-  padding: '8px 0',
+  padding: '10px 0',
   fontSize: '14px',
-  color: '#1A1A1A',
-  borderBottom: '1px solid #eee',
+  color: COLORS.navy,
+  borderBottom: `1px solid ${COLORS.border}`,
   fontWeight: '500',
 };
 
 const totalRow = {
-  borderTop: '2px solid #1A1A1A',
+  borderTop: `2px solid ${COLORS.blue}`,
 };
 
 // Google Guaranteed Badge Styles

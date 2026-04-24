@@ -94,28 +94,28 @@ export const Reminder24hEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const h3 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "18px",
   fontWeight: "bold",
   margin: "0 0 12px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
 };
 
 const detailsSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "20px",
   borderRadius: "8px",
   margin: "24px 0",
@@ -123,7 +123,7 @@ const detailsSection = {
 
 const detailText = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 12px 0",
   lineHeight: "1.6",
 };
@@ -139,7 +139,7 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
@@ -152,7 +152,7 @@ const contactSection = {
 const contactTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 20px 0",
 };
 
@@ -169,13 +169,13 @@ const primaryButton = {
 
 const secondaryButton = {
   backgroundColor: "transparent",
-  border: "2px solid #ECC98B",
-  color: "#1A1A1A",
+  border: "2px solid #0F77CC",
+  color: "#1B314B",
   margin: "8px",
 };
 
 const teamSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "20px",
   borderRadius: "8px",
   margin: "24px 0",
@@ -184,14 +184,14 @@ const teamSection = {
 
 const teamText = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
   lineHeight: "1.6",
 };
 
 const footerText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   margin: "32px 0 0 0",
   fontWeight: "500",

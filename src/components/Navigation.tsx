@@ -81,7 +81,7 @@ export function Navigation({ minimal = false }: NavigationProps) {
                 alt="AlphaLux Cleaning"
                 width="64"
                 height="64"
-                className="h-9 md:h-10 w-auto object-contain drop-shadow-[0_0_20px_rgba(161,121,56,0.35)] transition group-hover:drop-shadow-[0_0_25px_rgba(236,201,139,0.55)]"
+                className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_18px_rgba(15,119,204,0.30)] transition group-hover:drop-shadow-[0_0_24px_rgba(61,160,235,0.45)]"
               />
               <span className="hidden sm:inline font-serif text-lg font-semibold tracking-wide text-alx-gold-light">
                 AlphaLux Cleaning

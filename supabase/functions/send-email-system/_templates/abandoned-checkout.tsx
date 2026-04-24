@@ -86,38 +86,38 @@ export const AbandonedCheckoutEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
 };
 
 const offerSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "24px",
   borderRadius: "8px",
   textAlign: "center" as const,
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   margin: "24px 0",
 };
 
 const offerTitle = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 8px 0",
   fontWeight: "bold",
 };
 
 const priceText = {
   fontSize: "36px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontWeight: "bold",
   margin: "8px 0",
 };
@@ -134,7 +134,7 @@ const ctaSection = {
 };
 
 const socialProofSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "24px",
   borderRadius: "8px",
   margin: "32px 0",
@@ -143,7 +143,7 @@ const socialProofSection = {
 const socialProofTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
   textAlign: "center" as const,
 };
@@ -164,7 +164,7 @@ const reassuranceSection = {
 const reassuranceTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 20px 0",
   textAlign: "center" as const,
 };
