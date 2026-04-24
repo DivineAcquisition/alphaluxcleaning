@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, Loader2 } from 'lucide-react';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 export default function BookingConfirmation() {
   const params = useParams();
@@ -154,11 +155,7 @@ export default function BookingConfirmation() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <BrandedLoader caption="Loading your confirmation…" />;
   }
 
   if (!booking) {

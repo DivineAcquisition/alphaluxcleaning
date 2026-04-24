@@ -29,7 +29,7 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
         <Section style={header}>
           <Link href="https://app.alphaluxclean.com">
             <Img
-              src="/brand/alphaluxclean-logo.png"
+              src="https://app.alphaluxclean.com/brand/alphalux-logo.png"
               width="180"
               height="60"
               alt="AlphaLux Clean"

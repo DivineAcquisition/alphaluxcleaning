@@ -26,6 +26,7 @@ import {
   Star,
 } from 'lucide-react';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -1073,12 +1074,7 @@ export default function BookingCheckout() {
                   </Button>
                 </>
               ) : isInitializing ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="ml-2 text-muted-foreground">
-                    Preparing secure checkout...
-                  </span>
-                </div>
+                <BrandedLoader caption="Preparing secure checkout…" fullScreen={false} />
               ) : clientSecret ? (
                 <StripePaymentForm
                   depositAmount={finalDepositAmount}
