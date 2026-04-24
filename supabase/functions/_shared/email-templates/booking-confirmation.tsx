@@ -175,7 +175,7 @@ const content = {
 
 const greeting = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
   fontWeight: "600",
 };
@@ -217,7 +217,7 @@ const detailLabel = {
 
 const detailValue = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontWeight: "600",
   margin: "0",
 };
@@ -232,7 +232,7 @@ const totalRow = {
 
 const totalLabel = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontWeight: "bold",
   margin: "0",
 };
@@ -250,9 +250,9 @@ const buttonSection = {
 };
 
 const goldButton = {
-  backgroundColor: "#ECC98B",
+  backgroundColor: "#0F77CC",
   borderRadius: "6px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",

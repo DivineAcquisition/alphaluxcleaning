@@ -182,9 +182,9 @@ const promoExpiry = {
 
 // Gold Button with Dark Text
 const button = {
-  backgroundColor: "#ECC98B",
+  backgroundColor: "#0F77CC",
   borderRadius: "5px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",

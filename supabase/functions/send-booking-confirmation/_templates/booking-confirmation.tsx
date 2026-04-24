@@ -171,7 +171,7 @@ export default BookingConfirmationEmail;
 
 // Styles
 const main = {
-  backgroundColor: '#f4f4f5',
+  backgroundColor: '#F8F8F7',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 };
 
@@ -182,7 +182,7 @@ const container = {
 };
 
 const header = {
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  background: 'linear-gradient(135deg, #0F77CC 0%, #1B314B 100%)',
   padding: '30px 20px',
   textAlign: 'center' as const,
   borderRadius: '8px 8px 0 0',
@@ -204,22 +204,22 @@ const orderNumber = {
 };
 
 const discountBanner = {
-  background: '#fef3c7',
+  background: '#EFF7FE',
   padding: '20px',
   textAlign: 'center' as const,
-  borderLeft: '4px solid #f59e0b',
+  borderLeft: '4px solid #0F77CC',
 };
 
 const discountBadge = {
   fontSize: '20px',
   fontWeight: 'bold',
-  color: '#92400e',
+  color: '#0C5FA6',
   margin: '0 0 8px 0',
 };
 
 const discountText = {
   fontSize: '16px',
-  color: '#78350f',
+  color: '#1B314B',
   margin: '0',
 };
 
@@ -255,7 +255,7 @@ const card = {
 const cardHeading = {
   fontSize: '18px',
   fontWeight: '600',
-  color: '#667eea',
+  color: '#0F77CC',
   margin: '0 0 16px 0',
 };
 
@@ -333,23 +333,23 @@ const valueTotal = {
 };
 
 const highlight = {
-  backgroundColor: '#fef3c7',
+  backgroundColor: '#EFF7FE',
   padding: '20px',
   borderRadius: '6px',
   margin: '20px 0',
-  borderLeft: '4px solid #f59e0b',
+  borderLeft: '4px solid #0F77CC',
 };
 
 const highlightTitle = {
   fontSize: '16px',
   fontWeight: 'bold',
-  color: '#78350f',
+  color: '#1B314B',
   margin: '0 0 12px 0',
 };
 
 const listItem = {
   fontSize: '14px',
-  color: '#78350f',
+  color: '#1B314B',
   margin: '8px 0',
   lineHeight: '20px',
 };
@@ -360,7 +360,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#667eea',
+  backgroundColor: '#0F77CC',
   color: '#ffffff',
   fontSize: '16px',
   fontWeight: '600',

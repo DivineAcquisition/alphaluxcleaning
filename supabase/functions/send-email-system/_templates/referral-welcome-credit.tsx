@@ -74,39 +74,39 @@ export const ReferralWelcomeCreditEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
 };
 
 const creditSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "32px",
   borderRadius: "8px",
   textAlign: "center" as const,
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   margin: "24px 0",
 };
 
 const creditTitle = {
   fontSize: "20px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
 const amountText = {
   fontSize: "36px",
   fontWeight: "bold",
-  color: "#ECC98B",
+  color: "#0F77CC",
   margin: "0 0 8px 0",
 };
 
@@ -123,7 +123,7 @@ const benefitsSection = {
 const benefitsTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -134,7 +134,7 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
@@ -155,20 +155,20 @@ const referralSection = {
 const referralTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 12px 0",
 };
 
 const referralText = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
   lineHeight: "1.5",
 };
 
 const footerText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   margin: "32px 0 0 0",
 };

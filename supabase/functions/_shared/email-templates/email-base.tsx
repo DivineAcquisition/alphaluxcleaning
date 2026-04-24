@@ -138,9 +138,9 @@ const link = {
 };
 
 const button = {
-  backgroundColor: "#ECC98B",
+  backgroundColor: "#0F77CC",
   borderRadius: "8px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   fontWeight: "bold",
   textDecoration: "none",

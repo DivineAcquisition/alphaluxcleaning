@@ -68,21 +68,21 @@ export const BookingConfirmedEmail = (props: BookingConfirmedEmailProps) => (
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const h3 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "18px",
   fontWeight: "bold",
   margin: "0 0 16px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
@@ -95,13 +95,13 @@ const buttonSection = {
 
 const secondaryButton = {
   backgroundColor: "transparent",
-  border: "2px solid #ECC98B",
-  color: "#1A1A1A",
+  border: "2px solid #0F77CC",
+  color: "#1B314B",
   marginLeft: "16px",
 };
 
 const preparationSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "24px",
   borderRadius: "8px",
   margin: "24px 0",
@@ -114,22 +114,22 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
 
 const recurringNote = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "16px",
   borderRadius: "8px",
-  border: "1px solid #ECC98B",
+  border: "1px solid #0F77CC",
   margin: "24px 0",
 };
 
 const smallText = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
   lineHeight: "1.5",
 };

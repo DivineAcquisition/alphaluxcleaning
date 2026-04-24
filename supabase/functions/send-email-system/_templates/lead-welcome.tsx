@@ -71,14 +71,14 @@ export const LeadWelcomeEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
@@ -103,7 +103,7 @@ const benefitItem = {
 const benefitTitle = {
   fontSize: "16px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 8px 0",
 };
 

@@ -95,7 +95,7 @@ export const ReferralInviteEmail = ({
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
@@ -103,31 +103,31 @@ const h1 = {
 };
 
 const h3 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "20px",
   fontWeight: "bold",
   margin: "0 0 20px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
 };
 
 const codeSection = {
-  backgroundColor: "#fff8e1",
+  backgroundColor: "#EFF7FE",
   padding: "32px",
   borderRadius: "8px",
   textAlign: "center" as const,
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   margin: "24px 0",
 };
 
 const codeTitle = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
   fontWeight: "bold",
 };
@@ -135,12 +135,12 @@ const codeTitle = {
 const codeText = {
   fontSize: "32px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontFamily: "monospace",
   backgroundColor: "#ffffff",
   padding: "16px 24px",
   borderRadius: "8px",
-  border: "2px solid #ECC98B",
+  border: "2px solid #0F77CC",
   margin: "0 0 12px 0",
   display: "inline-block",
 };
@@ -159,12 +159,12 @@ const linkSection = {
 const linkTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
 const linkBox = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "16px",
   borderRadius: "8px",
   border: "1px solid #ddd",
@@ -200,8 +200,8 @@ const step = {
 const stepNumber = {
   fontSize: "32px",
   fontWeight: "bold",
-  color: "#ECC98B",
-  backgroundColor: "#fff8e1",
+  color: "#0F77CC",
+  backgroundColor: "#EFF7FE",
   width: "56px",
   height: "56px",
   borderRadius: "50%",
@@ -214,7 +214,7 @@ const stepNumber = {
 const stepTitle = {
   fontSize: "16px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 8px 0",
 };
 
@@ -226,7 +226,7 @@ const stepText = {
 };
 
 const socialShareSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "24px",
   borderRadius: "8px",
   margin: "32px 0",
@@ -235,7 +235,7 @@ const socialShareSection = {
 const socialTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -246,7 +246,7 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
@@ -267,7 +267,7 @@ const termsText = {
 
 const footerText = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   fontWeight: "500",
   margin: "32px 0 0 0",

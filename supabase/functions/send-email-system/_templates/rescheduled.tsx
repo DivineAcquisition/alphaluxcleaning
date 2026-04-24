@@ -65,14 +65,14 @@ export const RescheduledEmail = (props: RescheduledEmailProps) => (
 );
 
 const h1 = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "28px",
   fontWeight: "bold",
   margin: "0 0 24px 0",
 };
 
 const text = {
-  color: "#1A1A1A",
+  color: "#1B314B",
   fontSize: "16px",
   lineHeight: "1.6",
   margin: "0 0 24px 0",
@@ -90,19 +90,19 @@ const updateSection = {
 const updateTitle = {
   fontSize: "20px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 12px 0",
 };
 
 const updateDetails = {
   fontSize: "18px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
   lineHeight: "1.4",
 };
 
 const confirmationSection = {
-  backgroundColor: "#f8f9fa",
+  backgroundColor: "#F8F8F7",
   padding: "20px",
   borderRadius: "8px",
   margin: "24px 0",
@@ -111,7 +111,7 @@ const confirmationSection = {
 
 const confirmationText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0",
   lineHeight: "1.6",
 };
@@ -128,7 +128,7 @@ const reminderSection = {
 const reminderTitle = {
   fontSize: "18px",
   fontWeight: "bold",
-  color: "#1A1A1A",
+  color: "#1B314B",
   margin: "0 0 16px 0",
 };
 
@@ -139,14 +139,14 @@ const list = {
 
 const listItem = {
   fontSize: "14px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   marginBottom: "8px",
   lineHeight: "1.5",
 };
 
 const footerText = {
   fontSize: "16px",
-  color: "#1A1A1A",
+  color: "#1B314B",
   textAlign: "center" as const,
   margin: "32px 0 0 0",
 };

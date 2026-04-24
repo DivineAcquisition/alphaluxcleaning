@@ -73,9 +73,9 @@ export const RecurringConfirmedEmail = ({
   </EmailBase>
 );
 
-const h1 = { color: "#1A1A1A", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
-const text = { color: "#1A1A1A", fontSize: "16px", lineHeight: "1.6", margin: "0 0 16px 0" };
-const sectionTitle = { color: "#1A1A1A", fontSize: "20px", fontWeight: "600", margin: "24px 0 16px 0" };
+const h1 = { color: "#1B314B", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
+const text = { color: "#1B314B", fontSize: "16px", lineHeight: "1.6", margin: "0 0 16px 0" };
+const sectionTitle = { color: "#1B314B", fontSize: "20px", fontWeight: "600", margin: "24px 0 16px 0" };
 const highlightBox = { 
   backgroundColor: "#F0F9FF", 
   border: "2px solid #0EA5E9", 
@@ -90,7 +90,7 @@ const highlightTitle = {
   margin: "0 0 12px 0" 
 };
 const detailRow = { 
-  color: "#1A1A1A", 
+  color: "#1B314B", 
   fontSize: "16px", 
   lineHeight: "1.8", 
   margin: "8px 0" 

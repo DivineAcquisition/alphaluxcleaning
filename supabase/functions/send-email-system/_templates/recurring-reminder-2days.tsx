@@ -48,8 +48,8 @@ export const RecurringReminderEmail = ({
   </EmailBase>
 );
 
-const h1 = { color: "#1A1A1A", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
-const text = { color: "#1A1A1A", fontSize: "16px", lineHeight: "1.6", margin: "0 0 16px 0" };
+const h1 = { color: "#1B314B", fontSize: "28px", fontWeight: "bold", margin: "0 0 24px 0" };
+const text = { color: "#1B314B", fontSize: "16px", lineHeight: "1.6", margin: "0 0 16px 0" };
 const ctaSection = { textAlign: "center" as const, margin: "32px 0" };
 const detailsBox = { 
   backgroundColor: "#F7F7F7", 
@@ -57,5 +57,5 @@ const detailsBox = {
   borderRadius: "8px", 
   margin: "24px 0" 
 };
-const detailText = { margin: "8px 0", fontSize: "16px", color: "#1A1A1A" };
+const detailText = { margin: "8px 0", fontSize: "16px", color: "#1B314B" };
 const note = { color: "#666", fontSize: "14px", margin: "24px 0 0 0" };

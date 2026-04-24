@@ -135,6 +135,12 @@ serve(async (req) => {
         .then((r) => log('queue-booking-reminders', { ok: !r.error, err: r.error?.message }))
         .catch((e) => log('queue-booking-reminders threw', { err: (e as Error).message })),
     );
+    fanOut.push(
+      supabase.functions
+        .invoke('hcp-sync-booking', { body: { booking_id: bookingId } })
+        .then((r) => log('hcp-sync-booking', { ok: !r.error, err: r.error?.message, data: r.data }))
+        .catch((e) => log('hcp-sync-booking threw', { err: (e as Error).message })),
+    );
     // Fire-and-forget — we don't block the response on external sends.
     Promise.allSettled(fanOut);
 
