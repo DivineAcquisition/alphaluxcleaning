@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { scrollToConfirmation } from "@/lib/scroll-utils";
 import { AddToGoogleCalendarButton } from "@/components/booking/AddToGoogleCalendarButton";
+import { BrandedLoader } from "@/components/BrandedLoader";
 
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
@@ -455,10 +456,7 @@ Questions? Call (857) 754-4557
         <Navigation />
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-md mx-auto">
-            <div className="bg-card rounded-xl border p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading your order details...</p>
-            </div>
+            <BrandedLoader caption="Loading your order details…" fullScreen={false} />
           </div>
         </div>
       </div>

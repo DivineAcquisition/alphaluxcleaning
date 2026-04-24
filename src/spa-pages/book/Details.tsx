@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookingProgressBar } from '@/components/booking/BookingProgressBar';
 import { useTestMode } from '@/hooks/useTestMode';
 import { Loader2, Calendar, Home as HomeIcon, Building2, Building } from 'lucide-react';
+import { BrandedLoader } from '@/components/BrandedLoader';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -370,12 +371,7 @@ export default function BookingDetails() {
 
   if (!bookingData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading booking details...</p>
-        </div>
-      </div>
+      <BrandedLoader caption="Loading booking details…" />
     );
   }
 

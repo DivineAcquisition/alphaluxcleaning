@@ -78,14 +78,11 @@ export function Navigation({ minimal = false }: NavigationProps) {
             <Link to="/" className="flex items-center gap-3 group">
               <img
                 src={logo}
-                alt="AlphaLux Cleaning"
-                width="64"
-                height="64"
-                className="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_18px_rgba(15,119,204,0.30)] transition group-hover:drop-shadow-[0_0_24px_rgba(61,160,235,0.45)]"
+                alt="AlphaLux Clean"
+                width="180"
+                height="60"
+                className="h-9 md:h-11 w-auto object-contain drop-shadow-[0_0_18px_rgba(15,119,204,0.30)] transition group-hover:drop-shadow-[0_0_24px_rgba(61,160,235,0.45)]"
               />
-              <span className="hidden sm:inline font-serif text-lg font-semibold tracking-wide text-alx-gold-light">
-                AlphaLux Cleaning
-              </span>
             </Link>
 
             {/* Right Section - Hidden in minimal mode */}

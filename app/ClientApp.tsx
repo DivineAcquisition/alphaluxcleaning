@@ -19,27 +19,75 @@ const App = dynamic(() => import("@/App"), {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "linear-gradient(135deg, hsl(240 4% 4%) 0%, hsl(25 22% 9%) 45%, hsl(30 16% 14%) 100%)",
-        color: "#F6DFA8",
-        fontFamily: "Georgia, serif",
-        letterSpacing: "0.04em",
+          "radial-gradient(circle at center, hsl(212 47% 20%) 0%, hsl(214 56% 12%) 70%, hsl(220 62% 8%) 100%)",
+        color: "#D7ECFA",
+        fontFamily:
+          'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      <div style={{ textAlign: "center" }}>
+      <style>
+        {`@keyframes alxBootPulse {
+          0%, 100% { transform: scale(1); opacity: 0.95; }
+          50%      { transform: scale(1.04); opacity: 1; }
+        }
+        @keyframes alxBootRing {
+          0%   { transform: rotate(0deg);   opacity: 0.6; }
+          50%  { opacity: 1; }
+          100% { transform: rotate(360deg); opacity: 0.6; }
+        }`}
+      </style>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "1.25rem",
+          textAlign: "center",
+        }}
+      >
         <div
           style={{
-            fontSize: "14px",
-            textTransform: "uppercase",
-            color: "#A17938",
-            letterSpacing: "0.2em",
-            marginBottom: "8px",
+            position: "relative",
+            width: 132,
+            height: 132,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.04)",
+            boxShadow:
+              "0 0 0 1px rgba(15, 119, 204, 0.30), 0 0 60px rgba(15, 119, 204, 0.35)",
+            animation: "alxBootRing 2.4s linear infinite",
           }}
         >
-          AlphaLux Cleaning
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/alphalux-mark.png"
+            alt="AlphaLux Clean"
+            width={96}
+            height={96}
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: "18px",
+              objectFit: "cover",
+              boxShadow: "0 8px 28px rgba(0, 0, 0, 0.35)",
+              animation: "alxBootPulse 1.8s ease-in-out infinite",
+            }}
+          />
         </div>
-        <div style={{ fontSize: "20px", color: "#ECC98B" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "rgba(215, 236, 250, 0.92)",
+          }}
+        >
           Loading your booking experience…
-        </div>
+        </p>
       </div>
     </div>
   ),

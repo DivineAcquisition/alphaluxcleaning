@@ -7,6 +7,7 @@ import { CheckCircle, Gift, Copy, Share2, Home } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 const Success: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -100,11 +101,7 @@ const Success: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <BrandedLoader caption="Loading…" />;
   }
 
   return (

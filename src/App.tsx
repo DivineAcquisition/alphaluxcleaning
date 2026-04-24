@@ -9,6 +9,7 @@ import { BookingProvider } from '@/contexts/BookingContext';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
 import { DomainRedirect } from '@/components/DomainRedirect';
 import { UTMTracker } from '@/components/UTMTracker';
+import { BrandedLoader } from '@/components/BrandedLoader';
 
 // Essential booking pages only
 import { DomainAwareHome } from '@/components/DomainAwareHome';
@@ -83,14 +84,14 @@ function App() {
             <TestModeBanner />
           <Routes>
             {/* Optimized Booking Flow */}
-            <Route path="/book" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
-            <Route path="/book/zip" element={<Suspense fallback={<div>Loading...</div>}><BookZip /></Suspense>} />
-            <Route path="/book/sqft" element={<Suspense fallback={<div>Loading...</div>}><BookSquareFeet /></Suspense>} />
-            <Route path="/book/pricing" element={<Suspense fallback={<div>Loading...</div>}><BookPricing /></Suspense>} />
-            <Route path="/book/offer" element={<Suspense fallback={<div>Loading...</div>}><BookOffer /></Suspense>} />
-            <Route path="/book/checkout" element={<Suspense fallback={<div>Loading...</div>}><BookCheckout /></Suspense>} />
-            <Route path="/book/details" element={<Suspense fallback={<div>Loading...</div>}><BookDetails /></Suspense>} />
-            <Route path="/book/confirmation" element={<Suspense fallback={<div>Loading...</div>}><BookConfirmation /></Suspense>} />
+            <Route path="/book" element={<Suspense fallback={<BrandedLoader />}><BookZip /></Suspense>} />
+            <Route path="/book/zip" element={<Suspense fallback={<BrandedLoader />}><BookZip /></Suspense>} />
+            <Route path="/book/sqft" element={<Suspense fallback={<BrandedLoader />}><BookSquareFeet /></Suspense>} />
+            <Route path="/book/pricing" element={<Suspense fallback={<BrandedLoader />}><BookPricing /></Suspense>} />
+            <Route path="/book/offer" element={<Suspense fallback={<BrandedLoader />}><BookOffer /></Suspense>} />
+            <Route path="/book/checkout" element={<Suspense fallback={<BrandedLoader />}><BookCheckout /></Suspense>} />
+            <Route path="/book/details" element={<Suspense fallback={<BrandedLoader />}><BookDetails /></Suspense>} />
+            <Route path="/book/confirmation" element={<Suspense fallback={<BrandedLoader />}><BookConfirmation /></Suspense>} />
             
             {/* Redirects for old URLs */}
             <Route path="/book/home" element={<Navigate to="/book/sqft" replace />} />
@@ -133,7 +134,7 @@ function App() {
             
             {/* Call Page */}
             <Route path="/call" element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/CallPage')))}
               </Suspense>
             } />
@@ -151,7 +152,7 @@ function App() {
             
             {/* Printable Pricing Sheet */}
             <Route path="/pricing-sheet" element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/PricingSheet')))}
               </Suspense>
             } />
@@ -175,7 +176,7 @@ function App() {
           <Route path="/admin/promos" element={<PromoCodes />} />
           <Route path="/admin/csr-booking" element={
             <AdminRoute requiredRole="ops">
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/admin/CSRBookingForm')))}
               </Suspense>
             </AdminRoute>
@@ -208,7 +209,7 @@ function App() {
             
             {/* Payment Link Public Page */}
             <Route path="/pay/:bookingId" element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/PaymentLinkPage')))}
               </Suspense>
             } />
@@ -221,12 +222,12 @@ function App() {
             <Route path="/dev-test/webhooks" element={<DevTestWebhooks />} />
             <Route path="/dev-test/test-mode" element={<DevTestModeToggle />} />
             <Route path="/dev-test/cleanup" element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/DevTestCleanup')))}
               </Suspense>
             } />
             <Route path="/demo-booking" element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<BrandedLoader />}>
                 {React.createElement(React.lazy(() => import('./spa-pages/DemoBooking')))}
               </Suspense>
             } />
