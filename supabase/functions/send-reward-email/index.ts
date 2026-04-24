@@ -39,7 +39,7 @@ serve(async (req) => {
     const bookingUrl = `${appUrl}/guest-booking?promo=${rewardCode}&service=deep-clean&utm_source=email&utm_medium=reward`;
 
     const emailResponse = await resend.emails.send({
-      from: 'AlphaLuxClean <no-reply@info.alphaluxclean.com>',
+      from: 'AlphaLuxClean <no-reply@info.alphaluxcleaning.com>',
       to: [customerEmail],
       subject: 'Your 30% Deep Clean Reward',
       html: `

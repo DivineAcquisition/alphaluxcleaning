@@ -80,7 +80,7 @@ function calculateChatPricing(params: {
     
     // Check for custom quote (5000+)
     if (homeSize.id === '5000_plus') {
-      return 'For homes 5,000+ sq ft, we provide custom quotes. Please call us at (555) 123-4567 or email hello@alphaluxclean.com';
+      return 'For homes 5,000+ sq ft, we provide custom quotes. Please call us at (555) 123-4567 or email hello@alphaluxcleaning.com';
     }
     
     // Get base price

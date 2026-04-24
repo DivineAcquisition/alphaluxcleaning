@@ -104,7 +104,7 @@ Welcome to the team!`;
 
     // Send welcome email
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [email],
       subject: welcomeTitle,
       html: emailContent,

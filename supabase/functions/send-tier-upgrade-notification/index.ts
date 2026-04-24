@@ -100,7 +100,7 @@ serve(async (req) => {
           
           <div style="text-align: center; color: #666; font-size: 14px;">
             <p>AlphaLux Clean</p>
-            <p>📞 (281) 201-6112 | 📧 support@alphaluxclean.com</p>
+            <p>📞 (281) 201-6112 | 📧 support@alphaluxcleaning.com</p>
             <p>Visit us at <a href="https://alphaluxclean.com" style="color: #2563eb;">alphaluxclean.com</a></p>
           </div>
         </div>
@@ -108,7 +108,7 @@ serve(async (req) => {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [email],
       subject: `🎉 Tier Upgrade: Welcome to ${tierNames[newTier]} Status!`,
       html: emailContent,

@@ -44,7 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Create a new user with a clean email
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: 'divine@alphaluxclean.com',
+        email: 'divine@alphaluxcleaning.com',
         password: 'AlphaLux2025!-',
         email_confirm: true,
         user_metadata: {
@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (createError) {
         console.error('Error creating divine user:', createError);
         results.push({ 
-          email: 'divine@alphaluxclean.com',
+          email: 'divine@alphaluxcleaning.com',
           status: 'error', 
           message: createError.message 
         });
@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         results.push({ 
-          email: 'divine@alphaluxclean.com',
+          email: 'divine@alphaluxcleaning.com',
           status: 'success', 
           message: 'User fixed and recreated',
           originalEmail: 'divineacquisition.io@gmail.com'
@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
     } catch (error) {
       console.error('Error fixing divine user:', error);
       results.push({ 
-        email: 'divine@alphaluxclean.com', 
+        email: 'divine@alphaluxcleaning.com', 
         status: 'error', 
         message: error.message 
       });
@@ -91,8 +91,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Also ensure other admin users exist and work properly
     const adminEmails = [
-      'admin1@alphaluxclean.com',
-      'ellie@alphaluxclean.com'
+      'admin1@alphaluxcleaning.com',
+      'ellie@alphaluxcleaning.com'
     ];
 
     for (const email of adminEmails) {
@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
           password: 'AlphaLux2025!-',
           email_confirm: true,
           user_metadata: {
-            full_name: email === 'ellie@alphaluxclean.com' ? 'Ellie' : 'Admin User'
+            full_name: email === 'ellie@alphaluxcleaning.com' ? 'Ellie' : 'Admin User'
           }
         });
 

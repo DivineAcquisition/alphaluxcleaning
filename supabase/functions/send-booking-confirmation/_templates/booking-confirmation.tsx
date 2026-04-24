@@ -160,7 +160,7 @@ export const BookingConfirmationEmail = ({
         {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>AlphaLux Clean | Professional Cleaning Services</Text>
-          <Text style={footerText}>(972) 559-0223 | info@alphaluxclean.com</Text>
+          <Text style={footerText}>(972) 559-0223 | info@alphaluxcleaning.com</Text>
         </Section>
       </Container>
     </Body>

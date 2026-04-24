@@ -10,9 +10,9 @@ const corsHeaders = {
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 const adminEmails = [
-  'admin1@alphaluxclean.com',
-  'ellie@alphaluxclean.com', 
-  'divine@alphaluxclean.com'
+  'admin1@alphaluxcleaning.com',
+  'ellie@alphaluxcleaning.com', 
+  'divine@alphaluxcleaning.com'
 ];
 
 const handler = async (req: Request): Promise<Response> => {

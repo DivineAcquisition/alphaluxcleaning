@@ -27,7 +27,7 @@ serve(async (req) => {
       }
     );
 
-    const adminEmail = "info@alphaluxclean.com";
+    const adminEmail = "info@alphaluxcleaning.com";
     const adminPassword = "@Sher2002";
 
     // Check if admin user already exists

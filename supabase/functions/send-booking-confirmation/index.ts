@@ -122,8 +122,8 @@ serve(async (req) => {
     logStep("Sending customer confirmation email");
     const customerFrom =
       Deno.env.get("EMAIL_FROM") ||
-      "AlphaLux Clean <noreply@info.alphaluxclean.com>";
-    const customerReplyTo = Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxclean.com";
+      "AlphaLux Clean <noreply@info.alphaluxcleaning.com>";
+    const customerReplyTo = Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com";
     let customerEmailResponse = await resend.emails.send({
       from: customerFrom,
       to: [booking.customer.email],
@@ -133,7 +133,7 @@ serve(async (req) => {
     });
     if (
       customerEmailResponse.error &&
-      /domain.*is not verified|sending domain.*must be verified/i.test(
+      /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(
         customerEmailResponse.error.message || "",
       )
     ) {
@@ -218,8 +218,8 @@ serve(async (req) => {
     const adminFrom =
       Deno.env.get("EMAIL_FROM_ADMIN") ||
       Deno.env.get("EMAIL_FROM") ||
-      "AlphaLux Bookings <noreply@info.alphaluxclean.com>";
-    const adminTo = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") || "bookings@alphaluxclean.com";
+      "AlphaLux Bookings <noreply@info.alphaluxcleaning.com>";
+    const adminTo = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") || "bookings@alphaluxcleaning.com";
     let adminEmailResponse = await resend.emails.send({
       from: adminFrom,
       to: [adminTo],
@@ -228,7 +228,7 @@ serve(async (req) => {
     });
     if (
       adminEmailResponse.error &&
-      /domain.*is not verified|sending domain.*must be verified/i.test(
+      /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(
         adminEmailResponse.error.message || "",
       )
     ) {

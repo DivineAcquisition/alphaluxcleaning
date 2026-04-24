@@ -71,7 +71,7 @@ const handler = async (req: Request): Promise<Response> => {
       booking = orderData;
     }
 
-    const adminEmails = ["elliepangilinan17@gmail.com", "admin1@alphaluxclean.com"];
+    const adminEmails = ["elliepangilinan17@gmail.com", "admin1@alphaluxcleaning.com"];
     const assignmentUrl = `https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/job-assignments?highlight=${booking_id || order_id}`;
 
     const emailHTML = `
@@ -117,7 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send emails to both admin addresses
     const emailPromises = adminEmails.map(email => 
       resend.emails.send({
-        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
         to: [email],
         subject: `🔔 Job Assignment Required - ${booking.customer_name}`,
         html: emailHTML

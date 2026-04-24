@@ -440,7 +440,7 @@ serve(async (req) => {
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="mailto:support@alphaluxclean.com" 
+                <a href="mailto:support@alphaluxcleaning.com" 
                    style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
                   Contact Support
                 </a>
@@ -457,7 +457,7 @@ serve(async (req) => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+          from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
           to: [booking.customer_email],
           subject: "🎉 Your Cleaning Service is Complete!",
           html: emailHtml,

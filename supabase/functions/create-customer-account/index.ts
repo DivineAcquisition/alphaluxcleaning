@@ -110,7 +110,7 @@ serve(async (req) => {
       const portalUrl = 'https://portal.alphaluxclean.com';
       
       const emailResponse = await resend.emails.send({
-        from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+        from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
         to: [customerEmail],
         subject: "Welcome to AlphaLux Clean - Your Account is Ready!",
         html: `
@@ -153,7 +153,7 @@ serve(async (req) => {
               <h3 style="color: #334155; margin-top: 0;">📞 Need Help?</h3>
               <p style="color: #334155; margin-bottom: 0;">
                 If you have any questions or need assistance, please don't hesitate to contact us:<br>
-                Email: support@alphaluxclean.com<br>
+                Email: support@alphaluxcleaning.com<br>
                 Phone: (510) 882-4388
               </p>
             </div>

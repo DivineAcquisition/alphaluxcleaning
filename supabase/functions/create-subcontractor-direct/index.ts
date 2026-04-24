@@ -192,7 +192,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "AlphaLuxClean <noreply@info.alphaluxclean.com>",
+      from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
       to: [requestData.email],
       subject: `Welcome to AlphaLux Clean - ${tierConfig.tier_name} Subcontractor`,
       html: onboardingEmail,

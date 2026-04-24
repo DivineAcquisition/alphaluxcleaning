@@ -190,7 +190,7 @@ const AdminStatus = () => {
             <div className="space-y-3">
               <Button
                 className="w-full"
-                onClick={() => handleFixAdmin('info@alphaluxclean.com')}
+                onClick={() => handleFixAdmin('info@alphaluxcleaning.com')}
                 disabled={fixing}
               >
                 {fixing ? (
@@ -199,7 +199,7 @@ const AdminStatus = () => {
                     Setting Up...
                   </>
                 ) : (
-                  'Setup info@alphaluxclean.com as Admin'
+                  'Setup info@alphaluxcleaning.com as Admin'
                 )}
               </Button>
               

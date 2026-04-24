@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Clean <info@alphaluxclean.com>",
+      from: "AlphaLux Clean <info@alphaluxcleaning.com>",
       to: [testEmail],
       subject: "Test Email - AlphaLux Clean",
       html: `

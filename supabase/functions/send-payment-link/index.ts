@@ -34,7 +34,7 @@ serve(async (req) => {
 
     // Send email with payment link
     const { data, error } = await resend.emails.send({
-      from: 'AlphaLux Clean <booking@alphaluxclean.com>',
+      from: 'AlphaLux Clean <booking@alphaluxcleaning.com>',
       to: [customerEmail],
       subject: 'Complete Your AlphaLux Clean Booking',
       html: `
@@ -82,7 +82,7 @@ serve(async (req) => {
               <p style="font-size: 14px; color: #666; margin-top: 30px;">
                 <strong>Need help?</strong><br>
                 Call us at <a href="tel:9725590223" style="color: hsl(211 41% 24%); text-decoration: none;">(972) 559-0223</a><br>
-                Email us at <a href="mailto:support@alphaluxclean.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxclean.com</a>
+                Email us at <a href="mailto:support@alphaluxcleaning.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxcleaning.com</a>
               </p>
               
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; font-size: 12px; color: #999;">
