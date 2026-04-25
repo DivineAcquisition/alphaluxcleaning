@@ -302,7 +302,7 @@ export default function BookingZip() {
               </>
             ) : (
               <h1 className="text-xl md:text-3xl font-jakarta font-bold mb-2 leading-tight">
-                A Higher Standard of Clean — Booked in 60 Seconds
+                Book a Spotless Clean in Under 60 Seconds
               </h1>
             )}
             <p className="text-muted-foreground text-lg md:text-xl">
