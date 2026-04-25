@@ -630,7 +630,7 @@ function OfferCard({
       onClick={onSelect}
     >
       {highlighted && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-gold text-alx-black-ink rounded-full text-[10px] font-semibold shadow-gold uppercase tracking-wider">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-gold text-alx-black-ink rounded-full text-[10px] font-semibold shadow-gold uppercase tracking-wider bg-slate-700 text-slate-50">
           Most Popular
         </div>
       )}
