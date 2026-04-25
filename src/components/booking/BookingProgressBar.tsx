@@ -12,7 +12,7 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="sticky top-0 z-50 bg-alx-black-ink text-alx-gold-pale border-b border-alx-gold/20 shadow-soft">
+    <div className="sticky top-0 z-50 bg-muted text-foreground border-b border-border shadow-sm">
       <div className="max-w-4xl mx-auto px-4 py-3">
         {/* Logo and Call Button Header */}
         <div className="flex items-center justify-between mb-4">
@@ -20,14 +20,14 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
             <img
               src={logo}
               alt="AlphaLux Cleaning"
-              className="h-9 md:h-11 w-auto object-contain drop-shadow-[0_0_18px_rgba(161,121,56,0.35)]"
+              className="h-9 md:h-11 w-auto object-contain"
             />
           </a>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="btn-alx-outline-gold rounded-full border-alx-gold/60"
+              className="rounded-full"
               asChild
             >
               <a
@@ -42,7 +42,7 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
             </Button>
             <Button
               size="sm"
-              className="btn-alx-gold rounded-full border-0"
+              className="rounded-full"
               asChild
             >
               <a
@@ -58,16 +58,16 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
 
         {/* Progress Bar */}
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium uppercase tracking-[0.2em] text-alx-gold-pale/80">
+          <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Step {currentStep} of {totalSteps}
           </span>
-          <span className="text-sm font-semibold text-alx-gold-light">
+          <span className="text-sm font-semibold text-primary">
             {Math.round(progress)}%
           </span>
         </div>
-        <div className="h-1.5 bg-alx-black-elev rounded-full overflow-hidden">
+        <div className="h-1.5 bg-background rounded-full overflow-hidden border border-border">
           <div
-            className="h-full bg-gradient-gold transition-all duration-500 ease-out rounded-full"
+            className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
