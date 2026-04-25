@@ -17,6 +17,15 @@ interface TrackingData {
   base_price?: number;
   session_id?: string;
   utms?: Record<string, string>;
+  // Optional pricing-calculator + offer-step extras
+  service_date?: string;
+  time_slot?: string;
+  promo_code?: string;
+  sqft?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  window_count?: number;
+  total?: number;
 }
 
 export function useBookingProgress() {
