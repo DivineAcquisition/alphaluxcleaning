@@ -12,6 +12,7 @@ import { Loader2, CheckCircle2 } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+import { RotatingSubheadline } from '@/components/booking/RotatingSubheadline';
 import {
   NEW_CUSTOMER_PROMO_ACTIVE,
   NEW_CUSTOMER_PROMO_CODE,
@@ -308,6 +309,7 @@ export default function BookingZip() {
               Trusted by thousands of homes for spotless, stress-free cleaning.
               Enter your ZIP to see instant pricing and your next available slot.
             </p>
+            <RotatingSubheadline className="mt-4" />
           </div>
           
           <Card className="p-6 md:p-8">
