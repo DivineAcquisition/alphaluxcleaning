@@ -35,97 +35,89 @@ All colors MUST be HSL.
        `section-alx-navy` render in the alphaluxclean palette without
        touching markup.
     */
-    --background: 60 11% 97%;          /* #F8F8F7 cream */
-    --foreground: 212 47% 20%;         /* #1B314B navy ink */
+    --background: 240 4% 95%;          /* soft light gray page bg */
+    --foreground: 240 5% 10%;          /* near-black body text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 212 47% 20%;
+    --card: 0 0% 98%;                  /* off-white card surface */
+    --card-foreground: 240 5% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 212 47% 20%;
+    --popover: 0 0% 98%;
+    --popover-foreground: 240 5% 10%;
 
-    --primary: 212 47% 20%;            /* #1B314B brand navy */
-    --primary-foreground: 0 0% 100%;
+    --primary: 211 41% 24%;            /* deep navy blue */
+    --primary-foreground: 0 0% 98%;    /* near-white on navy */
 
-    --secondary: 208 87% 43%;          /* #0F77CC bright blue */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 5% 33%;           /* medium charcoal */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 214 30% 94%;              /* #EAEFF5 */
-    --muted-foreground: 215 17% 43%;   /* #5B6B80 */
+    --muted: 240 4% 83%;               /* light gray borders/dividers */
+    --muted-foreground: 240 5% 33%;
 
-    --accent: 208 86% 92%;             /* #D7ECFA pale-blue tint */
-    --accent-foreground: 212 47% 20%;
+    --accent: 211 41% 95%;             /* pale blue tint hover/highlight */
+    --accent-foreground: 211 41% 24%;
 
-    --destructive: 0 68% 46%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 211 41% 24%;        /* navy (matches primary by spec) */
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 212 25% 86%;             /* #DBE3EC */
-    --input: 212 25% 86%;
-    --ring: 208 87% 43%;               /* bright blue focus ring */
+    --border: 240 4% 83%;
+    --input: 240 4% 83%;
+    --ring: 211 41% 24%;               /* navy focus ring */
 
-    --success: 160 72% 35%;
-    --success-foreground: 0 0% 100%;
+    --success: 160 85% 35%;            /* emerald green */
+    --success-foreground: 0 0% 98%;
 
-    --warning: 38 92% 50%;             /* keep warm orange for warnings */
-    --warning-foreground: 212 47% 20%;
+    --warning: 45 93% 47%;             /* bright gold / amber */
+    --warning-foreground: 211 41% 24%;
 
-    /* Brand palette tokens (raw) — the `alx-*` tokens below reference
-       these and expose them to every utility class in the codebase. */
-    --alx-navy: 212 47% 20%;           /* #1B314B — brand navy */
-    --alx-navy-deep: 214 56% 12%;      /* #0E1C2E — deep hero navy */
-    --alx-navy-ink: 220 62% 8%;        /* #070E18 — near-black ink */
-    --alx-blue: 208 87% 43%;           /* #0F77CC — bright blue */
-    --alx-blue-deep: 210 85% 32%;      /* #0C5FA6 — pressed blue */
-    --alx-blue-light: 208 90% 58%;     /* #3DA0EB — hover blue tint */
+    /* Brand palette tokens (raw) — referenced by every alx-* utility. */
+    --alx-navy: 211 41% 24%;           /* deep navy */
+    --alx-navy-deep: 220 50% 15%;      /* deep midnight navy (promo bg) */
+    --alx-navy-ink: 240 5% 10%;        /* near-black ink */
+    --alx-blue: 211 41% 35%;           /* lighter navy (gradient stop) */
+    --alx-blue-deep: 211 41% 18%;      /* pressed navy */
+    --alx-blue-light: 211 41% 95%;     /* pale blue tint */
 
-    /* Legacy "black" names alias onto the brand navy so any component
-       using bg-alx-black / alx-black-deep / alx-black-ink renders in
-       the brand palette. */
+    /* Legacy "black" names alias to navy. */
     --alx-black: var(--alx-navy);
     --alx-black-deep: var(--alx-navy-deep);
     --alx-black-ink: var(--alx-navy-ink);
-    --alx-black-warm: 212 47% 20%;
-    --alx-black-elev: 212 38% 26%;     /* #283F5B — elevated navy */
+    --alx-black-warm: 211 41% 24%;
+    --alx-black-elev: 211 41% 35%;     /* elevated navy */
 
-    /* The legacy `--alx-gold*` tokens now point at the navy + bright-blue
-       scale. Every component that still references `text-alx-gold`,
-       `border-alx-gold`, `bg-alx-gold-pale`, `btn-alx-gold`, etc. renders
-       in the brand blue/navy palette without touching markup. The
-       names are kept for backwards compatibility. */
-    --alx-gold: 208 87% 43%;           /* → #0F77CC — bright blue */
-    --alx-gold-light: 208 90% 58%;     /* → #3DA0EB — hover blue tint */
-    --alx-gold-pale: 208 86% 92%;      /* → #D7ECFA — pale blue surface */
-    --alx-gold-deep: 210 85% 32%;      /* → #0C5FA6 — pressed deep blue */
-    --alx-amber: 212 47% 20%;          /* → #1B314B — navy callout */
-    --alx-cream: 60 11% 97%;           /* #F8F8F7 — cream bg */
+    /* Gold tokens are now actual gold/amber. Used for promo banners,
+       "10% OFF" badges, star ratings, and gold CTAs. */
+    --alx-gold: 45 93% 47%;            /* rich gold */
+    --alx-gold-light: 45 93% 62%;      /* lighter amber */
+    --alx-gold-pale: 48 67% 95%;       /* warm cream tint */
+    --alx-gold-deep: 38 92% 38%;       /* burnt amber pressed state */
+    --alx-amber: 45 93% 47%;           /* alias of gold */
+    --alx-cream: 48 50% 95%;           /* soft cream surface */
 
-    --gradient-primary: linear-gradient(135deg, hsl(212 47% 20%) 0%, hsl(214 56% 12%) 100%);
-    /* `gradient-gold` kept for backwards compatibility but now paints
-       the navy → bright-blue brand gradient (no more yellow CTAs). */
-    --gradient-gold: linear-gradient(135deg, hsl(212 47% 20%) 0%, hsl(208 87% 43%) 55%, hsl(210 85% 32%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(60 11% 97%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(220 62% 8%) 0%, hsl(214 56% 12%) 50%, hsl(212 47% 20%) 100%);
-    --gradient-dark: linear-gradient(135deg, hsl(220 62% 8%) 0%, hsl(212 47% 20%) 100%);
-    --gradient-promo: linear-gradient(135deg, hsl(212 47% 20%) 0%, hsl(208 87% 43%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(211 41% 24%) 0%, hsl(211 41% 35%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(45 93% 62%) 55%, hsl(38 92% 38%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(48 67% 97%) 0%, hsl(48 50% 92%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 50% 15%) 0%, hsl(211 41% 18%) 50%, hsl(211 41% 24%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(220 50% 15%) 0%, hsl(211 41% 24%) 100%);
+    --gradient-promo: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 92% 38%) 100%);
 
-    /* Promo Banner Colors (navy + bright blue, no gold) */
-    --promo-gold: 208 87% 43%;
-    --promo-gold-foreground: 0 0% 100%;
-    --promo-navy: 212 47% 20%;
-    --promo-navy-foreground: 208 86% 92%;
+    /* Promo Banner Colors — gold bg + navy text */
+    --promo-gold: 45 93% 47%;
+    --promo-gold-foreground: 220 50% 15%;
+    --promo-navy: 220 50% 15%;
+    --promo-navy-foreground: 48 67% 95%;
 
-    /* Service Card Themes — cream + pale-blue tints */
-    --service-regular: 60 11% 97%;
-    --service-regular-foreground: 212 47% 20%;
-    --service-deep: 208 86% 95%;
-    --service-deep-foreground: 212 47% 20%;
-    --service-moveout: 208 86% 92%;
-    --service-moveout-foreground: 212 47% 20%;
+    /* Service Card Themes */
+    --service-regular: 211 41% 95%;        /* pale blue */
+    --service-regular-foreground: 211 41% 24%;
+    --service-deep: 211 30% 92%;           /* slightly deeper blue-gray */
+    --service-deep-foreground: 211 41% 24%;
+    --service-moveout: 48 50% 90%;         /* warm cream */
+    --service-moveout-foreground: 211 41% 24%;
 
-    --shadow-clean: 0 10px 30px -10px hsl(212 47% 20% / 0.3);
-    --shadow-soft: 0 4px 16px -4px hsl(212 47% 20% / 0.15);
-    --shadow-glow: 0 0 40px hsl(208 87% 43% / 0.28);
-    --shadow-gold: 0 8px 24px -8px hsl(208 87% 43% / 0.45);
+    --shadow-clean: 0 10px 30px -10px hsl(211 41% 24% / 0.30);
+    --shadow-soft: 0 4px 16px -4px hsl(211 41% 24% / 0.15);
+    --shadow-glow: 0 0 40px hsl(211 41% 24% / 0.28);
+    --shadow-gold: 0 8px 24px -8px hsl(45 93% 47% / 0.45);
 
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
