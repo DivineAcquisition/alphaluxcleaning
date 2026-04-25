@@ -712,7 +712,7 @@ export function LegacyBookingFlow() {
 
         {/* New Client Special Banner - Matching Main Page */}
         <div className="w-full max-w-6xl mx-auto space-y-8 px-2 sm:px-4 mb-8">
-          <Card className="bg-gradient-to-r from-primary to-accent border-none shadow-xl">
+          <Card className="bg-primary border-none shadow-xl">
             <CardContent className="p-4 md:p-6">
               <div className="text-center text-white">
                 {/* Header */}
