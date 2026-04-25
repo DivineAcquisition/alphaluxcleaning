@@ -301,12 +301,12 @@ export default function BookingZip() {
               </>
             ) : (
               <h1 className="text-xl md:text-3xl font-jakarta font-bold mb-2 leading-tight">
-                Book Your New York Cleaning
+                A Higher Standard of Clean — Booked in 60 Seconds
               </h1>
             )}
             <p className="text-muted-foreground text-lg md:text-xl">
-              Enter your New York ZIP to get started. We only service NY State —
-              NYC, Long Island, Westchester, and upstate metros.
+              Trusted by thousands of homes for spotless, stress-free cleaning.
+              Enter your ZIP to see instant pricing and your next available slot.
             </p>
           </div>
           
@@ -337,8 +337,7 @@ export default function BookingZip() {
                     id="zip-helper"
                     className="text-xs text-muted-foreground mt-2 text-center"
                   >
-                    We only service New York State — NYC, Long Island, Westchester,
-                    and upstate NY.
+                    Instant pricing. No call required. 5-star rated cleaners.
                   </p>
                 </div>
                 
