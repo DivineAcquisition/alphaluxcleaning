@@ -577,6 +577,10 @@ export default function BookingOffer() {
               timeSlot={scheduledTimeSlot}
               onDateChange={setScheduledDate}
               onTimeSlotChange={setScheduledTimeSlot}
+              serviceDurationHours={
+                pendingOffer.offerType === 'deep_clean' ? 4 : 2
+              }
+              serviceLabel={pendingOffer.offerName}
             />
 
             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
