@@ -202,7 +202,7 @@ export default function BookingSummary() {
                         <span className="text-muted-foreground">Pay After Service</span>
                       </div>
                       <div className="h-8 bg-muted rounded-full overflow-hidden flex">
-                        <div className="bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-xs font-bold" 
+                        <div className="bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold" 
                              style={{ width: `${(49 / pricing.finalPrice) * 100}%` }}>
                           $49
                         </div>
