@@ -66,8 +66,8 @@ All colors MUST be HSL.
     --success: 160 85% 35%;            /* emerald green */
     --success-foreground: 0 0% 98%;
 
-    --warning: 45 93% 47%;             /* bright gold / amber */
-    --warning-foreground: 211 41% 24%;
+    --warning: 211 41% 24%;            /* navy (gold removed) */
+    --warning-foreground: 0 0% 98%;
 
     /* Brand palette tokens (raw) — referenced by every alx-* utility. */
     --alx-navy: 211 41% 24%;           /* deep navy */
@@ -84,40 +84,41 @@ All colors MUST be HSL.
     --alx-black-warm: 211 41% 24%;
     --alx-black-elev: 211 41% 35%;     /* elevated navy */
 
-    /* Gold tokens are now actual gold/amber. Used for promo banners,
-       "10% OFF" badges, star ratings, and gold CTAs. */
-    --alx-gold: 45 93% 47%;            /* rich gold */
-    --alx-gold-light: 45 93% 62%;      /* lighter amber */
-    --alx-gold-pale: 48 67% 95%;       /* warm cream tint */
-    --alx-gold-deep: 38 92% 38%;       /* burnt amber pressed state */
-    --alx-amber: 45 93% 47%;           /* alias of gold */
-    --alx-cream: 48 50% 95%;           /* soft cream surface */
+    /* Gold tokens REMAPPED to navy/blue — the brand is now navy-only.
+       Any legacy `text-alx-gold`, `bg-alx-gold`, `btn-alx-gold`,
+       `border-alx-gold`, gradient-gold, etc. now render as navy. */
+    --alx-gold: 211 41% 24%;           /* navy (was gold) */
+    --alx-gold-light: 211 41% 35%;     /* lighter navy */
+    --alx-gold-pale: 211 41% 95%;      /* pale blue tint */
+    --alx-gold-deep: 211 41% 18%;      /* pressed navy */
+    --alx-amber: 211 41% 24%;          /* alias → navy */
+    --alx-cream: 0 0% 98%;             /* off-white surface */
 
     --gradient-primary: linear-gradient(135deg, hsl(211 41% 24%) 0%, hsl(211 41% 35%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(45 93% 62%) 55%, hsl(38 92% 38%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(48 67% 97%) 0%, hsl(48 50% 92%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(211 41% 24%) 0%, hsl(211 41% 35%) 55%, hsl(211 41% 18%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(220 50% 15%) 0%, hsl(211 41% 18%) 50%, hsl(211 41% 24%) 100%);
     --gradient-dark: linear-gradient(135deg, hsl(220 50% 15%) 0%, hsl(211 41% 24%) 100%);
-    --gradient-promo: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 92% 38%) 100%);
+    --gradient-promo: linear-gradient(135deg, hsl(211 41% 24%) 0%, hsl(211 41% 18%) 100%);
 
-    /* Promo Banner Colors — gold bg + navy text */
-    --promo-gold: 45 93% 47%;
-    --promo-gold-foreground: 220 50% 15%;
+    /* Promo Banner Colors — navy bg + near-white text (gold removed) */
+    --promo-gold: 211 41% 24%;
+    --promo-gold-foreground: 0 0% 98%;
     --promo-navy: 220 50% 15%;
-    --promo-navy-foreground: 48 67% 95%;
+    --promo-navy-foreground: 0 0% 98%;
 
     /* Service Card Themes */
     --service-regular: 211 41% 95%;        /* pale blue */
     --service-regular-foreground: 211 41% 24%;
     --service-deep: 211 30% 92%;           /* slightly deeper blue-gray */
     --service-deep-foreground: 211 41% 24%;
-    --service-moveout: 48 50% 90%;         /* warm cream */
+    --service-moveout: 211 25% 90%;        /* soft blue-gray (gold-cream removed) */
     --service-moveout-foreground: 211 41% 24%;
 
     --shadow-clean: 0 10px 30px -10px hsl(211 41% 24% / 0.30);
     --shadow-soft: 0 4px 16px -4px hsl(211 41% 24% / 0.15);
     --shadow-glow: 0 0 40px hsl(211 41% 24% / 0.28);
-    --shadow-gold: 0 8px 24px -8px hsl(45 93% 47% / 0.45);
+    --shadow-gold: 0 8px 24px -8px hsl(211 41% 24% / 0.40);
 
     /* Mobile optimizations */
     --safe-area-inset-top: env(safe-area-inset-top);
@@ -202,8 +203,8 @@ All colors MUST be HSL.
     --success: 160 72% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 212 47% 20%;
+    --warning: 208 87% 43%;
+    --warning-foreground: 0 0% 100%;
 
     --border: 212 38% 26%;
     --input: 212 38% 26%;
