@@ -271,8 +271,11 @@ export default function BookingOffer() {
           : baseStandardPrice;
 
     const promoSavings = Math.max(0, originalPrice - basePrice);
+    // Map the local OfferType to the BookingContext's offerType union.
+    const contextOfferType: 'standard_clean' | 'deep_clean' | 'recurring' =
+      offerType === 'standard' ? 'standard_clean' : offerType;
     updateBookingData({
-      offerType,
+      offerType: contextOfferType,
       offerName,
       basePrice,
       visitCount,
