@@ -305,44 +305,6 @@ export default function BookingOffer() {
 
   return (
     <div className="min-h-screen bg-background">
-      {NEW_CUSTOMER_PROMO_ACTIVE && (
-        <div className="sticky top-0 z-50 w-full bg-alx-promo text-alx-gold-pale border-b border-alx-gold/20">
-          <div className="max-w-5xl mx-auto px-4 py-3 md:py-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3 text-center md:text-left">
-                <Gift className="h-6 w-6 text-alx-gold-light shrink-0 hidden md:block" />
-                <div>
-                  <p className="font-bold text-sm md:text-base">
-                    New Customer Special:{' '}
-                    <span className="text-alx-gold-light">
-                      {NEW_CUSTOMER_PROMO_PERCENT}% OFF
-                    </span>{' '}
-                    Any First Cleaning
-                  </p>
-                  <p className="text-alx-gold-pale/75 text-xs md:text-sm">
-                    Use code{' '}
-                    <span className="font-bold tracking-[0.14em] text-alx-gold-light">
-                      {NEW_CUSTOMER_PROMO_CODE}
-                    </span>{' '}
-                    — limit one redemption per customer.
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={() =>
-                  document
-                    .getElementById('service-cards')
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }
-                className="btn-alx-gold rounded-full px-6 whitespace-nowrap font-bold"
-              >
-                Claim My Discount
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <BookingProgressBar currentStep={3} totalSteps={6} />
 
       <div
