@@ -67,7 +67,7 @@ export function PriceSummaryCard({
   
   return (
     <Card className="sticky top-4 border-0 shadow-xl">
-      <CardHeader className="bg-gradient-to-r from-primary to-accent text-white">
+      <CardHeader className="bg-primary text-primary-foreground">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Sparkles className="h-5 w-5" />
           Order Summary
