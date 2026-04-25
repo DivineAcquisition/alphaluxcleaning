@@ -11,7 +11,7 @@
  * `DEEPCLEAN60`) are unaffected — they continue to validate / redeem
  * server-side via the `promo-system` edge function.
  */
-export const NEW_CUSTOMER_PROMO_ACTIVE = false;
+export const NEW_CUSTOMER_PROMO_ACTIVE = true;
 export const NEW_CUSTOMER_PROMO_CODE = "ALC2026";
 export const NEW_CUSTOMER_PROMO_PERCENT = NEW_CUSTOMER_PROMO_ACTIVE ? 50 : 0;
 export const NEW_CUSTOMER_PROMO_LABEL = NEW_CUSTOMER_PROMO_ACTIVE

@@ -705,7 +705,7 @@ function OfferCard({
           )}
         </div>
         <p className="text-xs text-alx-gold-dark font-semibold mt-1.5">
-          As low as ${Math.round(finalPrice * 0.5)} with code{' '}
+          {NEW_CUSTOMER_PROMO_PERCENT}% off applied with code{' '}
           <span className="font-mono tracking-wider">{NEW_CUSTOMER_PROMO_CODE}</span>
         </p>
         {savingsLabel && (
