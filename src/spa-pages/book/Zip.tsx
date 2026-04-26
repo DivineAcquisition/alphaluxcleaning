@@ -53,15 +53,22 @@ export default function BookingZip() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Client pre-check is NY-only — that's the single state AlphaLux
-  // services. The server (`validate-zip`) is the source of truth and
-  // applies its own range check; this is purely a UX shortcut so the
-  // user doesn't get a round-trip on an obviously out-of-area ZIP.
+  // Client pre-check covers AlphaLux's serviced states (NY + CA + TX).
+  // The server (`validate-zip`) is the source of truth and applies a
+  // tighter range check; this is purely a UX shortcut so the user
+  // doesn't make a round-trip on an obviously out-of-area ZIP.
   const isLikelySupportedZip = (value: string) => {
     if (value.length < 3) return true; // still typing
     const prefix3 = parseInt(value.slice(0, 3), 10);
+    const prefix5 = parseInt(value.slice(0, 5), 10) || 0;
     // NY: 100–149
-    return prefix3 >= 100 && prefix3 <= 149;
+    if (prefix3 >= 100 && prefix3 <= 149) return true;
+    // CA: 900–961 (server handles HI / Pacific carve-out at 967xx)
+    if (prefix3 >= 900 && prefix3 <= 961) return true;
+    // TX: 750–799 plus the 73301 IRS Austin single-box code
+    if (prefix3 >= 750 && prefix3 <= 799) return true;
+    if (prefix5 === 73301) return true;
+    return false;
   };
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
