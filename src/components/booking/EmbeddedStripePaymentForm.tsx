@@ -137,13 +137,13 @@ function PaymentFormContent({
         )}
         
         <div className="flex justify-between pt-2 border-t font-semibold">
-          <span>{paymentType === 'deposit' ? 'Deposit Amount' : 'Amount Due'}</span>
+          <span>{paymentType === 'deposit' ? 'Starter Deposit' : 'Total Due Today'}</span>
           <span className="text-primary text-lg">${displayAmount.toFixed(2)}</span>
         </div>
-        
-        {paymentType === 'deposit' && (
+
+        {paymentType === 'deposit' && fullAmount > paymentAmount && (
           <div className="text-xs text-muted-foreground">
-            Remaining ${(fullAmount - paymentAmount).toFixed(2)} due after service
+            Remaining ${(fullAmount - paymentAmount).toFixed(2)} billed after service
           </div>
         )}
       </div>

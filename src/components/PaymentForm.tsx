@@ -66,7 +66,14 @@ export function PaymentForm({
   const [appliedReferral, setAppliedReferral] = useState<any>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentType, setPaymentType] = useState<"deposit" | "full_with_discount">("deposit");
+  // The 20% deposit option has been removed because the live promo
+  // (ALC2026) already gives 50% off, and stacking a deposit on top of
+  // that produced confusing math + a follow-up balance invoice nobody
+  // expected. Every booking on this form is now full-pay; the type is
+  // pinned to `"full"` for downstream code paths that still branch
+  // on it. The legacy `full_with_discount` 5% pre-pay incentive is
+  // also retired since the headline promo already exceeds it.
+  const [paymentType] = useState<"full">("full");
   const [showEmbeddedForm, setShowEmbeddedForm] = useState(false);
   
   const { trackInitiateCheckout } = useFacebookPixel();
@@ -337,112 +344,41 @@ export function PaymentForm({
             <span>Secure payment via Stripe</span>
           </div>
 
-          {/* Payment Type Selection */}
+          {/* Payment Summary — single full-pay tile (the deposit
+              option has been removed) */}
           <div className="space-y-8">
             <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold text-primary">Choose Your Payment</h3>
-              <p className="text-muted-foreground">Select your preferred payment option</p>
+              <h3 className="text-2xl font-bold text-primary">Total Due Today</h3>
+              <p className="text-muted-foreground">
+                Pay the full service price up front. No deposit, no follow-up
+                balance invoice — your booking is complete after this payment.
+              </p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mx-auto">
-              {/* Pay 20% Deposit Now Option */}
-              <div 
-                onClick={() => setPaymentType('deposit')}
-                className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                  paymentType === 'deposit' 
-                    ? 'border-primary bg-primary/5 shadow-lg' 
-                    : 'border-border hover:border-primary/50'
-                }`}
-              >
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge variant="secondary" className="px-3 py-1">
-                    Secure Deposit
-                  </Badge>
-                </div>
-                <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 ${
-                    paymentType === 'deposit' 
-                      ? 'border-primary bg-primary' 
-                      : 'border-muted-foreground bg-background'
-                  } flex items-center justify-center transition-all`}>
-                    {paymentType === 'deposit' && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2">Pay 20% Deposit Now</h4>
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      ${(getFinalPrice() * 0.2).toFixed(2)}
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      now, then ${(getFinalPrice() * 0.8).toFixed(2)} after service
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Secure your booking with a small deposit
-                    </p>
-                  </div>
-                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-center text-green-600 gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Lower upfront payment
-                    </div>
-                    <div className="flex items-center justify-center text-green-600 gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Remaining balance charged after service
-                    </div>
-                    <div className="flex items-center justify-center text-green-600 gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Secure booking guarantee
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Pay Full Amount & Save 5% - NEW OPTION */}
-              <div 
-                onClick={() => setPaymentType('full_with_discount')}
-                className={`relative border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                  paymentType === 'full_with_discount' 
-                    ? 'border-green-500 bg-green-50 shadow-lg' 
-                    : 'border-border hover:border-green-500/50'
-                }`}
-              >
+            <div className="grid grid-cols-1 gap-6 w-full max-w-2xl mx-auto">
+              <div className="relative border-2 border-primary bg-primary/5 shadow-lg rounded-xl p-6">
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">
-                    💰 Best Value - Save 5%
+                  <Badge className="bg-primary hover:bg-primary px-3 py-1">
+                    Pay in Full
                   </Badge>
                 </div>
                 <div className="text-center space-y-4">
-                  <div className={`w-8 h-8 rounded-full mx-auto border-2 ${
-                    paymentType === 'full_with_discount' 
-                      ? 'border-green-600 bg-green-600' 
-                      : 'border-muted-foreground bg-background'
-                  } flex items-center justify-center transition-all`}>
-                    {paymentType === 'full_with_discount' && (
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                    )}
-                  </div>
                   <div>
-                    <h4 className="text-xl font-bold mb-2">Pay Full Amount & Save</h4>
+                    <h4 className="text-xl font-bold mb-2">Pay Full Amount</h4>
                     <div className="space-y-1 mb-2">
-                      <div className="text-2xl text-muted-foreground line-through">
+                      <div className="text-3xl font-bold text-primary">
                         ${getFinalPrice().toFixed(2)}
                       </div>
-                      <div className="text-3xl font-bold text-green-600">
-                        ${(getFinalPrice() * 0.95).toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold mb-2">
-                      You save ${(getFinalPrice() * 0.05).toFixed(2)}!
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Get 5% instant discount for paying in full
+                      Pay once — no balance invoice and nothing charged after
+                      the service.
                     </p>
                   </div>
-                   <div className="space-y-2 text-sm">
+                  <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-center text-green-600 gap-2">
                       <CheckCircle className="h-4 w-4" />
-                      <span className="font-medium">5% instant savings</span>
+                      <span className="font-medium">Booking confirmed instantly</span>
                     </div>
                     <div className="flex items-center justify-center text-green-600 gap-2">
                       <CheckCircle className="h-4 w-4" />
@@ -450,7 +386,7 @@ export function PaymentForm({
                     </div>
                     <div className="flex items-center justify-center text-green-600 gap-2">
                       <CheckCircle className="h-4 w-4" />
-                      <span className="font-medium">Priority scheduling</span>
+                      <span className="font-medium">Secure payment via Stripe</span>
                     </div>
                   </div>
                 </div>
@@ -528,21 +464,10 @@ export function PaymentForm({
           {/* Show embedded form for payment */}
           {showEmbeddedForm && preloadedClientSecret && (
             <EmbeddedStripePaymentForm
-              paymentAmount={
-                paymentType === 'deposit' 
-                  ? Math.round(getFinalPrice() * 0.2 * 100) / 100
-                  : Math.round(getFinalPrice() * 0.95 * 100) / 100
-              }
+              paymentAmount={getFinalPrice()}
               fullAmount={getFinalPrice()}
               paymentType={paymentType}
-              prepaymentDiscount={
-                paymentType === 'full_with_discount'
-                  ? {
-                      applied: true,
-                      amount: Math.round(getFinalPrice() * 0.05 * 100) / 100
-                    }
-                  : undefined
-              }
+              prepaymentDiscount={undefined}
               deepCleanDiscount={deepCleanDiscount || undefined}
               customerEmail={customerInfo.email}
               customerName={customerInfo.name}
@@ -553,8 +478,8 @@ export function PaymentForm({
                 // If authorization-only mode, just notify parent
                 if (authorizationOnly && onPaymentSuccess) {
                   onPaymentSuccess(paymentId, {
-                    amount: Math.round(getFinalPrice() * 0.2 * 100) / 100,
-                    fullAmount: getFinalPrice()
+                    amount: getFinalPrice(),
+                    fullAmount: getFinalPrice(),
                   });
                   return;
                 }
@@ -584,7 +509,7 @@ export function PaymentForm({
                         specialInstructions: '',
                         zipCode: ''
                       },
-                      paymentType: 'deposit_20',
+                      paymentType: 'full',
                       customerEmail: customerInfo.email,
                       customerName: customerInfo.name,
                       stripePaymentId: paymentId

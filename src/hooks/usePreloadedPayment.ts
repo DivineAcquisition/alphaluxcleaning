@@ -72,9 +72,9 @@ export const usePreloadedPayment = ({
     try {
       console.log('🚀 Preloading payment intent with data:', {
         fullAmount,
-        payment_type: 'deposit_20',
+        payment_type: 'full',
         customerEmail: customerInfo.email,
-        customerName: customerInfo.name
+        customerName: customerInfo.name,
       });
 
       const { data, error: paymentError } = await supabase.functions.invoke('create-payment', {
@@ -93,8 +93,8 @@ export const usePreloadedPayment = ({
           },
           customerEmail: customerInfo.email,
           customerName: customerInfo.name,
-          payment_type: 'deposit_20'
-        }
+          payment_type: 'full',
+        },
       });
 
       if (paymentError) {

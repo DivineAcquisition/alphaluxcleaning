@@ -30,7 +30,7 @@ import { BrandedLoader } from '@/components/BrandedLoader';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
-  const { bookingData, updateBookingData, depositAmount } = useBooking();
+  const { bookingData, updateBookingData } = useBooking();
   const { isTestMode } = useTestMode();
   const { trackStep, markCompleted } = useBookingProgress();
   const { trackInitiateCheckout } = useFacebookPixel();
@@ -130,18 +130,35 @@ export default function BookingCheckout() {
   const discountIsCorrupt = rawDiscount > 0 && rawDiscount >= rawBase;
   const effectiveDiscount = discountIsCorrupt ? 0 : rawDiscount;
   const finalPrice = Math.max(0, rawBase - effectiveDiscount);
-  const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.2;
-  const finalDepositAmount = Math.max(
-    1,
-    Math.round(finalPrice * depositPercentage),
-  );
-  const balanceDue = Math.max(0, finalPrice - finalDepositAmount);
+
+  // Payment model:
+  //
+  //   * One-time offers (Standard / Deep Clean / one-off Recurring
+  //     first visit): customer pays the full post-promo price up
+  //     front. No deposit, no balance invoice. The new-customer
+  //     ALC2026 promo already gives 50% off, so charging a 20%
+  //     deposit on top of that produced confusing numbers and a
+  //     follow-up balance invoice nobody expected.
+  //   * 90-day plan: keeps the original starter-deposit + monthly
+  //     subscription split because the plan is the product (3
+  //     monthly payments are baked into the offer). We surface a
+  //     small 6.25% starter deposit to lock the slot and then bill
+  //     the rest via the recurring subscription.
+  const is90DayPlan = bookingData.offerType === '90_day_plan';
   const monthlyPayment = Math.round(finalPrice * 0.25);
   const totalMonthlyPayments = monthlyPayment * 3;
-  const firstCleanBalance = Math.max(
-    0,
-    finalPrice - finalDepositAmount - totalMonthlyPayments,
-  );
+  const starterDeposit = is90DayPlan
+    ? Math.max(1, Math.round(finalPrice * 0.0625))
+    : 0;
+  // `dueToday` is what we charge in the embedded card form. For
+  // one-time bookings that's the full price. For the 90-day plan
+  // it's just the starter deposit; the rest comes via the auto-bill
+  // subscription created by `create-90day-subscription`.
+  const dueToday = is90DayPlan ? starterDeposit : finalPrice;
+  const balanceDue = is90DayPlan ? Math.max(0, finalPrice - starterDeposit) : 0;
+  const firstCleanBalance = is90DayPlan
+    ? Math.max(0, finalPrice - starterDeposit - totalMonthlyPayments)
+    : 0;
 
   const individualServicePrice = bookingData.basePrice
     ? (bookingData.basePrice / 4) * 1.2
@@ -185,13 +202,16 @@ export default function BookingCheckout() {
         homeSize: bookingData.homeSizeId,
         zipCode: bookingData.zipCode,
         estPrice: finalPrice,
-        depositAmount: finalDepositAmount,
+        // `depositAmount` is the column name used by the bookings
+        // table for "what we charged at checkout". For one-time
+        // bookings we charge the full price, so deposit == final.
+        depositAmount: dueToday,
         basePrice: finalPrice,
-        balanceDue: balanceDue,
+        balanceDue,
         offerName: bookingData.offerName,
         offerType: bookingData.offerType,
         visitCount: bookingData.visitCount,
-        isRecurring: bookingData.offerType === '90_day_plan',
+        isRecurring: is90DayPlan,
         promoCode: bookingData.promoCode || null,
         promoDiscountCents: bookingData.promoDiscount
           ? Math.round(bookingData.promoDiscount * 100)
@@ -209,7 +229,7 @@ export default function BookingCheckout() {
           promoCode: bookingData.promoCode,
           promoDiscount: bookingData.promoDiscount || 0,
           finalPrice,
-          depositAmount: finalDepositAmount,
+          depositAmount: dueToday,
           balanceDue,
           monthlyAmount: monthlyPayment,
         },
@@ -221,13 +241,13 @@ export default function BookingCheckout() {
           'create-payment-intent',
           {
             body: {
-              amount: finalDepositAmount,
+              amount: dueToday,
               customerEmail: customerData.email,
               customerName: `${customerData.firstName} ${customerData.lastName}`,
               customerPhone: customerData.phone,
               customerData,
               bookingData: bookingPayload,
-              paymentType: 'deposit',
+              paymentType: is90DayPlan ? 'deposit' : 'full',
               bookingId: reuseBookingId,
             },
           },
@@ -238,11 +258,11 @@ export default function BookingCheckout() {
         return;
       }
 
-      if (bookingData.offerType === '90_day_plan') {
+      if (is90DayPlan) {
         const { data: initData, error: initError } =
           await supabase.functions.invoke('create-payment-intent', {
             body: {
-              amount: finalDepositAmount,
+              amount: dueToday,
               customerEmail: customerData.email,
               customerName: `${customerData.firstName} ${customerData.lastName}`,
               customerPhone: customerData.phone,
@@ -274,7 +294,7 @@ export default function BookingCheckout() {
               customerEmail: customerData.email,
               customerName: `${customerData.firstName} ${customerData.lastName}`,
               customerPhone: customerData.phone,
-              depositAmount: finalDepositAmount,
+              depositAmount: dueToday,
               monthlyAmount: monthlyPayment,
               totalAmount: finalPrice,
               address: {
@@ -297,13 +317,17 @@ export default function BookingCheckout() {
           'create-payment-intent',
           {
             body: {
-              amount: finalDepositAmount,
+              amount: dueToday,
               customerEmail: customerData.email,
               customerName: `${customerData.firstName} ${customerData.lastName}`,
               customerPhone: customerData.phone,
               customerData,
               bookingData: bookingPayload,
-              paymentType: 'deposit',
+              // One-time offers charge the full post-promo price; no
+              // remaining balance, no follow-up invoice. The 90-day
+              // plan branch above keeps `paymentType: 'deposit'`
+              // because that flow really is a starter deposit.
+              paymentType: 'full',
               bookingId: reuseBookingId,
               metadata: { offer_type: bookingData.offerType },
             },
@@ -349,12 +373,13 @@ export default function BookingCheckout() {
 
       // Meta Pixel — InitiateCheckout fires once the PaymentIntent
       // is live and the customer is staring at the card form. We
-      // report the deposit (what they're actually about to pay right
-      // now) as the event value — InitiateCheckout value in Meta is
+      // report the amount they're actually about to pay (the full
+      // service price for one-time bookings, or the starter deposit
+      // for the 90-day plan) — InitiateCheckout value in Meta is
       // supposed to represent what the user is submitting, not the
       // lifetime contract value.
       trackInitiateCheckout({
-        value: finalDepositAmount,
+        value: dueToday,
         currency: 'USD',
       });
 
@@ -370,9 +395,10 @@ export default function BookingCheckout() {
   }, [
     bookingData,
     finalPrice,
-    finalDepositAmount,
+    dueToday,
     balanceDue,
     monthlyPayment,
+    is90DayPlan,
     isTestMode,
     isInitializing,
     clientSecret,
@@ -507,6 +533,10 @@ export default function BookingCheckout() {
     }
 
     try {
+      // One-time bookings are paid in full at this step, so we mark
+      // them `paid`. The 90-day plan still goes through `deposit_paid`
+      // because the rest comes via the auto-bill subscription.
+      const paymentStatus = is90DayPlan ? 'deposit_paid' : 'paid';
       const { error } = await supabase.functions.invoke(
         'confirm-booking-payment',
         {
@@ -514,7 +544,7 @@ export default function BookingCheckout() {
             bookingId,
             paymentIntentId,
             subscriptionId,
-            paymentStatus: 'deposit_paid',
+            paymentStatus,
           },
         },
       );
@@ -538,8 +568,7 @@ export default function BookingCheckout() {
               booking_id: bookingId,
               customer_id: customerId,
               subtotal_cents: Math.round((bookingData.basePrice || 0) * 100),
-              booking_type:
-                bookingData.offerType === '90_day_plan' ? 'ANY' : 'ONE_TIME',
+              booking_type: is90DayPlan ? 'ANY' : 'ONE_TIME',
               email: bookingData.contactInfo?.email || null,
             },
           });
@@ -548,22 +577,10 @@ export default function BookingCheckout() {
         }
       }
 
-      // Send the Stripe invoice for the remaining balance (fire-and-
-      // forget — we don't block the booking flow on invoice delivery).
-      if (balanceDue > 0.5 && bookingData.offerType !== '90_day_plan') {
-        supabase.functions
-          .invoke('send-balance-invoice', {
-            body: { bookingId, daysUntilDue: 7 },
-          })
-          .then(({ error: invoiceError }) => {
-            if (invoiceError) {
-              console.error('Balance invoice failed:', invoiceError);
-            } else {
-              console.log('Balance invoice queued for booking', bookingId);
-            }
-          })
-          .catch((err) => console.error('Balance invoice threw:', err));
-      }
+      // No balance invoice for one-time bookings — they're paid in
+      // full above. The 90-day plan handles its remaining balance via
+      // the auto-bill subscription, not an invoice, so no branch
+      // here triggers send-balance-invoice anymore.
 
       try {
         await supabase.functions.invoke('send-payment-schedule', {
@@ -573,7 +590,7 @@ export default function BookingCheckout() {
             customerName: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
             offerType: bookingData.offerType || 'standard',
             totalPrice: finalPrice,
-            depositAmount: finalDepositAmount,
+            depositAmount: dueToday,
             firstCleanBalance,
             monthlyPayment,
           },
@@ -582,7 +599,11 @@ export default function BookingCheckout() {
         console.error('Failed to send payment schedule email:', emailError);
       }
 
-      toast.success('Deposit paid! Let\'s finalize your booking.');
+      toast.success(
+        is90DayPlan
+          ? "Starter deposit paid! Let's finalize your booking."
+          : "Payment received! Let's finalize your booking.",
+      );
       navigate(`/book/details?booking_id=${bookingId}`);
     } catch (error: any) {
       console.error('Error updating booking:', error);
@@ -731,8 +752,9 @@ export default function BookingCheckout() {
       ? Math.round((effectiveDiscount / rawBase) * 100)
       : 0;
   const promoLabelSuffix = promoPercent > 0 ? `${promoPercent}% Off` : 'Discount';
-  const depositPercentLabel =
-    bookingData.offerType === '90_day_plan' ? '6.25% Deposit' : '20% Deposit';
+  // Only the 90-day plan still has a deposit label; one-time offers
+  // pay in full so we just say "Total Due Today".
+  const dueTodayLabel = is90DayPlan ? '6.25% Starter Deposit' : 'Total Due Today';
 
   return (
     <div className="min-h-screen bg-background">
@@ -744,8 +766,9 @@ export default function BookingCheckout() {
             Review & Reserve
           </h1>
           <p className="text-lg text-muted-foreground">
-            Pay a small deposit today to lock in your service. No hidden fees,
-            no contracts.
+            {is90DayPlan
+              ? 'Lock in your 90-day plan with a small starter deposit. Monthly billing handles the rest. No hidden fees.'
+              : 'Pay in full today to lock in your service — discount included. No hidden fees, no contracts.'}
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -826,10 +849,10 @@ export default function BookingCheckout() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">
-                            Today (Starter Deposit)
+                            Today ({dueTodayLabel})
                           </span>
                           <span className="font-bold text-primary">
-                            ${finalDepositAmount.toFixed(2)}
+                            ${dueToday.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
@@ -854,16 +877,14 @@ export default function BookingCheckout() {
                 ) : (
                   <>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">
-                        Due Today ({depositPercentLabel})
-                      </span>
+                      <span className="font-medium">{dueTodayLabel}</span>
                       <span className="text-2xl font-bold text-primary">
-                        ${finalDepositAmount.toFixed(2)}
+                        ${dueToday.toFixed(2)}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Remaining ${balanceDue.toFixed(2)} due after service
-                      completion.
+                      You're paying the full service price today — nothing else
+                      is owed after the cleaning.
                     </p>
                   </>
                 )}
@@ -1103,8 +1124,10 @@ export default function BookingCheckout() {
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Processing...
                       </>
+                    ) : is90DayPlan ? (
+                      `Pay $${dueToday.toFixed(2)} Starter Deposit (Test)`
                     ) : (
-                      `Pay $${finalDepositAmount.toFixed(2)} Deposit (Test)`
+                      `Pay $${dueToday.toFixed(2)} (Test)`
                     )}
                   </Button>
                 </>
@@ -1112,13 +1135,9 @@ export default function BookingCheckout() {
                 <BrandedLoader caption="Preparing secure checkout…" fullScreen={false} />
               ) : clientSecret ? (
                 <StripePaymentForm
-                  depositAmount={finalDepositAmount}
+                  dueToday={dueToday}
                   totalAmount={finalPrice}
-                  monthlyAmount={
-                    bookingData.offerType === '90_day_plan'
-                      ? monthlyPayment
-                      : undefined
-                  }
+                  monthlyAmount={is90DayPlan ? monthlyPayment : undefined}
                   offerType={bookingData.offerType || 'standard'}
                   onSuccess={handlePaymentSuccess}
                   onCancel={handleCancel}

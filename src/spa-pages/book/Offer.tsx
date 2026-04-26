@@ -624,7 +624,6 @@ function OfferCard({
   onSelect,
   onViewDetails,
 }: OfferCardProps) {
-  const depositToday = Math.max(1, Math.round(finalPrice * 0.25));
   return (
     <Card
       className={`relative p-5 md:p-6 cursor-pointer transition-all duration-200 hover:shadow-clean border-2 ${
@@ -685,7 +684,7 @@ function OfferCard({
           <p className="text-xs text-alx-gold font-semibold mt-1">{savingsLabel}</p>
         )}
         <p className="text-xs text-muted-foreground mt-1">
-          Pay only ${depositToday} today (20% deposit)
+          Pay in full at checkout — no deposit, no balance invoice.
         </p>
       </div>
 

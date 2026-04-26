@@ -187,8 +187,6 @@ export default function BookingPricing() {
   const promoPreview = previewPromoDiscount(quote.total);
   const promoTotal = promoPreview.total;
   const promoSavings = promoPreview.amount;
-  const depositPercentage = 0.2;
-  const depositAmount = Math.max(1, Math.round(promoTotal * depositPercentage));
 
   const handleContinue = () => {
     const serviceKey = TO_BOOKING_SERVICE_TYPE[serviceType];
@@ -497,11 +495,11 @@ export default function BookingPricing() {
                   )}
 
                   <div className="text-xs text-muted-foreground">
-                    Pay only{' '}
+                    Pay in full at checkout —{' '}
                     <strong className="text-foreground">
-                      ${depositAmount}
+                      ${promoTotal.toFixed(0)}
                     </strong>{' '}
-                    today (20% deposit). Remainder due after service.
+                    total, no deposit and no balance invoice.
                   </div>
 
                   <Button
