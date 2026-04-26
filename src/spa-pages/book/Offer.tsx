@@ -274,10 +274,17 @@ export default function BookingOffer() {
     // Map the local OfferType to the BookingContext's offerType union.
     const contextOfferType: 'standard_clean' | 'deep_clean' | 'recurring' =
       offerType === 'standard' ? 'standard_clean' : offerType;
+    // IMPORTANT: BookingContext stores `basePrice` as the **pre-promo**
+    // subtotal so checkout can render it as the strike-through line
+    // and compute `finalPrice = basePrice - promoDiscount`. If we
+    // wrote the already-discounted `basePrice` here, the discount
+    // would be subtracted twice and the checkout total would crash to
+    // $0.00 (and the deposit to the $1 floor). See Checkout.tsx
+    // line ~96 and ~750 for the consumers.
     updateBookingData({
       offerType: contextOfferType,
       offerName,
-      basePrice,
+      basePrice: originalPrice,
       visitCount,
       isRecurring,
       serviceType,
