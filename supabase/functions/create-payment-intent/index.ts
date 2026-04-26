@@ -2,10 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
-  resolveAccountForZip,
-  resolveSlugForZip,
-  getCredentials,
-} from "../_shared/stripe-accounts.ts";
+  FALLBACK_PUBLISHABLE_KEY,
+  getStripePublishableKey,
+  isValidPublishableKey,
+  requireStripeSecretKey,
+} from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +14,22 @@ const corsHeaders = {
 };
 
 // Bump this when debugging deployment mismatches
-const FUNCTION_VERSION = "2026-04-23-blue-theme";
+const FUNCTION_VERSION = "2026-04-26-single-account";
+
+/**
+ * Single-account Stripe integration.
+ *
+ * AlphaLux Cleaning runs on one Stripe account
+ * (`acct_1TONej6CLM640Ljs`). The previous ZIP-based router has been
+ * removed — `_shared/stripe-env.ts` is the single source of truth
+ * for the secret key and publishable key.
+ *
+ * The `stripe_account_slug` column on `bookings` is preserved at the
+ * DB level for historical reasons (column has a NOT NULL default of
+ * `alphalux_ny`); we keep stamping it for forward compatibility but
+ * nothing reads it for routing anymore.
+ */
+const ACCOUNT_SLUG = "alphalux_ny";
 
 /**
  * `bookings.source` has a CHECK constraint that only accepts a small
@@ -34,30 +50,29 @@ const logStep = (step: string, data?: any) => {
 
 serve(async (req) => {
   logStep("Request received", { method: req.method, url: req.url, version: FUNCTION_VERSION });
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client with SERVICE ROLE (bypasses RLS)
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
-    
+
     logStep("Supabase client initialized with service role");
 
     const body = await req.json();
-    logStep("Request body parsed", { 
+    logStep("Request body parsed", {
       hasAmount: !!body.amount,
       hasCustomerEmail: !!body.customerEmail,
       paymentType: body.paymentType,
       hasCustomerData: !!body.customerData,
       hasBookingData: !!body.bookingData
     });
-    
+
     const {
       amount,
       customerEmail,
@@ -65,59 +80,47 @@ serve(async (req) => {
       customerPhone,
       paymentType,
       bookingId: existingBookingId,
-      // New fields for customer/booking creation
       customerData,
       bookingData,
       metadata
     } = body;
 
-    // Validate required fields
     const email = customerEmail || customerData?.email;
     if (!email) {
       logStep("Validation failed - missing email");
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Customer email is required",
-          details: "A valid email address must be provided for payment processing" 
+          details: "A valid email address must be provided for payment processing"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    // Resolve which Stripe account should receive this payment based
-    // on the service ZIP. Falls back to the NY account if the ZIP is
-    // unmapped or the target account isn't configured — the ZIP
-    // allow-list in `validate-zip` should stop foreign ZIPs upstream,
-    // but this is belt-and-suspenders.
-    const serviceZip =
-      bookingData?.zipCode ||
-      customerData?.zip ||
-      body.zipCode ||
-      body.serviceZip ||
-      null;
-    const account = resolveAccountForZip(serviceZip);
-    if (!account) {
-      logStep("Configuration error - no Stripe account configured", { serviceZip });
+    let secretKey: string;
+    try {
+      secretKey = requireStripeSecretKey();
+    } catch (err: any) {
+      logStep("Configuration error - Stripe secret key missing");
       return new Response(
         JSON.stringify({
           error: "Payment system not configured",
-          details:
-            "No Stripe account is configured. Set STRIPE_SECRET_KEY_NY (and STRIPE_SECRET_KEY_CATX if serving CA/TX).",
+          details: err?.message ||
+            "STRIPE_SECRET_KEY (or STRIPE_SECRET_KEY_ALPHALUX) must be set in Supabase secrets.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
       );
     }
-    const resolvedSlug = account.slug;
-    logStep("Resolved Stripe account for booking", {
-      serviceZip,
-      slug: resolvedSlug,
-      account: account.displayName,
-    });
 
-    // Initialize Stripe with the account-specific secret.
-    const stripe = new Stripe(account.secretKey, {
-      apiVersion: "2023-10-16",
-    });
+    // Resolve a publishable key to ship back to the client alongside
+    // the client_secret. Prefer the env var; fall back to the bundled
+    // production key so the front-end never has to guess.
+    let publishableKey = getStripePublishableKey();
+    if (!isValidPublishableKey(publishableKey)) {
+      publishableKey = FALLBACK_PUBLISHABLE_KEY;
+    }
+
+    const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
 
     let customerId: string | null = null;
     let bookingId: string | null = existingBookingId || null;
@@ -126,8 +129,7 @@ serve(async (req) => {
     // === STEP 1: Upsert Customer (using service role - bypasses RLS) ===
     if (customerData) {
       logStep("Upserting customer with service role", { email: customerData.email });
-      
-      // Check if customer exists
+
       const { data: existingCustomer } = await supabaseClient
         .from('customers')
         .select('id, stripe_customer_id')
@@ -135,8 +137,7 @@ serve(async (req) => {
         .single();
 
       if (existingCustomer) {
-        // Update existing customer
-        const { data: updatedCustomer, error: updateError } = await supabaseClient
+        const { error: updateError } = await supabaseClient
           .from('customers')
           .update({
             first_name: customerData.firstName,
@@ -157,11 +158,10 @@ serve(async (req) => {
           logStep("Customer update error", { error: updateError });
           throw new Error(`Failed to update customer: ${updateError.message}`);
         }
-        
+
         customerId = existingCustomer.id;
         logStep("Customer updated", { customerId });
       } else {
-        // Create new customer
         const { data: newCustomer, error: insertError } = await supabaseClient
           .from('customers')
           .insert({
@@ -183,7 +183,7 @@ serve(async (req) => {
           logStep("Customer insert error", { error: insertError });
           throw new Error(`Failed to create customer: ${insertError.message}`);
         }
-        
+
         customerId = newCustomer.id;
         logStep("Customer created", { customerId });
       }
@@ -191,7 +191,6 @@ serve(async (req) => {
 
     // === STEP 2: Create or update Booking if data provided ===
     if (bookingData && customerId) {
-      // booking_status enum does NOT include 'payment_pending'
       const safeBookingStatus: "pending" = "pending";
       const bookingFields = {
         customer_id: customerId,
@@ -220,12 +219,12 @@ serve(async (req) => {
         address_line2: bookingData.addressLine2 || null,
         full_name: bookingData.fullName || null,
         source: safeSource(bookingData.source),
-        stripe_account_slug: resolvedSlug,
+        // The DB column is NOT NULL with a default of 'alphalux_ny'.
+        // We continue to write it explicitly so the value is stable
+        // even if the default ever changes.
+        stripe_account_slug: ACCOUNT_SLUG,
       };
 
-      // Reuse the booking row if the client passed one in (typical
-      // when the customer applies / removes a promo code and we need
-      // to recreate the PaymentIntent without duplicating the booking).
       if (bookingId) {
         logStep("Updating existing booking", { bookingId });
         const { error: updateError } = await supabaseClient
@@ -281,7 +280,6 @@ serve(async (req) => {
         stripeCustomerId = customer.id;
         logStep("Created new Stripe customer", { stripeCustomerId });
 
-        // Update customer record with Stripe ID
         if (customerId) {
           await supabaseClient
             .from('customers')
@@ -317,13 +315,13 @@ serve(async (req) => {
 
     // === STEP 4: Create Payment Intent ===
     const paymentAmount = amount || bookingData?.depositAmount || 0;
-    
+
     if (paymentAmount <= 0) {
       logStep("Invalid amount", { paymentAmount });
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Invalid payment amount",
-          details: "Amount must be greater than 0" 
+          details: "Amount must be greater than 0"
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
@@ -333,7 +331,7 @@ serve(async (req) => {
     let paymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(paymentAmount * 100), // Convert to cents
+        amount: Math.round(paymentAmount * 100),
         currency: 'usd',
         customer: stripeCustomerId,
         payment_method_types: ['card'],
@@ -343,17 +341,12 @@ serve(async (req) => {
           customer_id: customerId || '',
           customer_email: email,
           payment_type: paymentType || 'deposit',
-          stripe_account_slug: resolvedSlug,
           ...(metadata || {})
         }
       });
     } catch (stripeErr: any) {
       const msg = stripeErr?.message || String(stripeErr);
       const code = stripeErr?.code || stripeErr?.raw?.code;
-      // Expired or revoked secret key is an ops-only issue (we can't
-      // fix it from the client) but we want the UI to show a clear
-      // "payment system temporarily unavailable" message instead of a
-      // generic 500 with a raw Stripe error string.
       const isAuthIssue =
         code === "api_key_expired" ||
         code === "authentication_required" ||
@@ -376,21 +369,18 @@ serve(async (req) => {
         },
       );
     }
-    
+
     logStep("PaymentIntent created", { id: paymentIntent.id, amount: paymentIntent.amount });
 
-    // Update booking with payment intent ID and the resolved account
-    // slug, so every downstream flow (webhook, balance invoice,
-    // refund) hits the same Stripe account this PaymentIntent lives on.
     if (bookingId) {
       await supabaseClient
         .from('bookings')
         .update({
           stripe_payment_intent_id: paymentIntent.id,
-          stripe_account_slug: resolvedSlug,
+          stripe_account_slug: ACCOUNT_SLUG,
         })
         .eq('id', bookingId);
-      logStep("Booking updated with payment intent", { bookingId, slug: resolvedSlug });
+      logStep("Booking updated with payment intent", { bookingId });
     }
 
     return new Response(JSON.stringify({
@@ -402,13 +392,11 @@ serve(async (req) => {
       bookingId: bookingId,
       stripeCustomerId: stripeCustomerId,
       amount: paymentIntent.amount,
-      stripeAccountSlug: resolvedSlug,
-      // Publishable key is safe to return alongside the client secret —
-      // the client needs it to boot stripe.js against the correct
-      // account. Null only when the account row has no publishable
-      // key configured, in which case the client falls back to
-      // `/get-stripe-config` and its own hard-coded fallback.
-      publishableKey: account.publishableKey,
+      // Returned alongside the client secret so the front-end can
+      // boot Stripe.js against the same account that owns this PI in
+      // a single round-trip — no separate /get-stripe-config call
+      // needed.
+      publishableKey,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -417,8 +405,8 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage, stack: error instanceof Error ? error.stack : undefined });
-    
-    return new Response(JSON.stringify({ 
+
+    return new Response(JSON.stringify({
       error: errorMessage,
       success: false,
       details: "Payment processing failed. Please try again or contact support if the issue persists."

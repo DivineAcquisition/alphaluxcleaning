@@ -8,15 +8,15 @@ const corsHeaders = {
 };
 
 /**
- * ZIP allow-list for AlphaLux Cleaning.
+ * ZIP allow-list for AlphaLux Cleaning. NY-only.
  *
- * New York is always on (that account is primary). California and
- * Texas are gated behind the `STRIPE_ACCOUNT_CATX_ENABLED=true`
- * env var so the Stripe plumbing can ship before the flow opens
- * up to new states.
+ * The previous multi-state setup gated CA + TX behind environment
+ * flags so a second Stripe account could be onboarded; that account
+ * has been removed and AlphaLux now operates on a single Stripe
+ * account servicing New York State only. If/when service expands,
+ * extend the ZIP ranges and city labels here.
  */
 
-// --- New York --------------------------------------------------------------
 const NEW_YORK_ZIP_RANGES = [
   { min: 10001, max: 10299 }, // Manhattan
   { min: 10301, max: 10314 }, // Staten Island
@@ -36,41 +36,6 @@ function isNewYorkZip(zipCode: number): boolean {
   return NEW_YORK_ZIP_RANGES.some((r) => zipCode >= r.min && zipCode <= r.max);
 }
 
-// --- California ------------------------------------------------------------
-// 90000–96199 covers the entire state. Within that range there's a small
-// pocket (967xx) that belongs to the Northern Mariana Islands; we don't
-// service that so it's excluded.
-function isCaliforniaZip(zipCode: number): boolean {
-  if (zipCode < 90000 || zipCode > 96199) return false;
-  if (zipCode >= 96701 && zipCode <= 96899) return false; // HI / territories
-  return true;
-}
-
-// --- Texas -----------------------------------------------------------------
-function isTexasZip(zipCode: number): boolean {
-  if (zipCode === 73301) return true; // IRS Austin single-box
-  if (zipCode >= 75000 && zipCode <= 79999) return true;
-  if (zipCode >= 88510 && zipCode <= 88589) return true; // TX corner of NM
-  return false;
-}
-
-// --- Kill-switch -----------------------------------------------------------
-function flagOn(name: string): boolean {
-  const v = (Deno.env.get(name) || "").trim().toLowerCase();
-  return v === "true" || v === "1" || v === "yes" || v === "on";
-}
-
-function catxEnabled(): boolean {
-  // Either the standalone CA/TX Stripe account is activated, OR ops
-  // is running in "shared account" mode where one Stripe account
-  // handles all three states.
-  return (
-    flagOn("STRIPE_ACCOUNT_CATX_ENABLED") ||
-    flagOn("STRIPE_ACCOUNT_SHARED")
-  );
-}
-
-// --- City labels -----------------------------------------------------------
 function getGenericCityFromZip(zipCode: number): string | null {
   if (zipCode >= 10001 && zipCode <= 10299) return "New York";
   if (zipCode >= 10301 && zipCode <= 10314) return "Staten Island";
@@ -93,29 +58,6 @@ function getGenericCityFromZip(zipCode: number): string | null {
   if (zipCode >= 14201 && zipCode <= 14299) return "Buffalo";
   if (zipCode >= 14601 && zipCode <= 14699) return "Rochester";
   if (zipCode >= 14850 && zipCode <= 14899) return "Ithaca";
-
-  // California generic labels (only used when CA is enabled)
-  if (zipCode >= 90001 && zipCode <= 90899) return "Los Angeles";
-  if (zipCode >= 91300 && zipCode <= 91399) return "Van Nuys";
-  if (zipCode >= 92101 && zipCode <= 92199) return "San Diego";
-  if (zipCode >= 94101 && zipCode <= 94199) return "San Francisco";
-  if (zipCode >= 94501 && zipCode <= 94502) return "Alameda";
-  if (zipCode >= 95101 && zipCode <= 95199) return "San Jose";
-  if (zipCode >= 95801 && zipCode <= 95899) return "Sacramento";
-
-  // Texas generic labels
-  if (zipCode >= 75001 && zipCode <= 75399) return "Dallas";
-  if (zipCode >= 76101 && zipCode <= 76199) return "Fort Worth";
-  if (zipCode >= 77001 && zipCode <= 77099) return "Houston";
-  if (zipCode >= 78201 && zipCode <= 78299) return "San Antonio";
-  if (zipCode >= 78701 && zipCode <= 78799) return "Austin";
-  return null;
-}
-
-function stateForZip(zipCode: number): string | null {
-  if (isNewYorkZip(zipCode)) return "NY";
-  if (isCaliforniaZip(zipCode)) return "CA";
-  if (isTexasZip(zipCode)) return "TX";
   return null;
 }
 
@@ -138,22 +80,12 @@ serve(async (req) => {
       );
     }
 
-    const state = stateForZip(zipNum);
-    const serveableStates = new Set<string>(["NY"]);
-    if (catxEnabled()) {
-      serveableStates.add("CA");
-      serveableStates.add("TX");
-    }
-
-    if (!state || !serveableStates.has(state)) {
-      const coverage = catxEnabled()
-        ? "New York, California, and Texas"
-        : "New York State";
+    if (!isNewYorkZip(zipNum)) {
       return new Response(
         JSON.stringify({
           isValid: false,
           message:
-            `Sorry, AlphaLux Cleaning is currently only servicing ${coverage}. ZIP ${zipCode} is outside our service area. Call (857) 754-4557 if you think this is a mistake.`,
+            `Sorry, AlphaLux Cleaning is currently only servicing New York State. ZIP ${zipCode} is outside our service area. Call (857) 754-4557 if you think this is a mistake.`,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
@@ -168,14 +100,14 @@ serve(async (req) => {
       .select("city, state, active")
       .eq("zip_code", zipCode)
       .eq("active", true)
-      .in("state", Array.from(serveableStates))
+      .eq("state", "NY")
       .maybeSingle();
 
     const city = data?.city || getGenericCityFromZip(zipNum) || "Service Area";
-    const finalState = data?.state || state;
+    const state = data?.state || "NY";
 
     return new Response(
-      JSON.stringify({ isValid: true, city, state: finalState }),
+      JSON.stringify({ isValid: true, city, state }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
     );
   } catch (error: any) {

@@ -1,19 +1,16 @@
--- Multi-account Stripe routing
+-- Stripe account slug column (legacy / forward-compat).
 --
--- Adds a `stripe_account_slug` column on `bookings` and `customers`
--- so each payment row is permanently bound to the Stripe account it
--- was processed against. The router in the Edge Functions
--- (`_shared/stripe-accounts.ts`) will:
+-- AlphaLux Cleaning historically had plumbing for a multi-account
+-- Stripe setup (NY vs CA/TX). The dual-account router has been
+-- removed in favor of a single Stripe account
+-- (`acct_1TONej6CLM640Ljs`); see `supabase/functions/_shared/stripe-env.ts`.
 --
---   * stamp this column when a PaymentIntent is created against an
---     account, and
---   * read this column on every downstream flow (balance invoice,
---     refund, reconciliation).
---
--- Default is `alphalux_ny` because every historical row lived on the
--- NY account; once the CA/TX account kill-switch is enabled, new
--- rows will be stamped `alphalux_catx` at create-payment-intent
--- time based on the service ZIP.
+-- The `stripe_account_slug` column is preserved at the DB level so
+-- existing rows (every historical booking carries `alphalux_ny`)
+-- remain intact and downstream tooling that reads the column does
+-- not break. The single-account edge functions continue to write
+-- `'alphalux_ny'` on every new booking. If a future expansion
+-- reintroduces a second account, the column is already in place.
 
 alter table if exists public.bookings
   add column if not exists stripe_account_slug text not null default 'alphalux_ny';

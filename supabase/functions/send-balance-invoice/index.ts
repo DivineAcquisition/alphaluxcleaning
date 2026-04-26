@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import {
-  resolveAccountBySlug,
-  resolveAccountForZip,
-} from "../_shared/stripe-accounts.ts";
+import { requireStripeSecretKey } from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,9 +14,11 @@ const log = (step: string, data?: any) =>
 
 /**
  * Creates + finalizes + emails a Stripe invoice for the remaining
- * balance on a booking. The invoice item is explicitly bound to the
- * invoice id to avoid the "pending items pool" race that was
- * finalizing invoices at $0.
+ * balance on a booking. Single-account version — every booking is
+ * processed on the AlphaLux NY Stripe account.
+ *
+ * The invoice item is explicitly bound to the invoice id to avoid
+ * the "pending items pool" race that was finalizing invoices at $0.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -42,25 +41,17 @@ serve(async (req) => {
       throw new Error(`Booking not found: ${error?.message || "unknown"}`);
     }
 
-    // Invoice must land on the same Stripe account the original
-    // PaymentIntent was created against. Prefer the slug that was
-    // stamped on the booking row at create-payment-intent time; fall
-    // back to resolving from the ZIP, and then to the NY default.
-    const account =
-      resolveAccountBySlug(booking.stripe_account_slug) ||
-      resolveAccountForZip(booking.zip_code);
-    if (!account) {
+    let secretKey: string;
+    try {
+      secretKey = requireStripeSecretKey();
+    } catch (err: any) {
       throw new Error(
-        `No Stripe account configured for booking ${bookingId}. Set STRIPE_SECRET_KEY_NY (and STRIPE_SECRET_KEY_CATX if serving CA/TX).`,
+        err?.message ||
+          "Stripe secret key not configured. Set STRIPE_SECRET_KEY in Supabase secrets.",
       );
     }
-    log("Resolved Stripe account for balance invoice", {
-      bookingId,
-      slug: account.slug,
-      account: account.displayName,
-    });
 
-    const stripe = new Stripe(account.secretKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
 
     if (!booking.balance_due || booking.balance_due <= 0) {
       return new Response(
