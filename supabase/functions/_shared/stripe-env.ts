@@ -51,33 +51,51 @@ function firstEnv(...names: string[]): string | null {
 }
 
 /**
- * Resolve the Stripe secret (or restricted) API key. Accepts
- * `STRIPE_SECRET_KEY` first, then legacy / restricted-key fallbacks,
- * so freshly-rotated secrets under any historical name continue to
- * work without coordinated edge-function redeploys.
+ * Resolve the Stripe secret (or restricted) API key.
+ *
+ * Lookup order matters: the *_ALPHALUX suffix is checked first
+ * because that's the env var name ops has been rotating in the
+ * Supabase secrets UI. The unsuffixed `STRIPE_SECRET_KEY` is the
+ * canonical name long-term but historically held a stale key from a
+ * pre-rotation snapshot, so we let the freshly-managed value win.
+ * Any of the other names are accepted as a last resort so a
+ * differently-named secret still keeps payments online.
  */
 export function getStripeSecretKey(): string | null {
   return firstEnv(
-    "STRIPE_SECRET_KEY",
     "STRIPE_SECRET_KEY_ALPHALUX",
+    "STRIPE_SECRET_KEY",
     "STRIPE_SECRET_KEY_NY",
-    "STRIPE_RESTRICTED_KEY",
     "STRIPE_RESTRICTED_KEY_ALPHALUX",
+    "STRIPE_RESTRICTED_KEY",
   );
 }
 
 /**
- * Resolve the Stripe publishable key. Returns `null` only if no env
- * var is set; callers that need to never blank out the UI should
- * fall through to `FALLBACK_PUBLISHABLE_KEY`.
+ * Resolve the Stripe publishable key.
+ *
+ * IMPORTANT: We deliberately ignore env vars here and always return
+ * the bundled `FALLBACK_PUBLISHABLE_KEY`. Reasons:
+ *
+ *   1. The account is fixed (single-account refactor) — there's no
+ *      runtime variability to support.
+ *   2. Historically, the various STRIPE_PUBLISHABLE_KEY_* env vars in
+ *      this Supabase project have drifted to publishable keys for
+ *      the *wrong* Stripe account, which then mismatched the secret
+ *      key and produced "client_secret … does not match the
+ *      publishable key" errors at confirm time. Hard-coding the
+ *      correct key removes that failure mode entirely.
+ *   3. Publishable keys are public by design (already shipped in
+ *      `src/lib/stripe.ts`), so there's no security cost to bundling.
+ *
+ * If a future deployment ever needs to override (e.g. for a sandbox
+ * branch), set `STRIPE_PUBLISHABLE_KEY_OVERRIDE` and we'll honour it
+ * — but only that one canonical name, not the legacy soup.
  */
-export function getStripePublishableKey(): string | null {
-  return firstEnv(
-    "STRIPE_PUBLISHABLE_KEY",
-    "STRIPE_PUBLISHABLE_KEY_ALPHALUX",
-    "STRIPE_PUBLISHABLE_KEY_NY",
-    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
-  );
+export function getStripePublishableKey(): string {
+  const override = firstEnv("STRIPE_PUBLISHABLE_KEY_OVERRIDE");
+  if (override && isValidPublishableKey(override)) return override;
+  return FALLBACK_PUBLISHABLE_KEY;
 }
 
 /**
@@ -87,8 +105,8 @@ export function getStripePublishableKey(): string | null {
  */
 export function getStripeWebhookSecret(): string | null {
   return firstEnv(
-    "STRIPE_WEBHOOK_SECRET",
     "STRIPE_WEBHOOK_SECRET_ALPHALUX",
+    "STRIPE_WEBHOOK_SECRET",
     "STRIPE_WEBHOOK_SECRET_NY",
   );
 }
