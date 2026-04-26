@@ -16,10 +16,10 @@ interface StripePaymentFormProps {
   clientSecret: string;
   /**
    * Publishable key returned by create-payment-intent alongside the
-   * client secret. When present, Elements is initialized against the
-   * Stripe account that actually owns this PaymentIntent (NY or CA/TX).
-   * Optional for backwards compatibility — falls back to the global
-   * cached promise when omitted.
+   * client secret. When present, Elements is initialized with that
+   * key so the publishable + client_secret are guaranteed to belong
+   * to the same Stripe account in a single round-trip. Optional —
+   * falls back to the global cached promise when omitted.
    */
   publishableKey?: string | null;
   isProcessing: boolean;

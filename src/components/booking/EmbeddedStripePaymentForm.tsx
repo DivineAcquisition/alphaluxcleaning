@@ -267,15 +267,13 @@ export function EmbeddedStripePaymentForm({
       }
 
       console.log('✅ Payment intent created successfully', {
-        slug: data.stripeAccountSlug,
         hasPublishableKey: !!data.publishableKey,
       });
       setClientSecret(data.clientSecret);
-      // create-payment-intent returns the publishable key for the
-      // exact Stripe account that owns the PaymentIntent. We pass it
-      // to Elements below so stripe.js initialises against the right
-      // account — critical once CA/TX bookings route to a second
-      // Stripe account.
+      // create-payment-intent returns the publishable key inline with
+      // the client secret so the front-end can boot Stripe.js with a
+      // key guaranteed to belong to the same account that owns the
+      // PaymentIntent — no separate /get-stripe-config round-trip.
       if (data.publishableKey) {
         setAccountPublishableKey(data.publishableKey);
       }

@@ -340,10 +340,10 @@ export default function BookingCheckout() {
         setCustomerId(data.customerId);
         setBookingId(data.bookingId);
         setClientSecret(secret);
-        // Multi-account: the server returns the publishable key bound
-        // to the Stripe account that owns this PaymentIntent (NY vs
-        // CA/TX). Stash it so <StripePaymentForm> boots Elements
-        // against the right account.
+        // The server returns the publishable key inline with the
+        // client secret so Stripe.js boots against the exact same
+        // Stripe account that owns this PaymentIntent in one round
+        // trip — no separate /get-stripe-config call required.
         if (data.publishableKey) setAccountPublishableKey(data.publishableKey);
       }
 
