@@ -72,6 +72,28 @@ export default function BookingCheckout() {
     }
   }, [bookingData.zipCode, bookingData.basePrice, navigate]);
 
+  // Self-heal stale localStorage shape from the pre-fix /book/offer
+  // bug (where promoDiscount equaled the entire basePrice). We blow
+  // the bad promo away once on mount so the Stripe init below uses
+  // the correct deposit amount; the customer can re-apply the promo
+  // freely afterward via the input on this same page.
+  useEffect(() => {
+    const base = bookingData.basePrice || 0;
+    const discount = bookingData.promoDiscount || 0;
+    if (base > 0 && discount > 0 && discount >= base) {
+      console.warn(
+        '[checkout] Detected duplicated promo discount in stored booking — clearing.',
+        { basePrice: base, promoDiscount: discount },
+      );
+      updateBookingData({ promoCode: '', promoDiscount: 0 });
+      setPromoDisplay(null);
+      setPromoInput('');
+    }
+    // Run only once on mount; subsequent edits go through handleApplyPromo /
+    // handleRemovePromo which already keep the shape clean.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (hasContact && !hasTrackedCheckout) {
       trackStep('checkout_started');
@@ -92,8 +114,22 @@ export default function BookingCheckout() {
       : null,
   );
 
-  // Calculate final amounts
-  const finalPrice = (bookingData.basePrice || 0) - (bookingData.promoDiscount || 0);
+  // Calculate final amounts.
+  //
+  // Defensive guard: there was previously a bug in /book/offer where
+  // `basePrice` was stored as the **already-discounted** price and
+  // `promoDiscount` was stored alongside it, causing the discount to
+  // be subtracted twice here and the total to crash to $0. The Offer
+  // page now writes the pre-discount price, but customers who hit
+  // the old code path still have the bad shape sitting in
+  // localStorage. If the discount equals or exceeds the base price we
+  // assume the data is corrupted and ignore the discount rather than
+  // sell a $0 booking. The promo can still be re-applied below.
+  const rawBase = bookingData.basePrice || 0;
+  const rawDiscount = bookingData.promoDiscount || 0;
+  const discountIsCorrupt = rawDiscount > 0 && rawDiscount >= rawBase;
+  const effectiveDiscount = discountIsCorrupt ? 0 : rawDiscount;
+  const finalPrice = Math.max(0, rawBase - effectiveDiscount);
   const depositPercentage = bookingData.offerType === '90_day_plan' ? 0.0625 : 0.2;
   const finalDepositAmount = Math.max(
     1,
@@ -687,11 +723,12 @@ export default function BookingCheckout() {
   const serviceDetails = getServiceDetails();
 
   // Show the applied discount as a real percent of the pre-promo price
-  // rather than a hard-coded "20% Off" label. If no promo is applied,
-  // the discount line hides entirely.
+  // rather than a hard-coded "20% Off" label. If no promo is applied
+  // (or the stored discount was flagged as corrupt above) the discount
+  // line hides entirely.
   const promoPercent =
-    bookingData.promoDiscount && bookingData.basePrice
-      ? Math.round((bookingData.promoDiscount / bookingData.basePrice) * 100)
+    effectiveDiscount > 0 && rawBase > 0
+      ? Math.round((effectiveDiscount / rawBase) * 100)
       : 0;
   const promoLabelSuffix = promoPercent > 0 ? `${promoPercent}% Off` : 'Discount';
   const depositPercentLabel =
@@ -741,30 +778,28 @@ export default function BookingCheckout() {
 
               <Separator />
 
-              {bookingData.promoCode &&
-                bookingData.promoDiscount &&
-                bookingData.promoDiscount > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Original Price
-                      </span>
-                      <span className="line-through text-muted-foreground">
-                        ${(bookingData.basePrice || 0).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm bg-primary/10 p-2 rounded-lg border border-primary/30">
-                      <span className="flex items-center gap-1 text-primary font-semibold">
-                        <Tag className="w-4 h-4" />
-                        New Customer Special ({promoLabelSuffix})
-                      </span>
-                      <span className="text-primary font-bold">
-                        -${bookingData.promoDiscount.toFixed(2)}
-                      </span>
-                    </div>
-                    <Separator />
-                  </>
-                )}
+              {bookingData.promoCode && effectiveDiscount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Original Price
+                    </span>
+                    <span className="line-through text-muted-foreground">
+                      ${rawBase.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm bg-primary/10 p-2 rounded-lg border border-primary/30">
+                    <span className="flex items-center gap-1 text-primary font-semibold">
+                      <Tag className="w-4 h-4" />
+                      New Customer Special ({promoLabelSuffix})
+                    </span>
+                    <span className="text-primary font-bold">
+                      -${effectiveDiscount.toFixed(2)}
+                    </span>
+                  </div>
+                  <Separator />
+                </>
+              )}
 
               <div className="flex justify-between font-bold text-lg">
                 <span>
@@ -899,9 +934,9 @@ export default function BookingCheckout() {
                     <div className="font-semibold text-primary">
                       {promoDisplay}
                     </div>
-                    {bookingData.promoDiscount ? (
+                    {effectiveDiscount > 0 ? (
                       <div className="text-xs text-muted-foreground">
-                        Savings: ${bookingData.promoDiscount.toFixed(2)}
+                        Savings: ${effectiveDiscount.toFixed(2)}
                       </div>
                     ) : null}
                   </div>
