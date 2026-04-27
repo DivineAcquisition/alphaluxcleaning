@@ -23,7 +23,11 @@ import {
   NEW_CUSTOMER_PROMO_PERCENT,
 } from "@/lib/promo";
 
-const logo = "/brand/alphalux-logo.png";
+// Use the same square brand mark that the BrandedLoader full-page
+// loader displays. Keeps the loading-screen identity continuous with
+// the navbar so the customer sees the same logo before and after the
+// app finishes booting.
+const logo = "/brand/alphalux-mark.png";
 
 interface NavigationProps {
   minimal?: boolean;
@@ -74,15 +78,20 @@ export function Navigation({ minimal = false }: NavigationProps) {
       <nav className="w-full border-b border-alx-gold/15 bg-alx-black-ink/95 backdrop-blur supports-[backdrop-filter]:bg-alx-black-ink/85 text-alx-gold-pale shadow-soft">
         <div className="w-full max-w-7xl mx-auto px-3 sm:px-4">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo/Brand */}
+            {/* Logo/Brand — same square mark used by the BrandedLoader,
+                paired with the "AlphaLux Clean" wordmark so the brand
+                name still reads at a glance. */}
             <Link to="/" className="flex items-center gap-3 group">
               <img
                 src={logo}
                 alt="AlphaLux Clean"
-                width="180"
-                height="60"
-                className="h-9 md:h-11 w-auto object-contain drop-shadow-[0_0_18px_rgba(15,119,204,0.30)] transition group-hover:drop-shadow-[0_0_24px_rgba(61,160,235,0.45)]"
+                width="44"
+                height="44"
+                className="h-9 w-9 md:h-11 md:w-11 rounded-lg object-cover shadow-[0_4px_18px_rgba(0,0,0,0.35)] ring-1 ring-alx-gold/20 transition group-hover:ring-alx-gold/40"
               />
+              <span className="font-serif text-base md:text-lg font-semibold tracking-wide text-alx-gold-pale leading-none whitespace-nowrap hidden sm:inline-block">
+                AlphaLux <span className="text-alx-gold-light">Clean</span>
+              </span>
             </Link>
 
             {/* Right Section - Hidden in minimal mode */}
