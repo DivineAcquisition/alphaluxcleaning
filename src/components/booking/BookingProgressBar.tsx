@@ -1,7 +1,9 @@
 import { Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// Official AlphaLux Cleaning lockup pulled from alphaluxcleaning.com
-const logo = '/brand/alphalux-logo.png';
+// Use the same square brand mark that the BrandedLoader full-page
+// loader and the top navbar display, so the booking flow's
+// progress-bar header keeps the same visual identity.
+const logo = '/brand/alphalux-mark.png';
 
 interface BookingProgressBarProps {
   currentStep: number;
@@ -16,12 +18,17 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
       <div className="max-w-4xl mx-auto px-4 py-3">
         {/* Logo and Call Button Header */}
         <div className="flex items-center justify-between mb-4">
-          <a href="/" className="flex items-center">
+          <a href="/" className="flex items-center gap-3 group">
             <img
               src={logo}
               alt="AlphaLux Cleaning"
-              className="h-9 md:h-11 w-auto object-contain"
+              width="44"
+              height="44"
+              className="h-9 w-9 md:h-11 md:w-11 rounded-lg object-cover shadow-[0_4px_18px_rgba(0,0,0,0.25)] ring-1 ring-primary/15 transition group-hover:ring-primary/35"
             />
+            <span className="font-serif text-base md:text-lg font-semibold tracking-wide text-foreground leading-none whitespace-nowrap hidden sm:inline-block">
+              AlphaLux <span className="text-primary">Clean</span>
+            </span>
           </a>
           <div className="flex items-center gap-2">
             <Button
