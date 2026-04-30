@@ -60,6 +60,42 @@ interface HCPConfig {
   test_mode: boolean;
 }
 
+/**
+ * Pick the correct Authorization header format for a Housecall Pro
+ * credential. Per the official auth docs
+ * (https://docs.housecallpro.com/docs/housecall-public-api/b87d37ae48a0d-authentication):
+ *
+ *   - API keys (generated from Settings -> Integrations -> API Access)
+ *     must be sent as `Authorization: Token <key>` — NOT `Bearer`.
+ *   - OAuth 2.0 access tokens are sent as `Authorization: Bearer <token>`.
+ *
+ * The previous implementation hard-coded `Bearer` for everything, which
+ * works for OAuth but causes a 401 Unauthorized on every API-key
+ * request. We auto-detect by token shape and let ops force a scheme
+ * via `HCP_AUTH_SCHEME=token|bearer` if needed.
+ */
+function buildHcpAuthHeader(rawKey: string): string {
+  const key = (rawKey || "").trim();
+  const forced = (Deno.env.get("HCP_AUTH_SCHEME") || "").trim().toLowerCase();
+  if (forced === "token") return `Token ${key}`;
+  if (forced === "bearer") return `Bearer ${key}`;
+
+  // OAuth access tokens HCP issues are long opaque strings; API keys
+  // generated from the dashboard are typically a 32-char hex
+  // identifier. We use Bearer when the key contains JWT-style dots
+  // (modern OAuth) and otherwise default to Token, which matches
+  // the format every API-key user actually has.
+  if (key.includes(".") && key.split(".").length === 3) return `Bearer ${key}`;
+  return `Token ${key}`;
+}
+
+function buildHcpHeaders(config: HCPConfig): Record<string, string> {
+  return {
+    Authorization: buildHcpAuthHeader(config.api_key),
+    "Content-Type": "application/json",
+  };
+}
+
 serve(async (req) => {
   console.log("HCP sync function called with method:", req.method);
   
@@ -275,10 +311,7 @@ async function getRetryCount(supabase: any, bookingId: string): Promise<number> 
 }
 
 async function findOrCreateCustomer(config: HCPConfig, payload: BookingPayload): Promise<{ id: string; response: any }> {
-  const headers = {
-    'Authorization': `Bearer ${config.api_key}`,
-    'Content-Type': 'application/json'
-  };
+  const headers = buildHcpHeaders(config);
 
   // Search for existing customer by email
   console.log("Searching for customer:", payload.customer.email);
@@ -374,11 +407,7 @@ async function checkCustomerNeedsUpdate(existingCustomer: any, payload: BookingP
 }
 
 async function updateCustomer(config: HCPConfig, customerId: string, payload: BookingPayload): Promise<void> {
-  const headers = {
-    'Authorization': `Bearer ${config.api_key}`,
-    'Content-Type': 'application/json'
-  };
-
+  const headers = buildHcpHeaders(config);
   const phoneClassification = classifyPhoneNumber(payload.customer.phone);
 
   const updateData = {
@@ -407,11 +436,7 @@ async function updateCustomer(config: HCPConfig, customerId: string, payload: Bo
 
 async function createJob(config: HCPConfig, payload: BookingPayload, customerId: string): Promise<{ id: string; response: any }> {
   console.log("Creating job for customer:", customerId);
-  
-  const headers = {
-    'Authorization': `Bearer ${config.api_key}`,
-    'Content-Type': 'application/json'
-  };
+  const headers = buildHcpHeaders(config);
 
   // Build job title
   const title = `${payload.service.type} Cleaning (${payload.service.frequency})`;
