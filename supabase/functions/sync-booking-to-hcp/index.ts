@@ -154,7 +154,7 @@ serve(async (req) => {
       .select('*')
       .eq('booking_id', payload.booking_id)
       .eq('status', 'success')
-      .single();
+      .maybeSingle();
 
     if (existingLog) {
       console.log("Booking already synced successfully:", payload.booking_id);
@@ -174,7 +174,7 @@ serve(async (req) => {
       .from('hcp_sync_log')
       .select('*')
       .eq('booking_id', payload.booking_id)
-      .single();
+      .maybeSingle();
 
     const retryCount = existingLogEntry ? (existingLogEntry.retry_count || 0) : 0;
 
@@ -208,13 +208,15 @@ serve(async (req) => {
       hcpJobId = `test_job_${Date.now()}`;
       responsePayload = { test_mode: true, customer_id: hcpCustomerId, job_id: hcpJobId };
     } else {
-      // Find or create customer
+      // Find or create customer. The customer-search probe also
+      // resolves which auth scheme HCP accepts (Token vs Bearer);
+      // we thread the resolved headers through so the job-create
+      // POST below uses the same scheme that just worked.
       const customerResult = await findOrCreateCustomer(hcpConfig, payload);
       hcpCustomerId = customerResult.id;
       console.log("HCP Customer ID:", hcpCustomerId);
 
-      // Create job
-      const jobResult = await createJob(hcpConfig, payload, hcpCustomerId);
+      const jobResult = await createJob(hcpConfig, payload, hcpCustomerId, customerResult.headers);
       hcpJobId = jobResult.id;
       responsePayload = jobResult.response;
       console.log("HCP Job ID:", hcpJobId);
@@ -310,37 +312,68 @@ async function getRetryCount(supabase: any, bookingId: string): Promise<number> 
   }
 }
 
-async function findOrCreateCustomer(config: HCPConfig, payload: BookingPayload): Promise<{ id: string; response: any }> {
-  const headers = buildHcpHeaders(config);
+async function findOrCreateCustomer(
+  config: HCPConfig,
+  payload: BookingPayload,
+): Promise<{ id: string; response: any; headers: Record<string, string> }> {
+  // Auto-detect the right auth scheme: try whichever buildHcpHeaders
+  // chose first; if HCP returns 401 (auth error) on the search GET,
+  // flip the scheme and retry once. This handles the case where the
+  // API key shape doesn't match our heuristic — e.g. an older
+  // restricted-format key issued with `Bearer` semantics, or a fresh
+  // dashboard API key that needs the `Token` prefix. We log which
+  // scheme worked so ops can pin it explicitly via HCP_AUTH_SCHEME.
+  let headers = buildHcpHeaders(config);
+  const altScheme = headers.Authorization.startsWith("Token ")
+    ? `Bearer ${config.api_key.trim()}`
+    : `Token ${config.api_key.trim()}`;
+  const altHeaders = { ...headers, Authorization: altScheme };
+
+  // Log only the scheme + a short fingerprint so we can correlate
+  // 401s in logs without ever printing the full key.
+  const keyTrim = config.api_key.trim();
+  const fingerprint =
+    keyTrim.length > 8
+      ? `${keyTrim.slice(0, 4)}…${keyTrim.slice(-4)} (len=${keyTrim.length})`
+      : `(len=${keyTrim.length})`;
+  console.log(
+    `Primary auth scheme: ${headers.Authorization.split(" ")[0]} | key fingerprint: ${fingerprint}`,
+  );
 
   // Search for existing customer by email
   console.log("Searching for customer:", payload.customer.email);
   const searchUrl = `${config.base_url}/customers?email=${encodeURIComponent(payload.customer.email)}`;
-  
-  try {
-    const searchResponse = await fetch(searchUrl, { 
-      method: 'GET',
-      headers 
-    });
-
-    if (searchResponse.ok) {
-      const searchData = await searchResponse.json();
+  // Probe with the primary scheme; if we get 401 try the alt and
+  // adopt whichever returned 2xx for the rest of this request.
+  const probe = await fetch(searchUrl, { method: "GET", headers });
+  if (probe.status === 401) {
+    console.log("Primary auth scheme returned 401, trying fallback scheme");
+    const probeAlt = await fetch(searchUrl, { method: "GET", headers: altHeaders });
+    if (probeAlt.ok || probeAlt.status === 404) {
+      console.log("Fallback auth scheme accepted; using it for the rest of this request");
+      headers = altHeaders;
+    } else {
+      const body = await probeAlt.text();
+      throw new Error(
+        `HCP authentication failed under both Token and Bearer schemes (last ${probeAlt.status}: ${body.slice(0, 200)}). Verify HCP_API_KEY in Supabase secrets is current.`,
+      );
+    }
+  } else if (!probe.ok && probe.status !== 404) {
+    const body = await probe.text();
+    console.log("Customer search non-OK:", probe.status, body.slice(0, 200));
+  } else if (probe.ok) {
+    try {
+      const searchData = await probe.json();
       if (searchData.customers && searchData.customers.length > 0) {
         const existingCustomer = searchData.customers[0];
         console.log("Found existing customer:", existingCustomer.id);
-        
-        // Check if we need to update customer data
         const needsUpdate = await checkCustomerNeedsUpdate(existingCustomer, payload);
-        if (needsUpdate) {
-          console.log("Updating existing customer data");
-          await updateCustomer(config, existingCustomer.id, payload);
-        }
-        
-        return { id: existingCustomer.id, response: searchData };
+        if (needsUpdate) await updateCustomerWithHeaders(config, existingCustomer.id, payload, headers);
+        return { id: existingCustomer.id, response: searchData, headers };
       }
+    } catch (parseErr) {
+      console.log("Customer search response parse failed, will create new:", parseErr);
     }
-  } catch (error) {
-    console.log("Customer search failed, will create new:", error.message);
   }
 
   // Create new customer
@@ -394,8 +427,39 @@ async function findOrCreateCustomer(config: HCPConfig, payload: BookingPayload):
   }
 
   const createData = await createResponse.json();
-  console.log("Created customer:", createData.customer.id);
-  return { id: createData.customer.id, response: createData };
+  console.log("Created customer:", createData.customer?.id || createData.id);
+  return {
+    id: createData.customer?.id || createData.id,
+    response: createData,
+    headers,
+  };
+}
+
+async function updateCustomerWithHeaders(
+  config: HCPConfig,
+  customerId: string,
+  payload: BookingPayload,
+  headers: Record<string, string>,
+): Promise<void> {
+  const phoneClassification = classifyPhoneNumber(payload.customer.phone);
+  const updateData = {
+    mobile_number: phoneClassification.mobile,
+    home_number: phoneClassification.home,
+    phones: [payload.customer.phone],
+    address: {
+      line1: payload.address.line1,
+      line2: payload.address.line2 || "",
+      city: payload.address.city,
+      state: payload.address.state,
+      postal_code: payload.address.postal_code,
+    },
+  };
+  const response = await fetch(`${config.base_url}/customers/${customerId}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(updateData),
+  });
+  if (!response.ok) console.error("Customer update failed:", response.status);
 }
 
 async function checkCustomerNeedsUpdate(existingCustomer: any, payload: BookingPayload): Promise<boolean> {
@@ -434,9 +498,14 @@ async function updateCustomer(config: HCPConfig, customerId: string, payload: Bo
   }
 }
 
-async function createJob(config: HCPConfig, payload: BookingPayload, customerId: string): Promise<{ id: string; response: any }> {
+async function createJob(
+  config: HCPConfig,
+  payload: BookingPayload,
+  customerId: string,
+  headersOverride?: Record<string, string>,
+): Promise<{ id: string; response: any }> {
   console.log("Creating job for customer:", customerId);
-  const headers = buildHcpHeaders(config);
+  const headers = headersOverride || buildHcpHeaders(config);
 
   // Build job title
   const title = `${payload.service.type} Cleaning (${payload.service.frequency})`;
