@@ -89,7 +89,14 @@ serve(async (req) => {
 
     const hcpConfig: HCPConfig = {
       api_key: hcpApiKey,
-      base_url: "https://api.housecallpro.com/v1",
+      // Housecall Pro public API. The third-party guides on the
+      // internet still reference `/v1`, but probing
+      // api.housecallpro.com directly shows `/v1/customers` returns
+      // a 404 HTML "page not found" page while `/customers` returns
+      // 401 JSON when unauthenticated — so the live, correct base
+      // URL is the unversioned host. Allow override via env so we
+      // can flip to a sandbox / staging host without a redeploy.
+      base_url: Deno.env.get("HCP_BASE_URL") || "https://api.housecallpro.com",
       enabled: true,
       test_mode: Deno.env.get("HCP_TEST_MODE") === "true"
     };
