@@ -191,12 +191,15 @@ serve(async (req) => {
       })
       .eq('id', syncLog.id);
 
-    // Update booking record with HCP IDs
+    // Update booking record with HCP IDs. We also write the legacy
+    // `housecall_job_id` column so older code paths / dashboards
+    // that still read it continue to surface the job link.
     await supabase
       .from('bookings')
       .update({
         hcp_customer_id: hcpCustomerId,
-        hcp_job_id: hcpJobId
+        hcp_job_id: hcpJobId,
+        housecall_job_id: hcpJobId,
       })
       .eq('id', payload.booking_id);
 
@@ -553,16 +556,71 @@ async function createJob(config: HCPConfig, payload: BookingPayload, customerId:
   return { id: responseData.job.id, response: responseData };
 }
 
+/**
+ * Convert a YYYY-MM-DD date + an "HH:MM-HH:MM" wall-clock window in
+ * the customer's local timezone into ISO-8601 UTC strings (the
+ * format HCP's API expects on `scheduled_start` / `scheduled_end`).
+ *
+ * Implementation: we compute the timezone's UTC offset *for that
+ * specific date* via Intl.DateTimeFormat, which correctly accounts
+ * for daylight saving transitions — a 9 AM Los Angeles slot in
+ * March is UTC-7, the same slot in January is UTC-8. Naively
+ * constructing `new Date('2026-05-04T09:00:00')` (the previous
+ * implementation) ran in the server's UTC locale and shifted every
+ * appointment into the early hours of the next day in the
+ * customer's timezone. This regression is why HCP jobs that did
+ * land never matched the customer's expected arrival window.
+ */
 function formatTimeWindow(date: string, timeWindow: string, timezone: string): { start: string; end: string } {
-  const [startTime, endTime] = timeWindow.split('-');
-  
-  // Create dates in local timezone
-  const startDate = new Date(`${date}T${startTime}:00`);
-  const endDate = new Date(`${date}T${endTime}:00`);
-  
+  const [startTime, endTime] = (timeWindow || "09:00-17:00").split("-");
+  const tz = timezone && timezone.length > 0 ? timezone : "America/New_York";
+
+  function toUtcIso(ymd: string, hhmm: string): string {
+    const [y, m, d] = ymd.split("-").map(Number);
+    const [hh, mm] = hhmm.split(":").map(Number);
+    // First-pass UTC guess assuming the wall clock IS UTC.
+    const utcGuess = Date.UTC(
+      y || 1970,
+      Math.max(0, (m || 1) - 1),
+      d || 1,
+      hh || 0,
+      mm || 0,
+      0,
+    );
+    // Render that UTC instant in the target zone — the difference
+    // between the rendered wall-clock and the original wall-clock
+    // is exactly the timezone offset. Add it back to land at the
+    // correct UTC instant.
+    const dtf = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    const parts = Object.fromEntries(
+      dtf.formatToParts(new Date(utcGuess)).map((p) => [p.type, p.value]),
+    );
+    const renderedUtc = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      // Intl renders 24h "00".."23" but uses "24" for midnight in some
+      // locales; normalise to 0.
+      Number(parts.hour) === 24 ? 0 : Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second),
+    );
+    const offsetMs = utcGuess - renderedUtc;
+    return new Date(utcGuess + offsetMs).toISOString();
+  }
+
   return {
-    start: startDate.toISOString(),
-    end: endDate.toISOString()
+    start: toUtcIso(date, startTime),
+    end: toUtcIso(date, endTime),
   };
 }
 
