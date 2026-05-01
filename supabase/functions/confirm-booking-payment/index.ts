@@ -272,7 +272,26 @@ serve(async (req) => {
       };
     }
 
-    // 3) Send a balance invoice if there's a remaining balance and
+    // 3) Booking notification fan-out — Slack + Google Sheet (via
+    //    notify-booking). The function reads SLACK_WEBHOOK_URL and
+    //    BOOKING_TRACKER_WEBHOOK_URL from Supabase secrets and is a
+    //    no-op for any destination that isn't configured. Errors
+    //    are swallowed here for the same reason as the HCP sync —
+    //    a Slack outage shouldn't block a paid booking.
+    try {
+      const notifyResult = await supabase.functions.invoke("notify-booking", {
+        body: { bookingId: booking.id, event: "payment_confirmed" },
+      });
+      if (notifyResult.error) {
+        console.error("notify-booking error:", notifyResult.error.message || notifyResult.error);
+      } else {
+        console.log("notify-booking dispatched", notifyResult.data?.results);
+      }
+    } catch (notifyError) {
+      console.error("notify-booking threw:", notifyError);
+    }
+
+    // 4) Send a balance invoice if there's a remaining balance and
     //    one hasn't been created yet. After the deposit removal this
     //    only fires for the 90-day plan.
     const balanceDue = booking.balance_due || 0;
