@@ -629,8 +629,11 @@ async function createJob(
   }
 
   const responseData = await response.json();
-  console.log("Created job:", responseData.job.id);
-  return { id: responseData.job.id, response: responseData };
+  // HCP returns the new job at the top level. Older accounts wrap
+  // it in `{ job: {...} }`; honor either shape for safety.
+  const newJobId = responseData.job?.id || responseData.id;
+  console.log("Created job:", newJobId);
+  return { id: newJobId, response: responseData };
 }
 
 /**
