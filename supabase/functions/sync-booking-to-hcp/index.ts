@@ -216,7 +216,13 @@ serve(async (req) => {
       hcpCustomerId = customerResult.id;
       console.log("HCP Customer ID:", hcpCustomerId);
 
-      const jobResult = await createJob(hcpConfig, payload, hcpCustomerId, customerResult.headers);
+      const jobResult = await createJob(
+        hcpConfig,
+        payload,
+        hcpCustomerId,
+        customerResult.headers,
+        customerResult.addressId,
+      );
       hcpJobId = jobResult.id;
       responsePayload = jobResult.response;
       console.log("HCP Job ID:", hcpJobId);
@@ -315,7 +321,7 @@ async function getRetryCount(supabase: any, bookingId: string): Promise<number> 
 async function findOrCreateCustomer(
   config: HCPConfig,
   payload: BookingPayload,
-): Promise<{ id: string; response: any; headers: Record<string, string> }> {
+): Promise<{ id: string; response: any; headers: Record<string, string>; addressId?: string }> {
   // Auto-detect the right auth scheme: try whichever buildHcpHeaders
   // chose first; if HCP returns 401 (auth error) on the search GET,
   // flip the scheme and retry once. This handles the case where the
@@ -340,9 +346,13 @@ async function findOrCreateCustomer(
     `Primary auth scheme: ${headers.Authorization.split(" ")[0]} | key fingerprint: ${fingerprint}`,
   );
 
-  // Search for existing customer by email
+  // Search for existing customer by email. HCP's public API uses
+  // `?q=<term>` for a fuzzy customer search across name / email /
+  // phone — the older `?email=` filter is silently ignored and
+  // returns the unfiltered first page, which previously made every
+  // sync think the customer didn't exist and create duplicates.
   console.log("Searching for customer:", payload.customer.email);
-  const searchUrl = `${config.base_url}/customers?email=${encodeURIComponent(payload.customer.email)}`;
+  const searchUrl = `${config.base_url}/customers?q=${encodeURIComponent(payload.customer.email)}`;
   // Probe with the primary scheme; if we get 401 try the alt and
   // adopt whichever returned 2xx for the rest of this request.
   const probe = await fetch(searchUrl, { method: "GET", headers });
@@ -369,7 +379,13 @@ async function findOrCreateCustomer(
         console.log("Found existing customer:", existingCustomer.id);
         const needsUpdate = await checkCustomerNeedsUpdate(existingCustomer, payload);
         if (needsUpdate) await updateCustomerWithHeaders(config, existingCustomer.id, payload, headers);
-        return { id: existingCustomer.id, response: searchData, headers };
+        // Use the customer's first service address if present so the
+        // job below attaches to it directly. If the customer has no
+        // addresses on file we'll let HCP fall back to a built-in.
+        const existingAddrId = (existingCustomer.addresses || []).find(
+          (a: any) => (a?.type ?? "service") === "service",
+        )?.id || (existingCustomer.addresses || [])[0]?.id;
+        return { id: existingCustomer.id, response: searchData, headers, addressId: existingAddrId };
       }
     } catch (parseErr) {
       console.log("Customer search response parse failed, will create new:", parseErr);
@@ -395,20 +411,30 @@ async function findOrCreateCustomer(
     payload.recurring_active ? "Recurring_Active" : "One_Time"
   ].filter(Boolean);
 
+  // HCP customer payload shape (verified against api.housecallpro.com):
+  //   - email is a single `email` field, not `emails: []`.
+  //   - addresses live under `addresses: [{type, street, street_line_2,
+  //     city, state, zip, country}]`, not a single `address: {line1,...}`
+  //     map.
+  // Sending the wrong field names produces a 400 with the offending
+  // attribute echoed back, which is how this got caught.
   const createCustomerData = {
     first_name: payload.customer.first_name || 'Unknown',
     last_name: payload.customer.last_name || 'Customer',
-    emails: [payload.customer.email],
+    email: payload.customer.email,
     mobile_number: phoneClassification.mobile,
     home_number: phoneClassification.home,
-    phones: [payload.customer.phone],
-    address: {
-      line1: payload.address.line1,
-      line2: payload.address.line2 || "",
-      city: payload.address.city,
-      state: payload.address.state,
-      postal_code: payload.address.postal_code
-    },
+    addresses: [
+      {
+        type: "service",
+        street: payload.address.line1,
+        street_line_2: payload.address.line2 || "",
+        city: payload.address.city,
+        state: payload.address.state,
+        zip: payload.address.postal_code,
+        country: "US",
+      },
+    ],
     tags: tags,
     lead_source: leadSource,
     notifications_enabled: true
@@ -427,11 +453,19 @@ async function findOrCreateCustomer(
   }
 
   const createData = await createResponse.json();
-  console.log("Created customer:", createData.customer?.id || createData.id);
+  // HCP returns the new customer at the top level (no `customer:` wrapper).
+  // Some older accounts wrap it; honor either shape.
+  const created = createData.customer || createData;
+  const newCustomerId = created.id;
+  // Capture the service-address id so createJob can attach the job
+  // to it directly via `address_id` instead of HCP guessing.
+  const newAddrId = (created.addresses || [])[0]?.id;
+  console.log("Created customer:", newCustomerId, "address:", newAddrId);
   return {
-    id: createData.customer?.id || createData.id,
+    id: newCustomerId,
     response: createData,
     headers,
+    addressId: newAddrId,
   };
 }
 
@@ -442,60 +476,48 @@ async function updateCustomerWithHeaders(
   headers: Record<string, string>,
 ): Promise<void> {
   const phoneClassification = classifyPhoneNumber(payload.customer.phone);
+  // Mirror the create-shape: HCP rejects the legacy `address` map and
+  // expects `addresses: [{type, street, street_line_2, city, state,
+  // zip, country}]`.
   const updateData = {
     mobile_number: phoneClassification.mobile,
     home_number: phoneClassification.home,
-    phones: [payload.customer.phone],
-    address: {
-      line1: payload.address.line1,
-      line2: payload.address.line2 || "",
-      city: payload.address.city,
-      state: payload.address.state,
-      postal_code: payload.address.postal_code,
-    },
+    addresses: [
+      {
+        type: "service",
+        street: payload.address.line1,
+        street_line_2: payload.address.line2 || "",
+        city: payload.address.city,
+        state: payload.address.state,
+        zip: payload.address.postal_code,
+        country: "US",
+      },
+    ],
   };
   const response = await fetch(`${config.base_url}/customers/${customerId}`, {
     method: "PUT",
     headers,
     body: JSON.stringify(updateData),
   });
-  if (!response.ok) console.error("Customer update failed:", response.status);
+  if (!response.ok) {
+    const body = await response.text();
+    console.error("Customer update failed:", response.status, body.slice(0, 200));
+  }
 }
 
 async function checkCustomerNeedsUpdate(existingCustomer: any, payload: BookingPayload): Promise<boolean> {
-  // Check if phone or address has changed
-  const phoneMatch = existingCustomer.phones?.includes(payload.customer.phone);
-  const addressMatch = existingCustomer.address?.postal_code === payload.address.postal_code;
-  
+  // HCP returns `mobile_number` (digits only) and `addresses: [...]`.
+  // We compare against both phone fields and the first service
+  // address's zip — the cheapest signal that something actionable
+  // changed.
+  const incomingPhoneDigits = (payload.customer.phone || "").replace(/\D/g, "");
+  const existingPhoneDigits = (existingCustomer.mobile_number || existingCustomer.home_number || "").replace(/\D/g, "");
+  const phoneMatch = incomingPhoneDigits.length > 0 && existingPhoneDigits.endsWith(incomingPhoneDigits.slice(-10));
+
+  const existingAddrs: any[] = existingCustomer.addresses || [];
+  const addressMatch = existingAddrs.some((a) => (a?.zip || a?.postal_code) === payload.address.postal_code);
+
   return !phoneMatch || !addressMatch;
-}
-
-async function updateCustomer(config: HCPConfig, customerId: string, payload: BookingPayload): Promise<void> {
-  const headers = buildHcpHeaders(config);
-  const phoneClassification = classifyPhoneNumber(payload.customer.phone);
-
-  const updateData = {
-    mobile_number: phoneClassification.mobile,
-    home_number: phoneClassification.home,
-    phones: [payload.customer.phone],
-    address: {
-      line1: payload.address.line1,
-      line2: payload.address.line2 || "",
-      city: payload.address.city,
-      state: payload.address.state,
-      postal_code: payload.address.postal_code
-    }
-  };
-
-  const response = await fetch(`${config.base_url}/customers/${customerId}`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(updateData)
-  });
-
-  if (!response.ok) {
-    console.error("Customer update failed:", response.status);
-  }
 }
 
 async function createJob(
@@ -503,27 +525,13 @@ async function createJob(
   payload: BookingPayload,
   customerId: string,
   headersOverride?: Record<string, string>,
+  addressId?: string,
 ): Promise<{ id: string; response: any }> {
-  console.log("Creating job for customer:", customerId);
+  console.log("Creating job for customer:", customerId, "address:", addressId || "(default)");
   const headers = headersOverride || buildHcpHeaders(config);
 
-  // Build job title
-  const title = `${payload.service.type} Cleaning (${payload.service.frequency})`;
-  
-  // Build detailed description
-  const descriptionParts = [
-    `${payload.service.type} cleaning service`,
-    `Frequency: ${payload.service.frequency}`,
-    `Property size: ${payload.service.sqft_range}`,
-  ];
-  
-  if (payload.service.addons?.length) {
-    descriptionParts.push(`Add-ons: ${payload.service.addons.join(', ')}`);
-  }
-  
-  const description = descriptionParts.join(' | ');
-  
-  // Build comprehensive notes
+  // Notes are dropped into a single `notes` text block on the job;
+  // HCP exposes this as the job's primary note in the dashboard.
   const notes = [
     `Booking ID: ${payload.booking_id}`,
     `Source: ${mapLeadSource(payload.source)}`,
@@ -531,112 +539,80 @@ async function createJob(
     `Service Type: ${payload.service.type}`,
     `Frequency: ${payload.service.frequency}`,
   ];
-  
-  if (payload.service.addons?.length) {
-    notes.push(`Add-ons: ${payload.service.addons.join(', ')}`);
-  }
-  
-  if (payload.special_instructions) {
-    notes.push(`Special Instructions: ${payload.special_instructions}`);
-  }
-  
-  if (payload.property_details?.pets) {
-    notes.push(`Pets: ${payload.property_details.pets}`);
-  }
-  
-  if (payload.property_details?.access_code) {
-    notes.push(`Access Code: ${payload.property_details.access_code}`);
-  }
-  
-  if (payload.property_details?.parking_instructions) {
-    notes.push(`Parking: ${payload.property_details.parking_instructions}`);
-  }
-  
-  if (payload.pricing.mrr_est) {
-    notes.push(`MRR Estimate: $${payload.pricing.mrr_est}`);
-  }
-  
-  if (payload.pricing.arr_est) {
-    notes.push(`ARR Estimate: $${payload.pricing.arr_est}`);
-  }
-  
-  notes.push(`First Booking: ${payload.first_booking ? 'Yes' : 'No'}`);
-  notes.push(`Recurring Active: ${payload.recurring_active ? 'Yes' : 'No'}`);
+  if (payload.service.addons?.length) notes.push(`Add-ons: ${payload.service.addons.join(", ")}`);
+  if (payload.special_instructions) notes.push(`Special Instructions: ${payload.special_instructions}`);
+  if (payload.property_details?.pets) notes.push(`Pets: ${payload.property_details.pets}`);
+  if (payload.property_details?.access_code) notes.push(`Access Code: ${payload.property_details.access_code}`);
+  if (payload.property_details?.parking_instructions) notes.push(`Parking: ${payload.property_details.parking_instructions}`);
+  if (payload.pricing.mrr_est) notes.push(`MRR Estimate: $${payload.pricing.mrr_est}`);
+  if (payload.pricing.arr_est) notes.push(`ARR Estimate: $${payload.pricing.arr_est}`);
+  notes.push(`First Booking: ${payload.first_booking ? "Yes" : "No"}`);
+  notes.push(`Recurring Active: ${payload.recurring_active ? "Yes" : "No"}`);
 
-  // Calculate scheduled times with timezone awareness
+  // Wall-clock window in the customer's local timezone -> UTC ISO.
   const { start, end } = formatTimeWindow(
-    payload.schedule.date, 
-    payload.schedule.time_window || "09:00-17:00", 
-    payload.schedule.timezone
+    payload.schedule.date,
+    payload.schedule.time_window || "09:00-17:00",
+    payload.schedule.timezone,
   );
 
-  // Build line items - main service + individual addons
-  const lineItems = [];
-  
-  // Calculate base service price (total minus addons)
+  // Build line items. HCP wants `unit_price` in **cents**, not
+  // dollars — sending dollars produced a $1.38 invoice for a
+  // $137.50 service in earlier testing. We multiply once at the
+  // boundary so the rest of the pricing breakdown stays in dollars.
+  const lineItems: any[] = [];
   let basePrice = payload.pricing.total;
   if (payload.pricing.addons_breakdown?.length) {
     const addonsTotal = payload.pricing.addons_breakdown.reduce((sum, addon) => sum + addon.price, 0);
     basePrice = payload.pricing.total - addonsTotal;
   }
-  
-  // Main service line item
   lineItems.push({
-    name: `${payload.service.type} Cleaning - ${payload.service.sqft_range}`,
+    name: `${payload.service.type[0].toUpperCase()}${payload.service.type.slice(1)} Clean - ${payload.service.sqft_range}`,
     description: `${payload.service.frequency} cleaning service`,
     quantity: 1,
-    unit_price: basePrice,
-    total: basePrice
+    unit_price: Math.round(basePrice * 100),
+    kind: "labor",
   });
-  
-  // Individual addon line items
   if (payload.pricing.addons_breakdown?.length) {
     for (const addon of payload.pricing.addons_breakdown) {
       lineItems.push({
         name: addon.name,
         description: `Add-on service: ${addon.name}`,
         quantity: 1,
-        unit_price: addon.price,
-        total: addon.price
+        unit_price: Math.round(addon.price * 100),
+        kind: "labor",
       });
     }
   }
 
-  // Build job tags
   const jobTags = [
     "AlphaLux_UI",
     payload.address.state,
     payload.service.frequency,
     payload.service.type,
-    mapLeadSource(payload.source)
+    mapLeadSource(payload.source),
   ].filter(Boolean);
 
-  const jobData = {
+  // HCP job payload (verified shape):
+  //   - customer_id + address_id (when known) instead of address_override
+  //   - schedule: { scheduled_start, scheduled_end, arrival_window_seconds }
+  //   - notes is a plain string, not an array of objects
+  //   - lead_source must be a name from /lead_sources on this account
+  const arrivalWindowSeconds =
+    Math.max(0, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 1000)) || 7200;
+  const jobData: Record<string, any> = {
     customer_id: customerId,
-    title: title,
-    description: description,
-    work_status: "scheduled",
-    scheduled_start: start,
-    scheduled_end: end,
-    notes: notes.join('\n'),
-    lead_source: mapLeadSource(payload.source),
-    address_override: {
-      line1: payload.address.line1,
-      line2: payload.address.line2 || "",
-      city: payload.address.city,
-      state: payload.address.state,
-      postal_code: payload.address.postal_code
+    schedule: {
+      scheduled_start: start,
+      scheduled_end: end,
+      arrival_window: arrivalWindowSeconds,
     },
     line_items: lineItems,
     tags: jobTags,
-    custom_fields: {
-      booking_id: payload.booking_id,
-      mrr_estimate: payload.pricing.mrr_est || 0,
-      arr_estimate: payload.pricing.arr_est || 0,
-      frequency: payload.service.frequency,
-      source_channel: payload.source
-    }
+    lead_source: mapLeadSource(payload.source),
+    notes: notes.join("\n"),
   };
+  if (addressId) jobData.address_id = addressId;
 
   console.log("Creating job with data:", JSON.stringify(jobData, null, 2));
 
@@ -725,14 +701,35 @@ function formatTimeWindow(date: string, timeWindow: string, timezone: string): {
   };
 }
 
+/**
+ * Map our internal `source_channel` value to a Housecall Pro
+ * lead-source name. HCP rejects with 400 ("Lead source not found")
+ * if the name isn't in the account's configured list, so the
+ * mapping below is restricted to values verified to exist on this
+ * AlphaLux Cleaning HCP account via GET /lead_sources:
+ *
+ *     CSR AI · AC Doctor · Lead Form · Online Booking ·
+ *     Website Builder · HouseCall Marketplace · HouseCall App ·
+ *     ResponsiBid · OnCall Air
+ *
+ * "Online Booking" is the natural default for the customer-web
+ * flow. Add a mapping (and a corresponding HCP lead source) when
+ * we plug in new acquisition channels.
+ */
 function mapLeadSource(sourceChannel: string): string {
   const mapping: Record<string, string> = {
-    'UI_DIRECT': 'Website',
-    'META': 'Facebook',
-    'GG_LOCAL': 'Google',
-    'REENGAGE': 'Referral'
+    UI_DIRECT: "Online Booking",
+    UI: "Online Booking",
+    LEAD_FORM: "Lead Form",
+    LEAD: "Lead Form",
+    CSR: "CSR AI",
+    PHONE: "CSR AI",
+    META: "Online Booking",
+    FB: "Online Booking",
+    GG_LOCAL: "Online Booking",
+    REENGAGE: "Online Booking",
   };
-  return mapping[sourceChannel] || 'Other';
+  return mapping[sourceChannel] || "Online Booking";
 }
 
 function classifyPhoneNumber(phone: string): { mobile?: string; home?: string } {
