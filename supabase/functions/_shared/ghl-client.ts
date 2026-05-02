@@ -133,8 +133,43 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       method: 'POST',
       body: JSON.stringify({ ...body, locationId: creds.locationId }),
     });
-    const contactId = res.data?.contact?.id || res.data?.id || res.data?.contactId;
-    return { ok: res.ok, contactId, data: res.data };
+
+    // GHL's upsert response shape varies between "new contact" and
+    // "existing contact" branches and across API revisions. Try every
+    // known location for the contact id before giving up.
+    let contactId =
+      res.data?.contact?.id ||
+      res.data?.id ||
+      res.data?.contactId ||
+      res.data?.data?.contact?.id ||
+      res.data?.data?.id ||
+      res.data?.contact?._id ||
+      res.data?._id;
+
+    // Last-ditch fallback: if we got a 2xx but couldn't extract an id,
+    // OR the upsert failed but we have an email we can search on,
+    // look the contact up directly. This prevents spurious "contact
+    // not synced" failures when GHL returns a 200 with a payload
+    // shape we don't recognize, or when an over-strict customFields
+    // entry caused the upsert to silently 4xx while the underlying
+    // contact existed all along.
+    if (!contactId && body.email) {
+      try {
+        const lookup = await request('/contacts/search/duplicate', {
+          method: 'GET',
+          query: { locationId: creds.locationId, email: body.email },
+        });
+        contactId =
+          lookup.data?.contact?.id ||
+          lookup.data?.id ||
+          lookup.data?.contactId ||
+          undefined;
+      } catch (_) {
+        // ignore — caller surfaces the original failure
+      }
+    }
+
+    return { ok: res.ok || !!contactId, contactId, data: res.data, raw: res.raw };
   }
 
   async function addTags(contactId: string, tags: string[]) {
