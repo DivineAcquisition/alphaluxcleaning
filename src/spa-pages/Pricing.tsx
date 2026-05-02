@@ -1,125 +1,215 @@
-import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sparkles, Check, Phone, ArrowRight, Home, Droplets, Zap } from 'lucide-react';
-import { STATE_CONFIGS, type StateCode, calculateRecurringPricing, formatPrice } from '@/lib/state-pricing-system';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Sparkles,
+  Check,
+  Phone,
+  ArrowRight,
+  Home,
+  BadgePercent,
+  ShieldCheck,
+  Clock,
+  Sprout,
+  CreditCard,
+} from 'lucide-react';
+import {
+  STATE_CONFIGS,
+  type StateCode,
+  formatPrice,
+} from '@/lib/state-pricing-system';
+import {
+  NEW_CUSTOMER_PROMO_ACTIVE,
+  NEW_CUSTOMER_PROMO_CODE,
+  NEW_CUSTOMER_PROMO_PERCENT,
+  previewPromoDiscount,
+} from '@/lib/promo';
 
+/**
+ * Public `/pricing` rate card.
+ *
+ * Structured as five sections that map to the five questions a
+ * prospective customer asks in order:
+ *
+ *   1. Hero — "What's the offer right now?"              (NEW_CUSTOMER_PROMO)
+ *   2. Rate card — "What does it cost at my home size?"  (state tiers table)
+ *   3. Recurring lane — "How does a subscription work?"  (maintenance tiers)
+ *   4. Service comparison — "What's the difference?"     (side-by-side checklist)
+ *   5. Trust + FAQ — "Is this legit?"                    (badges + accordion)
+ *
+ * Everything on this page reads from the shared pricing sources in
+ * `src/lib/*-pricing*`, so whenever we update the rate card in the
+ * booking flow the marketing page follows automatically.
+ */
 export default function Pricing() {
-  // AlphaLux Cleaning only operates in New York State.
-  const [selectedState, setSelectedState] = useState<StateCode>('NY');
   const navigate = useNavigate();
-  
-  const stateConfig = STATE_CONFIGS.find(s => s.code === selectedState);
-  
+  const selectedState: StateCode = 'NY';
+  const stateConfig = STATE_CONFIGS.find((s) => s.code === selectedState);
   if (!stateConfig) return null;
 
-  const bookableTiers = stateConfig.tiers.filter(tier => tier.id !== '5000_plus');
-  const customQuoteTier = stateConfig.tiers.find(tier => tier.id === '5000_plus');
+  const bookableTiers = stateConfig.tiers.filter((t) => t.id !== '5000_plus');
+  const customQuoteTier = stateConfig.tiers.find((t) => t.id === '5000_plus');
+
+  const promoActive = NEW_CUSTOMER_PROMO_ACTIVE;
+  const promoCode = NEW_CUSTOMER_PROMO_CODE;
+  const promoPercent = NEW_CUSTOMER_PROMO_PERCENT;
+
+  // Sample the promo for a realistic mid-tier deep clean so the
+  // hero showcases a real dollar amount instead of a vague "up to".
+  const sampleTier = bookableTiers[1]; // 1,500–2,000 sq ft
+  const sampleDeepPreview = previewPromoDiscount(sampleTier?.deep ?? 0);
+  const sampleDeepOriginal = sampleTier?.deep ?? 0;
+  const sampleDeepAfter = sampleDeepPreview.total;
+  const sampleDeepSavings = sampleDeepPreview.amount;
 
   return (
     <>
       <Helmet>
-        <title>Transparent Cleaning Pricing | Up to 20% OFF First Cleaning</title>
-        <meta 
-          name="description" 
-          content="View our transparent pricing for house cleaning services across New York State. New customers save 50% on their first cleaning with code ALC2026." 
+        <title>Transparent Cleaning Pricing — AlphaLux Cleaning</title>
+        <meta
+          name="description"
+          content={
+            promoActive
+              ? `Flat, published rates for Standard, Deep, and Move-In/Out cleaning in New York. New customers save ${promoPercent}% with code ${promoCode}.`
+              : 'Flat, published rates for Standard, Deep, and Move-In/Out cleaning in New York.'
+          }
         />
       </Helmet>
 
       <div className="min-h-screen bg-background">
         <Navigation />
-        
-        {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 md:py-20">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJoc2woMjExIDQxJSAyNCUgLyAwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-          
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Sparkles className="h-4 w-4" />
-              Limited Time Offers
-            </div>
-            
+
+        {/* ───────────────── Hero ───────────────── */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-14 md:py-20">
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            {promoActive && (
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                <Sparkles className="h-4 w-4" />
+                New customer special — {promoPercent}% off with code{' '}
+                <span className="font-mono tracking-wider">{promoCode}</span>
+              </div>
+            )}
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
-              Transparent Pricing,
+              Transparent pricing,
               <br />
-              <span className="text-primary">No Hidden Fees</span>
+              <span className="text-primary">no hidden fees</span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Professional cleaning services with upfront pricing. New customers get <span className="font-semibold text-success">up to 20% OFF</span> their first cleaning.
+              Flat, published rates for every home size. Pay in full at
+              checkout — no deposit, no balance invoice, no surprises.
             </p>
-            
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate('/')} className="gap-2">
-                Get Your Free Quote
+
+            {promoActive && sampleTier && sampleDeepSavings > 0 && (
+              <div className="inline-flex items-baseline gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3 mb-8 text-left">
+                <span className="text-sm text-muted-foreground">
+                  Deep Clean, {sampleTier.label.toLowerCase()}:
+                </span>
+                <span className="text-muted-foreground line-through">
+                  {formatPrice(sampleDeepOriginal)}
+                </span>
+                <span className="text-2xl font-bold text-primary">
+                  {formatPrice(sampleDeepAfter)}
+                </span>
+                <span className="text-xs text-primary font-semibold uppercase tracking-wider">
+                  save {formatPrice(sampleDeepSavings)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Button
+                size="lg"
+                onClick={() => navigate(`/book/zip?promo=${promoCode}`)}
+                className="gap-2"
+              >
+                Get your free quote
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => window.open('tel:+18577544557', '_self')} className="gap-2">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => window.open('tel:+18577544557', '_self')}
+                className="gap-2"
+              >
                 <Phone className="h-4 w-4" />
-                Call (857) 754-4557
+                (857) 754-4557
               </Button>
             </div>
+
+            <p className="text-xs text-muted-foreground mt-6 inline-flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Trained, insured team · Secure payment via Stripe · Serving
+              New York State
+            </p>
           </div>
         </section>
 
-        {/* Promotional Banner */}
-        <section className="bg-gradient-to-r from-success/10 via-primary/10 to-success/10 border-y py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card className="border-success/30 bg-success/5">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-center md:text-left">
-                   <Badge className="bg-success text-success-foreground text-2xl px-6 py-3 whitespace-nowrap">Up to 20% OFF</Badge>
-                   <div>
-                     <h3 className="font-bold text-xl md:text-2xl text-foreground mb-1">New Customer Special: Up to 20% OFF Your First Cleaning!</h3>
-                     <p className="text-sm md:text-base text-muted-foreground">10% off Standard Clean, 20% off Deep Clean & Move-In/Out. First-time customers only.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Service Area */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              Serving New York State
-            </h2>
-            <Badge variant="outline" className="px-4 py-2 text-sm font-semibold">
-              NYC • Long Island • Hudson Valley • Upstate
+        {/* ───────────── Rate card (one-time) ───────────── */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col sm:flex-row items-baseline justify-between gap-3 mb-6">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+                Rate card
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Prices shown are the full service price for a one-time
+                cleaning. {promoActive ? `First-time customers save ${promoPercent}% at checkout with code ` : ''}
+                {promoActive && (
+                  <span className="font-mono tracking-wider text-primary font-semibold">
+                    {promoCode}
+                  </span>
+                )}
+                .
+              </p>
+            </div>
+            <Badge
+              variant="outline"
+              className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+            >
+              NY · NYC · Long Island · Hudson Valley · Upstate
             </Badge>
           </div>
-        </section>
 
-        {/* Pricing Table */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="font-semibold">Home Size</TableHead>
-                      <TableHead className="font-semibold">Standard Clean</TableHead>
+                      <TableHead className="font-semibold">Home size</TableHead>
+                      <TableHead className="font-semibold">
+                        Standard Clean
+                      </TableHead>
                       <TableHead className="font-semibold">Deep Clean</TableHead>
-                      <TableHead className="font-semibold">Move-In/Out</TableHead>
+                      <TableHead className="font-semibold">
+                        Move-In / Move-Out
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {bookableTiers.map((tier) => {
-                       const regularOriginal = tier.regular;
-                       const regularDiscounted = Math.round(tier.regular * 0.90);
-                       const deepOriginal = tier.deep;
-                       const deepDiscounted = Math.round(tier.deep * 0.80);
-                       const moveInOutOriginal = tier.moveInOut;
-                       const moveInOutDiscounted = Math.round(tier.moveInOut * 0.80);
-                       
+                    {bookableTiers.map((tier) => {
+                      const regPreview = previewPromoDiscount(tier.regular);
+                      const deepPreview = previewPromoDiscount(tier.deep);
+                      const movePreview = previewPromoDiscount(tier.moveInOut);
                       return (
                         <TableRow key={tier.id} className="hover:bg-muted/30">
                           <TableCell className="font-medium">
@@ -129,54 +219,37 @@ export default function Pricing() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {formatPrice(regularOriginal)}
-                                </span>
-                                <span className="text-lg font-bold text-success">
-                                  {formatPrice(regularDiscounted)}
-                                </span>
-                                 <Badge variant="secondary" className="bg-success/10 text-success text-xs">
-                                   10% OFF
-                                 </Badge>
-                              </div>
-                            </div>
+                            <PriceCell
+                              list={tier.regular}
+                              after={regPreview.total}
+                              save={regPreview.amount}
+                              promoActive={promoActive}
+                              promoPercent={promoPercent}
+                            />
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {formatPrice(deepOriginal)}
-                                </span>
-                                <span className="text-lg font-bold text-warning">
-                                  {formatPrice(deepDiscounted)}
-                                </span>
-                                 <Badge variant="secondary" className="bg-warning/10 text-warning text-xs">
-                                   20% OFF
-                                 </Badge>
-                              </div>
-                            </div>
+                            <PriceCell
+                              list={tier.deep}
+                              after={deepPreview.total}
+                              save={deepPreview.amount}
+                              promoActive={promoActive}
+                              promoPercent={promoPercent}
+                              accent
+                            />
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {formatPrice(moveInOutOriginal)}
-                                </span>
-                                <span className="text-lg font-bold text-primary">
-                                  {formatPrice(moveInOutDiscounted)}
-                                </span>
-                                 <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                   20% OFF
-                                 </Badge>
-                              </div>
-                            </div>
+                            <PriceCell
+                              list={tier.moveInOut}
+                              after={movePreview.total}
+                              save={movePreview.amount}
+                              promoActive={promoActive}
+                              promoPercent={promoPercent}
+                            />
                           </TableCell>
                         </TableRow>
                       );
                     })}
-                    
+
                     {customQuoteTier && (
                       <TableRow className="bg-accent/5">
                         <TableCell className="font-medium">
@@ -186,9 +259,15 @@ export default function Pricing() {
                           </div>
                         </TableCell>
                         <TableCell colSpan={3}>
-                          <Badge variant="outline" className="text-sm">
-                            Custom Quote Required - Call (857) 754-4557
-                          </Badge>
+                          <span className="text-sm">
+                            Custom quote — call{' '}
+                            <a
+                              href="tel:+18577544557"
+                              className="font-semibold text-primary"
+                            >
+                              (857) 754-4557
+                            </a>
+                          </span>
                         </TableCell>
                       </TableRow>
                     )}
@@ -197,228 +276,423 @@ export default function Pricing() {
               </div>
             </CardContent>
           </Card>
+
+          <p className="text-xs text-muted-foreground mt-3">
+            Add-ons (interior windows, extra bedrooms / bathrooms beyond the
+            base plan) are priced transparently on the quote builder at
+            checkout.
+          </p>
         </section>
 
-        {/* Recurring Services Pricing */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-            Recurring Service Pricing
-            <span className="block text-base font-normal text-muted-foreground mt-2">
-              Save even more with recurring cleanings (Standard Clean only)
-            </span>
-          </h2>
-          
-          <Accordion type="single" collapsible className="space-y-3">
-            {bookableTiers.map((tier) => {
-              const recurring = calculateRecurringPricing(tier.regular);
-              
-              return (
-                <AccordionItem key={tier.id} value={tier.id} className="border rounded-lg px-4">
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold">{tier.label}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                      <Card className="border-primary/20">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Zap className="h-4 w-4 text-primary" />
-                            <h4 className="font-semibold text-foreground">Weekly</h4>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-2xl font-bold text-primary">{formatPrice(recurring.weeklyPerClean)}/clean</p>
-                            <p className="text-sm text-muted-foreground">4× per month = {formatPrice(recurring.weeklyMonthly)}/mo</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card className="border-primary/20">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Droplets className="h-4 w-4 text-primary" />
-                            <h4 className="font-semibold text-foreground">Bi-Weekly</h4>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-2xl font-bold text-primary">{formatPrice(recurring.biWeeklyPerClean)}/clean</p>
-                            <p className="text-sm text-muted-foreground">2× per month = {formatPrice(recurring.biWeeklyMonthly)}/mo</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card className="border-primary/20">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Home className="h-4 w-4 text-primary" />
-                            <h4 className="font-semibold text-foreground">Monthly</h4>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-2xl font-bold text-primary">{formatPrice(recurring.monthlyPerClean)}/clean</p>
-                            <p className="text-sm text-muted-foreground">1× per month = {formatPrice(recurring.monthlyMonthly)}/mo</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </section>
-
-        {/* What's Included */}
+        {/* ───────── Recurring maintenance lane ───────── */}
         <section className="bg-muted/30 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-10">
-              What's Included in Each Service
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-foreground">Standard Cleaning</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    {['Dusting all surfaces', 'Vacuum all floors', 'Mop hard floors', 'Clean bathrooms', 'Clean kitchen', 'Empty trash'].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-foreground">Deep Cleaning</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    {['Everything in Standard', 'Baseboards cleaning', 'Inside appliances', 'Light fixtures', 'Window sills', 'Detailed scrubbing'].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-foreground">Move-In/Out</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    {['Everything in Deep Clean', 'Inside cabinets', 'Wall cleaning', 'Door frames', 'Complete sanitization', 'Ready for inspection'].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                Recurring maintenance
+              </h2>
+              <p className="text-muted-foreground">
+                Book a recurring cadence after your first deep clean and lock
+                in the same trusted cleaning team at a lower per-visit rate.
+                No long-term contract — pause or cancel any time.
+              </p>
             </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold">
+                          Home size
+                        </TableHead>
+                        <TableHead className="font-semibold">
+                          Weekly
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                            Save 15%
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold">
+                          Bi-weekly
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                            Save 10% · Most popular
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold">
+                          Monthly
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                            Save 5%
+                          </div>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bookableTiers.map((tier) => {
+                        const perVisit = tier.regular;
+                        const weekly = Math.round(perVisit * 0.85);
+                        const biweekly = Math.round(perVisit * 0.9);
+                        const monthly = Math.round(perVisit * 0.95);
+                        return (
+                          <TableRow key={tier.id} className="hover:bg-muted/30">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <Home className="h-4 w-4 text-muted-foreground" />
+                                {tier.label}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-lg font-bold">
+                                {formatPrice(weekly)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                / visit · {formatPrice(weekly * 4)}/mo
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-lg font-bold">
+                                {formatPrice(biweekly)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                / visit · {formatPrice(biweekly * 2)}/mo
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-lg font-bold">
+                                {formatPrice(monthly)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                / visit · {formatPrice(monthly)}/mo
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <p className="text-xs text-muted-foreground mt-3">
+              Recurring rates apply after the first full-price Deep Clean (or
+              the first Standard Clean if you skip the deep). Billed
+              per-visit, auto-paused on cancellation.
+            </p>
           </div>
         </section>
 
-        {/* Trust Indicators */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { title: '100% Satisfaction', subtitle: 'Guaranteed' },
-              { title: 'No Hidden Fees', subtitle: 'Transparent Pricing' },
-              { title: 'Professional', subtitle: 'Trained Cleaners' },
-              { title: 'Eco-Friendly', subtitle: 'Products Available' }
-            ].map((item) => (
-              <div key={item.title} className="space-y-1">
-                <h3 className="font-semibold text-foreground">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.subtitle}</p>
-              </div>
-            ))}
+        {/* ─────────── Service comparison ─────────── */}
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              What's included
+            </h2>
+            <p className="text-muted-foreground">
+              Every cleaning — whatever the type — comes with trained,
+              insured AlphaLux team members, eco-friendly products, and a
+              100% satisfaction guarantee.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <ServiceCard
+              title="Standard Clean"
+              subtitle="Keep-it-tidy maintenance"
+              priceHint={`From ${formatPrice(bookableTiers[0]?.regular)}`}
+              tone="neutral"
+              items={[
+                'Dust all reachable surfaces',
+                'Vacuum carpets + rugs',
+                'Mop hard floors',
+                'Sanitize kitchen counters + sink',
+                'Sanitize bathrooms',
+                'Empty trash + general tidy',
+              ]}
+            />
+            <ServiceCard
+              title="Deep Clean"
+              subtitle="Top-to-bottom reset"
+              priceHint={`From ${formatPrice(bookableTiers[0]?.deep)}`}
+              tone="primary"
+              items={[
+                'Everything in Standard Clean',
+                'Baseboards + door frames',
+                'Inside appliances on request',
+                'Light fixtures + ceiling fans',
+                'Window sills + tracks',
+                'Detailed scrub of bathrooms',
+              ]}
+            />
+            <ServiceCard
+              title="Move-In / Move-Out"
+              subtitle="Empty-home detail"
+              priceHint={`From ${formatPrice(bookableTiers[0]?.moveInOut)}`}
+              tone="gold"
+              items={[
+                'Everything in Deep Clean',
+                'Inside all cabinets + drawers',
+                'Inside oven + fridge',
+                'Wall spot cleaning',
+                'Door frames + closets',
+                'Ready for walkthrough',
+              ]}
+            />
           </div>
         </section>
 
-        {/* FAQ */}
-        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* ───────────── Trust strip ───────────── */}
+        <section className="bg-muted/30 py-10">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <TrustItem
+              icon={ShieldCheck}
+              title="100% guarantee"
+              subtitle="We'll fix it or refund"
+            />
+            <TrustItem
+              icon={BadgePercent}
+              title="No hidden fees"
+              subtitle="Flat, published rates"
+            />
+            <TrustItem
+              icon={Clock}
+              title="Flexible scheduling"
+              subtitle="Morning to evening slots"
+            />
+            <TrustItem
+              icon={Sprout}
+              title="Eco-friendly"
+              subtitle="Low-tox products"
+            />
+          </div>
+        </section>
+
+        {/* ───────────── FAQ ───────────── */}
+        <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-8">
-            Frequently Asked Questions
+            Frequently asked
           </h2>
-          
+
           <Accordion type="single" collapsible className="space-y-3">
-            <AccordionItem value="how-calculated" className="border rounded-lg px-4">
+            <AccordionItem value="calculated" className="border rounded-lg px-4">
               <AccordionTrigger>How is pricing calculated?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Pricing is based on your home's square footage and the type of service you select. We offer Standard Cleaning, Deep Cleaning, and Move-In/Out services with transparent pricing for all home sizes.
+                We publish a flat rate per home size and service type — no
+                hourly surprises. Our quote builder at checkout lets you add
+                optional surcharges (interior windows, extra rooms beyond the
+                base plan) with transparent per-item pricing. What you see is
+                what you pay.
               </AccordionContent>
             </AccordionItem>
-            
+
             <AccordionItem value="difference" className="border rounded-lg px-4">
-              <AccordionTrigger>What's the difference between regular and deep cleaning?</AccordionTrigger>
+              <AccordionTrigger>
+                What's the difference between Standard and Deep?
+              </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Standard Cleaning covers daily maintenance tasks like dusting, vacuuming, and bathroom/kitchen cleaning. Deep Cleaning includes everything in Standard plus detailed work like baseboards, inside appliances, light fixtures, and thorough scrubbing of all surfaces.
+                Standard Clean covers day-to-day upkeep — dusting, vacuuming,
+                bathroom and kitchen surfaces. Deep Clean adds the detail
+                work: baseboards, inside appliances on request, light
+                fixtures, window sills, and a thorough scrub of every surface.
+                Most new customers start with a Deep Clean and then move to a
+                recurring Standard cadence.
               </AccordionContent>
             </AccordionItem>
-            
+
+            <AccordionItem value="deposit" className="border rounded-lg px-4">
+              <AccordionTrigger>Is there a deposit?</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                No. You pay the full service price at checkout (with any
+                promo applied). There's no hold, no pre-auth, and no follow-up
+                balance invoice after the cleaning — your booking is complete
+                when the payment goes through.
+              </AccordionContent>
+            </AccordionItem>
+
             <AccordionItem value="pets" className="border rounded-lg px-4">
               <AccordionTrigger>Do you charge extra for pets?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                No, we don't charge extra for pets! Our pricing already accounts for homes with pets. We just ask that you let us know during booking so our team can prepare accordingly.
+                No extra charge for pets — just let us know during booking so
+                the team arrives prepared with the right setup.
               </AccordionContent>
             </AccordionItem>
-            
+
             <AccordionItem value="cancellation" className="border rounded-lg px-4">
-              <AccordionTrigger>What's your cancellation policy?</AccordionTrigger>
+              <AccordionTrigger>
+                What's your cancellation policy?
+              </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                We require 24 hours notice for cancellations. Cancellations made less than 24 hours before your scheduled service may be subject to a cancellation fee.
+                Free rescheduling or cancellation up to 24 hours before your
+                service. Same-day cancellations are subject to a 25% fee to
+                cover crew scheduling.
               </AccordionContent>
             </AccordionItem>
-            
-            <AccordionItem value="deposit" className="border rounded-lg px-4">
-              <AccordionTrigger>Is there a deposit required?</AccordionTrigger>
+
+            <AccordionItem value="payment" className="border rounded-lg px-4">
+              <AccordionTrigger>How do I pay?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                Yes, we require a 25% deposit to book your service. The remaining 75% is due after service completion. This helps us confirm your appointment and ensure our cleaners are ready for your home.
+                Securely via Stripe at the end of the booking flow — all
+                major cards + Apple Pay + Google Pay are accepted. We never
+                see or store your card number; Stripe handles the full
+                transaction.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
         </section>
 
-        {/* Bottom CTA */}
-        <section className="bg-gradient-to-br from-primary to-accent text-primary-foreground py-16">
+        {/* ───────────── Bottom CTA ───────────── */}
+        <section className="bg-gradient-to-br from-primary to-accent text-primary-foreground py-14">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to Book Your Cleaning?
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              Ready to book your cleaning?
             </h2>
             <p className="text-lg mb-8 opacity-90">
-              Get started with a free quote or call us directly to schedule your service
+              {promoActive
+                ? `Start with a free quote — ${promoPercent}% off with code ${promoCode} locks in automatically for new customers.`
+                : 'Start with a free quote. No deposit, no contracts, no surprises.'}
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                size="lg"
                 variant="secondary"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(`/book/zip?promo=${promoCode}`)}
                 className="gap-2"
               >
-                Book Your Cleaning Now
+                Book now
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 onClick={() => window.open('tel:+18577544557', '_self')}
                 className="gap-2 bg-white/10 hover:bg-white/20 border-white/30 text-white"
               >
                 <Phone className="h-4 w-4" />
-                Call (857) 754-4557
+                (857) 754-4557
               </Button>
             </div>
-            
-            <p className="text-sm mt-6 opacity-75">
-              Only 25% deposit required • Pay remaining 75% after service completion
+
+            <p className="text-xs mt-6 opacity-75 inline-flex items-center gap-2">
+              <CreditCard className="h-3.5 w-3.5" />
+              Pay the full service price at checkout. No deposit, no balance
+              invoice.
             </p>
           </div>
         </section>
       </div>
     </>
+  );
+}
+
+function PriceCell({
+  list,
+  after,
+  save,
+  promoActive,
+  promoPercent,
+  accent,
+}: {
+  list: number;
+  after: number;
+  save: number;
+  promoActive: boolean;
+  promoPercent: number;
+  accent?: boolean;
+}) {
+  const showSavings = promoActive && save > 0;
+  const primaryClass = accent ? 'text-primary' : 'text-foreground';
+  return (
+    <div className="flex flex-col gap-0.5">
+      {showSavings ? (
+        <>
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs text-muted-foreground line-through">
+              {formatPrice(list)}
+            </span>
+            <span className={`text-lg font-bold ${primaryClass}`}>
+              {formatPrice(after)}
+            </span>
+            <Badge
+              variant="secondary"
+              className="bg-primary/10 text-primary text-[10px] font-semibold"
+            >
+              {promoPercent}% off
+            </Badge>
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            You save {formatPrice(save)}
+          </div>
+        </>
+      ) : (
+        <span className={`text-lg font-bold ${primaryClass}`}>
+          {formatPrice(list)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ServiceCard({
+  title,
+  subtitle,
+  priceHint,
+  items,
+  tone,
+}: {
+  title: string;
+  subtitle: string;
+  priceHint: string;
+  items: string[];
+  tone: 'neutral' | 'primary' | 'gold';
+}) {
+  const toneClasses =
+    tone === 'primary'
+      ? 'border-primary/40 bg-primary/5'
+      : tone === 'gold'
+        ? 'border-alx-gold/40 bg-alx-gold/5'
+        : 'border-border bg-card';
+  const checkClass =
+    tone === 'primary'
+      ? 'text-primary'
+      : tone === 'gold'
+        ? 'text-alx-gold-dark'
+        : 'text-success';
+  return (
+    <Card className={`border-2 ${toneClasses}`}>
+      <CardContent className="p-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-1">{priceHint}</p>
+        </div>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          {items.map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <Check className={`h-4 w-4 ${checkClass} mt-0.5 flex-shrink-0`} />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TrustItem({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: typeof ShieldCheck;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <Icon className="h-6 w-6 text-primary mx-auto mb-1" />
+      <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
+    </div>
   );
 }
