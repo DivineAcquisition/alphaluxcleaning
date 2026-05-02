@@ -15,6 +15,20 @@ const corsHeaders = {
  * or holds an unknown id (legacy bookings).
  */
 const TIME_SLOT_WINDOWS: Record<string, string> = {
+  // ── Active (2026-05-02): hourly arrival windows with a 2-hour
+  //    crew service window. The HCP schedule uses start+end, so
+  //    the "arrival" label (1-hour) is expanded to the full
+  //    service window here (2-hour). ──
+  arr_9am: "09:00-11:00",
+  arr_10am: "10:00-12:00",
+  arr_11am: "11:00-13:00",
+  arr_12pm: "12:00-14:00",
+  arr_1pm: "13:00-15:00",
+  arr_2pm: "14:00-16:00",
+  arr_3pm: "15:00-17:00",
+  arr_4pm: "16:00-18:00",
+  arr_5pm: "17:00-19:00",
+  // ── Legacy two-hour blocks ──
   early_morning: "07:00-09:00",
   morning: "09:00-11:00",
   late_morning: "11:00-13:00",

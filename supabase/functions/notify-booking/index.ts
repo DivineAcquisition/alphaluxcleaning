@@ -46,6 +46,17 @@ const corsHeaders = {
 // `src/components/booking/OfferDateTimePicker.tsx` so the
 // notification reads the same arrival window the customer saw.
 const TIME_SLOT_LABELS: Record<string, string> = {
+  // ── Active (2026-05-02): hourly arrival windows 9 AM – 5 PM ──
+  arr_9am: "9 AM · 9–10 AM arrival",
+  arr_10am: "10 AM · 10–11 AM arrival",
+  arr_11am: "11 AM · 11 AM–12 PM arrival",
+  arr_12pm: "12 PM · 12–1 PM arrival",
+  arr_1pm: "1 PM · 1–2 PM arrival",
+  arr_2pm: "2 PM · 2–3 PM arrival",
+  arr_3pm: "3 PM · 3–4 PM arrival",
+  arr_4pm: "4 PM · 4–5 PM arrival",
+  arr_5pm: "5 PM · 5–6 PM arrival (latest start)",
+  // ── Legacy two-hour blocks ──
   early_morning: "Early Morning · 7–9 AM",
   morning: "Morning · 9–11 AM",
   late_morning: "Late Morning · 11 AM–1 PM",
