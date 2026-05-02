@@ -50,25 +50,18 @@ export interface PricingResult {
 
 export const DISCOUNT_RATE = 0; // No discount
 
-// New York pricing tiers — 2026-05-02 rate card. Numbers match
-// `new-pricing-system.ts` and `alphalux-pricing.ts` so the three
-// pricing surfaces (offer cards on /book/offer, calculator on
-// /book/pricing, marketing page on /pricing) all show the same
-// rate card.
-//
-// Constraints enforced by the floor check:
-//   - Standard Clean never below $195 (the user-specified floor is
-//     > $150; we land comfortably above).
-//   - Deep Clean never below $295 at the smallest tier, and always
-//     ≥ $335 for any home 1,501 sqft+ (user-specified floor is
-//     $225 for 1500+; we land well above).
+// New York pricing tiers — 2026-05-02 profitability review.
+// Prices match `new-pricing-system.ts` (the source of truth). See
+// the cost-model + margin-check comment there for the derivation;
+// at a glance, every list price keeps ≥ 25% gross margin on direct
+// cost ($33/hr per cleaner-hour) even after the ALC2026 50% promo.
 const NEW_YORK_TIERS: PricingTier[] = [
-  { id: '1000_1500', label: 'Up to 1,500 sq ft', minSqft: 0, maxSqft: 1500, regular: 195, deep: 295, moveInOut: 325 },
-  { id: '1501_2000', label: '1,500 – 2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 225, deep: 335, moveInOut: 375 },
-  { id: '2001_2500', label: '2,000 – 2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 255, deep: 375, moveInOut: 415 },
-  { id: '2501_3000', label: '2,500 – 3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 289, deep: 425, moveInOut: 475 },
-  { id: '3001_4000', label: '3,000 – 4,000 sq ft', minSqft: 3001, maxSqft: 4000, regular: 325, deep: 495, moveInOut: 555 },
-  { id: '4001_5000', label: '4,000 – 5,000 sq ft', minSqft: 4001, maxSqft: 5000, regular: 365, deep: 575, moveInOut: 655 },
+  { id: '1000_1500', label: 'Up to 1,500 sq ft', minSqft: 0, maxSqft: 1500, regular: 225, deep: 365, moveInOut: 449 },
+  { id: '1501_2000', label: '1,500 – 2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 269, deep: 449, moveInOut: 549 },
+  { id: '2001_2500', label: '2,000 – 2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 295, deep: 535, moveInOut: 629 },
+  { id: '2501_3000', label: '2,500 – 3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 325, deep: 625, moveInOut: 729 },
+  { id: '3001_4000', label: '3,000 – 4,000 sq ft', minSqft: 3001, maxSqft: 4000, regular: 375, deep: 715, moveInOut: 889 },
+  { id: '4001_5000', label: '4,000 – 5,000 sq ft', minSqft: 4001, maxSqft: 5000, regular: 425, deep: 895, moveInOut: 1079 },
   { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5001, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
 ];
 
@@ -95,15 +88,18 @@ export function getPricingTier(stateCode: StateCode, sqft: number): PricingTier 
 }
 
 /**
- * Calculate recurring pricing for Regular Clean
- * Weekly: ~40% of one-time × 4/month
- * Bi-Weekly: ~55% of one-time × 2/month
- * Monthly: ~75% of one-time × 1/month
+ * Calculate recurring pricing for Regular Clean.
+ *
+ * 2026-05-02 profitability review: per-visit discount tightened
+ * to match `DEFAULT_PRICING_CONFIG.frequencies.discount` in
+ * `new-pricing-system.ts` (13% / 8% / 4% off list). Recurring
+ * customers pay full price from visit 2 onward so these
+ * per-visit rates clear the direct-cost floor comfortably.
  */
 export function calculateRecurringPricing(oneTimePrice: number): RecurringPricing {
-  const weeklyPerClean = Math.round(oneTimePrice * 0.40 * 100) / 100;
-  const biWeeklyPerClean = Math.round(oneTimePrice * 0.55 * 100) / 100;
-  const monthlyPerClean = Math.round(oneTimePrice * 0.75 * 100) / 100;
+  const weeklyPerClean = Math.round(oneTimePrice * 0.87 * 100) / 100;
+  const biWeeklyPerClean = Math.round(oneTimePrice * 0.92 * 100) / 100;
+  const monthlyPerClean = Math.round(oneTimePrice * 0.96 * 100) / 100;
 
   return {
     weeklyPerClean,

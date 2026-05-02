@@ -310,19 +310,19 @@ export default function Pricing() {
                         <TableHead className="font-semibold">
                           Weekly
                           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                            Save 15%
+                            Save 13%
                           </div>
                         </TableHead>
                         <TableHead className="font-semibold">
                           Bi-weekly
                           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                            Save 10% · Most popular
+                            Save 8% · Most popular
                           </div>
                         </TableHead>
                         <TableHead className="font-semibold">
                           Monthly
                           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                            Save 5%
+                            Save 4%
                           </div>
                         </TableHead>
                       </TableRow>
@@ -330,9 +330,9 @@ export default function Pricing() {
                     <TableBody>
                       {bookableTiers.map((tier) => {
                         const perVisit = tier.regular;
-                        const weekly = Math.round(perVisit * 0.85);
-                        const biweekly = Math.round(perVisit * 0.9);
-                        const monthly = Math.round(perVisit * 0.95);
+                        const weekly = Math.round(perVisit * 0.87);
+                        const biweekly = Math.round(perVisit * 0.92);
+                        const monthly = Math.round(perVisit * 0.96);
                         return (
                           <TableRow key={tier.id} className="hover:bg-muted/30">
                             <TableCell className="font-medium">

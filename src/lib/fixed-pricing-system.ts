@@ -4,13 +4,14 @@
  */
 
 // Static flat pricing — "small home" baseline from the 2026-05-02
-// rate card in `new-pricing-system.ts`. Kept in sync with the tier
-// table's smallest bucket (Up to 1,500 sq ft) so a `PRICING_MODE=fixed`
-// override never undercuts the published floor.
+// profitability review. Kept in sync with the tier table's
+// smallest bucket (Up to 1,500 sq ft) so a `PRICING_MODE=fixed`
+// override never undercuts the published floor or drops below
+// the cost-model threshold.
 export const FLAT_PRICING = {
-  regular: 195,
-  deep: 295,
-  moveInOut: 325,
+  regular: 225,
+  deep: 365,
+  moveInOut: 449,
 } as const;
 
 // Frequency multipliers for recurring services

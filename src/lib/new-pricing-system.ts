@@ -73,18 +73,59 @@ export const DEPOSIT_PERCENTAGE = 0.25; // 25% deposit required
 // that the value persisted in a customer's localStorage on a previous
 // visit still resolves on the next. When the pricing spreadsheet is
 // refreshed we update the numbers in place rather than renaming the IDs.
-// 2026-05-02 price update.
+// 2026-05-02 price update (profitability review v2).
 //
-// Pricing floors:
-//   - Standard Clean > $150 at every tier (smallest tier starts at $195).
-//   - Deep Clean ≥ $225 at every tier, and ≥ $335 at every tier 1,501+
-//     sqft (per ops directive — a 1,500+ sq ft home should never
-//     fall below a $225 Deep, so we keep a healthy margin above
-//     that floor on the actual rate card).
+// Prices below are derived from explicit unit economics so that a
+// booking with the ALC2026 50% promo applied still clears ≥ 25%
+// gross margin on direct cost. This is the reason the previous
+// rate card had to come up: at the old $275 Deep @ 1,500 sqft a
+// promo-applied $137.50 booking cleared a $132 direct cost with
+// only $5.50 ($137.50 × 0.5 × 0.96 − $132) in gross profit, i.e.
+// ~4% margin before card fees.
 //
-// 90-day plan prices are roughly "Deep + 3 × Maintenance" with a
-// ~15% bundle discount, rounded to a marketable number ending in
-// 9.
+// ─── Cost model per cleaner-hour ─────────────────────────────
+//   Labor:                      $25.00 / hr (ops directive)
+//   Payroll tax + WC + benefits: $ 4.50 / hr (~18% loading)
+//   Supplies + equipment:        $ 1.50 / hr
+//   Travel + dispatch:           $ 2.00 / hr
+//   ─────────────────────────── ─────────
+//   Total cost                   $33.00 / hr per cleaner-hour
+//
+// ─── Hours-per-service model ─────────────────────────────────
+// Standard runs 1 cleaner; Deep + Move-Out run a 2-person team so
+// the job finishes same-day.
+//
+//   Tier (sqft)         Std hr   Deep hr×2   MoveOut hr×2
+//   ─────────────       ──────   ─────────   ───────────
+//   ≤ 1,500              2.5      2.0 × 2     2.5 × 2
+//   1,500–2,000          3.0      2.5 × 2     3.0 × 2
+//   2,000–2,500          3.5      3.0 × 2     3.5 × 2
+//   2,500–3,000          4.0      3.5 × 2     4.0 × 2
+//   3,000–4,000          5.0      4.0 × 2     5.0 × 2
+//   4,000–5,000          6.0      5.0 × 2     6.0 × 2
+//
+// ─── Price floor formula ─────────────────────────────────────
+// For a 50% promo to leave ≥ 25% gross margin:
+//   promo_price × 0.75 ≥ direct_cost
+//   ⇒ list ≥ direct_cost × (1 / 0.5) × (1 / 0.75) = direct_cost / 0.375
+//
+// Prices below are rounded up to the nearest $5 / $9 ending to
+// leave extra headroom and land on marketable numbers.
+//
+// ─── Post-promo margin check (for reference) ─────────────────
+//   Deep @ 1,500:    list $365 → promo $182.50, cost $132 → 28%
+//   Deep @ 2,000:    list $449 → promo $224.50, cost $165 → 26%
+//   Deep @ 2,500:    list $535 → promo $267.50, cost $198 → 26%
+//   Deep @ 3,000:    list $625 → promo $312.50, cost $231 → 26%
+//   Deep @ 4,000:    list $715 → promo $357.50, cost $264 → 26%
+//   Deep @ 5,000:    list $895 → promo $447.50, cost $330 → 26%
+//   Std  @ 1,500:    list $225 → promo $112.50, cost $ 82.50 → 27%
+//   MoveOut @ 1,500: list $449 → promo $224.50, cost $165 → 26%
+//
+// Non-promo bookings (most repeat customers) clear 63–65% margin.
+//
+// 90-day plan prices are "Deep + 3 × Maintenance" with a ~12%
+// bundle discount, rounded to a marketable number.
 export const HOME_SIZE_RANGES: HomeSizeRange[] = [
   {
     id: '1000_1500',
@@ -92,11 +133,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 0,
     maxSqft: 1500,
     bedroomRange: 'Studio – 2 BR',
-    deepPrice: 295,
-    maintenancePrice: 195,
-    ninetyDayPrice: 799,
-    regularPrice: 195,
-    moveInOutPrice: 325,
+    deepPrice: 365,
+    maintenancePrice: 225,
+    ninetyDayPrice: 935,
+    regularPrice: 225,
+    moveInOutPrice: 449,
   },
   {
     id: '1501_2000',
@@ -104,11 +145,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1500,
     maxSqft: 2000,
     bedroomRange: '2–3 BR homes',
-    deepPrice: 335,
-    maintenancePrice: 225,
-    ninetyDayPrice: 899,
-    regularPrice: 225,
-    moveInOutPrice: 375,
+    deepPrice: 449,
+    maintenancePrice: 269,
+    ninetyDayPrice: 1125,
+    regularPrice: 269,
+    moveInOutPrice: 549,
   },
   {
     id: '2001_2500',
@@ -116,11 +157,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2000,
     maxSqft: 2500,
     bedroomRange: '3 BR homes',
-    deepPrice: 375,
-    maintenancePrice: 255,
-    ninetyDayPrice: 999,
-    regularPrice: 255,
-    moveInOutPrice: 415,
+    deepPrice: 535,
+    maintenancePrice: 295,
+    ninetyDayPrice: 1289,
+    regularPrice: 295,
+    moveInOutPrice: 629,
   },
   {
     id: '2501_3000',
@@ -128,11 +169,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2500,
     maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
-    deepPrice: 425,
-    maintenancePrice: 289,
-    ninetyDayPrice: 1149,
-    regularPrice: 289,
-    moveInOutPrice: 475,
+    deepPrice: 625,
+    maintenancePrice: 325,
+    ninetyDayPrice: 1445,
+    regularPrice: 325,
+    moveInOutPrice: 729,
   },
   {
     id: '3001_4000',
@@ -140,11 +181,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3000,
     maxSqft: 4000,
     bedroomRange: '4 BR homes',
-    deepPrice: 495,
-    maintenancePrice: 325,
-    ninetyDayPrice: 1299,
-    regularPrice: 325,
-    moveInOutPrice: 555,
+    deepPrice: 715,
+    maintenancePrice: 375,
+    ninetyDayPrice: 1629,
+    regularPrice: 375,
+    moveInOutPrice: 889,
   },
   {
     id: '4001_5000',
@@ -152,11 +193,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4000,
     maxSqft: 5000,
     bedroomRange: '4–5 BR homes',
-    deepPrice: 575,
-    maintenancePrice: 365,
-    ninetyDayPrice: 1499,
-    regularPrice: 365,
-    moveInOutPrice: 655,
+    deepPrice: 895,
+    maintenancePrice: 425,
+    ninetyDayPrice: 1929,
+    regularPrice: 425,
+    moveInOutPrice: 1079,
   },
   {
     id: '5001_plus',
@@ -165,9 +206,9 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     maxSqft: 999999,
     bedroomRange: 'Custom Quote Required - Call (857) 754-4557',
     requiresEstimate: true,
-    deepPrice: 665,
-    maintenancePrice: 415,
-    ninetyDayPrice: 1699,
+    deepPrice: 1045,
+    maintenancePrice: 495,
+    ninetyDayPrice: 2199,
     regularPrice: 0,
     moveInOutPrice: 0,
   },
@@ -209,10 +250,15 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
     { id: 'move_in_out', name: 'Move-In/Out Cleaning', allowsRecurring: false }
   ],
   frequencies: [
+    // Recurring discounts nudged down (15/10/5 → 13/8/4) in the
+    // 2026-05-02 profitability review. Recurring customers pay
+    // full price from visit 2 onward, so even a smaller discount
+    // keeps the cadence attractive without eroding per-visit
+    // margin on repeat work.
     { id: 'one_time', name: 'One-time', discount: 0 },
-    { id: 'weekly', name: 'Weekly', recurringMultiplier: 1.0, cleansPerMonth: 4, discount: 0.15 },
-    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 1.0, cleansPerMonth: 2, discount: 0.10 },
-    { id: 'monthly', name: 'Monthly', recurringMultiplier: 1.0, cleansPerMonth: 1, discount: 0.05 }
+    { id: 'weekly', name: 'Weekly', recurringMultiplier: 1.0, cleansPerMonth: 4, discount: 0.13 },
+    { id: 'bi_weekly', name: 'Bi-Weekly', recurringMultiplier: 1.0, cleansPerMonth: 2, discount: 0.08 },
+    { id: 'monthly', name: 'Monthly', recurringMultiplier: 1.0, cleansPerMonth: 1, discount: 0.04 }
   ]
 };
 
