@@ -25,24 +25,37 @@ export interface SqftPricePoint {
 }
 
 /**
- * Deep Clean base ladder. Above 1500 sqft the spreadsheet uses
- * `price = 275 + (sqft - 1500) * 0.10`, so we interpolate linearly
- * from the last anchor point when the home is larger than any listed
- * tier.
+ * Deep Clean base ladder — updated 2026-05-02 to match the new
+ * rate card in `new-pricing-system.ts`. The ladder anchors to the
+ * same tier boundaries (1500 / 2000 / 2500 / 3000 / 4000 / 5000)
+ * so a square-foot slider on /book/pricing produces the same
+ * number the /book/offer cards and the /pricing rate card show.
+ *
+ * Above 5000 sqft we extrapolate at $0.18 per extra sqft (up from
+ * $0.10 pre-update) to align the "Custom Quote Required" tier
+ * with our post-increase floor.
  */
 export const DEEP_CLEAN_LADDER: SqftPricePoint[] = [
-  { uptoSqft: 1100, price: 200 },
-  { uptoSqft: 1500, price: 275 },
+  { uptoSqft: 1500, price: 295 },
+  { uptoSqft: 2000, price: 335 },
+  { uptoSqft: 2500, price: 375 },
+  { uptoSqft: 3000, price: 425 },
+  { uptoSqft: 4000, price: 495 },
+  { uptoSqft: 5000, price: 575 },
 ];
 
-export const DEEP_CLEAN_PER_SQFT_ABOVE_1500 = 0.1;
+export const DEEP_CLEAN_PER_SQFT_ABOVE_1500 = 0.18;
 
 export const MOVE_OUT_LADDER: SqftPricePoint[] = [
-  { uptoSqft: 1100, price: 225 },
-  { uptoSqft: 1500, price: 300 },
+  { uptoSqft: 1500, price: 325 },
+  { uptoSqft: 2000, price: 375 },
+  { uptoSqft: 2500, price: 415 },
+  { uptoSqft: 3000, price: 475 },
+  { uptoSqft: 4000, price: 555 },
+  { uptoSqft: 5000, price: 655 },
 ];
 
-export const MOVE_OUT_PER_SQFT_ABOVE_1500 = 0.1;
+export const MOVE_OUT_PER_SQFT_ABOVE_1500 = 0.2;
 
 /* ---------- Add-on surcharges ---------- */
 
@@ -298,24 +311,28 @@ export function calculateQuote(input: FullQuoteInput): FullQuoteResult {
 
 /* ---------- Public display tables (used by the UI step) ---------- */
 
+// Public display tables used by the `/book/pricing` calculator
+// reference section. Numbers mirror the tier card in
+// `new-pricing-system.ts` and the `/pricing` marketing page so all
+// three surfaces show one consistent rate card.
 export const DEEP_CLEAN_DISPLAY_TABLE = [
-  { label: 'Under 1,100 sq ft', sqftMax: 1100, price: 200 },
-  { label: '1,100 – 1,500 sq ft', sqftMax: 1500, price: 275 },
-  { label: '1,500 – 2,200 sq ft', sqftMax: 2200, price: 345 },
-  { label: '2,200 – 3,000 sq ft', sqftMax: 3000, price: 425 },
-  { label: '3,000 – 4,000 sq ft', sqftMax: 4000, price: 525 },
-  { label: '4,000 – 5,000 sq ft', sqftMax: 5000, price: 625 },
-  { label: '5,000+ sq ft', sqftMax: Infinity, price: 725 },
+  { label: 'Up to 1,500 sq ft', sqftMax: 1500, price: 295 },
+  { label: '1,500 – 2,000 sq ft', sqftMax: 2000, price: 335 },
+  { label: '2,000 – 2,500 sq ft', sqftMax: 2500, price: 375 },
+  { label: '2,500 – 3,000 sq ft', sqftMax: 3000, price: 425 },
+  { label: '3,000 – 4,000 sq ft', sqftMax: 4000, price: 495 },
+  { label: '4,000 – 5,000 sq ft', sqftMax: 5000, price: 575 },
+  { label: '5,000+ sq ft', sqftMax: Infinity, price: 665 },
 ];
 
 export const MOVE_OUT_DISPLAY_TABLE = [
-  { label: 'Under 1,100 sq ft', sqftMax: 1100, price: 225 },
-  { label: '1,100 – 1,500 sq ft', sqftMax: 1500, price: 300 },
-  { label: '1,500 – 2,000 sq ft', sqftMax: 2000, price: 350 },
-  { label: '2,000 – 3,000 sq ft', sqftMax: 3000, price: 450 },
-  { label: '3,000 – 4,000 sq ft', sqftMax: 4000, price: 550 },
-  { label: '4,000 – 5,000 sq ft', sqftMax: 5000, price: 650 },
-  { label: '5,000+ sq ft', sqftMax: Infinity, price: 750 },
+  { label: 'Up to 1,500 sq ft', sqftMax: 1500, price: 325 },
+  { label: '1,500 – 2,000 sq ft', sqftMax: 2000, price: 375 },
+  { label: '2,000 – 2,500 sq ft', sqftMax: 2500, price: 415 },
+  { label: '2,500 – 3,000 sq ft', sqftMax: 3000, price: 475 },
+  { label: '3,000 – 4,000 sq ft', sqftMax: 4000, price: 555 },
+  { label: '4,000 – 5,000 sq ft', sqftMax: 5000, price: 655 },
+  { label: '5,000+ sq ft', sqftMax: Infinity, price: 755 },
 ];
 
 export const HOURLY_DISPLAY_TABLE = [

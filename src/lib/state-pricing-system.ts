@@ -50,17 +50,26 @@ export interface PricingResult {
 
 export const DISCOUNT_RATE = 0; // No discount
 
-// New York pricing tiers (base: $175 regular, $265 deep, $275 move-in/out)
+// New York pricing tiers — 2026-05-02 rate card. Numbers match
+// `new-pricing-system.ts` and `alphalux-pricing.ts` so the three
+// pricing surfaces (offer cards on /book/offer, calculator on
+// /book/pricing, marketing page on /pricing) all show the same
+// rate card.
+//
+// Constraints enforced by the floor check:
+//   - Standard Clean never below $195 (the user-specified floor is
+//     > $150; we land comfortably above).
+//   - Deep Clean never below $295 at the smallest tier, and always
+//     ≥ $335 for any home 1,501 sqft+ (user-specified floor is
+//     $225 for 1500+; we land well above).
 const NEW_YORK_TIERS: PricingTier[] = [
-  { id: '1000_1500', label: '1,000–1,500 sq ft', minSqft: 1000, maxSqft: 1500, regular: 175, deep: 265, moveInOut: 275 },
-  { id: '1501_2000', label: '1,501–2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 205, deep: 305, moveInOut: 310 },
-  { id: '2001_2500', label: '2,001–2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 235, deep: 345, moveInOut: 345 },
-  { id: '2501_3000', label: '2,501–3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 265, deep: 385, moveInOut: 380 },
-  { id: '3001_3500', label: '3,001–3,500 sq ft', minSqft: 3001, maxSqft: 3500, regular: 295, deep: 425, moveInOut: 415 },
-  { id: '3501_4000', label: '3,501–4,000 sq ft', minSqft: 3501, maxSqft: 4000, regular: 325, deep: 465, moveInOut: 450 },
-  { id: '4001_4500', label: '4,001–4,500 sq ft', minSqft: 4001, maxSqft: 4500, regular: 355, deep: 505, moveInOut: 485 },
-  { id: '4501_5000', label: '4,501–5,000 sq ft', minSqft: 4501, maxSqft: 5000, regular: 385, deep: 545, moveInOut: 520 },
-  { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5000, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
+  { id: '1000_1500', label: 'Up to 1,500 sq ft', minSqft: 0, maxSqft: 1500, regular: 195, deep: 295, moveInOut: 325 },
+  { id: '1501_2000', label: '1,500 – 2,000 sq ft', minSqft: 1501, maxSqft: 2000, regular: 225, deep: 335, moveInOut: 375 },
+  { id: '2001_2500', label: '2,000 – 2,500 sq ft', minSqft: 2001, maxSqft: 2500, regular: 255, deep: 375, moveInOut: 415 },
+  { id: '2501_3000', label: '2,500 – 3,000 sq ft', minSqft: 2501, maxSqft: 3000, regular: 289, deep: 425, moveInOut: 475 },
+  { id: '3001_4000', label: '3,000 – 4,000 sq ft', minSqft: 3001, maxSqft: 4000, regular: 325, deep: 495, moveInOut: 555 },
+  { id: '4001_5000', label: '4,000 – 5,000 sq ft', minSqft: 4001, maxSqft: 5000, regular: 365, deep: 575, moveInOut: 655 },
+  { id: '5000_plus', label: '5,000+ sq ft', minSqft: 5001, maxSqft: 999999, regular: 0, deep: 0, moveInOut: 0 }
 ];
 
 // State configurations — New York only.
