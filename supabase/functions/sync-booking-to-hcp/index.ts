@@ -26,6 +26,8 @@ interface BookingPayload {
     frequency: string;
     sqft_range: string;
     addons?: string[];
+    rush?: boolean;
+    rush_upcharge?: number;
   };
   schedule: {
     date: string;
@@ -41,6 +43,7 @@ interface BookingPayload {
       name: string;
       price: number;
     }>;
+    rush_upcharge?: number;
   };
   source: string;
   special_instructions?: string;
@@ -539,6 +542,12 @@ async function createJob(
     `Service Type: ${payload.service.type}`,
     `Frequency: ${payload.service.frequency}`,
   ];
+  if (payload.service.rush || (payload.pricing.rush_upcharge ?? 0) > 0) {
+    const rushAmount = payload.pricing.rush_upcharge ?? payload.service.rush_upcharge ?? 0;
+    notes.unshift(
+      `⚡ RUSH / NEXT-DAY BOOKING — customer paid a +$${rushAmount.toFixed(0)} surcharge. Prioritize scheduling.`,
+    );
+  }
   if (payload.service.addons?.length) notes.push(`Add-ons: ${payload.service.addons.join(", ")}`);
   if (payload.special_instructions) notes.push(`Special Instructions: ${payload.special_instructions}`);
   if (payload.property_details?.pets) notes.push(`Pets: ${payload.property_details.pets}`);
@@ -561,11 +570,21 @@ async function createJob(
   // $137.50 service in earlier testing. We multiply once at the
   // boundary so the rest of the pricing breakdown stays in dollars.
   const lineItems: any[] = [];
+  const rushUpcharge = Math.max(
+    0,
+    Number(payload.pricing.rush_upcharge) ||
+      Number(payload.service.rush_upcharge) ||
+      0,
+  );
   let basePrice = payload.pricing.total;
   if (payload.pricing.addons_breakdown?.length) {
     const addonsTotal = payload.pricing.addons_breakdown.reduce((sum, addon) => sum + addon.price, 0);
-    basePrice = payload.pricing.total - addonsTotal;
+    basePrice -= addonsTotal;
   }
+  // Strip the rush surcharge off the base so the cleaning line
+  // item price matches the customer-facing "service cost" and the
+  // rush shows up as its own separately-reported line for ops.
+  if (rushUpcharge > 0) basePrice -= rushUpcharge;
   lineItems.push({
     name: `${payload.service.type[0].toUpperCase()}${payload.service.type.slice(1)} Clean - ${payload.service.sqft_range}`,
     description: `${payload.service.frequency} cleaning service`,
@@ -583,6 +602,16 @@ async function createJob(
         kind: "labor",
       });
     }
+  }
+  if (rushUpcharge > 0) {
+    lineItems.push({
+      name: "Next-Day Rush Booking",
+      description:
+        "Priority scheduling — customer opted into the next-day upsell at checkout.",
+      quantity: 1,
+      unit_price: Math.round(rushUpcharge * 100),
+      kind: "labor",
+    });
   }
 
   const jobTags = [

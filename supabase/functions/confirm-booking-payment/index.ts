@@ -118,6 +118,22 @@ function buildHcpPayload(booking: any, customer: any) {
       ? String(booking.full_name).split(" ").slice(1).join(" ")
       : "");
 
+  // Rush / next-day surcharge. Rendered as an explicit HCP line
+  // item so dispatch + billing see it distinct from the cleaning
+  // service, and pre-pended to the crew notes so the scheduler
+  // knows to prioritize the job.
+  const rushUpcharge = Math.max(
+    0,
+    Number(pricingBreakdown?.rushUpcharge) || 0,
+  );
+  const customerNotes = String(
+    booking?.special_instructions || booking?.notes || "",
+  ).trim();
+  const rushNote = rushUpcharge > 0
+    ? `[RUSH / NEXT-DAY BOOKING — +$${rushUpcharge.toFixed(0)} surcharge charged]`
+    : "";
+  const composedNotes = [rushNote, customerNotes].filter(Boolean).join("\n\n");
+
   return {
     booking_id: booking.id,
     customer: {
@@ -138,6 +154,11 @@ function buildHcpPayload(booking: any, customer: any) {
       frequency: booking?.frequency || "one_time",
       sqft_range: booking?.sqft_or_bedrooms || booking?.home_size || "",
       addons: addonNames,
+      // Include the rush flag in the service block so sync-booking-to-hcp
+      // can render a distinct "Next-Day Rush Booking" line item on
+      // the HCP job without needing to re-parse pricing_breakdown.
+      rush: rushUpcharge > 0,
+      rush_upcharge: rushUpcharge,
     },
     schedule: {
       date: service_date || "",
@@ -150,9 +171,10 @@ function buildHcpPayload(booking: any, customer: any) {
       arr_est: Number(booking?.arr) || 0,
       currency: "USD",
       addons_breakdown: addonsBreakdown,
+      rush_upcharge: rushUpcharge,
     },
     source: booking?.source_channel || booking?.source || "UI_DIRECT",
-    special_instructions: booking?.special_instructions || booking?.notes || "",
+    special_instructions: composedNotes,
     property_details: booking?.property_details || undefined,
     first_booking: Boolean(booking?.first_booking),
     recurring_active: Boolean(booking?.recurring_active),
