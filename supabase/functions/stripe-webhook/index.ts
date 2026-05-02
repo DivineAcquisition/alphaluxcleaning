@@ -260,6 +260,120 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     logStep("Failed to send payment receipt", { error: (receiptError as Error).message });
   }
 
+  // ── Server-side fan-out to GHL / HCP / Slack ──
+  //
+  // Historically this webhook only updated the DB row and sent the
+  // receipt email; the rest of the integration fan-out (GHL,
+  // Housecall Pro, Slack, booking-tracker sheet) ran from the
+  // **client** via confirm-booking-payment. That meant any user
+  // who closed the tab before the client finished posting — or
+  // who hit a 3-D-S race condition — had a paid booking in
+  // Stripe that never showed up in GHL or HCP (see Anya K's
+  // incident on 2026-04-28).
+  //
+  // Stripe's webhooks are the only guarantee a payment actually
+  // succeeded, so this is the right place to kick off the fan-out.
+  // Each dispatch is fire-and-forget + idempotent:
+  //
+  //   * enhanced-booking-webhook-v2 is keyed by booking_id and
+  //     posts the same payload twice safely.
+  //   * sync-booking-to-hcp upserts into hcp_sync_log by
+  //     booking_id (UNIQUE constraint added 2026-04-25).
+  //   * notify-booking's tracker Apps Script locates the row by
+  //     booking_id and updates instead of appending.
+  try {
+    const v2Result = await supabaseClient.functions.invoke('enhanced-booking-webhook-v2', {
+      body: { booking_id: booking.id, trigger_event: 'payment_confirmed' },
+    });
+    if (v2Result.error) {
+      logStep('enhanced-booking-webhook-v2 error', { error: v2Result.error });
+    } else {
+      logStep('enhanced-booking-webhook-v2 dispatched');
+    }
+  } catch (ghlError) {
+    logStep('enhanced-booking-webhook-v2 threw', { error: (ghlError as Error).message });
+  }
+
+  try {
+    // Re-fetch the joined customer + booking so the HCP payload
+    // has the latest address / phone after the update above.
+    const { data: joined } = await supabaseClient
+      .from('bookings')
+      .select('*, customers!customer_id(*)')
+      .eq('id', booking.id)
+      .maybeSingle();
+    if (joined) {
+      const c = joined.customers || {};
+      const hcpPayload = {
+        booking_id: joined.id,
+        customer: {
+          first_name: c.first_name || (joined.full_name || '').split(' ')[0] || 'Customer',
+          last_name: c.last_name || (joined.full_name || '').split(' ').slice(1).join(' '),
+          email: c.email || '',
+          phone: c.phone || '',
+        },
+        address: {
+          line1: joined.address_line1 || c.address_line1 || '',
+          line2: joined.address_line2 || c.address_line2 || '',
+          city: c.city || joined.city || '',
+          state: c.state || joined.state || 'NY',
+          postal_code: c.postal_code || joined.zip_code || '',
+        },
+        service: {
+          type: joined.service_type || 'deep',
+          frequency: joined.frequency || 'one_time',
+          sqft_range: joined.sqft_or_bedrooms || joined.home_size || '',
+          addons: Array.isArray(joined.addons)
+            ? joined.addons.map((a: any) => (typeof a === 'string' ? a : a?.name)).filter(Boolean)
+            : [],
+          rush: Number(joined.pricing_breakdown?.rushUpcharge || 0) > 0,
+          rush_upcharge: Number(joined.pricing_breakdown?.rushUpcharge || 0),
+        },
+        schedule: {
+          date: joined.service_date || '',
+          time_window: joined.time_slot || '',
+          timezone: joined.timezone || 'America/New_York',
+        },
+        pricing: {
+          total:
+            Number(joined.pricing_breakdown?.finalPrice) ||
+            Number(joined.base_price) ||
+            Number(joined.est_price) ||
+            0,
+          currency: 'USD',
+          rush_upcharge: Number(joined.pricing_breakdown?.rushUpcharge || 0),
+        },
+        source: joined.source || 'UI_DIRECT',
+        special_instructions: joined.special_instructions || '',
+        first_booking: Boolean(joined.first_booking),
+        recurring_active: Boolean(joined.recurring_active),
+      };
+      const hcpResult = await supabaseClient.functions.invoke('sync-booking-to-hcp', {
+        body: hcpPayload,
+      });
+      if (hcpResult.error) {
+        logStep('sync-booking-to-hcp error', { error: hcpResult.error });
+      } else {
+        logStep('sync-booking-to-hcp dispatched', { data: hcpResult.data });
+      }
+    }
+  } catch (hcpError) {
+    logStep('sync-booking-to-hcp threw', { error: (hcpError as Error).message });
+  }
+
+  try {
+    const notifyResult = await supabaseClient.functions.invoke('notify-booking', {
+      body: { bookingId: booking.id, event: 'payment_confirmed' },
+    });
+    if (notifyResult.error) {
+      logStep('notify-booking error', { error: notifyResult.error });
+    } else {
+      logStep('notify-booking dispatched');
+    }
+  } catch (notifyError) {
+    logStep('notify-booking threw', { error: (notifyError as Error).message });
+  }
+
   // Trigger balance invoice if there's a remaining balance and one hasn't been created yet
   // (Idempotent: confirm-booking-payment may also call this; send-balance-invoice short-circuits
   // if stripe_balance_invoice_id is already set.)
