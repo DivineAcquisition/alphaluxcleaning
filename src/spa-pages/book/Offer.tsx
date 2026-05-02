@@ -30,6 +30,7 @@ import { ServiceDetailsModal } from '@/components/booking/ServiceDetailsModal';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import {
   OfferDateTimePicker,
+  RUSH_SURCHARGE_USD,
   type TimeSlotId,
 } from '@/components/booking/OfferDateTimePicker';
 
@@ -53,6 +54,14 @@ export default function BookingOffer() {
   );
   const [scheduledTimeSlot, setScheduledTimeSlot] = useState<TimeSlotId | ''>(
     (bookingData.timeSlot as TimeSlotId) || '',
+  );
+  // Rush toggle — unlocks next-day booking (minLeadDays: 3 -> 1)
+  // and adds a $50 surcharge at checkout. Kept in local state here
+  // on the offer page and flushed into the BookingContext on
+  // handleConfirmSchedule so checkout can bake the surcharge into
+  // the PaymentIntent.
+  const [rushEnabled, setRushEnabled] = useState<boolean>(
+    Boolean(bookingData.rushUpcharge),
   );
   const pickerRef = useRef<HTMLDivElement | null>(null);
 
@@ -279,8 +288,12 @@ export default function BookingOffer() {
     // and compute `finalPrice = basePrice - promoDiscount`. If we
     // wrote the already-discounted `basePrice` here, the discount
     // would be subtracted twice and the checkout total would crash to
-    // $0.00 (and the deposit to the $1 floor). See Checkout.tsx
-    // line ~96 and ~750 for the consumers.
+    // $0.00.
+    //
+    // The rush surcharge is a post-promo line item (the promo
+    // discounts the service price, not the surcharge), so we ship
+    // it alongside the pre-promo basePrice and the checkout math
+    // adds it after the promo is applied.
     updateBookingData({
       offerType: contextOfferType,
       offerName,
@@ -296,6 +309,7 @@ export default function BookingOffer() {
           ? NEW_CUSTOMER_PROMO_CODE
           : '',
       promoDiscount: NEW_CUSTOMER_PROMO_ACTIVE ? promoSavings : 0,
+      rushUpcharge: rushEnabled ? RUSH_SURCHARGE_USD : 0,
     });
 
     trackStep('offer_selected', {
@@ -362,7 +376,7 @@ export default function BookingOffer() {
                 toast.success(`Code ${NEW_CUSTOMER_PROMO_CODE} copied — paste it at checkout`);
               }
             }}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-alx-gold/70 bg-alx-gold/10 px-4 py-1.5 text-sm font-semibold text-alx-gold-dark hover:bg-alx-gold/20 transition-colors"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-alx-gold/70 bg-alx-gold/10 px-4 py-1.5 text-sm font-semibold text-alx-gold-deep hover:bg-alx-gold/20 transition-colors"
             aria-label={`Copy promo code ${NEW_CUSTOMER_PROMO_CODE}`}
           >
             <BadgePercent className="h-4 w-4" />
@@ -550,6 +564,8 @@ export default function BookingOffer() {
                 pendingOffer.offerType === 'deep_clean' ? 4 : 2
               }
               serviceLabel={pendingOffer.offerName}
+              rushEnabled={rushEnabled}
+              onRushChange={setRushEnabled}
             />
 
             <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
@@ -648,7 +664,7 @@ function OfferCard({
           </div>
           <Badge
             variant="outline"
-            className="bg-alx-gold/10 text-alx-gold-dark border-alx-gold/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            className="bg-alx-gold/10 text-alx-gold-deep border-alx-gold/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
           >
             <BadgePercent className="h-3 w-3 mr-1" />
             Code {NEW_CUSTOMER_PROMO_CODE} · {NEW_CUSTOMER_PROMO_PERCENT}% off
@@ -676,7 +692,7 @@ function OfferCard({
             </span>
           )}
         </div>
-        <p className="text-xs text-alx-gold-dark font-semibold mt-1.5">
+        <p className="text-xs text-alx-gold-deep font-semibold mt-1.5">
           {NEW_CUSTOMER_PROMO_PERCENT}% off applied with code{' '}
           <span className="font-mono tracking-wider">{NEW_CUSTOMER_PROMO_CODE}</span>
         </p>

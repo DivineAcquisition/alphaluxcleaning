@@ -65,6 +65,8 @@ const COLUMNS = [
   "total_paid",
   "promo_code",
   "promo_discount",
+  "rush_upcharge",
+  "rush_booking",
   "payment_status",
   "stripe_payment_intent_id",
   "stripe_subscription_id",

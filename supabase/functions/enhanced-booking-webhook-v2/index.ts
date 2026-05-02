@@ -352,11 +352,26 @@ serve(async (req) => {
       },
       
       // ── Address (includes property info) ──
+      //
+      // `state` deliberately has **no hardcoded fallback**. The
+      // previous implementation defaulted missing states to 'TX',
+      // which silently mis-tagged NY / CA bookings in GHL and
+      // caused smart-list filters to miss them. If we don't know
+      // the state we'd rather ship an empty string and let the
+      // downstream automation flag it than ship a wrong one.
       address: {
         street: addressInfo.line1 || '',
+        line2: addressInfo.line2 || '',
         city: addressInfo.city || '',
-        state: addressInfo.state || 'TX',
+        state: addressInfo.state || '',
         zip: addressInfo.zip || '',
+        full_address: [
+          addressInfo.line1,
+          addressInfo.line2,
+          [addressInfo.city, addressInfo.state, addressInfo.zip]
+            .filter(Boolean)
+            .join(', '),
+        ].filter(Boolean).join(', '),
         property_type: propertyType,
         flooring: flooring,
       },
@@ -377,17 +392,47 @@ serve(async (req) => {
       },
       
       // ── Pricing (single source of truth for all money fields) ──
+      //
+      // `deposit_pct` used to be hardcoded to 25 but the deposit
+      // model changed in 2026-04 — one-time bookings now charge
+      // full-price up front (0% deposit) and only the 90-day plan
+      // still takes a small starter deposit. We derive the pct
+      // from the actual amounts on the row so downstream GHL
+      // automations get the right number.
       pricing: {
         base_price: Number(bookingData.base_price) || 0,
         est_price: Number(bookingData.est_price) || 0,
         deposit_amount: Number(bookingData.deposit_amount) || 0,
-        deposit_pct: 25,
+        deposit_pct:
+          Number(bookingData.base_price) > 0
+            ? Math.round(
+                (Number(bookingData.deposit_amount || 0) /
+                  Number(bookingData.base_price)) *
+                  100,
+              )
+            : 0,
         balance_due: Number(bookingData.balance_due) || 0,
         promo_code: bookingData.promo_code || '',
         promo_applied: bookingData.promo_applied || '',
         promo_discount_cents: bookingData.promo_discount_cents || 0,
+        promo_discount_dollars: (Number(bookingData.promo_discount_cents) || 0) / 100,
         prepayment_discount_applied: bookingData.prepayment_discount_applied || false,
         prepayment_discount_amount: bookingData.prepayment_discount_amount || 0,
+        // Rush / next-day surcharge — lives in pricing_breakdown
+        // since it's not a column on the bookings table. Surfaced
+        // here as a first-class field so GHL can render it on the
+        // receipt + in any "big ticket" alerts.
+        rush_upcharge: Number(
+          (bookingData.pricing_breakdown as any)?.rushUpcharge ??
+            (bookingData.pricing_breakdown as any)?.rush_upcharge ??
+            0,
+        ),
+        rush_booking:
+          Number(
+            (bookingData.pricing_breakdown as any)?.rushUpcharge ??
+              (bookingData.pricing_breakdown as any)?.rush_upcharge ??
+              0,
+          ) > 0,
         addons: processedAddons,
         addons_total: addOnsTotal,
         mrr: Number(bookingData.mrr) || 0,
@@ -401,32 +446,53 @@ serve(async (req) => {
       payment: {
         method: "Stripe",
         status: bookingData.status === 'confirmed' ? "Authorized" : "Pending",
+        stripe_customer_id: customer?.stripe_customer_id || '',
+        stripe_payment_intent_id: bookingData.stripe_payment_intent_id || '',
+        stripe_subscription_id: bookingData.stripe_subscription_id || '',
         transaction_id: bookingData.stripe_payment_intent_id || bookingData.square_payment_id || '',
         receipt_url: bookingData.receipt_url || '',
         balance_invoice_url: bookingData.balance_invoice_url || '',
         balance_invoice_id: bookingData.stripe_balance_invoice_id || '',
         payment_plan: (bookingData.deposit_amount && bookingData.deposit_amount > 0) ? 'deposit_first' : 'full_payment',
       },
-      
+
+      // ── Housecall Pro sync state (so GHL can deep-link to the
+      //     job + decide whether to retry the sync workflow) ──
+      hcp: {
+        customer_id: bookingData.hcp_customer_id || '',
+        job_id: bookingData.hcp_job_id || bookingData.housecall_job_id || '',
+        synced: Boolean(bookingData.hcp_job_id || bookingData.housecall_job_id),
+      },
+
       // ── Job (non-schedule work details) ──
       job: {
         bedrooms: propertyDetails.bedrooms || parseInt(bookingData.sqft_or_bedrooms) || 3,
         bathrooms: propertyDetails.bathrooms || 2,
         notes: specialInstructions,
-        labor_rate_per_hour: 25,
-        labor_cost_total: parseFloat((estimatedHours * 25).toFixed(2)),
+        labor_rate_per_hour: 33,
+        labor_cost_total: parseFloat((estimatedHours * 33).toFixed(2)),
         offer_name: bookingData.offer_name || 'Custom Service',
         offer_type: bookingData.offer_type || 'one_time',
         visit_count: bookingData.visit_count || 1,
         upgraded_from_onetime: wasUpgraded,
       },
-      
-      // ── Marketing ──
+
+      // ── Marketing / attribution. Emit every UTM field GHL
+      //     supports as its own key so the Zapier-less webhook
+      //     trigger can map them directly to contact custom fields
+      //     without having to JSON-parse a blob. ──
       marketing: {
         campaign: (bookingData.utms?.utm_campaign) || "Direct",
         ad_id: (bookingData.utms?.utm_content) || "",
         utm_source: (bookingData.utms?.utm_source) || "direct",
+        utm_medium: (bookingData.utms?.utm_medium) || "",
         utm_campaign: (bookingData.utms?.utm_campaign) || "",
+        utm_term: (bookingData.utms?.utm_term) || "",
+        utm_content: (bookingData.utms?.utm_content) || "",
+        gclid: (bookingData.utms?.gclid) || "",
+        fbclid: (bookingData.utms?.fbclid) || "",
+        referrer: (bookingData.utms?.referrer) || (bookingData.utms?.http_referrer) || "",
+        landing_page: (bookingData.utms?.landing_page) || "",
       },
       
       // ── Referral ──
@@ -439,19 +505,120 @@ serve(async (req) => {
       
       // ── Meta ──
       meta: {
-        origin: "lovable.io",
+        origin: "alphaluxcleaning.com",
         environment: "production",
-        version: "3.0.0",
+        version: "3.1.0",
         timestamp: new Date().toISOString(),
       },
     };
-    
+
+    // GHL-friendly flat custom fields. GHL's webhook trigger
+    // inbound-field mapper works most reliably against a flat
+    // top-level payload — nested objects require extra JSON-parse
+    // workflows on GHL's side. We mirror the data here under snake
+    // _case keys that match the contact custom-field names we've
+    // configured in GHL so the trigger can auto-map them 1:1 on
+    // contact upsert. Don't rename these keys once live — GHL
+    // workflows reference them by name.
+    const ghlContactFields = {
+      // ── Identity ──
+      contact_first_name: webhookDataPayload.customer.first_name,
+      contact_last_name: webhookDataPayload.customer.last_name,
+      contact_email: webhookDataPayload.customer.email,
+      contact_phone: webhookDataPayload.customer.phone,
+      contact_full_name: `${webhookDataPayload.customer.first_name} ${webhookDataPayload.customer.last_name}`.trim(),
+
+      // ── Address (flat, GHL-native fields) ──
+      address1: webhookDataPayload.address.street,
+      address_line2: webhookDataPayload.address.line2,
+      city: webhookDataPayload.address.city,
+      state: webhookDataPayload.address.state,
+      postal_code: webhookDataPayload.address.zip,
+      full_address: webhookDataPayload.address.full_address,
+      property_type: webhookDataPayload.address.property_type,
+      flooring_type: webhookDataPayload.address.flooring,
+
+      // ── Booking snapshot (top booking fields ops wants on the
+      //     contact card for at-a-glance triage) ──
+      booking_id: webhookDataPayload.booking_id,
+      booking_internal_id: bookingData.id,
+      service_type: webhookDataPayload.type,
+      frequency: webhookDataPayload.frequency,
+      is_recurring: webhookDataPayload.is_recurring,
+      offer_name: webhookDataPayload.job.offer_name,
+      offer_type: webhookDataPayload.job.offer_type,
+      sqft_range: webhookDataPayload.sq_ft_range,
+      bedrooms: webhookDataPayload.job.bedrooms,
+      bathrooms: webhookDataPayload.job.bathrooms,
+
+      // ── Schedule ──
+      service_date: webhookDataPayload.schedule.date,
+      service_date_formatted: webhookDataPayload.schedule.date_formatted,
+      arrival_window: webhookDataPayload.schedule.time_window,
+      arrival_window_formatted: webhookDataPayload.schedule.time_formatted,
+      service_start_iso: webhookDataPayload.schedule.start_datetime,
+      service_end_iso: webhookDataPayload.schedule.end_datetime,
+
+      // ── Pricing ──
+      est_price: webhookDataPayload.pricing.est_price,
+      base_price: webhookDataPayload.pricing.base_price,
+      deposit_amount: webhookDataPayload.pricing.deposit_amount,
+      deposit_pct: webhookDataPayload.pricing.deposit_pct,
+      balance_due: webhookDataPayload.pricing.balance_due,
+      promo_code: webhookDataPayload.pricing.promo_code,
+      promo_discount: webhookDataPayload.pricing.promo_discount_dollars,
+      rush_upcharge: webhookDataPayload.pricing.rush_upcharge,
+      rush_booking: webhookDataPayload.pricing.rush_booking,
+      mrr: webhookDataPayload.pricing.mrr,
+      arr: webhookDataPayload.pricing.arr,
+      expected_ltv: webhookDataPayload.pricing.expected_ltv,
+
+      // ── Payment ──
+      payment_status: webhookDataPayload.payment.status,
+      payment_plan: webhookDataPayload.payment.payment_plan,
+      stripe_customer_id: webhookDataPayload.payment.stripe_customer_id,
+      stripe_payment_intent_id: webhookDataPayload.payment.stripe_payment_intent_id,
+      stripe_subscription_id: webhookDataPayload.payment.stripe_subscription_id,
+      receipt_url: webhookDataPayload.payment.receipt_url,
+
+      // ── HCP sync state ──
+      hcp_customer_id: webhookDataPayload.hcp.customer_id,
+      hcp_job_id: webhookDataPayload.hcp.job_id,
+      hcp_synced: webhookDataPayload.hcp.synced,
+
+      // ── Marketing / attribution ──
+      utm_source: webhookDataPayload.marketing.utm_source,
+      utm_medium: webhookDataPayload.marketing.utm_medium,
+      utm_campaign: webhookDataPayload.marketing.utm_campaign,
+      utm_term: webhookDataPayload.marketing.utm_term,
+      utm_content: webhookDataPayload.marketing.utm_content,
+      gclid: webhookDataPayload.marketing.gclid,
+      fbclid: webhookDataPayload.marketing.fbclid,
+      landing_page: webhookDataPayload.marketing.landing_page,
+      referrer: webhookDataPayload.marketing.referrer,
+      lead_source: webhookDataPayload.marketing.utm_source || 'Website',
+      lead_source_detail: webhookDataPayload.marketing.utm_campaign || '',
+
+      // ── Referral ──
+      referral_code: webhookDataPayload.referral.code,
+      referral_link: webhookDataPayload.referral.link,
+
+      // ── Ops notes ──
+      special_instructions: specialInstructions,
+      booking_source: webhookDataPayload.booking_source,
+      booking_status: bookingData.status || 'unknown',
+    };
+
     // Flat payload — no wrapping `data` object so Zapier/GHL see clean field names
     const webhookPayload = {
       webhook_type: webhookType,
       webhook_timestamp: new Date().toISOString(),
       webhook_source: "alphalux_booking_system",
       ...webhookDataPayload,
+      // `ghl` is the flat, top-level block GHL's webhook trigger
+      // maps 1:1 to contact custom fields. Keep both the nested
+      // structure (for richer workflows) and this flat view.
+      ghl: ghlContactFields,
     };
 
     const payloadGenerationTime = Date.now() - payloadGenerationStart;

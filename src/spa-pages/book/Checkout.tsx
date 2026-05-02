@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Clock,
   Star,
+  Zap,
 } from 'lucide-react';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import { BrandedLoader } from '@/components/BrandedLoader';
@@ -129,7 +130,14 @@ export default function BookingCheckout() {
   const rawDiscount = bookingData.promoDiscount || 0;
   const discountIsCorrupt = rawDiscount > 0 && rawDiscount >= rawBase;
   const effectiveDiscount = discountIsCorrupt ? 0 : rawDiscount;
-  const finalPrice = Math.max(0, rawBase - effectiveDiscount);
+  // Rush (next-day) surcharge — $50 added when the customer
+  // toggled the rush option on /book/offer. Applied on top of the
+  // post-promo price because the promo discounts the service, not
+  // the rush itself. Clamp to 0 as a safety net in case a stale
+  // negative value snuck into localStorage from a prior session.
+  const rushUpcharge = Math.max(0, bookingData.rushUpcharge || 0);
+  const discountedService = Math.max(0, rawBase - effectiveDiscount);
+  const finalPrice = discountedService + rushUpcharge;
 
   // Payment model:
   //
@@ -228,6 +236,12 @@ export default function BookingCheckout() {
           basePrice: bookingData.basePrice || 0,
           promoCode: bookingData.promoCode,
           promoDiscount: bookingData.promoDiscount || 0,
+          // Post-promo service price before the rush surcharge is
+          // added — helpful for CS + reporting when someone wants
+          // to answer "what did the service itself cost?"
+          discountedService,
+          rushUpcharge,
+          rushEnabled: rushUpcharge > 0,
           finalPrice,
           depositAmount: dueToday,
           balanceDue,
@@ -329,7 +343,11 @@ export default function BookingCheckout() {
               // because that flow really is a starter deposit.
               paymentType: 'full',
               bookingId: reuseBookingId,
-              metadata: { offer_type: bookingData.offerType },
+              metadata: {
+                offer_type: bookingData.offerType,
+                rush_upcharge_usd: rushUpcharge,
+                rush_enabled: rushUpcharge > 0 ? 'true' : 'false',
+              },
             },
           },
         );
@@ -822,6 +840,18 @@ export default function BookingCheckout() {
                   </div>
                   <Separator />
                 </>
+              )}
+
+              {rushUpcharge > 0 && (
+                <div className="flex justify-between text-sm bg-alx-gold/10 p-2 rounded-lg border border-alx-gold/30">
+                  <span className="flex items-center gap-1 text-alx-gold-deep font-semibold">
+                    <Zap className="w-4 h-4" />
+                    Next-Day Rush Booking
+                  </span>
+                  <span className="text-alx-gold-deep font-bold">
+                    +${rushUpcharge.toFixed(2)}
+                  </span>
+                </div>
               )}
 
               <div className="flex justify-between font-bold text-lg">

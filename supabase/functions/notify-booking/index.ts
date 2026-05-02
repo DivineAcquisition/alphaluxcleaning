@@ -46,6 +46,17 @@ const corsHeaders = {
 // `src/components/booking/OfferDateTimePicker.tsx` so the
 // notification reads the same arrival window the customer saw.
 const TIME_SLOT_LABELS: Record<string, string> = {
+  // ── Active (2026-05-02): hourly arrival windows 9 AM – 5 PM ──
+  arr_9am: "9 AM · 9–10 AM arrival",
+  arr_10am: "10 AM · 10–11 AM arrival",
+  arr_11am: "11 AM · 11 AM–12 PM arrival",
+  arr_12pm: "12 PM · 12–1 PM arrival",
+  arr_1pm: "1 PM · 1–2 PM arrival",
+  arr_2pm: "2 PM · 2–3 PM arrival",
+  arr_3pm: "3 PM · 3–4 PM arrival",
+  arr_4pm: "4 PM · 4–5 PM arrival",
+  arr_5pm: "5 PM · 5–6 PM arrival (latest start)",
+  // ── Legacy two-hour blocks ──
   early_morning: "Early Morning · 7–9 AM",
   morning: "Morning · 9–11 AM",
   late_morning: "Late Morning · 11 AM–1 PM",
@@ -116,7 +127,8 @@ function buildSlackBlocks(opts: {
   appUrl: string;
 }) {
   const { booking, customer, tracker, appUrl } = opts;
-  const headline = `:sparkles: New paid booking — ${fmtMoney(tracker.total_paid)}`;
+  const rushPrefix = tracker.rush_upcharge > 0 ? ":zap: RUSH · " : "";
+  const headline = `${rushPrefix}:sparkles: New paid booking — ${fmtMoney(tracker.total_paid)}`;
   const customerName = fullName(booking, customer);
   const offer = booking?.offer_name || tracker.service_label || "Cleaning Service";
   const dateLabel = fmtDate(tracker.service_date);
@@ -161,6 +173,14 @@ function buildSlackBlocks(opts: {
           { type: "mrkdwn", text: `*Email*\n${email}` },
           { type: "mrkdwn", text: `*Address*\n${address || "—"}` },
           { type: "mrkdwn", text: `*Promo*\n${promoLine}` },
+          {
+            type: "mrkdwn",
+            text: `*Rush booking*\n${
+              tracker.rush_upcharge > 0
+                ? `:zap: Yes (+${fmtMoney(tracker.rush_upcharge)})`
+                : "No"
+            }`,
+          },
           { type: "mrkdwn", text: `*Total*\n${fmtMoney(tracker.total_paid)}` },
           {
             type: "mrkdwn",
@@ -190,6 +210,11 @@ function buildTrackerPayload(opts: { booking: any; customer: any; event: string 
   const promoDiscount = Number(booking?.promo_discount_cents)
     ? Number(booking?.promo_discount_cents) / 100
     : 0;
+  const rushUpcharge = Number(
+    booking?.pricing_breakdown?.rushUpcharge ??
+      booking?.pricing_breakdown?.rush_upcharge ??
+      0,
+  );
   return {
     event,
     booking_id: booking?.id ?? null,
@@ -214,6 +239,8 @@ function buildTrackerPayload(opts: { booking: any; customer: any; event: string 
     total_paid: total,
     promo_code: booking?.promo_code ?? null,
     promo_discount: promoDiscount,
+    rush_upcharge: rushUpcharge,
+    rush_booking: rushUpcharge > 0 ? "Yes" : "No",
     payment_status: booking?.payment_status ?? null,
     stripe_payment_intent_id: booking?.stripe_payment_intent_id ?? null,
     stripe_subscription_id: booking?.stripe_subscription_id ?? null,

@@ -40,6 +40,14 @@ interface BookingData {
   // Promo code support
   promoCode?: string;
   promoDiscount?: number;
+
+  // Rush / next-day scheduling surcharge. Populated by
+  // /book/offer when the customer flips the rush toggle to unlock
+  // next-day booking; read by /book/checkout to add the line item
+  // on top of (not inside) the promo-discounted service price.
+  // In dollars; 0 or undefined means "no rush" (standard 3-day
+  // lead).
+  rushUpcharge?: number;
   
   // Service Type (locked to 'deep')
   serviceType: 'regular' | 'deep' | 'move_in_out';

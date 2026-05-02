@@ -491,7 +491,7 @@ Questions? Call (857) 754-4557
             {/* AlphaLux brand lockup — gold ring + check mark */}
             <div className="relative inline-flex items-center justify-center mb-4">
               <div className="absolute inset-0 rounded-full bg-alx-gold/20 blur-xl" />
-              <div className="relative inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-alx-gold to-alx-gold-dark shadow-gold">
+              <div className="relative inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-alx-gold to-alx-gold-deep shadow-gold">
                 <CheckCircle className="h-7 w-7 text-alx-black-ink" />
               </div>
             </div>
