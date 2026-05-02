@@ -656,7 +656,7 @@ function ServiceCard({
     tone === 'primary'
       ? 'text-primary'
       : tone === 'gold'
-        ? 'text-alx-gold-dark'
+        ? 'text-alx-gold-deep'
         : 'text-success';
   return (
     <Card className={`border-2 ${toneClasses}`}>
