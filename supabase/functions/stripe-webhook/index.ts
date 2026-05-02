@@ -1,15 +1,61 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import {
-  getStripeWebhookSecret,
-  requireStripeSecretKey,
-} from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// ── Inlined from ../_shared/stripe-env.ts ──
+//
+// Supabase's edge-function deploy API uploads a single entrypoint
+// file; bundling the shared Stripe env helpers inline avoids needing
+// a second file + import_map. Keep this block in sync with
+// `supabase/functions/_shared/stripe-env.ts` if that file is updated.
+function normalizeSecret(raw: string): string {
+  let s = raw.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1).trim();
+  }
+  s = s.replace(/[\s.,;:`'"]+$/g, "");
+  return s;
+}
+function firstEnv(...names: string[]): string | null {
+  for (const n of names) {
+    const v = Deno.env.get(n);
+    if (v && typeof v === "string") {
+      const cleaned = normalizeSecret(v);
+      if (cleaned.length > 0) return cleaned;
+    }
+  }
+  return null;
+}
+function getStripeSecretKey(): string | null {
+  return firstEnv(
+    "STRIPE_SECRET_KEY_ALPHALUX",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_SECRET_KEY_NY",
+    "STRIPE_RESTRICTED_KEY_ALPHALUX",
+    "STRIPE_RESTRICTED_KEY",
+  );
+}
+function getStripeWebhookSecret(): string | null {
+  return firstEnv(
+    "STRIPE_WEBHOOK_SECRET_ALPHALUX",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_WEBHOOK_SECRET_NY",
+  );
+}
+function requireStripeSecretKey(): string {
+  const key = getStripeSecretKey();
+  if (!key) {
+    throw new Error(
+      "Stripe secret key is not configured. Set STRIPE_SECRET_KEY (or STRIPE_SECRET_KEY_ALPHALUX) in Supabase secrets.",
+    );
+  }
+  return key;
+}
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
