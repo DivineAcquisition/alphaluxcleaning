@@ -146,17 +146,19 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const appUrl = Deno.env.get("APP_URL") || "https://app.alphaluxclean.com";
 
-    // Assign the per-customer ALCxxx promo code. Idempotent on email, so
-    // repeat form fills (or refreshes) will always return the same code.
-    // We invoke this inline (not fire-and-forget) so the lead webhook
-    // can include the assigned code in the response payload.
+    // Stage 1 GHL sync: ghl-sync-lead handles the GHL contact upsert,
+    // mints the per-customer ALCxxx promo, opens a durable
+    // ghl_sync_log row, and schedules a retry if LeadConnector is
+    // down. We invoke it inline so we can return the assigned promo
+    // code in the response (the front-end uses it to surface "code
+    // sent to your email" copy at the next step).
     let assignedPromo: {
       code?: string;
       is_new?: boolean;
       ghl_contact_id?: string | null;
     } = {};
     try {
-      const promoRes = await supabase.functions.invoke('assign-lead-promo', {
+      const syncRes = await supabase.functions.invoke('ghl-sync-lead', {
         body: {
           email: payload.email,
           firstName: payload.firstName,
@@ -176,14 +178,19 @@ serve(async (req) => {
           },
         },
       });
-      if (promoRes.error) {
-        logStep('assign-lead-promo error', { error: promoRes.error.message });
+      if (syncRes.error) {
+        logStep('ghl-sync-lead error (queued for retry)', { error: syncRes.error.message });
       } else {
-        assignedPromo = (promoRes.data as any) || {};
-        logStep('promo assigned', assignedPromo);
+        const d = (syncRes.data as any) || {};
+        assignedPromo = {
+          code: d.promo_code,
+          is_new: d.promo_is_new,
+          ghl_contact_id: d.ghl_contact_id || null,
+        };
+        logStep('ghl-sync-lead success', assignedPromo);
       }
     } catch (err) {
-      logStep('assign-lead-promo call failed', {
+      logStep('ghl-sync-lead call failed (queued for retry)', {
         error: (err as Error).message,
       });
     }
