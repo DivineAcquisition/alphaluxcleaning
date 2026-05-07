@@ -9,11 +9,11 @@ import { toast } from 'sonner';
 interface StripePaymentFormProps {
   /**
    * Amount the customer is paying *right now* through the embedded
-   * Stripe form. For one-time bookings this is the full post-promo
-   * service price (the 20% deposit step has been removed because the
-   * ALC2026 50%-off promo already covers the discount). For the
-   * 90-day plan it's a small starter deposit and the rest is handled
-   * by the auto-bill subscription.
+   * Stripe form. For one-time bookings this is a 50% reservation
+   * deposit (the remaining 50% is invoiced after service to the
+   * card saved on file via setup_future_usage). For the 90-day plan
+   * it's a small starter deposit and the rest is handled by the
+   * auto-bill subscription.
    */
   dueToday: number;
   /**
@@ -184,7 +184,7 @@ function PaymentFormContent({
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-foreground font-medium">
-            {offerType === '90_day_plan' ? 'Starter Deposit' : 'Total Due Today'}
+            {offerType === '90_day_plan' ? 'Starter Deposit' : '50% Deposit Due Today'}
           </span>
           <span className="font-bold text-lg text-primary">
             ${dueToday.toFixed(2)}
@@ -196,13 +196,23 @@ function PaymentFormContent({
             <span>(auto-billed)</span>
           </div>
         )}
-        {/* Only the 90-day plan has an extra "total plan value" line —
-            for one-time bookings, due-today already equals the total. */}
         {offerType === '90_day_plan' && (
           <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-primary/15">
             <span>Total Plan Value</span>
             <span>${totalAmount.toFixed(2)}</span>
           </div>
+        )}
+        {offerType !== '90_day_plan' && totalAmount > dueToday && (
+          <>
+            <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-primary/15">
+              <span>Remaining Balance (charged after service)</span>
+              <span>${(totalAmount - dueToday).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Total Service Price</span>
+              <span>${totalAmount.toFixed(2)}</span>
+            </div>
+          </>
         )}
       </div>
 
@@ -276,7 +286,7 @@ function PaymentFormContent({
               <CreditCard className="mr-2 h-4 w-4" />
               {offerType === '90_day_plan'
                 ? `Pay $${dueToday.toFixed(2)} Starter Deposit`
-                : `Pay $${dueToday.toFixed(2)}`}
+                : `Pay $${dueToday.toFixed(2)} Deposit`}
             </>
           )}
         </Button>

@@ -333,6 +333,12 @@ serve(async (req) => {
         customer: stripeCustomerId,
         payment_method_types: ['card'],
         capture_method: 'automatic',
+        // Save the card to the Stripe Customer after this payment so we
+        // can charge the remaining balance off-session (e.g. the 50%
+        // post-service balance for one-time bookings, or any future
+        // recurring/upsell). Stripe will automatically attach the
+        // PaymentMethod to the Customer on success when this is set.
+        setup_future_usage: 'off_session',
         metadata: {
           booking_id: bookingId || '',
           customer_id: customerId || '',
