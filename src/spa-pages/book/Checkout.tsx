@@ -134,11 +134,11 @@ export default function BookingCheckout() {
   // Payment model:
   //
   //   * One-time offers (Standard / Deep Clean / one-off Recurring
-  //     first visit): customer pays the full post-promo price up
-  //     front. No deposit, no balance invoice. The new-customer
-  //     ALC2026 promo already gives 50% off, so charging a 20%
-  //     deposit on top of that produced confusing numbers and a
-  //     follow-up balance invoice nobody expected.
+  //     first visit): customer pays a 50% deposit up front to
+  //     reserve the slot. Stripe saves the card on file
+  //     (setup_future_usage='off_session' on the PaymentIntent) and
+  //     the remaining 50% is billed after the cleaning is complete
+  //     via `send-balance-invoice`.
   //   * 90-day plan: keeps the original starter-deposit + monthly
   //     subscription split because the plan is the product (3
   //     monthly payments are baked into the offer). We surface a
@@ -150,12 +150,19 @@ export default function BookingCheckout() {
   const starterDeposit = is90DayPlan
     ? Math.max(1, Math.round(finalPrice * 0.0625))
     : 0;
+  // 50% deposit for one-time bookings — rounded to the nearest cent
+  // so the deposit + balance always reconciles back to `finalPrice`.
+  const oneTimeDeposit = !is90DayPlan
+    ? Math.round(finalPrice * 0.5 * 100) / 100
+    : 0;
   // `dueToday` is what we charge in the embedded card form. For
-  // one-time bookings that's the full price. For the 90-day plan
-  // it's just the starter deposit; the rest comes via the auto-bill
-  // subscription created by `create-90day-subscription`.
-  const dueToday = is90DayPlan ? starterDeposit : finalPrice;
-  const balanceDue = is90DayPlan ? Math.max(0, finalPrice - starterDeposit) : 0;
+  // one-time bookings that's the 50% reservation deposit. For the
+  // 90-day plan it's the small starter deposit; the rest comes via
+  // the auto-bill subscription created by `create-90day-subscription`.
+  const dueToday = is90DayPlan ? starterDeposit : oneTimeDeposit;
+  const balanceDue = is90DayPlan
+    ? Math.max(0, finalPrice - starterDeposit)
+    : Math.max(0, finalPrice - oneTimeDeposit);
   const firstCleanBalance = is90DayPlan
     ? Math.max(0, finalPrice - starterDeposit - totalMonthlyPayments)
     : 0;
@@ -323,11 +330,12 @@ export default function BookingCheckout() {
               customerPhone: customerData.phone,
               customerData,
               bookingData: bookingPayload,
-              // One-time offers charge the full post-promo price; no
-              // remaining balance, no follow-up invoice. The 90-day
-              // plan branch above keeps `paymentType: 'deposit'`
-              // because that flow really is a starter deposit.
-              paymentType: 'full',
+              // One-time offers charge a 50% reservation deposit
+              // up front; the remaining 50% is invoiced after the
+              // cleaning via `send-balance-invoice`. The card is
+              // saved on the Stripe Customer (setup_future_usage)
+              // so the balance invoice can use the saved card.
+              paymentType: 'deposit',
               bookingId: reuseBookingId,
               metadata: { offer_type: bookingData.offerType },
             },
@@ -533,10 +541,12 @@ export default function BookingCheckout() {
     }
 
     try {
-      // One-time bookings are paid in full at this step, so we mark
-      // them `paid`. The 90-day plan still goes through `deposit_paid`
-      // because the rest comes via the auto-bill subscription.
-      const paymentStatus = is90DayPlan ? 'deposit_paid' : 'paid';
+      // Both one-time bookings and the 90-day plan now flow through
+      // `deposit_paid` — one-time bookings collect a 50% reservation
+      // deposit at checkout and the remaining 50% is invoiced after
+      // the cleaning. The 90-day plan handles its remaining balance
+      // via the auto-bill subscription.
+      const paymentStatus = 'deposit_paid';
       const { error } = await supabase.functions.invoke(
         'confirm-booking-payment',
         {
@@ -577,10 +587,21 @@ export default function BookingCheckout() {
         }
       }
 
-      // No balance invoice for one-time bookings — they're paid in
-      // full above. The 90-day plan handles its remaining balance via
-      // the auto-bill subscription, not an invoice, so no branch
-      // here triggers send-balance-invoice anymore.
+      // For one-time bookings the customer paid a 50% reservation
+      // deposit; queue the balance invoice for the remaining 50% so
+      // it goes out after the cleaning is complete. We don't want to
+      // block the redirect on this — fire-and-forget with a logged
+      // error if Stripe rejects it (the saved card on the Customer
+      // means it'll succeed off-session when the invoice runs).
+      if (!is90DayPlan && balanceDue > 0) {
+        try {
+          await supabase.functions.invoke('send-balance-invoice', {
+            body: { bookingId },
+          });
+        } catch (invoiceErr) {
+          console.error('Failed to queue balance invoice:', invoiceErr);
+        }
+      }
 
       try {
         await supabase.functions.invoke('send-payment-schedule', {
@@ -602,7 +623,7 @@ export default function BookingCheckout() {
       toast.success(
         is90DayPlan
           ? "Starter deposit paid! Let's finalize your booking."
-          : "Payment received! Let's finalize your booking.",
+          : "50% deposit received! Let's finalize your booking.",
       );
       navigate(`/book/details?booking_id=${bookingId}`);
     } catch (error: any) {
@@ -752,9 +773,10 @@ export default function BookingCheckout() {
       ? Math.round((effectiveDiscount / rawBase) * 100)
       : 0;
   const promoLabelSuffix = promoPercent > 0 ? `${promoPercent}% Off` : 'Discount';
-  // Only the 90-day plan still has a deposit label; one-time offers
-  // pay in full so we just say "Total Due Today".
-  const dueTodayLabel = is90DayPlan ? '6.25% Starter Deposit' : 'Total Due Today';
+  // 90-day plan keeps the small starter-deposit label; one-time
+  // offers now collect a 50% reservation deposit at checkout (the
+  // remaining 50% is invoiced after the cleaning to the saved card).
+  const dueTodayLabel = is90DayPlan ? '6.25% Starter Deposit' : '50% Deposit Due Today';
 
   return (
     <div className="min-h-screen bg-background">
@@ -768,7 +790,7 @@ export default function BookingCheckout() {
           <p className="text-lg text-muted-foreground">
             {is90DayPlan
               ? 'Lock in your 90-day plan with a small starter deposit. Monthly billing handles the rest. No hidden fees.'
-              : 'Pay in full today to lock in your service — discount included. No hidden fees, no contracts.'}
+              : 'Reserve your service with a 50% deposit today. Your card is securely saved on file and the remaining 50% is automatically charged after your cleaning is complete.'}
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -882,9 +904,18 @@ export default function BookingCheckout() {
                         ${dueToday.toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      You're paying the full service price today — nothing else
-                      is owed after the cleaning.
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground">
+                        Remaining Balance (charged after service)
+                      </span>
+                      <span className="font-bold">
+                        ${balanceDue.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Your card is securely saved on file with Stripe. The
+                      remaining 50% is automatically charged after your
+                      cleaning is complete — no need to enter your card again.
                     </p>
                   </>
                 )}
