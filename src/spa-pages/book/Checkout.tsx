@@ -41,6 +41,7 @@ export default function BookingCheckout() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [initSlow, setInitSlow] = useState(false);
   const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
 
   // Local contact form state — the Offer step doesn't collect it, so we
@@ -181,6 +182,23 @@ export default function BookingCheckout() {
     }
     setIsInitializing(true);
     setInitError(null);
+    setInitSlow(false);
+    // After 8s we surface a manual "Try Again" escape hatch so the
+    // BrandedLoader can never trap the user if the edge function
+    // (or Stripe) is taking too long to respond.
+    const slowTimer = window.setTimeout(() => setInitSlow(true), 8000);
+    // Hard 25s timeout — if the edge function is wedged we want to
+    // show an actionable error instead of an infinite spinner.
+    const hardTimer = window.setTimeout(() => {
+      setInitError(
+        'Stripe is taking longer than expected to respond. Please try again.',
+      );
+      setIsInitializing(false);
+    }, 25000);
+    const clearTimers = () => {
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(hardTimer);
+    };
 
     try {
       // If we already minted a booking on this page (e.g. the user
@@ -320,6 +338,11 @@ export default function BookingCheckout() {
 
         setClientSecret(data.clientSecret);
       } else {
+        console.log('[checkout] Calling create-payment-intent', {
+          amount: dueToday,
+          paymentType: 'deposit',
+          reuseBookingId,
+        });
         const { data, error } = await supabase.functions.invoke(
           'create-payment-intent',
           {
@@ -341,6 +364,11 @@ export default function BookingCheckout() {
             },
           },
         );
+        console.log('[checkout] create-payment-intent response', {
+          hasData: !!data,
+          hasError: !!error,
+          hasClientSecret: !!(data?.clientSecret || data?.client_secret),
+        });
 
         // Surface the server's structured error payload. supabase-js
         // sets a FunctionsHttpError on non-2xx but doesn't always
@@ -398,6 +426,8 @@ export default function BookingCheckout() {
       setInitError(msg);
       toast.error(msg);
     } finally {
+      clearTimers();
+      setInitSlow(false);
       setIsInitializing(false);
     }
   }, [
@@ -1163,7 +1193,33 @@ export default function BookingCheckout() {
                   </Button>
                 </>
               ) : isInitializing ? (
-                <BrandedLoader caption="Preparing secure checkout…" fullScreen={false} />
+                <div className="space-y-4">
+                  <BrandedLoader
+                    caption="Preparing secure checkout…"
+                    fullScreen={false}
+                  />
+                  {initSlow && (
+                    <div className="text-center space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Stripe is taking longer than usual.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsInitializing(false);
+                          setInitSlow(false);
+                          setClientSecret(null);
+                          setAccountPublishableKey(null);
+                          setBookingId(null);
+                          setTimeout(() => initializePayment(), 50);
+                        }}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ) : clientSecret ? (
                 <StripePaymentForm
                   dueToday={dueToday}
