@@ -6,6 +6,7 @@ import {
   getStripePublishableKey,
   requireStripeSecretKey,
   resolveStripeAccount,
+  slugFromCustomerLocation,
   type StripeAccountSlug,
 } from "../_shared/stripe-env.ts";
 
@@ -15,27 +16,30 @@ const corsHeaders = {
 };
 
 // Bump this when debugging deployment mismatches
-const FUNCTION_VERSION = "2026-05-08-dual-account";
+const FUNCTION_VERSION = "2026-05-08-state-strict";
 
 /**
- * Dual-account Stripe integration.
+ * Dual-account Stripe integration with STRICT state-based routing.
  *
- *   * `try`  — legacy AlphaLux Cleaning Stripe account (used by every
- *              host except `book.alphaluxclean.com`). Stamped on
- *              `bookings.stripe_account_slug` as the legacy literal
- *              `alphalux_ny`.
- *   * `book` — new Stripe account for the `book.alphaluxclean.com`
- *              subdomain. Stamped as `book`.
+ *   * NY customers           → `try`  account (legacy AlphaLux NY ops)
+ *                               Stamped as `alphalux_ny` on bookings.
+ *   * CA + TX customers      → `book` account (new CA/TX ops)
+ *                               Stamped as `book` on bookings.
  *
- * The slug is resolved (in priority order) from:
- *   1. The request body's explicit `account` field (front-end sends
- *      this based on `window.location.hostname`).
- *   2. The `Origin` / `Referer` / `Host` headers.
- *   3. Falls through to `try` so server-to-server calls without an
- *      Origin keep using the legacy account.
+ * Routing priority (most authoritative first — first non-null wins):
+ *
+ *   1. `customerData.state` (e.g. "CA", "NY", "TX"). Strict — a CA
+ *      customer can never be charged against the NY-only `try`
+ *      account, regardless of which subdomain they happen to be on.
+ *   2. `customerData.zip` first 3 digits, mapped to the same state
+ *      ranges that `/book/zip` already validates against.
+ *   3. The request body's explicit `account` override (legacy / dev).
+ *   4. The Origin / Referer / Host header.
+ *   5. Falls through to `try` (the legacy default — safe backstop).
  *
  * The selected slug is stamped on the booking row so downstream
- * functions (send-balance-invoice, etc.) know which account to use.
+ * functions (send-balance-invoice, stripe-webhook, etc.) know which
+ * account to use for the saved card / future charges.
  */
 
 /**
@@ -93,17 +97,39 @@ serve(async (req) => {
       account: accountOverride,
     } = body;
 
-    // Pick the Stripe account this request runs against. Frontend
-    // typically passes `account: 'book' | 'try'` based on the host;
-    // we still sniff Origin as a backstop so a missing field can't
-    // accidentally route a book.* customer onto the try account.
-    const accountSlug: StripeAccountSlug = resolveStripeAccount(
-      req,
-      accountOverride,
-    );
+    // STRICT state-based routing. The customer's state / zip is the
+    // single most authoritative signal — neither subdomain nor body
+    // override is allowed to move a CA/TX customer onto the NY-only
+    // try account (or vice versa). Host detection only matters when
+    // the request literally has no location info attached (e.g. an
+    // out-of-band probe with no customer payload yet).
+    const customerState =
+      customerData?.state ?? bookingData?.customerState ?? null;
+    const customerZip =
+      customerData?.zip ??
+      customerData?.postal_code ??
+      bookingData?.zipCode ??
+      null;
+
+    const stateSlug = slugFromCustomerLocation(customerState, customerZip);
+    let accountSlug: StripeAccountSlug;
+    let routingSource: "state" | "zip" | "override" | "host" | "default";
+    if (stateSlug) {
+      accountSlug = stateSlug;
+      routingSource = customerState ? "state" : "zip";
+    } else {
+      // No conclusive location info — fall back to the override + host
+      // detection chain (the dual-subdomain v1 behaviour).
+      accountSlug = resolveStripeAccount(req, accountOverride);
+      routingSource = accountOverride ? "override" : "host";
+    }
+
     const accountColumnValue = bookingColumnFromSlug(accountSlug);
     logStep("Resolved Stripe account", {
       slug: accountSlug,
+      routingSource,
+      customerState,
+      customerZip,
       bookingColumn: accountColumnValue,
       accountOverride,
       origin: req.headers.get("origin"),
@@ -144,28 +170,10 @@ serve(async (req) => {
     // Publishable key for THIS account. Returning it inline alongside
     // the client secret means the client can boot Stripe.js against
     // the correct account in a single round-trip, and we can never
-    // mismatch it with the secret key resolved above.
+    // mismatch it with the secret key resolved above. Both accounts
+    // bundle a fallback pk in `_shared/stripe-env.ts` so this is
+    // always non-null.
     const publishableKey = getStripePublishableKey(accountSlug);
-    if (!publishableKey) {
-      // Only ever null for the book account when its env var is
-      // missing. We'd rather fail loud here than silently serve the
-      // try-account's pk and produce a clientSecret/pk mismatch on
-      // confirm.
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error:
-            "Our payment processor is temporarily unavailable. Please try again in a moment or contact support.",
-          code: "stripe_publishable_missing",
-          details:
-            "STRIPE_PUBLISHABLE_KEY_BOOK is not configured. Set it in Supabase secrets to enable payments on book.alphaluxclean.com.",
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 503,
-        },
-      );
-    }
 
     const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
 

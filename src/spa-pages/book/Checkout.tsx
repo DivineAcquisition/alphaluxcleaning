@@ -261,12 +261,15 @@ export default function BookingCheckout() {
         },
       };
 
-      // Tell the edge function which Stripe account this request
-      // belongs to. Resolved from the host (`book.alphaluxclean.com`
-      // → 'book', everything else → 'try'). The server still sniffs
-      // the Origin header as a backstop, but passing it explicitly
-      // keeps a stale CDN / proxy from misrouting payments.
-      const stripeAccount = getStripeAccountSlug();
+      // STRICT state-based Stripe account routing. NY → try, CA + TX
+      // → book. We pass the resolved slug to the edge function so it
+      // doesn't have to re-derive it from request headers — the
+      // server still validates against customerData.state/zip on its
+      // end and ignores this hint if it disagrees with the location.
+      const stripeAccount = getStripeAccountSlug(
+        bookingData.contactInfo?.state || bookingData.state,
+        bookingData.contactInfo?.zip || bookingData.zipCode,
+      );
 
       if (isTestMode) {
         console.log('🧪 TEST MODE: Creating booking via edge function', {
