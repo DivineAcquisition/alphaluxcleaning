@@ -2,44 +2,114 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 
 /**
- * Dual-account Stripe loader.
+ * Dual-account Stripe loader with STRICT state-based routing.
  *
- * AlphaLux Cleaning now runs on TWO Stripe accounts split by
- * subdomain:
+ * AlphaLux Cleaning runs on TWO Stripe accounts split by the
+ * customer's state — independent of which subdomain they happen to
+ * be on:
  *
- *   * `book.alphaluxclean.com` → `book` account (new). Publishable
- *     key comes from `get-stripe-config?account=book` (which reads
- *     `STRIPE_PUBLISHABLE_KEY_BOOK` from Supabase secrets) or, more
- *     commonly, inline from `create-payment-intent`'s response.
- *   * everything else (including the legacy `try.alphaluxcleaning.com`)
- *     → `try` account. Keeps the existing hard-coded fallback +
- *     env-var soup so the legacy flow is unchanged.
+ *   * NY customers       → `try`  account (legacy AlphaLux NY ops).
+ *   * CA + TX customers  → `book` account (new CA/TX ops).
  *
- * Most call sites no longer hit `get-stripe-config` —
+ * The slug is derived from the booking's state code (preferred) or
+ * zip prefix (fallback). The host (`book.alphaluxclean.com` vs
+ * `try.alphaluxcleaning.com`) is only consulted when no state / zip
+ * is available yet — a CA customer who happens to land on
+ * `try.alphaluxcleaning.com` will still be charged against the
+ * book account once they enter their zip.
+ *
+ * Most call sites don't hit `get-stripe-config` —
  * `create-payment-intent` returns the publishable key inline next
- * to the client secret, and the embedded payment form boots Stripe
- * via `getStripeForKey(publishableKey)`. The fallbacks below are a
- * UI safety net for paths that need to load Stripe.js before they
- * know which booking the session belongs to.
+ * to the client secret, and the embedded form boots Stripe via
+ * `getStripeForKey(publishableKey)`. The fallbacks below are a UI
+ * safety net for paths that need Stripe.js before a booking exists.
  */
 
 export type StripeAccountSlug = 'try' | 'book';
 
 /**
- * Detect which Stripe account this browser session belongs to based
- * on the host. Anything served from `book.alphaluxclean.com` runs
- * on the `book` account; every other host (including
- * `try.alphaluxcleaning.com`, `localhost`, Lovable previews, etc.)
- * runs on the legacy `try` account. The check is intentionally
- * conservative — a missing/unknown host falls through to `try` so a
- * detection bug can never accidentally reroute legacy customers
- * onto the new account.
+ * Bundled fallback publishable key for the BOOK account
+ * (`acct_1S6xTvEFKFvC92D7` — handles all CA + TX payments).
+ * Publishable keys are public, so bundling is safe.
  */
-export const getStripeAccountSlug = (): StripeAccountSlug => {
+const FALLBACK_PUBLISHABLE_KEY_BOOK =
+  'pk_live_51S6xTvEFKFvC92D7wCSKXNX71yE6nc4Kwv2ilwuq2PD7ZDDhdfxvK4OLaJpLNAB8CiKjiLSpNWpw9fugWOdP8Q2300jcYkIDjd';
+
+/** Two-letter US state codes that route to the BOOK Stripe account.
+ *  NY (and any unknown / blank state) routes to the legacy TRY. */
+const BOOK_ACCOUNT_STATES = new Set(['CA', 'TX']);
+
+/**
+ * Resolve the Stripe slug from a US state code. Returns null when
+ * the state is missing / unknown so the caller can fall back to a
+ * different signal (zip prefix, host, etc.).
+ */
+export const slugFromState = (
+  state: string | null | undefined,
+): StripeAccountSlug | null => {
+  if (!state) return null;
+  const code = state.trim().toUpperCase();
+  if (BOOK_ACCOUNT_STATES.has(code)) return 'book';
+  if (code === 'NY') return 'try';
+  return null;
+};
+
+/**
+ * Resolve the Stripe slug from a US zip's first 3 digits — mirrors
+ * the supported-state ranges that `/book/zip` already validates
+ * against. Returns null for zips outside those ranges.
+ */
+export const slugFromZipPrefix = (
+  zip: string | null | undefined,
+): StripeAccountSlug | null => {
+  if (!zip) return null;
+  const digits = String(zip).replace(/\D/g, '');
+  if (digits.length < 3) return null;
+  const prefix3 = parseInt(digits.slice(0, 3), 10);
+  const prefix5 = parseInt(digits.slice(0, 5), 10) || 0;
+  if (prefix3 >= 100 && prefix3 <= 149) return 'try'; // NY
+  if (prefix3 >= 750 && prefix3 <= 799) return 'book'; // TX
+  if (prefix5 === 73301) return 'book'; // TX (Austin IRS)
+  if (prefix3 >= 900 && prefix3 <= 961) return 'book'; // CA
+  return null;
+};
+
+/**
+ * Strict authoritative slug resolution from the booking's location.
+ * State wins; zip is a fallback when the state is missing. Returns
+ * null only when neither signal is conclusive — callers should then
+ * fall back to host detection.
+ */
+export const slugFromCustomerLocation = (
+  state: string | null | undefined,
+  zip: string | null | undefined,
+): StripeAccountSlug | null => slugFromState(state) ?? slugFromZipPrefix(zip);
+
+/**
+ * Host-based slug fallback. Only used as a last resort when no
+ * state / zip is available yet. NEVER consulted at /book/checkout
+ * once a customer has entered a zip — at that point
+ * `slugFromCustomerLocation` is authoritative.
+ */
+const slugFromHost = (): StripeAccountSlug => {
   if (typeof window === 'undefined') return 'try';
   const host = (window.location.hostname || '').toLowerCase();
   if (host === 'book.alphaluxclean.com') return 'book';
   return 'try';
+};
+
+/**
+ * Resolve the Stripe account slug for this booking. Pass any state /
+ * zip you have; the function falls back to host detection only when
+ * neither signal is available.
+ */
+export const getStripeAccountSlug = (
+  state?: string | null,
+  zip?: string | null,
+): StripeAccountSlug => {
+  const fromLocation = slugFromCustomerLocation(state, zip);
+  if (fromLocation) return fromLocation;
+  return slugFromHost();
 };
 
 const FALLBACK_PUBLISHABLE_KEY =
@@ -131,18 +201,13 @@ const createStripePromise = (): Promise<Stripe | null> => {
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {
-          if (accountSlug === 'try') {
-            console.warn(
-              '⚠️ No remote Stripe key available, using bundled try-account fallback publishable key',
-            );
-            publishableKey = FALLBACK_PUBLISHABLE_KEY;
-          } else {
-            // Don't fall back to the try-account key on book.* —
-            // that would silently misroute payments. Bail loudly.
-            throw new Error(
-              'No valid Stripe publishable key for the BOOK account. Set STRIPE_PUBLISHABLE_KEY_BOOK in Supabase secrets.',
-            );
-          }
+          console.warn(
+            `⚠️ No remote Stripe key available, using bundled ${accountSlug}-account fallback publishable key`,
+          );
+          publishableKey =
+            accountSlug === 'book'
+              ? FALLBACK_PUBLISHABLE_KEY_BOOK
+              : FALLBACK_PUBLISHABLE_KEY;
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {

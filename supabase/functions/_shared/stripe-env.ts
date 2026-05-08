@@ -46,20 +46,101 @@ export const BOOK_ACCOUNT_SLUG = "book";
 
 /**
  * Hard-coded fallback for the TRY account's publishable key.
- * Publishable keys are designed to be safe to ship to the client
- * (they're already bundled in `src/lib/stripe.ts`), so this fallback
- * exists purely as a UI safety net: if the Supabase secret is missing
- * or holds the wrong value, `get-stripe-config` returns this so
- * Stripe.js still loads against the right account.
+ * Publishable keys are public by design (they ship to the browser
+ * already), so bundling them as a fallback is safe and means a
+ * missing Supabase secret can't blank the payment form.
  *
- * The BOOK account intentionally has no hard-coded fallback — its
- * publishable key MUST come from the `STRIPE_PUBLISHABLE_KEY_BOOK`
- * env var so we never accidentally serve the try-account's key on
- * the book subdomain (which would produce a "client_secret does not
- * match the publishable key used" error at confirm time).
+ * `acct_1TONej6CLM640Ljs` — original AlphaLux Cleaning Stripe account
+ * (NY operations).
  */
-export const FALLBACK_PUBLISHABLE_KEY =
+export const FALLBACK_PUBLISHABLE_KEY_TRY =
   "pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat";
+
+/**
+ * Hard-coded fallback for the BOOK account's publishable key.
+ *
+ * `acct_1S6xTvEFKFvC92D7` — new Stripe account that handles every
+ * payment from CA + TX customers. The publishable key is public so
+ * bundling it is safe; the matching secret + webhook secret live in
+ * Supabase env (`STRIPE_SECRET_KEY_BOOK`, `STRIPE_WEBHOOK_SECRET_BOOK`).
+ */
+export const FALLBACK_PUBLISHABLE_KEY_BOOK =
+  "pk_live_51S6xTvEFKFvC92D7wCSKXNX71yE6nc4Kwv2ilwuq2PD7ZDDhdfxvK4OLaJpLNAB8CiKjiLSpNWpw9fugWOdP8Q2300jcYkIDjd";
+
+/** @deprecated Use FALLBACK_PUBLISHABLE_KEY_TRY. Preserved as an
+ *  alias so any out-of-tree imports keep compiling. */
+export const FALLBACK_PUBLISHABLE_KEY = FALLBACK_PUBLISHABLE_KEY_TRY;
+
+/**
+ * Two-letter US state codes that route to the BOOK Stripe account.
+ * Anything outside this set (currently NY, plus any unknown / blank
+ * state) routes to the legacy TRY account.
+ */
+const BOOK_ACCOUNT_STATES: ReadonlySet<string> = new Set(["CA", "TX"]);
+
+/**
+ * Resolve the Stripe account slug from a customer's US state code.
+ *
+ * Returns `null` when the state is missing / unknown so the caller
+ * can fall back to a different signal (zip prefix, body override,
+ * Origin header, etc.). NY explicitly resolves to `try`; everything
+ * else returns `null` so the caller can decide.
+ */
+export function slugFromState(
+  state: string | null | undefined,
+): StripeAccountSlug | null {
+  if (!state) return null;
+  const code = state.trim().toUpperCase();
+  if (BOOK_ACCOUNT_STATES.has(code)) return "book";
+  if (code === "NY") return "try";
+  return null;
+}
+
+/**
+ * Resolve the Stripe account slug from a US zip code's first 3
+ * digits. Mirrors the supported-state ranges already used by
+ * `/book/zip` for client-side validation.
+ *
+ *   * NY: 100–149 → try
+ *   * TX: 750–799 (+ the 73301 IRS Austin single-box) → book
+ *   * CA: 900–961 → book
+ *
+ * Returns `null` for anything outside those ranges so callers can
+ * fall through to other signals (state code, host header, etc.).
+ */
+export function slugFromZipPrefix(
+  zip: string | null | undefined,
+): StripeAccountSlug | null {
+  if (!zip) return null;
+  const digits = String(zip).replace(/\D/g, "");
+  if (digits.length < 3) return null;
+  const prefix3 = parseInt(digits.slice(0, 3), 10);
+  const prefix5 = parseInt(digits.slice(0, 5), 10) || 0;
+  if (prefix3 >= 100 && prefix3 <= 149) return "try"; // NY
+  if (prefix3 >= 750 && prefix3 <= 799) return "book"; // TX
+  if (prefix5 === 73301) return "book"; // TX (Austin IRS)
+  if (prefix3 >= 900 && prefix3 <= 961) return "book"; // CA
+  return null;
+}
+
+/**
+ * Resolve the Stripe account slug strictly from a customer's
+ * location (state code or zip). State wins; zip is a fallback only
+ * when the state is missing or unrecognized. Returns `null` if
+ * neither signal is conclusive.
+ *
+ * This is the AUTHORITATIVE routing function for payments at
+ * checkout. Subdomain / Origin headers are intentionally ignored
+ * here so that a customer whose ZIP says CA can never be charged
+ * against the NY-only `try` account, even if they somehow landed on
+ * `try.alphaluxcleaning.com`.
+ */
+export function slugFromCustomerLocation(
+  state: string | null | undefined,
+  zip: string | null | undefined,
+): StripeAccountSlug | null {
+  return slugFromState(state) ?? slugFromZipPrefix(zip);
+}
 
 function normalizeSecret(raw: string): string {
   let s = raw.trim();
@@ -170,28 +251,29 @@ export function getStripeSecretKey(
 /**
  * Resolve the Stripe publishable key for the given account.
  *
- * `try` keeps its hard-coded fallback (the bundled production key
- * tied to the existing single-account Stripe). `book` MUST have
- * `STRIPE_PUBLISHABLE_KEY_BOOK` configured — there is no fallback
- * because returning the try-account's pk on the book subdomain would
- * produce a clientSecret/publishable mismatch and silently misroute
- * payments. Callers should treat a `null` return for `book` as a
- * hard configuration error and surface a 503 instead of falling
- * through.
+ * Both accounts ship with a bundled fallback so a missing Supabase
+ * secret can't blank the payment form. Publishable keys are public
+ * by design, so this is safe.
  *
- * Returns `string | null` — `null` only ever happens for `book`
- * when the env var is missing.
+ *   * try  → STRIPE_PUBLISHABLE_KEY_OVERRIDE → bundled try fallback
+ *   * book → STRIPE_PUBLISHABLE_KEY_BOOK    → bundled book fallback
+ *
+ * Returns the bundled fallback when no env override is set so this
+ * function never returns null. (Earlier behavior returned null for
+ * book when the env var was missing; with the BOOK pk now bundled
+ * that failure mode is gone.)
  */
 export function getStripePublishableKey(
   slug: StripeAccountSlug = "try",
-): string | null {
+): string {
   if (slug === "book") {
     const k = firstEnv("STRIPE_PUBLISHABLE_KEY_BOOK");
-    return k && isValidPublishableKey(k) ? k : null;
+    if (k && isValidPublishableKey(k)) return k;
+    return FALLBACK_PUBLISHABLE_KEY_BOOK;
   }
   const override = firstEnv("STRIPE_PUBLISHABLE_KEY_OVERRIDE");
   if (override && isValidPublishableKey(override)) return override;
-  return FALLBACK_PUBLISHABLE_KEY;
+  return FALLBACK_PUBLISHABLE_KEY_TRY;
 }
 
 /**
