@@ -52,6 +52,7 @@ import {
   DEFAULT_MIN_LEAD_DAYS,
   timeSlotToIsoWindow,
   type TimeSlotId,
+  OfferDateTimePicker,
 } from '@/components/booking/OfferDateTimePicker';
 
 function timeBlockToIsoWindow(dateStr: string, block: string) {
@@ -98,6 +99,11 @@ export default function BookingDetails() {
   const [preferredDate, setPreferredDate] = useState('');
   const [preferredTimeBlock, setPreferredTimeBlock] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Combo bundle ("Deep + Standard within 14 days") — second visit
+  // schedule. Empty unless the booking's offer_type is the combo.
+  const [secondVisitDate, setSecondVisitDate] = useState('');
+  const [secondVisitTimeSlot, setSecondVisitTimeSlot] = useState<TimeSlotId | ''>('');
 
   useEffect(() => {
     if (!bookingId) {
@@ -220,6 +226,13 @@ export default function BookingDetails() {
     if (preSelectedTime) {
       setPreferredTimeBlock(String(preSelectedTime));
     }
+
+    // Combo: re-hydrate the second-visit picker from
+    // property_details.second_visit so the customer doesn't lose
+    // their pick if they refresh the page mid-flow.
+    const sv = data.property_details?.second_visit;
+    if (sv?.date) setSecondVisitDate(String(sv.date).slice(0, 10));
+    if (sv?.time_slot) setSecondVisitTimeSlot(sv.time_slot as TimeSlotId);
   };
 
   const customerName = useMemo(() => {
@@ -229,6 +242,28 @@ export default function BookingDetails() {
     return [c?.first_name, c?.last_name].filter(Boolean).join(' ');
   }, [bookingData]);
 
+  // True when the customer bought the "Deep + Standard within 14 days"
+  // combo on /book/offer. Drives the second-visit picker below.
+  const isComboBundle = bookingData?.offer_type === 'deep_plus_standard';
+
+  // The second-visit picker is constrained to [first + 1 day,
+  // first + 14 days]. We translate that into the picker's
+  // (minLeadDays, windowDays) props which it computes from "today".
+  // If there's no first date yet, the picker stays disabled.
+  const secondPickerProps = useMemo(() => {
+    if (!isComboBundle || !preferredDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const first = new Date(preferredDate + 'T00:00:00');
+    const daysFromTodayToFirst = Math.round(
+      (first.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    // Earliest second visit = first + 1 day. Latest = first + 14.
+    const minLeadDays = Math.max(0, daysFromTodayToFirst + 1);
+    const windowDays = 13;
+    return { minLeadDays, windowDays };
+  }, [isComboBundle, preferredDate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -237,15 +272,56 @@ export default function BookingDetails() {
       return;
     }
 
+    // Combo bundle requires a second visit scheduled within 14 days
+    // of the first cleaning. We re-validate the window here in case
+    // the customer edited the first date after picking the second.
+    if (isComboBundle) {
+      if (!secondVisitDate || !secondVisitTimeSlot) {
+        toast.error(
+          'Pick a date and arrival window for your follow-up Standard Clean.',
+        );
+        return;
+      }
+      const first = new Date(preferredDate + 'T00:00:00');
+      const second = new Date(secondVisitDate + 'T00:00:00');
+      const diffDays = Math.round(
+        (second.getTime() - first.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (diffDays < 1) {
+        toast.error(
+          'Your second cleaning must be after your initial Deep Clean.',
+        );
+        return;
+      }
+      if (diffDays > 14) {
+        toast.error(
+          'Your second cleaning must be within 14 days of the initial Deep Clean.',
+        );
+        return;
+      }
+    }
+
     setLoading(true);
     setSubmitState({ kind: 'submitting' });
 
-    const propertyDetails = {
+    const propertyDetails: Record<string, unknown> = {
       dwelling_type: dwellingType,
       bedrooms: bedrooms ? Number(bedrooms) : null,
       bathrooms: bathrooms ? Number(bathrooms) : null,
       pets: hasPets,
     };
+
+    if (isComboBundle && secondVisitDate && secondVisitTimeSlot) {
+      // Persist the second visit on property_details.second_visit so
+      // ops can schedule the follow-up Standard Clean as a separate
+      // HCP job. Storing it here (rather than spinning up a second
+      // bookings row) keeps the first-pass change minimal.
+      propertyDetails.second_visit = {
+        type: 'standard',
+        date: secondVisitDate,
+        time_slot: secondVisitTimeSlot,
+      };
+    }
 
     try {
       // 1. Persist the service address + schedule on the booking row.
@@ -590,6 +666,53 @@ export default function BookingDetails() {
                   Change
                 </Button>
               </div>
+            </Card>
+          )}
+
+          {/* Combo bundle: schedule the 2nd Standard Clean within 14
+              days of the initial Deep Clean. Only rendered for
+              offer_type === 'deep_plus_standard'. */}
+          {isComboBundle && (
+            <Card className="p-6 border-alx-gold/40">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Schedule your follow-up Standard Clean
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Pick a date within <strong>14 days</strong> of your initial
+                  Deep Clean
+                  {preferredDate ? (
+                    <>
+                      {' '}
+                      (
+                      {new Date(preferredDate + 'T00:00:00').toLocaleDateString(
+                        'en-US',
+                        { month: 'long', day: 'numeric' },
+                      )}
+                      )
+                    </>
+                  ) : null}
+                  . The same AlphaLux team will handle both visits.
+                </p>
+              </div>
+
+              {!preferredDate ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Confirm your initial Deep Clean date first — the second
+                  visit's available dates depend on it.
+                </p>
+              ) : secondPickerProps ? (
+                <OfferDateTimePicker
+                  date={secondVisitDate}
+                  timeSlot={secondVisitTimeSlot}
+                  onDateChange={setSecondVisitDate}
+                  onTimeSlotChange={setSecondVisitTimeSlot}
+                  minLeadDays={secondPickerProps.minLeadDays}
+                  windowDays={secondPickerProps.windowDays}
+                  serviceDurationHours={2}
+                  serviceLabel="follow-up Standard Clean"
+                />
+              ) : null}
             </Card>
           )}
 
