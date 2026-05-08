@@ -172,6 +172,7 @@ serve(async (req) => {
       paymentIntentId,
       subscriptionId,
       paymentStatus = "deposit_paid",
+      recurringAgreementAcceptedAt,
     } = await req.json();
 
     console.log("Confirming payment for booking:", bookingId);
@@ -194,6 +195,29 @@ serve(async (req) => {
 
     if (paymentIntentId) updateData.stripe_payment_intent_id = paymentIntentId;
     if (subscriptionId) updateData.stripe_subscription_id = subscriptionId;
+
+    // Audit trail for the recurring 3-clean commitment. We merge into
+    // property_details rather than overwriting because subsequent
+    // /book/details submission rewrites that JSON column. Read-merge-
+    // write keeps the field stable even if the property_details payload
+    // arrives empty later (defensive — save-booking-details currently
+    // does a full overwrite).
+    if (recurringAgreementAcceptedAt) {
+      const { data: existingForMerge } = await supabase
+        .from("bookings")
+        .select("property_details")
+        .eq("id", bookingId)
+        .single();
+      const merged = {
+        ...(existingForMerge?.property_details || {}),
+        recurring_agreement: {
+          accepted_at: recurringAgreementAcceptedAt,
+          minimum_visits: 3,
+          terms_version: "2026-05-08-v1",
+        },
+      };
+      updateData.property_details = merged;
+    }
 
     const { data: booking, error: updateError } = await supabase
       .from("bookings")

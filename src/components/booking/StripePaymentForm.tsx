@@ -184,7 +184,11 @@ function PaymentFormContent({
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-foreground font-medium">
-            {offerType === '90_day_plan' ? 'Starter Deposit' : '50% Deposit Due Today'}
+            {offerType === '90_day_plan'
+              ? 'Starter Deposit'
+              : offerType === 'recurring'
+                ? '50% Deposit · Visit 1 of 3'
+                : '50% Deposit Due Today'}
           </span>
           <span className="font-bold text-lg text-primary">
             ${dueToday.toFixed(2)}
@@ -202,7 +206,26 @@ function PaymentFormContent({
             <span>${totalAmount.toFixed(2)}</span>
           </div>
         )}
-        {offerType !== '90_day_plan' && totalAmount > dueToday && (
+        {offerType === 'recurring' && (
+          <>
+            {totalAmount > dueToday && (
+              <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-primary/15">
+                <span>Visit 1 balance (invoiced after cleaning)</span>
+                <span>${(totalAmount - dueToday).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Visits 2 & 3</span>
+              <span>auto-billed to saved card</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground pt-1 italic">
+              By paying today you confirm the 3-clean minimum
+              commitment and agree your card stays on file for
+              visits 2 and 3.
+            </p>
+          </>
+        )}
+        {offerType !== '90_day_plan' && offerType !== 'recurring' && totalAmount > dueToday && (
           <>
             <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-primary/15">
               <span>Remaining Balance (charged after service)</span>
@@ -286,7 +309,9 @@ function PaymentFormContent({
               <CreditCard className="mr-2 h-4 w-4" />
               {offerType === '90_day_plan'
                 ? `Pay $${dueToday.toFixed(2)} Starter Deposit`
-                : `Pay $${dueToday.toFixed(2)} Deposit`}
+                : offerType === 'recurring'
+                  ? `Start 3-Visit Plan — Pay $${dueToday.toFixed(2)}`
+                  : `Pay $${dueToday.toFixed(2)} Deposit`}
             </>
           )}
         </Button>

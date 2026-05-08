@@ -9,6 +9,7 @@ import { TestTube } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +26,7 @@ import {
   CheckCircle2,
   Clock,
   Star,
+  Repeat,
 } from 'lucide-react';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import { BrandedLoader } from '@/components/BrandedLoader';
@@ -44,6 +46,13 @@ export default function BookingCheckout() {
   const [initError, setInitError] = useState<string | null>(null);
   const [initSlow, setInitSlow] = useState(false);
   const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
+
+  // Recurring 3-clean commitment acknowledgment. Required before the
+  // embedded Stripe payment form is enabled when offerType ===
+  // 'recurring'. Persisted on the booking row in
+  // property_details.recurring_agreement_accepted_at via
+  // confirm-booking-payment so we have an audit trail.
+  const [recurringAgreed, setRecurringAgreed] = useState(false);
 
   // Local contact form state — the Offer step doesn't collect it, so we
   // prompt for it inline if it's missing. This prevents the page from
@@ -594,6 +603,15 @@ export default function BookingCheckout() {
       // the cleaning. The 90-day plan handles its remaining balance
       // via the auto-bill subscription.
       const paymentStatus = 'deposit_paid';
+      // For recurring plans, record the moment the customer agreed
+      // to the 3-clean minimum + saved-card terms so we have an
+      // audit trail on the booking row. The checkbox at /book/checkout
+      // is required before the payment form was even enabled, so
+      // reaching this code path implies acceptance.
+      const recurringAgreementAcceptedAt =
+        isRecurringPlan && recurringAgreed
+          ? new Date().toISOString()
+          : undefined;
       const { error } = await supabase.functions.invoke(
         'confirm-booking-payment',
         {
@@ -602,6 +620,7 @@ export default function BookingCheckout() {
             paymentIntentId,
             subscriptionId,
             paymentStatus,
+            recurringAgreementAcceptedAt,
           },
         },
       );
@@ -831,6 +850,30 @@ export default function BookingCheckout() {
   // half is invoiced after the second cleaning.
   const isComboBundle = bookingData.offerType === 'deep_plus_standard';
 
+  // Recurring Maintenance is a 3-clean minimum commitment.
+  // First visit is 50% deposit + 50% balance (existing flow). Visits
+  // 2 + 3 are billed off-session at the maintenance rate against the
+  // card saved at checkout (setup_future_usage='off_session' on the
+  // PaymentIntent already attaches the PaymentMethod to the
+  // Customer). The customer must explicitly acknowledge the 3-visit
+  // minimum + saved-card terms before the embedded Stripe form
+  // becomes interactive.
+  const isRecurringPlan = bookingData.offerType === 'recurring';
+  const recurringMinVisits = 3;
+  // The post-promo `finalPrice` is just visit 1. Visits 2 + 3 bill
+  // at the standard maintenance rate (no promo). We pull the
+  // maintenance rate from the booking's pricingBreakdown if it's
+  // there; otherwise we conservatively assume each remaining visit
+  // costs the same as the pre-promo basePrice (which is the
+  // maintenance rate on the recurring offer).
+  const recurringMaintenancePerVisit = rawBase || finalPrice;
+  const recurringRemainingVisitsTotal = isRecurringPlan
+    ? recurringMaintenancePerVisit * (recurringMinVisits - 1)
+    : 0;
+  const recurringContractTotal = isRecurringPlan
+    ? finalPrice + recurringRemainingVisitsTotal
+    : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <BookingProgressBar currentStep={4} totalSteps={6} />
@@ -845,7 +888,9 @@ export default function BookingCheckout() {
               ? 'Lock in your 90-day plan with a small starter deposit. Monthly billing handles the rest. No hidden fees.'
               : isComboBundle
                 ? 'Reserve your Deep + Standard combo with a 50% deposit today. Your card is securely saved on file — the remaining 50% is automatically charged after your follow-up Standard Clean (within 14 days).'
-                : 'Reserve your service with a 50% deposit today. Your card is securely saved on file and the remaining 50% is automatically charged after your cleaning is complete.'}
+                : isRecurringPlan
+                  ? `Start your 3-visit recurring plan with a 50% deposit on visit 1. Your card is securely saved on file and visits 2 and 3 are auto-billed at the maintenance rate.`
+                  : 'Reserve your service with a 50% deposit today. Your card is securely saved on file and the remaining 50% is automatically charged after your cleaning is complete.'}
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -1118,6 +1163,84 @@ export default function BookingCheckout() {
             </CardContent>
           </Card>
 
+          {/* Recurring Service Agreement — only shown when the
+              customer is signing up for a recurring plan. The
+              embedded Stripe form below will not enable until the
+              checkbox is ticked. */}
+          {isRecurringPlan && (
+            <Card className="border-alx-gold/40 bg-alx-gold/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Repeat className="h-5 w-5 text-alx-gold" />
+                  Recurring Service Agreement
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-foreground">
+                  Recurring Maintenance is a <strong>3-clean minimum
+                  commitment</strong>. By starting this plan you agree
+                  to the following terms:
+                </p>
+                <ul className="space-y-2 text-sm text-foreground">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-alx-gold mt-0.5 flex-shrink-0" />
+                    <span>
+                      You'll receive at least <strong>3 cleanings</strong>{' '}
+                      under this plan. The 50% deposit you pay today
+                      covers visit&nbsp;1; the remaining 50% of visit&nbsp;1
+                      is invoiced after that cleaning.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-alx-gold mt-0.5 flex-shrink-0" />
+                    <span>
+                      Your card is{' '}
+                      <strong>securely saved on file with Stripe</strong>{' '}
+                      and will be auto-charged for visits&nbsp;2 and&nbsp;3
+                      at the standard maintenance rate of{' '}
+                      <strong>${recurringMaintenancePerVisit.toFixed(2)}</strong>{' '}
+                      per visit, before each scheduled cleaning.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-alx-gold mt-0.5 flex-shrink-0" />
+                    <span>
+                      Estimated total over the 3-visit minimum:{' '}
+                      <strong>${recurringContractTotal.toFixed(2)}</strong>{' '}
+                      (visit&nbsp;1 with promo + 2 maintenance visits at
+                      the standard rate).
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-alx-gold mt-0.5 flex-shrink-0" />
+                    <span>
+                      After the 3-visit minimum is complete, you can
+                      pause, change frequency, or cancel anytime by
+                      contacting AlphaLux support.
+                    </span>
+                  </li>
+                </ul>
+
+                <div className="flex items-start gap-3 rounded-lg border border-alx-gold/40 bg-background p-3">
+                  <Checkbox
+                    id="recurring-agree"
+                    checked={recurringAgreed}
+                    onCheckedChange={(v) => setRecurringAgreed(v === true)}
+                    className="mt-0.5"
+                  />
+                  <Label
+                    htmlFor="recurring-agree"
+                    className="text-sm font-medium leading-snug cursor-pointer"
+                  >
+                    I understand and agree — I'm signing up for a
+                    minimum of 3 cleanings, and my card will be saved
+                    on file and auto-charged before visits&nbsp;2 and&nbsp;3.
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment Form */}
           <Card>
             <CardHeader>
@@ -1204,6 +1327,16 @@ export default function BookingCheckout() {
                     Continue to Secure Payment
                   </Button>
                 </form>
+              ) : isRecurringPlan && !recurringAgreed ? (
+                <Alert className="border-alx-gold/40 bg-alx-gold/5">
+                  <Repeat className="h-4 w-4 text-alx-gold" />
+                  <AlertDescription className="text-sm">
+                    Please review and accept the{' '}
+                    <strong>Recurring Service Agreement</strong> above
+                    (3-clean minimum + saved-card terms) to enable the
+                    payment form.
+                  </AlertDescription>
+                </Alert>
               ) : isTestMode ? (
                 <>
                   <Alert>
@@ -1225,6 +1358,8 @@ export default function BookingCheckout() {
                       </>
                     ) : is90DayPlan ? (
                       `Pay $${dueToday.toFixed(2)} Starter Deposit (Test)`
+                    ) : isRecurringPlan ? (
+                      `Start 3-Visit Plan — Pay $${dueToday.toFixed(2)} (Test)`
                     ) : (
                       `Pay $${dueToday.toFixed(2)} (Test)`
                     )}
