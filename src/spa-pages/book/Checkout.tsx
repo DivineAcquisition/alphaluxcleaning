@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useBooking } from '@/contexts/BookingContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getStripeAccountSlug } from '@/lib/stripe';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -260,8 +261,17 @@ export default function BookingCheckout() {
         },
       };
 
+      // Tell the edge function which Stripe account this request
+      // belongs to. Resolved from the host (`book.alphaluxclean.com`
+      // → 'book', everything else → 'try'). The server still sniffs
+      // the Origin header as a backstop, but passing it explicitly
+      // keeps a stale CDN / proxy from misrouting payments.
+      const stripeAccount = getStripeAccountSlug();
+
       if (isTestMode) {
-        console.log('🧪 TEST MODE: Creating booking via edge function');
+        console.log('🧪 TEST MODE: Creating booking via edge function', {
+          stripeAccount,
+        });
         const { data, error } = await supabase.functions.invoke(
           'create-payment-intent',
           {
@@ -274,6 +284,7 @@ export default function BookingCheckout() {
               bookingData: bookingPayload,
               paymentType: is90DayPlan ? 'deposit' : 'full',
               bookingId: reuseBookingId,
+              account: stripeAccount,
             },
           },
         );
@@ -295,6 +306,7 @@ export default function BookingCheckout() {
               bookingData: bookingPayload,
               paymentType: 'deposit',
               bookingId: reuseBookingId,
+              account: stripeAccount,
             },
           });
 
@@ -342,6 +354,7 @@ export default function BookingCheckout() {
           amount: dueToday,
           paymentType: 'deposit',
           reuseBookingId,
+          stripeAccount,
         });
         const { data, error } = await supabase.functions.invoke(
           'create-payment-intent',
@@ -361,6 +374,7 @@ export default function BookingCheckout() {
               paymentType: 'deposit',
               bookingId: reuseBookingId,
               metadata: { offer_type: bookingData.offerType },
+              account: stripeAccount,
             },
           },
         );

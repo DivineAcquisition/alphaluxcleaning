@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { getStripePublishableKey } from "../_shared/stripe-env.ts";
+import {
+  getStripePublishableKey,
+  resolveStripeAccount,
+} from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,16 +11,14 @@ const corsHeaders = {
 };
 
 /**
- * Returns the Stripe publishable key for the AlphaLux Cleaning
- * Stripe account.
+ * Returns the Stripe publishable key for the requesting account.
  *
- * Single-account; the publishable key is hard-coded in the shared
- * helper because it's a public, non-rotating value tied to one
- * specific Stripe account. The previous environment-variable lookup
- * repeatedly drifted to publishable keys for *other* accounts and
- * produced the "client_secret does not match the publishable key
- * used" outage at confirm time. Removing the env-var path fixes
- * that failure mode by construction.
+ * Account resolution:
+ *   1. Explicit `account` field on the JSON body, or `?account=` on
+ *      the query string. Accepted values: `'try' | 'book'`.
+ *   2. Origin / Referer / Host header sniffing — anything from
+ *      `book.alphaluxclean.com` resolves to `book`, everything else
+ *      (including legacy try.alphaluxcleaning.com) resolves to `try`.
  *
  * Most call sites no longer hit this endpoint — `create-payment-intent`
  * already returns the publishable key inline alongside the client
@@ -29,9 +30,47 @@ serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const publishableKey = getStripePublishableKey();
+  // Pull `account` from query string or body (best-effort — body is
+  // POST-only, query string works for GET).
+  const url = new URL(req.url);
+  let override: string | null = url.searchParams.get("account");
+  if (!override && req.method !== "GET") {
+    try {
+      const body = await req.clone().json();
+      if (body && typeof body.account === "string") {
+        override = body.account;
+      }
+    } catch {
+      // ignore — empty body / non-JSON is fine
+    }
+  }
+
+  const slug = resolveStripeAccount(req, override);
+  const publishableKey = getStripePublishableKey(slug);
+
+  if (!publishableKey) {
+    return new Response(
+      JSON.stringify({
+        error: "Publishable key not configured for this account",
+        account: slug,
+        details:
+          slug === "book"
+            ? "Set STRIPE_PUBLISHABLE_KEY_BOOK in Supabase secrets."
+            : "Set STRIPE_PUBLISHABLE_KEY in Supabase secrets.",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      },
+    );
+  }
+
   return new Response(
-    JSON.stringify({ publishableKey, source: "single_account" }),
+    JSON.stringify({
+      publishableKey,
+      account: slug,
+      source: "dual_account",
+    }),
     {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

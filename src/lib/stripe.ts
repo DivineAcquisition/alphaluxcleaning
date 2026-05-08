@@ -2,20 +2,45 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 
 /**
- * Single-account Stripe loader.
+ * Dual-account Stripe loader.
  *
- * AlphaLux Cleaning runs on one Stripe account
- * (`acct_1TONej6CLM640Ljs`). This module:
+ * AlphaLux Cleaning now runs on TWO Stripe accounts split by
+ * subdomain:
  *
- *   1. Tries the bundled local key (env var on the Next build, or
- *      `window.STRIPE_PUBLISHABLE_KEY` shimmed in tests).
- *   2. Falls back to the Supabase `get-stripe-config` edge function
- *      so ops can rotate the key without redeploying the front end.
- *   3. Falls back to a hard-coded production publishable key so the
- *      payment form never blanks out due to a transient Supabase
- *      outage. Publishable keys are designed to be safe to bundle in
- *      the client.
+ *   * `book.alphaluxclean.com` → `book` account (new). Publishable
+ *     key comes from `get-stripe-config?account=book` (which reads
+ *     `STRIPE_PUBLISHABLE_KEY_BOOK` from Supabase secrets) or, more
+ *     commonly, inline from `create-payment-intent`'s response.
+ *   * everything else (including the legacy `try.alphaluxcleaning.com`)
+ *     → `try` account. Keeps the existing hard-coded fallback +
+ *     env-var soup so the legacy flow is unchanged.
+ *
+ * Most call sites no longer hit `get-stripe-config` —
+ * `create-payment-intent` returns the publishable key inline next
+ * to the client secret, and the embedded payment form boots Stripe
+ * via `getStripeForKey(publishableKey)`. The fallbacks below are a
+ * UI safety net for paths that need to load Stripe.js before they
+ * know which booking the session belongs to.
  */
+
+export type StripeAccountSlug = 'try' | 'book';
+
+/**
+ * Detect which Stripe account this browser session belongs to based
+ * on the host. Anything served from `book.alphaluxclean.com` runs
+ * on the `book` account; every other host (including
+ * `try.alphaluxcleaning.com`, `localhost`, Lovable previews, etc.)
+ * runs on the legacy `try` account. The check is intentionally
+ * conservative — a missing/unknown host falls through to `try` so a
+ * detection bug can never accidentally reroute legacy customers
+ * onto the new account.
+ */
+export const getStripeAccountSlug = (): StripeAccountSlug => {
+  if (typeof window === 'undefined') return 'try';
+  const host = (window.location.hostname || '').toLowerCase();
+  if (host === 'book.alphaluxclean.com') return 'book';
+  return 'try';
+};
 
 const FALLBACK_PUBLISHABLE_KEY =
   'pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat';
@@ -33,9 +58,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 const fetchStripeKey = async (): Promise<string | null> => {
   try {
-    console.log('🔄 Fetching Stripe configuration from Supabase...');
+    const account = getStripeAccountSlug();
+    console.log(
+      `🔄 Fetching Stripe configuration from Supabase for account=${account}…`,
+    );
     const { data, error } = await supabase.functions.invoke('get-stripe-config', {
-      body: {},
+      body: { account },
     });
 
     if (error) {
@@ -44,7 +72,9 @@ const fetchStripeKey = async (): Promise<string | null> => {
     }
 
     if (data?.publishableKey && isValidKey(data.publishableKey)) {
-      console.log('✅ Stripe publishable key retrieved from Supabase');
+      console.log(
+        `✅ Stripe publishable key retrieved from Supabase (account=${data.account || account})`,
+      );
       return data.publishableKey;
     }
 
@@ -71,26 +101,48 @@ const createStripePromise = (): Promise<Stripe | null> => {
       try {
         console.log(`🚀 Starting Stripe initialization (attempt ${attempt}/${maxRetries})...`);
 
-        let publishableKey =
-          (typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY) ||
-          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+        const accountSlug = getStripeAccountSlug();
 
-        if (publishableKey) {
-          console.log('🔑 Found local publishable key');
-        }
-
-        if (!publishableKey || !isValidKey(publishableKey)) {
-          console.log('⬇️ No valid local key, fetching from Supabase...');
-          try {
-            publishableKey = (await fetchStripeKey()) || undefined;
-          } catch (err) {
-            console.warn('⚠️ fetchStripeKey threw, will fall back to bundled key', err);
+        // Local-bundled key + `window.STRIPE_PUBLISHABLE_KEY` are
+        // only safe for the legacy `try` account. The book subdomain
+        // MUST get its key from `get-stripe-config?account=book` so
+        // we never accidentally boot Stripe.js with the try-account's
+        // publishable key (which would mismatch the book-account's
+        // client_secret at confirm time).
+        let publishableKey: string | undefined;
+        if (accountSlug === 'try') {
+          publishableKey =
+            (typeof window !== 'undefined' && window.STRIPE_PUBLISHABLE_KEY) ||
+            process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+          if (publishableKey) {
+            console.log('🔑 Found local publishable key (try account)');
           }
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {
-          console.warn('⚠️ No remote Stripe key available, using bundled fallback publishable key');
-          publishableKey = FALLBACK_PUBLISHABLE_KEY;
+          console.log(
+            `⬇️ No valid local key, fetching from Supabase (account=${accountSlug})…`,
+          );
+          try {
+            publishableKey = (await fetchStripeKey()) || undefined;
+          } catch (err) {
+            console.warn('⚠️ fetchStripeKey threw', err);
+          }
+        }
+
+        if (!publishableKey || !isValidKey(publishableKey)) {
+          if (accountSlug === 'try') {
+            console.warn(
+              '⚠️ No remote Stripe key available, using bundled try-account fallback publishable key',
+            );
+            publishableKey = FALLBACK_PUBLISHABLE_KEY;
+          } else {
+            // Don't fall back to the try-account key on book.* —
+            // that would silently misroute payments. Bail loudly.
+            throw new Error(
+              'No valid Stripe publishable key for the BOOK account. Set STRIPE_PUBLISHABLE_KEY_BOOK in Supabase secrets.',
+            );
+          }
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {

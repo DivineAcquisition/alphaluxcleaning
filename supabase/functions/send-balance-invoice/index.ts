@@ -1,7 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { requireStripeSecretKey } from "../_shared/stripe-env.ts";
+import {
+  requireStripeSecretKey,
+  slugFromBookingColumn,
+} from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,13 +44,27 @@ serve(async (req) => {
       throw new Error(`Booking not found: ${error?.message || "unknown"}`);
     }
 
+    // Honor the account stamped on the booking row at checkout time
+    // so the balance invoice runs through the same Stripe account
+    // that holds the saved card from the deposit. This is critical
+    // for the `book.alphaluxclean.com` flow — its saved cards live
+    // on the BOOK Stripe account and would not be charge-able from
+    // the legacy try account.
+    const bookingSlug = slugFromBookingColumn(booking.stripe_account_slug);
+    log("Using Stripe account from booking", {
+      slug: bookingSlug,
+      column: booking.stripe_account_slug,
+    });
+
     let secretKey: string;
     try {
-      secretKey = requireStripeSecretKey();
+      secretKey = requireStripeSecretKey(bookingSlug);
     } catch (err: any) {
       throw new Error(
         err?.message ||
-          "Stripe secret key not configured. Set STRIPE_SECRET_KEY in Supabase secrets.",
+          (bookingSlug === "book"
+            ? "Stripe secret key for the BOOK account is not configured. Set STRIPE_SECRET_KEY_BOOK in Supabase secrets."
+            : "Stripe secret key not configured. Set STRIPE_SECRET_KEY in Supabase secrets."),
       );
     }
 
