@@ -2,8 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
+  bookingColumnFromSlug,
   getStripePublishableKey,
   requireStripeSecretKey,
+  resolveStripeAccount,
+  type StripeAccountSlug,
 } from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
@@ -12,22 +15,28 @@ const corsHeaders = {
 };
 
 // Bump this when debugging deployment mismatches
-const FUNCTION_VERSION = "2026-04-26-single-account";
+const FUNCTION_VERSION = "2026-05-08-dual-account";
 
 /**
- * Single-account Stripe integration.
+ * Dual-account Stripe integration.
  *
- * AlphaLux Cleaning runs on one Stripe account
- * (`acct_1TONej6CLM640Ljs`). The previous ZIP-based router has been
- * removed — `_shared/stripe-env.ts` is the single source of truth
- * for the secret key and publishable key.
+ *   * `try`  — legacy AlphaLux Cleaning Stripe account (used by every
+ *              host except `book.alphaluxclean.com`). Stamped on
+ *              `bookings.stripe_account_slug` as the legacy literal
+ *              `alphalux_ny`.
+ *   * `book` — new Stripe account for the `book.alphaluxclean.com`
+ *              subdomain. Stamped as `book`.
  *
- * The `stripe_account_slug` column on `bookings` is preserved at the
- * DB level for historical reasons (column has a NOT NULL default of
- * `alphalux_ny`); we keep stamping it for forward compatibility but
- * nothing reads it for routing anymore.
+ * The slug is resolved (in priority order) from:
+ *   1. The request body's explicit `account` field (front-end sends
+ *      this based on `window.location.hostname`).
+ *   2. The `Origin` / `Referer` / `Host` headers.
+ *   3. Falls through to `try` so server-to-server calls without an
+ *      Origin keep using the legacy account.
+ *
+ * The selected slug is stamped on the booking row so downstream
+ * functions (send-balance-invoice, etc.) know which account to use.
  */
-const ACCOUNT_SLUG = "alphalux_ny";
 
 /**
  * `bookings.source` has a CHECK constraint that only accepts a small
@@ -80,8 +89,25 @@ serve(async (req) => {
       bookingId: existingBookingId,
       customerData,
       bookingData,
-      metadata
+      metadata,
+      account: accountOverride,
     } = body;
+
+    // Pick the Stripe account this request runs against. Frontend
+    // typically passes `account: 'book' | 'try'` based on the host;
+    // we still sniff Origin as a backstop so a missing field can't
+    // accidentally route a book.* customer onto the try account.
+    const accountSlug: StripeAccountSlug = resolveStripeAccount(
+      req,
+      accountOverride,
+    );
+    const accountColumnValue = bookingColumnFromSlug(accountSlug);
+    logStep("Resolved Stripe account", {
+      slug: accountSlug,
+      bookingColumn: accountColumnValue,
+      accountOverride,
+      origin: req.headers.get("origin"),
+    });
 
     const email = customerEmail || customerData?.email;
     if (!email) {
@@ -97,25 +123,49 @@ serve(async (req) => {
 
     let secretKey: string;
     try {
-      secretKey = requireStripeSecretKey();
+      secretKey = requireStripeSecretKey(accountSlug);
     } catch (err: any) {
-      logStep("Configuration error - Stripe secret key missing");
+      logStep("Configuration error - Stripe secret key missing", {
+        slug: accountSlug,
+      });
       return new Response(
         JSON.stringify({
           error: "Payment system not configured",
-          details: err?.message ||
-            "STRIPE_SECRET_KEY (or STRIPE_SECRET_KEY_ALPHALUX) must be set in Supabase secrets.",
+          details:
+            err?.message ||
+            (accountSlug === "book"
+              ? "STRIPE_SECRET_KEY_BOOK must be set in Supabase secrets for the book.alphaluxclean.com subdomain."
+              : "STRIPE_SECRET_KEY (or STRIPE_SECRET_KEY_ALPHALUX) must be set in Supabase secrets."),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 },
       );
     }
 
-    // Publishable key is hard-coded in `_shared/stripe-env.ts` — it's
-    // public, never expires, and is always tied to the same Stripe
-    // account as the secret key resolved above. Returning it inline
-    // means the client never has to round-trip to /get-stripe-config
-    // and can't accidentally boot Elements with a foreign-account key.
-    const publishableKey = getStripePublishableKey();
+    // Publishable key for THIS account. Returning it inline alongside
+    // the client secret means the client can boot Stripe.js against
+    // the correct account in a single round-trip, and we can never
+    // mismatch it with the secret key resolved above.
+    const publishableKey = getStripePublishableKey(accountSlug);
+    if (!publishableKey) {
+      // Only ever null for the book account when its env var is
+      // missing. We'd rather fail loud here than silently serve the
+      // try-account's pk and produce a clientSecret/pk mismatch on
+      // confirm.
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error:
+            "Our payment processor is temporarily unavailable. Please try again in a moment or contact support.",
+          code: "stripe_publishable_missing",
+          details:
+            "STRIPE_PUBLISHABLE_KEY_BOOK is not configured. Set it in Supabase secrets to enable payments on book.alphaluxclean.com.",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 503,
+        },
+      );
+    }
 
     const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
 
@@ -216,10 +266,12 @@ serve(async (req) => {
         address_line2: bookingData.addressLine2 || null,
         full_name: bookingData.fullName || null,
         source: safeSource(bookingData.source),
-        // The DB column is NOT NULL with a default of 'alphalux_ny'.
-        // We continue to write it explicitly so the value is stable
-        // even if the default ever changes.
-        stripe_account_slug: ACCOUNT_SLUG,
+        // Stamp the resolved account slug so downstream functions
+        // (send-balance-invoice, stripe-webhook, etc.) know which
+        // Stripe account this booking belongs to. `try` rows keep the
+        // legacy `alphalux_ny` literal for backwards compat;
+        // `book` rows stamp `book`.
+        stripe_account_slug: accountColumnValue,
       };
 
       if (bookingId) {
@@ -380,10 +432,13 @@ serve(async (req) => {
         .from('bookings')
         .update({
           stripe_payment_intent_id: paymentIntent.id,
-          stripe_account_slug: ACCOUNT_SLUG,
+          stripe_account_slug: accountColumnValue,
         })
         .eq('id', bookingId);
-      logStep("Booking updated with payment intent", { bookingId });
+      logStep("Booking updated with payment intent", {
+        bookingId,
+        slug: accountSlug,
+      });
     }
 
     return new Response(JSON.stringify({
@@ -395,10 +450,12 @@ serve(async (req) => {
       bookingId: bookingId,
       stripeCustomerId: stripeCustomerId,
       amount: paymentIntent.amount,
-      // Returned alongside the client secret so the front-end can
-      // boot Stripe.js against the same account that owns this PI in
-      // a single round-trip — no separate /get-stripe-config call
-      // needed.
+      // Account slug + publishable key for this PaymentIntent. The
+      // client uses `publishableKey` to boot Stripe.js against the
+      // correct account in a single round-trip; `account` is echoed
+      // back so the client can sanity-check it ended up on the same
+      // account it asked for.
+      account: accountSlug,
       publishableKey,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -2,8 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
-  getStripeWebhookSecret,
+  getAllConfiguredWebhookSecrets,
   requireStripeSecretKey,
+  type StripeAccountSlug,
 } from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
@@ -17,9 +18,23 @@ const logStep = (step: string, details?: any) => {
 };
 
 /**
- * Single-account webhook handler. Verifies the signature against the
- * one configured signing secret (`STRIPE_WEBHOOK_SECRET`) and routes
- * events into the booking lifecycle handlers below.
+ * Dual-account webhook handler.
+ *
+ * The same function URL is registered as the webhook endpoint on
+ * BOTH Stripe accounts (legacy `try` and new `book`). When an event
+ * comes in we don't know which account sent it until we verify the
+ * signature, so we try every configured signing secret in turn — the
+ * one that validates is the slug we use for any subsequent Stripe
+ * API calls and for stamping booking rows.
+ *
+ * Required env vars:
+ *   * try  → `STRIPE_WEBHOOK_SECRET` (or one of its aliases)
+ *   * book → `STRIPE_WEBHOOK_SECRET_BOOK`
+ *
+ * If only the `try` secret is set the function still works (book
+ * events will simply fail signature verification, which is the
+ * correct behavior — they shouldn't be processed without their own
+ * signing secret).
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,17 +43,6 @@ serve(async (req) => {
 
   try {
     logStep("Webhook received");
-
-    let secretKey: string;
-    try {
-      secretKey = requireStripeSecretKey();
-    } catch (err: any) {
-      throw new Error(
-        err?.message ||
-          "Stripe secret key not configured. Set STRIPE_SECRET_KEY in Supabase secrets.",
-      );
-    }
-    const webhookSecret = getStripeWebhookSecret();
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -49,29 +53,61 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get('stripe-signature');
 
-    const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
-    let event: any;
+    // Bootstrap a Stripe client just for signature verification —
+    // `webhooks.constructEventAsync` doesn't actually call out to
+    // Stripe, but the SDK requires a client instance. Picking the
+    // try-account secret key here is fine because verification is
+    // purely a local HMAC check; we'll switch to the matched slug's
+    // key for any real API calls below.
+    const tryAccountSecret = (() => {
+      try {
+        return requireStripeSecretKey("try");
+      } catch {
+        return null;
+      }
+    })();
+    const verifierKey = tryAccountSecret ?? "sk_dummy_for_webhook_verification";
+    const verifier = new Stripe(verifierKey, { apiVersion: "2023-10-16" });
+
+    const configuredSecrets = getAllConfiguredWebhookSecrets();
+    let event: any = null;
+    let accountSlug: StripeAccountSlug = "try";
 
     if (signature) {
-      if (!webhookSecret) {
-        logStep("Webhook signature present but no signing secret configured");
+      if (configuredSecrets.length === 0) {
+        logStep(
+          "Webhook signature present but no signing secret configured",
+          { configured: 0 },
+        );
         return new Response(
-          "Webhook Error: STRIPE_WEBHOOK_SECRET is not configured",
+          "Webhook Error: STRIPE_WEBHOOK_SECRET (or STRIPE_WEBHOOK_SECRET_BOOK) is not configured",
           { status: 400 },
         );
       }
-      try {
-        event = await stripe.webhooks.constructEventAsync(
-          body,
-          signature,
-          webhookSecret,
-        );
-        logStep("Webhook signature verified");
-      } catch (err: any) {
-        const msg = err?.message || String(err);
-        logStep("Webhook signature verification failed", { error: msg });
+
+      let lastErr: string | null = null;
+      for (const { slug, secret } of configuredSecrets) {
+        try {
+          event = await verifier.webhooks.constructEventAsync(
+            body,
+            signature,
+            secret,
+          );
+          accountSlug = slug;
+          logStep("Webhook signature verified", { slug });
+          break;
+        } catch (err: any) {
+          lastErr = err?.message || String(err);
+        }
+      }
+
+      if (!event) {
+        logStep("Webhook signature did not match any configured secret", {
+          tried: configuredSecrets.map((s) => s.slug),
+          lastErr,
+        });
         return new Response(
-          `Webhook Error: signature did not validate (${msg})`,
+          `Webhook Error: signature did not validate (${lastErr})`,
           { status: 400 },
         );
       }
@@ -81,9 +117,33 @@ serve(async (req) => {
       // sends a signature.
       logStep("Warning: No stripe-signature header, parsing without verification");
       event = JSON.parse(body);
+      // Default to the legacy try account when running unsigned —
+      // this branch is dev-only and the legacy account is the safe
+      // backstop.
+      accountSlug = "try";
     }
 
-    logStep("Event received", { type: event.type, id: event.id });
+    // Re-bind the Stripe client to the slug we actually matched on.
+    // Any handler call that hits the Stripe API (refunds, retrieves,
+    // updates) needs to run against the account that owns the
+    // event's underlying objects.
+    let handlerKey: string;
+    try {
+      handlerKey = requireStripeSecretKey(accountSlug);
+    } catch (err: any) {
+      logStep("Matched slug has no secret key configured", {
+        slug: accountSlug,
+        message: err?.message,
+      });
+      throw err;
+    }
+    const stripe = new Stripe(handlerKey, { apiVersion: "2023-10-16" });
+
+    logStep("Event received", {
+      type: event.type,
+      id: event.id,
+      slug: accountSlug,
+    });
 
     // Handle different event types
     switch (event.type) {
