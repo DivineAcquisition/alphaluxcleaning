@@ -31,11 +31,26 @@ interface BookingData {
   homeType: 'house' | 'apartment' | 'condo';
   
   // Step 3: Offer Selection
-  offerType?: 'tester_deep_clean' | '90_day_plan' | 'standard_clean' | 'deep_clean' | 'recurring';
+  offerType?:
+    | 'tester_deep_clean'
+    | '90_day_plan'
+    | 'standard_clean'
+    | 'deep_clean'
+    | 'recurring'
+    // Bundle: initial Deep Clean + a follow-up Standard Clean within
+    // 14 days. Captured at /book/offer; the second-visit date/time is
+    // collected on /book/details (post-deposit).
+    | 'deep_plus_standard';
   offerName?: string;
   basePrice?: number;
   visitCount?: number;
   isRecurring?: boolean;
+
+  // Second visit (only used when offerType === 'deep_plus_standard').
+  // Persisted on bookings.property_details.second_visit by
+  // save-booking-details so ops can schedule a second HCP job.
+  secondVisitDate?: string;
+  secondVisitTimeSlot?: string;
   
   // Promo code support
   promoCode?: string;

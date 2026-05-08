@@ -808,6 +808,12 @@ export default function BookingCheckout() {
   // remaining 50% is invoiced after the cleaning to the saved card).
   const dueTodayLabel = is90DayPlan ? '6.25% Starter Deposit' : '50% Deposit Due Today';
 
+  // The "Deep + Standard within 14 days" combo is a 2-visit one-time
+  // bundle. We surface different copy in the checkout summary so the
+  // customer knows the deposit covers both visits and the second
+  // half is invoiced after the second cleaning.
+  const isComboBundle = bookingData.offerType === 'deep_plus_standard';
+
   return (
     <div className="min-h-screen bg-background">
       <BookingProgressBar currentStep={4} totalSteps={6} />
@@ -820,7 +826,9 @@ export default function BookingCheckout() {
           <p className="text-lg text-muted-foreground">
             {is90DayPlan
               ? 'Lock in your 90-day plan with a small starter deposit. Monthly billing handles the rest. No hidden fees.'
-              : 'Reserve your service with a 50% deposit today. Your card is securely saved on file and the remaining 50% is automatically charged after your cleaning is complete.'}
+              : isComboBundle
+                ? 'Reserve your Deep + Standard combo with a 50% deposit today. Your card is securely saved on file — the remaining 50% is automatically charged after your follow-up Standard Clean (within 14 days).'
+                : 'Reserve your service with a 50% deposit today. Your card is securely saved on file and the remaining 50% is automatically charged after your cleaning is complete.'}
           </p>
           <div className="flex justify-center mt-4">
             <GoogleGuaranteedBadge variant="compact" />
@@ -943,9 +951,22 @@ export default function BookingCheckout() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Your card is securely saved on file with Stripe. The
-                      remaining 50% is automatically charged after your
-                      cleaning is complete — no need to enter your card again.
+                      {isComboBundle ? (
+                        <>
+                          Your card is securely saved on file with Stripe.
+                          Today's deposit covers both visits — the remaining
+                          50% is automatically charged after your follow-up
+                          Standard Clean (within 14 days). No need to enter
+                          your card again.
+                        </>
+                      ) : (
+                        <>
+                          Your card is securely saved on file with Stripe.
+                          The remaining 50% is automatically charged after
+                          your cleaning is complete — no need to enter your
+                          card again.
+                        </>
+                      )}
                     </p>
                   </>
                 )}
