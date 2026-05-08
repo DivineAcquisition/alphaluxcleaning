@@ -532,42 +532,47 @@ export default function BookingOffer() {
             }}
           />
 
-          {/* Recurring Maintenance */}
+          {/* Recurring Maintenance — 3-clean minimum commitment.
+              Visits 2 + 3 are auto-billed at the maintenance rate
+              against the card saved at checkout. */}
           <OfferCard
             selected={selectedOffer === 'recurring'}
             icon={CalendarCheck}
             title="Recurring Maintenance"
-            description="Keep your home guest-ready, always"
+            description="3-visit plan that keeps your home guest-ready, always"
             originalPrice={maintenancePrice}
             finalPrice={recurringPrice}
             priceSuffix="first visit"
             savingsLabel={
               NEW_CUSTOMER_PROMO_ACTIVE && recurringSavings > 0
-                ? `You save $${recurringSavings} on visit 1`
-                : ''
+                ? `You save $${recurringSavings} on visit 1 · 3-visit total ~$${
+                    recurringPrice + maintenancePrice * 2
+                  }`
+                : `3-visit total ~$${recurringPrice + maintenancePrice * 2}`
             }
             includes={[
+              '3-clean minimum commitment',
               'Bi-weekly or monthly scheduling',
               'Same trusted cleaning team',
+              'Card saved on file — visits 2 & 3 auto-billed',
               'Priority scheduling & member perks',
-              'Cancel or pause anytime',
               ...(NEW_CUSTOMER_PROMO_ACTIVE
                 ? [`${NEW_CUSTOMER_PROMO_PERCENT}% off your first visit with ${NEW_CUSTOMER_PROMO_CODE}`]
                 : []),
             ]}
             ctaLabel={
               NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Start Recurring — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Start Recurring'
+                ? `Start 3-Visit Plan — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
+                : 'Start 3-Visit Plan'
             }
             onSelect={() =>
               handleSelectOffer(
                 'recurring',
                 NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Recurring Maintenance — ${NEW_CUSTOMER_PROMO_PERCENT}% Off First Visit`
-                  : 'Recurring Maintenance',
+                  ? `Recurring Maintenance — 3-Visit Plan (${NEW_CUSTOMER_PROMO_PERCENT}% Off First Visit)`
+                  : 'Recurring Maintenance — 3-Visit Plan',
                 recurringPrice,
-                1,
+                3,
                 true,
               )
             }
