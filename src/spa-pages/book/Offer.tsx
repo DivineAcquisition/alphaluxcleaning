@@ -17,9 +17,7 @@ import {
 import {
   Check,
   Sparkles,
-  CalendarCheck,
   Info,
-  Gift,
   BadgePercent,
   Home,
   ArrowRight,
@@ -69,14 +67,12 @@ export default function BookingOffer() {
     selectedHomeSize?.regularPrice || Math.round(maintenancePrice * 1.05);
 
   // ALC2026 — new customer 50% off preview.
-  const standardPreview = previewPromoDiscount(baseStandardPrice);
-  const deepPreview = previewPromoDiscount(baseDeepPrice);
-  const recurringPreview = previewPromoDiscount(maintenancePrice);
-
-  const standardPrice = standardPreview.total;
-  const deepCleanPrice = deepPreview.total;
-  const recurringPrice = recurringPreview.total;
-  const recurringSavings = recurringPreview.amount;
+  // NOTE: standard / deep-only / recurring previews are not
+  // computed anymore — the Offer page only renders the combo card.
+  // Pricing tables (`baseDeepPrice`, `baseStandardPrice`,
+  // `maintenancePrice`) are still derived above because the combo
+  // math + the 5,000+ sq ft custom-quote screen below both read
+  // from them.
 
   // Combo offer: initial Deep Clean + a follow-up Standard Clean
   // within 14 days of the first visit. Both visits get the active
@@ -93,21 +89,18 @@ export default function BookingOffer() {
     }
   }, [bookingData.zipCode, bookingData.homeSizeId, navigate]);
 
-  // Meta Pixel — fire ViewContent once when the service menu is
-  // visible to the customer. We use the smallest non-zero price on
-  // the page as the event value so it isn't ambiguous to Meta's
-  // attribution model while still being conservative.
+  // Meta Pixel — fire ViewContent once when the offer page is
+  // visible. The combo is the only purchasable option here, so we
+  // report its post-promo price as the event value to keep Meta's
+  // attribution model aligned with the cart the customer actually
+  // sees.
   useEffect(() => {
     if (!selectedHomeSize || selectedHomeSize?.requiresEstimate) return;
-    const value = Math.min(
-      baseStandardPrice || Infinity,
-      baseDeepPrice || Infinity,
-      maintenancePrice || Infinity,
-    );
     trackViewContent({
-      content_name: 'Cleaning Service Menu',
+      content_name: 'Deep + Standard Combo',
       content_type: 'service',
-      value: Number.isFinite(value) ? value : undefined,
+      value:
+        Number.isFinite(comboPrice) && comboPrice > 0 ? comboPrice : undefined,
       currency: 'USD',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,28 +123,20 @@ export default function BookingOffer() {
 
             <div className="bg-muted p-6 rounded-lg mb-6 text-left">
               <h3 className="font-bold text-xl mb-4 text-center">
-                Estimated Starting Prices:
+                Estimated Starting Price:
               </h3>
               <ul className="space-y-2">
                 <li className="flex justify-between">
-                  <span>• Standard Cleaning:</span>
+                  <span>• Deep + Standard Combo:</span>
                   <span className="font-semibold">
-                    Starting at ${baseStandardPrice}
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <span>• Deep Clean:</span>
-                  <span className="font-semibold">
-                    Starting at ${selectedHomeSize.deepPrice}
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <span>• Recurring Maintenance:</span>
-                  <span className="font-semibold">
-                    Starting at ${selectedHomeSize.maintenancePrice}/visit
+                    Starting at ${baseComboPrice}
                   </span>
                 </li>
               </ul>
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Initial Deep Clean (~4 hrs) plus a Standard maintenance
+                visit within 14 days.
+              </p>
             </div>
 
             <p className="mb-6 text-lg">
@@ -395,10 +380,14 @@ export default function BookingOffer() {
           </div>
         </div>
 
-        <div
-          id="service-cards"
-          className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4"
-        >
+        {/* AlphaLux now leads with a single packaged offer — the
+            Deep + Standard Combo. The previous Standard Clean,
+            Deep Clean (standalone), and Recurring Maintenance
+            cards are intentionally hidden so the funnel surfaces
+            exactly one purchasable service. Bringing them back
+            should be a deliberate product decision, not an
+            accidental re-render. */}
+        <div id="service-cards" className="max-w-2xl mx-auto">
           {/* Deep + Standard Combo — initial Deep Clean plus a
               follow-up Standard Clean within 14 days. The 14-day
               second-visit window is enforced on /book/details where
@@ -442,142 +431,6 @@ export default function BookingOffer() {
             }
             onViewDetails={() => {
               setDetailsServiceType('tester');
-              setShowDetailsModal(true);
-            }}
-          />
-
-          {/* Standard Clean — One Time */}
-          <OfferCard
-            selected={selectedOffer === 'standard'}
-            icon={Home}
-            title="Standard Clean"
-            description="One-time refresh of the spaces you use every day"
-            originalPrice={baseStandardPrice}
-            finalPrice={standardPrice}
-            priceSuffix=""
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && standardPreview.amount > 0
-                ? `You save $${standardPreview.amount}`
-                : ''
-            }
-            includes={[
-              'Kitchens, bathrooms, living areas & bedrooms',
-              'Dusting, vacuuming & mopping',
-              'All supplies & equipment included',
-              'Trained, insured AlphaLux team',
-              'Secure payment via Stripe',
-            ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Standard'
-            }
-            onSelect={() =>
-              handleSelectOffer(
-                'standard',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Standard Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Standard Clean',
-                standardPrice,
-                1,
-                false,
-              )
-            }
-            onViewDetails={() => {
-              setDetailsServiceType('standard');
-              setShowDetailsModal(true);
-            }}
-          />
-
-          {/* Deep Clean — One Time */}
-          <OfferCard
-            selected={selectedOffer === 'deep_clean'}
-            icon={Sparkles}
-            title="Deep Clean"
-            description="40-point reset for top-to-bottom freshness"
-            originalPrice={baseDeepPrice}
-            finalPrice={deepCleanPrice}
-            priceSuffix=""
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && deepPreview.amount > 0
-                ? `You save $${deepPreview.amount}`
-                : ''
-            }
-            includes={[
-              '40-point Deep Clean checklist',
-              '2-person professional team',
-              'Baseboards, inside appliances & detail work',
-              'Trained, insured AlphaLux team',
-              'Secure payment via Stripe',
-            ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Deep Clean'
-            }
-            onSelect={() =>
-              handleSelectOffer(
-                'deep_clean',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Deep Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Deep Clean',
-                deepCleanPrice,
-                1,
-                false,
-              )
-            }
-            onViewDetails={() => {
-              setDetailsServiceType('tester');
-              setShowDetailsModal(true);
-            }}
-          />
-
-          {/* Recurring Maintenance — 3-clean minimum commitment.
-              Visits 2 + 3 are auto-billed at the maintenance rate
-              against the card saved at checkout. */}
-          <OfferCard
-            selected={selectedOffer === 'recurring'}
-            icon={CalendarCheck}
-            title="Recurring Maintenance"
-            description="3-visit plan that keeps your home guest-ready, always"
-            originalPrice={maintenancePrice}
-            finalPrice={recurringPrice}
-            priceSuffix="first visit"
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && recurringSavings > 0
-                ? `You save $${recurringSavings} on visit 1 · 3-visit total ~$${
-                    recurringPrice + maintenancePrice * 2
-                  }`
-                : `3-visit total ~$${recurringPrice + maintenancePrice * 2}`
-            }
-            includes={[
-              '3-clean minimum commitment',
-              'Bi-weekly or monthly scheduling',
-              'Same trusted cleaning team',
-              'Card saved on file — visits 2 & 3 auto-billed',
-              'Priority scheduling & member perks',
-              ...(NEW_CUSTOMER_PROMO_ACTIVE
-                ? [`${NEW_CUSTOMER_PROMO_PERCENT}% off your first visit with ${NEW_CUSTOMER_PROMO_CODE}`]
-                : []),
-            ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Start 3-Visit Plan — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Start 3-Visit Plan'
-            }
-            onSelect={() =>
-              handleSelectOffer(
-                'recurring',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Recurring Maintenance — 3-Visit Plan (${NEW_CUSTOMER_PROMO_PERCENT}% Off First Visit)`
-                  : 'Recurring Maintenance — 3-Visit Plan',
-                recurringPrice,
-                3,
-                true,
-              )
-            }
-            onViewDetails={() => {
-              setDetailsServiceType('standard');
               setShowDetailsModal(true);
             }}
           />
