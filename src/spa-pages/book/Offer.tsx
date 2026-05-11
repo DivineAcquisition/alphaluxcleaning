@@ -17,9 +17,7 @@ import {
 import {
   Check,
   Sparkles,
-  CalendarCheck,
   Info,
-  Gift,
   BadgePercent,
   Home,
   ArrowRight,
@@ -33,7 +31,18 @@ import {
   type TimeSlotId,
 } from '@/components/booking/OfferDateTimePicker';
 
-type OfferType = 'standard' | 'deep_clean' | 'recurring';
+/**
+ * Local offer-card identifier.
+ *
+ * AlphaLux now leads with a single packaged offer — the **Deep +
+ * Standard Combo** — instead of three separate service tiers. The
+ * earlier `standard | deep_clean | recurring` set is dropped at the
+ * UI layer (the BookingContext union still accepts the legacy
+ * values so any draft bookings in localStorage from before this
+ * change still resolve cleanly). Adding a new option here is a
+ * conscious product decision: the funnel is intentionally one-card.
+ */
+type OfferType = 'combo';
 
 export default function BookingOffer() {
   const navigate = useNavigate();
@@ -68,15 +77,19 @@ export default function BookingOffer() {
   const baseStandardPrice =
     selectedHomeSize?.regularPrice || Math.round(maintenancePrice * 1.05);
 
-  // ALC2026 — new customer 50% off preview.
-  const standardPreview = previewPromoDiscount(baseStandardPrice);
-  const deepPreview = previewPromoDiscount(baseDeepPrice);
-  const recurringPreview = previewPromoDiscount(maintenancePrice);
-
-  const standardPrice = standardPreview.total;
-  const deepCleanPrice = deepPreview.total;
-  const recurringPrice = recurringPreview.total;
-  const recurringSavings = recurringPreview.amount;
+  // ── Combo offer pricing ──
+  //
+  // The combo is sold as a single line item that bundles one Deep
+  // Clean (the first visit, ~4 hours) plus one Standard Clean
+  // follow-up (~2 hours, scheduled separately after the combo
+  // ships). Retail = deep + standard at their tier prices for
+  // this home size. The ALC2026 new-customer promo discounts the
+  // *combined* total in one shot so customers see one clean
+  // strike-through price rather than two stacked discounts.
+  const baseComboPrice = baseDeepPrice + baseStandardPrice;
+  const comboPreview = previewPromoDiscount(baseComboPrice);
+  const comboPrice = comboPreview.total;
+  const comboSavings = comboPreview.amount;
 
   useEffect(() => {
     if (!bookingData.zipCode || !bookingData.homeSizeId) {
@@ -90,15 +103,13 @@ export default function BookingOffer() {
   // attribution model while still being conservative.
   useEffect(() => {
     if (!selectedHomeSize || selectedHomeSize?.requiresEstimate) return;
-    const value = Math.min(
-      baseStandardPrice || Infinity,
-      baseDeepPrice || Infinity,
-      maintenancePrice || Infinity,
-    );
+    // Combo is the only purchasable offer now, so we fire
+    // ViewContent for it specifically — Meta gets a clean signal
+    // for the actual cart value the customer is being shown.
     trackViewContent({
-      content_name: 'Cleaning Service Menu',
+      content_name: 'Deep + Standard Combo',
       content_type: 'service',
-      value: Number.isFinite(value) ? value : undefined,
+      value: Number.isFinite(comboPrice) && comboPrice > 0 ? comboPrice : undefined,
       currency: 'USD',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,28 +132,19 @@ export default function BookingOffer() {
 
             <div className="bg-muted p-6 rounded-lg mb-6 text-left">
               <h3 className="font-bold text-xl mb-4 text-center">
-                Estimated Starting Prices:
+                Estimated Starting Price:
               </h3>
               <ul className="space-y-2">
                 <li className="flex justify-between">
-                  <span>• Standard Cleaning:</span>
+                  <span>• Deep + Standard Combo:</span>
                   <span className="font-semibold">
-                    Starting at ${baseStandardPrice}
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <span>• Deep Clean:</span>
-                  <span className="font-semibold">
-                    Starting at ${selectedHomeSize.deepPrice}
-                  </span>
-                </li>
-                <li className="flex justify-between">
-                  <span>• Recurring Maintenance:</span>
-                  <span className="font-semibold">
-                    Starting at ${selectedHomeSize.maintenancePrice}/visit
+                    Starting at ${baseComboPrice}
                   </span>
                 </li>
               </ul>
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                Includes one Deep Clean (~4 hrs) + one Standard Clean follow-up.
+              </p>
             </div>
 
             <p className="mb-6 text-lg">
@@ -249,31 +251,31 @@ export default function BookingOffer() {
     const { offerType, offerName, basePrice, visitCount, isRecurring } =
       pendingOffer;
 
-    let serviceType: 'regular' | 'deep' | 'move_in_out';
-    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
+    // Currently `combo` is the only offer rendered. The first
+    // visit is the Deep Clean (4 hr, scheduled now); the Standard
+    // Clean follow-up is billed in the same checkout and scheduled
+    // by ops separately. `serviceType` tracks the *first* visit so
+    // HCP and the calendar duration math behave correctly.
+    let serviceType: 'regular' | 'deep' | 'move_in_out' = 'deep';
+    let frequency: 'one_time' | 'weekly' | 'bi_weekly' | 'monthly' =
+      'one_time';
+    let contextOfferType:
+      | 'combo_deep_standard'
+      | 'standard_clean'
+      | 'deep_clean'
+      | 'recurring' = 'combo_deep_standard';
 
-    if (offerType === 'deep_clean') {
+    if (offerType === 'combo') {
       serviceType = 'deep';
       frequency = 'one_time';
-    } else if (offerType === 'recurring') {
-      serviceType = 'regular';
-      frequency = 'bi_weekly';
-    } else {
-      serviceType = 'regular';
-      frequency = 'one_time';
+      contextOfferType = 'combo_deep_standard';
     }
 
-    const originalPrice =
-      offerType === 'deep_clean'
-        ? baseDeepPrice
-        : offerType === 'recurring'
-          ? maintenancePrice
-          : baseStandardPrice;
+    // Retail (pre-promo) price for this offer. The combo's retail is
+    // the sum of the Deep + Standard tier prices for this home size.
+    const originalPrice = baseComboPrice;
 
     const promoSavings = Math.max(0, originalPrice - basePrice);
-    // Map the local OfferType to the BookingContext's offerType union.
-    const contextOfferType: 'standard_clean' | 'deep_clean' | 'recurring' =
-      offerType === 'standard' ? 'standard_clean' : offerType;
     // IMPORTANT: BookingContext stores `basePrice` as the **pre-promo**
     // subtotal so checkout can render it as the strike-through line
     // and compute `finalPrice = basePrice - promoDiscount`. If we
@@ -377,135 +379,57 @@ export default function BookingOffer() {
           </div>
         </div>
 
-        <div id="service-cards" className="grid gap-6 md:gap-8 md:grid-cols-3">
-          {/* Standard Clean — One Time */}
+        {/* AlphaLux now offers a single packaged service — the
+            Deep + Standard Combo — instead of three separate
+            tiers. We centre the card on the page rather than using
+            a 3-col grid so it reads as the hero offer rather than
+            "one of several". */}
+        <div id="service-cards" className="max-w-2xl mx-auto">
           <OfferCard
-            selected={selectedOffer === 'standard'}
-            icon={Home}
-            title="Standard Clean"
-            description="One-time refresh of the spaces you use every day"
-            originalPrice={baseStandardPrice}
-            finalPrice={standardPrice}
-            priceSuffix=""
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && standardPreview.amount > 0
-                ? `You save $${standardPreview.amount}`
-                : ''
-            }
-            includes={[
-              'Kitchens, bathrooms, living areas & bedrooms',
-              'Dusting, vacuuming & mopping',
-              'All supplies & equipment included',
-              'Trained, insured AlphaLux team',
-              'Secure payment via Stripe',
-            ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Standard'
-            }
-            onSelect={() =>
-              handleSelectOffer(
-                'standard',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Standard Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Standard Clean',
-                standardPrice,
-                1,
-                false,
-              )
-            }
-            onViewDetails={() => {
-              setDetailsServiceType('standard');
-              setShowDetailsModal(true);
-            }}
-          />
-
-          {/* Deep Clean — One Time */}
-          <OfferCard
-            selected={selectedOffer === 'deep_clean'}
+            selected={selectedOffer === 'combo'}
+            highlighted
             icon={Sparkles}
-            title="Deep Clean"
-            description="40-point reset for top-to-bottom freshness"
-            originalPrice={baseDeepPrice}
-            finalPrice={deepCleanPrice}
-            priceSuffix=""
+            title="Deep + Standard Combo"
+            description="One 40-point Deep Clean reset, plus a follow-up Standard Clean to keep your place feeling brand new."
+            originalPrice={baseComboPrice}
+            finalPrice={comboPrice}
+            priceSuffix="for both visits"
             savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && deepPreview.amount > 0
-                ? `You save $${deepPreview.amount}`
+              NEW_CUSTOMER_PROMO_ACTIVE && comboSavings > 0
+                ? `You save $${comboSavings}`
                 : ''
             }
             includes={[
-              '40-point Deep Clean checklist',
-              '2-person professional team',
-              'Baseboards, inside appliances & detail work',
-              'Trained, insured AlphaLux team',
-              'Secure payment via Stripe',
+              `Visit 1 — Deep Clean (~4 hrs): 40-point top-to-bottom reset`,
+              `Visit 2 — Standard Clean (~2 hrs): kitchens, baths, bedrooms, living areas`,
+              `Same trained, insured AlphaLux team for both visits`,
+              `Baseboards, inside appliances & detail work on visit 1`,
+              `Schedule visit 1 now — we'll coordinate visit 2 with you after`,
+              `All supplies & equipment included`,
+              ...(NEW_CUSTOMER_PROMO_ACTIVE
+                ? [
+                    `${NEW_CUSTOMER_PROMO_PERCENT}% off the whole combo with code ${NEW_CUSTOMER_PROMO_CODE}`,
+                  ]
+                : []),
             ]}
             ctaLabel={
               NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Deep Clean'
+                ? `Book Combo — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
+                : 'Book the Combo'
             }
             onSelect={() =>
               handleSelectOffer(
-                'deep_clean',
+                'combo',
                 NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Deep Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Deep Clean',
-                deepCleanPrice,
-                1,
+                  ? `Deep + Standard Combo — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
+                  : 'Deep + Standard Combo',
+                comboPrice,
+                2,
                 false,
               )
             }
             onViewDetails={() => {
               setDetailsServiceType('tester');
-              setShowDetailsModal(true);
-            }}
-          />
-
-          {/* Recurring Maintenance */}
-          <OfferCard
-            selected={selectedOffer === 'recurring'}
-            highlighted
-            icon={CalendarCheck}
-            title="Recurring Maintenance"
-            description="Keep your home guest-ready, always"
-            originalPrice={maintenancePrice}
-            finalPrice={recurringPrice}
-            priceSuffix="first visit"
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && recurringSavings > 0
-                ? `You save $${recurringSavings} on visit 1`
-                : ''
-            }
-            includes={[
-              'Bi-weekly or monthly scheduling',
-              'Same trusted cleaning team',
-              'Priority scheduling & member perks',
-              'Cancel or pause anytime',
-              ...(NEW_CUSTOMER_PROMO_ACTIVE
-                ? [`${NEW_CUSTOMER_PROMO_PERCENT}% off your first visit with ${NEW_CUSTOMER_PROMO_CODE}`]
-                : []),
-            ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Start Recurring — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Start Recurring'
-            }
-            onSelect={() =>
-              handleSelectOffer(
-                'recurring',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Recurring Maintenance — ${NEW_CUSTOMER_PROMO_PERCENT}% Off First Visit`
-                  : 'Recurring Maintenance',
-                recurringPrice,
-                1,
-                true,
-              )
-            }
-            onViewDetails={() => {
-              setDetailsServiceType('standard');
               setShowDetailsModal(true);
             }}
           />
@@ -546,9 +470,10 @@ export default function BookingOffer() {
               timeSlot={scheduledTimeSlot}
               onDateChange={setScheduledDate}
               onTimeSlotChange={setScheduledTimeSlot}
-              serviceDurationHours={
-                pendingOffer.offerType === 'deep_clean' ? 4 : 2
-              }
+              // The combo's first visit IS a Deep Clean, so we
+              // budget ~4 hours of crew time when filtering
+              // available arrival windows.
+              serviceDurationHours={pendingOffer.offerType === 'combo' ? 4 : 2}
               serviceLabel={pendingOffer.offerName}
             />
 

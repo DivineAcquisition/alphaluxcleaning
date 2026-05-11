@@ -31,7 +31,20 @@ interface BookingData {
   homeType: 'house' | 'apartment' | 'condo';
   
   // Step 3: Offer Selection
-  offerType?: 'tester_deep_clean' | '90_day_plan' | 'standard_clean' | 'deep_clean' | 'recurring';
+  //
+  // `combo_deep_standard` is the headline AlphaLux offer (one Deep
+  // Clean reset + one Standard Clean follow-up visit billed
+  // together). The legacy single-service values are kept so older
+  // bookings stored on a customer's device still resolve cleanly,
+  // but the customer-facing offer page only surfaces the combo
+  // (see `src/spa-pages/book/Offer.tsx`).
+  offerType?:
+    | 'combo_deep_standard'
+    | 'tester_deep_clean'
+    | '90_day_plan'
+    | 'standard_clean'
+    | 'deep_clean'
+    | 'recurring';
   offerName?: string;
   basePrice?: number;
   visitCount?: number;
