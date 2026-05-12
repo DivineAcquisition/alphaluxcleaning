@@ -24,6 +24,7 @@ const BookCheckout = lazy(() => import('@/spa-pages/book/Checkout'));
 const BookDetails = lazy(() => import('@/spa-pages/book/Details'));
 const BookConfirmation = lazy(() => import('@/spa-pages/book/Confirmation'));
 const BookSuccess = lazy(() => import('@/spa-pages/book/Success')); // Keep for old bookings
+const SavePaymentMethod = lazy(() => import('@/spa-pages/SavePaymentMethod'));
 import OrderStatus from '@/spa-pages/OrderStatus';
 import OrderConfirmation from '@/spa-pages/OrderConfirmation';
 import ConfirmationPreview from '@/spa-pages/ConfirmationPreview';
@@ -92,7 +93,28 @@ function App() {
             <Route path="/book/checkout" element={<Suspense fallback={<BrandedLoader />}><BookCheckout /></Suspense>} />
             <Route path="/book/details" element={<Suspense fallback={<BrandedLoader />}><BookDetails /></Suspense>} />
             <Route path="/book/confirmation" element={<Suspense fallback={<BrandedLoader />}><BookConfirmation /></Suspense>} />
-            
+
+            {/* Customer-facing "save a card on file" page — uses
+                Stripe SetupIntent + dual-account routing
+                (NY → try, CA + TX → book). Public / unauthenticated;
+                identifies the customer by email. */}
+            <Route
+              path="/save-card"
+              element={
+                <Suspense fallback={<BrandedLoader />}>
+                  <SavePaymentMethod />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/account/payment-methods"
+              element={<Navigate to="/save-card" replace />}
+            />
+            <Route
+              path="/account/save-card"
+              element={<Navigate to="/save-card" replace />}
+            />
+
             {/* Redirects for old URLs */}
             <Route path="/book/home" element={<Navigate to="/book/sqft" replace />} />
             <Route path="/book/service" element={<Navigate to="/book/offer" replace />} />
