@@ -16,7 +16,7 @@ const corsHeaders = {
 };
 
 // Bump this when debugging deployment mismatches
-const FUNCTION_VERSION = "2026-05-08-state-strict";
+const FUNCTION_VERSION = "2026-05-12-setup-mode";
 
 /**
  * Dual-account Stripe integration with STRICT state-based routing.
