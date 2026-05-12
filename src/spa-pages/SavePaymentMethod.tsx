@@ -110,16 +110,25 @@ export default function SavePaymentMethod() {
     setInitError(null);
 
     try {
+      // We call create-payment-intent with mode='setup' (rather than
+      // a dedicated create-setup-intent function) because Lovable's
+      // auto-deploy doesn't reliably register newly-added edge
+      // functions. create-payment-intent is already deployed and
+      // its setup-mode branch wraps the same SetupIntent logic.
       const { data, error } = await supabase.functions.invoke(
-        'create-setup-intent',
+        'create-payment-intent',
         {
           body: {
-            email: email.trim().toLowerCase(),
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            phone: phone.trim() || undefined,
-            state: state.trim().toUpperCase() || undefined,
-            zip: zip.trim() || undefined,
+            mode: 'setup',
+            customerEmail: email.trim().toLowerCase(),
+            customerData: {
+              email: email.trim().toLowerCase(),
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              phone: phone.trim() || undefined,
+              state: state.trim().toUpperCase() || undefined,
+              zip: zip.trim() || undefined,
+            },
           },
         },
       );
@@ -493,14 +502,26 @@ function SetupElementForm({
       }
 
       // Server-side promote PM to default + mirror onto customers row.
+      // Same reason as create — we call create-payment-intent with
+      // mode='finalize-setup' instead of a dedicated function so
+      // we don't depend on Lovable picking up new functions.
       const { data, error: confirmServerErr } = await supabase.functions.invoke(
-        'confirm-saved-card',
+        'create-payment-intent',
         {
           body: {
+            mode: 'finalize-setup',
             setupIntentId,
+            customerEmail: email,
+            customerData: {
+              email,
+              state: undefined,
+              zip: undefined,
+            },
+            // Forward the account hint so the server uses the same
+            // Stripe credentials the SetupIntent ran against (the
+            // SetupIntent's account is the source of truth — we
+            // include this only as a sanity hint).
             account,
-            customerId: supabaseCustomerId,
-            email,
           },
         },
       );

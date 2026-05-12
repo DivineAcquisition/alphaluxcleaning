@@ -95,6 +95,17 @@ serve(async (req) => {
       bookingData,
       metadata,
       account: accountOverride,
+      // Save-card flow piggybacks on this function because Lovable
+      // doesn't auto-deploy newly-added edge functions. When
+      // `mode === 'setup'` we create a Stripe SetupIntent (no
+      // charge, off_session usage) and return its clientSecret so
+      // the /save-card page can collect a card and store it.
+      // When `mode === 'finalize-setup'` we retrieve a succeeded
+      // SetupIntent, promote its PaymentMethod to the customer's
+      // default, and mirror onto our customers row. Everything else
+      // defaults to `mode === 'payment'` (the normal booking flow).
+      mode,
+      setupIntentId,
     } = body;
 
     // STRICT state-based routing. The customer's state / zip is the
@@ -176,6 +187,315 @@ serve(async (req) => {
     const publishableKey = getStripePublishableKey(accountSlug);
 
     const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
+
+    // ============================================================
+    // SAVE-CARD FLOW (mode='setup' / mode='finalize-setup')
+    // ============================================================
+    //
+    // The /save-card page lets a customer attach a card to their
+    // account without a booking. We piggyback on this function
+    // (instead of a dedicated `create-setup-intent` function)
+    // because Lovable's auto-deploy doesn't reliably pick up new
+    // edge functions — extending an already-deployed function is
+    // the only way to ship a working /save-card flow today.
+    //
+    // mode='setup'           → create a SetupIntent + return its
+    //                          clientSecret so the front-end's
+    //                          Stripe SetupElement can collect a
+    //                          card off-session.
+    // mode='finalize-setup'  → after stripe.confirmSetup succeeds
+    //                          client-side, this server-side step
+    //                          retrieves the SetupIntent, promotes
+    //                          the PaymentMethod to the customer's
+    //                          default, and mirrors onto our
+    //                          customers row.
+    if (mode === "setup") {
+      logStep("Save-card flow: creating SetupIntent", { slug: accountSlug });
+
+      // === Supabase customers upsert (by email) ===
+      let supabaseCustomerId: string | null = null;
+      const { data: existing } = await supabaseClient
+        .from("customers")
+        .select("id, first_name, last_name")
+        .eq("email", email)
+        .maybeSingle();
+
+      const firstName = customerData?.firstName;
+      const lastName = customerData?.lastName;
+      const phone = customerData?.phone;
+      const stateRaw = customerData?.state;
+      const zipRaw = customerData?.zip ?? customerData?.postal_code;
+
+      if (existing) {
+        supabaseCustomerId = existing.id;
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (firstName) updatePayload.first_name = firstName;
+        if (lastName) updatePayload.last_name = lastName;
+        if (firstName || lastName) {
+          updatePayload.name = [
+            firstName ?? existing.first_name,
+            lastName ?? existing.last_name,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+        }
+        if (phone) updatePayload.phone = phone;
+        if (stateRaw) updatePayload.state = stateRaw;
+        if (zipRaw) updatePayload.postal_code = zipRaw;
+        if (Object.keys(updatePayload).length > 1) {
+          await supabaseClient
+            .from("customers")
+            .update(updatePayload)
+            .eq("id", existing.id);
+        }
+      } else {
+        const { data: created, error: insertErr } = await supabaseClient
+          .from("customers")
+          .insert({
+            email,
+            first_name: firstName || null,
+            last_name: lastName || null,
+            name:
+              [firstName, lastName].filter(Boolean).join(" ").trim() || email,
+            phone: phone || null,
+            state: stateRaw || null,
+            postal_code: zipRaw || null,
+          })
+          .select("id")
+          .single();
+        if (insertErr) {
+          throw new Error(`Failed to create customer: ${insertErr.message}`);
+        }
+        supabaseCustomerId = created.id;
+      }
+
+      // === Stripe Customer find-or-create on the resolved account ===
+      let scId: string;
+      try {
+        const stripeCustomers = await stripe.customers.list({
+          email,
+          limit: 1,
+        });
+        if (stripeCustomers.data.length > 0) {
+          scId = stripeCustomers.data[0].id;
+        } else {
+          const created = await stripe.customers.create({
+            email,
+            name: [firstName, lastName].filter(Boolean).join(" ").trim() || undefined,
+            phone: phone || undefined,
+            metadata: {
+              supabase_customer_id: supabaseCustomerId || "",
+              source: "save_card_page",
+              account_slug: accountSlug,
+            },
+          });
+          scId = created.id;
+        }
+      } catch (err: any) {
+        logStep("Stripe customer find/create failed (setup mode)", {
+          error: err?.message,
+        });
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Our payment processor is temporarily unavailable. Please try again in a moment.",
+            details: err?.message,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 503,
+          },
+        );
+      }
+
+      if (supabaseCustomerId) {
+        await supabaseClient
+          .from("customers")
+          .update({ stripe_customer_id: scId })
+          .eq("id", supabaseCustomerId);
+      }
+
+      const setupIntent = await stripe.setupIntents.create({
+        customer: scId,
+        payment_method_types: ["card"],
+        usage: "off_session",
+        metadata: {
+          supabase_customer_id: supabaseCustomerId || "",
+          account_slug: accountSlug,
+          source: "save_card_page",
+          ...(metadata || {}),
+        },
+      });
+
+      logStep("SetupIntent created", { id: setupIntent.id, slug: accountSlug });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: "setup",
+          clientSecret: setupIntent.client_secret,
+          setupIntentId: setupIntent.id,
+          publishableKey,
+          account: accountSlug,
+          stripeCustomerId: scId,
+          customerId: supabaseCustomerId,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    if (mode === "finalize-setup") {
+      if (!setupIntentId || typeof setupIntentId !== "string") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Missing or invalid setupIntentId for finalize-setup mode.",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const si = await stripe.setupIntents.retrieve(setupIntentId, {
+        expand: ["payment_method"],
+      });
+
+      if (si.status !== "succeeded") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `SetupIntent is not yet succeeded (status: ${si.status}). Card was not saved.`,
+            status: si.status,
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const scId =
+        typeof si.customer === "string" ? si.customer : (si.customer as any)?.id;
+      const pmObj =
+        typeof si.payment_method === "string"
+          ? null
+          : (si.payment_method as any);
+      const pmId =
+        typeof si.payment_method === "string"
+          ? si.payment_method
+          : pmObj?.id;
+
+      if (!scId || !pmId) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "SetupIntent succeeded but has no PaymentMethod / Customer — cannot save card.",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      // Promote PM to customer default for off-session invoicing.
+      await stripe.customers.update(scId, {
+        invoice_settings: { default_payment_method: pmId },
+      });
+      logStep("Default PM set", { stripeCustomerId: scId, pmId });
+
+      // Mirror onto Supabase customers row.
+      const lookupEmail = email;
+      let customerRowId: string | null = null;
+      if (lookupEmail) {
+        const { data } = await supabaseClient
+          .from("customers")
+          .select("id")
+          .eq("email", lookupEmail)
+          .maybeSingle();
+        customerRowId = data?.id ?? null;
+      }
+      if (!customerRowId) {
+        const { data } = await supabaseClient
+          .from("customers")
+          .select("id")
+          .eq("stripe_customer_id", scId)
+          .maybeSingle();
+        customerRowId = data?.id ?? null;
+      }
+      if (customerRowId) {
+        await supabaseClient
+          .from("customers")
+          .update({
+            stripe_customer_id: scId,
+            stripe_default_payment_method_id: pmId,
+            stripe_card_on_file: true,
+            stripe_card_on_file_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", customerRowId);
+      }
+
+      // Fetch card metadata for the success response.
+      let card: {
+        brand?: string;
+        last4?: string;
+        expMonth?: number;
+        expYear?: number;
+      } = {};
+      if (pmObj?.card) {
+        card = {
+          brand: pmObj.card.brand,
+          last4: pmObj.card.last4,
+          expMonth: pmObj.card.exp_month,
+          expYear: pmObj.card.exp_year,
+        };
+      } else {
+        try {
+          const fetched = await stripe.paymentMethods.retrieve(pmId);
+          if (fetched.card) {
+            card = {
+              brand: fetched.card.brand,
+              last4: fetched.card.last4,
+              expMonth: fetched.card.exp_month,
+              expYear: fetched.card.exp_year,
+            };
+          }
+        } catch {
+          /* non-fatal */
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: "finalize-setup",
+          cardOnFile: true,
+          card,
+          account: accountSlug,
+          stripeCustomerId: scId,
+          paymentMethodId: pmId,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // ============================================================
+    // PAYMENT FLOW (default — existing booking deposit / 50% etc.)
+    // ============================================================
 
     let customerId: string | null = null;
     let bookingId: string | null = existingBookingId || null;
