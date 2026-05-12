@@ -38,13 +38,46 @@ function getHcpApiKey(): string | null {
   );
 }
 
-function hcpHeaders(apiKey: string): HeadersInit {
+/**
+ * Build the Authorization header for an HCP API call.
+ *
+ * Housecall Pro's API has two distinct auth schemes:
+ *   - Dashboard-issued API keys → `Authorization: Token <key>`
+ *     (NOT `Token token=<key>` — that was the historical Rails-style
+ *     header from a deprecated SDK and HCP's current API returns
+ *     401 for that shape.)
+ *   - OAuth 2.0 access tokens → `Authorization: Bearer <token>`
+ *
+ * We pick a default based on whether the value looks like a JWT
+ * (three dot-separated segments → OAuth → Bearer) vs a flat opaque
+ * dashboard key → Token. The caller can flip schemes via
+ * `tryAlternateAuth()` below if the first attempt 401s.
+ */
+function buildHcpAuthHeader(apiKey: string, force?: "token" | "bearer"): string {
+  if (force === "token") return `Token ${apiKey}`;
+  if (force === "bearer") return `Bearer ${apiKey}`;
+  if (apiKey.includes(".") && apiKey.split(".").length === 3) {
+    return `Bearer ${apiKey}`;
+  }
+  return `Token ${apiKey}`;
+}
+
+function hcpHeaders(apiKey: string, force?: "token" | "bearer"): HeadersInit {
   return {
-    Authorization: `Token token=${apiKey}`,
+    Authorization: buildHcpAuthHeader(apiKey, force),
     Accept: "application/json",
     "Content-Type": "application/json",
   };
 }
+
+/**
+ * `hcpFetch` with auth-scheme auto-fallback. We try the heuristic
+ * scheme first; if HCP returns 401 we retry once with the opposite
+ * scheme. The successful scheme is cached on `module-scope` so
+ * subsequent calls inside the same function invocation skip the
+ * probe and go straight to the working scheme.
+ */
+let cachedScheme: "token" | "bearer" | null = null;
 
 async function hcpFetch(
   path: string,
@@ -52,16 +85,43 @@ async function hcpFetch(
   apiKey: string,
 ): Promise<{ status: number; body: any; ok: boolean }> {
   const url = path.startsWith("http") ? path : `${HCP_BASE_URL}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: { ...hcpHeaders(apiKey), ...(init.headers || {}) },
-  });
-  const text = await res.text();
-  let body: any = null;
-  if (text) {
-    try { body = JSON.parse(text); } catch { body = text; }
+  const attempt = async (scheme?: "token" | "bearer") => {
+    const res = await fetch(url, {
+      ...init,
+      headers: { ...hcpHeaders(apiKey, scheme), ...(init.headers || {}) },
+    });
+    const text = await res.text();
+    let body: any = null;
+    if (text) {
+      try { body = JSON.parse(text); } catch { body = text; }
+    }
+    return { status: res.status, body, ok: res.ok };
+  };
+
+  const primary = await attempt(cachedScheme ?? undefined);
+  if (primary.status !== 401) {
+    if (!cachedScheme) {
+      cachedScheme =
+        apiKey.includes(".") && apiKey.split(".").length === 3
+          ? "bearer"
+          : "token";
+    }
+    return primary;
   }
-  return { status: res.status, body, ok: res.ok };
+
+  // Primary 401'd — flip the scheme and try once more.
+  const altScheme: "token" | "bearer" =
+    (cachedScheme ?? "token") === "token" ? "bearer" : "token";
+  log("HCP 401 with primary auth scheme — retrying with alt", {
+    primary: cachedScheme ?? "auto",
+    alt: altScheme,
+  });
+  const secondary = await attempt(altScheme);
+  if (secondary.ok) {
+    cachedScheme = altScheme;
+    log("HCP alt auth scheme succeeded — caching", { scheme: altScheme });
+  }
+  return secondary;
 }
 
 function addHours(iso: string, hours: number): string {
