@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  requireStripeSecretKey,
+  slugFromBookingColumn,
+} from "../_shared/stripe-env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -245,6 +250,64 @@ serve(async (req) => {
         .eq("id", booking.customer_id)
         .maybeSingle();
       customer = customerRow;
+    }
+
+    // CARD-ON-FILE — promote the PaymentMethod the customer just used
+    // to the Customer's default for future invoices. The PI was
+    // created with `setup_future_usage: 'off_session'`, so Stripe has
+    // already attached the PaymentMethod; this step sets it as
+    // `invoice_settings.default_payment_method` so
+    // `send-balance-invoice` (and any future off-session charges)
+    // auto-charge the saved card instead of emailing a manual
+    // hosted-invoice link. The stripe-webhook does the same thing as
+    // belt-and-suspenders, but doing it here too means the card is
+    // marked as default within ~1s of payment success — before the
+    // balance invoice fan-out runs further down this function.
+    if (paymentIntentId && customer) {
+      try {
+        const slug = slugFromBookingColumn(booking.stripe_account_slug);
+        const secretKey = requireStripeSecretKey(slug);
+        const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });
+        const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+        const stripeCustomerId =
+          typeof pi.customer === "string"
+            ? pi.customer
+            : (pi.customer as any)?.id;
+        const pmId =
+          typeof pi.payment_method === "string"
+            ? pi.payment_method
+            : (pi.payment_method as any)?.id;
+
+        if (stripeCustomerId && pmId) {
+          await stripe.customers.update(stripeCustomerId, {
+            invoice_settings: { default_payment_method: pmId },
+          });
+          await supabase
+            .from("customers")
+            .update({
+              stripe_customer_id: stripeCustomerId,
+              stripe_default_payment_method_id: pmId,
+              stripe_card_on_file: true,
+              stripe_card_on_file_at: new Date().toISOString(),
+            })
+            .eq("id", customer.id);
+          console.log("[confirm-booking-payment] Default PM set", {
+            stripeCustomerId,
+            pmId,
+            slug,
+          });
+        } else {
+          console.warn(
+            "[confirm-booking-payment] No PI customer/payment_method to promote",
+            { stripeCustomerId, pmId },
+          );
+        }
+      } catch (err: any) {
+        console.error(
+          "[confirm-booking-payment] Failed to promote default PM (non-fatal)",
+          err?.message || err,
+        );
+      }
     }
 
     // -------- Fan out to integrations --------

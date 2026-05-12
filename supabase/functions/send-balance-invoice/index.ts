@@ -109,21 +109,94 @@ serve(async (req) => {
         .eq("id", customer.id);
     }
 
+    // Resolve a default PaymentMethod for off-session charging.
+    //
+    // Priority:
+    //   1. The Stripe Customer's own `invoice_settings.default_payment_method`
+    //      (set by stripe-webhook / confirm-booking-payment after the
+    //      deposit succeeds).
+    //   2. The most-recently-attached card on the Customer (covers
+    //      bookings paid before we wired up the default-promotion
+    //      step — we self-heal by promoting the existing card on the
+    //      fly).
+    //   3. None — fall back to the legacy hosted-invoice email path
+    //      so the customer can still pay manually.
+    let defaultPaymentMethodId: string | null = null;
+    try {
+      const stripeCustomer = await stripe.customers.retrieve(stripeCustomerId);
+      if (!("deleted" in stripeCustomer) || !stripeCustomer.deleted) {
+        const explicit =
+          (stripeCustomer as any)?.invoice_settings?.default_payment_method;
+        defaultPaymentMethodId =
+          typeof explicit === "string" ? explicit : explicit?.id || null;
+      }
+      if (!defaultPaymentMethodId) {
+        const pms = await stripe.paymentMethods.list({
+          customer: stripeCustomerId,
+          type: "card",
+          limit: 1,
+        });
+        if (pms.data.length) {
+          defaultPaymentMethodId = pms.data[0].id;
+          // Self-heal: promote the attached card so future invoices
+          // skip this lookup.
+          await stripe.customers.update(stripeCustomerId, {
+            invoice_settings: { default_payment_method: defaultPaymentMethodId },
+          });
+          await supabase
+            .from("customers")
+            .update({
+              stripe_default_payment_method_id: defaultPaymentMethodId,
+              stripe_card_on_file: true,
+              stripe_card_on_file_at: new Date().toISOString(),
+            })
+            .eq("id", customer.id);
+          log("Self-healed default PM from attached card list", {
+            stripeCustomerId,
+            paymentMethodId: defaultPaymentMethodId,
+          });
+        }
+      }
+    } catch (err: any) {
+      log("Failed to resolve default PM (will fall back to send_invoice)", {
+        error: err?.message || String(err),
+      });
+    }
+
     const balanceCents = Math.round(Number(booking.balance_due) * 100);
+    const useAutoCharge = Boolean(defaultPaymentMethodId);
 
     // Create the invoice FIRST so we can bind the invoice item to it
     // explicitly. Relying on Stripe's "pending items pool" flow is
     // racy — if `auto_advance` fires before the item attaches the
     // invoice can finalize at $0.
+    //
+    // When a default PaymentMethod is on file we use
+    // `collection_method: 'charge_automatically'` so Stripe charges
+    // the saved card off-session as soon as the invoice finalizes.
+    // No more "hosted invoice link email" for the customer — they
+    // see a receipt for the auto-charge instead.
     const invoice = await stripe.invoices.create({
       customer: stripeCustomerId,
-      collection_method: "send_invoice",
-      days_until_due: daysUntilDue,
-      auto_advance: false,
+      collection_method: useAutoCharge ? "charge_automatically" : "send_invoice",
+      ...(useAutoCharge
+        ? {
+            default_payment_method: defaultPaymentMethodId!,
+            // `auto_advance: true` tells Stripe to finalize and
+            // charge the invoice as soon as it's ready. Combined
+            // with `charge_automatically`, this is the off-session
+            // charge of the saved card.
+            auto_advance: true,
+          }
+        : {
+            days_until_due: daysUntilDue,
+            auto_advance: false,
+          }),
       metadata: {
         booking_id: bookingId,
         customer_id: customer.id,
         invoice_type: "balance_due",
+        charge_mode: useAutoCharge ? "auto" : "manual",
       },
       description: `Balance due for your cleaning service on ${booking.service_date || "scheduled date"}`,
     });
@@ -149,13 +222,35 @@ serve(async (req) => {
       );
     }
 
-    const sent = await stripe.invoices.sendInvoice(invoice.id);
+    // For auto-charge invoices, finalize already triggers the charge
+    // attempt via `auto_advance: true`. For send_invoice we still
+    // explicitly email the hosted link so the customer can pay.
+    let invoiceForResponse = finalized;
+    if (!useAutoCharge) {
+      invoiceForResponse = await stripe.invoices.sendInvoice(invoice.id);
+    } else {
+      // Re-fetch so we surface the post-charge state (paid / pending /
+      // requires_action) to the caller and log it.
+      try {
+        invoiceForResponse = await stripe.invoices.retrieve(invoice.id);
+        log("Auto-charge invoice status after finalize", {
+          invoiceId: invoiceForResponse.id,
+          status: invoiceForResponse.status,
+          amountPaid: invoiceForResponse.amount_paid,
+          paid: invoiceForResponse.paid,
+        });
+      } catch (err: any) {
+        log("Failed to re-retrieve invoice after finalize (non-fatal)", {
+          error: err?.message || String(err),
+        });
+      }
+    }
 
     await supabase
       .from("bookings")
       .update({
-        stripe_balance_invoice_id: sent.id,
-        balance_invoice_url: sent.hosted_invoice_url,
+        stripe_balance_invoice_id: invoiceForResponse.id,
+        balance_invoice_url: invoiceForResponse.hosted_invoice_url,
         updated_at: new Date().toISOString(),
       })
       .eq("id", bookingId);
@@ -163,10 +258,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        invoiceId: sent.id,
-        hostedInvoiceUrl: sent.hosted_invoice_url,
+        invoiceId: invoiceForResponse.id,
+        hostedInvoiceUrl: invoiceForResponse.hosted_invoice_url,
         amount: booking.balance_due,
         customerEmail: customer.email,
+        chargeMode: useAutoCharge ? "auto" : "manual",
+        invoiceStatus: invoiceForResponse.status,
+        paid: invoiceForResponse.paid,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
     );

@@ -260,6 +260,21 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     })
     .eq('id', booking.id);
 
+  // CARD-ON-FILE — set the PaymentMethod used by this PaymentIntent
+  // as the customer's default for future invoices. The PI was created
+  // with `setup_future_usage: 'off_session'`, so Stripe automatically
+  // attached the PaymentMethod to the Customer on success, but it
+  // does NOT promote it to the default PM. Without this step,
+  // `send-balance-invoice` (and any future off-session charges) won't
+  // be able to charge the saved card automatically — they'd fall
+  // back to emailing a hosted-invoice link, which is what caused
+  // operators to think "cards aren't being saved".
+  //
+  // Runs for every payment (one-time deposit, 90-day starter
+  // deposit, recurring visit 1 — all of them) so every Customer
+  // ends up with a usable default card.
+  await persistDefaultPaymentMethod(paymentIntent, stripe, supabaseClient, booking);
+
   // For 90-day plan, create the subscription for monthly payments
   if (planType === '90_day_plan' && paymentType === 'deposit') {
     await create90DaySubscription(booking, paymentIntent, supabaseClient, stripe);
@@ -349,6 +364,94 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
   }
 
   logStep("Booking payment processed", { bookingId: booking.id });
+}
+
+/**
+ * Promote the PaymentMethod used on a successful PaymentIntent to be
+ * the customer's default for future invoices (the
+ * `invoice_settings.default_payment_method` slot Stripe checks when
+ * charging an invoice with `collection_method: 'charge_automatically'`).
+ *
+ * Idempotent: re-running for an already-default PM is a no-op as
+ * far as the customer is concerned.
+ *
+ * Failure is logged but never throws — we don't want a one-off
+ * Stripe API hiccup to stall the rest of the post-payment flow.
+ */
+async function persistDefaultPaymentMethod(
+  paymentIntent: any,
+  stripe: any,
+  supabaseClient: any,
+  booking: any,
+) {
+  try {
+    const stripeCustomerId =
+      typeof paymentIntent.customer === "string"
+        ? paymentIntent.customer
+        : paymentIntent.customer?.id;
+    if (!stripeCustomerId) {
+      logStep("persistDefaultPaymentMethod: no customer on PI", {
+        paymentIntentId: paymentIntent.id,
+      });
+      return;
+    }
+
+    // The PaymentMethod ID on the PI is the card the customer just
+    // used. With setup_future_usage='off_session' Stripe has already
+    // attached it to the Customer — we just need to mark it default.
+    const paymentMethodId =
+      typeof paymentIntent.payment_method === "string"
+        ? paymentIntent.payment_method
+        : paymentIntent.payment_method?.id;
+
+    let pmId = paymentMethodId;
+    if (!pmId) {
+      // Fallback: list the customer's attached card PMs and pick the
+      // most recent. Covers edge cases where the PI's payment_method
+      // field is null at webhook time.
+      const list = await stripe.paymentMethods.list({
+        customer: stripeCustomerId,
+        type: "card",
+        limit: 1,
+      });
+      pmId = list?.data?.[0]?.id;
+    }
+    if (!pmId) {
+      logStep("persistDefaultPaymentMethod: no PaymentMethod available", {
+        stripeCustomerId,
+      });
+      return;
+    }
+
+    await stripe.customers.update(stripeCustomerId, {
+      invoice_settings: { default_payment_method: pmId },
+    });
+    logStep("persistDefaultPaymentMethod: default PM set on customer", {
+      stripeCustomerId,
+      paymentMethodId: pmId,
+    });
+
+    // Mirror onto our customers row so other parts of the app (the
+    // admin dashboard, send-balance-invoice, etc.) can show "card on
+    // file" status without a Stripe round-trip.
+    if (booking?.customer_id) {
+      await supabaseClient
+        .from("customers")
+        .update({
+          stripe_customer_id: stripeCustomerId,
+          stripe_default_payment_method_id: pmId,
+          stripe_card_on_file: true,
+          stripe_card_on_file_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", booking.customer_id);
+    }
+  } catch (err: any) {
+    logStep("persistDefaultPaymentMethod: failed (non-fatal)", {
+      paymentIntentId: paymentIntent?.id,
+      error: err?.message || String(err),
+    });
+  }
 }
 
 async function create90DaySubscription(booking: any, paymentIntent: any, supabaseClient: any, stripe: any) {
