@@ -31,19 +31,129 @@ import {
 const ALPHALUX_CALENDAR_ID =
   Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || 'wJkjZVj4Op8GGebIPm3O';
 
+/**
+ * Customer-facing arrival windows the booking flow offers — keeps
+ * the start / end hours and the human-readable label in one map so
+ * `slotToIso()` (calendar appointment) and `slotToHuman()` (custom
+ * fields synced to GHL) can never drift out of sync.
+ *
+ * Mirrors `TIME_SLOTS` in
+ * `src/components/booking/OfferDateTimePicker.tsx`. Edit both when
+ * windows change.
+ */
+const ARRIVAL_WINDOWS: Record<
+  string,
+  {
+    label: string;
+    /** Human-readable window the customer saw on /book/offer (e.g. "1 – 3 PM"). */
+    window: string;
+    /** Start hour for calendar appointment ISO (24h). */
+    calendarStartHour: number;
+    /** End hour for calendar appointment ISO (24h). */
+    calendarEndHour: number;
+    /** True 24h hours for the start/end of the customer-promised window. */
+    startHour: number;
+    endHour: number;
+  }
+> = {
+  early_morning: {
+    label: 'Early Morning',
+    window: '7 – 9 AM',
+    calendarStartHour: 7,
+    calendarEndHour: 9,
+    startHour: 7,
+    endHour: 9,
+  },
+  morning: {
+    label: 'Morning',
+    window: '9 – 11 AM',
+    calendarStartHour: 9,
+    calendarEndHour: 11,
+    startHour: 9,
+    endHour: 11,
+  },
+  late_morning: {
+    label: 'Late Morning',
+    window: '11 AM – 1 PM',
+    calendarStartHour: 11,
+    calendarEndHour: 13,
+    startHour: 11,
+    endHour: 13,
+  },
+  afternoon: {
+    label: 'Afternoon',
+    window: '1 – 3 PM',
+    calendarStartHour: 13,
+    calendarEndHour: 15,
+    startHour: 13,
+    endHour: 15,
+  },
+  late_afternoon: {
+    label: 'Late Afternoon',
+    window: '3 – 5 PM',
+    calendarStartHour: 15,
+    calendarEndHour: 16, // shrink so 5 PM PT (=8 PM ET) doesn't fall outside the calendar's open hours
+    startHour: 15,
+    endHour: 17,
+  },
+  evening: {
+    label: 'Evening',
+    window: '5 – 7 PM',
+    calendarStartHour: 16,
+    calendarEndHour: 16, // collapse — calendar closes at 5 PM ET
+    startHour: 17,
+    endHour: 19,
+  },
+};
+
+/** Convert a 24h hour to "9 AM" / "1:30 PM" style. Minutes default to 0. */
+function formatHourAmPm(hour: number, minute = 0): string {
+  const h12 = ((hour + 11) % 12) + 1;
+  const ampm = hour < 12 ? 'AM' : 'PM';
+  if (minute === 0) return `${h12} ${ampm}`;
+  return `${h12}:${String(minute).padStart(2, '0')} ${ampm}`;
+}
+
+/**
+ * Convert a stored slot id (e.g. `afternoon`) into the customer-
+ * facing arrival window string (e.g. `1 – 3 PM`). Falls back to a
+ * Title-cased version of the raw value so a brand-new slot we
+ * forgot to map still arrives at GHL as something readable rather
+ * than the snake_case enum value.
+ */
+function slotToHuman(slot: string | null | undefined): string | null {
+  if (!slot) return null;
+  const def = ARRIVAL_WINDOWS[String(slot)];
+  if (def) return def.window;
+  return String(slot)
+    .split('_')
+    .map((s) => (s ? s[0].toUpperCase() + s.slice(1) : s))
+    .join(' ');
+}
+
+/**
+ * Pull just the start / end hour text out of a slot id so we can
+ * surface them on dedicated GHL fields ("3 PM" / "5 PM").
+ */
+function slotToStartEnd(
+  slot: string | null | undefined,
+): { start: string; end: string } | null {
+  if (!slot) return null;
+  const def = ARRIVAL_WINDOWS[String(slot)];
+  if (!def) return null;
+  return {
+    start: formatHourAmPm(def.startHour),
+    end: formatHourAmPm(def.endHour),
+  };
+}
+
 // Convert a YYYY-MM-DD + a TimeSlot id into ISO start/end timestamps
 // (Eastern Time — calendar's open hours are configured in ET).
 function slotToIso(date: string, slot: string | null): { start: string; end: string } | null {
   if (!date) return null;
-  const slotMap: Record<string, [number, number]> = {
-    early_morning: [7, 9],
-    morning: [9, 11],
-    late_morning: [11, 13],
-    afternoon: [13, 15],
-    late_afternoon: [15, 16],   // shrink so 5 PM PT (=8 PM ET) doesn't fall outside
-    evening: [16, 16],          // collapse — calendar closes at 5 PM ET
-  };
-  const [sh, eh] = slotMap[String(slot)] ?? [10, 12];
+  const def = ARRIVAL_WINDOWS[String(slot)];
+  const sh = def?.calendarStartHour ?? 10;
+  const eh = def?.calendarEndHour ?? 12;
   const [y, m, d] = date.split('-').map(Number);
   if (!y || !m || !d) return null;
   // Calendar is configured in America/New_York so we always send ET.
@@ -177,14 +287,25 @@ serve(async (req) => {
     push(['frequency'], booking.frequency);
 
     push(['service_date'], booking.service_date);
+    // Customer-facing arrival window text (e.g. "1 – 3 PM") rather
+    // than the internal slot id ("afternoon"). Ops + GHL automations
+    // both read these fields directly into customer comms, and the
+    // raw slug looked confusing in their messaging.
+    const arrivalWindow = slotToHuman(booking.time_slot);
+    const startEnd = slotToStartEnd(booking.time_slot);
     push(
       ['service_date_time', 'service_date__time'],
-      booking.service_date && booking.time_slot
-        ? `${booking.service_date} \u00b7 ${booking.time_slot}`
+      booking.service_date && arrivalWindow
+        ? `${booking.service_date} \u00b7 ${arrivalWindow}`
         : booking.service_date || undefined,
     );
-    push(['service_start_time'], booking.time_slot);
-    push(['service_end_time'], booking.time_slot);
+    push(['service_start_time'], startEnd?.start ?? arrivalWindow ?? undefined);
+    push(['service_end_time'], startEnd?.end ?? arrivalWindow ?? undefined);
+    // Also surface the raw window on its own dedicated field so any
+    // GHL workflows that already key off `arrival_window` stay
+    // populated (they previously got the slot id and may now branch
+    // on a friendlier value).
+    push(['arrival_window', 'service_arrival_window'], arrivalWindow ?? undefined);
 
     push(['booking_amount'], booking.est_price || booking.base_price);
     push(['original_price'], booking.base_price);

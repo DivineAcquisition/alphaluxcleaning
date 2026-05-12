@@ -170,6 +170,33 @@ serve(async (req) => {
       return `${hours.toString().padStart(2, '0')}:${minutes}`;
     }
 
+    /**
+     * The booking flow stores arrival windows as slot IDs (e.g.
+     * `afternoon`, `late_afternoon`). The downstream helpers in this
+     * function (parseTimeSlot, formatTimeGHL, calculateServiceStart)
+     * expect a "HH:MM AM/PM - HH:MM AM/PM" range. Convert here so
+     * the rest of the function operates on a uniform shape and GHL
+     * never receives the raw `late_afternoon` enum value.
+     */
+    function expandArrivalWindowSlot(value: string | null | undefined): string {
+      if (!value) return '';
+      const slotMap: Record<string, string> = {
+        early_morning: '7:00 AM - 9:00 AM',
+        morning: '9:00 AM - 11:00 AM',
+        late_morning: '11:00 AM - 1:00 PM',
+        afternoon: '1:00 PM - 3:00 PM',
+        late_afternoon: '3:00 PM - 5:00 PM',
+        evening: '5:00 PM - 7:00 PM',
+      };
+      const v = String(value).trim();
+      if (slotMap[v]) return slotMap[v];
+      // Already in HH:MM AM/PM range form? Pass through.
+      if (/(\d{1,2}):(\d{2})\s*(AM|PM)/i.test(v)) return v;
+      // Already in 24h "HH:MM-HH:MM" form? Pass through.
+      if (/^\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}$/.test(v)) return v;
+      return v;
+    }
+
     // GHL-friendly date: MM/DD/YYYY
     function formatDateGHL(dateStr: string): string {
       if (!dateStr) return '';
@@ -269,13 +296,20 @@ serve(async (req) => {
       customer_name: customer?.name || 'unknown'
     });
 
-    // Parse service details from booking
+    // Parse service details from booking. `time_slot` on the booking
+    // row is a slot ID (e.g. "afternoon") — expand it into the
+    // human-readable arrival window ("1:00 PM - 3:00 PM") so the
+    // GHL custom fields and the downstream parseTimeSlot /
+    // formatTimeGHL helpers all receive the actual time the
+    // customer was promised, not the raw enum value.
     const serviceDetails = {
       type: bookingData.service_type || 'Standard',
       frequency: bookingData.frequency || 'One-time',
       sqft_range: bookingData.sqft_or_bedrooms || 'Unknown',
       date: bookingData.service_date || new Date().toISOString().split('T')[0],
-      time: bookingData.time_slot || '09:00-17:00'
+      time:
+        expandArrivalWindowSlot(bookingData.time_slot) ||
+        '9:00 AM - 5:00 PM',
     };
 
     const addressInfo = {
