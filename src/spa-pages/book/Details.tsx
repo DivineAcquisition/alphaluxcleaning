@@ -323,6 +323,44 @@ export default function BookingDetails() {
       };
     }
 
+    // Combo bundle: bake the follow-up Standard Clean date + time
+    // window into special_instructions so HCP job notes, GHL
+    // `entry_instructions`, and any ops dashboard that surfaces
+    // `special_instructions` all see the 2nd-visit context next
+    // to the customer's own notes. The structured copy in
+    // `property_details.second_visit` is still the source of truth
+    // (it's what `propertyDetails` carries above and what GHL's
+    // dedicated `second_visit_date` custom field reads), but
+    // mirroring into the notes blob is what surfaces it on the
+    // HCP-side job description where dispatchers actually read it.
+    let combinedInstructions = notes ? notes.trim() : '';
+    if (isComboBundle && secondVisitDate && secondVisitTimeSlot) {
+      const secondVisitSlotDef = TIME_SLOTS.find(
+        (s) => s.id === secondVisitTimeSlot,
+      );
+      const secondVisitDateLabel = new Date(
+        secondVisitDate + 'T00:00:00',
+      ).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const secondVisitWindowLabel =
+        secondVisitSlotDef?.window || secondVisitTimeSlot;
+
+      const followUpBlock = [
+        'FOLLOW-UP STANDARD CLEAN (Deep + Standard Combo):',
+        `  Date: ${secondVisitDateLabel}`,
+        `  Arrival window: ${secondVisitWindowLabel}`,
+        '  This visit must be scheduled as a separate HCP job within 14 days of the initial Deep Clean.',
+      ].join('\n');
+
+      combinedInstructions = combinedInstructions
+        ? `${followUpBlock}\n\n---\n\n${combinedInstructions}`
+        : followUpBlock;
+    }
+
     try {
       // 1. Persist the service address + schedule on the booking row.
       const { data, error } = await supabase.functions.invoke(
@@ -337,7 +375,7 @@ export default function BookingDetails() {
             zipCode,
             serviceDate: preferredDate,
             timeSlot: preferredTimeBlock,
-            specialInstructions: notes || null,
+            specialInstructions: combinedInstructions || null,
             propertyDetails,
           },
         },
@@ -403,9 +441,21 @@ export default function BookingDetails() {
                   }
                 : null,
             ].filter(Boolean) as any,
-            notes: `Deposit paid: $${Number(bookingData.deposit_amount || 0).toFixed(
-              2,
-            )} · Balance due: $${Number(bookingData.balance_due || 0).toFixed(2)}`,
+            // Deposit / balance summary + (if combo) the follow-up
+            // Standard Clean date. combinedInstructions already
+            // includes the FOLLOW-UP STANDARD CLEAN block when
+            // applicable, so we prepend it once here so HCP
+            // dispatchers see it on the initial job's notes.
+            notes: [
+              combinedInstructions || null,
+              `Deposit paid: $${Number(bookingData.deposit_amount || 0).toFixed(
+                2,
+              )} · Balance due: $${Number(
+                bookingData.balance_due || 0,
+              ).toFixed(2)}`,
+            ]
+              .filter(Boolean)
+              .join('\n\n---\n\n'),
             booking_id: bookingData.id,
           }),
         });
