@@ -286,6 +286,39 @@ serve(async (req) => {
     push(['service_frequency'], booking.frequency);
     push(['frequency'], booking.frequency);
 
+    // Offer-level metadata. Earlier pushes covered the service
+    // primitives (type/frequency) but not the packaged offer the
+    // customer actually bought. Without these, ops couldn't tell
+    // a 'Deep + Standard Combo' booking apart from a standalone
+    // Deep Clean in GHL.
+    push(['offer_type'], booking.offer_type);
+    push(['offer_name'], booking.offer_name);
+    push(['visit_count'], booking.visit_count);
+    push(['is_recurring'], booking.is_recurring ? 'yes' : 'no');
+    push(['booking_status'], booking.status);
+    push(['payment_status'], booking.payment_status);
+    push(['booking_created_at'], booking.created_at);
+    push(['paid_at'], booking.paid_at);
+    push(['stripe_account'], booking.stripe_account_slug);
+
+    // Address fields — also pushed onto the contact body below but
+    // some GHL workflows / custom-field reports read from named
+    // fields too, so we surface them on both surfaces.
+    push(
+      ['service_address', 'service_address_line1', 'address_line1'],
+      booking.address_line1 || customer.address_line1,
+    );
+    push(
+      ['service_address_line2', 'address_line2'],
+      booking.address_line2 || customer.address_line2,
+    );
+    push(['service_city', 'city'], customer.city);
+    push(['service_state', 'state'], customer.state);
+    push(
+      ['service_zip', 'zip', 'postal_code'],
+      booking.zip_code || customer.postal_code,
+    );
+
     push(['service_date'], booking.service_date);
     // Customer-facing arrival window text (e.g. "1 – 3 PM") rather
     // than the internal slot id ("afternoon"). Ops + GHL automations
@@ -316,12 +349,55 @@ serve(async (req) => {
 
     const propertyDetails = booking.property_details || {};
     push(['sqft'], propertyDetails.sqft || booking.home_size);
+    push(['home_size', 'home_size_range'], booking.home_size);
+    // Friendly version of the home_size slug ("1000_1500" →
+    // "1,000–1,500 sq ft") for use directly in customer comms.
+    if (booking.home_size && /^\d+_\d+$/.test(booking.home_size)) {
+      const [lo, hi] = booking.home_size.split('_').map(Number);
+      const fmt = (n: number) => n.toLocaleString('en-US');
+      push(
+        ['home_size_label', 'home_size_friendly'],
+        `${fmt(lo)}–${fmt(hi)} sq ft`,
+      );
+    }
+    // sqft_or_bedrooms is what the booking row stamps (e.g.
+    // "1bed/1bath") — useful for ops dashboards that want a
+    // single string they can read at a glance.
+    push(
+      ['bedrooms_bathrooms', 'sqft_or_bedrooms'],
+      booking.sqft_or_bedrooms,
+    );
     push(['bedrooms'], propertyDetails.bedrooms);
     push(['bathrooms'], propertyDetails.bathrooms);
+    push(['dwelling_type', 'property_type'], propertyDetails.dwelling_type);
+    push(['pets'], propertyDetails.pets);
     push(['property_type'], propertyDetails.property_type);
     push(['flooring'], propertyDetails.flooring);
     push(['entry_instructions'], booking.special_instructions || booking.notes);
+    push(['special_instructions'], booking.special_instructions);
     push(['preferred_contact_method'], propertyDetails.preferred_contact_method);
+
+    // Combo bundle's follow-up visit (only present when
+    // offer_type === 'deep_plus_standard'). Lets ops see the
+    // second cleaning date without having to dig into the
+    // property_details JSON column in Supabase.
+    const secondVisit = propertyDetails.second_visit;
+    if (secondVisit?.date) {
+      push(['second_visit_date'], secondVisit.date);
+      push(['second_visit_time_slot'], secondVisit.time_slot);
+      push(
+        ['second_visit_type'],
+        secondVisit.type || 'standard',
+      );
+    }
+
+    // Pricing breakdown — surface the rich sub-values from
+    // pricing_breakdown so ops can build automations on e.g. the
+    // 90-day plan monthly amount without parsing the JSON.
+    const pb = booking.pricing_breakdown || {};
+    push(['final_price'], pb.finalPrice ?? booking.est_price);
+    push(['monthly_amount'], pb.monthlyAmount);
+    push(['first_clean_balance'], pb.firstCleanBalance);
 
     push(['conversion_status'], booking.is_recurring ? 'Recurring Active' : 'Offer Sent');
     push(['subscription_status'], booking.is_recurring ? 'Active Recurring' : 'One-Time');
