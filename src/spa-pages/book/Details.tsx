@@ -350,11 +350,26 @@ export default function BookingDetails() {
       // 2. Push the job into Housecall Pro. If HCP is unavailable the
       //    customer still gets a confirmation — the ops team retries
       //    out-of-band via `retry-failed-hcp-syncs`.
+      //
+      // The fetch is wrapped in an AbortController with a 12s
+      // timeout so a hanging HCP API (we hit this during the
+      // PLACEHOLDER_VALUE_TO_BE_REPLACED outage when HCP_API_KEY
+      // was unset — connections stalled instead of failing fast)
+      // can never keep the customer trapped on /book/details. The
+      // outer try/catch swallows the abort and still confirms the
+      // booking; ops picks up the missed job via the existing
+      // retry-failed-hcp-syncs sweep.
       try {
         const schedule = timeBlockToIsoWindow(preferredDate, preferredTimeBlock);
+        const hcpController = new AbortController();
+        const hcpTimer = window.setTimeout(
+          () => hcpController.abort(),
+          12000,
+        );
         const resp = await fetch('/api/create-job', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: hcpController.signal,
           body: JSON.stringify({
             customer: {
               name: customerName,
@@ -409,6 +424,7 @@ export default function BookingDetails() {
             booking_id: bookingData.id,
           }),
         });
+        window.clearTimeout(hcpTimer);
 
         const payload = await resp.json().catch(() => ({}));
 
