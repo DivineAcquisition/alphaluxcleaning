@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useBooking } from '@/contexts/BookingContext';
 import { useBookingProgress } from '@/hooks/useBookingProgress';
+import { getHomeSizeBySquareFootage } from '@/lib/new-pricing-system';
 import {
   calculateQuote,
   DEEP_CLEAN_DISPLAY_TABLE,
@@ -196,10 +197,19 @@ export default function BookingPricing() {
 
     const promoSavings = Math.max(0, quote.total - promoTotal);
 
+    // Seed homeSizeId from the entered sqft so /book/offer's combo
+    // pricing lines up with what the customer just saw on the
+    // calculator. /book/offer renders the price using
+    // resolveHomeSizeId(bookingData.homeSizeId) — without this the
+    // combo card would default to the 2001–2500 tier regardless of
+    // the customer's actual home size.
+    const homeSizeFromSqft = getHomeSizeBySquareFootage(sqft);
+
     updateBookingData({
       sqft,
       bedrooms,
       bathrooms,
+      homeSizeId: homeSizeFromSqft?.id,
       serviceType: serviceKey,
       frequency: 'one_time',
       offerType: offerKey,
@@ -225,7 +235,16 @@ export default function BookingPricing() {
       total: quote.total,
     });
 
-    setTimeout(() => navigate('/book/checkout'), 150);
+    // Always funnel through /book/offer instead of jumping straight
+    // to /book/checkout. /book/offer is the single source of truth
+    // for what's bookable today (the Deep + Standard Combo) and
+    // re-writes offerType / visitCount / basePrice to match. Without
+    // this redirect customers landing on the pricing calculator
+    // ended up paying for a standalone Deep Clean (offerType =
+    // 'deep_clean', visit_count = 1) which is intentionally not on
+    // the menu — Ginevra Petrosino's two May-14 bookings are the
+    // bug this redirect closes.
+    setTimeout(() => navigate('/book/offer'), 150);
   };
 
   const selectedIcon = SERVICE_OPTIONS.find((o) => o.id === serviceType)?.icon;

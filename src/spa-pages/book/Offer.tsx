@@ -508,18 +508,18 @@ export default function BookingOffer() {
         )}
 
         <div className="mt-8 text-center space-y-3">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/book/pricing')}
-            className="border-alx-gold/50 text-alx-gold hover:bg-alx-gold/10"
-          >
-            Need a custom quote? Open pricing calculator →
+          {/* The "Need a custom quote? Open pricing calculator →"
+              link to /book/pricing was removed intentionally. The
+              pricing calculator there sets offerType='deep_clean'
+              and visitCount=1 (standalone Deep Clean), which
+              completely bypasses the combo-only restriction on
+              this page. Customers were ending up with a $182 Deep
+              Clean booking instead of the intended Deep + Standard
+              Combo. CSRs who genuinely need the calculator can
+              still hit /book/pricing directly. */}
+          <Button variant="ghost" onClick={() => navigate('/book/sqft')}>
+            ← Back to Home Size
           </Button>
-          <div>
-            <Button variant="ghost" onClick={() => navigate('/book/sqft')}>
-              ← Back to Home Size
-            </Button>
-          </div>
         </div>
 
         <CleaningShowcaseCarousel />
