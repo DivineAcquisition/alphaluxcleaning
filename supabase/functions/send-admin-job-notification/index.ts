@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.54.0";
+import {
+  getInternalFromAddress,
+  getInternalRecipients,
+} from "../_shared/internal-recipients.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -71,58 +75,71 @@ const handler = async (req: Request): Promise<Response> => {
       booking = orderData;
     }
 
-    const adminEmails = ["elliepangilinan17@gmail.com", "admin1@alphaluxcleaning.com"];
+    // Use the canonical internal recipient list (info@alphaluxclean.com
+    // + info@alphaluxcleaning.com by default) rather than the previous
+    // hard-coded mix of a personal gmail and the deprecated admin1@
+    // mailbox — those addresses no longer route to anyone monitoring
+    // the funnel.
+    const adminEmails = getInternalRecipients();
     const assignmentUrl = `https://yltvknkqnzdeiqckqjha.supabase.co/functions/v1/job-assignments?highlight=${booking_id || order_id}`;
 
+    // Branded HTML — matches the customer confirmation email family
+    // (AlphaLux blue → navy gradient, white content cards on the
+    // #F8F8F7 body, alx blue accents). Same vocabulary as
+    // booking-admin-notification.tsx so all internal emails feel like
+    // they're from the same brand.
     const emailHTML = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">🔔 New Job Assignment Required</h1>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #F8F8F7; max-width: 640px; margin: 0 auto; padding: 20px 16px;">
+        <div style="background: linear-gradient(135deg, #0F77CC 0%, #1B314B 100%); padding: 28px 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em;">🔔 New Job Assignment Required</h1>
+          <p style="color: #EFF7FE; margin: 8px 0 0 0; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;">AlphaLux Ops</p>
         </div>
+        <div style="background: #ffffff; padding: 4px 20px; border-radius: 0 0 8px 8px;">
         
-        <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-          <h2 style="color: #1f2937; margin-top: 0;">Job Details</h2>
-          <p><strong>Customer:</strong> ${booking.customer_name || 'N/A'}</p>
-          <p><strong>Service Date:</strong> ${booking.service_date || booking.scheduled_date || 'TBD'}</p>
-          <p><strong>Service Time:</strong> ${booking.service_time || booking.scheduled_time || 'TBD'}</p>
-          <p><strong>Address:</strong> ${booking.service_address || booking.customer_address || 'Address not provided'}</p>
-          <p><strong>Phone:</strong> ${booking.customer_phone || 'Not provided'}</p>
-          <p><strong>Email:</strong> ${booking.customer_email || 'Not provided'}</p>
-          ${booking.special_instructions ? `<p><strong>Special Instructions:</strong> ${booking.special_instructions}</p>` : ''}
-          ${booking.cleaning_type ? `<p><strong>Service Type:</strong> ${booking.cleaning_type.replace(/_/g, ' ')}</p>` : ''}
-          ${booking.amount ? `<p><strong>Amount:</strong> $${(booking.amount / 100).toFixed(2)}</p>` : ''}
+          <div style="background: #f9fafb; padding: 18px 20px; border-radius: 8px; margin: 18px 0; border: 1px solid #e5e7eb;">
+            <h2 style="color: #0F77CC; margin: 0 0 12px 0; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Job Details</h2>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Customer:</span> <strong>${booking.customer_name || 'N/A'}</strong></p>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Service Date:</span> ${booking.service_date || booking.scheduled_date || 'TBD'}</p>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Service Time:</span> ${booking.service_time || booking.scheduled_time || 'TBD'}</p>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Address:</span> ${booking.service_address || booking.customer_address || 'Address not provided'}</p>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Phone:</span> ${booking.customer_phone || 'Not provided'}</p>
+            <p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Email:</span> ${booking.customer_email || 'Not provided'}</p>
+            ${booking.cleaning_type ? `<p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Service Type:</span> ${booking.cleaning_type.replace(/_/g, ' ')}</p>` : ''}
+            ${booking.amount ? `<p style="margin: 0 0 8px 0; color: #1B314B; font-size: 14px;"><span style="color: #6b7280; font-weight: 500; display: inline-block; min-width: 130px;">Amount:</span> <strong style="color: #0F77CC;">$${(booking.amount / 100).toFixed(2)}</strong></p>` : ''}
+            ${booking.special_instructions ? `<p style="margin: 12px 0 0 0; color: #1B314B; font-size: 13px; padding-top: 12px; border-top: 1px solid #e5e7eb; white-space: pre-wrap;"><span style="color: #6b7280; font-weight: 500;">Special Instructions:</span><br/>${booking.special_instructions}</p>` : ''}
+          </div>
+
+          <div style="text-align: center; margin: 24px 0 8px 0;">
+            <a href="${assignmentUrl}" style="background: #0F77CC; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 14px;">
+              Assign Cleaner Now
+            </a>
+          </div>
+
+          <div style="background: #EFF7FE; border-left: 4px solid #0F77CC; padding: 14px 16px; border-radius: 8px; margin: 18px 0;">
+            <p style="margin: 0; color: #0C5FA6; font-size: 13px;">
+              <strong>Action required:</strong> This job needs to be assigned to up to 3 cleaners. Please review and assign as soon as possible.
+            </p>
+          </div>
         </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${assignmentUrl}" 
-             style="background: #10b981; color: white; padding: 15px 30px; text-decoration: none; 
-                    border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">
-            🎯 Assign Cleaner Now
-          </a>
-        </div>
-
-        <div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px;">
-          <p style="margin: 0; color: #92400e;">
-            <strong>⚡ Action Required:</strong> This job needs to be assigned to up to 3 cleaners. 
-            Please review and assign as soon as possible to ensure customer satisfaction.
-          </p>
-        </div>
-
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 14px;">
-          <p>AlphaLux Clean - Job Management System</p>
+        <div style="text-align: center; padding: 18px 16px;">
+          <p style="color: #6b7280; font-size: 12px; margin: 0; font-weight: 600;">AlphaLux Clean — Internal Job Notification</p>
+          <p style="color: #9ca3af; font-size: 11px; margin: 4px 0 0 0;">Sent to internal ops mailboxes only · do not forward.</p>
         </div>
       </div>
     `;
 
-    // Send emails to both admin addresses
-    const emailPromises = adminEmails.map(email => 
+    // Single Resend send with all internal recipients in `to`. Both
+    // info@ mailboxes are ops, so they can see each other in the
+    // header — no need to send separately or BCC.
+    const emailPromises = [
       resend.emails.send({
-        from: "AlphaLuxClean <noreply@info.alphaluxcleaning.com>",
-        to: [email],
-        subject: `🔔 Job Assignment Required - ${booking.customer_name}`,
-        html: emailHTML
-      })
-    );
+        from: getInternalFromAddress(),
+        to: adminEmails,
+        subject: `🔔 Job Assignment Required — ${booking.customer_name || 'New booking'}`,
+        html: emailHTML,
+      }),
+    ];
 
     const emailResults = await Promise.allSettled(emailPromises);
     
