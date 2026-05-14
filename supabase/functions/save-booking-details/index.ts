@@ -141,8 +141,30 @@ serve(async (req) => {
         .then((r) => log('hcp-sync-booking', { ok: !r.error, err: r.error?.message, data: r.data }))
         .catch((e) => log('hcp-sync-booking threw', { err: (e as Error).message })),
     );
-    // Fire-and-forget — we don't block the response on external sends.
-    Promise.allSettled(fanOut);
+    // Background fan-out — we don't block the response on external
+    // sends, but we DO ask the Supabase Edge Runtime to keep the
+    // worker alive until they all settle. Without `waitUntil`,
+    // Deno Deploy terminates the function as soon as the HTTP
+    // response is flushed, which silently aborts the in-flight
+    // invokes mid-handshake — exactly the symptom that caused
+    // "GHL not firing / confirmation emails not sending" reports.
+    //
+    // EdgeRuntime is the Supabase-specific global; it's `undefined`
+    // on older runtimes or local Deno, so we feature-detect and
+    // fall back to a fire-and-forget that runs synchronously on
+    // older infrastructure. (`globalThis as any` keeps the type
+    // check happy without pulling in @supabase/functions-js types.)
+    const settled = Promise.allSettled(fanOut);
+    const edgeRuntime = (globalThis as any).EdgeRuntime;
+    if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
+      edgeRuntime.waitUntil(settled);
+    } else {
+      // Best-effort fallback for environments without waitUntil.
+      // The promise is still alive in module scope while the
+      // response is in flight; on most runtimes it will complete
+      // before termination. Errors are already caught per-promise.
+      settled.catch(() => {});
+    }
 
     log("Saved successfully", { bookingId });
 

@@ -1,20 +1,116 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import React from 'npm:react@18.3.1';
-import { renderAsync } from 'npm:@react-email/components@0.0.22';
-import { BookingConfirmationEmail } from './_templates/booking-confirmation.tsx';
+import React from "npm:react@18.3.1";
+import { renderAsync } from "npm:@react-email/components@0.0.22";
+import { BookingConfirmationEmail } from "./_templates/booking-confirmation.tsx";
+import {
+  BookingAdminNotification,
+  type BookingAdminNotificationProps,
+} from "./_templates/booking-admin-notification.tsx";
+import {
+  getInternalFromAddress,
+  getInternalRecipients,
+} from "../_shared/internal-recipients.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, data?: any) => {
-  console.log(`[SEND-BOOKING-CONFIRMATION] ${step}`, data || "");
+const logStep = (step: string, data?: unknown) => {
+  console.log(`[SEND-BOOKING-CONFIRMATION] ${step}`, data ?? "");
 };
+
+const SERVICE_TYPE_LABELS: Record<string, string> = {
+  regular: "Standard Cleaning",
+  deep: "Deep Cleaning",
+  move_in_out: "Move-In/Out Cleaning",
+};
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  one_time: "One-Time",
+  weekly: "Weekly",
+  bi_weekly: "Bi-Weekly",
+  monthly: "Monthly",
+};
+
+const TIME_SLOT_WINDOWS: Record<string, string> = {
+  early_morning: "7 – 9 AM",
+  morning: "9 – 11 AM",
+  late_morning: "11 AM – 1 PM",
+  afternoon: "1 – 3 PM",
+  late_afternoon: "3 – 5 PM",
+  evening: "5 – 7 PM",
+};
+
+function arrivalWindow(slot: string | null | undefined): string {
+  if (!slot) return "Time TBD";
+  return TIME_SLOT_WINDOWS[slot] ?? slot;
+}
+
+function fmtDate(yyyymmdd: string | null | undefined): string {
+  if (!yyyymmdd) return "Date TBD";
+  const [y, m, d] = String(yyyymmdd).split("-").map(Number);
+  if (!y || !m || !d) return String(yyyymmdd);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * The Resend `from` for the customer-facing confirmation. Falls back
+ * through the historical env-var soup so any deploy that already has
+ * one of these set keeps working without touching ops config.
+ */
+function getCustomerFromAddress(): string {
+  return (
+    Deno.env.get("EMAIL_FROM") ||
+    Deno.env.get("EMAIL_FROM_CUSTOMER") ||
+    "AlphaLux Clean <noreply@info.alphaluxcleaning.com>"
+  );
+}
+
+/**
+ * Convenience wrapper: send a Resend email, and if the primary
+ * sending domain bounces with "domain not verified", retry against
+ * Resend's onboarding domain so the email still lands during DNS
+ * cutover windows. Returns the final response (success or otherwise).
+ */
+async function sendWithUnverifiedRetry(
+  args: {
+    from: string;
+    to: string[];
+    subject: string;
+    html: string;
+    replyTo?: string;
+  },
+  retryFromBrand: string,
+) {
+  let response = await resend.emails.send(args);
+  const errMsg = response.error?.message || "";
+  if (
+    response.error &&
+    /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i
+      .test(errMsg)
+  ) {
+    logStep("Primary sender unverified — retrying via Resend onboarding domain", {
+      original: args.from,
+    });
+    response = await resend.emails.send({
+      ...args,
+      from: `${retryFromBrand} <onboarding@resend.dev>`,
+    });
+  }
+  return response;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -25,7 +121,6 @@ serve(async (req) => {
     logStep("Starting booking confirmation email");
 
     const { bookingId } = await req.json();
-
     if (!bookingId) {
       throw new Error("Booking ID is required");
     }
@@ -33,13 +128,13 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
-    // Fetch booking with customer details
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select(`
+      .select(
+        `
         *,
         customer:customers (
           id,
@@ -54,7 +149,8 @@ serve(async (req) => {
           state,
           postal_code
         )
-      `)
+      `,
+      )
       .eq("id", bookingId)
       .single();
 
@@ -62,207 +158,229 @@ serve(async (req) => {
       throw new Error(`Failed to fetch booking: ${bookingError?.message}`);
     }
 
-    logStep("Booking data fetched", { bookingId, customerEmail: booking.customer.email });
+    const customer = booking.customer || {};
+    if (!customer.email) {
+      throw new Error(
+        `Booking ${bookingId} has no customer email — cannot send confirmation.`,
+      );
+    }
 
-    const serviceTypeLabels: Record<string, string> = {
-      regular: "Standard Cleaning",
-      deep: "Deep Cleaning",
-      move_in_out: "Move-In/Out Cleaning",
-    };
-
-    const frequencyLabels: Record<string, string> = {
-      one_time: "One-Time",
-      weekly: "Weekly",
-      bi_weekly: "Bi-Weekly",
-      monthly: "Monthly",
-    };
-
-    const serviceDate = new Date(booking.service_date);
-    const formattedDate = serviceDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    logStep("Booking loaded", {
+      bookingId,
+      customerEmail: customer.email,
     });
 
-    // Calculate if there's a discount (for one-time bookings)
-    const isOneTime = booking.frequency === 'one_time';
-    const discount = isOneTime ? 50 : 0; // $50 discount for one-time bookings
+    const serviceTypeLabel =
+      SERVICE_TYPE_LABELS[booking.service_type] || booking.service_type;
+    const frequencyLabel =
+      FREQUENCY_LABELS[booking.frequency] || booking.frequency;
+    const offerName: string | null = booking.offer_name || null;
+    const offerType: string | null = booking.offer_type || null;
+    const isComboBundle = offerType === "deep_plus_standard";
 
-    // Render React Email template
+    const formattedDate = fmtDate(booking.service_date);
+    const formattedArrivalWindow = arrivalWindow(booking.time_slot);
+
+    const total = Number(booking.est_price) || 0;
+    const deposit = Number(booking.deposit_amount) || 0;
+    const balance = Math.max(0, total - deposit);
+    const promoDiscount =
+      booking.promo_discount_cents && booking.promo_discount_cents > 0
+        ? Number(booking.promo_discount_cents) / 100
+        : 0;
+
+    const isOneTime = booking.frequency === "one_time";
+
+    // ===================== Customer confirmation =====================
+
     const customerEmailHtml = await renderAsync(
       React.createElement(BookingConfirmationEmail, {
-        customerName: booking.customer.first_name || booking.customer.name,
+        customerName: customer.first_name || customer.name || "Customer",
         orderId: booking.id.slice(0, 8).toUpperCase(),
-        serviceType: serviceTypeLabels[booking.service_type] || booking.service_type,
-        frequency: frequencyLabels[booking.frequency] || booking.frequency,
+        serviceType: serviceTypeLabel,
+        frequency: frequencyLabel,
         serviceDate: formattedDate,
-        timeSlot: booking.time_slot,
+        timeSlot: formattedArrivalWindow,
         address: {
-          line1: booking.customer.address_line1,
-          line2: booking.customer.address_line2 || undefined,
-          city: booking.customer.city,
-          state: booking.customer.state,
-          postalCode: booking.customer.postal_code,
+          line1: booking.address_line1 || customer.address_line1 || "",
+          line2:
+            booking.address_line2 || customer.address_line2 || undefined,
+          city: customer.city || "",
+          state: customer.state || "",
+          postalCode: booking.zip_code || customer.postal_code || "",
         },
         pricing: {
-          total: booking.est_price,
-          deposit: booking.deposit_amount,
-          balance: booking.est_price - booking.deposit_amount,
-          discount: discount > 0 ? discount : undefined,
+          total,
+          deposit,
+          balance,
+          discount: promoDiscount > 0 ? promoDiscount : undefined,
         },
         specialInstructions: booking.special_instructions || undefined,
         isOneTime,
-      })
+      }),
     );
 
-    // Send customer confirmation email. Retries against the Resend
-    // onboarding sender if the branded domain isn't verified yet so a
-    // missing DNS record doesn't silently swallow the email.
-    logStep("Sending customer confirmation email");
-    const customerFrom =
-      Deno.env.get("EMAIL_FROM") ||
-      "AlphaLux Clean <noreply@info.alphaluxcleaning.com>";
-    const customerReplyTo = Deno.env.get("EMAIL_REPLY_TO") || "support@alphaluxcleaning.com";
-    let customerEmailResponse = await resend.emails.send({
-      from: customerFrom,
-      to: [booking.customer.email],
-      replyTo: customerReplyTo,
-      subject: `✅ Booking Confirmed - ${formattedDate}`,
-      html: customerEmailHtml,
-    });
-    if (
-      customerEmailResponse.error &&
-      /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(
-        customerEmailResponse.error.message || "",
-      )
-    ) {
-      logStep("Primary sender unverified, retrying with onboarding domain");
-      customerEmailResponse = await resend.emails.send({
-        from: "AlphaLux Clean <onboarding@resend.dev>",
-        to: [booking.customer.email],
+    logStep("Sending customer confirmation email", { to: customer.email });
+    const customerFrom = getCustomerFromAddress();
+    const customerReplyTo =
+      Deno.env.get("EMAIL_REPLY_TO") || "info@alphaluxcleaning.com";
+    const customerEmailResponse = await sendWithUnverifiedRetry(
+      {
+        from: customerFrom,
+        to: [customer.email],
         replyTo: customerReplyTo,
-        subject: `✅ Booking Confirmed - ${formattedDate}`,
+        subject: `✅ Booking Confirmed — ${formattedDate}`,
         html: customerEmailHtml,
+      },
+      "AlphaLux Clean",
+    );
+    if (customerEmailResponse.error) {
+      logStep("Customer email failed", {
+        error: customerEmailResponse.error.message,
+      });
+    } else {
+      logStep("Customer email sent", {
+        messageId: customerEmailResponse.data?.id,
       });
     }
 
-    logStep("Customer email sent", { messageId: customerEmailResponse.data?.id });
+    // ===================== Internal / admin notification =====================
 
-    // Send admin notification email
-    const adminEmailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { font-family: monospace; background: #1a1a1a; color: #00ff00; padding: 20px; }
-          .container { max-width: 600px; margin: 0 auto; background: #0a0a0a; padding: 20px; border: 2px solid #00ff00; border-radius: 8px; }
-          h1 { color: #00ff00; border-bottom: 2px solid #00ff00; padding-bottom: 10px; }
-          .info { margin: 10px 0; padding: 10px; background: #1a1a1a; border-left: 4px solid #00ff00; }
-          .label { color: #00aa00; font-weight: bold; }
-          .value { color: #00ff00; }
-          .alert { background: #ff6600; color: white; padding: 10px; margin: 15px 0; border-radius: 4px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>🔔 NEW BOOKING ALERT</h1>
-          <div class="alert">Order #${booking.id.slice(0, 8).toUpperCase()}</div>
-          
-          <div class="info">
-            <span class="label">CUSTOMER:</span> <span class="value">${booking.customer.name}</span><br>
-            <span class="label">EMAIL:</span> <span class="value">${booking.customer.email}</span><br>
-            <span class="label">PHONE:</span> <span class="value">${booking.customer.phone}</span>
-          </div>
-          
-          <div class="info">
-            <span class="label">SERVICE:</span> <span class="value">${serviceTypeLabels[booking.service_type]}</span><br>
-            <span class="label">FREQUENCY:</span> <span class="value">${frequencyLabels[booking.frequency]}</span><br>
-            <span class="label">DATE:</span> <span class="value">${formattedDate}</span><br>
-            <span class="label">TIME:</span> <span class="value">${booking.time_slot}</span>
-          </div>
-          
-          <div class="info">
-            <span class="label">ADDRESS:</span><br>
-            <span class="value">
-              ${booking.customer.address_line1}<br>
-              ${booking.customer.address_line2 ? `${booking.customer.address_line2}<br>` : ''}
-              ${booking.customer.city}, ${booking.customer.state} ${booking.customer.postal_code}
-            </span>
-          </div>
-          
-          <div class="info">
-            <span class="label">TOTAL:</span> <span class="value">$${booking.est_price.toFixed(2)}</span><br>
-            <span class="label">DEPOSIT:</span> <span class="value">$${booking.deposit_amount.toFixed(2)}</span><br>
-            <span class="label">BALANCE:</span> <span class="value">$${(booking.est_price - booking.deposit_amount).toFixed(2)}</span>
-          </div>
-          
-          ${booking.special_instructions ? `
-            <div class="info">
-              <span class="label">SPECIAL INSTRUCTIONS:</span><br>
-              <span class="value">${booking.special_instructions}</span>
-            </div>
-          ` : ''}
-          
-          <div class="info">
-            <span class="label">BOOKING ID:</span> <span class="value">${booking.id}</span><br>
-            <span class="label">SQUARE PAYMENT:</span> <span class="value">${booking.square_payment_id || 'N/A'}</span>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    const internalRecipients = getInternalRecipients();
+    logStep("Internal recipients resolved", { internalRecipients });
 
-    logStep("Sending admin notification email");
-    const adminFrom =
-      Deno.env.get("EMAIL_FROM_ADMIN") ||
-      Deno.env.get("EMAIL_FROM") ||
-      "AlphaLux Bookings <noreply@info.alphaluxcleaning.com>";
-    const adminTo = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") || "bookings@alphaluxcleaning.com";
-    let adminEmailResponse = await resend.emails.send({
+    // Second-visit details (combo bundle only).
+    let secondVisitProp: BookingAdminNotificationProps["secondVisit"] = null;
+    const sv = booking.property_details?.second_visit;
+    if (isComboBundle && sv?.date && sv?.time_slot) {
+      secondVisitProp = {
+        date: fmtDate(sv.date),
+        arrivalWindow: arrivalWindow(sv.time_slot),
+        type: sv.type || "standard",
+      };
+    }
+
+    const adminProps: BookingAdminNotificationProps = {
+      orderId: booking.id.slice(0, 8).toUpperCase(),
+      bookingId: booking.id,
+      customer: {
+        name:
+          customer.name ||
+          [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
+          booking.full_name ||
+          "Customer",
+        email: customer.email,
+        phone: customer.phone || "",
+      },
+      service: {
+        type: serviceTypeLabel,
+        frequency: frequencyLabel,
+        offerName: offerName || undefined,
+        visitCount: booking.visit_count ?? null,
+        isRecurring: !!booking.is_recurring,
+      },
+      schedule: {
+        date: formattedDate,
+        arrivalWindow: formattedArrivalWindow,
+      },
+      address: {
+        line1: booking.address_line1 || customer.address_line1 || "—",
+        line2:
+          booking.address_line2 || customer.address_line2 || undefined,
+        city: customer.city || "",
+        state: customer.state || "",
+        postalCode: booking.zip_code || customer.postal_code || "",
+      },
+      pricing: {
+        total,
+        deposit,
+        balance,
+        promoCode: booking.promo_code || undefined,
+        promoDiscount: promoDiscount > 0 ? promoDiscount : undefined,
+      },
+      stripe: {
+        accountSlug: booking.stripe_account_slug || "alphalux_ny",
+        paymentIntentId: booking.stripe_payment_intent_id || null,
+      },
+      hcp: {
+        jobId: booking.hcp_job_id || null,
+        customerId: booking.hcp_customer_id || null,
+      },
+      ghl: {
+        contactId: booking.ghl_contact_id || null,
+      },
+      secondVisit: secondVisitProp,
+      specialInstructions: booking.special_instructions || null,
+      adminConsoleUrl: (() => {
+        const base = (
+          Deno.env.get("APP_URL") || "https://alphaluxcleaning.com"
+        ).replace(/\/+$/, "");
+        return `${base}/admin/bookings/${booking.id}`;
+      })(),
+    };
+
+    const adminEmailHtml = await renderAsync(
+      React.createElement(BookingAdminNotification, adminProps),
+    );
+
+    const adminFrom = getInternalFromAddress();
+    const adminSubject = `🔔 New booking · ${adminProps.customer.name} · ${
+      offerName || serviceTypeLabel
+    } · ${formattedDate}`;
+
+    logStep("Sending admin notification email", {
+      to: internalRecipients,
       from: adminFrom,
-      to: [adminTo],
-      subject: `🔔 NEW BOOKING: ${serviceTypeLabels[booking.service_type]} - ${formattedDate}`,
-      html: adminEmailHtml,
     });
-    if (
-      adminEmailResponse.error &&
-      /domain.*is not verified|sending domain.*must be verified|testing emails to your own email address|verify a domain/i.test(
-        adminEmailResponse.error.message || "",
-      )
-    ) {
-      adminEmailResponse = await resend.emails.send({
-        from: "AlphaLux Bookings <onboarding@resend.dev>",
-        to: [adminTo],
-        subject: `🔔 NEW BOOKING: ${serviceTypeLabels[booking.service_type]} - ${formattedDate}`,
+    const adminEmailResponse = await sendWithUnverifiedRetry(
+      {
+        from: adminFrom,
+        // Single Resend send with multiple recipients — they each
+        // see a "To: info@…, info@…" header rather than getting
+        // BCC'd. That's intentional: both mailboxes are ops, so the
+        // visibility is fine and we save a Resend quota call.
+        to: internalRecipients,
+        subject: adminSubject,
         html: adminEmailHtml,
+      },
+      "AlphaLux Bookings",
+    );
+    if (adminEmailResponse.error) {
+      logStep("Admin email failed", {
+        error: adminEmailResponse.error.message,
+      });
+    } else {
+      logStep("Admin email sent", {
+        messageId: adminEmailResponse.data?.id,
       });
     }
-
-    logStep("Admin email sent", { messageId: adminEmailResponse.data?.id });
 
     return new Response(
       JSON.stringify({
         success: true,
         customerEmailSent: !!customerEmailResponse.data?.id,
+        customerEmailError: customerEmailResponse.error?.message || null,
         adminEmailSent: !!adminEmailResponse.data?.id,
+        adminEmailError: adminEmailResponse.error?.message || null,
+        adminRecipients: internalRecipients,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
-      }
+      },
     );
-  } catch (error: any) {
-    logStep("ERROR", error.message);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", msg);
     return new Response(
       JSON.stringify({
-        error: error.message || "Failed to send confirmation emails",
+        success: false,
+        error: msg || "Failed to send confirmation emails",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
-      }
+      },
     );
   }
 });
