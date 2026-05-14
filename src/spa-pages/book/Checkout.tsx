@@ -632,45 +632,65 @@ export default function BookingCheckout() {
 
       markCompleted(bookingId);
 
-      // Redeem the promo server-side if one was applied — this enforces
-      // the once-per-customer rule and stamps the booking with the
-      // final discount.
-      if (bookingData.promoCode && bookingData.promoDiscount && bookingData.promoDiscount > 0) {
-        try {
-          await supabase.functions.invoke('promo-system', {
+      // Everything below this point is non-blocking by design. Each
+      // call fires fire-and-forget so the customer immediately
+      // advances to /book/details after their deposit clears —
+      // before any of these were unblocked, an arbitrarily-slow
+      // post-payment fan-out (10–15s combined) was holding the
+      // navigate and a single transient failure (e.g. Stripe
+      // off-session SCA, GHL hiccup) was bouncing the customer
+      // out of checkout with a misleading "Payment recorded but
+      // failed to update booking" toast even though their booking
+      // was already confirmed by `confirm-booking-payment` above.
+      //
+      // Side-effects we still want to happen (promo redemption,
+      // balance invoice scheduling, payment schedule email) run
+      // in the background.
+
+      // Promo redemption — enforces the once-per-customer rule and
+      // stamps the booking with the final discount.
+      if (
+        bookingData.promoCode &&
+        bookingData.promoDiscount &&
+        bookingData.promoDiscount > 0
+      ) {
+        supabase.functions
+          .invoke('promo-system', {
             body: {
               action: 'redeem',
               code: bookingData.promoCode,
               booking_id: bookingId,
               customer_id: customerId,
-              subtotal_cents: Math.round((bookingData.basePrice || 0) * 100),
+              subtotal_cents: Math.round(
+                (bookingData.basePrice || 0) * 100,
+              ),
               booking_type: is90DayPlan ? 'ANY' : 'ONE_TIME',
               email: bookingData.contactInfo?.email || null,
             },
-          });
-        } catch (promoErr) {
-          console.error('Failed to redeem promo server-side:', promoErr);
-        }
+          })
+          .catch((promoErr) =>
+            console.error('Failed to redeem promo server-side:', promoErr),
+          );
       }
 
-      // For one-time bookings the customer paid a 50% reservation
-      // deposit; queue the balance invoice for the remaining 50% so
-      // it goes out after the cleaning is complete. We don't want to
-      // block the redirect on this — fire-and-forget with a logged
-      // error if Stripe rejects it (the saved card on the Customer
-      // means it'll succeed off-session when the invoice runs).
+      // Schedule the balance invoice for one-time bookings. Now
+      // that `send-balance-invoice` auto-charges the saved card,
+      // we keep this fire-and-forget so a slow/declined off-session
+      // charge can never block the customer from advancing — the
+      // booking is already confirmed and the deposit is in the
+      // account.
       if (!is90DayPlan && balanceDue > 0) {
-        try {
-          await supabase.functions.invoke('send-balance-invoice', {
-            body: { bookingId },
-          });
-        } catch (invoiceErr) {
-          console.error('Failed to queue balance invoice:', invoiceErr);
-        }
+        supabase.functions
+          .invoke('send-balance-invoice', { body: { bookingId } })
+          .catch((invoiceErr) =>
+            console.error('Failed to queue balance invoice:', invoiceErr),
+          );
       }
 
-      try {
-        await supabase.functions.invoke('send-payment-schedule', {
+      // Payment schedule email — purely informational; fire and
+      // forget like the rest.
+      supabase.functions
+        .invoke('send-payment-schedule', {
           body: {
             bookingId,
             customerEmail: bookingData.contactInfo.email,
@@ -681,10 +701,10 @@ export default function BookingCheckout() {
             firstCleanBalance,
             monthlyPayment,
           },
-        });
-      } catch (emailError) {
-        console.error('Failed to send payment schedule email:', emailError);
-      }
+        })
+        .catch((emailError) =>
+          console.error('Failed to send payment schedule email:', emailError),
+        );
 
       toast.success(
         is90DayPlan
@@ -694,7 +714,17 @@ export default function BookingCheckout() {
       navigate(`/book/details?booking_id=${bookingId}`);
     } catch (error: any) {
       console.error('Error updating booking:', error);
-      toast.error('Payment recorded but failed to update booking');
+      // We do NOT show "failed to update booking" anymore for
+      // transient post-confirm errors — if we got past
+      // confirm-booking-payment above, the booking is already
+      // confirmed in the DB. Just surface the raw error so we
+      // can debug, but keep the customer on this page so they
+      // can retry.
+      toast.error(
+        error?.message
+          ? `Payment recorded — recovering: ${error.message}`
+          : 'Payment recorded — please refresh if you don\'t see the next step.',
+      );
       setIsProcessing(false);
     }
   };
