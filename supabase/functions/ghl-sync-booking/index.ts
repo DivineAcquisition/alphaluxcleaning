@@ -417,6 +417,8 @@ serve(async (req) => {
       opportunity_updated: sync.updated,
       custom_fields_sent: sync.customFieldsSent,
       custom_fields_returned: sync.customFieldsReturned,
+      put_status: (sync as any).putStatus,
+      put_error: (sync as any).putError,
       tags,
     });
   } catch (error) {

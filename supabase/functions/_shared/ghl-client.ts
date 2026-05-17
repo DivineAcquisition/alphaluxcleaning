@@ -323,11 +323,68 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       }
     }
 
-    const returnedFields = Array.isArray(res.data?.contact?.customFields)
+    // POST /contacts/upsert silently drops `customFields` on the
+    // UPDATE branch (verified on the live AlphaLuxClean GHL location
+    // 2026-05-17 — a booking sync reported 19 fields sent but only 4
+    // ever showed up on the contact record). The fix is to follow up
+    // with PUT /contacts/:id which DOES persist the customFields
+    // array on both create and update branches.
+    //
+    // We send the full payload (name + address + customFields) on the
+    // PUT so a missing customFieldsByKey doesn't blow away populated
+    // GHL fields — the client filters empty values before sending.
+    let persistedFields = 0;
+    let putStatus: number | null = null;
+    let putError: string | null = null;
+    if (contactId && merged.length > 0) {
+      try {
+        // PUT /contacts/:id rejects fields it doesn't recognize (e.g.
+        // `email`, `tags`, `source`, `address2`) with a 422
+        // ("property address2 should not exist" — verified against the
+        // live LeadConnector API 2026-05-17). Keep the body to the
+        // documented PUT-accepted set: name/address1/city/state/zip
+        // + customFields. address2 is intentionally NOT sent here
+        // because it isn't part of the v2 PUT schema.
+        const put = await request(`/contacts/${contactId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            firstName: body.firstName || undefined,
+            lastName: body.lastName || undefined,
+            name: body.name || undefined,
+            address1: street,
+            city,
+            state,
+            postalCode,
+            country: body.country || 'US',
+            customFields: merged,
+          }),
+        });
+        putStatus = put.status;
+        if (!put.ok) {
+          putError = typeof put.raw === 'string' ? put.raw.slice(0, 400) : String(put.data);
+          clientLog('PUT /contacts/:id failed', {
+            contactId,
+            status: put.status,
+            bodyPreview: putError,
+          });
+        } else {
+          persistedFields = Array.isArray(put.data?.contact?.customFields)
+            ? put.data.contact.customFields.length
+            : Array.isArray(put.data?.customFields)
+              ? put.data.customFields.length
+              : merged.length;
+        }
+      } catch (e) {
+        putError = e instanceof Error ? e.message : String(e);
+        clientLog('PUT /contacts/:id error', { contactId, err: putError });
+      }
+    }
+
+    const returnedFields = persistedFields || (Array.isArray(res.data?.contact?.customFields)
       ? res.data.contact.customFields.length
       : Array.isArray(res.data?.customFields)
         ? res.data.customFields.length
-        : 0;
+        : 0);
     clientLog('upsertContact', {
       ok: res.ok || !!contactId,
       contactId,
@@ -341,6 +398,8 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       raw: res.raw,
       sent: sentCount,
       returned: returnedFields,
+      putStatus,
+      putError,
     };
   }
 
@@ -499,6 +558,8 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
         updated: false,
         customFieldsSent: up.sent,
         customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
       };
     }
 
@@ -524,6 +585,8 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
         updated: patch.ok,
         customFieldsSent: up.sent,
         customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
       };
     }
 
@@ -545,6 +608,8 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
         updated: false,
         customFieldsSent: up.sent,
         customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
       };
     }
     const created = await createOpportunity({
@@ -563,6 +628,8 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       updated: false,
       customFieldsSent: up.sent,
       customFieldsReturned: up.returned,
+      putStatus: (up as any).putStatus,
+      putError: (up as any).putError,
     };
   }
 

@@ -48,8 +48,10 @@ const MAX_ATTEMPTS = 5;
 // Bookings in these statuses are eligible for sync. Pending bookings
 // (status='pending', payment_status='pending') haven't paid yet so
 // ghl-sync-booking would silently no-op on them — keep them out of the
-// reconcile pool.
-const SYNCABLE_STATUSES = ['confirmed', 'completed', 'active', 'recurring'];
+// reconcile pool. Values must match the booking_status enum
+// (pending, confirmed, rescheduled, cancelled, completed,
+// recurring_active).
+const SYNCABLE_STATUSES = ['confirmed', 'rescheduled', 'completed', 'recurring_active'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
