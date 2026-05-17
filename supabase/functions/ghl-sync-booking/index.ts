@@ -1,30 +1,41 @@
 // ghl-sync-booking — STAGE 2 of the GHL pipeline.
-// After a booking is completed (address + schedule saved), push the
-// full booking payload into GoHighLevel:
 //
-//   1. Upsert the contact and backfill every matching custom field.
-//   2. Add tags: `lead - booked`, `customer`, `<service_type>`.
-//   3. Create (or skip if already present) an Opportunity in the
-//      "Booked" stage of the AGP - Sales & Growth pipeline.
-//   4. Book a confirmed appointment on the AlphaLuxCleaning calendar.
-//   5. Stamp bookings.ghl_contact_id so downstream syncs don't dupe.
+// After a booking is completed (address + schedule saved, deposit paid,
+// status confirmed) this function pushes the full booking payload into
+// GoHighLevel:
+//
+//   1. Upsert the contact with EVERY mapped custom field
+//      (see _shared/ghl-field-map.ts) plus address + tags.
+//   2. Find the contact's existing opportunity and PATCH it, or create
+//      one in the "Booked" stage if none exists. This is the
+//      idempotent lifecycle pattern lifted from novaracleaning — no
+//      more duplicate cards on each retry or status change.
+//   3. Book a confirmed appointment on the AlphaLuxCleaning calendar
+//      (best-effort — skipped silently if calendar isn't reachable).
+//   4. Mirror the same payload to the LeadConnector inbound webhook
+//      so GHL workflows still receive the booking even if the PIT
+//      call silently drops a field.
+//   5. Stamp bookings.ghl_synced_at + ghl_contact_id +
+//      ghl_opportunity_id + ghl_appointment_id so reconcile-ghl knows
+//      not to retry.
 //   6. Write a durable row to public.ghl_sync_log so a transient
-//      LeadConnector outage can be replayed by retry-ghl-syncs.
+//      LeadConnector outage can be replayed by retry-ghl-syncs /
+//      reconcile-ghl.
 //
-// Triggered from save-booking-details (and can be invoked manually
-// from an admin tool with `{ booking_id }`). Idempotent on
+// Triggered from save-booking-details, payment-webhook-handler,
+// reconcile-ghl, and admin tools (with `{ booking_id }`). Idempotent on
 // booking_id — calling repeatedly converges to a single contact +
 // opportunity + appointment.
 
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { createGhlClient, pickBookedPipelineStage } from '../_shared/ghl-client.ts';
 import {
-  buildCustomFieldMap,
-  createGhlClient,
-  pickBookedPipelineStage,
-  resolveFieldIdWithFallback as resolveFieldId,
-  type GHLCustomFieldValue,
-} from '../_shared/ghl-client.ts';
+  buildGhlBookingFields,
+  buildBookingTags,
+  bookingToOppStatus,
+} from '../_shared/ghl-field-map.ts';
+import { mirrorToLeadConnector } from '../_shared/leadconnector-mirror.ts';
 
 // Dedicated AlphaLuxCleaning calendar in the GHL subaccount. Override
 // via env var if ops moves the calendar.
@@ -32,122 +43,27 @@ const ALPHALUX_CALENDAR_ID =
   Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || 'wJkjZVj4Op8GGebIPm3O';
 
 /**
- * Customer-facing arrival windows the booking flow offers — keeps
- * the start / end hours and the human-readable label in one map so
- * `slotToIso()` (calendar appointment) and `slotToHuman()` (custom
- * fields synced to GHL) can never drift out of sync.
- *
- * Mirrors `TIME_SLOTS` in
- * `src/components/booking/OfferDateTimePicker.tsx`. Edit both when
- * windows change.
+ * Customer-facing arrival windows the booking flow offers. Mirrors
+ * `TIME_SLOTS` in `src/components/booking/OfferDateTimePicker.tsx`
+ * (and the human labels in `_shared/ghl-field-map.ts`) — kept in sync
+ * so calendar appointments use the same start/end hours customers see.
  */
 const ARRIVAL_WINDOWS: Record<
   string,
-  {
-    label: string;
-    /** Human-readable window the customer saw on /book/offer (e.g. "1 – 3 PM"). */
-    window: string;
-    /** Start hour for calendar appointment ISO (24h). */
-    calendarStartHour: number;
-    /** End hour for calendar appointment ISO (24h). */
-    calendarEndHour: number;
-    /** True 24h hours for the start/end of the customer-promised window. */
-    startHour: number;
-    endHour: number;
-  }
+  { calendarStartHour: number; calendarEndHour: number }
 > = {
-  early_morning: {
-    label: 'Early Morning',
-    window: '7 – 9 AM',
-    calendarStartHour: 7,
-    calendarEndHour: 9,
-    startHour: 7,
-    endHour: 9,
-  },
-  morning: {
-    label: 'Morning',
-    window: '9 – 11 AM',
-    calendarStartHour: 9,
-    calendarEndHour: 11,
-    startHour: 9,
-    endHour: 11,
-  },
-  late_morning: {
-    label: 'Late Morning',
-    window: '11 AM – 1 PM',
-    calendarStartHour: 11,
-    calendarEndHour: 13,
-    startHour: 11,
-    endHour: 13,
-  },
-  afternoon: {
-    label: 'Afternoon',
-    window: '1 – 3 PM',
-    calendarStartHour: 13,
-    calendarEndHour: 15,
-    startHour: 13,
-    endHour: 15,
-  },
-  late_afternoon: {
-    label: 'Late Afternoon',
-    window: '3 – 5 PM',
-    calendarStartHour: 15,
-    calendarEndHour: 16, // shrink so 5 PM PT (=8 PM ET) doesn't fall outside the calendar's open hours
-    startHour: 15,
-    endHour: 17,
-  },
-  evening: {
-    label: 'Evening',
-    window: '5 – 7 PM',
-    calendarStartHour: 16,
-    calendarEndHour: 16, // collapse — calendar closes at 5 PM ET
-    startHour: 17,
-    endHour: 19,
-  },
+  early_morning: { calendarStartHour: 7, calendarEndHour: 9 },
+  morning: { calendarStartHour: 9, calendarEndHour: 11 },
+  late_morning: { calendarStartHour: 11, calendarEndHour: 13 },
+  afternoon: { calendarStartHour: 13, calendarEndHour: 15 },
+  // late_afternoon and evening are clamped so the appointment stays
+  // inside the calendar's open hours (configured in America/New_York,
+  // closes at 5pm ET).
+  late_afternoon: { calendarStartHour: 15, calendarEndHour: 16 },
+  evening: { calendarStartHour: 16, calendarEndHour: 16 },
 };
 
-/** Convert a 24h hour to "9 AM" / "1:30 PM" style. Minutes default to 0. */
-function formatHourAmPm(hour: number, minute = 0): string {
-  const h12 = ((hour + 11) % 12) + 1;
-  const ampm = hour < 12 ? 'AM' : 'PM';
-  if (minute === 0) return `${h12} ${ampm}`;
-  return `${h12}:${String(minute).padStart(2, '0')} ${ampm}`;
-}
-
-/**
- * Convert a stored slot id (e.g. `afternoon`) into the customer-
- * facing arrival window string (e.g. `1 – 3 PM`). Falls back to a
- * Title-cased version of the raw value so a brand-new slot we
- * forgot to map still arrives at GHL as something readable rather
- * than the snake_case enum value.
- */
-function slotToHuman(slot: string | null | undefined): string | null {
-  if (!slot) return null;
-  const def = ARRIVAL_WINDOWS[String(slot)];
-  if (def) return def.window;
-  return String(slot)
-    .split('_')
-    .map((s) => (s ? s[0].toUpperCase() + s.slice(1) : s))
-    .join(' ');
-}
-
-/**
- * Pull just the start / end hour text out of a slot id so we can
- * surface them on dedicated GHL fields ("3 PM" / "5 PM").
- */
-function slotToStartEnd(
-  slot: string | null | undefined,
-): { start: string; end: string } | null {
-  if (!slot) return null;
-  const def = ARRIVAL_WINDOWS[String(slot)];
-  if (!def) return null;
-  return {
-    start: formatHourAmPm(def.startHour),
-    end: formatHourAmPm(def.endHour),
-  };
-}
-
-// Convert a YYYY-MM-DD + a TimeSlot id into ISO start/end timestamps
+// Convert a YYYY-MM-DD + a time-slot id into ISO start/end timestamps
 // (Eastern Time — calendar's open hours are configured in ET).
 function slotToIso(date: string, slot: string | null): { start: string; end: string } | null {
   if (!date) return null;
@@ -157,8 +73,9 @@ function slotToIso(date: string, slot: string | null): { start: string; end: str
   const [y, m, d] = date.split('-').map(Number);
   if (!y || !m || !d) return null;
   // Calendar is configured in America/New_York so we always send ET.
-  // Pick EDT (-04:00) for Apr–Oct, EST (-05:00) for the rest. Service
-  // dates are mostly within the spring/summer window.
+  // Service dates are mostly within the spring/summer window so EDT
+  // is the right default; correctness is a 30-min wobble in the
+  // edge-of-winter case, which is acceptable for an arrival window.
   const offset = '-04:00';
   const start = `${date}T${String(sh).padStart(2, '0')}:00:00${offset}`;
   const end = `${date}T${String(Math.max(sh + 1, eh)).padStart(2, '0')}:30:00${offset}`;
@@ -202,7 +119,8 @@ serve(async (req) => {
       return json({ success: false, error: 'booking_id is required' }, 400);
     }
 
-    // Open / reuse a durable sync-log row (skip if invoked from retry).
+    // Open / reuse a durable sync-log row (skip if invoked from retry
+    // which already opened a row).
     if (!bodyParsed?._from_retry) {
       const { data: existing } = await supabase
         .from('ghl_sync_log')
@@ -220,6 +138,8 @@ serve(async (req) => {
             status: 'pending',
             attempts: (existing.attempts ?? 0) + 1,
             payload: bodyParsed,
+            source: bodyParsed?.source || 'edge_function',
+            trigger_op: bodyParsed?.trigger_op || 'sync',
             updated_at: new Date().toISOString(),
           })
           .eq('id', logRowId);
@@ -232,6 +152,8 @@ serve(async (req) => {
             status: 'pending',
             attempts: 1,
             payload: bodyParsed,
+            source: bodyParsed?.source || 'edge_function',
+            trigger_op: bodyParsed?.trigger_op || 'sync',
           })
           .select('id')
           .single();
@@ -256,12 +178,7 @@ serve(async (req) => {
       return json({ success: false, error: 'booking has no customer email' }, 422);
     }
 
-    log('loaded booking', { bookingId, email });
-
-    // 2. Build GHL client and field map.
-    const ghl = createGhlClient();
-    const fieldsRes = await ghl.listCustomFields();
-    const fieldMap = buildCustomFieldMap(fieldsRes.fields);
+    log('loaded booking', { bookingId, email, status: booking.status });
 
     const fullName =
       booking.full_name ||
@@ -271,236 +188,92 @@ serve(async (req) => {
     const [firstName, ...rest] = fullName.split(' ');
     const lastName = rest.join(' ') || customer.last_name || '';
 
-    const customFields: GHLCustomFieldValue[] = [];
-    const push = (candidates: string[], value: unknown) => {
-      if (value === undefined || value === null || value === '') return;
-      const id = resolveFieldId(fieldMap, candidates);
-      if (id) customFields.push({ id, field_value: value });
-    };
+    // 2. Build the comprehensive custom-field bag + tags via the shared
+    //    mapper. This replaces the ad-hoc push() calls and guarantees
+    //    EVERY GHL custom field we know about gets a value (or empty,
+    //    which the client filters so we don't overwrite populated
+    //    fields with blanks).
+    const customFieldsByKey = buildGhlBookingFields({
+      booking: booking as any,
+      customer: customer as any,
+    });
+    const tags = buildBookingTags(booking as any);
+    const oppStatus = bookingToOppStatus(booking.status);
 
-    push(['promo_code'], booking.promo_code);
-    push(['discount_cash_value'], booking.promo_discount_cents
-      ? booking.promo_discount_cents / 100
-      : undefined);
-    push(['service_type'], booking.service_type);
-    push(['service_frequency'], booking.frequency);
-    push(['frequency'], booking.frequency);
+    // 3. Lifecycle sync — upsert contact + find/patch-or-create one
+    //    opportunity. The client retries on 429/5xx, splits the
+    //    address defensively, and resolves customFieldsByKey to GHL
+    //    UUIDs via the live custom-field map.
+    const ghl = createGhlClient();
 
-    // Offer-level metadata. Earlier pushes covered the service
-    // primitives (type/frequency) but not the packaged offer the
-    // customer actually bought. Without these, ops couldn't tell
-    // a 'Deep + Standard Combo' booking apart from a standalone
-    // Deep Clean in GHL.
-    push(['offer_type'], booking.offer_type);
-    push(['offer_name'], booking.offer_name);
-    push(['visit_count'], booking.visit_count);
-    push(['is_recurring'], booking.is_recurring ? 'yes' : 'no');
-    push(['booking_status'], booking.status);
-    push(['payment_status'], booking.payment_status);
-    push(['booking_created_at'], booking.created_at);
-    push(['paid_at'], booking.paid_at);
-    push(['stripe_account'], booking.stripe_account_slug);
-
-    // Address fields — also pushed onto the contact body below but
-    // some GHL workflows / custom-field reports read from named
-    // fields too, so we surface them on both surfaces.
-    push(
-      ['service_address', 'service_address_line1', 'address_line1'],
-      booking.address_line1 || customer.address_line1,
-    );
-    push(
-      ['service_address_line2', 'address_line2'],
-      booking.address_line2 || customer.address_line2,
-    );
-    push(['service_city', 'city'], customer.city);
-    push(['service_state', 'state'], customer.state);
-    push(
-      ['service_zip', 'zip', 'postal_code'],
-      booking.zip_code || customer.postal_code,
-    );
-
-    push(['service_date'], booking.service_date);
-    // Customer-facing arrival window text (e.g. "1 – 3 PM") rather
-    // than the internal slot id ("afternoon"). Ops + GHL automations
-    // both read these fields directly into customer comms, and the
-    // raw slug looked confusing in their messaging.
-    const arrivalWindow = slotToHuman(booking.time_slot);
-    const startEnd = slotToStartEnd(booking.time_slot);
-    push(
-      ['service_date_time', 'service_date__time'],
-      booking.service_date && arrivalWindow
-        ? `${booking.service_date} \u00b7 ${arrivalWindow}`
-        : booking.service_date || undefined,
-    );
-    push(['service_start_time'], startEnd?.start ?? arrivalWindow ?? undefined);
-    push(['service_end_time'], startEnd?.end ?? arrivalWindow ?? undefined);
-    // Also surface the raw window on its own dedicated field so any
-    // GHL workflows that already key off `arrival_window` stay
-    // populated (they previously got the slot id and may now branch
-    // on a friendlier value).
-    push(['arrival_window', 'service_arrival_window'], arrivalWindow ?? undefined);
-
-    push(['booking_amount'], booking.est_price || booking.base_price);
-    push(['original_price'], booking.base_price);
-    push(['deposit_amount'], booking.deposit_amount);
-    push(['remaining_balance'], booking.balance_due);
-    push(['mrr_est'], booking.mrr);
-    push(['arr_est'], booking.arr);
-
-    const propertyDetails = booking.property_details || {};
-    push(['sqft'], propertyDetails.sqft || booking.home_size);
-    push(['home_size', 'home_size_range'], booking.home_size);
-    // Friendly version of the home_size slug ("1000_1500" →
-    // "1,000–1,500 sq ft") for use directly in customer comms.
-    if (booking.home_size && /^\d+_\d+$/.test(booking.home_size)) {
-      const [lo, hi] = booking.home_size.split('_').map(Number);
-      const fmt = (n: number) => n.toLocaleString('en-US');
-      push(
-        ['home_size_label', 'home_size_friendly'],
-        `${fmt(lo)}–${fmt(hi)} sq ft`,
-      );
-    }
-    // sqft_or_bedrooms is what the booking row stamps (e.g.
-    // "1bed/1bath") — useful for ops dashboards that want a
-    // single string they can read at a glance.
-    push(
-      ['bedrooms_bathrooms', 'sqft_or_bedrooms'],
-      booking.sqft_or_bedrooms,
-    );
-    push(['bedrooms'], propertyDetails.bedrooms);
-    push(['bathrooms'], propertyDetails.bathrooms);
-    push(['dwelling_type', 'property_type'], propertyDetails.dwelling_type);
-    push(['pets'], propertyDetails.pets);
-    push(['property_type'], propertyDetails.property_type);
-    push(['flooring'], propertyDetails.flooring);
-    push(['entry_instructions'], booking.special_instructions || booking.notes);
-    push(['special_instructions'], booking.special_instructions);
-    push(['preferred_contact_method'], propertyDetails.preferred_contact_method);
-
-    // Combo bundle's follow-up visit (only present when
-    // offer_type === 'deep_plus_standard'). Lets ops see the
-    // second cleaning date without having to dig into the
-    // property_details JSON column in Supabase.
-    const secondVisit = propertyDetails.second_visit;
-    if (secondVisit?.date) {
-      push(['second_visit_date'], secondVisit.date);
-      push(['second_visit_time_slot'], secondVisit.time_slot);
-      push(
-        ['second_visit_type'],
-        secondVisit.type || 'standard',
-      );
+    // Resolve pipeline + stage up-front so the lifecycle helper can
+    // pass them straight into createOpportunity when the contact has
+    // no existing opportunity yet.
+    let pipelineId: string | undefined;
+    let stageId: string | undefined;
+    try {
+      const picked = await pickBookedPipelineStage(ghl);
+      pipelineId = picked.pipelineId;
+      stageId = picked.stageId;
+      if (picked.label) log('pipeline picked', { label: picked.label });
+    } catch (e) {
+      log('pipeline pick failed', {
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
 
-    // Pricing breakdown — surface the rich sub-values from
-    // pricing_breakdown so ops can build automations on e.g. the
-    // 90-day plan monthly amount without parsing the JSON.
-    const pb = booking.pricing_breakdown || {};
-    push(['final_price'], pb.finalPrice ?? booking.est_price);
-    push(['monthly_amount'], pb.monthlyAmount);
-    push(['first_clean_balance'], pb.firstCleanBalance);
+    const monetaryValue = Number(booking.est_price || booking.base_price || 0);
 
-    push(['conversion_status'], booking.is_recurring ? 'Recurring Active' : 'Offer Sent');
-    push(['subscription_status'], booking.is_recurring ? 'Active Recurring' : 'One-Time');
-
-    push(['utm_source'], booking.utms?.utm_source);
-    push(['utm_medium'], booking.utms?.utm_medium);
-    push(['utm_campaign'], booking.utms?.utm_campaign);
-    push(['utm_content'], booking.utms?.utm_content);
-    push(['landing_page'], booking.utms?.landing_page);
-    push(['tracking_attribution'], booking.attribution_method);
-    if (booking.utms) {
-      push(['utm_fields'], JSON.stringify(booking.utms));
-    }
-    push(['fb_lead_id'], booking.utms?.fb_lead_id);
-
-    push(['stripe_id'], booking.stripe_payment_intent_id || booking.stripe_checkout_session_id);
-    push(['payment_link'], booking.receipt_url);
-    push(['invoice_link'], booking.balance_invoice_url);
-    push(
-      ['manage_link'],
-      booking.manage_token
-        ? `https://app.alphaluxclean.com/order-status?token=${booking.manage_token}`
-        : undefined,
-    );
-    push(['referral_code'], booking.referrer_code);
-
-    const tags = [
-      'lead - booked',
-      'customer',
-      'alphaluxclean-txca',
-      booking.service_type ? `service-${booking.service_type}`.toLowerCase() : '',
-      booking.frequency ? `freq-${booking.frequency}`.toLowerCase() : '',
-      booking.promo_code ? `promo-${String(booking.promo_code).toLowerCase()}` : '',
-    ].filter(Boolean) as string[];
-
-    const upsert = await ghl.upsertContact({
-      email,
-      phone: customer.phone || undefined,
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      name: fullName || undefined,
-      address1: booking.address_line1 || customer.address_line1 || undefined,
-      address2: booking.address_line2 || customer.address_line2 || undefined,
-      city: customer.city || undefined,
-      state: customer.state || undefined,
-      postalCode: booking.zip_code || customer.postal_code || undefined,
-      source: 'AlphaLuxClean TX/CA — booking completed',
-      tags,
-      customFields,
+    const sync = await ghl.syncBookingLifecycle({
+      contact: {
+        email,
+        phone: customer.phone || undefined,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        name: fullName || undefined,
+        address1: booking.address_line1 || customer.address_line1 || undefined,
+        address2: booking.address_line2 || customer.address_line2 || undefined,
+        city: customer.city || undefined,
+        state: customer.state || undefined,
+        postalCode: booking.zip_code || customer.postal_code || undefined,
+        source: 'AlphaLuxClean TX/CA — booking completed',
+        tags,
+        customFieldsByKey,
+      },
+      opportunity: {
+        pipelineId,
+        stageId,
+        name: `${fullName || email} · ${booking.offer_name || booking.service_type || 'Booking'}`,
+        status: oppStatus,
+        monetaryValue,
+        source: 'alphaluxclean-txca',
+      },
     });
 
-    const ghlContactId = upsert.contactId || booking.ghl_contact_id || null;
+    log('lifecycle sync', {
+      contactId: sync.contactId,
+      opportunityId: sync.opportunityId,
+      updated: sync.updated,
+      sent: sync.customFieldsSent,
+      returned: sync.customFieldsReturned,
+    });
 
-    if (ghlContactId) {
-      // Ensure tags are applied even if upsert returned an existing contact
-      // (the upsert endpoint ignores tags on some API versions).
-      try {
-        await ghl.addTags(ghlContactId, tags);
-      } catch (e) {
-        log('add_tags warn', { error: e instanceof Error ? e.message : String(e) });
-      }
+    const ghlContactId = sync.contactId || (booking as any).ghl_contact_id || null;
+    const opportunityId = sync.opportunityId;
 
-      await supabase
-        .from('bookings')
-        .update({ ghl_contact_id: ghlContactId })
-        .eq('id', booking.id);
+    if (!ghlContactId) {
+      throw new Error('GHL upsert returned no contact id — see logs for details');
     }
 
-    // 3. Create an opportunity in the "Booked" stage of the AGP -
-    //    Sales & Growth Pipeline (falls back to a "Closed - Won" /
-    //    "Paid / Appt Confirmed" stage on any other pipeline).
-    let opportunityId: string | null = null;
-    if (ghlContactId) {
-      try {
-        const { pipelineId, stageId, label } = await pickBookedPipelineStage(ghl);
-        if (pipelineId && stageId) {
-          const opp = await ghl.createOpportunity({
-            pipelineId,
-            stageId,
-            name: `${fullName || email} · ${booking.offer_name || booking.service_type || 'Booking'}`,
-            status: 'won',
-            contactId: ghlContactId,
-            monetaryValue: Number(booking.est_price || booking.base_price || 0),
-            source: 'alphaluxclean-txca',
-            customFields,
-          });
-          opportunityId = opp.opportunityId || null;
-          log('opportunity', { ok: opp.ok, opportunityId, pipeline: label });
-        } else {
-          log('no pipeline found — skipping opportunity');
-        }
-      } catch (e) {
-        log('opportunity skipped', {
-          error: e instanceof Error ? e.message : String(e),
-        });
-      }
-    }
-
-    // 4. Book a confirmed appointment on the AlphaLuxCleaning calendar.
-    //    Uses the booking's service_date + time_slot. Skipped silently
-    //    if either is missing (e.g. partial booking, in-flight rebook).
+    // 4. Book / refresh a confirmed appointment on the AlphaLuxCleaning
+    //    calendar. Uses the booking's service_date + time_slot. Skipped
+    //    silently if either is missing (e.g. partial booking, in-flight
+    //    rebook). We don't dedupe on appointment id here — duplicate
+    //    appointments are cheap to clean up vs the alternative of
+    //    missing one entirely, and the calendar's idempotency on
+    //    (calendarId, contactId, startTime) often makes this a no-op.
     let appointmentId: string | null = null;
-    if (ghlContactId && booking.service_date) {
+    if (booking.service_date) {
       const slot = slotToIso(booking.service_date, booking.time_slot);
       if (slot) {
         try {
@@ -571,7 +344,21 @@ serve(async (req) => {
         .eq('code', booking.promo_code);
     }
 
-    // 6. Mark the sync-log row successful so the retry worker leaves it alone.
+    // 6. Stamp the booking row as synced. Used by reconcile-ghl + admin
+    //    dashboards to confirm GHL is in lockstep with the booking.
+    await supabase
+      .from('bookings')
+      .update({
+        ghl_contact_id: ghlContactId,
+        ghl_opportunity_id: opportunityId,
+        ghl_appointment_id: appointmentId,
+        ghl_synced_at: new Date().toISOString(),
+        ghl_sync_attempts: ((booking as any).ghl_sync_attempts || 0) + 1,
+        ghl_sync_error: null,
+      })
+      .eq('id', booking.id);
+
+    // 7. Mark the sync-log row successful so the retry worker leaves it alone.
     if (logRowId) {
       await supabase
         .from('ghl_sync_log')
@@ -580,26 +367,63 @@ serve(async (req) => {
           ghl_contact_id: ghlContactId,
           ghl_opportunity_id: opportunityId,
           ghl_appointment_id: appointmentId,
-          custom_fields_synced: customFields.length,
+          custom_fields_synced: sync.customFieldsReturned || sync.customFieldsSent,
           last_error: null,
+          succeeded: true,
+          http_status: 200,
+          error_message: null,
           next_retry_at: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', logRowId);
     }
 
+    // 8. Mirror to LeadConnector inbound webhook — safety net. If
+    //    GHL_INBOUND_WEBHOOK_URL isn't set this returns silently and
+    //    the PIT call above is the only outbound surface.
+    await mirrorToLeadConnector({
+      event: `booking.${booking.status || 'update'}`,
+      payload: {
+        booking_id: booking.id,
+        ghl_contact_id: ghlContactId,
+        ghl_opportunity_id: opportunityId,
+        ghl_appointment_id: appointmentId,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        email,
+        phone: customer.phone || null,
+        address1: booking.address_line1 || customer.address_line1 || null,
+        address2: booking.address_line2 || customer.address_line2 || null,
+        city: customer.city || null,
+        state: customer.state || null,
+        postal_code: booking.zip_code || customer.postal_code || null,
+        custom_fields: customFieldsByKey,
+        tags,
+        opportunity: {
+          name: `${fullName || email} · ${booking.offer_name || booking.service_type || 'Booking'}`,
+          status: oppStatus,
+          monetary_value: monetaryValue,
+          source: 'alphaluxclean-txca',
+        },
+      },
+    });
+
     return json({
-      success: !!ghlContactId,
+      success: true,
       ghl_contact_id: ghlContactId,
       opportunity_id: opportunityId,
       appointment_id: appointmentId,
-      custom_fields_synced: customFields.length,
+      opportunity_updated: sync.updated,
+      custom_fields_sent: sync.customFieldsSent,
+      custom_fields_returned: sync.customFieldsReturned,
       tags,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('[ghl-sync-booking] error', msg);
 
+    // Update sync-log row with failure + next retry backoff.
     if (logRowId) {
       const { data: row } = await supabase
         .from('ghl_sync_log')
@@ -615,10 +439,30 @@ serve(async (req) => {
         .update({
           status: attempts >= 5 ? 'abandoned' : 'failed',
           last_error: msg,
+          succeeded: false,
+          error_message: msg.slice(0, 500),
           next_retry_at: attempts >= 5 ? null : next.toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', logRowId);
+    }
+
+    // Also stamp the booking row so reconcile-ghl picks it up next cycle.
+    if (bookingId) {
+      try {
+        const { data: row } = await supabase
+          .from('bookings')
+          .select('ghl_sync_attempts')
+          .eq('id', bookingId)
+          .maybeSingle();
+        await supabase
+          .from('bookings')
+          .update({
+            ghl_sync_attempts: ((row as any)?.ghl_sync_attempts || 0) + 1,
+            ghl_sync_error: msg.slice(0, 500),
+          })
+          .eq('id', bookingId);
+      } catch (_) { /* best effort */ }
     }
 
     return json({ success: false, error: msg }, 500);
