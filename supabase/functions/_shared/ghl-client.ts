@@ -1,19 +1,28 @@
-// Shared GoHighLevel Private Integration client.
+// Shared GoHighLevel Private Integration client for AlphaLuxClean TX/CA.
 //
 // Reads GHL_PRIVATE_INTEGRATION_TOKEN (aka PIT) and GHL_LOCATION_ID from
-// Edge Function secrets. Private Integration tokens are *location-scoped*,
-// so every call must include the locationId either as a query param or
-// in the request body (depending on endpoint).
+// Edge Function secrets. PIT tokens are *location-scoped*, so every call
+// must include the locationId either as a query param or in the request
+// body (depending on endpoint).
 //
-// Endpoints used by AlphaLuxClean TX/CA:
-//   - POST   /contacts/upsert
-//   - POST   /contacts/{contactId}/tags
-//   - GET    /locations/{locationId}/customFields
-//   - GET    /contacts/search/duplicate?locationId&email|phone
-//   - POST   /opportunities/
-//   - GET    /opportunities/pipelines?locationId
+// Public surface used by ghl-sync-booking / ghl-sync-lead / reconcile-ghl:
+//   - request(path, init)                  raw HTTP with retry-on-429/5xx
+//   - upsertContact(body)                  POST /contacts/upsert
+//   - addTags(contactId, tags)             POST /contacts/:id/tags
+//   - listCustomFields()                   GET  /locations/:id/customFields
+//   - findContactByEmail(email)            GET  /contacts/search/duplicate
+//   - listPipelines()                      GET  /opportunities/pipelines
+//   - createOpportunity(params)            POST /opportunities/
+//   - findLatestOpportunityForContact(id)  GET  /opportunities/search
+//   - updateOpportunity(id, patch)         PUT  /opportunities/:id
+//   - syncBookingLifecycle({contact,opp})  upsert + find/patch-or-create
+//                                          opportunity. Idempotent across
+//                                          the booking lifecycle (no
+//                                          duplicate cards on every
+//                                          retry / reschedule / cancel).
 //
-// All calls include Version: 2021-07-28 per the LeadConnector API spec.
+// All calls include Version: 2021-07-28 per the LeadConnector API spec
+// and retry up to 3 times on transient 429/5xx with exponential backoff.
 
 export const GHL_BASE = 'https://services.leadconnectorhq.com';
 export const GHL_API_VERSION = '2021-07-28';
@@ -48,6 +57,8 @@ export interface GHLContactUpsert {
   website?: string | null;
   tags?: string[];
   customFields?: GHLCustomFieldValue[];
+  /** Convenience: pass a key/value bag and let the client resolve ids. */
+  customFieldsByKey?: Record<string, unknown>;
   companyName?: string | null;
   dnd?: boolean;
 }
@@ -59,7 +70,13 @@ export interface GHLClient {
     path: string,
     init?: RequestInit & { query?: Record<string, string | number | undefined> },
   ): Promise<{ ok: boolean; status: number; data: any; raw: string }>;
-  upsertContact(body: GHLContactUpsert): Promise<{ ok: boolean; contactId?: string; data: any }>;
+  upsertContact(body: GHLContactUpsert): Promise<{
+    ok: boolean;
+    contactId?: string;
+    data: any;
+    sent: number;
+    returned: number;
+  }>;
   addTags(contactId: string, tags: string[]): Promise<{ ok: boolean; data: any }>;
   listCustomFields(): Promise<{
     ok: boolean;
@@ -82,6 +99,38 @@ export interface GHLClient {
     pipelines: Array<{ id: string; name: string; stages: Array<{ id: string; name: string }> }>;
     data: any;
   }>;
+  findLatestOpportunityForContact(
+    contactId: string,
+  ): Promise<{ id: string; name?: string; status?: string; pipelineId?: string } | null>;
+  updateOpportunity(
+    opportunityId: string,
+    patch: {
+      name?: string;
+      status?: 'open' | 'won' | 'lost' | 'abandoned';
+      pipelineId?: string;
+      pipelineStageId?: string;
+      monetaryValue?: number;
+      customFields?: GHLCustomFieldValue[];
+    },
+  ): Promise<{ ok: boolean; data: any }>;
+  syncBookingLifecycle(args: {
+    contact: GHLContactUpsert;
+    opportunity: {
+      pipelineId?: string;
+      stageId?: string;
+      name: string;
+      status?: 'open' | 'won' | 'lost' | 'abandoned';
+      monetaryValue?: number;
+      source?: string;
+      customFields?: GHLCustomFieldValue[];
+    };
+  }): Promise<{
+    contactId: string | null;
+    opportunityId: string | null;
+    updated: boolean;
+    customFieldsSent: number;
+    customFieldsReturned: number;
+  }>;
 }
 
 export function readGhlCredentials(): { token: string; locationId: string } {
@@ -100,11 +149,21 @@ export function readGhlCredentials(): { token: string; locationId: string } {
   return { token, locationId };
 }
 
+function clientLog(step: string, details?: unknown) {
+  console.log(
+    `[ghl-client] ${step}${details !== undefined ? ' ' + JSON.stringify(details) : ''}`,
+  );
+}
+
 export function createGhlClient(overrides?: { token?: string; locationId?: string }): GHLClient {
   const creds = overrides?.token && overrides?.locationId
     ? { token: overrides.token, locationId: overrides.locationId }
     : readGhlCredentials();
 
+  // ─── retry-on-failure wrapper ────────────────────────────────
+  // Network blips + transient 5xx + 429 rate-limits get up to 3
+  // attempts with exponential backoff (200ms → 600ms → 1.8s).
+  // Non-retryable statuses (4xx other than 429) return immediately.
   async function request(
     path: string,
     init?: RequestInit & { query?: Record<string, string | number | undefined> },
@@ -121,17 +180,116 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     headers.set('Version', GHL_API_VERSION);
     headers.set('Accept', 'application/json');
     if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-    const res = await fetch(url.toString(), { ...init, headers });
-    const raw = await res.text();
-    let data: any = null;
-    try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
-    return { ok: res.ok, status: res.status, data, raw };
+
+    const maxAttempts = 3;
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const res = await fetch(url.toString(), { ...init, headers });
+        const raw = await res.text();
+        let data: any = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
+        const retryable = res.status === 429 || res.status >= 500;
+        if (!retryable || attempt === maxAttempts) {
+          return { ok: res.ok, status: res.status, data, raw };
+        }
+        clientLog('retrying', { attempt, status: res.status, path });
+      } catch (err) {
+        lastErr = err;
+        if (attempt === maxAttempts) {
+          clientLog('network error — giving up', {
+            attempt, path, err: err instanceof Error ? err.message : String(err),
+          });
+          throw err;
+        }
+        clientLog('network error retrying', {
+          attempt, path, err: err instanceof Error ? err.message : String(err),
+        });
+      }
+      // 200 * 3^(attempt-1) → 200, 600, 1800ms
+      await new Promise((r) => setTimeout(r, 200 * Math.pow(3, attempt - 1)));
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('ghl request exhausted retries');
+  }
+
+  // ─── Custom-field id cache ───────────────────────────────────
+  // `fieldKey` (or normalized variant) → field UUID. Populated
+  // once per cold start so the booking sync doesn't refetch this
+  // list on every invocation.
+  let fieldIdMapCache: Record<string, string> | null = null;
+  let fieldIdMapPromise: Promise<Record<string, string>> | null = null;
+
+  async function loadFieldIdMap(): Promise<Record<string, string>> {
+    if (fieldIdMapCache) return fieldIdMapCache;
+    if (fieldIdMapPromise) return await fieldIdMapPromise;
+    fieldIdMapPromise = (async () => {
+      const res = await listCustomFields();
+      const map = buildCustomFieldMap(res.fields);
+      fieldIdMapCache = map;
+      return map;
+    })();
+    return await fieldIdMapPromise;
+  }
+
+  async function customFieldsByKeyToArray(
+    byKey: Record<string, unknown> | undefined,
+  ): Promise<GHLCustomFieldValue[]> {
+    if (!byKey) return [];
+    const map = await loadFieldIdMap();
+    const out: GHLCustomFieldValue[] = [];
+    for (const [key, raw] of Object.entries(byKey)) {
+      if (raw === undefined || raw === null || raw === '') continue;
+      const id = resolveFieldIdWithFallback(map, [key]);
+      if (!id) {
+        clientLog('custom-field key not in GHL — skipping', { key });
+        continue;
+      }
+      out.push({ id, field_value: raw });
+    }
+    return out;
   }
 
   async function upsertContact(body: GHLContactUpsert) {
+    // Resolve customFieldsByKey → id-keyed entries, then merge with
+    // any explicit customFields the caller passed.
+    const fromKeys = await customFieldsByKeyToArray(body.customFieldsByKey);
+    const merged: GHLCustomFieldValue[] = [
+      ...(body.customFields || []),
+      ...fromKeys,
+    ];
+
+    // Defensive address splitter — if a caller passes a full address
+    // string in address1, lift City/State/ZIP out so each lands in
+    // its native GHL slot.
+    const split = splitFullAddress(body.address1 || '');
+    const street = split.street || body.address1 || undefined;
+    const city = body.city || split.city || undefined;
+    const state = body.state || split.state || undefined;
+    const postalCode = body.postalCode || split.zipCode || undefined;
+
+    const sentCount = merged.length;
     const res = await request('/contacts/upsert', {
       method: 'POST',
-      body: JSON.stringify({ ...body, locationId: creds.locationId }),
+      body: JSON.stringify({
+        locationId: creds.locationId,
+        email: body.email || undefined,
+        phone: body.phone || undefined,
+        firstName: body.firstName || undefined,
+        lastName: body.lastName || undefined,
+        name: body.name || undefined,
+        address1: street,
+        address2: body.address2 || undefined,
+        city,
+        state,
+        postalCode,
+        country: body.country || 'US',
+        source: body.source || undefined,
+        website: body.website || undefined,
+        companyName: body.companyName || undefined,
+        dnd: body.dnd || undefined,
+        tags: body.tags && body.tags.length > 0 ? body.tags : undefined,
+        customFields: merged.length > 0 ? merged : undefined,
+      }),
     });
 
     // GHL's upsert response shape varies between "new contact" and
@@ -148,11 +306,7 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
 
     // Last-ditch fallback: if we got a 2xx but couldn't extract an id,
     // OR the upsert failed but we have an email we can search on,
-    // look the contact up directly. This prevents spurious "contact
-    // not synced" failures when GHL returns a 200 with a payload
-    // shape we don't recognize, or when an over-strict customFields
-    // entry caused the upsert to silently 4xx while the underlying
-    // contact existed all along.
+    // look the contact up directly.
     if (!contactId && body.email) {
       try {
         const lookup = await request('/contacts/search/duplicate', {
@@ -169,7 +323,84 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       }
     }
 
-    return { ok: res.ok || !!contactId, contactId, data: res.data, raw: res.raw };
+    // POST /contacts/upsert silently drops `customFields` on the
+    // UPDATE branch (verified on the live AlphaLuxClean GHL location
+    // 2026-05-17 — a booking sync reported 19 fields sent but only 4
+    // ever showed up on the contact record). The fix is to follow up
+    // with PUT /contacts/:id which DOES persist the customFields
+    // array on both create and update branches.
+    //
+    // We send the full payload (name + address + customFields) on the
+    // PUT so a missing customFieldsByKey doesn't blow away populated
+    // GHL fields — the client filters empty values before sending.
+    let persistedFields = 0;
+    let putStatus: number | null = null;
+    let putError: string | null = null;
+    if (contactId && merged.length > 0) {
+      try {
+        // PUT /contacts/:id rejects fields it doesn't recognize (e.g.
+        // `email`, `tags`, `source`, `address2`) with a 422
+        // ("property address2 should not exist" — verified against the
+        // live LeadConnector API 2026-05-17). Keep the body to the
+        // documented PUT-accepted set: name/address1/city/state/zip
+        // + customFields. address2 is intentionally NOT sent here
+        // because it isn't part of the v2 PUT schema.
+        const put = await request(`/contacts/${contactId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            firstName: body.firstName || undefined,
+            lastName: body.lastName || undefined,
+            name: body.name || undefined,
+            address1: street,
+            city,
+            state,
+            postalCode,
+            country: body.country || 'US',
+            customFields: merged,
+          }),
+        });
+        putStatus = put.status;
+        if (!put.ok) {
+          putError = typeof put.raw === 'string' ? put.raw.slice(0, 400) : String(put.data);
+          clientLog('PUT /contacts/:id failed', {
+            contactId,
+            status: put.status,
+            bodyPreview: putError,
+          });
+        } else {
+          persistedFields = Array.isArray(put.data?.contact?.customFields)
+            ? put.data.contact.customFields.length
+            : Array.isArray(put.data?.customFields)
+              ? put.data.customFields.length
+              : merged.length;
+        }
+      } catch (e) {
+        putError = e instanceof Error ? e.message : String(e);
+        clientLog('PUT /contacts/:id error', { contactId, err: putError });
+      }
+    }
+
+    const returnedFields = persistedFields || (Array.isArray(res.data?.contact?.customFields)
+      ? res.data.contact.customFields.length
+      : Array.isArray(res.data?.customFields)
+        ? res.data.customFields.length
+        : 0);
+    clientLog('upsertContact', {
+      ok: res.ok || !!contactId,
+      contactId,
+      sent: sentCount,
+      returned: returnedFields,
+    });
+    return {
+      ok: res.ok || !!contactId,
+      contactId,
+      data: res.data,
+      raw: res.raw,
+      sent: sentCount,
+      returned: returnedFields,
+      putStatus,
+      putError,
+    };
   }
 
   async function addTags(contactId: string, tags: string[]) {
@@ -239,6 +470,169 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     return { ok: res.ok, opportunityId, data: res.data };
   }
 
+  // ─── Opportunity lookup + update ─────────────────────────────
+  //
+  // GHL's PIT API exposes:
+  //   GET  /opportunities/search?location_id=&contact_id=
+  //   PUT  /opportunities/:id    (body fields are partial — only what you send)
+  //
+  // syncBookingLifecycle uses these to keep ONE opportunity per
+  // booking and mutate its status + custom fields rather than
+  // spamming the pipeline with a new card on every payment / status
+  // change.
+  async function findLatestOpportunityForContact(contactId: string) {
+    if (!contactId) return null;
+    const res = await request('/opportunities/search', {
+      method: 'GET',
+      query: {
+        location_id: creds.locationId,
+        contact_id: contactId,
+        limit: 20,
+      },
+    });
+    if (!res.ok) {
+      clientLog('findLatestOpportunityForContact failed', { status: res.status });
+      return null;
+    }
+    const opps: any[] = res.data?.opportunities || [];
+    if (opps.length === 0) return null;
+    opps.sort((a, b) => {
+      const aT = Date.parse(a.updatedAt || a.createdAt || '') || 0;
+      const bT = Date.parse(b.updatedAt || b.createdAt || '') || 0;
+      return bT - aT;
+    });
+    const top = opps[0];
+    return top?.id
+      ? {
+        id: top.id as string,
+        name: top.name as string | undefined,
+        status: top.status as string | undefined,
+        pipelineId: (top.pipelineId || top.pipeline_id) as string | undefined,
+      }
+      : null;
+  }
+
+  async function updateOpportunity(
+    opportunityId: string,
+    patch: {
+      name?: string;
+      status?: 'open' | 'won' | 'lost' | 'abandoned';
+      pipelineId?: string;
+      pipelineStageId?: string;
+      monetaryValue?: number;
+      customFields?: GHLCustomFieldValue[];
+    },
+  ) {
+    if (!opportunityId) return { ok: false, data: null };
+    const body: Record<string, unknown> = {};
+    if (patch.name !== undefined) body.name = patch.name;
+    if (patch.status !== undefined) body.status = patch.status;
+    if (patch.pipelineId !== undefined) body.pipelineId = patch.pipelineId;
+    if (patch.pipelineStageId !== undefined) body.pipelineStageId = patch.pipelineStageId;
+    if (patch.monetaryValue !== undefined) body.monetaryValue = patch.monetaryValue;
+    if (patch.customFields && patch.customFields.length > 0) body.customFields = patch.customFields;
+    const res = await request(`/opportunities/${encodeURIComponent(opportunityId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return { ok: res.ok, data: res.data };
+  }
+
+  async function syncBookingLifecycle(args: {
+    contact: GHLContactUpsert;
+    opportunity: {
+      pipelineId?: string;
+      stageId?: string;
+      name: string;
+      status?: 'open' | 'won' | 'lost' | 'abandoned';
+      monetaryValue?: number;
+      source?: string;
+      customFields?: GHLCustomFieldValue[];
+    };
+  }) {
+    const up = await upsertContact(args.contact);
+    if (!up.contactId) {
+      return {
+        contactId: null,
+        opportunityId: null,
+        updated: false,
+        customFieldsSent: up.sent,
+        customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
+      };
+    }
+
+    // Make sure tags get applied even when /contacts/upsert ignored them
+    // on the existing-contact branch.
+    if (args.contact.tags?.length) {
+      try { await addTags(up.contactId, args.contact.tags); } catch (_) { /* ignore */ }
+    }
+
+    const existing = await findLatestOpportunityForContact(up.contactId);
+    if (existing) {
+      const patch = await updateOpportunity(existing.id, {
+        name: args.opportunity.name,
+        status: args.opportunity.status,
+        monetaryValue: args.opportunity.monetaryValue,
+        pipelineId: args.opportunity.pipelineId,
+        pipelineStageId: args.opportunity.stageId,
+        customFields: args.opportunity.customFields,
+      });
+      return {
+        contactId: up.contactId,
+        opportunityId: existing.id,
+        updated: patch.ok,
+        customFieldsSent: up.sent,
+        customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
+      };
+    }
+
+    // No opportunity yet — resolve pipeline + stage, then create one.
+    let pipelineId = args.opportunity.pipelineId;
+    let stageId = args.opportunity.stageId;
+    if (!pipelineId || !stageId) {
+      const picked = await pickBookedPipelineStage({
+        listPipelines,
+      } as unknown as GHLClient);
+      pipelineId = pipelineId || picked.pipelineId;
+      stageId = stageId || picked.stageId;
+    }
+    if (!pipelineId || !stageId) {
+      clientLog('no pipeline found — skipping opportunity create');
+      return {
+        contactId: up.contactId,
+        opportunityId: null,
+        updated: false,
+        customFieldsSent: up.sent,
+        customFieldsReturned: up.returned,
+        putStatus: (up as any).putStatus,
+        putError: (up as any).putError,
+      };
+    }
+    const created = await createOpportunity({
+      pipelineId,
+      stageId,
+      name: args.opportunity.name,
+      status: args.opportunity.status || 'open',
+      contactId: up.contactId,
+      monetaryValue: args.opportunity.monetaryValue,
+      source: args.opportunity.source,
+      customFields: args.opportunity.customFields,
+    });
+    return {
+      contactId: up.contactId,
+      opportunityId: created.opportunityId || null,
+      updated: false,
+      customFieldsSent: up.sent,
+      customFieldsReturned: up.returned,
+      putStatus: (up as any).putStatus,
+      putError: (up as any).putError,
+    };
+  }
+
   return {
     token: creds.token,
     locationId: creds.locationId,
@@ -249,6 +643,9 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     findContactByEmail,
     listPipelines,
     createOpportunity,
+    findLatestOpportunityForContact,
+    updateOpportunity,
+    syncBookingLifecycle,
   };
 }
 
@@ -303,12 +700,12 @@ export function resolveFieldId(
 /**
  * Baseline mapping of "logical booking field" → the GHL subaccount's
  * actual 20-char custom field id, snapshotted from the AlphaLuxClean
- * subaccount's `/locations/:id/customFields` response. Acts as a
- * fallback so new booking fields work even when the dynamic fieldKey
- * lookup can't find a match (e.g. because the field was renamed and we
- * still recognize it by id). The dynamic lookup always takes
- * precedence — this is only consulted when `resolveFieldId` returns
- * undefined.
+ * subaccount's `/locations/:id/customFields` response on 2026-05-17.
+ * Acts as a fallback so new booking fields work even when the dynamic
+ * fieldKey lookup can't find a match (e.g. because the field was
+ * renamed and we still recognize it by id). The dynamic lookup always
+ * takes precedence — this is only consulted when `resolveFieldId`
+ * returns undefined.
  */
 export const KNOWN_GHL_FIELD_IDS: Record<string, string> = {
   promo_code: 'hzImH3cMPM6Cj5J8e1uy',
@@ -378,7 +775,7 @@ export function resolveFieldIdWithFallback(
  * the integration as long as the stage name stays recognizable.
  */
 export async function pickBookedPipelineStage(
-  client: GHLClient,
+  client: { listPipelines: GHLClient['listPipelines'] },
 ): Promise<{ pipelineId?: string; stageId?: string; label?: string }> {
   const res = await client.listPipelines();
   const pipelines = res.pipelines || [];
@@ -397,4 +794,65 @@ export async function pickBookedPipelineStage(
     return { pipelineId: first.id, stageId: first.stages[0].id, label: `${first.name} → ${first.stages[0].name}` };
   }
   return {};
+}
+
+// ─── Address splitter (mirrors client-side parseAddressString) ──────────
+//
+// Pull ZIP + 2-letter state + city + street out of a freeform address so
+// callers can always feed in `address1` and get back clean GHL slots.
+// Returns blank fields when nothing matches; the caller is responsible
+// for falling back to the original string.
+const US_STATE_CODE_SET = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN',
+  'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
+  'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT',
+  'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+]);
+
+export function splitFullAddress(input: string): {
+  street: string; city: string; state: string; zipCode: string;
+} {
+  const empty = { street: '', city: '', state: '', zipCode: '' };
+  if (!input || typeof input !== 'string') return empty;
+  let work = input.trim().replace(/\s+/g, ' ');
+  if (!work) return empty;
+
+  let zipCode = '';
+  let state = '';
+  let city = '';
+  let street = work;
+
+  const zipMatch = work.match(/\b(\d{5})(?:-\d{4})?\b\s*$/);
+  if (zipMatch) {
+    zipCode = zipMatch[1];
+    work = work.slice(0, zipMatch.index).trim().replace(/,\s*$/, '');
+  }
+
+  const stateMatch = work.match(/,?\s*([A-Za-z]{2})\s*$/);
+  if (stateMatch && US_STATE_CODE_SET.has(stateMatch[1].toUpperCase())) {
+    state = stateMatch[1].toUpperCase();
+    work = work.slice(0, stateMatch.index).trim().replace(/,\s*$/, '');
+  }
+
+  const lastComma = work.lastIndexOf(',');
+  if (lastComma >= 0) {
+    city = work.slice(lastComma + 1).trim();
+    street = work.slice(0, lastComma).trim();
+  } else {
+    street = work;
+  }
+
+  return { street, city, state, zipCode };
+}
+
+// ─── Tiny formatters reused across mappers ──────────────────────────────
+export function fmtMoney(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined || Number.isNaN(cents)) return '';
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+export function ynBool(v: boolean | null | undefined): string {
+  if (v === true) return 'Yes';
+  if (v === false) return 'No';
+  return '';
 }
