@@ -1015,18 +1015,22 @@ export default function BookingCheckout() {
                     <p className="text-xs text-muted-foreground mt-2">
                       {isComboBundle ? (
                         <>
-                          Your card is securely saved on file with Stripe.
-                          Today's deposit covers both visits — the remaining
-                          50% is automatically charged after your follow-up
-                          Standard Clean (within 14 days). No need to enter
-                          your card again.
+                          Your card is securely saved with Stripe. We charge
+                          today's 50% deposit and place a temporary hold for
+                          the remaining 50% to confirm the funds are
+                          available. The hold is captured (turned into a
+                          charge) automatically after your follow-up
+                          Standard Clean (within 14 days) — no invoice
+                          emails, no second checkout.
                         </>
                       ) : (
                         <>
-                          Your card is securely saved on file with Stripe.
-                          The remaining 50% is automatically charged after
-                          your cleaning is complete — no need to enter your
-                          card again.
+                          Your card is securely saved with Stripe. We charge
+                          today's 50% deposit and place a temporary hold for
+                          the remaining 50% to confirm the funds are
+                          available. The hold is captured (turned into a
+                          charge) automatically after your cleaning is
+                          complete — no invoice emails, no second checkout.
                         </>
                       )}
                     </p>
