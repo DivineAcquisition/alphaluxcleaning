@@ -1,1 +1,21 @@
 project_id = "yltvknkqnzdeiqckqjha"
+
+# Edge function registrations.
+#
+# Most functions are auto-detected on push, but some Lovable/Supabase
+# deploy pipelines need brand-new function directories to be listed
+# explicitly here before they'll pick them up. Functions added to
+# `supabase/functions/` after May 27, 2026 are registered here so
+# the next deploy includes them in the bundle.
+
+[functions.authorize-booking-balance]
+verify_jwt = false
+
+[functions.retry-balance-authorizations]
+verify_jwt = false
+
+[functions.capture-booking-balance]
+verify_jwt = false
+
+[functions.cancel-booking-for-auth-failure]
+verify_jwt = false

@@ -6,6 +6,13 @@ import {
   slugFromBookingColumn,
 } from "../_shared/stripe-env.ts";
 
+// Bumped whenever a behavior change ships so Lovable's edge
+// function cache is forced to redeploy. Mirrors the same trick
+// we use on create-payment-intent. Surface this in the response
+// (`functionVersion`) so it's easy to verify in the field which
+// deploy is currently live.
+const FUNCTION_VERSION = "2026-05-27-balance-auth";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -438,6 +445,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        functionVersion: FUNCTION_VERSION,
         booking,
         balanceAuthTriggered,
         hcp: hcpResult,
