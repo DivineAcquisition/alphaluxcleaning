@@ -66,13 +66,14 @@ export default function BookingOffer() {
   const baseStandardPrice =
     selectedHomeSize?.regularPrice || Math.round(maintenancePrice * 1.05);
 
-  // ALC2026 — new customer 50% off preview.
-  // NOTE: standard / deep-only / recurring previews are not
-  // computed anymore — the Offer page only renders the combo card.
-  // Pricing tables (`baseDeepPrice`, `baseStandardPrice`,
-  // `maintenancePrice`) are still derived above because the combo
-  // math + the 5,000+ sq ft custom-quote screen below both read
-  // from them.
+  // ALC2026 — new customer 50% off previews. Computed for every
+  // offer we render so the savings copy ("You save $X") stays
+  // in sync with the pricing table.
+  const standardPreview = previewPromoDiscount(baseStandardPrice);
+  const deepPreview = previewPromoDiscount(baseDeepPrice);
+
+  const standardPrice = standardPreview.total;
+  const deepCleanPrice = deepPreview.total;
 
   // Combo offer: initial Deep Clean + a follow-up Standard Clean
   // within 14 days of the first visit. Both visits get the active
@@ -380,14 +381,19 @@ export default function BookingOffer() {
           </div>
         </div>
 
-        {/* AlphaLux now leads with a single packaged offer — the
-            Deep + Standard Combo. The previous Standard Clean,
-            Deep Clean (standalone), and Recurring Maintenance
-            cards are intentionally hidden so the funnel surfaces
-            exactly one purchasable service. Bringing them back
-            should be a deliberate product decision, not an
-            accidental re-render. */}
-        <div id="service-cards" className="max-w-2xl mx-auto">
+        {/* AlphaLux funnel offers three purchasable services. The
+            Deep + Standard Combo stays first and `highlighted` as
+            the recommended bundle; the standalone Standard Clean
+            and Deep Clean are also available for customers who
+            don't want the bundled follow-up visit. Recurring
+            Maintenance is intentionally not on this menu — it's a
+            3-clean minimum commitment that needs its own
+            disclosure flow and currently only ships when ops
+            re-enables that product line. */}
+        <div
+          id="service-cards"
+          className="grid gap-6 md:gap-8 md:grid-cols-3"
+        >
           {/* Deep + Standard Combo — initial Deep Clean plus a
               follow-up Standard Clean within 14 days. The 14-day
               second-visit window is enforced on /book/details where
@@ -426,6 +432,96 @@ export default function BookingOffer() {
                   : 'Deep + Standard Combo',
                 comboPrice,
                 2,
+                false,
+              )
+            }
+            onViewDetails={() => {
+              setDetailsServiceType('tester');
+              setShowDetailsModal(true);
+            }}
+          />
+
+          {/* Standard Clean — one-time refresh of high-use spaces.
+              No bundled follow-up visit; visit_count = 1 on the
+              booking row. */}
+          <OfferCard
+            selected={selectedOffer === 'standard'}
+            icon={Home}
+            title="Standard Clean"
+            description="One-time refresh of the spaces you use every day"
+            originalPrice={baseStandardPrice}
+            finalPrice={standardPrice}
+            priceSuffix=""
+            savingsLabel={
+              NEW_CUSTOMER_PROMO_ACTIVE && standardPreview.amount > 0
+                ? `You save $${standardPreview.amount}`
+                : ''
+            }
+            includes={[
+              'Kitchens, bathrooms, living areas & bedrooms',
+              'Dusting, vacuuming & mopping',
+              'All supplies & equipment included',
+              'Trained, insured AlphaLux team',
+              'Secure payment via Stripe — 50% deposit today',
+            ]}
+            ctaLabel={
+              NEW_CUSTOMER_PROMO_ACTIVE
+                ? `Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
+                : 'Book Standard Clean'
+            }
+            onSelect={() =>
+              handleSelectOffer(
+                'standard',
+                NEW_CUSTOMER_PROMO_ACTIVE
+                  ? `Standard Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
+                  : 'Standard Clean',
+                standardPrice,
+                1,
+                false,
+              )
+            }
+            onViewDetails={() => {
+              setDetailsServiceType('standard');
+              setShowDetailsModal(true);
+            }}
+          />
+
+          {/* Deep Clean — one-time 40-point reset. Same product as
+              the first visit of the combo, but no bundled follow-up.
+              visit_count = 1. */}
+          <OfferCard
+            selected={selectedOffer === 'deep_clean'}
+            icon={Sparkles}
+            title="Deep Clean"
+            description="40-point reset for top-to-bottom freshness"
+            originalPrice={baseDeepPrice}
+            finalPrice={deepCleanPrice}
+            priceSuffix=""
+            savingsLabel={
+              NEW_CUSTOMER_PROMO_ACTIVE && deepPreview.amount > 0
+                ? `You save $${deepPreview.amount}`
+                : ''
+            }
+            includes={[
+              '40-point Deep Clean checklist',
+              '2-person professional team',
+              'Baseboards, inside appliances & detail work',
+              'Trained, insured AlphaLux team',
+              'Secure payment via Stripe — 50% deposit today',
+            ]}
+            ctaLabel={
+              NEW_CUSTOMER_PROMO_ACTIVE
+                ? `Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
+                : 'Book Deep Clean'
+            }
+            onSelect={() =>
+              handleSelectOffer(
+                'deep_clean',
+                NEW_CUSTOMER_PROMO_ACTIVE
+                  ? `Deep Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
+                  : 'Deep Clean',
+                deepCleanPrice,
+                1,
                 false,
               )
             }
