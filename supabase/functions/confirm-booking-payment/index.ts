@@ -378,29 +378,60 @@ serve(async (req) => {
       console.error("notify-booking threw:", notifyError);
     }
 
-    // 4) Send a balance invoice if there's a remaining balance and
-    //    one hasn't been created yet. After the deposit removal this
-    //    only fires for the 90-day plan.
+    // 4) Balance handling.
+    //
+    // For bookings with a remaining balance we now place an
+    // authorization-only HOLD on the customer's saved card for the
+    // balance amount (via authorize-booking-balance). The hold
+    // reserves funds without charging — when the cleaning is
+    // complete, capture-booking-balance flips the hold into a real
+    // charge in one Stripe call. No more hosted-invoice email
+    // round-trip.
+    //
+    // If the off-session auth fails (insufficient funds, decline,
+    // SCA required), the retry sweep retries up to 3 times before
+    // the service date; after 3 strikes the booking is cancelled
+    // and the deposit is refunded automatically by
+    // cancel-booking-for-auth-failure.
+    //
+    // Mark the booking as 'pending' in the lifecycle column so the
+    // retry sweep can rescue it if the immediate invoke below
+    // doesn't land (e.g. Supabase Edge Runtime terminates before
+    // the call completes). authorize-booking-balance is idempotent
+    // — re-running just records another attempt or finds the row
+    // already in the right state.
     const balanceDue = booking.balance_due || 0;
-    if (balanceDue > 0 && !booking.stripe_balance_invoice_id) {
-      console.log("Balance due detected, sending invoice:", balanceDue);
+    let balanceAuthTriggered = false;
+    if (balanceDue > 0 && booking.balance_auth_status !== "captured") {
       try {
-        const invoiceResult = await supabase.functions.invoke(
-          "send-balance-invoice",
-          { body: { bookingId: booking.id, daysUntilDue: 7 } },
+        await supabase
+          .from("bookings")
+          .update({
+            balance_auth_status: "pending",
+            balance_auth_amount_cents: Math.round(Number(balanceDue) * 100),
+          })
+          .eq("id", booking.id);
+
+        const authResult = await supabase.functions.invoke(
+          "authorize-booking-balance",
+          { body: { booking_id: booking.id, reason: "initial" } },
         );
-        if (invoiceResult.error) {
-          console.error("Balance invoice error:", invoiceResult.error);
+        if (authResult.error) {
+          console.error("authorize-booking-balance error:", authResult.error);
         } else {
-          console.log("Balance invoice sent successfully:", invoiceResult.data);
+          balanceAuthTriggered = true;
+          console.log(
+            "authorize-booking-balance dispatched",
+            authResult.data,
+          );
         }
-      } catch (invoiceError) {
-        console.error("Failed to trigger balance invoice:", invoiceError);
+      } catch (authErr) {
+        console.error("Failed to trigger balance authorization:", authErr);
       }
     } else {
-      console.log("Skipping balance invoice", {
+      console.log("Skipping balance authorization", {
         balanceDue,
-        alreadyInvoiced: !!booking.stripe_balance_invoice_id,
+        status: booking.balance_auth_status,
       });
     }
 
@@ -408,7 +439,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         booking,
-        balanceInvoiceTriggered: balanceDue > 0,
+        balanceAuthTriggered,
         hcp: hcpResult,
       }),
       {
