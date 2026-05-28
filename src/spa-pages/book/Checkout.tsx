@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import { BrandedLoader } from '@/components/BrandedLoader';
+import { NEW_CUSTOMER_PROMO_CODE } from '@/lib/promo';
 
 export default function BookingCheckout() {
   const navigate = useNavigate();
@@ -487,6 +488,19 @@ export default function BookingCheckout() {
     }
     if (!bookingData.basePrice || bookingData.basePrice <= 0) {
       setPromoError('Please complete your selection before applying a code.');
+      return;
+    }
+
+    // ALC2026 new-customer 50% promo is reserved for the Deep + Standard
+    // Combo bundle. Block it on standalone Standard / Deep Clean orders
+    // so it can't be hand-applied at checkout to bypass the offer page.
+    if (
+      trimmed === NEW_CUSTOMER_PROMO_CODE &&
+      bookingData.offerType !== 'deep_plus_standard'
+    ) {
+      setPromoError(
+        `Code ${NEW_CUSTOMER_PROMO_CODE} is only valid on the Deep + Standard Combo bundle.`,
+      );
       return;
     }
 

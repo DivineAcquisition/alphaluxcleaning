@@ -66,19 +66,20 @@ export default function BookingOffer() {
   const baseStandardPrice =
     selectedHomeSize?.regularPrice || Math.round(maintenancePrice * 1.05);
 
-  // ALC2026 — new customer 50% off previews. Computed for every
-  // offer we render so the savings copy ("You save $X") stays
-  // in sync with the pricing table.
-  const standardPreview = previewPromoDiscount(baseStandardPrice);
-  const deepPreview = previewPromoDiscount(baseDeepPrice);
-
-  const standardPrice = standardPreview.total;
-  const deepCleanPrice = deepPreview.total;
+  // The ALC2026 new-customer 50% promo applies ONLY to the
+  // Deep + Standard Combo bundle now — the standalone Standard
+  // Clean and Deep Clean offers run at full rate-card pricing.
+  // (Customers can still re-enter the code at checkout, but
+  // promo-system's validation should be tightened to combo-only
+  // server-side as a separate follow-up if ops wants to enforce
+  // hard.)
+  const standardPrice = baseStandardPrice;
+  const deepCleanPrice = baseDeepPrice;
 
   // Combo offer: initial Deep Clean + a follow-up Standard Clean
-  // within 14 days of the first visit. Both visits get the active
-  // new-customer promo applied at the same percentage so the bundle
-  // total is consistent with picking each service individually.
+  // within 14 days of the first visit. The bundle still carries
+  // the new-customer 50% promo because it's the recommended
+  // packaged offer.
   const baseComboPrice = baseDeepPrice + baseStandardPrice;
   const comboPreview = previewPromoDiscount(baseComboPrice);
   const comboPrice = comboPreview.total;
@@ -327,21 +328,21 @@ export default function BookingOffer() {
             <>
               <Badge className="mb-3 bg-alx-gold/15 text-alx-gold-light border border-alx-gold/40 px-3 py-1 text-xs font-bold">
                 <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                New Customer Special — {NEW_CUSTOMER_PROMO_PERCENT}% OFF
+                New Customer Combo — {NEW_CUSTOMER_PROMO_PERCENT}% OFF
               </Badge>
               <h1 className="font-serif text-2xl md:text-4xl font-bold text-foreground mb-2 leading-tight">
                 Save{' '}
                 <span className="text-alx-gradient-gold">
                   {NEW_CUSTOMER_PROMO_PERCENT}%
                 </span>{' '}
-                On Your First Cleaning
+                On The Deep + Standard Combo
               </h1>
               <p className="text-xs md:text-sm uppercase tracking-[0.22em] text-alx-gold font-semibold mb-2">
                 Code{' '}
                 <span className="text-alx-gold-light">
                   {NEW_CUSTOMER_PROMO_CODE}
                 </span>{' '}
-                applied automatically
+                — combo bundle only
               </p>
             </>
           ) : (
@@ -351,7 +352,7 @@ export default function BookingOffer() {
           )}
           <p className="text-sm md:text-base text-muted-foreground">
             {NEW_CUSTOMER_PROMO_ACTIVE
-              ? 'Pick any service — the new-customer discount is locked in.'
+              ? 'The 50% new-customer discount applies to the Deep + Standard Combo bundle. Standard Clean and Deep Clean are priced at our regular rates.'
               : 'Transparent pricing. No contracts. Book in minutes.'}
           </p>
 
@@ -372,7 +373,7 @@ export default function BookingOffer() {
             <BadgePercent className="h-4 w-4" />
             Use code <span className="font-mono tracking-[0.18em]">{NEW_CUSTOMER_PROMO_CODE}</span>
             <span className="hidden sm:inline text-alx-gold/80">
-              for {NEW_CUSTOMER_PROMO_PERCENT}% off your first clean
+              for {NEW_CUSTOMER_PROMO_PERCENT}% off the Combo bundle
             </span>
           </button>
 
@@ -443,20 +444,18 @@ export default function BookingOffer() {
 
           {/* Standard Clean — one-time refresh of high-use spaces.
               No bundled follow-up visit; visit_count = 1 on the
-              booking row. */}
+              booking row. Runs at full rate-card pricing — the
+              ALC2026 promo is reserved for the Combo bundle. */}
           <OfferCard
             selected={selectedOffer === 'standard'}
             icon={Home}
             title="Standard Clean"
             description="One-time refresh of the spaces you use every day"
             originalPrice={baseStandardPrice}
-            finalPrice={standardPrice}
+            finalPrice={baseStandardPrice}
             priceSuffix=""
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && standardPreview.amount > 0
-                ? `You save $${standardPreview.amount}`
-                : ''
-            }
+            savingsLabel=""
+            promoEligible={false}
             includes={[
               'Kitchens, bathrooms, living areas & bedrooms',
               'Dusting, vacuuming & mopping',
@@ -464,18 +463,12 @@ export default function BookingOffer() {
               'Trained, insured AlphaLux team',
               'Secure payment via Stripe — 50% deposit today',
             ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Standard — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Standard Clean'
-            }
+            ctaLabel="Book Standard Clean"
             onSelect={() =>
               handleSelectOffer(
                 'standard',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Standard Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Standard Clean',
-                standardPrice,
+                'Standard Clean',
+                baseStandardPrice,
                 1,
                 false,
               )
@@ -488,20 +481,18 @@ export default function BookingOffer() {
 
           {/* Deep Clean — one-time 40-point reset. Same product as
               the first visit of the combo, but no bundled follow-up.
-              visit_count = 1. */}
+              visit_count = 1. Runs at full rate-card pricing — the
+              ALC2026 promo is reserved for the Combo bundle. */}
           <OfferCard
             selected={selectedOffer === 'deep_clean'}
             icon={Sparkles}
             title="Deep Clean"
             description="40-point reset for top-to-bottom freshness"
             originalPrice={baseDeepPrice}
-            finalPrice={deepCleanPrice}
+            finalPrice={baseDeepPrice}
             priceSuffix=""
-            savingsLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE && deepPreview.amount > 0
-                ? `You save $${deepPreview.amount}`
-                : ''
-            }
+            savingsLabel=""
+            promoEligible={false}
             includes={[
               '40-point Deep Clean checklist',
               '2-person professional team',
@@ -509,18 +500,12 @@ export default function BookingOffer() {
               'Trained, insured AlphaLux team',
               'Secure payment via Stripe — 50% deposit today',
             ]}
-            ctaLabel={
-              NEW_CUSTOMER_PROMO_ACTIVE
-                ? `Book Deep — Save ${NEW_CUSTOMER_PROMO_PERCENT}%`
-                : 'Book Deep Clean'
-            }
+            ctaLabel="Book Deep Clean"
             onSelect={() =>
               handleSelectOffer(
                 'deep_clean',
-                NEW_CUSTOMER_PROMO_ACTIVE
-                  ? `Deep Clean — ${NEW_CUSTOMER_PROMO_PERCENT}% New Customer Special`
-                  : 'Deep Clean',
-                deepCleanPrice,
+                'Deep Clean',
+                baseDeepPrice,
                 1,
                 false,
               )
@@ -649,6 +634,11 @@ interface OfferCardProps {
   savingsLabel: string;
   includes: string[];
   ctaLabel: string;
+  // Whether the ALC2026 new-customer 50% promo applies to this
+  // card. When false, the promo badge, strike-through "Regular"
+  // line, and "X% off applied with code …" footnote are hidden
+  // so the card prices at the regular rate.
+  promoEligible?: boolean;
   onSelect: () => void;
   onViewDetails: () => void;
 }
@@ -665,9 +655,11 @@ function OfferCard({
   savingsLabel,
   includes,
   ctaLabel,
+  promoEligible = true,
   onSelect,
   onViewDetails,
 }: OfferCardProps) {
+  const showPromo = NEW_CUSTOMER_PROMO_ACTIVE && promoEligible;
   return (
     <Card
       className={`relative p-5 md:p-6 cursor-pointer transition-all duration-200 hover:shadow-clean border-2 ${
@@ -690,13 +682,15 @@ function OfferCard({
           <div className="h-9 w-9 rounded-xl bg-alx-black text-alx-gold-light flex items-center justify-center shadow-soft">
             <Icon className="h-4 w-4" />
           </div>
-          <Badge
-            variant="outline"
-            className="bg-alx-gold/10 text-alx-gold-dark border-alx-gold/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-          >
-            <BadgePercent className="h-3 w-3 mr-1" />
-            Code {NEW_CUSTOMER_PROMO_CODE} · {NEW_CUSTOMER_PROMO_PERCENT}% off
-          </Badge>
+          {showPromo && (
+            <Badge
+              variant="outline"
+              className="bg-alx-gold/10 text-alx-gold-dark border-alx-gold/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            >
+              <BadgePercent className="h-3 w-3 mr-1" />
+              Code {NEW_CUSTOMER_PROMO_CODE} · {NEW_CUSTOMER_PROMO_PERCENT}% off
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -704,7 +698,7 @@ function OfferCard({
       <p className="text-xs md:text-sm text-muted-foreground mb-4">{description}</p>
 
       <div className="mb-5">
-        {NEW_CUSTOMER_PROMO_ACTIVE && originalPrice > finalPrice && (
+        {showPromo && originalPrice > finalPrice && (
           <div className="text-xs text-muted-foreground line-through mb-1">
             Regular: ${originalPrice}
             {priceSuffix ? `/${priceSuffix}` : ''}
@@ -720,10 +714,12 @@ function OfferCard({
             </span>
           )}
         </div>
-        <p className="text-xs text-alx-gold-dark font-semibold mt-1.5">
-          {NEW_CUSTOMER_PROMO_PERCENT}% off applied with code{' '}
-          <span className="font-mono tracking-wider">{NEW_CUSTOMER_PROMO_CODE}</span>
-        </p>
+        {showPromo && (
+          <p className="text-xs text-alx-gold-dark font-semibold mt-1.5">
+            {NEW_CUSTOMER_PROMO_PERCENT}% off applied with code{' '}
+            <span className="font-mono tracking-wider">{NEW_CUSTOMER_PROMO_CODE}</span>
+          </p>
+        )}
         {savingsLabel && (
           <p className="text-xs text-alx-gold font-semibold mt-1">{savingsLabel}</p>
         )}
