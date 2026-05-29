@@ -82,6 +82,32 @@ The GHL Private Integration token needs the **Conversations / Messages** and
 { "action": "set_enabled", "contactId": "<ghlContactId>", "enabled": false }
 ```
 
+## Conversation framework
+
+The agent's persona + sales methodology live in `buildSystemPrompt()` inside
+`supabase/functions/ghl-sms-ai-agent/index.ts`. It's built to:
+
+1. **Sound like a real person texting** — one line per message, contractions,
+   no corporate/AI tells, one question at a time, mirrors the lead's energy.
+2. **Pull context and use it as leverage** — it reads the whole thread, catches
+   the specifics (move-out date, newborn, hosting, pets, "place is trashed"),
+   diagnoses the real *why*, reflects it back, and ties value to *their*
+   situation. Their why/trigger is persisted as a `context` note in
+   `collected_data` so it carries across messages.
+3. **Sell value before price** — never leads with a number. Flow: connect &
+   discover → build value with the ONE proof point that fits their why → light
+   qualify → present price anchored to value → close + handle objections. If a
+   lead asks price too early, it gives a soft frame and trades for the 1–2 facts
+   it needs to quote.
+
+Real, on-brand value levers it draws from: same trusted team every visit;
+bonded/licensed/insured; 24-hour re-clean satisfaction guarantee; eco-friendly
+products safe for kids & pets; all supplies included; 40-point Deep Clean by a
+2-person team; no contracts / transparent pricing; premium quality.
+
+To tune the voice or the offer framing, edit `buildSystemPrompt()` — that's the
+single source of truth for how the agent talks and sells.
+
 ## Behavior notes
 
 - **Opt-out:** inbound `STOP`/`UNSUBSCRIBE`/`CANCEL` etc. immediately marks the
