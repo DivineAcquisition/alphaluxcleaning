@@ -19,3 +19,8 @@ verify_jwt = false
 
 [functions.cancel-booking-for-auth-failure]
 verify_jwt = false
+
+# AI SMS conversion agent. GHL fires inbound-message webhooks without a
+# Supabase JWT, so this must accept unauthenticated POSTs.
+[functions.ghl-sms-ai-agent]
+verify_jwt = false
