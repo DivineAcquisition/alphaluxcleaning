@@ -17,9 +17,10 @@
 //   - action:"get_conversation"  → fetch one thread's transcript
 //   - action:"set_enabled"       → pause/resume the bot for one contact
 //
-// Secrets used: LOVABLE_API_KEY (AI gateway), GHL_PRIVATE_INTEGRATION_TOKEN
+// Secrets used: ANTHROPIC_API_KEY (Claude), GHL_PRIVATE_INTEGRATION_TOKEN
 // + GHL_LOCATION_ID (messaging; falls back to shared client defaults),
-// SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
+// SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY. Optional: ANTHROPIC_MODEL
+// (defaults to claude-sonnet-4-6).
 
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -332,8 +333,18 @@ function parseInbound(body: any) {
 const OPT_OUT_WORDS = ['stop', 'stopall', 'unsubscribe', 'cancel', 'end', 'quit', 'optout', 'opt out', 'remove me'];
 
 // ---------------------------------------------------------------------------
-// Lovable AI gateway call with a small tool-execution loop.
+// Anthropic Claude call (Messages API) with a small tool-execution loop.
 // ---------------------------------------------------------------------------
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+
+// Claude expects tools as { name, description, input_schema }. Reuse the
+// OpenAI-style definitions above by remapping `parameters` → `input_schema`.
+const anthropicTools = tools.map((t) => ({
+  name: t.function.name,
+  description: t.function.description,
+  input_schema: t.function.parameters,
+}));
+
 async function runAgent(opts: {
   supabase: any;
   apiKey: string;
@@ -342,10 +353,17 @@ async function runAgent(opts: {
   collected: Record<string, unknown>;
   contactInfo: { phone?: string; email?: string; firstName?: string; lastName?: string };
 }): Promise<{ reply: string; collected: Record<string, unknown>; status?: string; bookingId?: string; handoff?: string }> {
-  const conversation: any[] = [
-    { role: 'system', content: opts.systemPrompt },
-    ...opts.transcript.map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
-  ];
+  const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-sonnet-4-6';
+
+  // Claude's system prompt is a top-level param, and the messages array MUST
+  // start with a 'user' turn — so drop any leading assistant message (our own
+  // outreach opener); the system prompt + collected context already carry it.
+  const messages: any[] = opts.transcript.map((m) => ({
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: m.content,
+  }));
+  while (messages.length && messages[0].role !== 'user') messages.shift();
+  if (!messages.length) messages.push({ role: 'user', content: '(the lead just reached out)' });
 
   let collected = { ...opts.collected };
   let status: string | undefined;
@@ -354,36 +372,45 @@ async function runAgent(opts: {
   let reply = '';
 
   for (let loop = 0; loop < 6; loop++) {
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const res = await fetch(ANTHROPIC_URL, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
+      headers: {
+        'x-api-key': opts.apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: conversation,
-        tools,
-        tool_choice: 'auto',
+        model,
+        max_tokens: 1024,
+        system: opts.systemPrompt,
+        tools: anthropicTools,
+        messages,
       }),
     });
 
     if (!res.ok) {
       const txt = await res.text();
-      log('AI gateway error', { status: res.status, txt: txt.slice(0, 300) });
-      if (res.status === 429) return { reply: "Thanks for reaching out! One sec and I'll get right back to you.", collected };
-      throw new Error(`AI gateway ${res.status}`);
+      log('Anthropic error', { status: res.status, txt: txt.slice(0, 300) });
+      if (res.status === 429 || res.status === 529) {
+        return { reply: "Thanks for reaching out! One sec and I'll get right back to you.", collected };
+      }
+      throw new Error(`Anthropic ${res.status}`);
     }
 
     const data = await res.json();
-    const choice = data.choices?.[0];
-    const msg = choice?.message;
-    const toolCalls = msg?.tool_calls;
+    const content: any[] = Array.isArray(data.content) ? data.content : [];
+    const toolUses = content.filter((b) => b?.type === 'tool_use');
+    const textOut = content.filter((b) => b?.type === 'text').map((b) => b.text).join('').trim();
 
-    if (toolCalls && toolCalls.length) {
-      conversation.push({ role: 'assistant', content: msg.content ?? null, tool_calls: toolCalls });
-      for (const tc of toolCalls) {
-        let args: any = {};
-        try { args = JSON.parse(tc.function.arguments || '{}'); } catch { /* ignore */ }
+    if (data.stop_reason === 'tool_use' && toolUses.length) {
+      // Echo the assistant's tool-use turn back, then answer each tool call.
+      messages.push({ role: 'assistant', content });
+      const toolResults: any[] = [];
+
+      for (const tu of toolUses) {
+        const name = tu.name;
+        const args = tu.input || {};
         let result = '';
-        const name = tc.function.name;
 
         if (name === 'calculate_price') {
           result = quotePrice(args);
@@ -433,12 +460,14 @@ async function runAgent(opts: {
           result = 'Unknown tool.';
         }
 
-        conversation.push({ role: 'tool', tool_call_id: tc.id, name, content: result });
+        toolResults.push({ type: 'tool_result', tool_use_id: tu.id, content: result });
       }
-      continue; // let the model react to tool results
+
+      messages.push({ role: 'user', content: toolResults });
+      continue; // let Claude react to the tool results
     }
 
-    reply = (msg?.content || '').trim();
+    reply = textOut;
     break;
   }
 
@@ -512,8 +541,8 @@ serve(async (req) => {
     }
 
     // ---- Outreach + inbound both end up exchanging SMS ------------------
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) return jsonResponse({ success: false, error: 'LOVABLE_API_KEY not configured' }, 500);
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) return jsonResponse({ success: false, error: 'ANTHROPIC_API_KEY not configured' }, 500);
 
     const ghl = createGhlClient();
 
@@ -649,7 +678,7 @@ serve(async (req) => {
 
     const result = await runAgent({
       supabase,
-      apiKey: LOVABLE_API_KEY,
+      apiKey: ANTHROPIC_API_KEY,
       systemPrompt,
       transcript: llmTranscript,
       collected,
