@@ -15,8 +15,8 @@ GHL "Inbound Message" workflow webhook  ──►  POST /functions/v1/ghl-sms-ai
         ▼
 Edge function:
   1. Loads/creates the lead's conversation row (sms_ai_conversations)
-  2. Replays the full transcript into the LLM (google/gemini-2.5-flash
-     via the Lovable AI gateway) with a conversion-focused system prompt
+  2. Replays the full transcript into Claude (Anthropic Messages API,
+     claude-sonnet-4-6) with a conversion-focused system prompt
   3. LLM uses tools: calculate_price · check_availability · create_booking
      · update_lead_status · handoff_to_human
   4. Sends the reply back via GHL Conversations API (type=SMS)
@@ -40,7 +40,8 @@ panel, or the bot auto-pauses on a `handoff_to_human`).
 
 | Secret | Purpose |
 | --- | --- |
-| `LOVABLE_API_KEY` | AI gateway access (same key used by `chat-booking-assistant`) |
+| `ANTHROPIC_API_KEY` | Claude (Anthropic Messages API) — powers the conversation. |
+| `ANTHROPIC_MODEL` | Optional. Defaults to `claude-sonnet-4-6`. |
 | `GHL_PRIVATE_INTEGRATION_TOKEN` | GHL Private Integration token (location-scoped). Falls back to the shared default baked into `ghl-client.ts`. |
 | `GHL_LOCATION_ID` | GHL sub-account/location id. Falls back to the shared default. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Provided automatically by Supabase. |
