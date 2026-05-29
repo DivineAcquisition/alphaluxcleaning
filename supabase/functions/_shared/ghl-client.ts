@@ -17,6 +17,10 @@
 
 export const GHL_BASE = 'https://services.leadconnectorhq.com';
 export const GHL_API_VERSION = '2021-07-28';
+// The Conversations/messaging endpoints are pinned to an older API
+// revision than contacts/opportunities. Sending an SMS with the
+// 2021-07-28 header returns a 400, so messaging calls must override it.
+export const GHL_CONVERSATIONS_API_VERSION = '2021-04-15';
 
 // AlphaLuxClean TX/CA (and alphaluxcleaning NY) both live under this
 // GHL subaccount; the PIT below is location-scoped to it. These
@@ -67,6 +71,13 @@ export interface GHLClient {
     data: any;
   }>;
   findContactByEmail(email: string): Promise<{ ok: boolean; contactId?: string; data: any }>;
+  findContactByPhone(phone: string): Promise<{ ok: boolean; contactId?: string; data: any }>;
+  getContact(contactId: string): Promise<{ ok: boolean; contact: any; data: any }>;
+  sendSms(params: {
+    contactId: string;
+    message: string;
+    fromNumber?: string;
+  }): Promise<{ ok: boolean; status: number; messageId?: string; conversationId?: string; data: any }>;
   createOpportunity(params: {
     pipelineId: string;
     stageId: string;
@@ -202,6 +213,46 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     return { ok: res.ok, contactId, data: res.data };
   }
 
+  async function findContactByPhone(phone: string) {
+    const res = await request('/contacts/search/duplicate', {
+      method: 'GET',
+      query: { locationId: creds.locationId, number: phone },
+    });
+    const contactId = res.data?.contact?.id || res.data?.id;
+    return { ok: res.ok, contactId, data: res.data };
+  }
+
+  async function getContact(contactId: string) {
+    const res = await request(`/contacts/${contactId}`, { method: 'GET' });
+    const contact = res.data?.contact || res.data || null;
+    return { ok: res.ok, contact, data: res.data };
+  }
+
+  async function sendSms(params: { contactId: string; message: string; fromNumber?: string }) {
+    // POST /conversations/messages with type=SMS. GHL routes the message
+    // out through the location's connected phone number (LeadConnector /
+    // Twilio) and threads it into the contact's existing conversation,
+    // so inbound replies come back to us via the same webhook.
+    const payload: Record<string, unknown> = {
+      type: 'SMS',
+      contactId: params.contactId,
+      message: params.message,
+    };
+    if (params.fromNumber) payload.fromNumber = params.fromNumber;
+    const res = await request('/conversations/messages', {
+      method: 'POST',
+      headers: { Version: GHL_CONVERSATIONS_API_VERSION },
+      body: JSON.stringify(payload),
+    });
+    return {
+      ok: res.ok,
+      status: res.status,
+      messageId: res.data?.messageId || res.data?.id || res.data?.msg?.id,
+      conversationId: res.data?.conversationId || res.data?.conversation?.id,
+      data: res.data,
+    };
+  }
+
   async function listPipelines() {
     const res = await request('/opportunities/pipelines', {
       method: 'GET',
@@ -247,6 +298,9 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     addTags,
     listCustomFields,
     findContactByEmail,
+    findContactByPhone,
+    getContact,
+    sendSms,
     listPipelines,
     createOpportunity,
   };
