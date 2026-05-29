@@ -518,6 +518,26 @@ function jsonResponse(payload: unknown, status = 200) {
   });
 }
 
+// Resolve a secret by name: platform env var first, then the service-role
+// `app_secrets` table (so keys can be managed without the dashboard and
+// survive redeploys). Cached in memory for the lifetime of the instance.
+const _secretCache: Record<string, string> = {};
+async function getSecret(supabase: any, name: string): Promise<string | undefined> {
+  const env = Deno.env.get(name);
+  if (env) return env;
+  if (_secretCache[name]) return _secretCache[name];
+  try {
+    const { data } = await supabase.from('app_secrets').select('value').eq('name', name).maybeSingle();
+    if (data?.value) {
+      _secretCache[name] = data.value;
+      return data.value;
+    }
+  } catch (_) {
+    // table missing or unreadable — fall through to undefined
+  }
+  return undefined;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -575,7 +595,7 @@ serve(async (req) => {
     }
 
     // ---- Outreach + inbound both end up exchanging SMS ------------------
-    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    const ANTHROPIC_API_KEY = await getSecret(supabase, 'ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) return jsonResponse({ success: false, error: 'ANTHROPIC_API_KEY not configured' }, 500);
 
     const ghl = createGhlClient();

@@ -40,7 +40,7 @@ panel, or the bot auto-pauses on a `handoff_to_human`).
 
 | Secret | Purpose |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Claude (Anthropic Messages API) — powers the conversation. |
+| `ANTHROPIC_API_KEY` | Claude (Anthropic Messages API) — powers the conversation. Read from the env var first, then from the service-role `app_secrets` table (`name = 'ANTHROPIC_API_KEY'`) as a fallback, so it can be managed without the dashboard. |
 | `ANTHROPIC_MODEL` | Optional. Defaults to `claude-sonnet-4-6`. |
 | `GHL_PRIVATE_INTEGRATION_TOKEN` | GHL Private Integration token (location-scoped). Falls back to the shared default baked into `ghl-client.ts`. |
 | `GHL_LOCATION_ID` | GHL sub-account/location id. Falls back to the shared default. |
