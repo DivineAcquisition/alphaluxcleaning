@@ -19,8 +19,12 @@ serve(async (req) => {
   try {
     logStep("GHL Advanced Pipeline started");
 
-    const GHL_PRIVATE_TOKEN = Deno.env.get("GHL_PRIVATE_INTEGRATION_TOKEN");
-    const GHL_LOCATION_ID = Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
+    // Prefer the canonical PIT secret names (GHL_PIT_TOKEN / GHL_LOCATION_ID),
+    // matching the shared client + the Novara setup, before the legacy names.
+    const GHL_PRIVATE_TOKEN =
+      Deno.env.get("GHL_PIT_TOKEN") || Deno.env.get("GHL_PRIVATE_INTEGRATION_TOKEN");
+    const GHL_LOCATION_ID =
+      Deno.env.get("GHL_LOCATION_ID") || Deno.env.get("GOHIGHLEVEL_LOCATION_ID");
 
     if (!GHL_PRIVATE_TOKEN || !GHL_LOCATION_ID) {
       throw new Error("GoHighLevel Private Integration credentials not configured");
