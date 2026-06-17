@@ -1,19 +1,47 @@
 // Shared GoHighLevel Private Integration client.
 //
-// Reads GHL_PRIVATE_INTEGRATION_TOKEN (aka PIT) and GHL_LOCATION_ID from
-// Edge Function secrets. Private Integration tokens are *location-scoped*,
-// so every call must include the locationId either as a query param or
-// in the request body (depending on endpoint).
+// Credential resolution (mirrors the Novara booking system — the working
+// reference implementation):
 //
-// Endpoints used by AlphaLuxClean TX/CA:
+//   token    : GHL_PIT_TOKEN  →  GHL_PRIVATE_INTEGRATION_TOKEN  →
+//              GOHIGHLEVEL_API_KEY  →  baked-in default
+//   location : GHL_LOCATION_ID  →  GOHIGHLEVEL_LOCATION_ID  →  default
+//
+// `GHL_PIT_TOKEN` is now the canonical name so a Private Integration
+// Token provisioned the same way as the Novara subaccount is picked up
+// automatically. (Previously only `GHL_PRIVATE_INTEGRATION_TOKEN` was
+// read, so a freshly-minted PIT stored under `GHL_PIT_TOKEN` was ignored
+// and every call silently fell back to a stale hard-coded token → 401s,
+// i.e. "the GHL PIT is not working at all".)
+//
+// Private Integration tokens are *location-scoped*, so every call must
+// include the locationId either as a query param or in the request body
+// (depending on endpoint).
+//
+// Hardening ported from Novara so the PIT path behaves identically:
+//   - Automatic retry on 429 / 5xx / network errors (exp. backoff).
+//   - Phone numbers normalized to E.164 before contact upsert.
+//   - Freeform "Street, City, ST ZIP" addresses split into native slots.
+//   - Opportunity owner resolution (GHL_OWNER_USER_ID / GHL_OWNER_EMAIL).
+//   - find-or-update opportunity helpers so re-syncs never duplicate cards.
+//   - Sales/booking pipeline auto-selection that NEVER lands a customer
+//     in a hiring / recruiting pipeline.
+//
+// Endpoints used:
 //   - POST   /contacts/upsert
 //   - POST   /contacts/{contactId}/tags
 //   - GET    /locations/{locationId}/customFields
 //   - GET    /contacts/search/duplicate?locationId&email|phone
+//   - GET    /users/?locationId
 //   - POST   /opportunities/
+//   - PUT    /opportunities/{opportunityId}
+//   - GET    /opportunities/search?location_id&contact_id
 //   - GET    /opportunities/pipelines?locationId
+//   - POST   /conversations/messages
 //
 // All calls include Version: 2021-07-28 per the LeadConnector API spec.
+
+import { toE164US } from './phone-format.ts';
 
 export const GHL_BASE = 'https://services.leadconnectorhq.com';
 export const GHL_API_VERSION = '2021-07-28';
@@ -24,8 +52,9 @@ export const GHL_CONVERSATIONS_API_VERSION = '2021-04-15';
 
 // AlphaLuxClean TX/CA (and alphaluxcleaning NY) both live under this
 // GHL subaccount; the PIT below is location-scoped to it. These
-// defaults let the edge functions run out-of-the-box — override them
-// by setting the matching env vars on any edge function.
+// defaults are a LAST-RESORT fallback only — always prefer setting the
+// GHL_PIT_TOKEN / GHL_LOCATION_ID edge-function secrets so the token can
+// be rotated without a deploy.
 const DEFAULT_PIT = 'pit-299cc7eb-1702-4549-b976-f95d682c744e';
 const DEFAULT_LOCATION_ID = 'Lvvq87zxxbYFnaTEklYX';
 
@@ -54,6 +83,16 @@ export interface GHLContactUpsert {
   customFields?: GHLCustomFieldValue[];
   companyName?: string | null;
   dnd?: boolean;
+}
+
+export interface GHLOpportunityUpdate {
+  name?: string;
+  status?: 'open' | 'won' | 'lost' | 'abandoned';
+  pipelineId?: string;
+  stageId?: string;
+  monetaryValue?: number;
+  assignedTo?: string;
+  customFields?: GHLCustomFieldValue[];
 }
 
 export interface GHLClient {
@@ -86,17 +125,29 @@ export interface GHLClient {
     contactId: string;
     monetaryValue?: number;
     source?: string;
+    assignedTo?: string;
     customFields?: GHLCustomFieldValue[];
   }): Promise<{ ok: boolean; opportunityId?: string; data: any }>;
+  findOpportunityForContact(
+    contactId: string,
+    pipelineId?: string,
+  ): Promise<{ ok: boolean; opportunityId?: string; name?: string; status?: string; data: any }>;
+  updateOpportunity(
+    opportunityId: string,
+    patch: GHLOpportunityUpdate,
+  ): Promise<{ ok: boolean; data: any }>;
+  listUsers(): Promise<{ ok: boolean; users: Array<{ id: string; email: string; name: string }>; data: any }>;
+  resolveOwnerUserId(): Promise<string | null>;
   listPipelines(): Promise<{
     ok: boolean;
-    pipelines: Array<{ id: string; name: string; stages: Array<{ id: string; name: string }> }>;
+    pipelines: Array<{ id: string; name: string; stages: Array<{ id: string; name: string; position?: number }> }>;
     data: any;
   }>;
 }
 
 export function readGhlCredentials(): { token: string; locationId: string } {
   const token =
+    Deno.env.get('GHL_PIT_TOKEN') ||
     Deno.env.get('GHL_PRIVATE_INTEGRATION_TOKEN') ||
     Deno.env.get('GOHIGHLEVEL_API_KEY') ||
     DEFAULT_PIT;
@@ -104,18 +155,38 @@ export function readGhlCredentials(): { token: string; locationId: string } {
     Deno.env.get('GHL_LOCATION_ID') ||
     Deno.env.get('GOHIGHLEVEL_LOCATION_ID') ||
     DEFAULT_LOCATION_ID;
-  if (!token) throw new Error('GHL_PRIVATE_INTEGRATION_TOKEN is not configured.');
+  if (!token) throw new Error('GHL_PIT_TOKEN is not configured.');
   if (!locationId) {
     throw new Error('GHL_LOCATION_ID is not configured. Private Integration tokens are location-scoped.');
   }
-  return { token, locationId };
+  return { token: token.trim(), locationId: locationId.trim() };
 }
+
+/**
+ * True when an explicit PIT token + location are configured via env vars
+ * (i.e. not relying on the baked-in default). Lets callers fail-open /
+ * skip GHL work gracefully instead of hammering a stale default token.
+ */
+export function ghlIsConfigured(): boolean {
+  const token =
+    Deno.env.get('GHL_PIT_TOKEN') ||
+    Deno.env.get('GHL_PRIVATE_INTEGRATION_TOKEN') ||
+    Deno.env.get('GOHIGHLEVEL_API_KEY');
+  const locationId = Deno.env.get('GHL_LOCATION_ID') || Deno.env.get('GOHIGHLEVEL_LOCATION_ID');
+  return Boolean(token && locationId);
+}
+
+// ─── Owner / location-user resolution cache (per cold start) ──────────────
+let ownerIdCache: string | null | undefined; // undefined = not resolved yet
 
 export function createGhlClient(overrides?: { token?: string; locationId?: string }): GHLClient {
   const creds = overrides?.token && overrides?.locationId
     ? { token: overrides.token, locationId: overrides.locationId }
     : readGhlCredentials();
 
+  // Retry-on-failure wrapper. Network blips + transient 5xx + 429
+  // rate-limits get up to 3 attempts with exponential backoff
+  // (200 ms → 600 ms → 1.8 s). Non-retryable 4xx return immediately.
   async function request(
     path: string,
     init?: RequestInit & { query?: Record<string, string | number | undefined> },
@@ -129,20 +200,59 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     }
     const headers = new Headers(init?.headers || {});
     headers.set('Authorization', `Bearer ${creds.token}`);
-    headers.set('Version', GHL_API_VERSION);
+    if (!headers.has('Version')) headers.set('Version', GHL_API_VERSION);
     headers.set('Accept', 'application/json');
     if (init?.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-    const res = await fetch(url.toString(), { ...init, headers });
-    const raw = await res.text();
-    let data: any = null;
-    try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
-    return { ok: res.ok, status: res.status, data, raw };
+
+    const maxAttempts = 3;
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await fetch(url.toString(), { ...init, headers });
+        const retryable = res.status === 429 || res.status >= 500;
+        if (!retryable || attempt === maxAttempts) {
+          const raw = await res.text();
+          let data: any = null;
+          try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = raw; }
+          return { ok: res.ok, status: res.status, data, raw };
+        }
+        console.log(`[ghl-client] retrying ${path} (attempt ${attempt}, status ${res.status})`);
+      } catch (err) {
+        lastErr = err;
+        if (attempt === maxAttempts) throw err;
+        console.log(`[ghl-client] network error on ${path} (attempt ${attempt}) — retrying`);
+      }
+      await new Promise((r) => setTimeout(r, 200 * Math.pow(3, attempt - 1)));
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('ghl request exhausted retries');
   }
 
   async function upsertContact(body: GHLContactUpsert) {
+    // Normalize phone to E.164 and lift City/State/ZIP out of a freeform
+    // address1 so each value lands in its native GHL slot (matches the
+    // Novara client). GHL dedupes on a clean phone/email; a malformed
+    // phone makes the contact look "missing" downstream.
+    const phoneE164 = body.phone ? (toE164US(body.phone) || undefined) : undefined;
+    const split = splitFullAddress(body.address1 || '');
+    const finalStreet = split.street || body.address1 || undefined;
+    const finalCity = body.city || split.city || undefined;
+    const finalState = body.state || split.state || undefined;
+    const finalZip = body.postalCode || split.zipCode || undefined;
+
+    const payload: GHLContactUpsert & { locationId: string } = {
+      ...body,
+      phone: phoneE164,
+      address1: finalStreet,
+      city: finalCity,
+      state: finalState,
+      postalCode: finalZip,
+      country: body.country || 'US',
+      locationId: creds.locationId,
+    };
+
     const res = await request('/contacts/upsert', {
       method: 'POST',
-      body: JSON.stringify({ ...body, locationId: creds.locationId }),
+      body: JSON.stringify(payload),
     });
 
     // GHL's upsert response shape varies between "new contact" and
@@ -158,17 +268,18 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       res.data?._id;
 
     // Last-ditch fallback: if we got a 2xx but couldn't extract an id,
-    // OR the upsert failed but we have an email we can search on,
-    // look the contact up directly. This prevents spurious "contact
-    // not synced" failures when GHL returns a 200 with a payload
-    // shape we don't recognize, or when an over-strict customFields
-    // entry caused the upsert to silently 4xx while the underlying
-    // contact existed all along.
-    if (!contactId && body.email) {
+    // OR the upsert failed but we have an email/phone we can search on,
+    // look the contact up directly. This prevents spurious "contact not
+    // synced" failures when GHL returns a payload shape we don't
+    // recognize, or when an over-strict customFields entry caused the
+    // upsert to silently 4xx while the underlying contact existed.
+    if (!contactId && (body.email || phoneE164)) {
       try {
         const lookup = await request('/contacts/search/duplicate', {
           method: 'GET',
-          query: { locationId: creds.locationId, email: body.email },
+          query: body.email
+            ? { locationId: creds.locationId, email: body.email }
+            : { locationId: creds.locationId, number: phoneE164 },
         });
         contactId =
           lookup.data?.contact?.id ||
@@ -216,7 +327,7 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
   async function findContactByPhone(phone: string) {
     const res = await request('/contacts/search/duplicate', {
       method: 'GET',
-      query: { locationId: creds.locationId, number: phone },
+      query: { locationId: creds.locationId, number: toE164US(phone) || phone },
     });
     const contactId = res.data?.contact?.id || res.data?.id;
     return { ok: res.ok, contactId, data: res.data };
@@ -262,6 +373,50 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     return { ok: res.ok, pipelines, data: res.data };
   }
 
+  async function listUsers() {
+    const res = await request('/users/', {
+      method: 'GET',
+      query: { locationId: creds.locationId },
+    });
+    const raw: any[] = res.data?.users || [];
+    const users = raw
+      .map((u: any) => ({
+        id: String(u.id || ''),
+        email: String(u.email || '').trim().toLowerCase(),
+        name: (`${u.firstName || ''} ${u.lastName || ''}`.trim() || String(u.name || '')).toLowerCase(),
+      }))
+      .filter((u) => u.id);
+    return { ok: res.ok, users, data: res.data };
+  }
+
+  /**
+   * Resolve the default opportunity owner. GHL_OWNER_USER_ID wins; else
+   * GHL_OWNER_EMAIL is matched against the location's user list. Cached
+   * for the cold start; returns null when nothing matches (caller leaves
+   * the opportunity unassigned).
+   */
+  async function resolveOwnerUserId(): Promise<string | null> {
+    if (ownerIdCache !== undefined) return ownerIdCache;
+    const explicit = (Deno.env.get('GHL_OWNER_USER_ID') || '').trim();
+    if (explicit) {
+      ownerIdCache = explicit;
+      return explicit;
+    }
+    const ownerEmail = (Deno.env.get('GHL_OWNER_EMAIL') || '').trim().toLowerCase();
+    if (!ownerEmail) {
+      ownerIdCache = null;
+      return null;
+    }
+    try {
+      const { users } = await listUsers();
+      const match = users.find((u) => u.email === ownerEmail);
+      ownerIdCache = match?.id ?? null;
+    } catch (_) {
+      ownerIdCache = null;
+    }
+    return ownerIdCache;
+  }
+
   async function createOpportunity(params: {
     pipelineId: string;
     stageId: string;
@@ -270,6 +425,7 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     contactId: string;
     monetaryValue?: number;
     source?: string;
+    assignedTo?: string;
     customFields?: GHLCustomFieldValue[];
   }) {
     const res = await request('/opportunities/', {
@@ -283,11 +439,61 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
         contactId: params.contactId,
         monetaryValue: params.monetaryValue,
         source: params.source,
+        assignedTo: params.assignedTo || undefined,
         customFields: params.customFields,
       }),
     });
     const opportunityId = res.data?.opportunity?.id || res.data?.id;
     return { ok: res.ok, opportunityId, data: res.data };
+  }
+
+  /**
+   * Find the most-recent opportunity for a contact (optionally scoped to
+   * one pipeline). Used to keep ONE opportunity per booking instead of
+   * spamming a new card on every re-sync.
+   */
+  async function findOpportunityForContact(contactId: string, pipelineId?: string) {
+    if (!contactId) return { ok: false, opportunityId: undefined, data: null };
+    const query: Record<string, string | number | undefined> = {
+      location_id: creds.locationId,
+      contact_id: contactId,
+      limit: 20,
+    };
+    if (pipelineId) query.pipeline_id = pipelineId;
+    const res = await request('/opportunities/search', { method: 'GET', query });
+    const opps: any[] = res.data?.opportunities || [];
+    if (opps.length === 0) return { ok: res.ok, opportunityId: undefined, data: res.data };
+    opps.sort((a, b) => {
+      const at = Date.parse(a.updatedAt || a.createdAt || '') || 0;
+      const bt = Date.parse(b.updatedAt || b.createdAt || '') || 0;
+      return bt - at;
+    });
+    const top = opps[0];
+    return {
+      ok: res.ok,
+      opportunityId: top?.id,
+      name: top?.name,
+      status: top?.status,
+      data: res.data,
+    };
+  }
+
+  /** PUT /opportunities/:id — partial update. */
+  async function updateOpportunity(opportunityId: string, patch: GHLOpportunityUpdate) {
+    if (!opportunityId) return { ok: false, data: null };
+    const body: Record<string, unknown> = {};
+    if (patch.name !== undefined) body.name = patch.name;
+    if (patch.status !== undefined) body.status = patch.status;
+    if (patch.pipelineId !== undefined) body.pipelineId = patch.pipelineId;
+    if (patch.stageId !== undefined) body.pipelineStageId = patch.stageId;
+    if (patch.monetaryValue !== undefined) body.monetaryValue = patch.monetaryValue;
+    if (patch.assignedTo !== undefined) body.assignedTo = patch.assignedTo;
+    if (patch.customFields && patch.customFields.length > 0) body.customFields = patch.customFields;
+    const res = await request(`/opportunities/${encodeURIComponent(opportunityId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    return { ok: res.ok, data: res.data };
   }
 
   return {
@@ -302,7 +508,11 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
     getContact,
     sendSms,
     listPipelines,
+    listUsers,
+    resolveOwnerUserId,
     createOpportunity,
+    findOpportunityForContact,
+    updateOpportunity,
   };
 }
 
@@ -425,19 +635,29 @@ export function resolveFieldIdWithFallback(
   return undefined;
 }
 
+// Pipelines we must NEVER drop a customer/sales opportunity into. The
+// hiring / recruiting / contractor onboarding funnel is for cleaners,
+// not customers — a booking landing here is a classic GHL bug.
+const HIRING_PIPELINE_RE =
+  /\b(hir|recruit|cleaner|team|onboard|driver|contractor|applicant|interview|candidate)\b/i;
+
 /**
- * Default pipeline + stage for a "booked customer". The AGP - Sales &
- * Growth Pipeline has a dedicated "Booked" stage (stage index 4). We
- * look it up dynamically so renaming the pipeline in GHL can't break
- * the integration as long as the stage name stays recognizable.
+ * Default pipeline + stage for a "booked customer". Prefers the AGP -
+ * Sales & Growth Pipeline and its "Booked" stage, looked up dynamically
+ * so renaming the pipeline in GHL can't break the integration as long as
+ * the stage name stays recognizable. NEVER selects a hiring/recruiting
+ * pipeline (ported guard from the Novara client).
  */
 export async function pickBookedPipelineStage(
   client: GHLClient,
 ): Promise<{ pipelineId?: string; stageId?: string; label?: string }> {
   const res = await client.listPipelines();
-  const pipelines = res.pipelines || [];
-  const preferred = pipelines.find((p) => /sales\s*&\s*growth|agp\s*-\s*sales/i.test(p.name));
-  const pool = preferred ? [preferred, ...pipelines.filter((p) => p !== preferred)] : pipelines;
+  const all = res.pipelines || [];
+  // A customer/sales opportunity must never land in the hiring pipeline.
+  const pipelines = all.filter((p) => !HIRING_PIPELINE_RE.test(p.name || ''));
+  const candidatePool = pipelines.length > 0 ? pipelines : all;
+  const preferred = candidatePool.find((p) => /sales\s*&\s*growth|agp\s*-\s*sales/i.test(p.name));
+  const pool = preferred ? [preferred, ...candidatePool.filter((p) => p !== preferred)] : candidatePool;
   for (const p of pool) {
     const stage =
       p.stages?.find((s) => /^\s*booked\b/i.test(s.name)) ||
@@ -445,10 +665,72 @@ export async function pickBookedPipelineStage(
       p.stages?.find((s) => /closed\s*.*won/i.test(s.name));
     if (stage) return { pipelineId: p.id, stageId: stage.id, label: `${p.name} → ${stage.name}` };
   }
-  // Fall back to the very first stage of the first pipeline.
-  const first = pipelines[0];
+  // Fall back to the first (non-hiring) pipeline's first stage.
+  const first = candidatePool[0];
   if (first?.stages?.[0]) {
     return { pipelineId: first.id, stageId: first.stages[0].id, label: `${first.name} → ${first.stages[0].name}` };
   }
   return {};
+}
+
+// ─── Address splitter (mirrors the Novara client) ─────────────────────────
+const US_STATE_CODE_SET = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN',
+  'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
+  'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT',
+  'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+]);
+
+/**
+ * Pull ZIP + 2-letter state + city + street out of a freeform address.
+ * Returns blank fields when nothing matches; the caller is responsible
+ * for falling back to the original string.
+ */
+export function splitFullAddress(input: string): {
+  street: string; city: string; state: string; zipCode: string;
+} {
+  const empty = { street: '', city: '', state: '', zipCode: '' };
+  if (!input || typeof input !== 'string') return empty;
+  let work = input.trim().replace(/\s+/g, ' ');
+  if (!work) return empty;
+
+  let zipCode = '';
+  let state = '';
+  let city = '';
+  let street = work;
+
+  const zipMatch = work.match(/\b(\d{5})(?:-\d{4})?\b\s*$/);
+  if (zipMatch) {
+    zipCode = zipMatch[1];
+    work = work.slice(0, zipMatch.index).trim().replace(/,\s*$/, '');
+  }
+
+  const stateMatch = work.match(/,?\s*([A-Za-z]{2})\s*$/);
+  if (stateMatch && US_STATE_CODE_SET.has(stateMatch[1].toUpperCase())) {
+    state = stateMatch[1].toUpperCase();
+    work = work.slice(0, stateMatch.index).trim().replace(/,\s*$/, '');
+  }
+
+  const lastComma = work.lastIndexOf(',');
+  if (lastComma >= 0) {
+    city = work.slice(lastComma + 1).trim();
+    street = work.slice(0, lastComma).trim();
+  } else {
+    street = work;
+  }
+
+  return { street, city, state, zipCode };
+}
+
+/** Format a dollar amount as "$X.XX" for monetary GHL fields. */
+export function fmtMoney(amount: number | null | undefined): string {
+  if (!amount && amount !== 0) return '';
+  return `$${Number(amount).toFixed(2)}`;
+}
+
+/** Yes/No string for GHL dropdowns that store yes/no. */
+export function ynBool(v: boolean | null | undefined): string {
+  if (v === true) return 'Yes';
+  if (v === false) return 'No';
+  return '';
 }
