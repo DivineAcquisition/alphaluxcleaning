@@ -52,11 +52,14 @@ export const GHL_CONVERSATIONS_API_VERSION = '2021-04-15';
 
 // AlphaLuxClean TX/CA (and alphaluxcleaning NY) both live under this
 // GHL subaccount; the PIT below is location-scoped to it. These
-// defaults are a LAST-RESORT fallback only — always prefer setting the
-// GHL_PIT_TOKEN / GHL_LOCATION_ID edge-function secrets so the token can
-// be rotated without a deploy.
-const DEFAULT_PIT = 'pit-299cc7eb-1702-4549-b976-f95d682c744e';
+// defaults let the integration run out-of-the-box, but always prefer
+// setting the GHL_PIT_TOKEN / GHL_LOCATION_ID edge-function secrets so
+// the token can be rotated without a deploy.
+const DEFAULT_PIT = 'pit-d98be6f6-1452-4e0e-8aaa-431371f4ddc4';
 const DEFAULT_LOCATION_ID = 'Lvvq87zxxbYFnaTEklYX';
+// Default opportunity owner — matched against the location's user list
+// when neither GHL_OWNER_USER_ID nor GHL_OWNER_EMAIL is set.
+const DEFAULT_OWNER_EMAIL = 'info@alphaluxcleaning.com';
 
 export interface GHLCustomFieldValue {
   /** Custom field id (preferred) or key. LeadConnector accepts either. */
@@ -402,7 +405,9 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       ownerIdCache = explicit;
       return explicit;
     }
-    const ownerEmail = (Deno.env.get('GHL_OWNER_EMAIL') || '').trim().toLowerCase();
+    const ownerEmail = (Deno.env.get('GHL_OWNER_EMAIL') || DEFAULT_OWNER_EMAIL)
+      .trim()
+      .toLowerCase();
     if (!ownerEmail) {
       ownerIdCache = null;
       return null;
