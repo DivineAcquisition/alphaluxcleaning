@@ -194,6 +194,9 @@ serve(async (req) => {
   let logRowId: string | null = null;
   let bookingId: string | null = null;
   let bodyParsed: any = null;
+  // Opportunity id from a prior sync of this booking (if any) so we
+  // update the same card instead of creating a duplicate on re-sync.
+  let priorOpportunityId: string | null = null;
 
   try {
     bodyParsed = await req.json();
@@ -214,6 +217,7 @@ serve(async (req) => {
         .maybeSingle();
       if (existing) {
         logRowId = existing.id;
+        priorOpportunityId = (existing as any).ghl_opportunity_id || null;
         await supabase
           .from('ghl_sync_log')
           .update({
@@ -466,26 +470,57 @@ serve(async (req) => {
         .eq('id', booking.id);
     }
 
-    // 3. Create an opportunity in the "Booked" stage of the AGP -
-    //    Sales & Growth Pipeline (falls back to a "Closed - Won" /
-    //    "Paid / Appt Confirmed" stage on any other pipeline).
+    // 3. Maintain ONE opportunity per booking in the "Booked" stage of
+    //    the AGP - Sales & Growth Pipeline (falls back to a "Closed -
+    //    Won" / "Paid / Appt Confirmed" stage on any other non-hiring
+    //    pipeline). We find-or-update rather than always creating, so a
+    //    re-sync (retry, details edit, etc.) never spawns a duplicate
+    //    card — mirroring the Novara booking flow.
     let opportunityId: string | null = null;
     if (ghlContactId) {
       try {
         const { pipelineId, stageId, label } = await pickBookedPipelineStage(ghl);
         if (pipelineId && stageId) {
-          const opp = await ghl.createOpportunity({
-            pipelineId,
-            stageId,
-            name: `${fullName || email} · ${booking.offer_name || booking.service_type || 'Booking'}`,
-            status: 'won',
-            contactId: ghlContactId,
-            monetaryValue: Number(booking.est_price || booking.base_price || 0),
-            source: 'alphaluxclean-txca',
-            customFields,
-          });
-          opportunityId = opp.opportunityId || null;
-          log('opportunity', { ok: opp.ok, opportunityId, pipeline: label });
+          const ownerId = (await ghl.resolveOwnerUserId()) || undefined;
+          const oppName = `${fullName || email} · ${booking.offer_name || booking.service_type || 'Booking'}`;
+          const monetaryValue = Number(booking.est_price || booking.base_price || 0);
+
+          // Prefer the opportunity id we stored on a prior sync; else
+          // search GHL for an existing card for this contact in the
+          // target pipeline.
+          let existingOppId = priorOpportunityId;
+          if (!existingOppId) {
+            const found = await ghl.findOpportunityForContact(ghlContactId, pipelineId);
+            existingOppId = found.opportunityId || null;
+          }
+
+          if (existingOppId) {
+            const upd = await ghl.updateOpportunity(existingOppId, {
+              name: oppName,
+              status: 'won',
+              pipelineId,
+              stageId,
+              monetaryValue,
+              assignedTo: ownerId,
+              customFields,
+            });
+            opportunityId = existingOppId;
+            log('opportunity updated', { ok: upd.ok, opportunityId, pipeline: label });
+          } else {
+            const opp = await ghl.createOpportunity({
+              pipelineId,
+              stageId,
+              name: oppName,
+              status: 'won',
+              contactId: ghlContactId,
+              monetaryValue,
+              source: 'alphaluxclean-txca',
+              assignedTo: ownerId,
+              customFields,
+            });
+            opportunityId = opp.opportunityId || null;
+            log('opportunity created', { ok: opp.ok, opportunityId, pipeline: label });
+          }
         } else {
           log('no pipeline found — skipping opportunity');
         }
