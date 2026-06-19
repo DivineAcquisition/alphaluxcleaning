@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { sendSms } from '../_shared/sms.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,125 +12,108 @@ interface SMSRequest {
   message: string;
   notificationId?: string;
   customerId?: string;
+  contactId?: string;
+  email?: string;
+  name?: string;
   templateId?: string;
   variables?: Record<string, any>;
-  provider?: 'openphone' | 'twilio' | 'auto';
+  // Retained for backwards compatibility; routing is now always
+  // GHL-first → OpenPhone-fallback regardless of this value.
+  provider?: 'openphone' | 'twilio' | 'ghl' | 'auto';
   enableFallback?: boolean;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { 
-      to, 
-      message, 
-      notificationId, 
-      customerId, 
-      templateId, 
+    const {
+      to,
+      message,
+      notificationId,
+      customerId,
+      contactId,
+      email,
+      name,
+      templateId,
       variables,
-      provider = 'auto',
-      enableFallback = true
+      enableFallback = true,
     }: SMSRequest = await req.json();
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    let selectedProvider = provider;
-    
-    // Auto-select provider based on available credentials
-    if (provider === 'auto') {
-      const hasOpenPhone = Deno.env.get('OPENPHONE_API_KEY') && Deno.env.get('OPENPHONE_PHONE_NUMBER_ID');
-      const hasTwilio = Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN');
-      
-      // Prefer OpenPhone if available
-      if (hasOpenPhone) {
-        selectedProvider = 'openphone';
-      } else if (hasTwilio) {
-        selectedProvider = 'twilio';
-      } else {
-        throw new Error('No SMS provider configured');
-      }
-    }
-
-    console.log(`Attempting to send SMS via ${selectedProvider}`);
-
-    // Try primary provider
-    try {
-      const functionName = selectedProvider === 'openphone' 
-        ? 'send-openphone-sms' 
-        : 'enhanced-sms-notification';
-
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { to, message, notificationId, customerId, templateId, variables }
-      });
-
-      if (error) throw error;
-      
-      if (data?.success) {
-        console.log(`SMS sent successfully via ${selectedProvider}`);
-        return new Response(JSON.stringify({
-          success: true,
-          provider: selectedProvider,
-          data
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Render a template first if requested (keeps the old template path working).
+    let finalMessage = message;
+    if (templateId && variables) {
+      try {
+        const { data: renderResult } = await supabase.functions.invoke('template-renderer', {
+          body: { templateId, variables, deliveryMethod: 'sms' },
         });
-      }
-    } catch (primaryError: any) {
-      console.error(`Primary provider ${selectedProvider} failed:`, primaryError);
-      
-      // Try fallback if enabled
-      if (enableFallback) {
-        const fallbackProvider = selectedProvider === 'openphone' ? 'twilio' : 'openphone';
-        const fallbackFunction = fallbackProvider === 'openphone' 
-          ? 'send-openphone-sms' 
-          : 'enhanced-sms-notification';
-        
-        console.log(`Attempting fallback to ${fallbackProvider}`);
-        
-        try {
-          const { data, error } = await supabase.functions.invoke(fallbackFunction, {
-            body: { to, message, notificationId, customerId, templateId, variables }
-          });
-
-          if (error) throw error;
-          
-          if (data?.success) {
-            console.log(`SMS sent successfully via fallback provider ${fallbackProvider}`);
-            return new Response(JSON.stringify({
-              success: true,
-              provider: fallbackProvider,
-              fallback: true,
-              data
-            }), {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-          }
-        } catch (fallbackError: any) {
-          console.error(`Fallback provider ${fallbackProvider} also failed:`, fallbackError);
-          throw new Error(`Both providers failed. Primary: ${primaryError.message}, Fallback: ${fallbackError.message}`);
+        if ((renderResult as any)?.renderedContent) {
+          finalMessage = (renderResult as any).renderedContent;
         }
-      } else {
-        throw primaryError;
+      } catch (e) {
+        console.warn('[send-sms-unified] template render failed, using raw message', e);
       }
     }
 
-    throw new Error('SMS sending failed without specific error');
+    // GHL is the core channel; OpenPhone is the fallback.
+    const result = await sendSms({
+      to,
+      message: finalMessage,
+      contactId,
+      email,
+      name,
+      enableFallback,
+    });
 
+    // Best-effort: mark the notification row sent/failed.
+    if (notificationId) {
+      try {
+        await supabase
+          .from('notification_queue')
+          .update({
+            status: result.success ? 'sent' : 'failed',
+            sent_at: result.success ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+            metadata: {
+              provider: result.provider,
+              fallback: result.fallback,
+              message_id: result.messageId,
+              error: result.error,
+            },
+          })
+          .eq('id', notificationId);
+      } catch (e) {
+        console.warn('[send-sms-unified] notification_queue update failed', e);
+      }
+
+      if (customerId && result.success) {
+        try {
+          await supabase.from('notification_analytics').insert({
+            notification_id: notificationId,
+            customer_id: customerId,
+            event_type: 'sent',
+            delivery_method: 'sms',
+            metadata: { provider: result.provider, fallback: result.fallback },
+            created_at: new Date().toISOString(),
+          });
+        } catch (_) { /* non-critical */ }
+      }
+    }
+
+    return new Response(JSON.stringify(result), {
+      status: result.success ? 200 : 502,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     console.error('Unified SMS Error:', error);
-    return new Response(JSON.stringify({ 
-      success: false,
-      error: error.message 
-    }), {
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
