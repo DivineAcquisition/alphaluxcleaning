@@ -24,3 +24,7 @@ verify_jwt = false
 # Supabase JWT, so this must accept unauthenticated POSTs.
 [functions.ghl-sms-ai-agent]
 verify_jwt = false
+
+# Cold-lead re-engagement sweep. Invoked by pg_cron with the anon JWT.
+[functions.reengage-cold-leads]
+verify_jwt = false

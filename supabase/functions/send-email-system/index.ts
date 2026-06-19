@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Import email templates
 import { LeadWelcomeEmail } from "./_templates/lead-welcome.tsx";
+import { LeadAdminNotificationEmail } from "./_templates/lead-admin-notification.tsx";
 import { BookingStartedEmail } from "./_templates/booking-started.tsx";
 import { BookingConfirmedEmail } from "./_templates/booking-confirmed.tsx";
 import { RescheduledEmail } from "./_templates/rescheduled.tsx";
@@ -257,6 +258,12 @@ async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 
         ? "Finish in 60s: pick home size → see price"
         : "Your instant price is one click away";
       emailComponent = React.createElement(LeadWelcomeEmail, templateProps);
+      break;
+
+    case 'lead_admin_notification':
+      subject = `New lead: ${data.first_name || ''} ${data.last_name || ''}`.trim() +
+        (data.zip_code ? ` (${data.zip_code})` : '');
+      emailComponent = React.createElement(LeadAdminNotificationEmail, templateProps);
       break;
 
     case 'booking_started':
