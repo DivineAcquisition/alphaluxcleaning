@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getInternalRecipients } from "../_shared/internal-recipients.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -217,6 +218,50 @@ serve(async (req) => {
       logStep('Lead welcome email error', { error: err.message });
     });
 
+    // Notify the owner / ops on EVERY entry-form submission so speed-to-lead
+    // follow-up can happen immediately. Sent to each internal recipient
+    // (owner mailbox + ops) and de-duped by an event_id keyed on the lead's
+    // email + minute so a double-submit doesn't double-email.
+    const submittedAt = payload.timestamp || new Date().toISOString();
+    const adminEventBase = `lead-admin-${(payload.email || '').toLowerCase()}-${submittedAt.slice(0, 16)}`;
+    for (const recipient of getInternalRecipients()) {
+      supabase.functions.invoke('send-email-system', {
+        body: {
+          template: 'lead_admin_notification',
+          to: recipient,
+          event_id: `${adminEventBase}-${recipient}`,
+          data: {
+            first_name: payload.firstName,
+            last_name: payload.lastName,
+            email: payload.email,
+            phone: payload.phone,
+            zip_code: payload.zipCode,
+            city: payload.city || '',
+            state: payload.state || '',
+            promo_code: assignedPromo.code || '',
+            utm_source: payload.utmSource || '',
+            utm_medium: payload.utmMedium || '',
+            utm_campaign: payload.utmCampaign || '',
+            utm_content: payload.utmContent || '',
+            landing_page: payload.landingPage || '',
+            referrer: payload.referrer || '',
+            message: payload.message || '',
+            submitted_at: submittedAt,
+            app_url: appUrl,
+          },
+          category: 'transactional',
+        },
+      }).then(res => {
+        if (res.error) {
+          logStep('Owner lead notification failed', { recipient, error: res.error.message });
+        } else {
+          logStep('Owner lead notification sent', { recipient });
+        }
+      }).catch(err => {
+        logStep('Owner lead notification error', { recipient, error: err.message });
+      });
+    }
+
     // Return based on GHL response
     if (!ghlResponse.ok) {
       logStep('GHL webhook failed', { status: ghlStatus });
@@ -243,9 +288,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    logStep('Error processing lead webhook', { error: error.message });
+    const msg = error instanceof Error ? error.message : String(error);
+    logStep('Error processing lead webhook', { error: msg });
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: msg }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
