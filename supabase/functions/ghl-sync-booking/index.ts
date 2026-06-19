@@ -428,6 +428,76 @@ serve(async (req) => {
     );
     push(['referral_code'], booking.referrer_code);
 
+    // ── Full booking field map ───────────────────────────────────────
+    // Take FULL advantage of the PIT: surface every remaining booking
+    // column on GHL. Each push() is a no-op unless a matching GHL custom
+    // field exists (resolved dynamically by fieldKey/name, then by the
+    // KNOWN_GHL_FIELD_IDS fallback), so this is safe to be exhaustive.
+    const yn = (v: unknown) => (v === true ? 'Yes' : v === false ? 'No' : undefined);
+
+    // Identity / linkage
+    push(['booking_id', 'alphalux_booking_id'], booking.id);
+    push(['customer_id'], booking.customer_id);
+    push(['full_name', 'customer_name'], fullName);
+    push(['phone', 'contact_phone', 'customer_phone'], customer.phone);
+    push(['email', 'contact_email', 'customer_email'], email);
+    push(['timezone'], booking.timezone);
+
+    // Add-ons (array or json → comma list)
+    push(
+      ['addons', 'add_ons', 'add_on_services'],
+      Array.isArray(booking.addons)
+        ? booking.addons.join(', ')
+        : booking.addons
+        ? (typeof booking.addons === 'string' ? booking.addons : JSON.stringify(booking.addons))
+        : undefined,
+    );
+
+    // Commitment / recurring detail
+    push(['commitment_months', 'commitment'], booking.commitment_months);
+    push(['recurring_active'], yn(booking.recurring_active));
+    push(['is_recurring_instance'], yn(booking.is_recurring_instance));
+    push(['parent_recurring_service_id'], booking.parent_recurring_service_id);
+    push(['membership_plan', 'membership_plan_id'], booking.membership_plan_id);
+    push(['visit_count'], booking.visit_count);
+
+    // Lead source / attribution / status
+    push(['lead_source', 'source'], booking.source);
+    push(['source_channel'], booking.source_channel);
+    push(['first_booking', 'is_first_booking'], yn(booking.first_booking));
+    push(['at_risk'], yn(booking.at_risk));
+    push(['marketing_opt_in'], yn(booking.marketing_opt_in));
+
+    // Scheduling preferences (pre-confirmation)
+    push(['preferred_date'], booking.preferred_date);
+    push(['preferred_time_block'], booking.preferred_time_block);
+    push(['service_time_window'], booking.service_time_window);
+
+    // Pricing extras
+    push(['prepayment_discount'], booking.prepayment_discount_amount);
+    push(['prepayment_discount_applied'], yn(booking.prepayment_discount_applied));
+    push(['commitment_balance', 'balance_due'], booking.balance_due);
+    push(['promo_applied'], booking.promo_applied);
+    push(['reward_code', 'reward_code_issued'], booking.reward_code_issued);
+
+    // Payment / processor linkage
+    push(['payment_option'], booking.payment_option_id);
+    push(['stripe_subscription_id', 'subscription_id'], booking.stripe_subscription_id);
+    push(['stripe_checkout_session_id'], booking.stripe_checkout_session_id);
+    push(['stripe_balance_invoice_id'], booking.stripe_balance_invoice_id);
+    push(['square_payment_id'], booking.square_payment_id);
+    push(['square_customer_id'], booking.square_customer_id);
+    push(['hcp_job_id', 'housecall_job_id'], booking.hcp_job_id || booking.housecall_job_id);
+    push(['hcp_customer_id'], booking.hcp_customer_id);
+
+    // Deep-clean recommendation signals
+    push(['deep_clean_last_answer'], booking.deep_clean_last_answer);
+    push(['deep_clean_recommendation_shown'], yn(booking.deep_clean_recommendation_shown));
+
+    // Manage / receipt links (extra aliases)
+    push(['receipt_link', 'receipt_url'], booking.receipt_url);
+    push(['updated_at'], booking.updated_at);
+
     const tags = [
       'lead - booked',
       'customer',
