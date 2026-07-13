@@ -108,9 +108,11 @@ serve(async (req) => {
             body: JSON.stringify({
               notification_id: notificationId,
               customer_id: customerId,
-              event_type: 'sent',
+              notification_type: 'sms',
+              status: 'sent',
               delivery_method: 'sms',
-              metadata: { provider: 'openphone' },
+              provider: 'openphone',
+              metadata: { provider: 'openphone', message_id: result.id },
               created_at: new Date().toISOString()
             }),
           });

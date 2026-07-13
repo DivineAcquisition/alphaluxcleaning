@@ -66,6 +66,7 @@ import BookingMonitor from '@/spa-pages/admin/BookingMonitor';
 import BookingTester from '@/spa-pages/admin/BookingTester';
 import DatabaseWatcher from '@/spa-pages/admin/DatabaseWatcher';
 import ConversionOptimization from '@/spa-pages/admin/ConversionOptimization';
+import SalesEngagementDashboard from '@/spa-pages/admin/SalesEngagementDashboard';
 import Waitlist from '@/spa-pages/Waitlist';
 import CallPage from '@/spa-pages/CallPage';
 
@@ -223,6 +224,7 @@ function App() {
               <ConversionOptimization />
             </AdminRoute>
           } />
+          <Route path="/admin/sales" element={<SalesEngagementDashboard />} />
           <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />

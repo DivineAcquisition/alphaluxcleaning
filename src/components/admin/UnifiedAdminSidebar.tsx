@@ -43,7 +43,8 @@ import {
   Users2,
   Webhook,
   TestTube,
-  DollarSign
+  DollarSign,
+  Cloud
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +56,18 @@ const adminItems = [
     path: "/admin",
     icon: LayoutDashboard,
     description: "Overview & metrics"
+  },
+  {
+    label: "Sales & Engagement",
+    path: "/admin/sales",
+    icon: BarChart3,
+    description: "Funnel, revenue & messaging"
+  },
+  {
+    label: "HCP Sync",
+    path: "/admin/integrations/housecall-pro/logs",
+    icon: Cloud,
+    description: "Housecall Pro sync health"
   },
   {
     label: "Email Templates",
