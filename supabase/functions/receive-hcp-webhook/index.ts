@@ -70,6 +70,13 @@ serve(async (req) => {
       case 'job.rescheduled':
         await handleJobRescheduled(supabase, eventData);
         break;
+
+      case 'job.started':
+      case 'job.on_my_way':
+      case 'job.work_started':
+      case 'job.appointment.dispatched':
+        await handleJobStarted(supabase, eventData, eventType);
+        break;
       
       case 'invoice.paid':
         await handleInvoicePaid(supabase, eventData);
@@ -183,12 +190,20 @@ async function handleJobRescheduled(supabase: any, data: any) {
 
   // Extract new scheduled date if available
   const updates: any = {
+    status: 'rescheduled',
     updated_at: new Date().toISOString()
   };
 
-  if (data.scheduled_start) {
-    const newDate = new Date(data.scheduled_start);
-    updates.service_date = newDate.toISOString().split('T')[0];
+  const scheduledStart = data.scheduled_start || data.schedule?.scheduled_start;
+  const scheduledEnd = data.scheduled_end || data.schedule?.scheduled_end;
+  if (scheduledStart) {
+    const start = new Date(scheduledStart);
+    updates.service_date = start.toISOString().split('T')[0];
+    if (scheduledEnd) {
+      const fmt = (d: Date) =>
+        `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+      updates.service_time_window = `${fmt(start)}-${fmt(new Date(scheduledEnd))}`;
+    }
   }
 
   await supabase
@@ -197,6 +212,39 @@ async function handleJobRescheduled(supabase: any, data: any) {
     .eq('id', booking.id);
 
   console.log("Updated booking with new schedule:", booking.id);
+}
+
+// HCP job started / technician on the way / dispatched. There is no matching
+// booking_status enum value for "in progress", so we record the event (and any
+// assigned technicians) in integration_logs for ops visibility without mutating
+// the booking status.
+async function handleJobStarted(supabase: any, data: any, eventType: string) {
+  console.log("Handling job started/dispatched:", data.id, eventType);
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('hcp_job_id', data.id)
+    .maybeSingle();
+
+  const employees = data.assigned_employees || data.employees || data.dispatched_employees || [];
+  const technicians = Array.isArray(employees)
+    ? employees
+        .map((e: any) => e?.name || [e?.first_name, e?.last_name].filter(Boolean).join(' ') || e?.id)
+        .filter(Boolean)
+    : [];
+
+  await supabase.from('integration_logs').insert({
+    integration_type: 'HCP',
+    action: `job_started_${eventType}`,
+    status: 'success',
+    booking_id: booking?.id ?? null,
+    external_id: data.id,
+    request_payload: { technicians, event_type: eventType },
+    response_payload: { recorded: true }
+  });
+
+  console.log("Recorded job start/dispatch for HCP job:", data.id, "technicians:", technicians);
 }
 
 async function handleInvoicePaid(supabase: any, data: any) {
