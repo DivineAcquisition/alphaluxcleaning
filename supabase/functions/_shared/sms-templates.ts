@@ -8,8 +8,13 @@ interface TemplateVariables {
 }
 
 export const SMS_TEMPLATES: Record<string, (vars: TemplateVariables) => string> = {
-  booking_confirmed: (vars: TemplateVariables) => 
-    `Hi ${vars.first_name}! Your ${vars.service_type} cleaning is confirmed for ${vars.service_date} (${vars.time_window}). Manage: ${vars.manage_link}`,
+  // Keep the manage link optional — the SPA has no public /manage page
+  // today, so callers that can't build a real link simply omit it and
+  // the message stays a clean, reply-able confirmation.
+  booking_confirmed: (vars: TemplateVariables) =>
+    `Hi ${vars.first_name}! Your ${vars.service_type} cleaning is confirmed for ${vars.service_date} (arrival ${vars.time_window}).` +
+    (vars.manage_link ? ` Manage: ${vars.manage_link}` : ' Questions? Just reply to this text.') +
+    ' - AlphaLux Clean',
   
   referral_reward_earned: (vars: TemplateVariables) =>
     `🎉 Great news ${vars.first_name}! ${vars.referred_name} just booked their first cleaning. You earned ${vars.amount} credit! - AlphaLuxClean`,

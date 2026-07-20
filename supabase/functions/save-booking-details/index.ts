@@ -109,8 +109,9 @@ serve(async (req) => {
 
     // Kick off the email + CRM fan-out in parallel (best-effort — each
     // step logs its own failure but never blocks the booking flow).
-    //   1. send-booking-confirmation: customer-facing "you're booked"
-    //      email + internal ops notification.
+    //   1. booking-confirm-comms: idempotent customer confirmation
+    //      email + SMS (claims flags on the booking row, so retries
+    //      and races with stripe-webhook can never double-send).
     //   2. ghl-sync-booking: push contact + custom fields + booked-stage
     //      opportunity into GoHighLevel.
     //   3. queue-booking-reminders: schedule the 24h + 2h reminder
@@ -119,9 +120,9 @@ serve(async (req) => {
     const fanOut: Promise<any>[] = [];
     fanOut.push(
       supabase.functions
-        .invoke('send-booking-confirmation', { body: { bookingId } })
-        .then((r) => log('send-booking-confirmation', { ok: !r.error, err: r.error?.message }))
-        .catch((e) => log('send-booking-confirmation threw', { err: (e as Error).message })),
+        .invoke('booking-confirm-comms', { body: { bookingId } })
+        .then((r) => log('booking-confirm-comms', { ok: !r.error, err: r.error?.message, data: r.data }))
+        .catch((e) => log('booking-confirm-comms threw', { err: (e as Error).message })),
     );
     fanOut.push(
       supabase.functions

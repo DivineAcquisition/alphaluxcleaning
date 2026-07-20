@@ -280,14 +280,21 @@ async function processBookingPayment(booking: any, paymentIntent: any, supabaseC
     await create90DaySubscription(booking, paymentIntent, supabaseClient, stripe);
   }
 
-  // Send confirmation email (branded AlphaLux template)
+  // Send customer confirmation email + SMS. booking-confirm-comms is
+  // idempotent (claims flags on the booking row), so this can't
+  // double-send even when save-booking-details fires the same fan-out.
   try {
-    await supabaseClient.functions.invoke('send-booking-confirmation', {
+    const commsResult = await supabaseClient.functions.invoke('booking-confirm-comms', {
       body: { bookingId: booking.id }
     });
-    logStep("Confirmation email sent", { bookingId: booking.id });
+    logStep("Confirmation comms dispatched", {
+      bookingId: booking.id,
+      result: commsResult.data,
+    });
   } catch (emailError) {
-    logStep("Failed to send confirmation email", { error: emailError.message });
+    logStep("Failed to send confirmation comms", {
+      error: emailError instanceof Error ? emailError.message : String(emailError),
+    });
   }
 
   // Also dispatch a branded payment receipt via the unified email system.
