@@ -34,3 +34,31 @@ verify_jwt = false
 # stripe-webhook, so JWT verification stays on.
 [functions.booking-confirm-comms]
 verify_jwt = true
+
+# Housecall Pro webhook receiver. HCP posts events without a Supabase
+# JWT — authenticity is enforced via HCP_WEBHOOK_SECRET HMAC instead.
+[functions.receive-hcp-webhook]
+verify_jwt = false
+
+# OpenPhone inbound-message webhook (STOP/START opt-outs, reply logging).
+# OpenPhone posts without a Supabase JWT — authenticity is enforced via
+# OPENPHONE_WEBHOOK_SECRET HMAC instead.
+[functions.openphone-webhook]
+verify_jwt = false
+
+# Lifecycle engine sweep (cadence + offers + campaigns). Invoked by
+# pg_cron with the anon JWT, same pattern as reengage-cold-leads.
+[functions.lifecycle-engine]
+verify_jwt = false
+
+# One-click email unsubscribe target — opened from email clients, so it
+# must accept unauthenticated GETs.
+[functions.lifecycle-unsubscribe]
+verify_jwt = false
+
+# HCP retry/backfill sweeps — invoked by pg_cron with the anon JWT.
+[functions.retry-failed-hcp-syncs]
+verify_jwt = false
+
+[functions.ensure-recent-bookings-hcp-synced]
+verify_jwt = false

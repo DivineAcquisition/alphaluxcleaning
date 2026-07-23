@@ -27,15 +27,26 @@ const log = (step: string, data?: unknown) =>
     data !== undefined ? JSON.stringify(data) : "",
   );
 
-function getHcpApiKey(): string | null {
+async function getHcpApiKey(supabase?: any): Promise<string | null> {
   // Same precedence as /app/api/create-job/route.ts so ops only has
-  // one secret to manage.
-  return (
+  // one secret to manage: env vars first, then the app_secrets table
+  // (written by update-hcp-config from the admin UI).
+  const fromEnv =
     Deno.env.get("HCP_API_KEY") ||
     Deno.env.get("HOUSECALL_PRO_API_KEY") ||
-    Deno.env.get("HCP_LIVE_API_KEY") ||
-    null
-  );
+    Deno.env.get("HCP_LIVE_API_KEY");
+  if (fromEnv) return fromEnv;
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from("app_secrets")
+        .select("value")
+        .eq("name", "HCP_API_KEY")
+        .maybeSingle();
+      if (data?.value) return data.value;
+    } catch (_) { /* env-only */ }
+  }
+  return null;
 }
 
 /**
@@ -282,17 +293,17 @@ serve(async (req) => {
     const bookingId = body?.booking_id || body?.bookingId;
     if (!bookingId) throw new Error("Missing booking_id");
 
-    const apiKey = getHcpApiKey();
-    if (!apiKey) {
-      log("Skipping — HCP_API_KEY not configured");
-      return json({ success: false, skipped: "no_api_key" }, 200);
-    }
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } },
     );
+
+    const apiKey = await getHcpApiKey(supabase);
+    if (!apiKey) {
+      log("Skipping — HCP_API_KEY not configured");
+      return json({ success: false, skipped: "no_api_key" }, 200);
+    }
 
     const { data: booking, error } = await supabase
       .from("bookings")

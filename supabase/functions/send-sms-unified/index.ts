@@ -18,9 +18,16 @@ interface SMSRequest {
   templateId?: string;
   variables?: Record<string, any>;
   // Retained for backwards compatibility; routing is now always
-  // GHL-first → OpenPhone-fallback regardless of this value.
+  // OpenPhone-first (state-routed number) → GHL-fallback regardless
+  // of this value.
   provider?: 'openphone' | 'twilio' | 'ghl' | 'auto';
   enableFallback?: boolean;
+  /** Customer state — picks the OpenPhone "from" number (NJ/TX/CA/NY). */
+  state?: string;
+  /** ZIP fallback for state inference. */
+  zip?: string;
+  /** Caller tag for the sms_logs ledger. */
+  context?: string;
 }
 
 serve(async (req) => {
@@ -40,6 +47,9 @@ serve(async (req) => {
       templateId,
       variables,
       enableFallback = true,
+      state,
+      zip,
+      context,
     }: SMSRequest = await req.json();
 
     const supabase = createClient(
@@ -62,10 +72,13 @@ serve(async (req) => {
       }
     }
 
-    // GHL is the core channel; OpenPhone is the fallback.
+    // OpenPhone is the core channel (state-routed number); GHL is the fallback.
     const result = await sendSms({
       to,
       message: finalMessage,
+      state,
+      zip,
+      context: context || 'send-sms-unified',
       contactId,
       email,
       name,
