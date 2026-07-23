@@ -130,6 +130,29 @@ Booking → HCP flow (unchanged, now self-healing):
 Point the HCP webhook (HCP dashboard → API & Webhooks) at:
 `https://<project>.functions.supabase.co/receive-hcp-webhook`
 
+## Internal Booking (ported from Novara's book-as-va)
+
+Admin/VA phone-booking workspace at **/admin/internal-booking**, backed by the
+`book-as-va` edge function — a port of Novara's internal booking endpoint with the
+comms + ops platforms swapped:
+
+| Novara step | AlphaLux port |
+|-------------|---------------|
+| GHL Sales-pipeline contact + opportunity | **Housecall Pro job** via `hcp-sync-booking` |
+| GHL calendar appointment | The HCP job IS the schedule |
+| Confirmation SMS via GHL number | **OpenPhone, state-routed** (NJ/TX/CA/NY number) |
+| Confirmation email via Resend | Same (through idempotent `booking-confirm-comms`) |
+| Stripe deposit invoice + day-of remaining cron | Deposit invoice due today + remaining invoice due **on the service date** (no new cron needed), on the customer's state-routed Stripe account (`try`/`book`) |
+
+One atomic call: admin auth check → customer upsert (city/state drive SMS + Stripe
+routing) → booking insert (`source: internal_booking`, canonical `service_date` /
+`time_slot`) → invoices per mode (`deposit_plus_remaining` · `full_now` · `none`) →
+HCP sync → confirmation email + invoice-aware SMS → response with the booking ref and
+hosted-invoice URLs for the VA to copy/paste while still on the phone. Pricing uses a
+server-side rate card mirrored 1:1 by the form's live quote. The retention triggers
+fire on insert, so internally booked customers enter the lifecycle engine
+automatically (and their upcoming clean suppresses reactivation touches).
+
 ## Setup checklist
 
 1. **Apply the migration** `20260723100000_lifecycle_engine.sql` (tables, triggers,

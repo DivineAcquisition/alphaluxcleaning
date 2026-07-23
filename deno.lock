@@ -40,7 +40,8 @@
     "https://deno.land/x/media_types@v2.9.0/mod.ts": "d63583b978d32eff8b76e1ae5d83cba2fb27baa90cc1bcb0ad15a06122ea8c19",
     "https://deno.land/x/xhr@0.1.0/mod.ts": "5200325d879e571961f0927e8e32e66fd33f4ba0d29a219560cf9e0fe9bc6cdf",
     "https://esm.sh/@supabase/supabase-js@2.45.0": "36ae57c3f2dc3f94fd122a846b40a87114d29bb2f47e910cb46bee5575febf2e",
-    "https://esm.sh/@supabase/supabase-js@2.54.0": "17b11dd716bb066eca7f3a01cc2e90c542cb9a91a7faee7db6aeec4e7c9e630c"
+    "https://esm.sh/@supabase/supabase-js@2.54.0": "17b11dd716bb066eca7f3a01cc2e90c542cb9a91a7faee7db6aeec4e7c9e630c",
+    "https://esm.sh/stripe@14.21.0": "f6487cd8974b4c445fe2ed8188d0a680f425bedf793abdead16796e719749d30"
   },
   "workspace": {
     "packageJson": {

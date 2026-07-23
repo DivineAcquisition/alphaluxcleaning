@@ -56,6 +56,12 @@ verify_jwt = false
 [functions.lifecycle-unsubscribe]
 verify_jwt = false
 
+# Internal booking endpoint (ported from Novara's book-as-va). Invoked
+# from the admin workspace with the admin's session JWT; the function
+# re-verifies the caller against admin_users before doing anything.
+[functions.book-as-va]
+verify_jwt = true
+
 # HCP retry/backfill sweeps — invoked by pg_cron with the anon JWT.
 [functions.retry-failed-hcp-syncs]
 verify_jwt = false

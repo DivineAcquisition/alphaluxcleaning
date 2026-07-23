@@ -87,6 +87,12 @@ const adminItems = [
     description: "Customer management"
   },
   {
+    label: "Internal Booking",
+    path: "/admin/internal-booking",
+    icon: Calendar,
+    description: "Book customers over the phone"
+  },
+  {
     label: "Lifecycle Engine",
     path: "/admin/lifecycle",
     icon: Zap,
