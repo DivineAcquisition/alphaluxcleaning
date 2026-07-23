@@ -223,6 +223,13 @@ function App() {
               <ConversionOptimization />
             </AdminRoute>
           } />
+          <Route path="/admin/lifecycle" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/LifecycleEngine')))}
+              </Suspense>
+            </AdminRoute>
+          } />
           <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />

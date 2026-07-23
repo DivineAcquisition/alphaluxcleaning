@@ -87,6 +87,12 @@ const adminItems = [
     description: "Customer management"
   },
   {
+    label: "Lifecycle Engine",
+    path: "/admin/lifecycle",
+    icon: Zap,
+    description: "Reactivation, offers & campaigns"
+  },
+  {
     label: "Subcontractors",
     path: "/admin/subcontractors",
     icon: UserCheck,
