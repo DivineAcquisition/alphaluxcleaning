@@ -16,7 +16,8 @@
 //   Email — delegates to the existing `send-booking-confirmation`
 //           function (branded customer email + internal ops email).
 //   SMS   — rendered from `_shared/sms-templates.ts` and sent through
-//           `_shared/sms.ts` (GHL primary → OpenPhone fallback).
+//           `_shared/sms.ts` (OpenPhone primary with the state-routed
+//           business number → GHL fallback).
 //
 // Failures never propagate as HTTP errors to the confirm path —
 // the booking is already paid/confirmed; comms are best-effort and
@@ -92,7 +93,7 @@ serve(async (req) => {
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select(
-        "id, customer_id, status, service_type, service_date, time_slot, offer_name, confirmation_email_sent_at, confirmation_sms_sent_at",
+        "id, customer_id, status, service_type, service_date, time_slot, offer_name, zip_code, confirmation_email_sent_at, confirmation_sms_sent_at",
       )
       .eq("id", bookingId)
       .single();
@@ -109,11 +110,13 @@ serve(async (req) => {
       first_name?: string | null;
       last_name?: string | null;
       name?: string | null;
+      state?: string | null;
+      postal_code?: string | null;
     } | null = null;
     if (booking.customer_id) {
       const { data } = await supabase
         .from("customers")
-        .select("email, phone, first_name, last_name, name")
+        .select("email, phone, first_name, last_name, name, state, postal_code")
         .eq("id", booking.customer_id)
         .maybeSingle();
       customer = data;
@@ -210,6 +213,10 @@ serve(async (req) => {
         const res = await sendSms({
           to: customer.phone,
           message,
+          // State-routed OpenPhone "from" number (NJ / TX / CA / NY).
+          state: customer.state || undefined,
+          zip: (booking as any).zip_code || customer.postal_code || undefined,
+          context: "booking_confirm",
           email: customer.email || undefined,
           firstName: customer.first_name || undefined,
           lastName: customer.last_name || undefined,

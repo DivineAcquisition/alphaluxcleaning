@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
+import { sendSmsViaOpenPhone } from '../_shared/sms.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,8 @@ const corsHeaders = {
 interface SMSRequest {
   to: string;
   message: string;
+  state?: string;   // picks the state-routed OpenPhone "from" number
+  zip?: string;     // ZIP fallback for state inference
   notificationId?: string;
   customerId?: string;
   templateId?: string;
@@ -23,15 +26,7 @@ serve(async (req) => {
   }
 
   try {
-    const { to, message, notificationId, customerId, templateId, variables }: SMSRequest = await req.json();
-    
-    const OPENPHONE_API_KEY = Deno.env.get('OPENPHONE_API_KEY');
-    const OPENPHONE_PHONE_NUMBER_ID = Deno.env.get('OPENPHONE_PHONE_NUMBER_ID');
-
-    if (!OPENPHONE_API_KEY || !OPENPHONE_PHONE_NUMBER_ID) {
-      console.error('Missing OpenPhone credentials');
-      throw new Error('OpenPhone credentials not configured');
-    }
+    const { to, message, state, zip, notificationId, customerId, templateId, variables }: SMSRequest = await req.json();
 
     // Process message with template variables if provided
     let processedMessage = message;
@@ -50,28 +45,16 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Sending SMS via OpenPhone to ${to}: ${processedMessage}`);
+    console.log(`Sending SMS via OpenPhone to ${to} (state: ${state || 'auto'})`);
 
-    // Send SMS via OpenPhone API
-    const response = await fetch('https://api.openphone.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENPHONE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: processedMessage,
-        phoneNumberId: OPENPHONE_PHONE_NUMBER_ID,
-        to: [to],
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error('OpenPhone SMS error:', result);
-      throw new Error(`SMS failed: ${result.message || result.error || 'Unknown error'}`);
+    // Send through the shared state-routed OpenPhone sender so the
+    // "from" number matches the customer's state (NJ / TX / CA / NY).
+    const sendResult = await sendSmsViaOpenPhone(to, processedMessage, { state, zip });
+    if (!sendResult.ok) {
+      console.error('OpenPhone SMS error:', sendResult.error);
+      throw new Error(`SMS failed: ${sendResult.error || 'Unknown error'}`);
     }
+    const result = { id: sendResult.messageId, from: sendResult.from, state: sendResult.stateCode };
 
     console.log('SMS sent successfully via OpenPhone:', result.id);
 

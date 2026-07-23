@@ -6,6 +6,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Verify the Housecall Pro webhook signature. HCP sends:
+ *   Api-Timestamp: <unix ms>
+ *   Api-Signature: hex(HMAC-SHA256(signing_secret, `${timestamp}.${rawBody}`))
+ * Enforcement requires HCP_WEBHOOK_SECRET (the signing secret shown in the
+ * HCP webhook settings). When unset we accept (fail-open) so the receiver
+ * keeps working before the secret is provisioned.
+ */
+async function verifyHcpSignature(req: Request, rawBody: string, secret: string | null): Promise<boolean> {
+  if (!secret) return true;
+
+  const signature = req.headers.get("api-signature") || req.headers.get("x-hcp-signature") || "";
+  const timestamp = req.headers.get("api-timestamp") || "";
+  if (!signature) return false;
+
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const candidates = timestamp ? [`${timestamp}.${rawBody}`, rawBody] : [rawBody];
+    for (const data of candidates) {
+      const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
+      const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      if (hex === signature.toLowerCase()) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   console.log("HCP webhook receiver called");
   
@@ -20,7 +55,28 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const payload = await req.json();
+    let webhookSecret = Deno.env.get("HCP_WEBHOOK_SECRET") || null;
+    if (!webhookSecret) {
+      try {
+        const { data } = await supabase
+          .from("app_secrets")
+          .select("value")
+          .eq("name", "HCP_WEBHOOK_SECRET")
+          .maybeSingle();
+        webhookSecret = data?.value || null;
+      } catch (_) { /* env-only */ }
+    }
+
+    const rawBody = await req.text();
+    if (!(await verifyHcpSignature(req, rawBody, webhookSecret))) {
+      console.warn("HCP webhook signature verification failed — rejecting");
+      return new Response(JSON.stringify({ success: false, error: "invalid signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const payload = JSON.parse(rawBody);
     console.log("Received HCP webhook:", payload);
 
     // Extract event type and data
@@ -106,7 +162,7 @@ serve(async (req) => {
     console.error("Webhook processing error:", error);
     
     return new Response(JSON.stringify({
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       success: false
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

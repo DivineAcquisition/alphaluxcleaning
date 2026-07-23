@@ -150,6 +150,7 @@ serve(async (req) => {
         firstName: c.firstName,
         lastName: c.lastName,
         message: personalized,
+        context: 'reengage_cold_leads',
       });
 
       if (sendRes.success) {

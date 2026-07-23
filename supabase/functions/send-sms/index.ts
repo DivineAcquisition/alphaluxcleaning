@@ -1,16 +1,19 @@
 // send-sms — canonical outbound SMS endpoint.
 //
-// Routes through GoHighLevel (PIT) first and falls back to OpenPhone
-// only when GHL fails, via the shared _shared/sms.ts helper. GHL is the
-// core channel (the VA works the conversation there); OpenPhone is the
-// safety net.
+// Routes through OpenPhone first — from the business number matching the
+// customer's state (NJ / TX / CA / NY) — and falls back to GoHighLevel
+// only when OpenPhone fails, via the shared _shared/sms.ts helper.
+// Opt-outs (STOP) are enforced globally inside sendSms().
 //
 // Body: {
 //   to?: string,            // destination phone (any format)
 //   message: string,        // required
-//   contactId?: string,     // known GHL contact id (optional)
+//   state?: string,         // customer state — picks the OpenPhone "from" number
+//   zip?: string,           // ZIP fallback for state inference
+//   context?: string,       // caller tag for the sms_logs ledger
+//   contactId?: string,     // known GHL contact id (optional, fallback path)
 //   email?, firstName?, lastName?, name?,  // used to resolve/create the GHL contact
-//   fromNumber?: string,    // override GHL "from" number
+//   fromNumber?: string,    // override GHL "from" number (fallback path)
 //   enableFallback?: bool,  // default true
 //   enableGhl?: bool        // default true
 // }
