@@ -92,6 +92,7 @@ interface Customer {
   postal_code: string | null;
   timezone: string | null;
   last_booking_at: string | null;
+  next_booking_at: string | null;
   first_service_at: string | null;
   total_bookings: number;
   completed_bookings: number;
@@ -214,7 +215,7 @@ serve(async (req) => {
 
     const { data: customersRaw } = await supabase
       .from("customers")
-      .select("id, email, phone, first_name, last_name, name, state, postal_code, timezone, last_booking_at, first_service_at, total_bookings, completed_bookings, lifecycle_stage, is_recurring_member")
+      .select("id, email, phone, first_name, last_name, name, state, postal_code, timezone, last_booking_at, next_booking_at, first_service_at, total_bookings, completed_bookings, lifecycle_stage, is_recurring_member")
       .limit(CUSTOMER_BATCH);
     const customers = (customersRaw || []) as Customer[];
 
@@ -332,6 +333,8 @@ function pickDueStep(c: Customer, steps: CadenceStep[], settings: Settings): Cad
   let track: CadenceStep["track"];
   if (c.is_recurring_member) {
     track = "loyalty"; // members get the light track — no reactivation, no pitches
+  } else if (c.next_booking_at) {
+    return null; // they already have an upcoming clean — nothing to reactivate
   } else if (c.lifecycle_stage === "lapsed" || daysSince >= settings.lapsed_after_days) {
     return null; // auto-cadence stops at 120+; campaigns/offers still reach them
   } else if (c.completed_bookings === 1) {

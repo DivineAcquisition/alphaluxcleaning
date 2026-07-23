@@ -26,6 +26,7 @@
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.customers
   ADD COLUMN IF NOT EXISTS last_booking_at timestamptz,
+  ADD COLUMN IF NOT EXISTS next_booking_at timestamptz,
   ADD COLUMN IF NOT EXISTS first_service_at timestamptz,
   ADD COLUMN IF NOT EXISTS total_bookings integer NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS completed_bookings integer NOT NULL DEFAULT 0,
@@ -35,6 +36,8 @@ ALTER TABLE public.customers
 
 COMMENT ON COLUMN public.customers.last_booking_at IS
   'Most recent past service date (completed or confirmed). The lifecycle cadence clock.';
+COMMENT ON COLUMN public.customers.next_booking_at IS
+  'Nearest upcoming service date — customers with one are never sent reactivation touches.';
 COMMENT ON COLUMN public.customers.lifecycle_stage IS
   'lead | active | recurring | lapsed — derived by refresh_customer_retention().';
 
@@ -337,6 +340,7 @@ BEGIN
     completed_bookings  = stats.completed,
     first_service_at    = stats.first_completed,
     last_booking_at     = stats.last_service,
+    next_booking_at     = stats.next_service,
     is_recurring_member = stats.recurring,
     lifecycle_stage     = CASE
       WHEN stats.recurring THEN 'recurring'
@@ -353,6 +357,9 @@ BEGIN
       (MAX(b.service_date) FILTER (
         WHERE b.status IN ('completed', 'confirmed') AND b.service_date <= CURRENT_DATE
       ))::timestamptz AS last_service,
+      (MIN(b.service_date) FILTER (
+        WHERE b.status IN ('confirmed', 'pending') AND b.service_date > CURRENT_DATE
+      ))::timestamptz AS next_service,
       EXISTS (
         SELECT 1 FROM public.recurring_services rs
         WHERE rs.customer_id = cu.id AND rs.status = 'active'
