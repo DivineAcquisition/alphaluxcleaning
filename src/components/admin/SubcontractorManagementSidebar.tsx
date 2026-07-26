@@ -88,7 +88,7 @@ export function SubcontractorManagementSidebar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/auth');
+    navigate('/admin-login');
   };
 
   return (

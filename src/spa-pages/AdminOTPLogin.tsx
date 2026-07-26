@@ -76,7 +76,7 @@ const AdminOTPLogin = () => {
       }
 
       toast.success("Login successful!");
-      navigate('/admin-dashboard');
+      navigate('/admin');
     } catch (error) {
       console.error('Error:', error);
       toast.error("Verification failed");

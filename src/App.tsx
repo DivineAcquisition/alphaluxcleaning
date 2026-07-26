@@ -183,19 +183,55 @@ function App() {
             <Route path="/recurring-services" element={<RecurringServices />} />
             <Route path="/start-recurring" element={<StartRecurring />} />
             
-            {/* Admin Routes */}
+            {/* Admin Routes.
+                Every /admin/* page is wrapped in <AdminRoute> — several
+                (HCP settings, promo codes) were previously reachable by
+                anyone who knew the URL. Login/status pages stay public so
+                an admin can actually sign in. */}
             <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin-otp-login" element={<AdminOTPLogin />} />
           <Route path="/admin-auth-login" element={<AdminAuthLogin />} />
           <Route path="/admin-status" element={<AdminStatus />} />
+          {/* Legacy paths that older pages still navigate to. */}
+          <Route path="/admin-dashboard" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/email/templates" element={<AdminEmailTemplates />} />
           <Route path="/admin/email/logs" element={<AdminEmailLogs />} />
           <Route path="/admin/email/events" element={<AdminEmailEvents />} />
           <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/integrations/housecall-pro" element={<HousecallProSettings />} />
-          <Route path="/admin/integrations/housecall-pro/logs" element={<HousecallProLogs />} />
-          <Route path="/admin/integrations/housecall-pro/test" element={<HCPTestSuite />} />
-          <Route path="/admin/promos" element={<PromoCodes />} />
+          <Route path="/admin/bookings" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/BookingsAdmin')))}
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/admin/customers" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/CustomersAdmin')))}
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/admin/leads" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/LeadsAdmin')))}
+              </Suspense>
+            </AdminRoute>
+          } />
+          <Route path="/admin/integrations/housecall-pro" element={
+            <AdminRoute requiredRole="ops"><HousecallProSettings /></AdminRoute>
+          } />
+          <Route path="/admin/integrations/housecall-pro/logs" element={
+            <AdminRoute><HousecallProLogs /></AdminRoute>
+          } />
+          <Route path="/admin/integrations/housecall-pro/test" element={
+            <AdminRoute requiredRole="ops"><HCPTestSuite /></AdminRoute>
+          } />
+          <Route path="/admin/promos" element={
+            <AdminRoute requiredRole="ops"><PromoCodes /></AdminRoute>
+          } />
           <Route path="/admin/csr-booking" element={
             <AdminRoute requiredRole="ops">
               <Suspense fallback={<BrandedLoader />}>

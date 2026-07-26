@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { Navigation } from '@/components/Navigation';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,15 +29,13 @@ export default function BookingTester() {
   const successRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : '0';
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminLayout title="Booking Tester" description="Run end-to-end booking flow tests">
       <Helmet>
         <title>Automated Booking Flow Tester - AlphaLux Admin</title>
         <meta name="description" content="Run automated tests on the booking flow" />
       </Helmet>
 
-      <Navigation />
-
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="space-y-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
@@ -208,6 +206,6 @@ export default function BookingTester() {
           </Card>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 }

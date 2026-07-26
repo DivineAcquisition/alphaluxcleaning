@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ABTestResults } from "@/components/admin/ABTestResults";
 import { DropOffHeatmap } from "@/components/admin/DropOffHeatmap";
@@ -10,18 +10,16 @@ export default function ConversionOptimization() {
   const [timeRange, setTimeRange] = useState("7d");
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Conversion Optimization</h1>
-          <p className="text-muted-foreground mt-2">
-            Analyze user behavior, test variations, and optimize pricing
-          </p>
-        </div>
+    <AdminLayout
+      title="Conversion Optimization"
+      description="Analyze user behavior, test variations, and optimize pricing"
+    >
+    <div className="space-y-6">
+      <div className="flex items-center justify-end">
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value)}
-          className="px-4 py-2 border rounded-md"
+          className="px-4 py-2 border rounded-md bg-background"
         >
           <option value="24h">Last 24 Hours</option>
           <option value="7d">Last 7 Days</option>
@@ -59,5 +57,6 @@ export default function ConversionOptimization() {
         </TabsContent>
       </Tabs>
     </div>
+    </AdminLayout>
   );
 }

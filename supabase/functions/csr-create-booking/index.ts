@@ -192,8 +192,8 @@ serve(async (req) => {
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from('bookings')
       .insert({
+        // `bookings` has no email column — it lives on the customers row.
         customer_id: customer.id,
-        email: customerData.email,
         full_name: `${customerData.firstName} ${customerData.lastName}`,
         address_line1: customerData.addressLine1,
         address_line2: customerData.addressLine2,

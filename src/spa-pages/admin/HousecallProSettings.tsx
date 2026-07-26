@@ -70,25 +70,29 @@ export default function HousecallProSettings() {
   const handleTest = async () => {
     try {
       setTesting(true);
-      // Test the connection by making an API call
-      const response = await fetch('/api/hcp/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      });
-      
-      if (response.ok) {
+      // Previously POSTed to /api/hcp/test, which has never existed in
+      // this app (app/api only serves create-job), so the button always
+      // reported a failure. get-hcp-config is the real server-side
+      // source of truth for whether the credential is usable.
+      const live = await getHCPConfig();
+      if (live && (live as any).api_key_configured) {
         toast({
-          title: 'Success',
-          description: 'Connection to Housecall Pro API successful'
+          title: 'Housecall Pro is connected',
+          description: (live as any).webhook_secret_configured
+            ? 'API key found and the webhook signing secret is set.'
+            : 'API key found. The webhook signing secret is not set yet — inbound HCP events are unverified.',
         });
       } else {
-        throw new Error('API test failed');
+        toast({
+          title: 'Not connected',
+          description: 'No Housecall Pro API key is configured. Save one below, or set HCP_API_KEY in Supabase secrets.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to connect to Housecall Pro API',
+        description: error instanceof Error ? error.message : 'Failed to reach Housecall Pro config',
         variant: 'destructive'
       });
     } finally {

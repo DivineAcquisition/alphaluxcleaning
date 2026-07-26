@@ -188,7 +188,7 @@ export default function CSRBookingForm() {
           toast.success('Booking created! Payment link sent to customer.');
         }
         
-        navigate('/admin/dashboard');
+        navigate('/admin');
       }
     } catch (error: any) {
       console.error('Error creating booking:', error);
@@ -200,7 +200,7 @@ export default function CSRBookingForm() {
 
   const handlePaymentSuccess = async (paymentId: string) => {
     toast.success('Payment processed successfully!');
-    navigate('/admin/dashboard');
+    navigate('/admin');
   };
 
   if (showPaymentForm && bookingData) {
@@ -668,7 +668,7 @@ export default function CSRBookingForm() {
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {watchPaymentMode === 'instant' ? 'Proceed to Payment' : 'Create Booking & Send Link'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/admin/dashboard')}>
+                <Button type="button" variant="outline" onClick={() => navigate('/admin')}>
                   Cancel
                 </Button>
               </div>

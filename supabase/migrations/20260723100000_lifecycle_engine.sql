@@ -549,11 +549,13 @@ BEGIN
       'CREATE POLICY %I ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)',
       t || '_service_role_all', t
     );
+    -- Admin workspace access is gated by `admin_users` (the same table
+    -- admin-auth-guard checks), not the legacy `profiles.role` column.
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', t || '_admin_all', t);
     EXECUTE format(
       $pol$CREATE POLICY %I ON public.%I FOR ALL TO authenticated
-        USING (EXISTS (SELECT 1 FROM public.profiles WHERE user_id = auth.uid() AND role = 'admin'))
-        WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE user_id = auth.uid() AND role = 'admin'))$pol$,
+        USING (EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid() AND status = 'active'))
+        WITH CHECK (EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid() AND status = 'active'))$pol$,
       t || '_admin_all', t
     );
   END LOOP;

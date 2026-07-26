@@ -143,19 +143,50 @@ export async function openPhoneSend(opts: {
       headers: { Authorization: auth, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const json = await res.json().catch(() => ({}));
-    return { res, json };
+    const text = await res.text();
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+    return { res, json, text };
+  };
+
+  /**
+   * OpenPhone nests failures under `errors[]` / `error.message`, so a naive
+   * `json.message` renders "[object Object]" and hides the actual reason
+   * (bad key vs. a `from` number the workspace doesn't own). Flatten it.
+   */
+  const describe = (json: any, text: string): string => {
+    if (!json) return (text || 'no response body').slice(0, 300);
+    const parts: string[] = [];
+    if (typeof json.message === 'string') parts.push(json.message);
+    else if (json.message) parts.push(JSON.stringify(json.message));
+    if (typeof json.error === 'string') parts.push(json.error);
+    else if (json.error?.message) parts.push(String(json.error.message));
+    if (Array.isArray(json.errors)) {
+      parts.push(
+        json.errors
+          .map((e: any) => e?.message || e?.detail || JSON.stringify(e))
+          .join('; '),
+      );
+    }
+    if (json.code) parts.push(`code=${json.code}`);
+    const joined = parts.filter(Boolean).join(' | ');
+    return (joined || JSON.stringify(json)).slice(0, 300);
   };
 
   try {
-    let { res, json } = await attempt(apiKey);
+    let { res, json, text } = await attempt(apiKey);
     if (res.status === 401) {
-      ({ res, json } = await attempt(`Bearer ${apiKey}`));
+      ({ res, json, text } = await attempt(`Bearer ${apiKey}`));
     }
     if (!res.ok) {
+      const hint = res.status === 401
+        ? ' (check OPENPHONE_API_KEY in Supabase secrets)'
+        : res.status === 403
+        ? ` (does the OpenPhone workspace own ${body.from || body.phoneNumberId}?)`
+        : '';
       return {
         ok: false,
-        error: `OpenPhone failed (status ${res.status}): ${json?.message || json?.error || 'unknown'}`,
+        error: `OpenPhone failed (status ${res.status}): ${describe(json, text)}${hint}`,
       };
     }
     return { ok: true, messageId: json?.data?.id || json?.id };

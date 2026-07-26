@@ -335,8 +335,9 @@ serve(async (req) => {
     const { data: booking, error: bookErr } = await supabase
       .from("bookings")
       .insert({
+        // NOTE: `bookings` has no email column — the address of record
+        // lives on the linked customers row (joined via customer_id).
         customer_id: customerId,
-        email,
         full_name: `${body.firstName} ${body.lastName || ""}`.trim(),
         address_line1: body.addressLine1 || null,
         address_line2: body.addressLine2 || null,

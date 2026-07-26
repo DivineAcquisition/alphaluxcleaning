@@ -44,15 +44,28 @@ CREATE INDEX IF NOT EXISTS lead_intro_notifications_state_idx
 COMMENT ON TABLE public.lead_intro_notifications IS
   'Idempotency ledger + audit trail for the speed-to-lead intro SMS and internal ops alert fired at booking-funnel lead capture.';
 
--- Attribute a lead to the booking they eventually made (best-effort, by email).
+-- Attribute a lead to the booking they eventually made.
+--
+-- `bookings` has no email column — the address of record lives on the
+-- linked customer row — so we resolve it through customer_id.
 CREATE OR REPLACE FUNCTION public.tg_lead_intro_mark_converted()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_email text;
 BEGIN
-  IF NEW.email IS NULL THEN
+  IF NEW.customer_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT lower(trim(c.email)) INTO v_email
+  FROM public.customers c
+  WHERE c.id = NEW.customer_id;
+
+  IF v_email IS NULL THEN
     RETURN NEW;
   END IF;
 
@@ -60,7 +73,7 @@ BEGIN
   SET converted_booking_id = NEW.id,
       converted_at = now(),
       updated_at = now()
-  WHERE email = lower(trim(NEW.email))
+  WHERE email = v_email
     AND converted_booking_id IS NULL;
 
   RETURN NEW;

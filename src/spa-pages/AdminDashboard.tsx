@@ -1,237 +1,379 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+// Admin dashboard — live operational overview.
+//
+// Every figure on this page is queried from Supabase at render time (see
+// useAdminMetrics). The previous version mixed real booking counts with
+// mock subcontractors, a hardcoded reliability score, and payouts guessed
+// at 70% of price; all of that is gone. Field operations live in Housecall
+// Pro, so this workspace reports what it actually owns: the funnel,
+// revenue, comms rails, and integration health.
+
+import { Link } from 'react-router-dom';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Calendar, 
-  Users, 
-  Clock, 
-  AlertTriangle, 
-  DollarSign, 
-  TrendingUp,
-  MapPin,
-  Phone,
-  Eye,
-  UserPlus,
-  Filter,
-  MoreHorizontal,
-  CheckCircle,
-  XCircle,
-  Timer,
-  Activity,
-  TestTube,
-  Database
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useAdminMetrics, useRecentBookings } from '@/hooks/useAdminMetrics';
+import {
+  CalendarDays, Users, DollarSign, TrendingUp, AlertTriangle, RefreshCw,
+  MessageSquare, Mail, Plug, Zap, ArrowRight, UserPlus,
 } from 'lucide-react';
-import { Navigation } from '@/components/Navigation';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import { KPICards } from '@/components/dashboard/KPICards';
-import { JobsWorkboard } from '@/components/dashboard/JobsWorkboard';
-import { SubcontractorsWorkboard } from '@/components/dashboard/SubcontractorsWorkboard';
-import { PayoutsAlertsSection } from '@/components/dashboard/PayoutsAlertsSection';
-import { AssignmentDrawer } from '@/components/dashboard/AssignmentDrawer';
-import { format } from 'date-fns';
+
+const money = (n: number) =>
+  n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  completed: 'default',
+  confirmed: 'default',
+  pending: 'secondary',
+  cancelled: 'destructive',
+  rescheduled: 'outline',
+  recurring_active: 'default',
+};
+
+function Kpi({
+  label, value, sub, icon: Icon, to,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  icon: React.ElementType;
+  to?: string;
+}) {
+  const body = (
+    <Card className={to ? 'transition-colors hover:border-primary/40' : undefined}>
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-2xl font-bold mt-1">{value}</p>
+            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+          </div>
+          <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+  return to ? <Link to={to}>{body}</Link> : body;
+}
 
 export default function AdminDashboard() {
-  const [selectedJob, setSelectedJob] = useState<string | null>(null);
-  const [assignmentDrawerOpen, setAssignmentDrawerOpen] = useState(false);
-  
-  const {
-    kpis,
-    jobs,
-    subcontractors,
-    payouts,
-    alerts,
-    loading,
-    error,
-    refetch
-  } = useDashboardData();
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminMetrics();
+  const { data: recent, isLoading: recentLoading } = useRecentBookings(15);
 
-  const handleAssignJob = (jobId: string) => {
-    setSelectedJob(jobId);
-    setAssignmentDrawerOpen(true);
-  };
-
-  const handleAssignmentComplete = () => {
-    setAssignmentDrawerOpen(false);
-    setSelectedJob(null);
-    refetch();
-  };
-
-  if (loading) {
+  if (isError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminLayout title="Dashboard" description="Live operational overview">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Couldn't load dashboard data</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Unknown error'}
+            <Button size="sm" variant="outline" className="ml-3" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </AdminLayout>
     );
   }
 
-  if (error) {
+  if (isLoading || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="pt-6 text-center">
-              <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
-              <h2 className="text-lg font-semibold text-destructive mb-2">Dashboard Error</h2>
-              <p className="text-muted-foreground mb-4">
-                Failed to load dashboard data. Please try again.
-              </p>
-              <Button onClick={refetch} variant="outline">
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
+      <AdminLayout title="Dashboard" description="Live operational overview">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
-      </div>
+      </AdminLayout>
     );
+  }
+
+  const { bookings, revenue, customers, funnel, comms, integrations, lifecycle } = data;
+
+  // Alerts are derived from live state — they appear only when something
+  // genuinely needs attention.
+  const alerts: Array<{ id: string; title: string; body: string; to?: string; cta?: string }> = [];
+  if (integrations.bookingsMissingHcp > 0) {
+    alerts.push({
+      id: 'hcp',
+      title: `${integrations.bookingsMissingHcp} booking(s) not in Housecall Pro`,
+      body: 'Confirmed or completed bookings without an HCP job. The hourly backfill retries automatically; check the sync log if the count keeps climbing.',
+      to: '/admin/integrations/housecall-pro/logs',
+      cta: 'Open sync log',
+    });
+  }
+  if (integrations.hcpFailed > 0) {
+    alerts.push({
+      id: 'hcp-failed',
+      title: `${integrations.hcpFailed} failed HCP sync(s)`,
+      body: 'These jobs never reached Housecall Pro and need a retry.',
+      to: '/admin/integrations/housecall-pro/logs',
+      cta: 'Review',
+    });
+  }
+  if (funnel.introSmsFailed > 0) {
+    alerts.push({
+      id: 'sms',
+      title: `${funnel.introSmsFailed} intro SMS failure(s)`,
+      body: 'New leads did not receive their welcome text. Usually an OpenPhone credential or number-ownership problem.',
+      to: '/admin/leads',
+      cta: 'Open leads',
+    });
+  }
+  if (comms.emailsFailed7d > 0) {
+    alerts.push({
+      id: 'email',
+      title: `${comms.emailsFailed7d} email failure(s) this week`,
+      body: 'Resend rejected or bounced these sends.',
+      to: '/admin/email/logs',
+      cta: 'Open email logs',
+    });
+  }
+  if (lifecycle.engineEnabled === false) {
+    alerts.push({
+      id: 'lifecycle',
+      title: 'Lifecycle engine is switched off',
+      body: 'Reactivation cadence, offers and campaigns are not sending. Turn it on once the copy has been reviewed.',
+      to: '/admin/lifecycle',
+      cta: 'Open lifecycle',
+    });
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5">
-      <Navigation />
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => window.location.href = '/admin/csr-booking'}>
-              <Phone className="w-4 h-4 mr-2" />
-              CSR Booking
-            </Button>
-            <Button variant="outline" size="sm" onClick={refetch}>
-              <Clock className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
+    <AdminLayout title="Dashboard" description="Live operational overview">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <p className="text-sm text-muted-foreground">
+            All figures are queried live. Field operations (crews, dispatch, payouts) live in
+            Housecall Pro.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
-        {/* KPI Cards */}
-        <KPICards kpis={kpis} />
+        {alerts.length > 0 && (
+          <div className="space-y-2">
+            {alerts.map((a) => (
+              <Alert key={a.id}>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>{a.title}</AlertTitle>
+                <AlertDescription className="flex items-center justify-between gap-4 flex-wrap">
+                  <span>{a.body}</span>
+                  {a.to && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={a.to}>{a.cta} <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                    </Button>
+                  )}
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
 
-        {/* Developer Tools - Real-Time Monitoring & Testing */}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Kpi
+            label="Jobs today" value={bookings.today}
+            sub={`${bookings.upcoming7} in the next 7 days`}
+            icon={CalendarDays} to="/admin/bookings"
+          />
+          <Kpi
+            label="Booked revenue (month)" value={money(revenue.bookedThisMonth)}
+            sub={`${money(revenue.bookedAllTime)} all time`}
+            icon={DollarSign} to="/admin/bookings"
+          />
+          <Kpi
+            label="Outstanding balance" value={money(revenue.outstandingBalance)}
+            sub={`Avg booking ${money(revenue.avgBookingValue)}`}
+            icon={TrendingUp} to="/admin/bookings"
+          />
+          <Kpi
+            label="Customers" value={customers.total}
+            sub={`${customers.active} active · ${customers.lapsed} lapsed`}
+            icon={Users} to="/admin/customers"
+          />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4" /> Funnel &amp; leads
+              </CardTitle>
+              <CardDescription>Top-of-funnel capture and speed-to-lead.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <Row label="Leads captured (all time)" value={funnel.partialLeads} />
+              <Row label="New leads this week" value={funnel.leadsThisWeek} />
+              <Row label="Intro SMS delivered" value={funnel.introSmsSent} />
+              <Row
+                label="Intro SMS failed" value={funnel.introSmsFailed}
+                tone={funnel.introSmsFailed > 0 ? 'bad' : undefined}
+              />
+              <Row label="Leads that became bookings" value={funnel.leadsConverted} />
+              <Row
+                label="Lead → booking rate"
+                value={`${funnel.conversionRate.toFixed(1)}%`}
+              />
+              <Button asChild size="sm" variant="outline" className="w-full mt-2">
+                <Link to="/admin/leads">Open leads</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Comms (last 7 days)
+              </CardTitle>
+              <CardDescription>OpenPhone SMS and Resend email health.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <Row label="SMS sent" value={comms.smsSent7d} />
+              <Row
+                label="SMS failed" value={comms.smsFailed7d}
+                tone={comms.smsFailed7d > 0 ? 'bad' : undefined}
+              />
+              <Row label="Emails sent" value={comms.emailsSent7d} />
+              <Row
+                label="Emails failed" value={comms.emailsFailed7d}
+                tone={comms.emailsFailed7d > 0 ? 'bad' : undefined}
+              />
+              <Row label="SMS opt-outs (STOP)" value={comms.smsOptOuts} />
+              <Row label="Email unsubscribes" value={comms.emailOptOuts} />
+              <Button asChild size="sm" variant="outline" className="w-full mt-2">
+                <Link to="/admin/email/logs">
+                  <Mail className="h-3 w-3 mr-1" /> Email logs
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Plug className="h-4 w-4" /> Integrations
+              </CardTitle>
+              <CardDescription>Housecall Pro, GoHighLevel, lifecycle engine.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <Row label="HCP jobs synced" value={integrations.hcpSynced} />
+              <Row
+                label="HCP syncs failed" value={integrations.hcpFailed}
+                tone={integrations.hcpFailed > 0 ? 'bad' : undefined}
+              />
+              <Row
+                label="Bookings missing an HCP job" value={integrations.bookingsMissingHcp}
+                tone={integrations.bookingsMissingHcp > 0 ? 'bad' : undefined}
+              />
+              <Row
+                label="GHL sync errors" value={integrations.ghlFailed}
+                tone={integrations.ghlFailed > 0 ? 'bad' : undefined}
+              />
+              <Row
+                label="Lifecycle engine"
+                value={
+                  lifecycle.engineEnabled === null
+                    ? 'not configured'
+                    : lifecycle.engineEnabled ? 'on' : 'off'
+                }
+              />
+              <Row label="Lifecycle sends (7d)" value={lifecycle.sends7d} />
+              <Button asChild size="sm" variant="outline" className="w-full mt-2">
+                <Link to="/admin/integrations/housecall-pro">
+                  <Zap className="h-3 w-3 mr-1" /> Integration settings
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Developer Tools
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Booking Monitor */}
-              <Button
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2"
-                onClick={() => window.location.href = '/admin/booking-monitor'}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <Activity className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Booking Monitor</span>
-                </div>
-                <p className="text-xs text-muted-foreground text-left">
-                  Real-time tracking of active bookings, conversion funnel, and live activity feed
-                </p>
-              </Button>
-
-              {/* Automated Tester */}
-              <Button
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2"
-                onClick={() => window.location.href = '/admin/booking-tester'}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <TestTube className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Automated Tester</span>
-                </div>
-                <p className="text-xs text-muted-foreground text-left">
-                  Run automated test suites on booking flow with detailed validation reports
-                </p>
-              </Button>
-
-              {/* Database Watcher */}
-              <Button
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2"
-                onClick={() => window.location.href = '/admin/database-watcher'}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <Database className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Database Watcher</span>
-                </div>
-                <p className="text-xs text-muted-foreground text-left">
-                  Monitor live database changes across all tables with real-time event stream
-                </p>
-              </Button>
-
-              {/* Conversion Optimization */}
-              <Button
-                variant="outline"
-                className="h-auto p-4 flex flex-col items-start gap-2"
-                onClick={() => window.location.href = '/admin/conversion'}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Conversion Optimization</span>
-                </div>
-                <p className="text-xs text-muted-foreground text-left">
-                  A/B test results, drop-off heatmaps, and pricing sensitivity analysis
-                </p>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <CardTitle className="text-base">Recent bookings</CardTitle>
+                <CardDescription>
+                  {bookings.total} total · {bookings.pending} pending · {bookings.confirmed} confirmed ·{' '}
+                  {bookings.completed} completed
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/bookings">View all</Link>
               </Button>
             </div>
+          </CardHeader>
+          <CardContent>
+            {recentLoading ? (
+              <Skeleton className="h-48" />
+            ) : (recent || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No bookings yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Service date</TableHead>
+                      <TableHead>Offer</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Value</TableHead>
+                      <TableHead>HCP</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(recent || []).map((b) => (
+                      <TableRow key={b.id}>
+                        <TableCell>
+                          <div className="font-medium">{b.full_name || 'Unnamed'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {b.customer?.email || '—'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {b.service_date || 'Not scheduled'}
+                        </TableCell>
+                        <TableCell>{b.offer_name || b.service_type || '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant={STATUS_VARIANT[b.status] || 'secondary'}>{b.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {b.est_price != null ? money(Number(b.est_price)) : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {b.hcp_job_id
+                            ? <Badge variant="outline">synced</Badge>
+                            : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Workboard */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Jobs Section */}
-          <div className="space-y-4">
-            <JobsWorkboard 
-              jobs={jobs}
-              onAssignJob={handleAssignJob}
-              onRefresh={refetch}
-            />
-          </div>
-
-          {/* Subcontractors Section */}
-          <div className="space-y-4">
-            <SubcontractorsWorkboard 
-              subcontractors={subcontractors}
-              onAssignJob={handleAssignJob}
-            />
-          </div>
-        </div>
-
-        {/* Payouts & Alerts */}
-        <PayoutsAlertsSection 
-          payouts={payouts}
-          alerts={alerts}
-          onRefresh={refetch}
-        />
-
-        {/* Assignment Drawer */}
-        <AssignmentDrawer
-          open={assignmentDrawerOpen}
-          onClose={() => setAssignmentDrawerOpen(false)}
-          jobId={selectedJob}
-          onAssignmentComplete={handleAssignmentComplete}
-        />
       </div>
+    </AdminLayout>
+  );
+}
+
+function Row({
+  label, value, tone,
+}: {
+  label: string;
+  value: string | number;
+  tone?: 'bad';
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-medium ${tone === 'bad' ? 'text-destructive' : ''}`}>{value}</span>
     </div>
   );
 }

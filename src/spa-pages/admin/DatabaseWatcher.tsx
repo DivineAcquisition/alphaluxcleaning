@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { Navigation } from '@/components/Navigation';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,16 @@ import { useState } from 'react';
 const WATCHED_TABLES = [
   'bookings',
   'customers',
+  'partial_bookings',
+  'lead_intro_notifications',
   'payments',
-  'integration_logs',
   'email_jobs',
-  'webhook_queue',
+  'sms_logs',
+  'lifecycle_sends',
   'hcp_sync_log',
+  'webhook_queue',
+  'integration_logs',
   'booking_events',
-  'test_runs',
 ];
 
 export default function DatabaseWatcher() {
@@ -48,15 +51,13 @@ export default function DatabaseWatcher() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminLayout title="Database Watcher" description="Realtime feed of database changes">
       <Helmet>
         <title>Real-Time Database Watcher - AlphaLux Admin</title>
         <meta name="description" content="Monitor database changes in real-time" />
       </Helmet>
 
-      <Navigation />
-
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -182,6 +183,6 @@ export default function DatabaseWatcher() {
           </p>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

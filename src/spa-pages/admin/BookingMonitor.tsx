@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { Navigation } from '@/components/Navigation';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,15 +20,13 @@ export default function BookingMonitor() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminLayout title="Booking Monitor" description="Live booking funnel events as they happen">
       <Helmet>
         <title>Real-Time Booking Monitor - AlphaLux Admin</title>
         <meta name="description" content="Monitor active bookings in real-time" />
       </Helmet>
 
-      <Navigation />
-
-      <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -155,6 +153,6 @@ export default function BookingMonitor() {
           </Badge>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

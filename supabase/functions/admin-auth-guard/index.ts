@@ -6,6 +6,50 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Resolve the caller's JWT to an active `admin_users` row.
+ *
+ * Used to gate the service-role management actions below. Returns the
+ * caller's role on success so the handler can additionally require the
+ * full `admin` role for destructive operations.
+ */
+async function requireActiveAdmin(
+  authHeader: string | null,
+  // deno-lint-ignore no-explicit-any
+  svc: any,
+): Promise<
+  | { ok: true; userId: string; role: string }
+  | { ok: false; status: number; error: string }
+> {
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+  const jwt = authHeader.replace("Bearer ", "");
+
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { global: { headers: { Authorization: `Bearer ${jwt}` } } },
+  );
+
+  const { data: { user }, error } = await userClient.auth.getUser();
+  if (error || !user) {
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  const { data: admin } = await svc
+    .from("admin_users")
+    .select("role, status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!admin) {
+    return { ok: false, status: 403, error: "Forbidden" };
+  }
+  return { ok: true, userId: user.id, role: (admin as any).role };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -116,11 +160,36 @@ serve(async (req) => {
       });
     }
 
-    // Admin management actions (require service role or admin auth)
+    // ---- Admin management actions ----
+    //
+    // These run with the service-role key, so the CALLER must be proven
+    // to be an active admin first. Previously this block executed for
+    // anyone who could reach the function URL, which meant an anonymous
+    // client could enumerate admin users and change roles.
     const svc = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    const caller = await requireActiveAdmin(auth, svc);
+    if (!caller.ok) {
+      return new Response(
+        JSON.stringify({ error: caller.error }),
+        {
+          status: caller.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Role and status changes are destructive — restrict to full admins.
+    const PRIVILEGED_ACTIONS = ["update_user_role", "update_user_status", "add_to_allowlist"];
+    if (PRIVILEGED_ACTIONS.includes(action) && caller.role !== "admin") {
+      return new Response(
+        JSON.stringify({ error: "Forbidden", reason: `${action} requires the admin role` }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     switch (action) {
       case 'list_users': {
@@ -220,15 +289,16 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Admin auth guard error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Admin auth guard error:', err);
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name
+      message: err.message,
+      stack: err.stack,
+      name: err.name
     });
     return new Response(JSON.stringify({ 
       error: "Internal server error", 
-      details: error?.message 
+      details: err.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
