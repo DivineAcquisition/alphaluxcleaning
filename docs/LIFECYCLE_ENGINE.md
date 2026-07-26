@@ -130,6 +130,30 @@ Booking → HCP flow (unchanged, now self-healing):
 Point the HCP webhook (HCP dashboard → API & Webhooks) at:
 `https://<project>.functions.supabase.co/receive-hcp-webhook`
 
+## Speed-to-lead (booking-funnel entry)
+
+The moment a visitor submits name / email / phone on `/book/zip`, two things fire:
+
+1. **Intro SMS** from the OpenPhone number matching their market (state from the
+   validated ZIP lookup, falling back to ZIP-range inference).
+2. **Internal alert email** to the ops mailbox (`info@alphaluxcleaning.com` +
+   `info@alphaluxclean.com`, overridable with `INTERNAL_RECIPIENT_EMAILS`).
+
+Both are owned by the `lead-intro-comms` edge function and recorded in
+`lead_intro_notifications`, which is the idempotency ledger: the SMS slot is
+claimed atomically (`UPDATE … WHERE intro_sms_sent_at IS NULL`) before dispatch,
+so a double-submitted form, a retried webhook, and the client-side backup call
+together still produce exactly one text and one alert. A failed send releases the
+claim so the next attempt retries. Leads who previously texted STOP
+(`sms_opt_outs`) are skipped and recorded as such.
+
+It is triggered from two places on purpose — `emit-lead-webhook` server-side
+(primary) and `Zip.tsx` client-side (backup, so the touch still lands if the
+webhook's GHL leg is slow or mid-deploy). The ledger makes the duplication safe.
+
+A booking later created by that email address stamps `converted_booking_id` on the
+lead row, so **/admin/leads** shows speed-to-lead through to conversion.
+
 ## Internal Booking (ported from Novara's book-as-va)
 
 Admin/VA phone-booking workspace at **/admin/internal-booking**, backed by the

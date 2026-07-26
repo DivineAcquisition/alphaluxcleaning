@@ -222,6 +222,29 @@ export default function BookingZip() {
           }
         }
       }).catch(err => console.error('Error tracking progress:', err));
+
+      // Speed-to-lead: intro SMS from the OpenPhone number for this
+      // customer's state + internal ops alert. `emit-lead-webhook` also
+      // triggers this server-side; the function claims the send
+      // atomically in lead_intro_notifications, so the two paths together
+      // still produce exactly one text and one alert. Firing from here as
+      // well means the touch still goes out if the webhook is mid-deploy
+      // or its GHL leg is timing out.
+      supabase.functions.invoke('lead-intro-comms', {
+        body: {
+          firstName,
+          lastName,
+          email,
+          phone: `+1${cleanPhone}`,
+          zipCode,
+          city: validatedLocation?.city,
+          state: validatedLocation?.state,
+          promoCode: (data as any)?.promo?.code || '',
+          landingPage: trackingData.landing_page || window.location.href,
+          referrer: trackingData.referrer,
+          utms: trackingData,
+        }
+      }).catch(err => console.error('Error sending lead intro:', err));
       
       // Update booking context with contact info
       updateBookingData({

@@ -96,6 +96,10 @@ export interface AdminOverview {
     hcpPending: number;
     bookingsMissingHcp: number;
     ghlFailed: number;
+    /** Most recent HCP failure reason — usually names the actual cause. */
+    lastHcpError: string | null;
+    /** Most recent outbound SMS failure reason. */
+    lastSmsError: string | null;
   };
   lifecycle: {
     engineEnabled: boolean | null;
@@ -119,7 +123,7 @@ async function fetchOverview(): Promise<AdminOverview> {
     custTotal, custNewWeek, custStages,
     partialTotal, partialWeek, leadIntroRows,
     emailSent, emailFailed, smsRows, smsOptOuts, emailOptOuts,
-    hcpRows, bookingsMissingHcp, ghlFailed,
+    hcpRows, bookingsMissingHcp, ghlFailed, lastHcpError, lastSmsError,
     lifecycleSettings, lifecycleSteps, lifecycleSends, lifecycleAttributed,
   ] = await Promise.all([
     countRows('bookings', (q) => q.eq('service_date', today)),
@@ -177,6 +181,29 @@ async function fetchOverview(): Promise<AdminOverview> {
     countRows('bookings', (q) =>
       q.in('status', ['confirmed', 'completed']).is('hcp_job_id', null)),
     countRows('bookings', (q) => q.not('ghl_sync_error', 'is', null)),
+
+    safe(async () => {
+      const { data } = await db
+        .from('hcp_sync_log')
+        .select('last_error')
+        .eq('status', 'failed')
+        .not('last_error', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data?.last_error as string) || null;
+    }, null as string | null),
+    safe(async () => {
+      const { data } = await db
+        .from('sms_logs')
+        .select('error')
+        .eq('status', 'failed')
+        .not('error', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data?.error as string) || null;
+    }, null as string | null),
 
     safe(async () => {
       const { data } = await db.from('lifecycle_settings').select('engine_enabled').eq('id', 1).maybeSingle();
@@ -259,6 +286,8 @@ async function fetchOverview(): Promise<AdminOverview> {
       hcpPending: hcpStatus('pending'),
       bookingsMissingHcp,
       ghlFailed,
+      lastHcpError,
+      lastSmsError,
     },
     lifecycle: {
       engineEnabled: lifecycleSettings?.engine_enabled ?? null,

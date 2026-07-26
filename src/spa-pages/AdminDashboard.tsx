@@ -110,16 +110,22 @@ export default function AdminDashboard() {
     alerts.push({
       id: 'hcp-failed',
       title: `${integrations.hcpFailed} failed HCP sync(s)`,
-      body: 'These jobs never reached Housecall Pro and need a retry.',
+      // The stored error names the real cause (almost always a rejected
+      // API key), so show it rather than a generic "sync failed".
+      body: integrations.lastHcpError
+        ? `Most recent failure: ${integrations.lastHcpError}`
+        : 'These jobs never reached Housecall Pro and need a retry.',
       to: '/admin/integrations/housecall-pro/logs',
       cta: 'Review',
     });
   }
-  if (funnel.introSmsFailed > 0) {
+  if (funnel.introSmsFailed > 0 || comms.smsFailed7d > 0) {
     alerts.push({
       id: 'sms',
-      title: `${funnel.introSmsFailed} intro SMS failure(s)`,
-      body: 'New leads did not receive their welcome text. Usually an OpenPhone credential or number-ownership problem.',
+      title: `${funnel.introSmsFailed || comms.smsFailed7d} SMS failure(s)`,
+      body: integrations.lastSmsError
+        ? `Most recent failure: ${integrations.lastSmsError}`
+        : 'Outbound texts are not going out. Usually an OpenPhone credential or number-ownership problem.',
       to: '/admin/leads',
       cta: 'Open leads',
     });
