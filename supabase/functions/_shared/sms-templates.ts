@@ -8,6 +8,15 @@ interface TemplateVariables {
 }
 
 export const SMS_TEMPLATES: Record<string, (vars: TemplateVariables) => string> = {
+  // Speed-to-lead intro, fired the moment someone submits their contact
+  // info at the top of the booking funnel. Sent from the OpenPhone number
+  // matching their state so the reply lands in the right market's inbox.
+  lead_intro: (vars: TemplateVariables) =>
+    `Hi ${vars.first_name}, it's AlphaLux Clean — thanks for checking availability${vars.city ? ` in ${vars.city}` : ''}! ` +
+    `You can finish booking here: ${vars.booking_link}` +
+    (vars.promo_code ? ` (your code ${vars.promo_code} is applied)` : '') +
+    `. Questions? Just reply to this text — a real person answers. Reply STOP to opt out.`,
+
   // Keep the manage link optional — the SPA has no public /manage page
   // today, so callers that can't build a real link simply omit it and
   // the message stays a clean, reply-able confirmation.

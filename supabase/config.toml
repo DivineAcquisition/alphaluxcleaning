@@ -62,6 +62,11 @@ verify_jwt = false
 [functions.book-as-va]
 verify_jwt = true
 
+# Speed-to-lead fan-out (intro SMS from the state's OpenPhone number +
+# internal ops alert). Invoked server-to-server by emit-lead-webhook.
+[functions.lead-intro-comms]
+verify_jwt = true
+
 # HCP retry/backfill sweeps — invoked by pg_cron with the anon JWT.
 [functions.retry-failed-hcp-syncs]
 verify_jwt = false

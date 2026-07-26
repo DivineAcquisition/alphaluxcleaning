@@ -18,6 +18,24 @@ const nextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
+  async redirects() {
+    return [
+      // The legacy booking subdomain is retired — everything now lives on
+      // try.alphaluxcleaning.com. Redirect at the edge (before React boots)
+      // and preserve the path + query so ad links with ?promo=… survive.
+      //
+      // Stripe routing is unaffected: create-payment-intent resolves the
+      // account from the customer's state/ZIP first (slugFromCustomerLocation),
+      // so CA/TX customers still charge against the BOOK account even though
+      // the host is no longer book.alphaluxclean.com.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "(www\\.)?book\\.alphaluxclean\\.com" }],
+        destination: "https://try.alphaluxcleaning.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {

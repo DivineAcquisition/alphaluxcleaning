@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getInternalRecipients } from "../_shared/internal-recipients.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -218,71 +217,68 @@ serve(async (req) => {
       logStep('Lead welcome email error', { error: err.message });
     });
 
-    // Notify the owner / ops on EVERY entry-form submission so speed-to-lead
-    // follow-up can happen immediately. Sent to each internal recipient
-    // (owner mailbox + ops) and de-duped by an event_id keyed on the lead's
-    // email + minute so a double-submit doesn't double-email.
+    // Speed-to-lead fan-out: intro SMS to the lead from the OpenPhone
+    // number matching their state, plus the internal ops notification
+    // email. Delegated to `lead-intro-comms`, which owns the
+    // idempotency ledger (lead_intro_notifications) so a double-submit
+    // can't double-text or double-email.
+    //
+    // AWAITED on purpose: the edge runtime tears down pending promises
+    // once we return a response, so the previous fire-and-forget
+    // invocation of the owner notification was silently dropped
+    // whenever the response won the race.
     const submittedAt = payload.timestamp || new Date().toISOString();
-    const adminEventBase = `lead-admin-${(payload.email || '').toLowerCase()}-${submittedAt.slice(0, 16)}`;
-    for (const recipient of getInternalRecipients()) {
-      supabase.functions.invoke('send-email-system', {
+    let leadIntro: unknown = null;
+    try {
+      const introRes = await supabase.functions.invoke('lead-intro-comms', {
         body: {
-          template: 'lead_admin_notification',
-          to: recipient,
-          event_id: `${adminEventBase}-${recipient}`,
-          data: {
-            first_name: payload.firstName,
-            last_name: payload.lastName,
-            email: payload.email,
-            phone: payload.phone,
-            zip_code: payload.zipCode,
-            city: payload.city || '',
-            state: payload.state || '',
-            promo_code: assignedPromo.code || '',
-            utm_source: payload.utmSource || '',
-            utm_medium: payload.utmMedium || '',
-            utm_campaign: payload.utmCampaign || '',
-            utm_content: payload.utmContent || '',
-            landing_page: payload.landingPage || '',
-            referrer: payload.referrer || '',
-            message: payload.message || '',
-            submitted_at: submittedAt,
-            app_url: appUrl,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          email: payload.email,
+          phone: payload.phone,
+          zipCode: payload.zipCode,
+          city: payload.city,
+          state: payload.state,
+          promoCode: assignedPromo.code || '',
+          landingPage: payload.landingPage,
+          referrer: payload.referrer,
+          submittedAt,
+          utms: {
+            utm_source: payload.utmSource,
+            utm_medium: payload.utmMedium,
+            utm_campaign: payload.utmCampaign,
+            utm_content: payload.utmContent,
+            utm_term: payload.utmTerm,
           },
-          category: 'transactional',
         },
-      }).then(res => {
-        if (res.error) {
-          logStep('Owner lead notification failed', { recipient, error: res.error.message });
-        } else {
-          logStep('Owner lead notification sent', { recipient });
-        }
-      }).catch(err => {
-        logStep('Owner lead notification error', { recipient, error: err.message });
       });
+      leadIntro = introRes.error ? { error: introRes.error.message } : introRes.data;
+      logStep('lead-intro-comms result', leadIntro);
+    } catch (err) {
+      leadIntro = { error: (err as Error).message };
+      logStep('lead-intro-comms failed (non-blocking)', leadIntro);
     }
 
-    // Return based on GHL response
+    // The lead is captured at this point regardless of the GHL *webhook*
+    // (the durable contact upsert happens in ghl-sync-lead, which has its
+    // own retry, and the intro SMS + ops alert have already gone out).
+    // A failed webhook is an integration warning, not a customer-facing
+    // failure — reporting it as one made the funnel show a scary error
+    // toast on leads that actually saved fine.
     if (!ghlResponse.ok) {
-      logStep('GHL webhook failed', { status: ghlStatus });
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Webhook delivery failed',
-          status: ghlStatus 
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      logStep('GHL webhook failed (lead still captured)', { status: ghlStatus });
+    } else {
+      logStep('Lead webhook sent successfully to GHL');
     }
-
-    logStep('Lead webhook sent successfully to GHL');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Lead captured and sent to GoHighLevel',
+        message: 'Lead captured',
+        ghlDelivered: ghlResponse.ok,
         ghlStatus: ghlStatus,
         promo: assignedPromo,
+        leadIntro,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
