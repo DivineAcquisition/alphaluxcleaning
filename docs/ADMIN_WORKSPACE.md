@@ -70,14 +70,29 @@ admin pages now use `AdminLayout`.
 
 ## Credential health
 
-Two live integrations are currently failing authentication. The code paths are
-correct; the stored secrets are being rejected:
+Run the check any time from **Housecall Pro settings → Test Connection**, which
+calls the admin-gated `integration-health` edge function. It performs a real
+authenticated request against each provider and reports the provider's own error
+text (never secret values). The dashboard also surfaces the most recent stored
+HCP and SMS failure reasons.
 
-- **Housecall Pro** — every `hcp_sync_log` failure is
-  `HCP authentication failed under both Token and Bearer schemes (401 Unauthorized)`.
-  Set a current `HCP_API_KEY` in Supabase secrets.
-- **OpenPhone** — outbound sends return `401`. Set a current `OPENPHONE_API_KEY`.
+State as of the last check:
 
-Both surface on the dashboard with the actual error text, so the cause is visible
-rather than showing a generic "sync failed". Once the keys are valid, the
-`retry-failed-hcp-syncs` cron (every 30 minutes) drains the backlog automatically.
+| Integration | Result |
+|-------------|--------|
+| Housecall Pro | **Not connected.** The value stored in Supabase as `HCP_API_KEY` is a placeholder string (32 chars, matches `PLACEHOLDER…REPLACED`), not a real key. |
+| OpenPhone | **Not connected.** A real-looking key is stored but OpenPhone returns `401 Unauthorized`. |
+| Resend | Working — a restricted send-only key. It can't list domains, which is expected and harmless. |
+
+The Housecall Pro timeline matches the placeholder theory exactly: the last
+successful sync was **2026-05-02**, and every attempt from **2026-05-17** onward
+failed with 401. The key was working and was then overwritten.
+
+Note there are two separate credential stores. The Next.js route
+`app/api/create-job/route.ts` reads `HCP_API_KEY` from the **hosting provider's**
+environment (Vercel), while every Supabase edge function reads it from **Supabase
+secrets**. A key set in one is not visible to the other, so both need the real
+value.
+
+Once the keys are valid, the `retry-failed-hcp-syncs` cron (every 30 minutes)
+drains the backlog of failed syncs automatically.

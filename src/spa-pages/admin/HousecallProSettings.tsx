@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { AlertCircle, Eye, EyeOff, TestTube } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { getHCPConfig, updateHCPConfig, redactApiKey, type HCPConfig } from '@/lib/hcp';
 
 export default function HousecallProSettings() {
@@ -70,29 +71,31 @@ export default function HousecallProSettings() {
   const handleTest = async () => {
     try {
       setTesting(true);
-      // Previously POSTed to /api/hcp/test, which has never existed in
-      // this app (app/api only serves create-job), so the button always
-      // reported a failure. get-hcp-config is the real server-side
-      // source of truth for whether the credential is usable.
-      const live = await getHCPConfig();
-      if (live && (live as any).api_key_configured) {
+      // Previously POSTed to /api/hcp/test, which has never existed in this
+      // app (app/api only serves create-job), so the button always reported
+      // failure regardless of the real state. `integration-health` performs
+      // an actual authenticated call against the Housecall Pro API and
+      // returns their error text when it fails.
+      const { data, error } = await supabase.functions.invoke('integration-health');
+      if (error) throw error;
+
+      const hcp = (data as any)?.integrations?.housecallPro;
+      if (hcp?.ok) {
         toast({
           title: 'Housecall Pro is connected',
-          description: (live as any).webhook_secret_configured
-            ? 'API key found and the webhook signing secret is set.'
-            : 'API key found. The webhook signing secret is not set yet — inbound HCP events are unverified.',
+          description: `Authenticated successfully (${hcp.scheme} scheme).`,
         });
       } else {
         toast({
-          title: 'Not connected',
-          description: 'No Housecall Pro API key is configured. Save one below, or set HCP_API_KEY in Supabase secrets.',
+          title: 'Housecall Pro is not connected',
+          description: hcp?.reason || 'The API key was rejected.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to reach Housecall Pro config',
+        description: error instanceof Error ? error.message : 'Failed to run the connection test',
         variant: 'destructive'
       });
     } finally {
