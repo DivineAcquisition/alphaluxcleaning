@@ -38,6 +38,7 @@
 // All calls include Version: 2021-07-28 per the LeadConnector API spec.
 
 import { toE164US } from './phone-format.ts';
+import { getSecret } from './secrets.ts';
 
 export const GHL_BASE = 'https://services.leadconnectorhq.com';
 export const GHL_API_VERSION = '2021-07-28';
@@ -177,9 +178,12 @@ export function readGhlCredentials(): { token: string; locationId: string } {
   return { token: token.trim(), locationId: locationId.trim() };
 }
 
+const TOKEN_ALIASES = ['GHL_PRIVATE_INTEGRATION_TOKEN', 'GOHIGHLEVEL_API_KEY'];
+const LOCATION_ALIASES = ['GOHIGHLEVEL_LOCATION_ID'];
+
 /**
- * True when both halves of the location-scoped credential are present.
- * Lets callers skip GHL work gracefully instead of throwing.
+ * Env-var-only check. Kept for synchronous callers; prefer the async
+ * form below, which also sees credentials stored in `app_secrets`.
  */
 export function ghlIsConfigured(): boolean {
   const token =
@@ -188,6 +192,39 @@ export function ghlIsConfigured(): boolean {
     Deno.env.get('GOHIGHLEVEL_API_KEY');
   const locationId = Deno.env.get('GHL_LOCATION_ID') || Deno.env.get('GOHIGHLEVEL_LOCATION_ID');
   return Boolean(token && locationId);
+}
+
+/**
+ * Resolve both halves of the location-scoped credential from env vars
+ * or `app_secrets`. Returns null when either half is missing — callers
+ * should skip GHL work rather than construct a half-configured client.
+ */
+export async function resolveGhlCredentials(): Promise<
+  { token: string; locationId: string } | null
+> {
+  const [token, locationId] = await Promise.all([
+    getSecret('GHL_PIT_TOKEN', TOKEN_ALIASES),
+    getSecret('GHL_LOCATION_ID', LOCATION_ALIASES),
+  ]);
+  if (!token || !locationId) return null;
+  return { token, locationId };
+}
+
+/** True when a usable token + location pair exists in either store. */
+export async function ghlIsConfiguredAsync(): Promise<boolean> {
+  return (await resolveGhlCredentials()) !== null;
+}
+
+/**
+ * Build a client from whichever store holds the credentials. Throws the
+ * same descriptive error as `readGhlCredentials` when nothing is set.
+ */
+export async function createGhlClientFromSecrets(): Promise<GHLClient> {
+  const creds = await resolveGhlCredentials();
+  if (creds) return createGhlClient(creds);
+  // Nothing in app_secrets either — reuse the env path purely for its
+  // error message, which names the missing variable.
+  return createGhlClient();
 }
 
 // ─── Owner / location-user resolution cache (per cold start) ──────────────

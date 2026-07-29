@@ -37,7 +37,11 @@
 // Never throws — returns a structured result the caller can log.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { createGhlClient, ghlIsConfigured, type GHLClient } from './ghl-client.ts';
+import {
+  createGhlClientFromSecrets,
+  ghlIsConfiguredAsync,
+  type GHLClient,
+} from './ghl-client.ts';
 import { toE164US, phoneDigits10 } from './phone-format.ts';
 import { openPhoneSend, resolveStateNumber, type StateNumber } from './openphone.ts';
 
@@ -183,7 +187,7 @@ export async function resolveGhlContactId(
 /** Send via GHL conversations (PIT). Resolves/creates the contact first. */
 export async function sendSmsViaGhl(input: SendSmsInput): Promise<{ ok: boolean; contactId?: string; messageId?: string; error?: string }> {
   try {
-    const client = createGhlClient();
+    const client = await createGhlClientFromSecrets();
     const contactId = await resolveGhlContactId(client, {
       contactId: input.contactId,
       phone: input.to,
@@ -237,10 +241,17 @@ export async function sendSmsViaOpenPhone(
 /**
  * Provider order for a send, derived from the booking channel. The
  * first entry is the rail that owns the message; anything after it is
- * failover. Exported so the rails can be asserted in sms.test.ts
- * without touching a provider.
+ * failover.
+ *
+ * `ghlConfigured` is passed in rather than read here because resolving
+ * GHL credentials is async (they may live in `app_secrets`, not just
+ * env). Keeping this function pure also makes the rails assertable in
+ * sms.deno-test.ts without touching a provider.
  */
-export function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
+export function providerOrder(
+  input: SendSmsInput,
+  ghlConfigured: boolean,
+): Array<'openphone' | 'ghl'> {
   const ghlPermitted = input.enableFallback !== false && input.enableGhl !== false;
 
   if (input.channel === 'public') {
@@ -250,7 +261,7 @@ export function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
 
   if (input.channel === 'internal') {
     if (!ghlPermitted) return ['openphone'];
-    if (!ghlIsConfigured()) {
+    if (!ghlConfigured) {
       smsLog('internal channel: GHL not configured — using OpenPhone');
       return ['openphone'];
     }
@@ -258,7 +269,7 @@ export function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
   }
 
   // No channel declared — legacy order.
-  return ghlPermitted ? ['openphone', 'ghl'] : ['openphone'];
+  return ghlPermitted && ghlConfigured ? ['openphone', 'ghl'] : ['openphone'];
 }
 
 /**
@@ -284,7 +295,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { success: true, provider: 'none', fallback: false, suppressed: true, attempts };
   }
 
-  const order = providerOrder(input);
+  const order = providerOrder(input, await ghlIsConfiguredAsync());
   let stateNumber: StateNumber | null = null;
 
   for (const provider of order) {

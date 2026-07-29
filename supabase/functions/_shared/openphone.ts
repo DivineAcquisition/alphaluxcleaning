@@ -13,6 +13,7 @@
 // inferred from the ZIP code.
 
 import { toE164US } from './phone-format.ts';
+import { getSecret } from './secrets.ts';
 
 export type StateCode = 'NJ' | 'TX' | 'CA' | 'NY';
 
@@ -154,8 +155,15 @@ export async function openPhoneSend(opts: {
   from?: string | null;
   phoneNumberId?: string | null;
 }): Promise<OpenPhoneSendResult> {
-  const apiKey = Deno.env.get('OPENPHONE_API_KEY');
-  if (!apiKey) return { ok: false, error: 'OPENPHONE_API_KEY not configured' };
+  // Env var first, then the service-role app_secrets table.
+  const apiKey = await getSecret('OPENPHONE_API_KEY');
+  if (!apiKey) {
+    return {
+      ok: false,
+      error:
+        'OPENPHONE_API_KEY not configured (checked edge-function secrets and app_secrets)',
+    };
+  }
 
   const to = toE164US(opts.to) || opts.to;
   const body: Record<string, unknown> = { content: opts.message, to: [to] };

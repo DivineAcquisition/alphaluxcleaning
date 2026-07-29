@@ -14,6 +14,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getSecret } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,9 +33,7 @@ function looksPlaceholder(v: string): boolean {
 
 async function checkHcp() {
   const key = clean(
-    Deno.env.get("HCP_API_KEY") ||
-    Deno.env.get("HOUSECALL_PRO_API_KEY") ||
-    Deno.env.get("HCP_LIVE_API_KEY"),
+    await getSecret("HCP_API_KEY", ["HOUSECALL_PRO_API_KEY", "HCP_LIVE_API_KEY"]),
   );
   if (!key) {
     return { ok: false, configured: false, reason: "No HCP API key is set in Supabase secrets." };
@@ -72,9 +71,13 @@ async function checkHcp() {
 }
 
 async function checkOpenPhone() {
-  const key = clean(Deno.env.get("OPENPHONE_API_KEY"));
+  const key = clean(await getSecret("OPENPHONE_API_KEY"));
   if (!key) {
-    return { ok: false, configured: false, reason: "No OPENPHONE_API_KEY is set in Supabase secrets." };
+    return {
+      ok: false,
+      configured: false,
+      reason: "No OPENPHONE_API_KEY found in edge-function secrets or app_secrets.",
+    };
   }
   if (looksPlaceholder(key)) {
     return { ok: false, configured: true, placeholder: true, reason: "OPENPHONE_API_KEY is a placeholder string." };
@@ -134,19 +137,17 @@ async function checkOpenPhone() {
  */
 async function checkGhl() {
   const token = clean(
-    Deno.env.get("GHL_PIT_TOKEN") ||
-    Deno.env.get("GHL_PRIVATE_INTEGRATION_TOKEN") ||
-    Deno.env.get("GOHIGHLEVEL_API_KEY"),
+    await getSecret("GHL_PIT_TOKEN", ["GHL_PRIVATE_INTEGRATION_TOKEN", "GOHIGHLEVEL_API_KEY"]),
   );
   const locationId = clean(
-    Deno.env.get("GHL_LOCATION_ID") || Deno.env.get("GOHIGHLEVEL_LOCATION_ID"),
+    await getSecret("GHL_LOCATION_ID", ["GOHIGHLEVEL_LOCATION_ID"]),
   );
 
   if (!token) {
     return {
       ok: false,
       configured: false,
-      reason: "No GHL_PIT_TOKEN is set in Supabase secrets. Internal-booking texts cannot send.",
+      reason: "No GHL_PIT_TOKEN found in edge-function secrets or app_secrets. Internal-booking texts cannot send.",
     };
   }
   if (looksPlaceholder(token)) {
@@ -157,6 +158,7 @@ async function checkGhl() {
       ok: false,
       configured: false,
       reason: "GHL_PIT_TOKEN is set but GHL_LOCATION_ID is not. Private Integration tokens are location-scoped — copy the Location ID from GoHighLevel (Settings → Business Profile) for the same subaccount the integration was created in.",
+      token: "present",
     };
   }
 
@@ -207,8 +209,14 @@ async function checkGhl() {
 }
 
 async function checkResend() {
-  const key = clean(Deno.env.get("RESEND_API_KEY"));
-  if (!key) return { ok: false, configured: false, reason: "No RESEND_API_KEY is set." };
+  const key = clean(await getSecret("RESEND_API_KEY"));
+  if (!key) {
+    return {
+      ok: false,
+      configured: false,
+      reason: "No RESEND_API_KEY found in edge-function secrets or app_secrets.",
+    };
+  }
   if (looksPlaceholder(key)) {
     return { ok: false, configured: true, placeholder: true, reason: "RESEND_API_KEY is a placeholder string." };
   }

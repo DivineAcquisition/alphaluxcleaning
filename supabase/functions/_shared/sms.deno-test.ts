@@ -24,52 +24,50 @@ function withEnv(vars: Record<string, string | null>, run: () => void) {
   }
 }
 
-const GHL_CONFIGURED = { GHL_PIT_TOKEN: 'pit-test', GHL_LOCATION_ID: 'loc-test' };
-const GHL_ABSENT = {
-  GHL_PIT_TOKEN: null,
-  GHL_PRIVATE_INTEGRATION_TOKEN: null,
-  GOHIGHLEVEL_API_KEY: null,
-  GHL_LOCATION_ID: null,
-  GOHIGHLEVEL_LOCATION_ID: null,
-};
+const NO_FAILOVER_OVERRIDE = { INTERNAL_SMS_OPENPHONE_FAILOVER: null };
 
 const base = { to: '+15551234567', message: 'hi' };
+const GHL_UP = true;
+const GHL_DOWN = false;
 
 Deno.test('public rail never falls back to GoHighLevel', () => {
-  withEnv({ ...GHL_CONFIGURED, INTERNAL_SMS_OPENPHONE_FAILOVER: null }, () => {
-    assertEquals(providerOrder({ ...base, channel: 'public' }), ['openphone']);
+  withEnv(NO_FAILOVER_OVERRIDE, () => {
+    assertEquals(providerOrder({ ...base, channel: 'public' }, GHL_UP), ['openphone']);
+    // Even with GHL unavailable the answer is the same — never reroute.
+    assertEquals(providerOrder({ ...base, channel: 'public' }, GHL_DOWN), ['openphone']);
   });
 });
 
 Deno.test('internal rail sends through GoHighLevel with OpenPhone failover', () => {
-  withEnv({ ...GHL_CONFIGURED, INTERNAL_SMS_OPENPHONE_FAILOVER: null }, () => {
-    assertEquals(providerOrder({ ...base, channel: 'internal' }), ['ghl', 'openphone']);
+  withEnv(NO_FAILOVER_OVERRIDE, () => {
+    assertEquals(providerOrder({ ...base, channel: 'internal' }, GHL_UP), ['ghl', 'openphone']);
   });
 });
 
 Deno.test('internal rail can be made strictly GoHighLevel-only', () => {
-  withEnv({ ...GHL_CONFIGURED, INTERNAL_SMS_OPENPHONE_FAILOVER: 'false' }, () => {
-    assertEquals(providerOrder({ ...base, channel: 'internal' }), ['ghl']);
+  withEnv({ INTERNAL_SMS_OPENPHONE_FAILOVER: 'false' }, () => {
+    assertEquals(providerOrder({ ...base, channel: 'internal' }, GHL_UP), ['ghl']);
   });
 });
 
 Deno.test('internal rail falls back to OpenPhone when GHL is not configured', () => {
-  withEnv({ ...GHL_ABSENT, INTERNAL_SMS_OPENPHONE_FAILOVER: null }, () => {
-    assertEquals(providerOrder({ ...base, channel: 'internal' }), ['openphone']);
+  withEnv(NO_FAILOVER_OVERRIDE, () => {
+    assertEquals(providerOrder({ ...base, channel: 'internal' }, GHL_DOWN), ['openphone']);
   });
 });
 
 Deno.test('messages with no rail keep the legacy order', () => {
-  withEnv(GHL_CONFIGURED, () => {
-    assertEquals(providerOrder(base), ['openphone', 'ghl']);
+  withEnv(NO_FAILOVER_OVERRIDE, () => {
+    assertEquals(providerOrder(base, GHL_UP), ['openphone', 'ghl']);
+    assertEquals(providerOrder(base, GHL_DOWN), ['openphone']);
   });
 });
 
 Deno.test('callers can still opt out of GHL entirely', () => {
-  withEnv(GHL_CONFIGURED, () => {
-    assertEquals(providerOrder({ ...base, enableGhl: false }), ['openphone']);
+  withEnv(NO_FAILOVER_OVERRIDE, () => {
+    assertEquals(providerOrder({ ...base, enableGhl: false }, GHL_UP), ['openphone']);
     assertEquals(
-      providerOrder({ ...base, channel: 'internal', enableFallback: false }),
+      providerOrder({ ...base, channel: 'internal', enableFallback: false }, GHL_UP),
       ['openphone'],
     );
   });

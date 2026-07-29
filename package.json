@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "health-check": "node scripts/health-check.js",
-    "test": "deno test --no-check --no-lock --allow-env --allow-net supabase/functions/_shared/sms.deno-test.ts src/config/domains.deno-test.ts"
+    "test": "deno test --no-check --no-lock --allow-env --allow-net supabase/functions/_shared/sms.deno-test.ts supabase/functions/_shared/secrets.deno-test.ts src/config/domains.deno-test.ts"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",

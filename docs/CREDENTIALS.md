@@ -6,8 +6,53 @@ setting a value in one does **not** set it in the others.
 | Store | Holds | Where |
 |---|---|---|
 | Supabase edge-function secrets | Everything the booking and comms rails run on | Supabase dashboard → Edge Functions → Secrets |
+| `public.app_secrets` | The same, settable without the dashboard | Service-role table, see below |
 | Vercel environment variables | The Next.js server route and public browser values | Vercel → Project → Settings → Environment Variables |
 | `.env` (local only, gitignored) | Local development copies | Your machine |
+
+## app_secrets — the dashboard-free store
+
+Supabase exposes no API for writing edge-function environment secrets;
+they can only be set by a human in the dashboard. `public.app_secrets`
+exists so credentials can also be set and rotated over SQL. Edge
+functions resolve every credential through `_shared/secrets.ts`:
+
+```
+Deno.env.get(NAME)  →  app_secrets.value where name = NAME  →  undefined
+```
+
+**The environment variable always wins.** Moving a credential into the
+dashboard later quietly supersedes the table copy instead of conflicting
+with it, and a value is never read from the database if the platform has
+one.
+
+Security: the table is service-role only. RLS is enabled *and* forced,
+and `anon` / `authenticated` have had their default table grants revoked,
+so a credential is unreadable even if RLS were later switched off.
+Verified with `set local role anon` → 0 rows.
+
+Rotate a value with:
+
+```sql
+insert into public.app_secrets (name, value, updated_at)
+values ('OPENPHONE_API_KEY', '<new value>', now())
+on conflict (name) do update set value = excluded.value, updated_at = now();
+```
+
+Cached per function instance, so a rotation applies on the next cold
+start.
+
+### Currently installed
+
+| Secret | Store | Verified |
+|---|---|---|
+| `OPENPHONE_API_KEY` | `app_secrets` | Yes — lists all four workspace numbers |
+| `GHL_PIT_TOKEN` | `app_secrets` | Yes — authenticates against the location below |
+| `GHL_LOCATION_ID` | `app_secrets` | Yes — `ESaf0wtNvMhNtUYQ4rzz` |
+| `ANTHROPIC_API_KEY` | `app_secrets` | Pre-existing |
+
+These take effect once the edge functions are redeployed — the versions
+running today predate `_shared/secrets.ts` and still read env only.
 
 ## Use the right Supabase project
 
