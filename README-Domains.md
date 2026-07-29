@@ -1,188 +1,109 @@
-# Bay Area Cleaning Pros - Multi-Host Configuration
+# Domain architecture
 
-## Domain Architecture
+One Vercel project serves every host. There is no separate admin
+deployment — the surface a visitor gets is decided by the `Host` header.
 
-This application supports multiple subdomains with host-specific routing and restrictions:
+| Host | Serves | Auth |
+|------|--------|------|
+| `admin.alphaluxcleaning.com` | Admin workspace (`/admin/*`, admin login, internal tooling) | Required, `admin_users` |
+| `admin.alphaluxclean.com` | Same, legacy brand spelling | Required |
+| `try.alphaluxcleaning.com` | Public booking funnel | None (guest) |
+| `try.novaracleaning.com` | Same funnel, alternate hostname | None (guest) |
+| `book.alphaluxclean.com` | Retired — 308 to `try.alphaluxcleaning.com` | — |
+| localhost, `*.vercel.app` | Everything, unenforced | — |
 
-### Production Domains
+`try.alphaluxcleaning.com` is the **canonical** public origin: it is where
+cross-host redirects land and what outbound links in SMS, email and
+Stripe use. Override with `NEXT_PUBLIC_BOOKING_ORIGIN` /
+`NEXT_PUBLIC_ADMIN_ORIGIN` if that ever changes.
 
-- **admin.bayareacleaningpros.com** - Administrative portal
-- **book.bayareacleaningpros.com** - Public booking interface  
-- **contractor.bayareacleaningpros.com** - Subcontractor portal
-- **portal.bayareacleaningpros.com** - Customer portal (coming soon)
-- **try.bayareacleaningpros.com** - Signup redirect (301 to admin)
-- **bayareacleaningpros.com** - Marketing site redirect
-
-### DNS Setup Checklist
-
-For each subdomain, configure the following DNS records at your domain registrar:
-
-```
-Type: CNAME
-Name: admin
-Value: [your-lovable-domain].lovable.app
-
-Type: CNAME  
-Name: book
-Value: [your-lovable-domain].lovable.app
-
-Type: CNAME
-Name: contractor
-Value: [your-lovable-domain].lovable.app
-
-Type: CNAME
-Name: portal
-Value: [your-lovable-domain].lovable.app
-
-Type: CNAME
-Name: try
-Value: [your-lovable-domain].lovable.app
-
-Type: A (for apex domain)
-Name: @
-Value: 185.158.133.1
-```
-
-### SSL Certificates
-
-SSL certificates are automatically provisioned by Lovable for all configured domains. This typically takes 5-15 minutes after DNS propagation.
-
-## Route Restrictions by Host
-
-### Admin Portal (admin.bayareacleaningpros.com)
-**Allowed Routes:**
-- `/login`, `/signup`, `/onboard`
-- `/dashboard`, `/admin/*`
-- `/app/*`, `/billing`, `/integrations/*`
-
-**Authentication:** Required (admin/manager roles)
-
-### Booking Portal (book.bayareacleaningpros.com) 
-**Allowed Routes:**
-- `/` (booking interface)
-- `/b/*` (booking slugs)
-- Confirmation pages: `/order-confirmation`, `/payment-confirmation`, etc.
-
-**Authentication:** Not required (public)
-
-### Contractor Portal (contractor.bayareacleaningpros.com)
-**Allowed Routes:**
-- `/today` (daily dashboard)
-- `/job/*` (job details)
-- `/offer/*` (job offers)
-- `/contractor-auth` (login)
-
-**Authentication:** Required (contractor role)
-
-### Customer Portal (portal.bayareacleaningpros.com)
-**Allowed Routes:**
-- `/portal/*` (customer dashboard)
-- `/customer-auth` (login)
-
-**Authentication:** Required (customer role)
-
-## Security Features
-
-### HTTPS Enforcement
-- All production hosts automatically redirect HTTP to HTTPS
-- Security headers set per host requirements
-
-### Security Headers
-```
-X-Frame-Options: DENY (SAMEORIGIN for booking portal)
-Referrer-Policy: strict-origin-when-cross-origin
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 1; mode=block
-```
-
-### SEO Configuration
-- Host-specific canonical URLs (no cross-host canonicalization)
-- `noindex` directive for admin and contractor portals
-- Custom meta descriptions per host
-
-## Health Endpoints
-
-Each host provides a health check endpoint:
-
-- `admin.bayareacleaningpros.com/health/admin`
-- `book.bayareacleaningpros.com/health/book` 
-- `contractor.bayareacleaningpros.com/health/sub`
-- `portal.bayareacleaningpros.com/health/portal`
-
-## Error Handling
-
-### Branded 404 Pages
-Each host shows a branded 404 page for unauthorized routes with:
-- Host-specific branding and colors
-- Appropriate call-to-action buttons
-- Consistent styling with Bay Area Cleaning Pros brand
-
-### Cross-Host Protection
-Accessing unauthorized routes on any host (e.g., `/admin` on booking portal) shows the branded 404 instead of leaking internal routes.
-
-## Development & Testing
-
-### Local Development
-In development environments (localhost, Lovable preview), the system defaults to admin portal with relaxed restrictions for testing.
-
-### Testing Checklist
-Once DNS is configured, verify:
-
-1. **Admin Portal:**
-   - `https://admin.bayareacleaningpros.com/signup` → Shows signup form
-   - Login works and redirects to dashboard
-   - Accessing `/app/*` requires authentication
-
-2. **Booking Portal:**  
-   - `https://book.bayareacleaningpros.com/` → Shows booking interface
-   - Confirmation pages work without authentication
-   - Accessing admin routes shows branded 404
-
-3. **Contractor Portal:**
-   - `https://contractor.bayareacleaningpros.com/today` → Requires contractor login
-   - Job management pages work for authenticated contractors
-   - Admin routes show branded 404
-
-4. **Redirects:**
-   - `https://try.bayareacleaningpros.com` → 301 redirects to admin signup
-   - `https://bayareacleaningpros.com` → Redirects appropriately
-
-5. **Cross-Host Security:**
-   - Admin routes on booking portal → Branded 404
-   - Contractor routes on admin portal → Branded 404
-   - Proper authentication enforcement per host
-
-## Adding New Hosts
-
-To add a new subdomain:
-
-1. **Update Domain Detection** (`src/utils/domainDetection.ts`)
-   - Add new host to `hostRoleMap`
-   - Define allowed routes and target audience
-
-2. **Configure Security** (`src/components/HostBasedRouter.tsx`)
-   - Add authentication rules if needed
-   - Set appropriate route restrictions
-
-3. **Add DNS Records**
-   - Create CNAME record pointing to Lovable
-   - Allow 24-48 hours for propagation
-
-4. **Update Documentation**
-   - Add new host to this README
-   - Update testing checklist
-
-## Environment Variables
-
-The following environment variables are configured in Lovable:
+## Where the rule lives
 
 ```
-APP_URL=https://admin.bayareacleaningpros.com
-BOOK_URL=https://book.bayareacleaningpros.com  
-SUB_URL=https://contractor.bayareacleaningpros.com
-PORTAL_URL=https://portal.bayareacleaningpros.com
-TRY_URL=https://try.bayareacleaningpros.com
-ROOT_URL=https://bayareacleaningpros.com
+src/config/domains.ts   ← the rule (host role, path surface, decision)
+├── middleware.ts               applies it at the edge, on hard loads
+├── src/components/DomainGuard  applies it on in-app navigation
+├── app/ChatWidget.tsx          public funnel only
+└── app/MarketingScripts.tsx    everywhere except the admin host
 ```
 
-These are used for cross-domain redirects and link generation.
+Both enforcement points are needed. This app is a Next.js shell around a
+client-side React Router SPA, so a `<Link to="/admin">` clicked on the
+public host never reaches the edge — only the router guard sees it.
+Conversely the guard only runs after React boots, which is far too late
+to keep admin code off a public page load.
+
+## Path surfaces
+
+Paths are classified into three surfaces, and a host only serves its own
+plus `shared`.
+
+**Admin surface** — `/admin*`, the admin login and status pages, and the
+internal tooling that used to be public on the booking domain:
+`/dev-test*`, `/demo-booking`, `/booking-debug`, `/email-tools`,
+`/test-webhook`, `/confirmation-preview`.
+
+**Shared** — `/api/*` (the Next route the funnel calls for Housecall Pro
+job creation) and `/health/*` (uptime probes).
+
+**Public** — everything else: the booking funnel, payment links,
+referrals, careers, marketing pages.
+
+## What each host does with a foreign path
+
+- Admin host, public path → 307 to the same path on the booking origin.
+- Admin host, `/` → 307 to `/admin` (the workspace is the front door).
+- Booking host, admin path → 307 to the same path on the admin origin.
+- Retired host, any path → 308 to the booking origin.
+
+Query strings and fragments survive every hop, so an ad link with
+`?promo=…` or a deep link into the workspace still works.
+
+Redirects between live surfaces are 307 (temporary) on purpose: a 308
+would be cached in visitors' browsers indefinitely and make a future
+config change impossible to roll out. The retired host is a genuine
+permanent move, so it stays 308.
+
+## Admin host hardening
+
+Responses on the admin host carry `X-Robots-Tag: noindex, nofollow,
+noarchive`, `X-Frame-Options: DENY` and `Referrer-Policy: same-origin`.
+Meta Pixel and Mouseflow do not load there — session replay over the
+bookings and leads pages would record customer PII, and internal traffic
+would pollute conversion data.
+
+## DNS
+
+Point each hostname at Vercel and attach it to this project. No
+per-host project or rewrite rules are required.
+
+```
+Type: CNAME   Name: admin   Value: cname.vercel-dns.com
+Type: CNAME   Name: try     Value: cname.vercel-dns.com
+```
+
+Vercel provisions certificates automatically once the records resolve.
+
+## Verifying a deployment
+
+```bash
+npm run health-check                          # against production DNS
+BASE_URL=http://localhost:3000 npm run health-check   # against next start
+```
+
+The script asserts the full matrix — admin surface reachable on the
+admin host, funnel bounced off it, admin bounced off the public host,
+internal tooling bounced off the public host, retired host still
+forwarding — and exits non-zero on the first violation. `BASE_URL` sends
+the hostnames as `Host` headers, so the whole thing can be checked
+against a preview build before DNS is cut over.
+
+## Adding a host
+
+1. Add the hostname to `ADMIN_HOSTS` or `BOOKING_HOSTS` in
+   `src/config/domains.ts`.
+2. Add a case to `CASES` in `scripts/health-check.js`.
+3. Attach the domain in Vercel.
+
+Nothing else needs to change: the middleware, the router guard, the chat
+widget and the marketing tags all read from the same config.

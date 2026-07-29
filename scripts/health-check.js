@@ -1,157 +1,119 @@
 #!/usr/bin/env node
 
 /**
- * Health Check Script for Bay Area Cleaning Pros Multi-Host Setup
- * 
- * This script tests all health endpoints across different hosts to ensure
- * the multi-host routing is working correctly.
- * 
- * Usage: npm run health-check
+ * Domain separation health check.
+ *
+ * Verifies the live deployment enforces the rule in src/config/domains.ts:
+ * the admin host serves the workspace and bounces everything else, and the
+ * public booking host serves the funnel and bounces admin surface. Each
+ * case asserts a status code and, for redirects, where it points.
+ *
+ * Usage:
+ *   npm run health-check                       # against production
+ *   BASE_URL=http://localhost:3000 npm run health-check
+ *
+ * With BASE_URL set, requests go to that origin with the host name sent
+ * as a Host header, so the same matrix can be run against `next start`
+ * or a preview deployment before DNS is cut over.
  */
 
 const https = require('https');
 const http = require('http');
+const { URL } = require('url');
 
-// Health endpoints to test
-const HEALTH_ENDPOINTS = [
-  {
-    name: 'Admin Portal',
-    url: 'https://admin.bayareacleaningpros.com/health/admin',
-    fallback: 'http://localhost:8080/health/admin'
-  },
-  {
-    name: 'Booking Portal',
-    url: 'https://book.bayareacleaningpros.com/health/book',
-    fallback: 'http://localhost:8080/health/book'
-  },
-  {
-    name: 'Contractor Portal',
-    url: 'https://contractor.bayareacleaningpros.com/health/sub',
-    fallback: 'http://localhost:8080/health/sub'
-  },
-  {
-    name: 'Customer Portal',
-    url: 'https://portal.bayareacleaningpros.com/health/portal',
-    fallback: 'http://localhost:8080/health/portal'
-  }
+const ADMIN_HOST = process.env.ADMIN_HOST || 'admin.alphaluxcleaning.com';
+const BOOKING_HOST = process.env.BOOKING_HOST || 'try.alphaluxcleaning.com';
+const RETIRED_HOST = 'book.alphaluxclean.com';
+const BASE_URL = process.env.BASE_URL || '';
+
+/** [host, path, expected status, expected Location substring or null] */
+const CASES = [
+  ['admin surface reachable on admin host', ADMIN_HOST, '/admin', [200, 401, 403], null],
+  ['admin login reachable on admin host', ADMIN_HOST, '/admin-login', [200], null],
+  ['admin host root enters the workspace', ADMIN_HOST, '/', [307, 308], '/admin'],
+  ['booking funnel bounced off admin host', ADMIN_HOST, '/book/zip', [307, 308], BOOKING_HOST],
+  ['health probe served on admin host', ADMIN_HOST, '/health/admin', [200], null],
+
+  ['booking funnel reachable on public host', BOOKING_HOST, '/book/zip', [200], null],
+  ['admin bounced off public host', BOOKING_HOST, '/admin', [307, 308], ADMIN_HOST],
+  ['admin login bounced off public host', BOOKING_HOST, '/admin-login', [307, 308], ADMIN_HOST],
+  ['internal tooling bounced off public host', BOOKING_HOST, '/dev-test', [307, 308], ADMIN_HOST],
+
+  ['retired host still forwards', RETIRED_HOST, '/book/offer', [301, 307, 308], BOOKING_HOST],
 ];
 
-/**
- * Make HTTP request and return promise
- */
-function makeRequest(url) {
+function request(host, path) {
   return new Promise((resolve) => {
-    const isHttps = url.startsWith('https:');
-    const client = isHttps ? https : http;
-    
-    const request = client.get(url, {
-      timeout: 10000,
-      headers: {
-        'User-Agent': 'Health-Check-Script/1.0'
-      }
-    }, (response) => {
-      let data = '';
-      
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      response.on('end', () => {
-        resolve({
-          success: response.statusCode >= 200 && response.statusCode < 300,
-          statusCode: response.statusCode,
-          data: data,
-          url: url
-        });
-      });
+    const target = BASE_URL ? new URL(path, BASE_URL) : new URL(path, `https://${host}`);
+    const client = target.protocol === 'https:' ? https : http;
+
+    const req = client.request(
+      target,
+      {
+        method: 'GET',
+        timeout: 10000,
+        headers: { Host: host, 'User-Agent': 'alphalux-domain-health-check/2.0' },
+      },
+      (res) => {
+        res.resume(); // discard the body, we only need the head
+        resolve({ statusCode: res.statusCode, location: res.headers.location || '' });
+      },
+    );
+
+    req.on('error', (error) => resolve({ error: error.message }));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve({ error: 'request timeout' });
     });
-    
-    request.on('error', (error) => {
-      resolve({
-        success: false,
-        error: error.message,
-        url: url
-      });
-    });
-    
-    request.on('timeout', () => {
-      request.destroy();
-      resolve({
-        success: false,
-        error: 'Request timeout',
-        url: url
-      });
-    });
+    req.end();
   });
 }
 
-/**
- * Test a single endpoint with fallback
- */
-async function testEndpoint(endpoint) {
-  console.log(`Testing ${endpoint.name}...`);
-  
-  // Try production URL first
-  let result = await makeRequest(endpoint.url);
-  
-  // If production fails, try localhost fallback
-  if (!result.success && endpoint.fallback) {
-    console.log(`  Production failed, trying localhost...`);
-    result = await makeRequest(endpoint.fallback);
-    result.isLocalhost = true;
-  }
-  
-  return { ...result, name: endpoint.name };
-}
+async function run() {
+  console.log('AlphaLux — domain separation health check');
+  console.log(`Target: ${BASE_URL || 'production DNS'}\n`);
 
-/**
- * Main health check function
- */
-async function runHealthCheck() {
-  console.log('🏥 Bay Area Cleaning Pros - Multi-Host Health Check');
-  console.log('================================================\n');
-  
-  const results = [];
-  
-  // Test all endpoints
-  for (const endpoint of HEALTH_ENDPOINTS) {
-    const result = await testEndpoint(endpoint);
-    results.push(result);
-    
-    if (result.success) {
-      const hostType = result.isLocalhost ? '(localhost)' : '(production)';
-      console.log(`✅ ${result.name} ${hostType}`);
-      console.log(`   Status: ${result.statusCode}`);
-    } else {
-      console.log(`❌ ${result.name}`);
-      console.log(`   Error: ${result.error || 'HTTP ' + result.statusCode}`);
-      console.log(`   URL: ${result.url}`);
+  const failures = [];
+
+  for (const [label, host, path, expectedStatuses, expectedLocation] of CASES) {
+    const res = await request(host, path);
+
+    if (res.error) {
+      failures.push(`${label} — request failed: ${res.error}`);
+      console.log(`FAIL  ${label}\n      ${host}${path} — ${res.error}`);
+      continue;
     }
-    console.log('');
+
+    const statusOk = expectedStatuses.includes(res.statusCode);
+    const locationOk = !expectedLocation || res.location.includes(expectedLocation);
+
+    if (statusOk && locationOk) {
+      const where = res.location ? ` -> ${res.location}` : '';
+      console.log(`ok    ${label}\n      ${host}${path} ${res.statusCode}${where}`);
+      continue;
+    }
+
+    const detail = !statusOk
+      ? `expected ${expectedStatuses.join('/')}, got ${res.statusCode}`
+      : `expected redirect to ${expectedLocation}, got ${res.location || '(none)'}`;
+    failures.push(`${label} — ${detail}`);
+    console.log(`FAIL  ${label}\n      ${host}${path} — ${detail}`);
   }
-  
-  // Summary
-  const successCount = results.filter(r => r.success).length;
-  const totalCount = results.length;
-  
-  console.log('Summary:');
-  console.log(`${successCount}/${totalCount} endpoints healthy`);
-  
-  if (successCount === totalCount) {
-    console.log('🎉 All systems operational!');
-    process.exit(0);
-  } else {
-    console.log('⚠️  Some endpoints are down. Check DNS and deployment status.');
+
+  console.log(`\n${CASES.length - failures.length}/${CASES.length} checks passed`);
+  if (failures.length > 0) {
+    console.log('\nFailures:');
+    for (const f of failures) console.log(`  - ${f}`);
     process.exit(1);
   }
+  process.exit(0);
 }
 
-// Run the health check
 if (require.main === module) {
-  runHealthCheck().catch(error => {
-    console.error('Health check failed:', error);
+  run().catch((error) => {
+    console.error('Health check crashed:', error);
     process.exit(1);
   });
 }
 
-module.exports = { runHealthCheck, testEndpoint };
+module.exports = { run };

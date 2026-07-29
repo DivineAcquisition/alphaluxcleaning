@@ -4,11 +4,25 @@ Every page under `/admin/*` reads live data from Supabase. This document records
 what the workspace contains after the overhaul and what was removed, so nobody
 re-introduces the placeholder data that used to be here.
 
+## Where it lives
+
+The workspace is served **only** from `admin.alphaluxcleaning.com`. Requesting
+`/admin` on the public booking host redirects to the admin host, and requesting
+a booking path on the admin host redirects back — enforced at the edge by
+`middleware.ts` and on in-app navigation by `DomainGuard`, both reading
+`src/config/domains.ts`. See [`README-Domains.md`](../README-Domains.md).
+
+Internal tooling (`/dev-test*`, `/email-tools`, `/booking-debug`,
+`/test-webhook`, `/demo-booking`, `/confirmation-preview`) counts as admin
+surface and is unreachable from the public domain. Marketing and session-replay
+tags do not load on the admin host.
+
 ## Navigation
 
 | Group | Page | Route | Source of truth |
 |-------|------|-------|-----------------|
 | Operations | Dashboard | `/admin` | `useAdminMetrics` (live aggregate) |
+| Operations | Booking Activity | `/admin/activity` | `useBookingActivity` (both rails) |
 | Operations | Bookings | `/admin/bookings` | `bookings` ⨝ `customers` |
 | Operations | Customers | `/admin/customers` | `customers` retention columns |
 | Operations | Leads | `/admin/leads` | `lead_intro_notifications`, `partial_bookings` |
@@ -20,6 +34,28 @@ re-introduces the placeholder data that used to be here.
 | System | Housecall Pro + Sync Logs | `/admin/integrations/housecall-pro*` | `get-hcp-config`, `hcp_sync_log` |
 | System | Admin Users | `/admin/users` | `admin_users` via `admin-auth-guard` |
 | System | Booking Monitor / DB Watcher / Booking Tester | `/admin/*` | realtime subscriptions |
+
+## Booking Activity (`/admin/activity`)
+
+The workspace runs two booking rails with deliberately different comms
+plumbing (see [`COMMS_ROUTING.md`](./COMMS_ROUTING.md)), and this page is where
+both are watched:
+
+- **Per-rail panels** — volume over 24h / 7d / 30d, booked value, status mix,
+  Housecall Pro coverage, SMS sent vs failed, and the providers that actually
+  carried each rail's texts.
+- **Merged timeline** — bookings, leads, outbound SMS, Housecall Pro syncs and
+  GoHighLevel syncs in one feed, tagged by rail and filterable by rail and
+  event type.
+- **Rail warnings** — raised when a rail sends on a provider it isn't supposed
+  to use. Public-funnel texts on GoHighLevel mean customers are being texted
+  from the wrong area code with replies going to an unwatched inbox; internal
+  texts on OpenPhone mean GHL is failing over and the CRM workflows are not
+  being driven.
+
+Rails are identified by `bookings.source` (`internal_booking` → internal) and
+`sms_logs.channel`. SMS rows written before the channel column existed report
+as unattributed rather than being guessed into a rail.
 
 ## What changed in the overhaul
 

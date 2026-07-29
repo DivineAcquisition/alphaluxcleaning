@@ -28,8 +28,12 @@ caller ID is local and replies land in the right OpenPhone inbox:
   `supabase/functions/_shared/openphone.ts`.
 - State resolution order: explicit customer/booking state → ZIP inference → the
   `OPENPHONE_DEFAULT_STATE` env (default `NJ`).
-- Routing happens inside `_shared/sms.ts` → `sendSms()`. **OpenPhone is the primary
-  channel**; GHL is only a fallback when OpenPhone fails.
+- Routing happens inside `_shared/sms.ts` → `sendSms()`, which picks the provider
+  from the message's booking rail: the **public** online booking funnel is
+  OpenPhone-only, the **internal** (VA) booking rail sends through GoHighLevel and
+  quotes an OpenPhone number for support. Lifecycle sends declare no rail and keep
+  the legacy order (OpenPhone, then GHL). Full rationale in
+  [`COMMS_ROUTING.md`](./COMMS_ROUTING.md).
 - The OpenPhone v1 API takes the raw API key in the `Authorization` header (no
   `Bearer` prefix) — the sender handles both schemes defensively.
 - Optional: paste each number's OpenPhone `phoneNumberId` (PN…) into the registry for
@@ -162,16 +166,17 @@ comms + ops platforms swapped:
 
 | Novara step | AlphaLux port |
 |-------------|---------------|
-| GHL Sales-pipeline contact + opportunity | **Housecall Pro job** via `hcp-sync-booking` |
-| GHL calendar appointment | The HCP job IS the schedule |
-| Confirmation SMS via GHL number | **OpenPhone, state-routed** (NJ/TX/CA/NY number) |
+| GHL Sales-pipeline contact + opportunity | Kept — `ghl-sync-booking` drives the automations for this rail |
+| GHL calendar appointment | Kept, plus a **Housecall Pro job** via `hcp-sync-booking` — the HCP job is what the crew works from |
+| Confirmation SMS via GHL number | Kept — GoHighLevel sends, and the copy names the **state-routed OpenPhone** line (NJ/TX/CA/NY) for support |
 | Confirmation email via Resend | Same (through idempotent `booking-confirm-comms`) |
 | Stripe deposit invoice + day-of remaining cron | Deposit invoice due today + remaining invoice due **on the service date** (no new cron needed), on the customer's state-routed Stripe account (`try`/`book`) |
 
-One atomic call: admin auth check → customer upsert (city/state drive SMS + Stripe
-routing) → booking insert (`source: internal_booking`, canonical `service_date` /
-`time_slot`) → invoices per mode (`deposit_plus_remaining` · `full_now` · `none`) →
-HCP sync → confirmation email + invoice-aware SMS → response with the booking ref and
+One atomic call: admin auth check → customer upsert (city/state drive the support
+number + Stripe routing) → booking insert (`source: internal_booking`, canonical
+`service_date` / `time_slot`) → invoices per mode (`deposit_plus_remaining` ·
+`full_now` · `none`) → HCP sync → GHL sync (fires the workflows) → confirmation
+email + invoice-aware SMS through GoHighLevel → response with the booking ref and
 hosted-invoice URLs for the VA to copy/paste while still on the phone. Pricing uses a
 server-side rate card mirrored 1:1 by the form's live quote. The retention triggers
 fire on insert, so internally booked customers enter the lifecycle engine
@@ -182,9 +187,11 @@ automatically (and their upcoming clean suppresses reactivation touches).
 1. **Apply the migration** `20260723100000_lifecycle_engine.sql` (tables, triggers,
    seeds, crons, RLS).
 2. **Secrets** (Supabase dashboard → Edge Functions → Secrets):
-   - `OPENPHONE_API_KEY` — required for SMS
+   - `OPENPHONE_API_KEY` — required for SMS on the public rail and for support numbers
    - `OPENPHONE_WEBHOOK_SECRET` — recommended (webhook signature enforcement)
    - `OPENPHONE_DEFAULT_STATE` — optional, default `NJ`
+   - `GHL_PIT_TOKEN` + `GHL_LOCATION_ID` — required for SMS on the internal rail
+   - `INTERNAL_SMS_OPENPHONE_FAILOVER` — optional, set `false` for GHL-only internal SMS
    - `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO` — email rail (already set)
    - `HCP_API_KEY` (or `HOUSECALL_PRO_API_KEY`) — already set
    - `HCP_WEBHOOK_SECRET` — recommended
@@ -195,8 +202,8 @@ automatically (and their upcoming clean suppresses reactivation touches).
 4. **HCP dashboard**: point the webhook at `receive-hcp-webhook` (above).
 5. **Deploy edge functions**: `lifecycle-engine`, `lifecycle-unsubscribe`,
    `openphone-webhook` (new) plus the updated ones (`send-sms`, `send-sms-unified`,
-   `send-openphone-sms`, `booking-confirm-comms`, `hcp-sync-booking`,
-   `receive-hcp-webhook`, `get-hcp-config`, `update-hcp-config`,
+   `send-openphone-sms`, `booking-confirm-comms`, `book-as-va`, `lead-intro-comms`,
+   `hcp-sync-booking`, `receive-hcp-webhook`, `get-hcp-config`, `update-hcp-config`,
    `reengage-cold-leads`).
 6. **Verify** at `/admin/lifecycle → Settings` with a **Dry run** — it lists exactly
    who would receive what without sending.
