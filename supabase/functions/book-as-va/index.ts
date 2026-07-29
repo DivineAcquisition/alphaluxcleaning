@@ -67,6 +67,14 @@ import { sendSms } from "../_shared/sms.ts";
 import { toE164US } from "../_shared/phone-format.ts";
 import { resolveSupportNumber, timezoneForState } from "../_shared/openphone.ts";
 import {
+  buildQuote,
+  estimatedHours,
+  SERVICE_TIERS,
+  splitTotal,
+  type InvoiceMode,
+  type ServiceType,
+} from "../_shared/pricing-internal.ts";
+import {
   slugFromCustomerLocation,
   getStripeSecretKey,
   bookingColumnFromSlug,
@@ -83,47 +91,10 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[BOOK-AS-VA] ${step}${tail}`);
 };
 
-// ─── Pricing ────────────────────────────────────────────────────────
-//
-// SOURCE OF TRUTH: mirrors the admin Internal Booking form's rate card
-// 1:1 (same table as the CSR quote) so the React quote and the Stripe
-// invoice always produce identical numbers.
-const HOME_SIZE_SQFT: Record<string, number> = {
-  under_1000: 800,
-  "1000_1499": 1250,
-  "1500_1999": 1750,
-  "2000_2499": 2250,
-  "2500_2999": 2750,
-  "3000_3499": 3250,
-  "3500_3999": 3750,
-  "4000_4999": 4500,
-  "5000_plus": 5500,
-};
-
-const OFFER_DETAILS: Record<
-  string,
-  { name: string; type: string; serviceType: string; visits: number }
-> = {
-  standard: { name: "Standard Clean", type: "standard_clean", serviceType: "regular", visits: 1 },
-  tester: { name: "Tester Deep Clean", type: "tester", serviceType: "deep", visits: 1 },
-  "90_day": { name: "90-Day Reset & Maintain Plan", type: "90_day_plan", serviceType: "deep", visits: 4 },
-  move_in_out: { name: "Move-In/Out Clean", type: "move_in_out", serviceType: "move_in_out", visits: 1 },
-};
-
-function computePriceDollars(sqftRange: string, offerType: string): number {
-  const sqft = HOME_SIZE_SQFT[sqftRange] ?? 2250;
-  if (offerType === "tester") {
-    return sqft < 1500 ? 199 : sqft < 2500 ? 249 : sqft < 4000 ? 299 : 349;
-  }
-  if (offerType === "90_day") {
-    return sqft < 1500 ? 549 : sqft < 2500 ? 649 : sqft < 4000 ? 749 : 849;
-  }
-  if (offerType === "move_in_out") {
-    return sqft < 1500 ? 299 : sqft < 2500 ? 359 : sqft < 4000 ? 429 : 499;
-  }
-  // standard
-  return sqft < 1500 ? 149 : sqft < 2500 ? 179 : sqft < 4000 ? 209 : 249;
-}
+// Pricing lives in ../_shared/pricing-internal.ts, the byte-identical
+// mirror of the rate card the admin form quotes from. The superseded
+// local table that used to sit here priced by sqft bucket and offer
+// name, which no longer matches what the VA is shown.
 
 // ─── Stripe + invoice helpers ───────────────────────────────────────
 async function ensureStripeCustomer(
@@ -213,7 +184,13 @@ interface InternalBookingBody {
   city?: string;
   state?: string;
   zipCode?: string;
-  sqftRange: string;
+  /** Rate-card size id, e.g. "1501_2000". Preferred. */
+  homeSizeId?: string;
+  /** 'standard' | 'deep' | 'moveInOut' | 'combo'. Preferred. */
+  serviceType?: ServiceType;
+  addOns?: string[];
+  /** Legacy fields kept so older callers keep working. */
+  sqftRange?: string;
   offerType?: string;
   bedrooms?: string | number;
   bathrooms?: string | number;
@@ -261,39 +238,55 @@ serve(async (req) => {
     if (adminError || !adminData) throw new Error("User is not an admin");
 
     const body: InternalBookingBody = await req.json();
+    const sizeId = body.homeSizeId || body.sqftRange;
     if (
-      !body.firstName || !body.email || !body.phone || !body.sqftRange ||
+      !body.firstName || !body.email || !body.phone || !sizeId ||
       !body.serviceDate || !body.timeSlot
     ) {
       return json(
-        { error: "firstName, email, phone, sqftRange, serviceDate, timeSlot are required" },
+        { error: "firstName, email, phone, homeSizeId, serviceDate, timeSlot are required" },
         400,
       );
     }
 
-    // 1. Compute pricing (server-side rate card, admin override wins)
+    // 1. Compute pricing from the SHARED rate card. This module is the
+    //    byte-identical mirror of the one the admin form quotes from, so
+    //    the number the VA reads on the phone is the number Stripe
+    //    invoices. Never recompute a price here.
     const email = body.email.trim().toLowerCase();
     const phoneE164 = toE164US(body.phone) || null;
-    const offer = OFFER_DETAILS[body.offerType || "standard"] || OFFER_DETAILS.standard;
-    const listTotal = computePriceDollars(body.sqftRange, body.offerType || "standard");
+    const serviceType: ServiceType = body.serviceType ||
+      (body.offerType === "tester" ? "deep"
+        : body.offerType === "move_in_out" ? "moveInOut"
+        : "standard");
+    const addOns = Array.isArray(body.addOns) ? body.addOns : [];
+    const quote = buildQuote(sizeId, serviceType, addOns);
+    const offer = {
+      name: SERVICE_TIERS[serviceType].label,
+      type: serviceType,
+      serviceType: serviceType === "moveInOut"
+        ? "move_in_out"
+        : serviceType === "deep" || serviceType === "combo"
+        ? "deep"
+        : "regular",
+      visits: serviceType === "combo" ? 2 : 1,
+    };
+    const listTotal = quote.listPrice;
     const total = typeof body.priceOverride?.total === "number" && body.priceOverride.total > 0
       ? Math.round(body.priceOverride.total * 100) / 100
-      : listTotal;
-    const invoiceMode = body.invoiceMode || "deposit_plus_remaining";
+      : quote.total;
+    const invoiceMode: InvoiceMode = body.invoiceMode || "deposit_plus_preauth";
     const depositPercent = typeof body.depositPercent === "number"
       ? Math.max(0, Math.min(1, body.depositPercent))
-      : 0.25; // AlphaLux convention (Novara defaults 0.5)
+      : 0.5;
+    const split = splitTotal(total, invoiceMode, depositPercent);
     const deposit = typeof body.priceOverride?.deposit === "number"
       ? Math.round(body.priceOverride.deposit * 100) / 100
-      : invoiceMode === "full_now"
-      ? total
-      : Math.round(total * depositPercent * 100) / 100;
+      : split.deposit;
     const balance = Math.max(0, Math.round((total - deposit) * 100) / 100);
 
-    const frequency = body.frequency ||
-      (offer.type === "90_day_plan" ? "biweekly" : "one-time");
-    const isRecurring = offer.type === "90_day_plan" ||
-      ["weekly", "biweekly", "monthly"].includes(frequency);
+    const frequency = body.frequency || "one-time";
+    const isRecurring = ["weekly", "biweekly", "monthly"].includes(frequency);
 
     // 2. Upsert the customer row. City/state matter: they route the
     //    OpenPhone "from" number AND the Stripe account.
@@ -352,7 +345,7 @@ serve(async (req) => {
         address_line1: body.addressLine1 || null,
         address_line2: body.addressLine2 || null,
         zip_code: body.zipCode || null,
-        sqft_or_bedrooms: body.sqftRange,
+        sqft_or_bedrooms: sizeId,
         service_type: offer.serviceType,
         frequency,
         service_date: body.serviceDate,
@@ -377,7 +370,10 @@ serve(async (req) => {
         property_details: {
           bedrooms: body.bedrooms ?? null,
           bathrooms: body.bathrooms ?? null,
-          sqft_range: body.sqftRange,
+          home_size_id: sizeId,
+          service_tier: serviceType,
+          add_ons: addOns,
+          estimated_hours: estimatedHours(sizeId),
           invoice_mode: invoiceMode,
           deposit_percent: depositPercent,
           booked_by: body.csrName || user.email || "admin",
@@ -397,8 +393,33 @@ serve(async (req) => {
     let remainingInvoice: { invoiceId: string; hostedInvoiceUrl: string | null } | null = null;
     let fullInvoice: { invoiceId: string; hostedInvoiceUrl: string | null } | null = null;
     let invoiceError: string | null = null;
+    let payPageUrl: string | null = null;
 
-    if (invoiceMode !== "none" && total > 0) {
+    // deposit_plus_preauth doesn't raise an invoice at all. The customer
+    // gets a tokenized pay link instead: they pay the deposit there and
+    // the card is saved, which is the only way the balance hold can be
+    // placed later without them present. The token — not the booking id —
+    // is the credential for that page.
+    if (invoiceMode === "deposit_plus_preauth" && total > 0) {
+      const bytes = new Uint8Array(20);
+      crypto.getRandomValues(bytes);
+      const payToken = Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      const origin = Deno.env.get("BOOKING_ORIGIN") || "https://try.alphaluxcleaning.com";
+      payPageUrl = `${origin}/pay/${payToken}`;
+      const { error: tokenError } = await supabase
+        .from("bookings")
+        .update({ pay_page_token: payToken })
+        .eq("id", bookingId);
+      if (tokenError) {
+        invoiceError = `Could not create the pay link: ${tokenError.message}`;
+        payPageUrl = null;
+      }
+      logStep("pay link minted", { bookingId, ok: Boolean(payPageUrl) });
+    }
+
+    if (invoiceMode !== "none" && invoiceMode !== "deposit_plus_preauth" && total > 0) {
       const stripeKey = getStripeSecretKey(stripeSlug);
       if (stripeKey) {
         try {
@@ -556,6 +577,11 @@ serve(async (req) => {
         const parts = [
           `AlphaLux Clean: Hi ${body.firstName}! Your ${offer.name} is confirmed for ${body.serviceDate} (${window}). Total $${total.toFixed(2)}.`,
         ];
+        if (payPageUrl) {
+          parts.push(
+            ` Please secure it with your $${deposit.toFixed(2)} deposit here: ${payPageUrl} — we won't charge the remaining $${balance.toFixed(2)} until after the clean is done.`,
+          );
+        }
         if (depositInvoice) {
           parts.push(
             ` Deposit invoice ($${deposit.toFixed(2)}) just sent to your email — please pay today. The remaining $${balance.toFixed(2)} is due on your service date.`,
@@ -605,6 +631,7 @@ serve(async (req) => {
       invoiceMode,
       stripeAccount: stripeSlug,
       totals: { total, deposit, balance },
+      payPageUrl,
       depositInvoice,
       remainingInvoice,
       fullInvoice,
