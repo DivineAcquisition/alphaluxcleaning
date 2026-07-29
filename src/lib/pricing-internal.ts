@@ -12,9 +12,11 @@
 // The four sellable offers are exactly the funnel's:
 //
 //   standard      → maintenancePrice
-//   deep          → deepPrice          ("Tester Deep Clean")
-//   90_day        → ninetyDayPrice     (deep + 3 maintenance, bundled)
+//   deep          → deepPrice
 //   move_in_out   → moveInOutPrice
+//   bundle        → deep + half a standard (one deep, one follow-up)
+//   recurring     → standard on a cadence, at the funnel's frequency
+//                   discount (weekly 13%, biweekly 8%, monthly 4%)
 //
 // Mirrored for the edge runtime in
 // `supabase/functions/_shared/pricing-internal.ts`, which is generated
@@ -30,7 +32,9 @@ import {
 export { HOME_SIZE_RANGES, resolveHomeSizeId };
 export type { HomeSizeRange };
 
-export type OfferId = 'standard' | 'deep' | '90_day' | 'move_in_out';
+export type OfferId = 'standard' | 'deep' | 'move_in_out' | 'bundle' | 'recurring';
+
+export type Cadence = 'weekly' | 'biweekly' | 'monthly';
 
 export interface OfferDefinition {
   id: OfferId;
@@ -53,7 +57,7 @@ export const OFFERS: Record<OfferId, OfferDefinition> = {
   standard: {
     id: 'standard',
     label: 'Standard Clean',
-    blurb: 'Recurring-grade maintenance clean.',
+    blurb: 'Maintenance clean for an already-kept home.',
     priceField: 'maintenancePrice',
     serviceType: 'regular',
     offerType: 'standard_clean',
@@ -62,23 +66,13 @@ export const OFFERS: Record<OfferId, OfferDefinition> = {
   },
   deep: {
     id: 'deep',
-    label: 'Tester Deep Clean',
-    blurb: 'Top-to-bottom first clean. The usual entry point.',
+    label: 'Deep Clean',
+    blurb: 'Top-to-bottom reset. The usual first clean.',
     priceField: 'deepPrice',
     serviceType: 'deep',
-    offerType: 'tester',
+    offerType: 'deep_clean',
     visits: 1,
     isRecurring: false,
-  },
-  '90_day': {
-    id: '90_day',
-    label: '90-Day Reset & Maintain',
-    blurb: 'Deep clean plus three maintenance visits, bundled.',
-    priceField: 'ninetyDayPrice',
-    serviceType: 'deep',
-    offerType: '90_day_plan',
-    visits: 4,
-    isRecurring: true,
   },
   move_in_out: {
     id: 'move_in_out',
@@ -90,9 +84,53 @@ export const OFFERS: Record<OfferId, OfferDefinition> = {
     visits: 1,
     isRecurring: false,
   },
+  bundle: {
+    id: 'bundle',
+    label: 'Deep + Standard Bundle',
+    blurb: 'Deep clean now, standard follow-up at half price.',
+    priceField: 'deepPrice',
+    serviceType: 'deep',
+    offerType: 'bundle_deep_standard',
+    visits: 2,
+    isRecurring: false,
+  },
+  recurring: {
+    id: 'recurring',
+    label: 'Recurring Service',
+    blurb: 'Standard clean on a cadence, discounted per visit.',
+    priceField: 'maintenancePrice',
+    serviceType: 'regular',
+    offerType: 'recurring_plan',
+    visits: 1,
+    isRecurring: true,
+  },
 };
 
-export const OFFER_ORDER: OfferId[] = ['deep', 'standard', '90_day', 'move_in_out'];
+/**
+ * Per-visit discount for a recurring cadence. Mirrors the funnel's
+ * FrequencyConfig — recurring customers pay these from visit one, and
+ * the rates were tuned in the profitability review to stay attractive
+ * without eroding per-visit margin on repeat work.
+ */
+export const CADENCE_DISCOUNTS: Record<Cadence, number> = {
+  weekly: 0.13,
+  biweekly: 0.08,
+  monthly: 0.04,
+};
+
+export const CADENCE_LABELS: Record<Cadence, string> = {
+  weekly: 'Weekly',
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
+};
+
+export const CADENCE_PER_MONTH: Record<Cadence, number> = {
+  weekly: 4,
+  biweekly: 2,
+  monthly: 1,
+};
+
+export const OFFER_ORDER: OfferId[] = ['deep', 'standard', 'move_in_out', 'bundle', 'recurring'];
 
 /** Deposit taken up front. Matches the funnel (25%). */
 export const DEPOSIT_PERCENT = DEPOSIT_PERCENTAGE;
@@ -119,16 +157,34 @@ export function tierFor(homeSizeId: string): HomeSizeRange | undefined {
   return HOME_SIZE_RANGES.find((r) => r.id === id);
 }
 
-/** List price for an offer at a home size, in the customer's state. */
+/**
+ * Price for an offer at a home size, in the customer's state.
+ *
+ * Bundle and recurring are derived rather than stored, so they cannot
+ * drift out of step with the standard and deep prices they are built
+ * from.
+ */
 export function offerPrice(
   homeSizeId: string,
   offerId: OfferId,
   state?: string | null,
+  cadence: Cadence = 'biweekly',
 ): number {
   const tier = tierFor(homeSizeId);
   if (!tier) return 0;
+  const mult = stateMultiplier(state);
+  const standard = Math.round(Number(tier.maintenancePrice) * mult);
+  const deep = Math.round(Number(tier.deepPrice) * mult);
+
+  if (offerId === 'bundle') {
+    if (!standard || !deep) return 0;
+    return Math.round(deep + standard / 2);
+  }
+  if (offerId === 'recurring') {
+    return Math.round(standard * (1 - CADENCE_DISCOUNTS[cadence]));
+  }
   const base = Number(tier[OFFERS[offerId].priceField]) || 0;
-  return Math.round(base * stateMultiplier(state));
+  return Math.round(base * mult);
 }
 
 /** True when the tier is quote-only (5,001+ sq ft). */
@@ -143,21 +199,30 @@ export interface Quote {
   tierLabel: string;
   visits: number;
   requiresEstimate: boolean;
+  isRecurring: boolean;
+  cadence?: Cadence;
+  /** What the customer pays per month on a recurring plan. */
+  monthlyTotal?: number;
 }
 
 export function buildQuote(
   homeSizeId: string,
   offerId: OfferId,
   state?: string | null,
+  cadence: Cadence = 'biweekly',
 ): Quote {
   const tier = tierFor(homeSizeId);
   const offer = OFFERS[offerId];
+  const total = offerPrice(homeSizeId, offerId, state, cadence);
   return {
     offerLabel: offer.label,
-    total: offerPrice(homeSizeId, offerId, state),
+    total,
     tierLabel: tier?.label ?? 'Unknown size',
     visits: offer.visits,
     requiresEstimate: Boolean(tier?.requiresEstimate),
+    isRecurring: offer.isRecurring,
+    cadence: offer.isRecurring ? cadence : undefined,
+    monthlyTotal: offer.isRecurring ? total * CADENCE_PER_MONTH[cadence] : undefined,
   };
 }
 

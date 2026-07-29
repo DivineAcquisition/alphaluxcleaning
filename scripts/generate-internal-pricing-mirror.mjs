@@ -68,7 +68,7 @@ export function render(tiers, depositPercent) {
 // which is why the tier table below is inlined. \`npm test\` fails if this
 // file drifts from what the generator would produce.
 
-export type OfferId = 'standard' | 'deep' | '90_day' | 'move_in_out';
+export type OfferId = 'standard' | 'deep' | 'move_in_out' | 'bundle' | 'recurring';\nexport type Cadence = 'weekly' | 'biweekly' | 'monthly';
 
 export interface HomeSizeRange {
   id: string;
@@ -109,42 +109,23 @@ export interface OfferDefinition {
 }
 
 export const OFFERS: Record<OfferId, OfferDefinition> = {
-  standard: {
-    id: 'standard',
-    label: 'Standard Clean',
-    priceField: 'maintenancePrice',
-    serviceType: 'regular',
-    offerType: 'standard_clean',
-    visits: 1,
-    isRecurring: false,
-  },
-  deep: {
-    id: 'deep',
-    label: 'Tester Deep Clean',
-    priceField: 'deepPrice',
-    serviceType: 'deep',
-    offerType: 'tester',
-    visits: 1,
-    isRecurring: false,
-  },
-  '90_day': {
-    id: '90_day',
-    label: '90-Day Reset & Maintain',
-    priceField: 'ninetyDayPrice',
-    serviceType: 'deep',
-    offerType: '90_day_plan',
-    visits: 4,
-    isRecurring: true,
-  },
-  move_in_out: {
-    id: 'move_in_out',
-    label: 'Move-In / Move-Out',
-    priceField: 'moveInOutPrice',
-    serviceType: 'move_in_out',
-    offerType: 'move_in_out',
-    visits: 1,
-    isRecurring: false,
-  },
+  standard: { id: 'standard', label: 'Standard Clean', priceField: 'maintenancePrice', serviceType: 'regular', offerType: 'standard_clean', visits: 1, isRecurring: false },
+  deep: { id: 'deep', label: 'Deep Clean', priceField: 'deepPrice', serviceType: 'deep', offerType: 'deep_clean', visits: 1, isRecurring: false },
+  move_in_out: { id: 'move_in_out', label: 'Move-In / Move-Out', priceField: 'moveInOutPrice', serviceType: 'move_in_out', offerType: 'move_in_out', visits: 1, isRecurring: false },
+  bundle: { id: 'bundle', label: 'Deep + Standard Bundle', priceField: 'deepPrice', serviceType: 'deep', offerType: 'bundle_deep_standard', visits: 2, isRecurring: false },
+  recurring: { id: 'recurring', label: 'Recurring Service', priceField: 'maintenancePrice', serviceType: 'regular', offerType: 'recurring_plan', visits: 1, isRecurring: true },
+};
+
+export const CADENCE_DISCOUNTS: Record<Cadence, number> = {
+  weekly: 0.13,
+  biweekly: 0.08,
+  monthly: 0.04,
+};
+
+export const CADENCE_PER_MONTH: Record<Cadence, number> = {
+  weekly: 4,
+  biweekly: 2,
+  monthly: 1,
 };
 
 export const DEPOSIT_PERCENT = ${depositPercent};
@@ -183,11 +164,29 @@ export function tierFor(homeSizeId: string): HomeSizeRange | undefined {
   return HOME_SIZE_RANGES.find((r) => r.id === id);
 }
 
-export function offerPrice(homeSizeId: string, offerId: OfferId, state?: string | null): number {
+export function offerPrice(
+  homeSizeId: string,
+  offerId: OfferId,
+  state?: string | null,
+  cadence: Cadence = 'biweekly',
+): number {
   const tier = tierFor(homeSizeId);
   if (!tier) return 0;
+  const mult = stateMultiplier(state);
+  const standard = Math.round(Number(tier.maintenancePrice) * mult);
+  const deep = Math.round(Number(tier.deepPrice) * mult);
+
+  // Bundle and recurring are derived, never stored, so they cannot
+  // drift from the prices they are built on.
+  if (offerId === 'bundle') {
+    if (!standard || !deep) return 0;
+    return Math.round(deep + standard / 2);
+  }
+  if (offerId === 'recurring') {
+    return Math.round(standard * (1 - CADENCE_DISCOUNTS[cadence]));
+  }
   const base = Number(tier[OFFERS[offerId].priceField]) || 0;
-  return Math.round(base * stateMultiplier(state));
+  return Math.round(base * mult);
 }
 
 export type InvoiceMode =

@@ -9,7 +9,8 @@
 // which is why the tier table below is inlined. `npm test` fails if this
 // file drifts from what the generator would produce.
 
-export type OfferId = 'standard' | 'deep' | '90_day' | 'move_in_out';
+export type OfferId = 'standard' | 'deep' | 'move_in_out' | 'bundle' | 'recurring';
+export type Cadence = 'weekly' | 'biweekly' | 'monthly';
 
 export interface HomeSizeRange {
   id: string;
@@ -29,60 +30,60 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     "label": "Up to 1,500 sq ft",
     "minSqft": 0,
     "maxSqft": 1500,
-    "deepPrice": 365,
-    "maintenancePrice": 225,
+    "deepPrice": 339,
+    "maintenancePrice": 209,
     "ninetyDayPrice": 935,
-    "moveInOutPrice": 449
+    "moveInOutPrice": 419
   },
   {
     "id": "1501_2000",
     "label": "1,500 – 2,000 sq ft",
     "minSqft": 1500,
     "maxSqft": 2000,
-    "deepPrice": 449,
-    "maintenancePrice": 269,
+    "deepPrice": 419,
+    "maintenancePrice": 249,
     "ninetyDayPrice": 1125,
-    "moveInOutPrice": 549
+    "moveInOutPrice": 509
   },
   {
     "id": "2001_2500",
     "label": "2,000 – 2,500 sq ft",
     "minSqft": 2000,
     "maxSqft": 2500,
-    "deepPrice": 535,
-    "maintenancePrice": 295,
+    "deepPrice": 499,
+    "maintenancePrice": 275,
     "ninetyDayPrice": 1289,
-    "moveInOutPrice": 629
+    "moveInOutPrice": 585
   },
   {
     "id": "2501_3000",
     "label": "2,500 – 3,000 sq ft",
     "minSqft": 2500,
     "maxSqft": 3000,
-    "deepPrice": 625,
-    "maintenancePrice": 325,
+    "deepPrice": 579,
+    "maintenancePrice": 299,
     "ninetyDayPrice": 1445,
-    "moveInOutPrice": 729
+    "moveInOutPrice": 679
   },
   {
     "id": "3001_4000",
     "label": "3,000 – 4,000 sq ft",
     "minSqft": 3000,
     "maxSqft": 4000,
-    "deepPrice": 715,
-    "maintenancePrice": 375,
+    "deepPrice": 665,
+    "maintenancePrice": 349,
     "ninetyDayPrice": 1629,
-    "moveInOutPrice": 889
+    "moveInOutPrice": 825
   },
   {
     "id": "4001_5000",
     "label": "4,000 – 5,000 sq ft",
     "minSqft": 4000,
     "maxSqft": 5000,
-    "deepPrice": 895,
-    "maintenancePrice": 425,
+    "deepPrice": 829,
+    "maintenancePrice": 409,
     "ninetyDayPrice": 1929,
-    "moveInOutPrice": 1079
+    "moveInOutPrice": 999
   },
   {
     "id": "5001_plus",
@@ -90,8 +91,8 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     "minSqft": 5000,
     "maxSqft": 999999,
     "requiresEstimate": true,
-    "deepPrice": 1045,
-    "maintenancePrice": 495,
+    "deepPrice": 969,
+    "maintenancePrice": 459,
     "ninetyDayPrice": 2199,
     "moveInOutPrice": 0
   }
@@ -108,45 +109,26 @@ export interface OfferDefinition {
 }
 
 export const OFFERS: Record<OfferId, OfferDefinition> = {
-  standard: {
-    id: 'standard',
-    label: 'Standard Clean',
-    priceField: 'maintenancePrice',
-    serviceType: 'regular',
-    offerType: 'standard_clean',
-    visits: 1,
-    isRecurring: false,
-  },
-  deep: {
-    id: 'deep',
-    label: 'Tester Deep Clean',
-    priceField: 'deepPrice',
-    serviceType: 'deep',
-    offerType: 'tester',
-    visits: 1,
-    isRecurring: false,
-  },
-  '90_day': {
-    id: '90_day',
-    label: '90-Day Reset & Maintain',
-    priceField: 'ninetyDayPrice',
-    serviceType: 'deep',
-    offerType: '90_day_plan',
-    visits: 4,
-    isRecurring: true,
-  },
-  move_in_out: {
-    id: 'move_in_out',
-    label: 'Move-In / Move-Out',
-    priceField: 'moveInOutPrice',
-    serviceType: 'move_in_out',
-    offerType: 'move_in_out',
-    visits: 1,
-    isRecurring: false,
-  },
+  standard: { id: 'standard', label: 'Standard Clean', priceField: 'maintenancePrice', serviceType: 'regular', offerType: 'standard_clean', visits: 1, isRecurring: false },
+  deep: { id: 'deep', label: 'Deep Clean', priceField: 'deepPrice', serviceType: 'deep', offerType: 'deep_clean', visits: 1, isRecurring: false },
+  move_in_out: { id: 'move_in_out', label: 'Move-In / Move-Out', priceField: 'moveInOutPrice', serviceType: 'move_in_out', offerType: 'move_in_out', visits: 1, isRecurring: false },
+  bundle: { id: 'bundle', label: 'Deep + Standard Bundle', priceField: 'deepPrice', serviceType: 'deep', offerType: 'bundle_deep_standard', visits: 2, isRecurring: false },
+  recurring: { id: 'recurring', label: 'Recurring Service', priceField: 'maintenancePrice', serviceType: 'regular', offerType: 'recurring_plan', visits: 1, isRecurring: true },
 };
 
-export const DEPOSIT_PERCENT = 0.25;
+export const CADENCE_DISCOUNTS: Record<Cadence, number> = {
+  weekly: 0.13,
+  biweekly: 0.08,
+  monthly: 0.04,
+};
+
+export const CADENCE_PER_MONTH: Record<Cadence, number> = {
+  weekly: 4,
+  biweekly: 2,
+  monthly: 1,
+};
+
+export const DEPOSIT_PERCENT = 0.5;
 
 export const STATE_MULTIPLIERS: Record<string, number> = {
   NY: 1.15,
@@ -182,11 +164,29 @@ export function tierFor(homeSizeId: string): HomeSizeRange | undefined {
   return HOME_SIZE_RANGES.find((r) => r.id === id);
 }
 
-export function offerPrice(homeSizeId: string, offerId: OfferId, state?: string | null): number {
+export function offerPrice(
+  homeSizeId: string,
+  offerId: OfferId,
+  state?: string | null,
+  cadence: Cadence = 'biweekly',
+): number {
   const tier = tierFor(homeSizeId);
   if (!tier) return 0;
+  const mult = stateMultiplier(state);
+  const standard = Math.round(Number(tier.maintenancePrice) * mult);
+  const deep = Math.round(Number(tier.deepPrice) * mult);
+
+  // Bundle and recurring are derived, never stored, so they cannot
+  // drift from the prices they are built on.
+  if (offerId === 'bundle') {
+    if (!standard || !deep) return 0;
+    return Math.round(deep + standard / 2);
+  }
+  if (offerId === 'recurring') {
+    return Math.round(standard * (1 - CADENCE_DISCOUNTS[cadence]));
+  }
   const base = Number(tier[OFFERS[offerId].priceField]) || 0;
-  return Math.round(base * stateMultiplier(state));
+  return Math.round(base * mult);
 }
 
 export type InvoiceMode =

@@ -67,6 +67,7 @@ import { sendSms } from "../_shared/sms.ts";
 import { toE164US } from "../_shared/phone-format.ts";
 import { resolveSupportNumber, timezoneForState } from "../_shared/openphone.ts";
 import {
+  type Cadence,
   offerPrice,
   OFFERS,
   resolveHomeSizeId,
@@ -187,8 +188,13 @@ interface InternalBookingBody {
   zipCode?: string;
   /** Rate-card size id, e.g. "1501_2000". Preferred. */
   homeSizeId?: string;
-  /** 'standard' | 'deep' | '90_day' | 'move_in_out'. Preferred. */
+  /** 'standard' | 'deep' | 'move_in_out' | 'bundle' | 'recurring'. */
   offerId?: OfferId;
+  /** Only meaningful for the recurring offer. */
+  cadence?: Cadence;
+  accessNotes?: string;
+  teamNotes?: string;
+  propertyDetails?: Record<string, unknown>;
   /** Legacy fields kept so older callers keep working. */
   sqftRange?: string;
   offerType?: string;
@@ -259,7 +265,6 @@ serve(async (req) => {
     const offerId: OfferId = body.offerId ||
       (body.offerType === "tester" ? "deep"
         : body.offerType === "move_in_out" ? "move_in_out"
-        : body.offerType === "90_day" ? "90_day"
         : "standard");
     const offerDef = OFFERS[offerId];
     const offer = {
@@ -271,7 +276,12 @@ serve(async (req) => {
     // State matters: NY carries a 15% uplift in the funnel's rate card,
     // so a phone quote must apply it too or the website and the VA
     // disagree for the same house.
-    const rateCardTotal = offerPrice(sizeIdResolved, offerId, body.state);
+    const rateCardTotal = offerPrice(
+      sizeIdResolved,
+      offerId,
+      body.state,
+      body.cadence || "biweekly",
+    );
     const listTotal = rateCardTotal;
     const total = typeof body.priceOverride?.total === "number" && body.priceOverride.total > 0
       ? Math.round(body.priceOverride.total * 100) / 100
@@ -286,7 +296,9 @@ serve(async (req) => {
       : split.deposit;
     const balance = Math.max(0, Math.round((total - deposit) * 100) / 100);
 
-    const frequency = body.frequency || (offerDef.isRecurring ? "biweekly" : "one-time");
+    const frequency = offerDef.isRecurring
+      ? (body.cadence || "biweekly")
+      : (body.frequency || "one-time");
     const isRecurring = offerDef.isRecurring ||
       ["weekly", "biweekly", "monthly"].includes(frequency);
 
@@ -375,7 +387,12 @@ serve(async (req) => {
           home_size_id: sizeIdResolved,
           home_size_label: tierFor(sizeIdResolved)?.label ?? null,
           offer_id: offerId,
+          cadence: offerDef.isRecurring ? (body.cadence || "biweekly") : null,
           state_multiplier_applied: body.state || null,
+          dwelling_type: (body.propertyDetails as any)?.dwellingType ?? null,
+          pets: (body.propertyDetails as any)?.pets ?? null,
+          access_notes: body.accessNotes || null,
+          team_notes: body.teamNotes || null,
           invoice_mode: invoiceMode,
           deposit_percent: depositPercent,
           booked_by: body.csrName || user.email || "admin",

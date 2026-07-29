@@ -62,7 +62,7 @@ export interface PricingResult {
 }
 
 // Deposit configuration
-export const DEPOSIT_PERCENTAGE = 0.25; // 25% deposit required
+export const DEPOSIT_PERCENTAGE = 0.5; // 50% deposit required
 
 // Universal Hybrid Pricing Model - Home size ranges with base prices.
 // Source of truth: AlphaLux pricing spreadsheet (Deep Clean, Move-Out
@@ -133,11 +133,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 0,
     maxSqft: 1500,
     bedroomRange: 'Studio – 2 BR',
-    deepPrice: 365,
-    maintenancePrice: 225,
+    deepPrice: 339,
+    maintenancePrice: 209,
     ninetyDayPrice: 935,
-    regularPrice: 225,
-    moveInOutPrice: 449,
+    regularPrice: 209,
+    moveInOutPrice: 419,
   },
   {
     id: '1501_2000',
@@ -145,11 +145,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 1500,
     maxSqft: 2000,
     bedroomRange: '2–3 BR homes',
-    deepPrice: 449,
-    maintenancePrice: 269,
+    deepPrice: 419,
+    maintenancePrice: 249,
     ninetyDayPrice: 1125,
-    regularPrice: 269,
-    moveInOutPrice: 549,
+    regularPrice: 249,
+    moveInOutPrice: 509,
   },
   {
     id: '2001_2500',
@@ -157,11 +157,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2000,
     maxSqft: 2500,
     bedroomRange: '3 BR homes',
-    deepPrice: 535,
-    maintenancePrice: 295,
+    deepPrice: 499,
+    maintenancePrice: 275,
     ninetyDayPrice: 1289,
-    regularPrice: 295,
-    moveInOutPrice: 629,
+    regularPrice: 275,
+    moveInOutPrice: 585,
   },
   {
     id: '2501_3000',
@@ -169,11 +169,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 2500,
     maxSqft: 3000,
     bedroomRange: '3–4 BR homes',
-    deepPrice: 625,
-    maintenancePrice: 325,
+    deepPrice: 579,
+    maintenancePrice: 299,
     ninetyDayPrice: 1445,
-    regularPrice: 325,
-    moveInOutPrice: 729,
+    regularPrice: 299,
+    moveInOutPrice: 679,
   },
   {
     id: '3001_4000',
@@ -181,11 +181,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 3000,
     maxSqft: 4000,
     bedroomRange: '4 BR homes',
-    deepPrice: 715,
-    maintenancePrice: 375,
+    deepPrice: 665,
+    maintenancePrice: 349,
     ninetyDayPrice: 1629,
-    regularPrice: 375,
-    moveInOutPrice: 889,
+    regularPrice: 349,
+    moveInOutPrice: 825,
   },
   {
     id: '4001_5000',
@@ -193,11 +193,11 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     minSqft: 4000,
     maxSqft: 5000,
     bedroomRange: '4–5 BR homes',
-    deepPrice: 895,
-    maintenancePrice: 425,
+    deepPrice: 829,
+    maintenancePrice: 409,
     ninetyDayPrice: 1929,
-    regularPrice: 425,
-    moveInOutPrice: 1079,
+    regularPrice: 409,
+    moveInOutPrice: 999,
   },
   {
     id: '5001_plus',
@@ -206,10 +206,10 @@ export const HOME_SIZE_RANGES: HomeSizeRange[] = [
     maxSqft: 999999,
     bedroomRange: 'Custom Quote Required - Call (857) 754-4557',
     requiresEstimate: true,
-    deepPrice: 1045,
-    maintenancePrice: 495,
+    deepPrice: 969,
+    maintenancePrice: 459,
     ninetyDayPrice: 2199,
-    regularPrice: 0,
+    regularPrice: 459,
     moveInOutPrice: 0,
   },
 ];

@@ -38,6 +38,8 @@ import {
   HOME_SIZE_RANGES,
   INVOICE_MODES,
   money,
+  CADENCE_LABELS,
+  CADENCE_PER_MONTH,
   offerPrice,
   OFFERS,
   OFFER_ORDER,
@@ -45,6 +47,7 @@ import {
   splitTotal,
   TIME_SLOTS,
   type InvoiceMode,
+  type Cadence,
   type OfferId,
 } from '@/lib/pricing-internal';
 import {
@@ -68,7 +71,10 @@ const INITIAL = {
   firstName: '', lastName: '', email: '', phone: '',
   addressLine1: '', addressLine2: '', city: '', state: 'NJ', zipCode: '',
   homeSizeId: '1501_2000', offerId: 'deep' as OfferId,
+  cadence: 'biweekly' as Cadence,
   bedrooms: '', bathrooms: '',
+  dwellingType: '', pets: 'none', parkingNotes: '',
+  accessNotes: '', teamNotes: '',
   frequency: 'one-time',
   serviceDate: '', timeSlot: '',
   invoiceMode: 'deposit_plus_preauth' as InvoiceMode,
@@ -159,8 +165,8 @@ export default function InternalBooking() {
     setForm((p) => ({ ...p, [field]: value }));
 
   const quote = useMemo(
-    () => buildQuote(form.homeSizeId, form.offerId, form.state),
-    [form.homeSizeId, form.offerId, form.state],
+    () => buildQuote(form.homeSizeId, form.offerId, form.state, form.cadence),
+    [form.homeSizeId, form.offerId, form.state, form.cadence],
   );
 
   const override = Number(form.priceOverride);
@@ -201,6 +207,14 @@ export default function InternalBooking() {
           zipCode: form.zipCode,
           homeSizeId: form.homeSizeId,
           offerId: form.offerId,
+          cadence: form.offerId === 'recurring' ? form.cadence : undefined,
+          propertyDetails: {
+            dwellingType: form.dwellingType || null,
+            pets: form.pets,
+            parkingNotes: form.parkingNotes || null,
+          },
+          accessNotes: form.accessNotes || undefined,
+          teamNotes: form.teamNotes || undefined,
           bedrooms: form.bedrooms || undefined,
           bathrooms: form.bathrooms || undefined,
           frequency: form.frequency,
@@ -368,7 +382,7 @@ export default function InternalBooking() {
               <div className="grid gap-2 sm:grid-cols-2">
                 {OFFER_ORDER.map((id) => {
                   const active = form.offerId === id;
-                  const price = offerPrice(form.homeSizeId, id, form.state);
+                  const price = offerPrice(form.homeSizeId, id, form.state, form.cadence);
                   const offer = OFFERS[id];
                   return (
                     <button
@@ -398,6 +412,38 @@ export default function InternalBooking() {
               </div>
             </Field>
 
+            {form.offerId === 'recurring' && (
+              <Field label="Cadence" required hint="Discount applies from the first visit.">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {(Object.keys(CADENCE_LABELS) as Cadence[]).map((c) => {
+                    const active = form.cadence === c;
+                    const per = offerPrice(form.homeSizeId, 'recurring', form.state, c);
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => set('cadence', c)}
+                        className={cn(
+                          'rounded-xl border p-3 text-left transition-colors',
+                          active
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                            : 'hover:border-primary/40 hover:bg-muted/50',
+                        )}
+                      >
+                        <div className="text-sm font-semibold">{CADENCE_LABELS[c]}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {money(per)} per visit
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {money(per * CADENCE_PER_MONTH[c])} / month
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Bedrooms">
                 <Input type="number" min={0} value={form.bedrooms} onChange={(e) => set('bedrooms', e.target.value)} />
@@ -418,10 +464,47 @@ export default function InternalBooking() {
               </Field>
             </div>
 
-            <Field label="Special instructions">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Dwelling type">
+                <Select value={form.dwellingType} onValueChange={(v) => set('dwellingType', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="house">House</SelectItem>
+                    <SelectItem value="apartment">Apartment</SelectItem>
+                    <SelectItem value="condo">Condo</SelectItem>
+                    <SelectItem value="townhome">Townhome</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Pets" hint="Crews plan supplies and time around pets.">
+                <Select value={form.pets} onValueChange={(v) => set('pets', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No pets</SelectItem>
+                    <SelectItem value="cats">Cats</SelectItem>
+                    <SelectItem value="dogs">Dogs</SelectItem>
+                    <SelectItem value="both">Cats and dogs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+
+            <Field label="Special instructions" hint="Shared with the customer on their confirmation.">
               <Textarea rows={2} value={form.specialInstructions}
                 onChange={(e) => set('specialInstructions', e.target.value)} />
             </Field>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Access & parking" hint="How the crew gets in and where they park.">
+                <Textarea rows={2} value={form.accessNotes}
+                  onChange={(e) => set('accessNotes', e.target.value)} />
+              </Field>
+              <Field label="Internal team notes" hint="Never shown to the customer.">
+                <Textarea rows={2} value={form.teamNotes}
+                  onChange={(e) => set('teamNotes', e.target.value)} />
+              </Field>
+            </div>
           </FormSection>
 
           <FormSection
@@ -539,6 +622,12 @@ export default function InternalBooking() {
                       <span>{quote.visits}</span>
                     </div>
                   )}
+                  {quote.isRecurring && quote.monthlyTotal != null && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Per month ({CADENCE_LABELS[form.cadence]})</span>
+                      <span>{money(quote.monthlyTotal)}</span>
+                    </div>
+                  )}
                 </div>
 
                 {quote.requiresEstimate && (
@@ -550,7 +639,7 @@ export default function InternalBooking() {
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
+                  <span>{quote.isRecurring ? 'Per visit' : 'Total'}</span>
                   <span>{money(total)}</span>
                 </div>
                 {override > 0 && (
