@@ -81,3 +81,10 @@ verify_jwt = false
 
 [functions.ensure-recent-bookings-hcp-synced]
 verify_jwt = false
+
+# Serves the Google Places browser key to the admin address field.
+# Unauthenticated because the Maps JS API runs in the browser and needs
+# the key before any session exists. The real control is the HTTP
+# referrer restriction on the key in Google Cloud Console.
+[functions.google-places-key]
+verify_jwt = false

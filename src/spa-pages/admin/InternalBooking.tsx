@@ -29,6 +29,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { AddressAutocomplete } from '@/components/admin/AddressAutocomplete';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -310,8 +311,20 @@ export default function InternalBooking() {
                 <Input placeholder="(555) 123-4567" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
               </Field>
               <div className="sm:col-span-2">
-                <Field label="Street address">
-                  <Input value={form.addressLine1} onChange={(e) => set('addressLine1', e.target.value)} />
+                <Field label="Street address" hint="Pick a Google suggestion to fill city, state and ZIP automatically.">
+                  <AddressAutocomplete
+                    value={form.addressLine1}
+                    onChange={(v) => set('addressLine1', v)}
+                    onResolved={(a) =>
+                      setForm((p) => ({
+                        ...p,
+                        addressLine1: a.line1 || p.addressLine1,
+                        city: a.city || p.city,
+                        state: a.state || p.state,
+                        zipCode: a.zipCode || p.zipCode,
+                      }))
+                    }
+                  />
                 </Field>
               </div>
               <Field label="Unit / Apt">
