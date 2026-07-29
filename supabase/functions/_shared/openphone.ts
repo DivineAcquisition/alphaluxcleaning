@@ -105,6 +105,42 @@ export function timezoneForState(state: string | null | undefined, zip?: string 
   return STATE_NUMBER_DEFAULTS[code].timezone;
 }
 
+/** "+15512399444" → "(551) 239-9444" for embedding in message copy. */
+export function formatUsNumber(e164: string | null | undefined): string {
+  const digits = String(e164 || '').replace(/\D/g, '');
+  const core = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
+  if (core.length !== 10) return String(e164 || '');
+  return `(${core.slice(0, 3)}) ${core.slice(3, 6)}-${core.slice(6)}`;
+}
+
+export interface SupportNumber {
+  stateCode: StateCode;
+  e164: string;
+  /** Human-readable form, e.g. "(551) 239-9444". */
+  display: string;
+}
+
+/**
+ * The OpenPhone number a customer should call or text for help.
+ *
+ * Support is OpenPhone on every rail, including the internal booking
+ * flow whose automated messages go out through GoHighLevel: a GHL
+ * LeadConnector number is not staffed, so any message it sends has to
+ * name the OpenPhone line for the customer's market explicitly.
+ */
+export async function resolveSupportNumber(opts: {
+  state?: string | null;
+  zip?: string | null;
+  supabase?: { from: (t: string) => any } | null;
+}): Promise<SupportNumber> {
+  const num = await resolveStateNumber(opts);
+  return {
+    stateCode: num.stateCode,
+    e164: num.phoneE164,
+    display: formatUsNumber(num.phoneE164),
+  };
+}
+
 export interface OpenPhoneSendResult {
   ok: boolean;
   messageId?: string;

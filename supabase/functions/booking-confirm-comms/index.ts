@@ -16,8 +16,13 @@
 //   Email — delegates to the existing `send-booking-confirmation`
 //           function (branded customer email + internal ops email).
 //   SMS   — rendered from `_shared/sms-templates.ts` and sent through
-//           `_shared/sms.ts` (OpenPhone primary with the state-routed
-//           business number → GHL fallback).
+//           `_shared/sms.ts` on the rail that owns the booking, derived
+//           from `bookings.source`: a public funnel booking texts from
+//           the state-routed OpenPhone number (no GHL fallback), while
+//           an internal/VA booking fires through GoHighLevel. Internal
+//           bookings normally pre-claim the SMS slot in `book-as-va`
+//           and send their own invoice-aware copy, so the internal path
+//           here is the retry net rather than the usual route.
 //
 // Failures never propagate as HTTP errors to the confirm path —
 // the booking is already paid/confirmed; comms are best-effort and
@@ -25,8 +30,9 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { sendSms } from "../_shared/sms.ts";
+import { channelFromBookingSource, sendSms } from "../_shared/sms.ts";
 import { renderSMSTemplate } from "../_shared/sms-templates.ts";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,7 +99,7 @@ serve(async (req) => {
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select(
-        "id, customer_id, status, service_type, service_date, time_slot, offer_name, zip_code, confirmation_email_sent_at, confirmation_sms_sent_at",
+        "id, customer_id, status, service_type, service_date, time_slot, offer_name, zip_code, source, confirmation_email_sent_at, confirmation_sms_sent_at",
       )
       .eq("id", bookingId)
       .single();
@@ -125,6 +131,7 @@ serve(async (req) => {
     let emailOutcome: ChannelOutcome;
     let smsOutcome: ChannelOutcome;
     let smsProvider: string | null = null;
+    const smsChannel = channelFromBookingSource((booking as any).source);
 
     // =================== EMAIL (idempotent) ===================
     if (!customer?.email) {
@@ -201,7 +208,7 @@ serve(async (req) => {
           SERVICE_TYPE_LABELS[booking.service_type] ||
           booking.service_type ||
           "cleaning";
-        const message = renderSMSTemplate("booking_confirmed", {
+        let message = renderSMSTemplate("booking_confirmed", {
           first_name: customer.first_name || customer.name || "there",
           service_type: serviceLabel,
           service_date: fmtDate(booking.service_date),
@@ -210,12 +217,24 @@ serve(async (req) => {
             : "arrival window TBD",
         });
 
+        const state = customer.state || undefined;
+        const zip = (booking as any).zip_code || customer.postal_code || undefined;
+
+        // Internal bookings go out through GoHighLevel, whose sending
+        // number is not a staffed inbox — name the market's OpenPhone
+        // support line explicitly so replies reach a human.
+        if (smsChannel === "internal") {
+          const support = await resolveSupportNumber({ state, zip, supabase });
+          message += ` Questions? Call or text ${support.display}.`;
+        }
+
         const res = await sendSms({
           to: customer.phone,
           message,
-          // State-routed OpenPhone "from" number (NJ / TX / CA / NY).
-          state: customer.state || undefined,
-          zip: (booking as any).zip_code || customer.postal_code || undefined,
+          channel: smsChannel,
+          // Public rail: state-routed OpenPhone "from" number (NJ/TX/CA/NY).
+          state,
+          zip,
           context: "booking_confirm",
           email: customer.email || undefined,
           firstName: customer.first_name || undefined,
@@ -228,6 +247,7 @@ serve(async (req) => {
           smsProvider = res.provider;
           log("SMS sent", {
             bookingId,
+            channel: smsChannel,
             provider: res.provider,
             fallback: res.fallback,
           });
@@ -250,6 +270,7 @@ serve(async (req) => {
         email: emailOutcome,
         sms: smsOutcome,
         smsProvider,
+        smsChannel,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

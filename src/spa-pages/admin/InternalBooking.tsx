@@ -2,10 +2,16 @@
 //
 // Ported from the Novara internal booking system ("Novara Internal
 // Booking" / book-as-va), molded for AlphaLux: the booking lands in
-// Housecall Pro (ops platform), the confirmation SMS rides the
-// state-routed OpenPhone number (NJ/TX/CA/NY), the confirmation email
+// Housecall Pro (ops platform), the booking is pushed into GoHighLevel
+// which fires the automated comms for this rail, the confirmation email
 // goes out via Resend, and Stripe invoices are created on the
 // customer's state-routed Stripe account.
+//
+// Comms split: automated messages on the internal rail are sent by
+// GoHighLevel, but the number the customer is told to call or text is
+// always the OpenPhone line for their market — a LeadConnector number
+// is not a staffed inbox. The public online booking interface is the
+// mirror image: OpenPhone sends everything there.
 //
 // The VA fills the form while on the phone, books, and gets back a
 // result panel with the booking ref + invoice URLs to copy/paste to
@@ -57,6 +63,16 @@ const OFFERS = [
 ];
 
 const STATES = ['NJ', 'NY', 'TX', 'CA'];
+
+// Support lines quoted in the UI. The server resolves the live value
+// from `sms_state_numbers` (editable under Lifecycle → Numbers), so
+// treat these as the defaults ops sees, not the source of truth.
+const SUPPORT_NUMBERS: Record<string, string> = {
+  NJ: '(551) 239-9444',
+  TX: '(972) 559-0223',
+  CA: '(323) 300-5528',
+  NY: '(631) 366-8565',
+};
 
 // Mirrors the server rate card in book-as-va 1:1 so the live quote and
 // the Stripe invoice always match.
@@ -184,9 +200,16 @@ export default function InternalBooking() {
                 <Badge variant={result.hcpJobId ? 'default' : 'destructive'}>
                   {result.hcpJobId ? `HCP job ${result.hcpJobId}` : `HCP: ${result.hcpError || 'not synced'}`}
                 </Badge>
+                <Badge variant={result.ghlContactId ? 'default' : 'destructive'}>
+                  {result.ghlContactId
+                    ? 'GoHighLevel synced — automations firing'
+                    : `GHL: ${result.ghlError || 'not synced'}`}
+                </Badge>
                 <Badge variant={smsOk ? 'default' : 'secondary'}>
                   {smsOk
-                    ? `SMS sent (${result.smsResult?.provider}${result.smsResult?.fromNumber ? ` from ${result.smsResult.fromNumber}` : ''})`
+                    ? `SMS sent via ${result.smsResult?.provider === 'ghl' ? 'GoHighLevel' : 'OpenPhone failover'}${
+                        result.smsResult?.fromNumber ? ` (${result.smsResult.fromNumber})` : ''
+                      }`
                     : result.smsResult ? 'SMS failed' : 'SMS skipped'}
                 </Badge>
                 <Badge variant={emailOk ? 'default' : 'secondary'}>
@@ -218,7 +241,7 @@ export default function InternalBooking() {
   return (
     <AdminLayout
       title="Internal Booking"
-      description="Book a customer while on the phone — job lands in Housecall Pro, confirmation SMS rides the state's OpenPhone number"
+      description="Book a customer while on the phone — job lands in Housecall Pro, GoHighLevel fires the automated comms, support stays on OpenPhone"
     >
       <div className="grid lg:grid-cols-3 gap-6 max-w-6xl">
         <div className="lg:col-span-2 space-y-6">
@@ -262,7 +285,7 @@ export default function InternalBooking() {
                 <Input value={form.city} onChange={(e) => set('city', e.target.value)} />
               </div>
               <div>
-                <Label>State (routes SMS number + Stripe account)</Label>
+                <Label>State (routes support number + Stripe account)</Label>
                 <Select value={form.state} onValueChange={(v) => set('state', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -377,7 +400,10 @@ export default function InternalBooking() {
               <div className="col-span-2 flex items-center gap-2">
                 <Switch checked={form.sendConfirmationSms}
                   onCheckedChange={(v) => set('sendConfirmationSms', v)} />
-                <Label>Send confirmation SMS (OpenPhone, {form.state} number)</Label>
+                <Label>
+                  Send confirmation SMS via GoHighLevel (support line:{' '}
+                  {SUPPORT_NUMBERS[form.state] || form.state})
+                </Label>
               </div>
             </CardContent>
           </Card>
@@ -413,8 +439,10 @@ export default function InternalBooking() {
               </Button>
               <p className="text-xs text-muted-foreground pt-2">
                 On book: customer + booking saved → job pushed to Housecall Pro → Stripe
-                invoice(s) emailed → confirmation email (Resend) + SMS from the {form.state} OpenPhone
-                number. Lifecycle engine picks the customer up automatically.
+                invoice(s) emailed → booking synced to GoHighLevel (fires the automated
+                workflows) → confirmation email (Resend) and confirmation SMS sent by
+                GoHighLevel, quoting {SUPPORT_NUMBERS[form.state] || 'the local'} OpenPhone
+                line for support. Lifecycle engine picks the customer up automatically.
               </p>
             </CardContent>
           </Card>

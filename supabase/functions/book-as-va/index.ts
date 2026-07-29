@@ -6,23 +6,33 @@
 //
 //   1. Verify the caller is an active admin (admin_users)
 //   2. Upsert the customer row — including city/state, which drive the
-//      OpenPhone "from" number and the Stripe account routing
+//      support number the customer is given and the Stripe account
+//      routing
 //   3. Insert the booking row with canonical pricing + schedule fields
-//   4. Sync the job into HOUSECALL PRO via hcp-sync-booking
-//      (replaces Novara's GHL pipeline + GHL calendar steps — HCP is
-//      the ops platform here, the job IS the schedule)
+//   4. Sync the job into HOUSECALL PRO via hcp-sync-booking — HCP is
+//      the ops platform here, the job IS the schedule
 //   5. Optionally create Stripe invoices on the customer's state-routed
 //      Stripe account:
 //        a) deposit invoice due today (default 25%, AlphaLux convention)
 //        b) remaining-balance invoice due on the service date
 //        or a single full-amount invoice ("full_now")
-//   6. Send the branded confirmation email via booking-confirm-comms
+//   6. Push the booking into GOHIGHLEVEL via ghl-sync-booking (contact,
+//      custom fields, tags, opportunity, calendar) — this is what fires
+//      the automated GHL workflows for the internal rail
+//   7. Send the branded confirmation email via booking-confirm-comms
 //      (Resend) — the SMS flag is pre-claimed so the shared helper only
 //      emails
-//   7. Send an invoice-aware confirmation SMS via OpenPhone from the
-//      number matching the customer's state (NJ / TX / CA / NY)
-//   8. Return everything the VA needs to copy/paste invoice URLs to the
+//   8. Send the invoice-aware confirmation SMS through GOHIGHLEVEL so
+//      it threads into the same CRM conversation as the workflow
+//      messages, with the OpenPhone number for the customer's market
+//      named in the copy as the support line
+//   9. Return everything the VA needs to copy/paste invoice URLs to the
 //      customer while still on the phone.
+//
+// Comms split (deliberate, see _shared/sms.ts):
+//   internal rail (this function) — GoHighLevel sends, OpenPhone is the
+//     support contact and the failover provider.
+//   public rail (online booking interface) — OpenPhone sends, always.
 //
 // The retention triggers fire on the booking insert, so the customer's
 // lifecycle clock (last/next booking) updates automatically and the
@@ -55,7 +65,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { sendSms } from "../_shared/sms.ts";
 import { toE164US } from "../_shared/phone-format.ts";
-import { timezoneForState } from "../_shared/openphone.ts";
+import { resolveSupportNumber, timezoneForState } from "../_shared/openphone.ts";
 import {
   slugFromCustomerLocation,
   getStripeSecretKey,
@@ -486,10 +496,32 @@ serve(async (req) => {
       }
     }
 
-    // 6 + 7. Confirmation comms. We pre-claim the SMS flag so the shared
+    // 6. GoHighLevel — the automation platform for the internal rail.
+    //    Pushing the booking here upserts the contact with every booking
+    //    custom field, tags it, opens the opportunity and books the
+    //    calendar event, which is what triggers the GHL workflows that
+    //    fire the rest of the automated comms. Idempotent on booking_id;
+    //    retry-ghl-syncs replays a transient LeadConnector outage.
+    let ghlContactId: string | null = null;
+    let ghlError: string | null = null;
+    if (bookingStatus === "confirmed") {
+      try {
+        const r = await supabase.functions.invoke("ghl-sync-booking", {
+          body: { booking_id: bookingId },
+        });
+        if (r.data?.success) ghlContactId = r.data.contact_id || r.data.ghl_contact_id || null;
+        else ghlError = r.data?.error || r.error?.message || "unknown";
+        logStep("GHL sync", { ghlContactId, ghlError });
+      } catch (err) {
+        ghlError = err instanceof Error ? err.message : String(err);
+        logStep("GHL sync errored (non-blocking)", { error: ghlError });
+      }
+    }
+
+    // 7 + 8. Confirmation comms. We pre-claim the SMS flag so the shared
     //    booking-confirm-comms helper only sends the branded email, then
-    //    send the VA-specific invoice-aware SMS ourselves through the
-    //    state-routed OpenPhone number.
+    //    send the VA-specific invoice-aware SMS ourselves on the internal
+    //    rail (GoHighLevel).
     let emailResult: unknown = null;
     let smsResult: unknown = null;
     if (bookingStatus === "confirmed") {
@@ -513,6 +545,14 @@ serve(async (req) => {
 
       if (wantsSms) {
         const window = TIME_SLOT_WINDOWS[body.timeSlot] || body.timeSlot;
+        // GoHighLevel sends this message from a LeadConnector number
+        // nobody monitors, so the copy has to hand the customer the
+        // OpenPhone line for their market to call or text for support.
+        const support = await resolveSupportNumber({
+          state: body.state,
+          zip: body.zipCode,
+          supabase,
+        });
         const parts = [
           `AlphaLux Clean: Hi ${body.firstName}! Your ${offer.name} is confirmed for ${body.serviceDate} (${window}). Total $${total.toFixed(2)}.`,
         ];
@@ -522,11 +562,15 @@ serve(async (req) => {
           );
         }
         if (fullInvoice) parts.push(" Invoice sent to your email.");
+        parts.push(` Questions? Call or text us at ${support.display}.`);
         parts.push(" Reply STOP to opt out.");
 
         const sms = await sendSms({
           to: phoneE164 as string,
           message: parts.join(""),
+          // Internal rail: GoHighLevel sends, OpenPhone is the failover.
+          channel: "internal",
+          contactId: ghlContactId || undefined,
           state: body.state,
           zip: body.zipCode,
           context: "internal_booking_confirm",
@@ -548,7 +592,7 @@ serve(async (req) => {
       logStep("invoiceMode=none → booking left pending, comms skipped");
     }
 
-    // 8. Final response — everything the VA needs while on the phone.
+    // 9. Final response — everything the VA needs while on the phone.
     return json({
       success: true,
       bookingId,
@@ -556,6 +600,8 @@ serve(async (req) => {
       customerId,
       hcpJobId,
       hcpError,
+      ghlContactId,
+      ghlError,
       invoiceMode,
       stripeAccount: stripeSlug,
       totals: { total, deposit, balance },
