@@ -266,6 +266,13 @@ function App() {
               </Suspense>
             </AdminRoute>
           } />
+          <Route path="/admin/activity" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/ActivityMonitor')))}
+              </Suspense>
+            </AdminRoute>
+          } />
           <Route path="/admin/internal-booking" element={
             <AdminRoute>
               <Suspense fallback={<BrandedLoader />}>

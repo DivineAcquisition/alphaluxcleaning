@@ -51,6 +51,7 @@ interface NavItem {
 
 const operationsItems: NavItem[] = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, description: "Live overview" },
+  { label: "Booking Activity", path: "/admin/activity", icon: Activity, description: "Internal + online rails" },
   { label: "Bookings", path: "/admin/bookings", icon: CalendarDays, description: "All jobs & revenue" },
   { label: "Customers", path: "/admin/customers", icon: Users, description: "CRM & lifecycle stage" },
   { label: "Leads", path: "/admin/leads", icon: UserPlus, description: "Speed-to-lead & funnel" },
