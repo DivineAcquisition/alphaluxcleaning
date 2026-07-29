@@ -1,96 +1,89 @@
-// Guards the two copies of the internal rate card against drift.
+// Guards the edge copy of the internal rate card against drift.
 //
-// `src/lib/pricing-internal.ts` (browser) and
-// `supabase/functions/_shared/pricing-internal.ts` (Deno) are duplicated
-// on purpose — there is no build step joining the browser bundle to the
-// edge runtime. The failure mode that duplication invites is silent and
-// expensive: a VA quotes one number on the phone while Stripe invoices
-// another. This test diffs everything below the header comment and fails
-// on any difference. Run with: npm test
+// Prices live in `src/lib/new-pricing-system.ts` — the public funnel's
+// rate card, derived from unit economics. Deno cannot import it, so
+// `scripts/generate-internal-pricing-mirror.mjs` inlines the tier table
+// into `pricing-internal.ts`. If someone edits the funnel's prices and
+// forgets to regenerate, a VA quotes one number on the phone and Stripe
+// invoices another — silent, and it costs money either direction.
+//
+// This test regenerates the mirror in memory and fails if the committed
+// file differs. Run with: npm test
 
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 import {
-  ADD_ONS,
-  buildQuote,
   DEPOSIT_PERCENT,
   HOME_SIZE_RANGES,
-  serviceFinalPrice,
-  serviceListPrice,
-  SERVICE_TIERS,
+  offerPrice,
+  OFFERS,
+  resolveHomeSizeId,
   splitTotal,
+  stateMultiplier,
 } from './pricing-internal.ts';
 
-/** Strip the leading `//` header so only the code body is compared. */
-function body(source: string): string {
-  const lines = source.split('\n');
-  let i = 0;
-  while (i < lines.length && (lines[i].startsWith('//') || lines[i].trim() === '')) i++;
-  return lines.slice(i).join('\n').trim();
-}
+const repoRoot = new URL('../../../', import.meta.url);
 
-Deno.test('the browser and Deno rate cards are identical', async () => {
-  const [client, server] = await Promise.all([
-    Deno.readTextFile(new URL('../../../src/lib/pricing-internal.ts', import.meta.url)),
-    Deno.readTextFile(new URL('./pricing-internal.ts', import.meta.url)),
-  ]);
+Deno.test('the edge mirror matches the funnel rate card', async () => {
+  const generator = await import(
+    new URL('scripts/generate-internal-pricing-mirror.mjs', repoRoot).href
+  );
+  const expected = generator.build();
+  const committed = await Deno.readTextFile(
+    new URL('supabase/functions/_shared/pricing-internal.ts', repoRoot),
+  );
   assertEquals(
-    body(server),
-    body(client),
-    'Internal rate card drifted between the browser and edge copies — ' +
-      'a VA would quote one price and Stripe would invoice another.',
+    committed.trim(),
+    expected.trim(),
+    'Internal pricing mirror is stale — run `npm run pricing:mirror`. ' +
+      'Until you do, phone bookings price differently from the website.',
   );
 });
 
-Deno.test('list price applies the service tier multiplier', () => {
-  // 1,501–2,000 sq ft, zone B base is $225.
-  assertEquals(serviceListPrice('1501_2000', 'standard'), 225);
-  assertEquals(serviceListPrice('1501_2000', 'deep'), 338); // 225 x 1.5, rounded
-  assertEquals(serviceListPrice('1501_2000', 'moveInOut'), 450);
-  assertEquals(serviceListPrice('1501_2000', 'combo'), 563);
+Deno.test('offers bill against the funnel prices', () => {
+  // 1,500–2,000 sq ft tier, base (non-NY) rates.
+  assertEquals(offerPrice('1501_2000', 'standard', 'NJ'), 269);
+  assertEquals(offerPrice('1501_2000', 'deep', 'NJ'), 449);
+  assertEquals(offerPrice('1501_2000', '90_day', 'NJ'), 1125);
+  assertEquals(offerPrice('1501_2000', 'move_in_out', 'NJ'), 549);
 });
 
-Deno.test('standing discounts come off list', () => {
-  assertEquals(serviceFinalPrice('1501_2000', 'standard'), 191.25); // 15% off 225
-  assertEquals(serviceFinalPrice('1501_2000', 'deep'), 253.5); // 25% off 338
-  assertEquals(serviceFinalPrice('1501_2000', 'moveInOut'), 450); // no discount
+Deno.test('New York carries the 15% uplift, other markets do not', () => {
+  assertEquals(stateMultiplier('NY'), 1.15);
+  assertEquals(stateMultiplier('NJ'), 1.0);
+  assertEquals(stateMultiplier('TX'), 1.0);
+  assertEquals(stateMultiplier('CA'), 1.0);
+  // Unknown state must not silently inflate a quote.
+  assertEquals(stateMultiplier('FL'), 1.0);
+  assertEquals(stateMultiplier(null), 1.0);
+
+  assertEquals(offerPrice('1501_2000', 'deep', 'NY'), Math.round(449 * 1.15));
 });
 
-Deno.test('combo bills deep at list plus standard at half', () => {
-  // deep 338 + (standard 225 / 2) = 450.50
-  assertEquals(serviceFinalPrice('1501_2000', 'combo'), 450.5);
+Deno.test('legacy tier ids from older bookings still resolve', () => {
+  assertEquals(resolveHomeSizeId('1500_1999'), '1501_2000');
+  assertEquals(resolveHomeSizeId('under_1000'), '1000_1500');
+  assertEquals(resolveHomeSizeId('5000_plus'), '5001_plus');
+  assertEquals(resolveHomeSizeId('1501_2000'), '1501_2000');
+  // Nonsense falls back to the smallest tier rather than pricing at zero.
+  assertEquals(resolveHomeSizeId('nonsense'), HOME_SIZE_RANGES[0].id);
 });
 
-Deno.test('move-in/out absorbs the fridge and oven add-ons', () => {
-  const withExtras = buildQuote('1501_2000', 'moveInOut', ['fridge', 'oven', 'windows']);
-  // Only the $40 windows add-on is billable.
-  assertEquals(withExtras.addOnsTotal, 40);
-
-  const standard = buildQuote('1501_2000', 'standard', ['fridge', 'oven']);
-  assertEquals(standard.addOnsTotal, 60);
+Deno.test('the deposit split matches the funnel 25%', () => {
+  assertEquals(DEPOSIT_PERCENT, 0.25);
+  assertEquals(splitTotal(400, 'deposit_plus_preauth'), { deposit: 100, remaining: 300 });
+  assertEquals(splitTotal(400, 'deposit_plus_remaining', 0.5), { deposit: 200, remaining: 200 });
+  assertEquals(splitTotal(400, 'full_now'), { deposit: 400, remaining: 0 });
+  assertEquals(splitTotal(400, 'none'), { deposit: 0, remaining: 400 });
 });
 
-Deno.test('the quote totals service plus add-ons', () => {
-  const q = buildQuote('1501_2000', 'standard', ['windows']);
-  assertEquals(q.servicePrice, 191.25);
-  assertEquals(q.addOnsTotal, 40);
-  assertEquals(q.total, 231.25);
-  assertEquals(q.discount, 33.75);
-});
-
-Deno.test('deposit split honours the invoice mode', () => {
-  assertEquals(splitTotal(200, 'deposit_plus_preauth'), { deposit: 100, remaining: 100 });
-  assertEquals(splitTotal(200, 'deposit_plus_remaining', 0.25), { deposit: 50, remaining: 150 });
-  assertEquals(splitTotal(200, 'full_now'), { deposit: 200, remaining: 0 });
-  assertEquals(splitTotal(200, 'none'), { deposit: 0, remaining: 200 });
-});
-
-Deno.test('the rate card covers every size with a positive price', () => {
-  assertEquals(HOME_SIZE_RANGES.length, 9);
-  for (const range of HOME_SIZE_RANGES) {
-    if (range.standardPrice <= 0) throw new Error(`${range.id} has no price`);
-    if (range.baseHours <= 0) throw new Error(`${range.id} has no hours`);
+Deno.test('every offer maps to a booking service and offer type', () => {
+  assertEquals(Object.keys(OFFERS).length, 4);
+  for (const offer of Object.values(OFFERS)) {
+    if (!offer.serviceType || !offer.offerType) {
+      throw new Error(`Offer ${offer.id} is missing its booking mapping`);
+    }
+    if (offer.visits < 1) throw new Error(`Offer ${offer.id} has no visits`);
   }
-  assertEquals(DEPOSIT_PERCENT, 0.5);
-  assertEquals(Object.keys(SERVICE_TIERS).length, 4);
-  assertEquals(Object.keys(ADD_ONS).length, 21);
+  assertEquals(OFFERS['90_day'].visits, 4);
+  assertEquals(OFFERS['90_day'].isRecurring, true);
 });

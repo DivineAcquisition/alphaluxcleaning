@@ -1,12 +1,71 @@
-// GENERATED FILE — do not edit by hand.
+#!/usr/bin/env node
+
+/**
+ * Generates the edge-runtime copy of the internal booking rate card.
+ *
+ * The browser reads prices from `src/lib/new-pricing-system.ts` (the
+ * public funnel's rate card, derived from unit economics). Deno cannot
+ * import that file — there is no build step joining the browser bundle
+ * to the edge runtime — so `book-as-va` needs its own copy of the tier
+ * table.
+ *
+ * Copying it by hand is how a VA ends up quoting one price while Stripe
+ * invoices another, so this script lifts HOME_SIZE_RANGES straight out
+ * of the funnel's source and writes the mirror. `npm test` fails if the
+ * committed mirror no longer matches what this would produce.
+ *
+ * Usage: npm run pricing:mirror
+ */
+
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const SOURCE = resolve(root, 'src/lib/new-pricing-system.ts');
+const TARGET = resolve(root, 'supabase/functions/_shared/pricing-internal.ts');
+
+/** Pull the HOME_SIZE_RANGES array literal out of the funnel's rate card. */
+export function extractTiers(source) {
+  const match = source.match(/export const HOME_SIZE_RANGES: HomeSizeRange\[\] = (\[[\s\S]*?\n\]);/);
+  if (!match) throw new Error('HOME_SIZE_RANGES not found in new-pricing-system.ts');
+
+  // The literal is plain data (no expressions), so quoting the keys and
+  // stripping comments/trailing commas makes it valid JSON.
+  const json = match[1]
+    .replace(/\/\/[^\n]*/g, '')
+    .replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":')
+    .replace(/'/g, '"')
+    .replace(/,(\s*[}\]])/g, '$1');
+
+  const tiers = JSON.parse(json);
+  if (!Array.isArray(tiers) || tiers.length === 0) throw new Error('No tiers parsed');
+  for (const t of tiers) {
+    for (const field of ['deepPrice', 'maintenancePrice', 'ninetyDayPrice', 'moveInOutPrice']) {
+      if (typeof t[field] !== 'number') {
+        throw new Error(`Tier ${t.id} is missing a numeric ${field}`);
+      }
+    }
+  }
+  return tiers;
+}
+
+export function extractDepositPercent(source) {
+  const m = source.match(/export const DEPOSIT_PERCENTAGE\s*=\s*([0-9.]+)/);
+  if (!m) throw new Error('DEPOSIT_PERCENTAGE not found');
+  return Number(m[1]);
+}
+
+export function render(tiers, depositPercent) {
+  return `// GENERATED FILE — do not edit by hand.
 //
-// Run `npm run pricing:mirror` to regenerate. Source of truth is
+// Run \`npm run pricing:mirror\` to regenerate. Source of truth is
 // src/lib/new-pricing-system.ts, the public AlphaLux booking funnel's
 // rate card, so a phone booking always quotes the same price as the
 // website for the same house.
 //
 // Deno cannot import the browser rate card (no build step joins them),
-// which is why the tier table below is inlined. `npm test` fails if this
+// which is why the tier table below is inlined. \`npm test\` fails if this
 // file drifts from what the generator would produce.
 
 export type OfferId = 'standard' | 'deep' | '90_day' | 'move_in_out';
@@ -23,79 +82,21 @@ export interface HomeSizeRange {
   moveInOutPrice: number;
 }
 
-export const HOME_SIZE_RANGES: HomeSizeRange[] = [
-  {
-    "id": "1000_1500",
-    "label": "Up to 1,500 sq ft",
-    "minSqft": 0,
-    "maxSqft": 1500,
-    "deepPrice": 365,
-    "maintenancePrice": 225,
-    "ninetyDayPrice": 935,
-    "moveInOutPrice": 449
-  },
-  {
-    "id": "1501_2000",
-    "label": "1,500 – 2,000 sq ft",
-    "minSqft": 1500,
-    "maxSqft": 2000,
-    "deepPrice": 449,
-    "maintenancePrice": 269,
-    "ninetyDayPrice": 1125,
-    "moveInOutPrice": 549
-  },
-  {
-    "id": "2001_2500",
-    "label": "2,000 – 2,500 sq ft",
-    "minSqft": 2000,
-    "maxSqft": 2500,
-    "deepPrice": 535,
-    "maintenancePrice": 295,
-    "ninetyDayPrice": 1289,
-    "moveInOutPrice": 629
-  },
-  {
-    "id": "2501_3000",
-    "label": "2,500 – 3,000 sq ft",
-    "minSqft": 2500,
-    "maxSqft": 3000,
-    "deepPrice": 625,
-    "maintenancePrice": 325,
-    "ninetyDayPrice": 1445,
-    "moveInOutPrice": 729
-  },
-  {
-    "id": "3001_4000",
-    "label": "3,000 – 4,000 sq ft",
-    "minSqft": 3000,
-    "maxSqft": 4000,
-    "deepPrice": 715,
-    "maintenancePrice": 375,
-    "ninetyDayPrice": 1629,
-    "moveInOutPrice": 889
-  },
-  {
-    "id": "4001_5000",
-    "label": "4,000 – 5,000 sq ft",
-    "minSqft": 4000,
-    "maxSqft": 5000,
-    "deepPrice": 895,
-    "maintenancePrice": 425,
-    "ninetyDayPrice": 1929,
-    "moveInOutPrice": 1079
-  },
-  {
-    "id": "5001_plus",
-    "label": "5,000+ sq ft",
-    "minSqft": 5000,
-    "maxSqft": 999999,
-    "requiresEstimate": true,
-    "deepPrice": 1045,
-    "maintenancePrice": 495,
-    "ninetyDayPrice": 2199,
-    "moveInOutPrice": 0
-  }
-];
+export const HOME_SIZE_RANGES: HomeSizeRange[] = ${JSON.stringify(
+    tiers.map((t) => ({
+      id: t.id,
+      label: t.label,
+      minSqft: t.minSqft,
+      maxSqft: t.maxSqft,
+      ...(t.requiresEstimate ? { requiresEstimate: true } : {}),
+      deepPrice: t.deepPrice,
+      maintenancePrice: t.maintenancePrice,
+      ninetyDayPrice: t.ninetyDayPrice,
+      moveInOutPrice: t.moveInOutPrice,
+    })),
+    null,
+    2,
+  )};
 
 export interface OfferDefinition {
   id: OfferId;
@@ -146,7 +147,7 @@ export const OFFERS: Record<OfferId, OfferDefinition> = {
   },
 };
 
-export const DEPOSIT_PERCENT = 0.25;
+export const DEPOSIT_PERCENT = ${depositPercent};
 
 export const STATE_MULTIPLIERS: Record<string, number> = {
   NY: 1.15,
@@ -207,4 +208,17 @@ export function splitTotal(
   const pct = Math.max(0, Math.min(1, depositPercent));
   const deposit = round2(total * pct);
   return { deposit, remaining: round2(Math.max(0, total - deposit)) };
+}
+`;
+}
+
+export function build() {
+  const source = readFileSync(SOURCE, 'utf8');
+  return render(extractTiers(source), extractDepositPercent(source));
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const output = build();
+  writeFileSync(TARGET, output);
+  console.log(`Wrote ${TARGET} (${output.split('\n').length} lines)`);
 }

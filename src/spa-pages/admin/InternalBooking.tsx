@@ -32,18 +32,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  ADD_ONS,
-  addOnPrice,
   buildQuote,
+  DEPOSIT_PERCENT,
   HOME_SIZE_RANGES,
   INVOICE_MODES,
   money,
-  serviceListPrice,
-  SERVICE_TIERS,
+  offerPrice,
+  OFFERS,
+  OFFER_ORDER,
+  requiresEstimate,
   splitTotal,
   TIME_SLOTS,
   type InvoiceMode,
-  type ServiceType,
+  type OfferId,
 } from '@/lib/pricing-internal';
 import {
   Loader2, Copy, CheckCircle2, Phone, DollarSign, RotateCcw, Home, CalendarDays,
@@ -62,18 +63,15 @@ const SUPPORT_NUMBERS: Record<string, string> = {
   NY: '(631) 366-8565',
 };
 
-const SERVICE_ORDER: ServiceType[] = ['standard', 'deep', 'moveInOut', 'combo'];
-
 const INITIAL = {
   firstName: '', lastName: '', email: '', phone: '',
   addressLine1: '', addressLine2: '', city: '', state: 'NJ', zipCode: '',
-  homeSizeId: '1501_2000', serviceType: 'standard' as ServiceType,
-  addOns: [] as string[],
+  homeSizeId: '1501_2000', offerId: 'deep' as OfferId,
   bedrooms: '', bathrooms: '',
   frequency: 'one-time',
   serviceDate: '', timeSlot: '',
   invoiceMode: 'deposit_plus_preauth' as InvoiceMode,
-  depositPercent: '50',
+  depositPercent: String(Math.round(DEPOSIT_PERCENT * 100)),
   priceOverride: '',
   specialInstructions: '', csrName: '',
   sendConfirmationSms: true,
@@ -159,20 +157,14 @@ export default function InternalBooking() {
   const set = <K extends keyof typeof INITIAL>(field: K, value: (typeof INITIAL)[K]) =>
     setForm((p) => ({ ...p, [field]: value }));
 
-  const toggleAddOn = (id: string) =>
-    setForm((p) => ({
-      ...p,
-      addOns: p.addOns.includes(id) ? p.addOns.filter((a) => a !== id) : [...p.addOns, id],
-    }));
-
   const quote = useMemo(
-    () => buildQuote(form.homeSizeId, form.serviceType, form.addOns),
-    [form.homeSizeId, form.serviceType, form.addOns],
+    () => buildQuote(form.homeSizeId, form.offerId, form.state),
+    [form.homeSizeId, form.offerId, form.state],
   );
 
   const override = Number(form.priceOverride);
   const total = override > 0 ? override : quote.total;
-  const depositPct = Math.max(0, Math.min(100, Number(form.depositPercent) || 50)) / 100;
+  const depositPct = Math.max(0, Math.min(100, Number(form.depositPercent) || DEPOSIT_PERCENT * 100)) / 100;
   const { deposit, remaining } = splitTotal(total, form.invoiceMode, depositPct);
 
   // What the VA still has to collect before the button does anything.
@@ -207,8 +199,7 @@ export default function InternalBooking() {
           state: form.state,
           zipCode: form.zipCode,
           homeSizeId: form.homeSizeId,
-          serviceType: form.serviceType,
-          addOns: form.addOns,
+          offerId: form.offerId,
           bedrooms: form.bedrooms || undefined,
           bathrooms: form.bathrooms || undefined,
           frequency: form.frequency,
@@ -360,16 +351,17 @@ export default function InternalBooking() {
               </Select>
             </Field>
 
-            <Field label="Service" required>
+            <Field label="Offer" required>
               <div className="grid gap-2 sm:grid-cols-2">
-                {SERVICE_ORDER.map((type) => {
-                  const active = form.serviceType === type;
-                  const list = serviceListPrice(form.homeSizeId, type);
+                {OFFER_ORDER.map((id) => {
+                  const active = form.offerId === id;
+                  const price = offerPrice(form.homeSizeId, id, form.state);
+                  const offer = OFFERS[id];
                   return (
                     <button
-                      key={type}
+                      key={id}
                       type="button"
-                      onClick={() => set('serviceType', type)}
+                      onClick={() => set('offerId', id)}
                       className={cn(
                         'rounded-xl border p-3 text-left transition-colors',
                         active
@@ -377,39 +369,16 @@ export default function InternalBooking() {
                           : 'hover:border-primary/40 hover:bg-muted/50',
                       )}
                     >
-                      <div className="text-sm font-semibold">{SERVICE_TIERS[type].label}</div>
-                      <div className="text-xs text-muted-foreground">{money(list)} list</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </Field>
-
-            <Field
-              label="Add-ons"
-              hint={
-                form.serviceType === 'moveInOut'
-                  ? 'Move-In/Out already includes the fridge and oven, so those bill at $0.'
-                  : undefined
-              }
-            >
-              <div className="flex flex-wrap gap-1.5">
-                {Object.entries(ADD_ONS).map(([id, addOn]) => {
-                  const active = form.addOns.includes(id);
-                  const price = addOnPrice(id, form.serviceType);
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => toggleAddOn(id)}
-                      className={cn(
-                        'rounded-full border px-3 py-1 text-xs transition-colors',
-                        active
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'hover:border-primary/40 hover:bg-muted',
-                      )}
-                    >
-                      {addOn.label} · {price === 0 ? 'included' : money(price)}
+                      <div className="text-sm font-semibold">{offer.label}</div>
+                      <div className="text-xs text-muted-foreground">{offer.blurb}</div>
+                      <div className="mt-1 text-sm font-bold text-primary">
+                        {price > 0 ? money(price) : 'Quote required'}
+                        {offer.visits > 1 && (
+                          <span className="ml-1 text-xs font-normal text-muted-foreground">
+                            · {offer.visits} visits
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -469,7 +438,8 @@ export default function InternalBooking() {
               </Field>
             </div>
             <p className="text-xs text-muted-foreground">
-              Estimated crew time: {quote.estimatedHours} hours.
+              {quote.offerLabel} · {quote.tierLabel}
+              {quote.visits > 1 && ` · ${quote.visits} visits`}
             </p>
           </FormSection>
 
@@ -543,22 +513,26 @@ export default function InternalBooking() {
               <CardContent className="space-y-3">
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">
-                    <span>{SERVICE_TIERS[form.serviceType].label} (list)</span>
-                    <span>{money(quote.listPrice)}</span>
+                    <span>{quote.offerLabel}</span>
+                    <span>{money(quote.total)}</span>
                   </div>
-                  {quote.discount > 0 && (
-                    <div className="flex justify-between text-success">
-                      <span>Discount</span>
-                      <span>−{money(quote.discount)}</span>
-                    </div>
-                  )}
-                  {form.addOns.length > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{quote.tierLabel}</span>
+                    <span>{form.state}</span>
+                  </div>
+                  {quote.visits > 1 && (
                     <div className="flex justify-between text-muted-foreground">
-                      <span>{form.addOns.length} add-on{form.addOns.length > 1 ? 's' : ''}</span>
-                      <span>{money(quote.addOnsTotal)}</span>
+                      <span>Visits included</span>
+                      <span>{quote.visits}</span>
                     </div>
                   )}
                 </div>
+
+                {quote.requiresEstimate && (
+                  <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs">
+                    This size is quote-only. Enter the agreed price as an override before booking.
+                  </div>
+                )}
 
                 <Separator />
 

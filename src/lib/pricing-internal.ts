@@ -1,184 +1,163 @@
-// Internal-booking rate card — ported from the Novara pricing system.
+// Internal-booking pricing — the SAME offers and prices the public
+// AlphaLux booking flow sells.
 //
-// This is the source of truth for the admin/VA booking flow. It is
-// mirrored byte-for-byte in `supabase/functions/_shared/pricing-internal.ts`
-// so the live quote a VA reads on the phone and the Stripe invoice the
-// customer receives can never disagree. Edit both together.
+// This deliberately owns no numbers of its own. Tiers and prices come
+// straight from `@/lib/new-pricing-system`, which is what /book/offer
+// quotes from and whose rate card is derived from explicit unit
+// economics (labour, loading, supplies, travel) so a promo-applied
+// booking still clears its margin floor. A phone booking that priced
+// independently would undercut that analysis and disagree with the
+// website for the same house.
 //
-// Shape of a quote:
+// The four sellable offers are exactly the funnel's:
 //
-//   listPrice  = homeSizeBase x serviceTierMultiplier x zoneModifier
-//   finalPrice = listPrice with the service's standing discount applied
-//   total      = finalPrice + add-ons
-//   deposit    = total x depositPercent  (default 50%)
+//   standard      → maintenancePrice
+//   deep          → deepPrice          ("Tester Deep Clean")
+//   90_day        → ninetyDayPrice     (deep + 3 maintenance, bundled)
+//   move_in_out   → moveInOutPrice
 //
-// The customer-facing funnel has its own separate rate card; this one is
-// deliberately independent so phone pricing can move without touching
-// the website.
+// Mirrored for the edge runtime in
+// `supabase/functions/_shared/pricing-internal.ts`, which is generated
+// from this file's data and diff-tested against it.
 
-export type ServiceType = 'standard' | 'deep' | 'moveInOut' | 'combo';
-export type ZoneId = 'A' | 'B' | 'C';
+import {
+  DEPOSIT_PERCENTAGE,
+  HOME_SIZE_RANGES,
+  resolveHomeSizeId,
+  type HomeSizeRange,
+} from '@/lib/new-pricing-system';
 
-export interface HomeSizeRange {
-  id: string;
+export { HOME_SIZE_RANGES, resolveHomeSizeId };
+export type { HomeSizeRange };
+
+export type OfferId = 'standard' | 'deep' | '90_day' | 'move_in_out';
+
+export interface OfferDefinition {
+  id: OfferId;
   label: string;
-  /** Base price for a STANDARD clean in zone B, in dollars. */
-  standardPrice: number;
-  /** Crew hours used for scheduling estimates. */
-  baseHours: number;
+  blurb: string;
+  /** Which price on the tier this offer bills at. */
+  priceField: keyof Pick<
+    HomeSizeRange,
+    'maintenancePrice' | 'deepPrice' | 'ninetyDayPrice' | 'moveInOutPrice'
+  >;
+  /** Value written to `bookings.service_type`. */
+  serviceType: string;
+  /** Value written to `bookings.offer_type`. */
+  offerType: string;
+  visits: number;
+  isRecurring: boolean;
 }
 
-export const HOME_SIZE_RANGES: HomeSizeRange[] = [
-  { id: '0_999', label: '0 – 999 sq ft', standardPrice: 150, baseHours: 2.0 },
-  { id: '1000_1500', label: '1,000 – 1,500 sq ft', standardPrice: 190, baseHours: 2.5 },
-  { id: '1501_2000', label: '1,501 – 2,000 sq ft', standardPrice: 225, baseHours: 3.0 },
-  { id: '2001_2500', label: '2,001 – 2,500 sq ft', standardPrice: 260, baseHours: 3.5 },
-  { id: '2501_3000', label: '2,501 – 3,000 sq ft', standardPrice: 300, baseHours: 4.0 },
-  { id: '3001_3500', label: '3,001 – 3,500 sq ft', standardPrice: 340, baseHours: 4.5 },
-  { id: '3501_4000', label: '3,501 – 4,000 sq ft', standardPrice: 375, baseHours: 5.0 },
-  { id: '4001_4500', label: '4,001 – 4,500 sq ft', standardPrice: 415, baseHours: 5.5 },
-  { id: '4501_5000', label: '4,501 – 5,000 sq ft', standardPrice: 450, baseHours: 6.0 },
-];
-
-export const SERVICE_TIERS: Record<ServiceType, { label: string; multiplier: number }> = {
-  standard: { label: 'Standard Clean', multiplier: 1.0 },
-  deep: { label: 'Deep Clean', multiplier: 1.5 },
-  combo: { label: 'Deep + Standard Combo', multiplier: 2.5 },
-  moveInOut: { label: 'Move-In / Move-Out', multiplier: 2.0 },
+export const OFFERS: Record<OfferId, OfferDefinition> = {
+  standard: {
+    id: 'standard',
+    label: 'Standard Clean',
+    blurb: 'Recurring-grade maintenance clean.',
+    priceField: 'maintenancePrice',
+    serviceType: 'regular',
+    offerType: 'standard_clean',
+    visits: 1,
+    isRecurring: false,
+  },
+  deep: {
+    id: 'deep',
+    label: 'Tester Deep Clean',
+    blurb: 'Top-to-bottom first clean. The usual entry point.',
+    priceField: 'deepPrice',
+    serviceType: 'deep',
+    offerType: 'tester',
+    visits: 1,
+    isRecurring: false,
+  },
+  '90_day': {
+    id: '90_day',
+    label: '90-Day Reset & Maintain',
+    blurb: 'Deep clean plus three maintenance visits, bundled.',
+    priceField: 'ninetyDayPrice',
+    serviceType: 'deep',
+    offerType: '90_day_plan',
+    visits: 4,
+    isRecurring: true,
+  },
+  move_in_out: {
+    id: 'move_in_out',
+    label: 'Move-In / Move-Out',
+    blurb: 'Empty-home turnover clean.',
+    priceField: 'moveInOutPrice',
+    serviceType: 'move_in_out',
+    offerType: 'move_in_out',
+    visits: 1,
+    isRecurring: false,
+  },
 };
 
-/** Geographic modifier. The internal flow always quotes zone B. */
-export const SERVICE_ZONES: Record<ZoneId, { label: string; modifier: number }> = {
-  A: { label: 'Zone A (premium)', modifier: 1.15 },
-  B: { label: 'Zone B (standard)', modifier: 1.0 },
-  C: { label: 'Zone C (outer)', modifier: 0.9 },
-};
+export const OFFER_ORDER: OfferId[] = ['deep', 'standard', '90_day', 'move_in_out'];
+
+/** Deposit taken up front. Matches the funnel (25%). */
+export const DEPOSIT_PERCENT = DEPOSIT_PERCENTAGE;
 
 /**
- * Standing discount off list, by service.
- *
- * Combo is not a percentage: it bills the deep clean at full list plus
- * the standard clean at half, which is why it is handled separately in
- * `serviceFinalPrice` rather than living in this table.
+ * Per-state multiplier, mirroring the funnel's StateConfig. Only NY
+ * carries an uplift today; every other market bills at the base rate.
  */
-export const SERVICE_DISCOUNT_RATES: Record<ServiceType, number> = {
-  standard: 0.15,
-  deep: 0.25,
-  combo: 0,
-  moveInOut: 0,
+export const STATE_MULTIPLIERS: Record<string, number> = {
+  NY: 1.15,
+  NJ: 1.0,
+  TX: 1.0,
+  CA: 1.0,
 };
 
-export const DEPOSIT_PERCENT = 0.5;
-
-export interface AddOn {
-  label: string;
-  price: number;
-  note?: string;
+export function stateMultiplier(state?: string | null): number {
+  return STATE_MULTIPLIERS[String(state || '').toUpperCase()] ?? 1.0;
 }
-
-export const ADD_ONS: Record<string, AddOn> = {
-  fridge: { label: 'Inside fridge', price: 30, note: 'Included with Move-In/Out' },
-  oven: { label: 'Inside oven', price: 30, note: 'Included with Move-In/Out' },
-  windows: { label: 'Interior windows', price: 40, note: 'Per visit' },
-  laundry: { label: 'Laundry — wash & fold', price: 35, note: 'Per load' },
-  changeLinens: { label: 'Change bed linens', price: 15 },
-  dishes: { label: 'Dishes & kitchen cleanup', price: 20 },
-  baseboards: { label: 'Baseboards (hand-wiped)', price: 35 },
-  blinds: { label: 'Blinds & shutters', price: 30 },
-  cabinets: { label: 'Inside cabinets', price: 35 },
-  walls: { label: 'Spot wall washing', price: 40 },
-  ceilingFans: { label: 'Ceiling fans', price: 15 },
-  microwave: { label: 'Inside microwave', price: 10 },
-  dishwasher: { label: 'Inside dishwasher', price: 15 },
-  garage: { label: 'Garage sweep-out', price: 50 },
-  basement: { label: 'Basement clean', price: 75 },
-  patio: { label: 'Patio / balcony', price: 35 },
-  petHair: { label: 'Heavy pet-hair removal', price: 35 },
-  closets: { label: 'Inside closets / tidy', price: 30 },
-  trashHaul: { label: 'Trash haul', price: 75 },
-  deepBathroomDetail: { label: 'Deep bathroom detail', price: 45 },
-  cateringEvent: { label: 'Catering / event cleanup', price: 85 },
-};
-
-/** Add-ons a Move-In/Out already covers, so they bill at $0. */
-const MOVE_IN_OUT_INCLUDED = new Set(['fridge', 'oven']);
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-export function homeSizeBase(homeSizeId: string): number {
-  return HOME_SIZE_RANGES.find((r) => r.id === homeSizeId)?.standardPrice ?? 0;
+export function tierFor(homeSizeId: string): HomeSizeRange | undefined {
+  const id = resolveHomeSizeId(homeSizeId);
+  return HOME_SIZE_RANGES.find((r) => r.id === id);
 }
 
-export function estimatedHours(homeSizeId: string): number {
-  return HOME_SIZE_RANGES.find((r) => r.id === homeSizeId)?.baseHours ?? 3;
-}
-
-/** Undiscounted list price for a service — what the rate card says. */
-export function serviceListPrice(
+/** List price for an offer at a home size, in the customer's state. */
+export function offerPrice(
   homeSizeId: string,
-  serviceType: ServiceType,
-  zone: ZoneId = 'B',
+  offerId: OfferId,
+  state?: string | null,
 ): number {
-  const base = homeSizeBase(homeSizeId);
-  if (!base) return 0;
-  return Math.round(base * SERVICE_TIERS[serviceType].multiplier * SERVICE_ZONES[zone].modifier);
+  const tier = tierFor(homeSizeId);
+  if (!tier) return 0;
+  const base = Number(tier[OFFERS[offerId].priceField]) || 0;
+  return Math.round(base * stateMultiplier(state));
 }
 
-/** What the customer actually pays for the service, before add-ons. */
-export function serviceFinalPrice(
-  homeSizeId: string,
-  serviceType: ServiceType,
-  zone: ZoneId = 'B',
-): number {
-  const list = serviceListPrice(homeSizeId, serviceType, zone);
-  if (!list) return 0;
-  if (serviceType === 'combo') {
-    // Deep at full list + standard at half — not a flat percentage.
-    const standardList = serviceListPrice(homeSizeId, 'standard', zone);
-    const deepList = serviceListPrice(homeSizeId, 'deep', zone);
-    return round2(deepList + standardList * 0.5);
-  }
-  return round2(list * (1 - SERVICE_DISCOUNT_RATES[serviceType]));
-}
-
-export function addOnPrice(addOnId: string, serviceType: ServiceType): number {
-  if (serviceType === 'moveInOut' && MOVE_IN_OUT_INCLUDED.has(addOnId)) return 0;
-  return ADD_ONS[addOnId]?.price ?? 0;
-}
-
-export function addOnsTotal(addOns: string[], serviceType: ServiceType): number {
-  return addOns.reduce((sum, id) => sum + addOnPrice(id, serviceType), 0);
+/** True when the tier is quote-only (5,001+ sq ft). */
+export function requiresEstimate(homeSizeId: string): boolean {
+  return Boolean(tierFor(homeSizeId)?.requiresEstimate);
 }
 
 export interface Quote {
-  /** Rate-card price before the standing discount. */
-  listPrice: number;
-  /** Service price after the standing discount. */
-  servicePrice: number;
-  addOnsTotal: number;
-  /** What the customer owes in total. */
+  offerLabel: string;
+  /** Rate-card price for this offer, state-adjusted. */
   total: number;
-  /** Savings vs list, for the VA to quote on the phone. */
-  discount: number;
-  estimatedHours: number;
+  tierLabel: string;
+  visits: number;
+  requiresEstimate: boolean;
 }
 
 export function buildQuote(
   homeSizeId: string,
-  serviceType: ServiceType,
-  addOns: string[] = [],
-  zone: ZoneId = 'B',
+  offerId: OfferId,
+  state?: string | null,
 ): Quote {
-  const listPrice = serviceListPrice(homeSizeId, serviceType, zone);
-  const servicePrice = serviceFinalPrice(homeSizeId, serviceType, zone);
-  const extras = addOnsTotal(addOns, serviceType);
+  const tier = tierFor(homeSizeId);
+  const offer = OFFERS[offerId];
   return {
-    listPrice,
-    servicePrice,
-    addOnsTotal: extras,
-    total: round2(servicePrice + extras),
-    discount: round2(listPrice - servicePrice),
-    estimatedHours: estimatedHours(homeSizeId),
+    offerLabel: offer.label,
+    total: offerPrice(homeSizeId, offerId, state),
+    tierLabel: tier?.label ?? 'Unknown size',
+    visits: offer.visits,
+    requiresEstimate: Boolean(tier?.requiresEstimate),
   };
 }
 
@@ -197,7 +176,7 @@ export const INVOICE_MODES: Array<{
     value: 'deposit_plus_preauth',
     label: 'Deposit now + pre-auth hold',
     description:
-      'Customer signs and pays the deposit on a secure link, and we save the card. The balance is authorized a few days before service and captured after the clean.',
+      'Customer pays the deposit on a secure link and we save the card. The balance is authorized before service and captured after the clean.',
   },
   {
     value: 'deposit_plus_remaining',

@@ -67,12 +67,13 @@ import { sendSms } from "../_shared/sms.ts";
 import { toE164US } from "../_shared/phone-format.ts";
 import { resolveSupportNumber, timezoneForState } from "../_shared/openphone.ts";
 import {
-  buildQuote,
-  estimatedHours,
-  SERVICE_TIERS,
+  offerPrice,
+  OFFERS,
+  resolveHomeSizeId,
   splitTotal,
+  tierFor,
   type InvoiceMode,
-  type ServiceType,
+  type OfferId,
 } from "../_shared/pricing-internal.ts";
 import {
   slugFromCustomerLocation,
@@ -186,9 +187,8 @@ interface InternalBookingBody {
   zipCode?: string;
   /** Rate-card size id, e.g. "1501_2000". Preferred. */
   homeSizeId?: string;
-  /** 'standard' | 'deep' | 'moveInOut' | 'combo'. Preferred. */
-  serviceType?: ServiceType;
-  addOns?: string[];
+  /** 'standard' | 'deep' | '90_day' | 'move_in_out'. Preferred. */
+  offerId?: OfferId;
   /** Legacy fields kept so older callers keep working. */
   sqftRange?: string;
   offerType?: string;
@@ -255,26 +255,27 @@ serve(async (req) => {
     //    invoices. Never recompute a price here.
     const email = body.email.trim().toLowerCase();
     const phoneE164 = toE164US(body.phone) || null;
-    const serviceType: ServiceType = body.serviceType ||
+    const sizeIdResolved = resolveHomeSizeId(sizeId);
+    const offerId: OfferId = body.offerId ||
       (body.offerType === "tester" ? "deep"
-        : body.offerType === "move_in_out" ? "moveInOut"
+        : body.offerType === "move_in_out" ? "move_in_out"
+        : body.offerType === "90_day" ? "90_day"
         : "standard");
-    const addOns = Array.isArray(body.addOns) ? body.addOns : [];
-    const quote = buildQuote(sizeId, serviceType, addOns);
+    const offerDef = OFFERS[offerId];
     const offer = {
-      name: SERVICE_TIERS[serviceType].label,
-      type: serviceType,
-      serviceType: serviceType === "moveInOut"
-        ? "move_in_out"
-        : serviceType === "deep" || serviceType === "combo"
-        ? "deep"
-        : "regular",
-      visits: serviceType === "combo" ? 2 : 1,
+      name: offerDef.label,
+      type: offerDef.offerType,
+      serviceType: offerDef.serviceType,
+      visits: offerDef.visits,
     };
-    const listTotal = quote.listPrice;
+    // State matters: NY carries a 15% uplift in the funnel's rate card,
+    // so a phone quote must apply it too or the website and the VA
+    // disagree for the same house.
+    const rateCardTotal = offerPrice(sizeIdResolved, offerId, body.state);
+    const listTotal = rateCardTotal;
     const total = typeof body.priceOverride?.total === "number" && body.priceOverride.total > 0
       ? Math.round(body.priceOverride.total * 100) / 100
-      : quote.total;
+      : rateCardTotal;
     const invoiceMode: InvoiceMode = body.invoiceMode || "deposit_plus_preauth";
     const depositPercent = typeof body.depositPercent === "number"
       ? Math.max(0, Math.min(1, body.depositPercent))
@@ -285,8 +286,9 @@ serve(async (req) => {
       : split.deposit;
     const balance = Math.max(0, Math.round((total - deposit) * 100) / 100);
 
-    const frequency = body.frequency || "one-time";
-    const isRecurring = ["weekly", "biweekly", "monthly"].includes(frequency);
+    const frequency = body.frequency || (offerDef.isRecurring ? "biweekly" : "one-time");
+    const isRecurring = offerDef.isRecurring ||
+      ["weekly", "biweekly", "monthly"].includes(frequency);
 
     // 2. Upsert the customer row. City/state matter: they route the
     //    OpenPhone "from" number AND the Stripe account.
@@ -345,7 +347,7 @@ serve(async (req) => {
         address_line1: body.addressLine1 || null,
         address_line2: body.addressLine2 || null,
         zip_code: body.zipCode || null,
-        sqft_or_bedrooms: sizeId,
+        sqft_or_bedrooms: sizeIdResolved,
         service_type: offer.serviceType,
         frequency,
         service_date: body.serviceDate,
@@ -370,10 +372,10 @@ serve(async (req) => {
         property_details: {
           bedrooms: body.bedrooms ?? null,
           bathrooms: body.bathrooms ?? null,
-          home_size_id: sizeId,
-          service_tier: serviceType,
-          add_ons: addOns,
-          estimated_hours: estimatedHours(sizeId),
+          home_size_id: sizeIdResolved,
+          home_size_label: tierFor(sizeIdResolved)?.label ?? null,
+          offer_id: offerId,
+          state_multiplier_applied: body.state || null,
           invoice_mode: invoiceMode,
           deposit_percent: depositPercent,
           booked_by: body.csrName || user.email || "admin",
