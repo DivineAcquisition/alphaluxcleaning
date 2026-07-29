@@ -581,56 +581,64 @@ export function resolveFieldId(
 }
 
 /**
- * Baseline mapping of "logical booking field" → the GHL subaccount's
- * actual 20-char custom field id, snapshotted from the AlphaLuxClean
- * subaccount's `/locations/:id/customFields` response. Acts as a
- * fallback so new booking fields work even when the dynamic fieldKey
- * lookup can't find a match (e.g. because the field was renamed and we
- * still recognize it by id). The dynamic lookup always takes
- * precedence — this is only consulted when `resolveFieldId` returns
- * undefined.
+ * Baseline mapping of "logical booking field" → the subaccount's actual
+ * 20-char custom field id. Only consulted when the dynamic fieldKey
+ * lookup returns nothing (a renamed field, or a failed customFields
+ * call); `resolveFieldId` always wins.
+ *
+ * Custom field ids are LOCATION-SPECIFIC. This snapshot is from
+ * location ESaf0wtNvMhNtUYQ4rzz, read from
+ * GET /locations/:id/customFields — all 40 keys below resolved against
+ * the live subaccount.
+ *
+ * The previous snapshot was taken from a different subaccount, so every
+ * id in it was wrong for the location the integration actually talks to.
+ * That is worse than having no fallback at all: instead of degrading
+ * when the customFields call fails, it would confidently write to ids
+ * this location has never heard of. If the subaccount ever changes,
+ * re-snapshot this map or delete it — do not leave a stale one here.
  */
 export const KNOWN_GHL_FIELD_IDS: Record<string, string> = {
-  promo_code: 'hzImH3cMPM6Cj5J8e1uy',
-  discount_cash_value: 'vE91v97WzEdzQa87Elfj',
-  service_type: 'vocRlkakgv2xpjq2hboB',
-  service_frequency: 'rxRm0cS6YzQ0WxjWBnhm',
-  frequency: '5G0eOYGBjWVCNoaIHSnt',
-  service_date: 'maICPrr3pzfw0Tys6tY7',
-  service_date_time: 'gxFEQgfzRx1AmyION3Lm',
-  service_start_time: 'WNMBMqL587QVfxyb46hE',
-  service_end_time: '45oB3nW4qpDs0JXeX77l',
-  sqft: 'BI70nAIMEwPitLS4tDq1',
-  bedrooms: 'KyuoJxzMuptC8rVvRYno',
-  bathrooms: 'vze2zer9b8ELHDz0ktfU',
-  property_type: '6B2st722Eo1gAZcqVVIi',
-  flooring: 'VwxCMKNz03RD3T15IpSo',
-  entry_instructions: 'XGIgNx2OJMmeW3OYZuxF',
-  preferred_contact_method: 'DNjNcsWBJCwC5bHKpfdH',
-  urgency: 'u3c4Sk7uywD4XIZSpPjy',
-  conversion_status: '7n1z4v250F7GNL6mF2SF',
-  subscription_status: 'HNKs61LbyQRtt7EKi38z',
-  booking_amount: 'EuqFOk0d8gm4UUAdFFU5',
-  original_price: 'KhZGtMNpquhTRt3tzwUo',
-  deposit_amount: 'NJEevPnCpNqGIlOZLn7m',
-  remaining_balance: 'ClzRZQNKpOJl4qaRmQ5S',
-  cancel_fee_amount: 'IPSZc26bbAVyMlbZMMFT',
-  mrr_est: 'LSbQ6BMQmnZFgBgmDoeZ',
-  arr_est: 'jBGVSSBB9y0NyjKEgU3L',
-  utm_source: 'S2TL9WCMxTwvJLJ632qh',
-  utm_medium: 'zG1XiVVJ4z7FBy0PU4WA',
-  utm_campaign: 'DCdHF938a5m3dBhW9YU1',
-  utm_content: 'UXGs3AzKfN5QrnTvRDKn',
-  utm_fields: 'WGAUW6Yl23jmFQyDYRd0',
-  landing_page: 'KJFPQFwhxthmPPK7Evik',
-  tracking_attribution: 'pwgPBfUxurA1qaRPw2Z5',
-  fb_lead_id: 'PvKgPrXwjJrXrUiYVXNv',
-  stripe_id: 'nyIGUcTiVfZhryfo5arQ',
-  payment_link: 'Tl6FLcufUnM6N8sX5rq5',
-  invoice_link: 'B8p5vfGemDl6XPXFSzSA',
-  manage_link: 'lImnqhbUGFKXgxbA6Ww6',
-  referral_code: 'ycwBGlB3IZyyQilzy8Wk',
-  referral_link: '3KVKOe2GhxTgjxWqOXra',
+  promo_code: 'FzUjOSsvMKVUJlunydPF',
+  discount_cash_value: 'ScHiW7aYVykeB7I3Fsbw',
+  service_type: '04fcH1iCBeOg0BJsBXeB',
+  service_frequency: 'wxVFdZmn6yS8PZBfemTS',
+  frequency: 'Nul3Ned27HuYMNQ7r4dJ',
+  service_date: 'YcsQkzVv8H0WseKgLWFX',
+  service_date_time: '4znHikx9hky9Sh7W7HSX',
+  service_start_time: 'w4d6U1W4eGWU8aSfqVd9',
+  service_end_time: 'IgUczKthdDh6ughj6yL2',
+  sqft: 'LySVTgYNBUqK9rZUerLi',
+  bedrooms: 'KzDv6bpjFcq4akNZbwQ6',
+  bathrooms: 'T9q0YuBTvX5h4VwSJXwY',
+  property_type: 'MuVXSHeJwbLUG3wMF2IG',
+  flooring: 'DAM7y9mhid1SDbf6F6WA',
+  entry_instructions: 'Nk0KNbMXO7Sc9S1EzUvx',
+  preferred_contact_method: 'tp6R0OwdlEfHBZHMboOw',
+  urgency: 'fOWAnj0ugFtX0NElTHtb',
+  conversion_status: 'twagqXsLcfAvsiLwx6t5',
+  subscription_status: 'bEX5eKgpYLvNLpSZAeuJ',
+  booking_amount: '27zv8pgwD0uAg2OMYIYn',
+  original_price: 'DXU1e8yYfESPMSc8tMoG',
+  deposit_amount: 'DbYDtgMHNgZEilc0egjn',
+  remaining_balance: 'Kzpfmz7Ovf2Gr8COsAW8',
+  cancel_fee_amount: 'JHxtlkl5O6JiQbS097cE',
+  mrr_est: 'mgg5KrYnZ55Quf8BbhKl',
+  arr_est: 'fY4OUVdOJHrJe3S9iwZy',
+  utm_source: 'NPOFUoi9DPsRBSB5EluW',
+  utm_medium: 'xjRoKXJU4WJuugCGQFoG',
+  utm_campaign: '14N1RFgpZVe0iMydqibb',
+  utm_content: 'y0WCPqqEEv6waxuTp0Gc',
+  utm_fields: 'DkHRjYv1XudI5cCbXl0t',
+  landing_page: '1s0Hj9hT4rwFKBGmeGWF',
+  tracking_attribution: 'EO41flyVlJe3mHTiIEeG',
+  fb_lead_id: 'GOES8RgqR8JLgIx0BMx8',
+  stripe_id: 'pWepgdBHk9HpgNvmytux',
+  payment_link: 'CLa3s66PvyVW2u5hXCeB',
+  invoice_link: 'GfL9izAnsJXjJlzIgPPG',
+  manage_link: 'y7cOPJpx9s3ouvj3tWwi',
+  referral_code: 'y0EWaKfFOJMax0g73SZb',
+  referral_link: 'uPvcQ1fgv6SDZjjccgTB',
 };
 
 /**

@@ -28,8 +28,13 @@ import {
 
 // Dedicated AlphaLuxCleaning calendar in the GHL subaccount. Override
 // via env var if ops moves the calendar.
+//
+// Calendar ids are location-specific. The previous default belonged to a
+// different subaccount, so every appointment push 404'd against the
+// location the integration actually uses. This id was read from
+// GET /calendars/?locationId=ESaf0wtNvMhNtUYQ4rzz.
 const ALPHALUX_CALENDAR_ID =
-  Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || 'wJkjZVj4Op8GGebIPm3O';
+  Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || 'L5BDUEPT1Kiq8NGbvPeP';
 
 /**
  * Customer-facing arrival windows the booking flow offers — keeps
