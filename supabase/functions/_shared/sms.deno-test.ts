@@ -2,7 +2,7 @@
 //
 // The provider order is the whole point of the internal/public split, and
 // it is the kind of thing a well-meaning "let's add a fallback everywhere"
-// change would quietly undo. Run with: deno task test
+// change would quietly undo. Run with: npm test
 
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 import { channelFromBookingSource, providerOrder } from './sms.ts';

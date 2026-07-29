@@ -1,8 +1,10 @@
 // Pins the strict domain architecture described in README-Domains.md.
 //
 // Both the edge middleware and the client guard call resolveHostRoute,
-// so these cases cover every enforcement point at once. Run with:
-// deno task test
+// so these cases cover every enforcement point at once.
+//
+// Runs under Deno (`npm test`) — hence the .deno-test.ts suffix, which
+// keeps it out of the Next type-check pass.
 
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 import { chatWidgetAllowed, hostRole, pathSurface, resolveHostRoute } from './domains.ts';

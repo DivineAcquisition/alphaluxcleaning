@@ -92,7 +92,7 @@ npm run health-check                                  # against production DNS
 BASE_URL=http://localhost:3000 npm run health-check   # against next start
 ```
 
-`npm test` runs `src/config/domains.test.ts` under Deno (already a
+`npm test` runs `src/config/domains.deno-test.ts` under Deno (already a
 dependency of this repo for the edge functions) and pins the decision
 table: which hosts map to which surface, which paths are admin-only,
 where each foreign path is sent, and that unknown hosts stay unenforced.
@@ -111,7 +111,7 @@ against a preview build before DNS is cut over.
 
 1. Add the hostname to `ADMIN_HOSTS` or `BOOKING_HOSTS` in
    `src/config/domains.ts`.
-2. Add a case to `src/config/domains.test.ts` and to `CASES` in
+2. Add a case to `src/config/domains.deno-test.ts` and to `CASES` in
    `scripts/health-check.js`.
 3. Attach the domain in Vercel.
 
