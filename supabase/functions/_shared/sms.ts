@@ -237,9 +237,10 @@ export async function sendSmsViaOpenPhone(
 /**
  * Provider order for a send, derived from the booking channel. The
  * first entry is the rail that owns the message; anything after it is
- * failover.
+ * failover. Exported so the rails can be asserted in sms.test.ts
+ * without touching a provider.
  */
-function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
+export function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
   const ghlPermitted = input.enableFallback !== false && input.enableGhl !== false;
 
   if (input.channel === 'public') {

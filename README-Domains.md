@@ -87,9 +87,18 @@ Vercel provisions certificates automatically once the records resolve.
 ## Verifying a deployment
 
 ```bash
-npm run health-check                          # against production DNS
+npm test                                              # the rule itself
+npm run health-check                                  # against production DNS
 BASE_URL=http://localhost:3000 npm run health-check   # against next start
 ```
+
+`npm test` runs `src/config/domains.test.ts` under Deno (already a
+dependency of this repo for the edge functions) and pins the decision
+table: which hosts map to which surface, which paths are admin-only,
+where each foreign path is sent, and that unknown hosts stay unenforced.
+
+`npm run health-check` then asserts the deployment actually behaves that
+way over HTTP.
 
 The script asserts the full matrix — admin surface reachable on the
 admin host, funnel bounced off it, admin bounced off the public host,
@@ -102,7 +111,8 @@ against a preview build before DNS is cut over.
 
 1. Add the hostname to `ADMIN_HOSTS` or `BOOKING_HOSTS` in
    `src/config/domains.ts`.
-2. Add a case to `CASES` in `scripts/health-check.js`.
+2. Add a case to `src/config/domains.test.ts` and to `CASES` in
+   `scripts/health-check.js`.
 3. Attach the domain in Vercel.
 
 Nothing else needs to change: the middleware, the router guard, the chat

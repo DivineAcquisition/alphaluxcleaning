@@ -76,6 +76,10 @@ strictly GHL-only. When GHL credentials are absent entirely
 (`GHL_PIT_TOKEN` / `GHL_LOCATION_ID` unset), the rail falls back to
 OpenPhone regardless and the activity dashboard flags it.
 
+The provider order is pinned by `supabase/functions/_shared/sms.test.ts`
+(`npm test`), because "add a fallback everywhere" is exactly the kind of
+well-meaning change that would quietly undo the split.
+
 ## Cross-cutting guarantees
 
 These apply on every path, both rails:
