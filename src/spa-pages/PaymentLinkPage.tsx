@@ -1,178 +1,235 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+// /pay/<token> — the customer-facing deposit page.
+//
+// Addressed by pay token, never by booking id. The previous version read
+// `bookings` straight from the browser with the anon key using the raw
+// UUID from the URL, so anyone holding an id could pull up a customer's
+// name, service address and price. Booking ids travel through webhooks,
+// logs and admin URLs; they are identifiers, not credentials.
+//
+// Everything now goes through the `booking-pay-page` edge function,
+// which is the only thing that can exchange a token for booking details
+// and the only place the deposit amount is decided — so the amount
+// cannot be tampered with from the browser.
+//
+// Paying here saves the card, which is what lets the balance be
+// authorized before the clean and captured after it.
+
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { InstantPaymentForm } from '@/components/ui/instant-payment-form';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
+import { PayPageCheckout } from '@/components/booking/PayPageCheckout';
+import { BrandedLoader } from '@/components/BrandedLoader';
+import { CheckCircle, ShieldCheck, CalendarDays, MapPin, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface PaySummary {
+  bookingId: string;
+  reference: string;
+  customerName: string | null;
+  serviceLabel: string;
+  serviceDate: string | null;
+  timeWindow: string | null;
+  address: string | null;
+  total: number;
+  depositDue: number;
+  balanceDue: number;
+  paid: boolean;
+}
+
+const money = (n: number) =>
+  n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return 'To be scheduled';
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-muted/40 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">{children}</div>
+    </div>
+  );
+}
+
 export default function PaymentLinkPage() {
-  const { bookingId } = useParams<{ bookingId: string }>();
-  const navigate = useNavigate();
+  // The route param is a pay token, not a booking id.
+  const { bookingId: token } = useParams<{ bookingId: string }>();
+  const [summary, setSummary] = useState<PaySummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bookingData, setBookingData] = useState<any>(null);
+  const [error, setError] = useState<'not_found' | 'cancelled' | 'server' | null>(null);
   const [paid, setPaid] = useState(false);
 
-  useEffect(() => {
-    const fetchBooking = async () => {
-      if (!bookingId) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            customers (
-              email,
-              first_name,
-              last_name,
-              phone
-            )
-          `)
-          .eq('id', bookingId)
-          .single();
-
-        if (error) throw error;
-
-        if (data.payment_status === 'paid' || data.status === 'confirmed') {
-          setPaid(true);
-        } else {
-          setBookingData(data);
-        }
-      } catch (error: any) {
-        console.error('Error fetching booking:', error);
-        toast.error('Booking not found');
-        navigate('/');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBooking();
-  }, [bookingId, navigate]);
-
-  const handlePaymentSuccess = async (paymentId: string) => {
-    try {
-      // Update booking status
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_status: 'paid',
-          paid_at: new Date().toISOString(),
-          stripe_payment_intent_id: paymentId,
-        })
-        .eq('id', bookingId);
-
-      if (error) throw error;
-
-      setPaid(true);
-      toast.success('Payment successful! You will receive a confirmation email shortly.');
-    } catch (error: any) {
-      console.error('Error updating booking:', error);
-      toast.error('Payment processed but status update failed. Please contact support.');
+  const load = useCallback(async () => {
+    if (!token) {
+      setError('not_found');
+      setLoading(false);
+      return;
     }
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('booking-pay-page', {
+        body: { action: 'get', token },
+      });
+      if (fnError || !data?.success) {
+        setError(data?.error === 'cancelled' ? 'cancelled' : 'not_found');
+        return;
+      }
+      setSummary(data.booking as PaySummary);
+      setPaid(Boolean(data.booking?.paid));
+    } catch {
+      setError('server');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  // The webhook is the source of truth for marking the booking paid —
+  // the browser only refreshes what it is allowed to see. The previous
+  // version wrote status/payment_status straight from the client, which
+  // both trusted the browser and skipped the confirmation pipeline.
+  const handlePaymentSuccess = async () => {
+    setPaid(true);
+    toast.success('Payment received. A confirmation email is on its way.');
+    void load();
   };
 
-  if (loading) {
+  if (loading) return <BrandedLoader caption="Loading your booking…" />;
+
+  if (error) {
+    const copy = {
+      not_found: {
+        title: 'This link is no longer valid',
+        body: 'It may have expired or already been used. Please ask us for a fresh payment link.',
+      },
+      cancelled: {
+        title: 'This booking was cancelled',
+        body: 'No payment is due. Get in touch if you think this is a mistake.',
+      },
+      server: {
+        title: 'Something went wrong',
+        body: 'We could not load this booking. Please try again in a moment.',
+      },
+    }[error];
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading payment details...</p>
-        </div>
-      </div>
+      <Shell>
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <CardTitle>{copy.title}</CardTitle>
+            <CardDescription>{copy.body}</CardDescription>
+          </CardHeader>
+        </Card>
+      </Shell>
     );
   }
+
+  if (!summary) return null;
 
   if (paid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+      <Shell>
+        <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success/15">
+              <CheckCircle className="h-6 w-6 text-success" />
             </div>
-            <CardTitle>Payment Already Completed</CardTitle>
+            <CardTitle>You're all set</CardTitle>
             <CardDescription>
-              This booking has already been paid for. You should receive a confirmation email shortly.
+              Deposit received for {summary.reference}. We've emailed your confirmation.
+              {summary.balanceDue > 0 && (
+                <>
+                  {' '}The remaining {money(summary.balanceDue)} is charged after your clean is
+                  complete — nothing else to do now.
+                </>
+              )}
             </CardDescription>
           </CardHeader>
         </Card>
-      </div>
+      </Shell>
     );
   }
 
-  if (!bookingData) {
-    return null;
-  }
-
-  const customer = bookingData.customers;
-  const offerName = bookingData.offer_name || 'Deep Clean Service';
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/5 py-12 px-4">
-      <div className="container max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Complete Your Payment</h1>
-          <p className="text-muted-foreground">Secure payment for your {offerName}</p>
-        </div>
+    <Shell>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Complete your booking</CardTitle>
+          <CardDescription>
+            {summary.customerName ? `${summary.customerName} · ` : ''}
+            {summary.reference}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2 text-sm">
+            <div className="flex items-start gap-2">
+              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <span>
+                <span className="font-medium">{summary.serviceLabel}</span>
+                <br />
+                {fmtDate(summary.serviceDate)}
+                {summary.timeWindow ? ` · ${summary.timeWindow}` : ''}
+              </span>
+            </div>
+            {summary.address && (
+              <div className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <span>{summary.address}</span>
+              </div>
+            )}
+          </div>
 
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Booking Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Service:</span>
-                <span className="font-medium">{offerName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Customer:</span>
-                <span className="font-medium">
-                  {customer?.first_name} {customer?.last_name}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Address:</span>
-                <span className="font-medium">{bookingData.address_line1}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t">
-                <span className="text-muted-foreground">Total Price:</span>
-                <span className="font-semibold">${bookingData.est_price}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Due Today (25% Deposit):</span>
-                <span className="font-bold text-primary text-lg">
-                  ${bookingData.deposit_amount}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Balance Due After Service:</span>
-                <span className="font-medium">${bookingData.balance_due}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <Separator />
 
-        <InstantPaymentForm
-          paymentAmount={bookingData.deposit_amount}
-          fullAmount={bookingData.est_price}
-          paymentType="deposit"
-          customerEmail={customer?.email || ''}
-          customerName={`${customer?.first_name} ${customer?.last_name}`}
-          customerPhone={customer?.phone || ''}
-          bookingId={bookingId!}
-          onSuccess={handlePaymentSuccess}
-          onCancel={() => navigate('/')}
-        />
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Total for this clean</span>
+              <span>{money(summary.total)}</span>
+            </div>
+            <div className="flex justify-between text-base font-semibold">
+              <span>Due today</span>
+              <span>{money(summary.depositDue)}</span>
+            </div>
+            {summary.balanceDue > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>After your clean</span>
+                <span>{money(summary.balanceDue)}</span>
+              </div>
+            )}
+          </div>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>🔒 Secure payment powered by Stripe</p>
-          <p className="mt-2">Questions? Call us at (857) 754-4557</p>
-        </div>
-      </div>
-    </div>
+          {summary.balanceDue > 0 && (
+            <p className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
+              We save your card to place a hold for the remaining{' '}
+              {money(summary.balanceDue)} shortly before your appointment. You are only
+              charged for it once the clean is finished.
+            </p>
+          )}
+
+          <PayPageCheckout
+            token={token as string}
+            amount={summary.depositDue}
+            onSuccess={handlePaymentSuccess}
+          />
+
+          <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Secure payment powered by Stripe
+          </p>
+        </CardContent>
+      </Card>
+    </Shell>
   );
 }

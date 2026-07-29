@@ -196,6 +196,29 @@ async function handleJobCompleted(supabase: any, data: any) {
     .eq('id', booking.id);
 
   console.log("Updated booking to completed:", booking.id);
+
+  // Collect the balance. The authorization hold placed before service is
+  // worthless until it is captured, and Stripe voids it after 7 days —
+  // so a completed clean that never reaches this call is simply revenue
+  // we authorized and then walked away from. Job completion is the event
+  // that earns the money, so it is the event that captures it.
+  //
+  // Non-blocking and idempotent: capture-booking-balance no-ops when the
+  // balance is already settled, and falls back to a fresh off-session
+  // charge (then a hosted invoice) if the hold has expired.
+  const balanceDue = Number(booking.balance_due) || 0;
+  if (balanceDue > 0 && booking.balance_auth_status !== "captured") {
+    try {
+      const res = await supabase.functions.invoke("capture-booking-balance", {
+        body: { booking_id: booking.id, reason: "hcp_job_completed" },
+      });
+      console.log("Balance capture requested:", JSON.stringify(res.data ?? res.error));
+    } catch (err) {
+      // Never fail the webhook over this — HCP retries would re-run the
+      // status update, and the balance sweep can still collect later.
+      console.error("Balance capture failed (non-blocking):", err);
+    }
+  }
 }
 
 async function handleJobCancelled(supabase: any, data: any) {

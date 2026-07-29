@@ -35,6 +35,14 @@ verify_jwt = false
 [functions.booking-confirm-comms]
 verify_jwt = true
 
+# Customer-facing pay page (/pay/<token>). Deliberately unauthenticated:
+# the customer has no Supabase account, and the 40-char pay_page_token in
+# the URL is itself the credential. The function only ever exchanges a
+# valid token for that one booking's summary, and never echoes the token
+# or any id back.
+[functions.booking-pay-page]
+verify_jwt = false
+
 # Housecall Pro webhook receiver. HCP posts events without a Supabase
 # JWT — authenticity is enforced via HCP_WEBHOOK_SECRET HMAC instead.
 [functions.receive-hcp-webhook]

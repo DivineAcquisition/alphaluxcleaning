@@ -28,9 +28,37 @@ serve(async (req) => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-    // Use production booking domain
-    const appUrl = 'https://book.alphaluxclean.com';
-    const paymentUrl = `${appUrl}/pay/${bookingId}`;
+    // Mint (or reuse) the pay token. The link used to address the booking
+    // by raw UUID, which meant anyone holding an id — they travel through
+    // webhooks, logs and admin URLs — could read the customer's name,
+    // address and price. The token is the credential; the id is not.
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } },
+    );
+
+    const { data: existing } = await supabaseAdmin
+      .from('bookings')
+      .select('pay_page_token')
+      .eq('id', bookingId)
+      .maybeSingle();
+
+    let payToken = existing?.pay_page_token as string | undefined;
+    if (!payToken) {
+      const bytes = new Uint8Array(20);
+      crypto.getRandomValues(bytes);
+      payToken = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+      const { error: tokenError } = await supabaseAdmin
+        .from('bookings')
+        .update({ pay_page_token: payToken })
+        .eq('id', bookingId);
+      if (tokenError) throw new Error(`Could not mint pay token: ${tokenError.message}`);
+    }
+
+    // book.alphaluxclean.com is retired and 301s to the booking host.
+    const appUrl = Deno.env.get('BOOKING_ORIGIN') || 'https://try.alphaluxcleaning.com';
+    const paymentUrl = `${appUrl}/pay/${payToken}`;
 
     // Send email with payment link
     const { data, error } = await resend.emails.send({
