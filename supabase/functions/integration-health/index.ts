@@ -119,6 +119,93 @@ async function checkOpenPhone() {
   return { ok: false, configured: true, reason: "unknown" };
 }
 
+/**
+ * GoHighLevel is load-bearing for the internal booking rail (it sends the
+ * automated comms), and its two credentials fail in ways that look
+ * identical from the outside but need opposite fixes:
+ *
+ *   "Invalid Private Integration token"        → the token is revoked
+ *   "This location is not accessible from
+ *    this token!"                              → the token is FINE, the
+ *                                                location id is wrong
+ *
+ * The second one reads like a bad key and sends people off rotating a
+ * perfectly good token, so it gets its own message.
+ */
+async function checkGhl() {
+  const token = clean(
+    Deno.env.get("GHL_PIT_TOKEN") ||
+    Deno.env.get("GHL_PRIVATE_INTEGRATION_TOKEN") ||
+    Deno.env.get("GOHIGHLEVEL_API_KEY"),
+  );
+  const locationId = clean(
+    Deno.env.get("GHL_LOCATION_ID") || Deno.env.get("GOHIGHLEVEL_LOCATION_ID"),
+  );
+
+  if (!token) {
+    return {
+      ok: false,
+      configured: false,
+      reason: "No GHL_PIT_TOKEN is set in Supabase secrets. Internal-booking texts cannot send.",
+    };
+  }
+  if (looksPlaceholder(token)) {
+    return { ok: false, configured: true, placeholder: true, reason: "GHL_PIT_TOKEN is a placeholder string." };
+  }
+  if (!locationId) {
+    return {
+      ok: false,
+      configured: false,
+      reason: "GHL_PIT_TOKEN is set but GHL_LOCATION_ID is not. Private Integration tokens are location-scoped — copy the Location ID from GoHighLevel (Settings → Business Profile) for the same subaccount the integration was created in.",
+    };
+  }
+
+  try {
+    const res = await fetch(
+      `https://services.leadconnectorhq.com/users/?locationId=${encodeURIComponent(locationId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Version: "2021-07-28",
+          Accept: "application/json",
+        },
+      },
+    );
+    const text = await res.text();
+    if (res.ok) {
+      let users = 0;
+      try { users = (JSON.parse(text)?.users || []).length; } catch { /* non-JSON */ }
+      return { ok: true, configured: true, locationId, users };
+    }
+    if (/not accessible from this token/i.test(text)) {
+      return {
+        ok: false,
+        configured: true,
+        status: res.status,
+        locationMismatch: true,
+        locationId,
+        reason: `The token is valid, but it is not scoped to location ${locationId}. Do not rotate the token — set GHL_LOCATION_ID to the subaccount the Private Integration was created in.`,
+      };
+    }
+    if (/invalid private integration token/i.test(text)) {
+      return {
+        ok: false,
+        configured: true,
+        status: res.status,
+        reason: "GoHighLevel rejected the token (Invalid Private Integration token). It was revoked or rotated — mint a new one under Settings → Private Integrations.",
+      };
+    }
+    return {
+      ok: false,
+      configured: true,
+      status: res.status,
+      reason: `GoHighLevel returned ${res.status}: ${text.slice(0, 200)}`,
+    };
+  } catch (err) {
+    return { ok: false, configured: true, reason: String(err).slice(0, 200) };
+  }
+}
+
 async function checkResend() {
   const key = clean(Deno.env.get("RESEND_API_KEY"));
   if (!key) return { ok: false, configured: false, reason: "No RESEND_API_KEY is set." };
@@ -186,14 +273,15 @@ serve(async (req) => {
     .maybeSingle();
   if (!admin) return json({ error: "Forbidden" }, 403);
 
-  const [housecallPro, openPhone, resend] = await Promise.all([
+  const [housecallPro, openPhone, goHighLevel, resend] = await Promise.all([
     checkHcp(),
     checkOpenPhone(),
+    checkGhl(),
     checkResend(),
   ]);
 
   return json({
     checkedAt: new Date().toISOString(),
-    integrations: { housecallPro, openPhone, resend },
+    integrations: { housecallPro, openPhone, goHighLevel, resend },
   });
 });

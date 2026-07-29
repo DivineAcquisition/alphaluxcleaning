@@ -1,3 +1,9 @@
+# Secrets. Real credentials live in Supabase edge-function secrets and
+# Vercel environment variables — never in the repo. See .env.example.
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log

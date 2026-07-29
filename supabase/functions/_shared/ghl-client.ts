@@ -1,18 +1,14 @@
 // Shared GoHighLevel Private Integration client.
 //
-// Credential resolution (mirrors the Novara booking system — the working
-// reference implementation):
+// Credential resolution:
 //
 //   token    : GHL_PIT_TOKEN  →  GHL_PRIVATE_INTEGRATION_TOKEN  →
-//              GOHIGHLEVEL_API_KEY  →  baked-in default
-//   location : GHL_LOCATION_ID  →  GOHIGHLEVEL_LOCATION_ID  →  default
+//              GOHIGHLEVEL_API_KEY
+//   location : GHL_LOCATION_ID  →  GOHIGHLEVEL_LOCATION_ID
 //
-// `GHL_PIT_TOKEN` is now the canonical name so a Private Integration
-// Token provisioned the same way as the Novara subaccount is picked up
-// automatically. (Previously only `GHL_PRIVATE_INTEGRATION_TOKEN` was
-// read, so a freshly-minted PIT stored under `GHL_PIT_TOKEN` was ignored
-// and every call silently fell back to a stale hard-coded token → 401s,
-// i.e. "the GHL PIT is not working at all".)
+// Both are required and both must belong to the SAME subaccount — see
+// the note above `DEFAULT_OWNER_EMAIL`. `/admin/integrations/housecall-pro`
+// → Test Connection reports which of the two is wrong.
 //
 // Private Integration tokens are *location-scoped*, so every call must
 // include the locationId either as a query param or in the request body
@@ -50,15 +46,24 @@ export const GHL_API_VERSION = '2021-07-28';
 // 2021-07-28 header returns a 400, so messaging calls must override it.
 export const GHL_CONVERSATIONS_API_VERSION = '2021-04-15';
 
-// AlphaLuxClean TX/CA (and alphaluxcleaning NY) both live under this
-// GHL subaccount; the PIT below is location-scoped to it. These
-// defaults let the integration run out-of-the-box, but always prefer
-// setting the GHL_PIT_TOKEN / GHL_LOCATION_ID edge-function secrets so
-// the token can be rotated without a deploy.
-const DEFAULT_PIT = 'pit-d98be6f6-1452-4e0e-8aaa-431371f4ddc4';
-const DEFAULT_LOCATION_ID = 'Lvvq87zxxbYFnaTEklYX';
+// Credentials come from edge-function secrets only. There are
+// deliberately NO baked-in defaults:
+//
+//   * The PIT that used to be hard-coded here has been revoked —
+//     GoHighLevel now answers "Invalid Private Integration token" for
+//     it — so it could only ever produce 401s.
+//   * A default location is worse than none. Private Integration tokens
+//     are location-scoped, so pairing a perfectly good token with a
+//     default subaccount it doesn't own fails as "This location is not
+//     accessible from this token!", which reads like a bad key and
+//     sends you looking in the wrong place.
+//
+// Missing configuration therefore fails loudly, and `ghlIsConfigured()`
+// lets callers skip GHL work rather than hammer a broken client.
+
 // Default opportunity owner — matched against the location's user list
-// when neither GHL_OWNER_USER_ID nor GHL_OWNER_EMAIL is set.
+// when neither GHL_OWNER_USER_ID nor GHL_OWNER_EMAIL is set. Not a
+// credential.
 const DEFAULT_OWNER_EMAIL = 'info@alphaluxcleaning.com';
 
 export interface GHLCustomFieldValue {
@@ -152,23 +157,29 @@ export function readGhlCredentials(): { token: string; locationId: string } {
   const token =
     Deno.env.get('GHL_PIT_TOKEN') ||
     Deno.env.get('GHL_PRIVATE_INTEGRATION_TOKEN') ||
-    Deno.env.get('GOHIGHLEVEL_API_KEY') ||
-    DEFAULT_PIT;
+    Deno.env.get('GOHIGHLEVEL_API_KEY');
   const locationId =
     Deno.env.get('GHL_LOCATION_ID') ||
-    Deno.env.get('GOHIGHLEVEL_LOCATION_ID') ||
-    DEFAULT_LOCATION_ID;
-  if (!token) throw new Error('GHL_PIT_TOKEN is not configured.');
+    Deno.env.get('GOHIGHLEVEL_LOCATION_ID');
+  if (!token) {
+    throw new Error(
+      'GHL_PIT_TOKEN is not configured. Create a Private Integration in the ' +
+        'GoHighLevel subaccount and store its token as a Supabase edge-function secret.',
+    );
+  }
   if (!locationId) {
-    throw new Error('GHL_LOCATION_ID is not configured. Private Integration tokens are location-scoped.');
+    throw new Error(
+      'GHL_LOCATION_ID is not configured. Private Integration tokens are ' +
+        'location-scoped, so the token is useless without the id of the subaccount ' +
+        'it was created in (GHL → Settings → Business Profile → Location ID).',
+    );
   }
   return { token: token.trim(), locationId: locationId.trim() };
 }
 
 /**
- * True when an explicit PIT token + location are configured via env vars
- * (i.e. not relying on the baked-in default). Lets callers fail-open /
- * skip GHL work gracefully instead of hammering a stale default token.
+ * True when both halves of the location-scoped credential are present.
+ * Lets callers skip GHL work gracefully instead of throwing.
  */
 export function ghlIsConfigured(): boolean {
   const token =
