@@ -3,37 +3,24 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { chatWidgetAllowed, pathSurface } from "@/config/domains";
 
 /**
  * LeadConnector (GoHighLevel) chat widget.
  *
- * Loads only on the public funnel host (try.alphaluxcleaning.com) so the
- * widget never appears in the admin workspace, the customer portal, the
- * contractor app, or on unrelated preview domains. Set
- * NEXT_PUBLIC_CHAT_WIDGET_HOSTS (comma-separated) to allow extra hosts
- * when testing on a preview URL.
+ * Public booking funnel only — the host/path rule comes from the shared
+ * domain config, so the widget can never appear in the admin workspace
+ * or on internal tooling pages. Set NEXT_PUBLIC_CHAT_WIDGET_HOSTS
+ * (comma-separated) to allow extra hosts when testing on a preview URL.
  */
 
 const WIDGET_ID = "6a6622cd7dc24a6d50911829";
 
-const DEFAULT_HOSTS = ["try.alphaluxcleaning.com", "www.try.alphaluxcleaning.com"];
-
-/** Route prefixes where the sales chat widget would be noise, not help. */
-const EXCLUDED_PREFIXES = [
-  "/admin",
-  "/contractor",
-  "/customer-portal",
-  "/portal",
-  "/dev",
-  "/health",
-];
-
-function allowedHosts(): string[] {
-  const extra = (process.env.NEXT_PUBLIC_CHAT_WIDGET_HOSTS || "")
+function extraAllowedHosts(): string[] {
+  return (process.env.NEXT_PUBLIC_CHAT_WIDGET_HOSTS || "")
     .split(",")
     .map((h) => h.trim().toLowerCase())
     .filter(Boolean);
-  return [...DEFAULT_HOSTS, ...extra];
 }
 
 export default function ChatWidget() {
@@ -41,14 +28,15 @@ export default function ChatWidget() {
   const [hostAllowed, setHostAllowed] = useState(false);
 
   useEffect(() => {
-    setHostAllowed(allowedHosts().includes(window.location.hostname.toLowerCase()));
-  }, []);
+    const host = window.location.hostname.toLowerCase();
+    // A preview host opted in via env still only gets the widget on
+    // customer-facing routes.
+    const previewAllowed =
+      extraAllowedHosts().includes(host) && pathSurface(pathname) === "public";
+    setHostAllowed(chatWidgetAllowed(host, pathname) || previewAllowed);
+  }, [pathname]);
 
-  const routeAllowed = !EXCLUDED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
-
-  if (!hostAllowed || !routeAllowed) return null;
+  if (!hostAllowed) return null;
 
   return (
     <Script

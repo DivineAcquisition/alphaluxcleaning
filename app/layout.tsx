@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import ChatWidget from "./ChatWidget";
+import MarketingScripts from "./MarketingScripts";
 import "@/index.css";
 
 export const metadata: Metadata = {
@@ -66,41 +66,8 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {/* Meta Pixel */}
-        <Script id="fb-pixel" strategy="afterInteractive">
-          {`!function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '795901793381387');
-          fbq('track', 'PageView');`}
-        </Script>
-
-        {/* Mouseflow */}
-        <Script id="mouseflow" strategy="afterInteractive">
-          {`window._mfq = window._mfq || [];
-          (function() {
-            var mf = document.createElement("script");
-            mf.type = "text/javascript"; mf.defer = true;
-            mf.src = "//cdn.mouseflow.com/projects/04fea0d1-c0fa-44ee-98ba-6cf464d16d40.js";
-            document.getElementsByTagName("head")[0].appendChild(mf);
-          })();`}
-        </Script>
-
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            alt=""
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=795901793381387&ev=PageView&noscript=1"
-          />
-        </noscript>
+        {/* Meta Pixel + Mouseflow — suppressed on the admin host. */}
+        <MarketingScripts />
 
         {/* LeadConnector chat widget — public funnel host only. */}
         <ChatWidget />

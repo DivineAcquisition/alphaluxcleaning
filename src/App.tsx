@@ -7,7 +7,7 @@ import { CheckCircle } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { BookingProvider } from '@/contexts/BookingContext';
 import { TestModeBanner } from '@/components/admin/TestModeBanner';
-import { DomainRedirect } from '@/components/DomainRedirect';
+import { DomainGuard } from '@/components/DomainGuard';
 import { UTMTracker } from '@/components/UTMTracker';
 import { BrandedLoader } from '@/components/BrandedLoader';
 
@@ -80,7 +80,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BookingProvider>
           <Router>
-          <DomainRedirect>
+          <DomainGuard>
             <UTMTracker />
             <TestModeBanner />
           <Routes>
@@ -314,7 +314,7 @@ function App() {
             
             <Route path="*" element={<NotFound />} />
           </Routes>
-            </DomainRedirect>
+            </DomainGuard>
         </Router>
         <Toaster />
         <Sonner />
