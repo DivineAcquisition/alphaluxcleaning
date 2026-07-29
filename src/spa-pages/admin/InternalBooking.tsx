@@ -67,6 +67,13 @@ const SUPPORT_NUMBERS: Record<string, string> = {
   NY: '(631) 366-8565',
 };
 
+/** Novara groups arrival windows by part of day rather than one long list. */
+const SLOT_PERIODS = [
+  { label: 'Morning', slots: ['early_morning', 'morning'] },
+  { label: 'Midday', slots: ['late_morning', 'afternoon'] },
+  { label: 'Evening', slots: ['late_afternoon', 'evening'] },
+];
+
 const INITIAL = {
   firstName: '', lastName: '', email: '', phone: '',
   addressLine1: '', addressLine2: '', city: '', state: 'NJ', zipCode: '',
@@ -95,10 +102,10 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card className="rounded-2xl border-border shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-alx-navy-deep text-sm font-bold text-primary-foreground shadow-sm">
             {number}
           </span>
           <div className="min-w-0 flex-1 pt-0.5">
@@ -139,6 +146,24 @@ function Field({
   );
 }
 
+/** Shape of the book-as-va response the result screen renders. */
+interface BookingResult {
+  bookingRef: string;
+  stripeAccount: string;
+  totals: { total: number; deposit: number; balance: number };
+  hcpJobId?: string | null;
+  hcpError?: string | null;
+  ghlContactId?: string | null;
+  ghlError?: string | null;
+  payPageUrl?: string | null;
+  smsResult?: { success?: boolean; provider?: string } | null;
+  emailResult?: { email?: string; success?: boolean } | null;
+  depositInvoice?: { hostedInvoiceUrl?: string | null } | null;
+  remainingInvoice?: { hostedInvoiceUrl?: string | null } | null;
+  fullInvoice?: { hostedInvoiceUrl?: string | null } | null;
+  invoiceError?: string | null;
+}
+
 function CopyRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
@@ -159,7 +184,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 export default function InternalBooking() {
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<BookingResult | null>(null);
 
   const set = <K extends keyof typeof INITIAL>(field: K, value: (typeof INITIAL)[K]) =>
     setForm((p) => ({ ...p, [field]: value }));
@@ -230,7 +255,7 @@ export default function InternalBooking() {
       });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || 'Booking failed');
-      setResult(data);
+      setResult(data as BookingResult);
       toast.success(`Booking ${data.bookingRef} created`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -303,6 +328,55 @@ export default function InternalBooking() {
       title="Internal Booking"
       description="Book while the customer is on the phone"
     >
+      <div className="mx-auto max-w-[1240px]">
+        <header className="mb-7">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+              Workspace · Internal
+            </span>
+            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {form.state} · {SUPPORT_NUMBERS[form.state] || '—'}
+            </span>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
+                AlphaLux Internal Booking
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                Same rate card the website quotes. GoHighLevel fires the automated
+                comms; the OpenPhone line for the customer's market is what they call.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <div className="mb-6 inline-flex rounded-xl border border-border bg-muted/50 p-1">
+          {([
+            { id: 'one_time' as const, label: 'One-time clean' },
+            { id: 'recurring' as const, label: 'Recurring plan' },
+          ]).map((tab) => {
+            const active = (form.offerId === 'recurring') === (tab.id === 'recurring');
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() =>
+                  set('offerId', tab.id === 'recurring' ? 'recurring' : 'deep')
+                }
+                className={cn(
+                  'rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors',
+                  active
+                    ? 'bg-card text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
       <div className="grid gap-6 xl:grid-cols-12">
         <div className="space-y-5 xl:col-span-8">
           <FormSection
@@ -523,14 +597,37 @@ export default function InternalBooking() {
                 />
               </Field>
               <Field label="Arrival window" required>
-                <Select value={form.timeSlot} onValueChange={(v) => set('timeSlot', v)}>
-                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                  <SelectContent>
-                    {TIME_SLOTS.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  {SLOT_PERIODS.map((period) => (
+                    <div key={period.label}>
+                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
+                        {period.label}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {period.slots.map((value) => {
+                          const slot = TIME_SLOTS.find((t) => t.value === value);
+                          if (!slot) return null;
+                          const active = form.timeSlot === value;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => set('timeSlot', value)}
+                              className={cn(
+                                'rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors',
+                                active
+                                  ? 'border-primary bg-primary text-primary-foreground'
+                                  : 'hover:border-primary/40 hover:bg-muted',
+                              )}
+                            >
+                              {slot.label.replace(/^[^(]*\(|\)$/g, '')}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </Field>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -599,14 +696,16 @@ export default function InternalBooking() {
         {/* ─── Sticky quote rail ─────────────────────────────────────── */}
         <aside className="xl:col-span-4">
           <div className="xl:sticky xl:top-20">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Sparkles className="h-4 w-4 text-primary" /> Live quote
-                </CardTitle>
-                <CardDescription>Matches the invoice exactly — read it out.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <Card className="overflow-hidden rounded-2xl border-border shadow-sm">
+              <div className="bg-gradient-to-r from-alx-navy-deep via-primary to-alx-black-elev px-5 py-4 text-primary-foreground">
+                <p className="flex items-center gap-2 text-sm font-bold tracking-tight">
+                  <Sparkles className="h-4 w-4" /> Live quote
+                </p>
+                <p className="mt-0.5 text-xs text-primary-foreground/80">
+                  Matches the invoice exactly — read it out.
+                </p>
+              </div>
+              <CardContent className="space-y-3 pt-4">
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>{quote.offerLabel}</span>
@@ -707,6 +806,7 @@ export default function InternalBooking() {
             </Card>
           </div>
         </aside>
+        </div>
       </div>
     </AdminLayout>
   );
