@@ -19,8 +19,67 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Several operational tables (sms_logs, ghl_sync_log,
-// lead_intro_notifications) are newer than the generated Supabase types.
+// lead_intro_notifications) are newer than the generated Supabase types,
+// so queries go through an untyped handle and the rows are described by
+// the interfaces below instead.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+interface BookingRow {
+  id: string;
+  created_at: string;
+  service_date: string | null;
+  time_slot: string | null;
+  full_name: string | null;
+  status: string;
+  source: string | null;
+  offer_name: string | null;
+  service_type: string | null;
+  est_price: number | string | null;
+  hcp_job_id: string | null;
+  zip_code: string | null;
+}
+
+interface SmsLogRow {
+  id: string;
+  created_at: string;
+  channel: string | null;
+  provider: string | null;
+  status: string;
+  context: string | null;
+  to_phone: string | null;
+  from_number: string | null;
+  error: string | null;
+}
+
+interface LeadRow {
+  email: string;
+  created_at: string;
+  first_name: string | null;
+  state_code: string | null;
+  intro_sms_status: string | null;
+  intro_sms_error: string | null;
+  zip_code: string | null;
+}
+
+interface HcpSyncRow {
+  id: string;
+  booking_id: string;
+  status: string;
+  last_error: string | null;
+  hcp_job_id: string | null;
+  updated_at: string;
+}
+
+interface GhlSyncRow {
+  id: string;
+  booking_id: string | null;
+  stage: string | null;
+  status: string;
+  last_error: string | null;
+  ghl_contact_id: string | null;
+  updated_at: string;
+}
 
 export const BOOKING_ACTIVITY_KEY = ['booking-activity'];
 
@@ -119,21 +178,13 @@ function num(v: unknown): number {
   return typeof v === 'number' ? v : Number(v) || 0;
 }
 
-function fmtMoney(n: number): string {
-  return n.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  });
-}
-
 async function fetchActivity(): Promise<BookingActivity> {
   const since7 = isoDaysAgo(7);
   const since30 = isoDaysAgo(30);
   const since1 = isoDaysAgo(1);
 
   const [bookingRows, smsRows, leadRows, hcpRows, ghlRows] = await Promise.all([
-    safe(async () => {
+    safe<BookingRow[]>(async () => {
       const { data, error } = await db
         .from('bookings')
         .select(
@@ -142,10 +193,10 @@ async function fetchActivity(): Promise<BookingActivity> {
         .order('created_at', { ascending: false })
         .limit(2000);
       if (error) throw error;
-      return (data || []) as any[];
-    }, [] as any[]),
+      return (data || []) as BookingRow[];
+    }, []),
 
-    safe(async () => {
+    safe<SmsLogRow[]>(async () => {
       const { data, error } = await db
         .from('sms_logs')
         .select('id, created_at, channel, provider, status, context, to_phone, from_number, error')
@@ -153,38 +204,38 @@ async function fetchActivity(): Promise<BookingActivity> {
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
-      return (data || []) as any[];
-    }, [] as any[]),
+      return (data || []) as SmsLogRow[];
+    }, []),
 
-    safe(async () => {
+    safe<LeadRow[]>(async () => {
       const { data, error } = await db
         .from('lead_intro_notifications')
         .select('email, created_at, first_name, state_code, intro_sms_status, intro_sms_error, zip_code')
         .order('created_at', { ascending: false })
         .limit(200);
       if (error) throw error;
-      return (data || []) as any[];
-    }, [] as any[]),
+      return (data || []) as LeadRow[];
+    }, []),
 
-    safe(async () => {
+    safe<HcpSyncRow[]>(async () => {
       const { data, error } = await db
         .from('hcp_sync_log')
         .select('id, booking_id, status, last_error, hcp_job_id, updated_at')
         .order('updated_at', { ascending: false })
         .limit(150);
       if (error) throw error;
-      return (data || []) as any[];
-    }, [] as any[]),
+      return (data || []) as HcpSyncRow[];
+    }, []),
 
-    safe(async () => {
+    safe<GhlSyncRow[]>(async () => {
       const { data, error } = await db
         .from('ghl_sync_log')
         .select('id, booking_id, stage, status, last_error, ghl_contact_id, updated_at')
         .order('updated_at', { ascending: false })
         .limit(150);
       if (error) throw error;
-      return (data || []) as any[];
-    }, [] as any[]),
+      return (data || []) as GhlSyncRow[];
+    }, []),
   ]);
 
   const stats: Record<ActivityChannel, ChannelStats> = {
@@ -389,4 +440,4 @@ export function useBookingActivity() {
   return query;
 }
 
-export { CHANNEL_LABEL, EXPECTED_PROVIDER, fmtMoney };
+export { CHANNEL_LABEL, EXPECTED_PROVIDER };
