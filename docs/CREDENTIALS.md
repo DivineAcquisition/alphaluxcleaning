@@ -9,6 +9,21 @@ setting a value in one does **not** set it in the others.
 | Vercel environment variables | The Next.js server route and public browser values | Vercel → Project → Settings → Environment Variables |
 | `.env` (local only, gitignored) | Local development copies | Your machine |
 
+## Use the right Supabase project
+
+The organization contains three projects with confusingly similar
+purposes. This app is **AlphaLuxClean**:
+
+| Project | Ref | Used by this repo |
+|---|---|---|
+| **AlphaLuxClean** | `yltvknkqnzdeiqckqjha` | **Yes** — matches `src/integrations/supabase/client.ts` |
+| BayAreaCleaningPros | `rfgurianvyrgonjvvsnc` | No — predecessor brand |
+| NovaraCleaning | `sxdraeptzuamsgjcvfeg` | No — sibling business |
+
+A key pasted into the wrong project's secrets looks saved and changes
+nothing, which is a genuinely hard failure to spot. Check the project
+name in the dashboard header before saving.
+
 Verify any of it from the workspace: **Admin → Housecall Pro → Test
 Connection** calls the admin-gated `integration-health` function, which
 performs a real authenticated request against Housecall Pro, OpenPhone,
@@ -74,10 +89,11 @@ One number per market, held in `public.sms_state_numbers` and editable at
 | CA | (323) 300-5528 | `PNixdsFI1a` |
 | NY | (631) 366-8565 | `PNmbaQkeHE` |
 
-The ids are populated by migration `20260729140000_openphone_phone_ids`.
-`openPhoneSend()` prefers the id over the raw number because sending by
-E.164 breaks with a 403 the moment a number is ported, renamed or moved
-between workspaces.
+These ids are already applied to the AlphaLuxClean database (migration
+`20260729140000_openphone_phone_ids`), and were read from the live
+workspace, so all four match. `openPhoneSend()` prefers the id over the
+raw number because sending by E.164 breaks with a 403 the moment a number
+is ported, renamed or moved between workspaces.
 
 If OpenPhone returns **403** rather than 401, the key is valid but the
 workspace does not own the number being sent from — check this table
