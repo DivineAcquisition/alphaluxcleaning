@@ -47,7 +47,7 @@ BEGIN
       cleaner_record->>'email',
       COALESCE(cleaner_record->>'phone', ''),
       'Existing team member transitioning to new digital platform',
-      'Experienced cleaner with Bay Area Cleaning Professionals',
+      'Experienced cleaner with AlphaLux Clean',
       COALESCE(cleaner_record->>'availability', 'Flexible schedule'),
       COALESCE(cleaner_record->>'emergency_contact_name', 'To be updated'),
       COALESCE(cleaner_record->>'emergency_contact_phone', 'To be updated'),

@@ -7,7 +7,7 @@ SELECT
   id,
   'super_admin'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com', 'divineacquisition.io@gmail.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com', 'divineacquisition.io@gmail.com')
 ON CONFLICT (user_id, role) DO NOTHING;
 
 -- Add subcontractor role for testing
@@ -16,7 +16,7 @@ SELECT
   id,
   'subcontractor'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 ON CONFLICT (user_id, role) DO NOTHING;
 
 -- Create test subcontractor profiles linked to existing admin users
@@ -42,8 +42,8 @@ INSERT INTO public.subcontractors (
 SELECT 
   u.id,
   CASE 
-    WHEN u.email = 'admin1@bayareacleaningpros.com' THEN 'Test Admin Subcontractor'
-    WHEN u.email = 'ellie@bayareacleaningpros.com' THEN 'Ellie Test Subcontractor'
+    WHEN u.email = 'admin1@alphaluxcleaning.com' THEN 'Test Admin Subcontractor'
+    WHEN u.email = 'ellie@alphaluxcleaning.com' THEN 'Ellie Test Subcontractor'
   END,
   u.email,
   '(555) 123-4567',
@@ -61,7 +61,7 @@ SELECT
   22,
   4.8
 FROM auth.users u
-WHERE u.email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE u.email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 ON CONFLICT (user_id) DO UPDATE SET
   full_name = EXCLUDED.full_name,
   tier_level = EXCLUDED.tier_level,
@@ -83,5 +83,5 @@ FROM public.subcontractors s
 CROSS JOIN (
   SELECT id FROM public.bookings LIMIT 3
 ) b
-WHERE s.email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE s.email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 ON CONFLICT DO NOTHING;

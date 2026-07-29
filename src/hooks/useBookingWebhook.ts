@@ -246,7 +246,7 @@ export const useBookingWebhook = () => {
       const comprehensivePayload = {
         event_type: "order_entry",
         timestamp: new Date().toISOString(),
-        source: "bay_area_cleaning_pros",
+        source: "alphalux_clean",
         
         // Core service information (ensuring frequency is properly captured)
         serviceType: data.serviceType || 'residential_cleaning',

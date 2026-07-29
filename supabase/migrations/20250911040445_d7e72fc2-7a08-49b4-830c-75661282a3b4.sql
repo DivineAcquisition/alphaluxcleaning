@@ -1,4 +1,4 @@
--- Insert default email templates for Bay Area Cleaning Pros
+-- Insert default email templates for AlphaLux Clean
 INSERT INTO public.email_templates (
   company_id,
   template_key,

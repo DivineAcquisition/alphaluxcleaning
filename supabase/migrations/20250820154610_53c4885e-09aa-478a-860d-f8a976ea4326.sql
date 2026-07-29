@@ -18,7 +18,7 @@ BEGIN
   -- If user doesn't exist, create account
   IF v_user_id IS NULL THEN
     -- Generate a temporary password
-    v_password := 'BayArea' || substr(md5(random()::text), 1, 8) || '!';
+    v_password := 'AlphaLux' || substr(md5(random()::text), 1, 8) || '!';
     
     -- Create the user account via auth.users
     INSERT INTO auth.users (
@@ -72,7 +72,7 @@ BEGIN
       importance
     ) VALUES (
       v_user_id,
-      'Welcome to Bay Area Cleaning Pros!',
+      'Welcome to AlphaLux Clean!',
       'Your account has been created. Your temporary password is: ' || v_password || '. Please log in to your customer portal and change your password.',
       'account_created',
       NEW.id,

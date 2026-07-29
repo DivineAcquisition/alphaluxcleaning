@@ -27,7 +27,7 @@ serve(async (req) => {
     const ghlPayload = {
       event_type: 'payment_successful',
       timestamp: new Date().toISOString(),
-      source: 'bay_area_cleaning_pros',
+      source: 'alphalux_clean',
       
       // Customer Information
       customer: {

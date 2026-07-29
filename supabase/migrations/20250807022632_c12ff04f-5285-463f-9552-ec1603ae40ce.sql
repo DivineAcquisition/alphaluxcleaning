@@ -7,7 +7,7 @@ SELECT
   id,
   'super_admin'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com', 'divineacquisition.io@gmail.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com', 'divineacquisition.io@gmail.com')
 AND NOT EXISTS (
   SELECT 1 FROM public.user_roles ur 
   WHERE ur.user_id = auth.users.id AND ur.role = 'super_admin'::app_role
@@ -19,7 +19,7 @@ SELECT
   id,
   'subcontractor'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 AND NOT EXISTS (
   SELECT 1 FROM public.user_roles ur 
   WHERE ur.user_id = auth.users.id AND ur.role = 'subcontractor'::app_role
@@ -48,8 +48,8 @@ INSERT INTO public.subcontractors (
 SELECT 
   u.id,
   CASE 
-    WHEN u.email = 'admin1@bayareacleaningpros.com' THEN 'Test Admin Subcontractor'
-    WHEN u.email = 'ellie@bayareacleaningpros.com' THEN 'Ellie Test Subcontractor'
+    WHEN u.email = 'admin1@alphaluxcleaning.com' THEN 'Test Admin Subcontractor'
+    WHEN u.email = 'ellie@alphaluxcleaning.com' THEN 'Ellie Test Subcontractor'
   END,
   u.email,
   '(555) 123-4567',
@@ -67,7 +67,7 @@ SELECT
   22,
   4.8
 FROM auth.users u
-WHERE u.email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE u.email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 AND NOT EXISTS (
   SELECT 1 FROM public.subcontractors s WHERE s.user_id = u.id
 );

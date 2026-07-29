@@ -138,7 +138,7 @@ serve(async (req) => {
           timestamp: new Date().toISOString(),
           transaction_type: 'subscription_payment',
           ...subscriptionTransactionData,
-          source: 'bay_area_cleaning_pros'
+          source: 'alphalux_clean'
         }),
       });
 

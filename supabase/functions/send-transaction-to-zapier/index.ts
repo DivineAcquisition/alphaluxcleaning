@@ -32,7 +32,7 @@ serve(async (req) => {
       timestamp: new Date().toISOString(),
       transaction_type: type || 'customer_payment',
       ...transactionData,
-      source: 'bay_area_cleaning_pros'
+      source: 'alphalux_clean'
     };
 
     logStep("Sending to Zapier webhook", { url: ZAPIER_WEBHOOK_URL });

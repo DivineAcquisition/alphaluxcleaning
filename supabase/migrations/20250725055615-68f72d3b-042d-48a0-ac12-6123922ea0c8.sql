@@ -109,8 +109,8 @@ CREATE OR REPLACE FUNCTION public.create_initial_admin_users()
 AS $function$
 DECLARE
   admin_emails TEXT[] := ARRAY[
-    'admin1@bayareacleaningpros.com',
-    'ellie@bayareacleaningpros.com', 
+    'admin1@alphaluxcleaning.com',
+    'ellie@alphaluxcleaning.com', 
     'divineacquisition.io@gmail.com'
   ];
   email_address TEXT;
@@ -131,8 +131,8 @@ BEGIN
       'ADMIN_' || upper(substring(md5(email_address), 1, 6)),
       email_address,
       CASE 
-        WHEN email_address = 'admin1@bayareacleaningpros.com' THEN 'Admin User 1'
-        WHEN email_address = 'ellie@bayareacleaningpros.com' THEN 'Ellie'
+        WHEN email_address = 'admin1@alphaluxcleaning.com' THEN 'Admin User 1'
+        WHEN email_address = 'ellie@alphaluxcleaning.com' THEN 'Ellie'
         WHEN email_address = 'divineacquisition.io@gmail.com' THEN 'Divine Acquisition'
       END,
       'admin_setup',
