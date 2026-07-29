@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import ChatWidget from "./ChatWidget";
 import MarketingScripts from "./MarketingScripts";
 import "@/index.css";
 
@@ -68,9 +67,6 @@ export default function RootLayout({
       <body>
         {/* Meta Pixel + Mouseflow — suppressed on the admin host. */}
         <MarketingScripts />
-
-        {/* LeadConnector chat widget — public funnel host only. */}
-        <ChatWidget />
 
         {children}
       </body>

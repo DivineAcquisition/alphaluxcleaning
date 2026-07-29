@@ -7,7 +7,7 @@
 // keeps it out of the Next type-check pass.
 
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { chatWidgetAllowed, hostRole, pathSurface, resolveHostRoute } from './domains.ts';
+import { hostRole, pathSurface, resolveHostRoute } from './domains.ts';
 
 const ADMIN = 'admin.alphaluxcleaning.com';
 const BOOKING = 'try.alphaluxcleaning.com';
@@ -86,11 +86,4 @@ Deno.test('unknown hosts are never enforced', () => {
     assertEquals(resolveHostRoute(host, '/admin').action, 'allow', host);
     assertEquals(resolveHostRoute(host, '/book/zip').action, 'allow', host);
   }
-});
-
-Deno.test('chat widget loads on the public funnel only', () => {
-  assertEquals(chatWidgetAllowed(BOOKING, '/book/zip'), true);
-  assertEquals(chatWidgetAllowed(BOOKING, '/dev-test'), false);
-  assertEquals(chatWidgetAllowed(ADMIN, '/admin'), false);
-  assertEquals(chatWidgetAllowed('localhost', '/book/zip'), false);
 });

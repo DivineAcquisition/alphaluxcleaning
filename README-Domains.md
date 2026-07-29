@@ -23,7 +23,6 @@ Stripe use. Override with `NEXT_PUBLIC_BOOKING_ORIGIN` /
 src/config/domains.ts   ← the rule (host role, path surface, decision)
 ├── middleware.ts               applies it at the edge, on hard loads
 ├── src/components/DomainGuard  applies it on in-app navigation
-├── app/ChatWidget.tsx          public funnel only
 └── app/MarketingScripts.tsx    everywhere except the admin host
 ```
 

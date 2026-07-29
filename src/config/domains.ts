@@ -1,6 +1,6 @@
 // Host → surface map. Single source of truth for the strict domain
-// architecture, shared by the edge middleware (middleware.ts), the
-// client-side guard (components/DomainGuard.tsx) and the chat widget.
+// architecture, shared by the edge middleware (middleware.ts) and the
+// client-side guard (components/DomainGuard.tsx).
 //
 //   admin.alphaluxcleaning.com   → admin workspace ONLY
 //   try.alphaluxcleaning.com     → public booking funnel ONLY
@@ -164,12 +164,4 @@ export function resolveHostRoute(
     url: `${ADMIN_ORIGIN}${pathname}${search}`,
     reason: 'admin-path-on-public-host',
   };
-}
-
-/** True when the chat widget (public funnel only) should render. */
-export function chatWidgetAllowed(
-  rawHost: string | null | undefined,
-  pathname: string,
-): boolean {
-  return hostRole(rawHost) === 'booking' && pathSurface(pathname) === 'public';
 }
