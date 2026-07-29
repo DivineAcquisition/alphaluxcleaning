@@ -76,7 +76,7 @@ serve(async (req) => {
         const ghlPayload = {
           event_type: 'order_sync',
           timestamp: new Date().toISOString(),
-          source: 'bay_area_cleaning_pros_sync',
+          source: 'alphalux_clean_sync',
           
           // Customer Information
           customer: {

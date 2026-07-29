@@ -113,7 +113,7 @@ serve(async (req) => {
       const webhookPayload = {
         ...bookingData,
         webhook_timestamp: new Date().toISOString(),
-        webhook_source: 'bay_area_cleaning_pros_booking_system',
+        webhook_source: 'alphalux_clean_booking_system',
         config_id: config.id
       };
 

@@ -53,7 +53,7 @@ serve(async (req) => {
     }
 
     // Generate a temporary password
-    const tempPassword = 'BayArea' + Math.random().toString(36).substring(2, 10).toUpperCase() + '!';
+    const tempPassword = 'AlphaLux' + Math.random().toString(36).substring(2, 10).toUpperCase() + '!';
 
     console.log('Creating new customer account...');
 

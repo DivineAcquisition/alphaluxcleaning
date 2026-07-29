@@ -91,7 +91,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'BayAreaCleaning-CustomerPortal/1.0'
+        'User-Agent': 'AlphaLuxClean-CustomerPortal/1.0'
       },
       body: JSON.stringify(webhookPayload)
     });

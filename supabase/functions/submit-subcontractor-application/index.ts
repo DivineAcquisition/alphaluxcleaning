@@ -212,7 +212,7 @@ serve(async (req) => {
           can_lift_heavy_items,
           comfortable_with_chemicals
         },
-        source: 'bay_area_cleaning_pros'
+        source: 'alphalux_clean'
       };
 
       logStep("Sending to Zapier webhook", { url: zapierWebhookUrl });

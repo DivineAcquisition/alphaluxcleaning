@@ -46,7 +46,7 @@ export function usePaymentSecurity() {
   const generateDeviceFingerprint = useCallback((): DeviceFingerprint => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    ctx?.fillText('BayAreaCleaning', 10, 10);
+    ctx?.fillText('AlphaLuxClean', 10, 10);
     const canvasFingerprint = canvas.toDataURL();
 
     const webglCanvas = document.createElement('canvas');

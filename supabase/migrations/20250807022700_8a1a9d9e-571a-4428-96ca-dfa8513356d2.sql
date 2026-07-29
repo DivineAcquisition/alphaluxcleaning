@@ -4,7 +4,7 @@ SELECT
   id,
   'super_admin'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com', 'divineacquisition.io@gmail.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com', 'divineacquisition.io@gmail.com')
 AND NOT EXISTS (
   SELECT 1 FROM public.user_roles ur 
   WHERE ur.user_id = auth.users.id AND ur.role = 'super_admin'::app_role
@@ -16,7 +16,7 @@ SELECT
   id,
   'subcontractor'::app_role
 FROM auth.users 
-WHERE email IN ('admin1@bayareacleaningpros.com', 'ellie@bayareacleaningpros.com')
+WHERE email IN ('admin1@alphaluxcleaning.com', 'ellie@alphaluxcleaning.com')
 AND NOT EXISTS (
   SELECT 1 FROM public.user_roles ur 
   WHERE ur.user_id = auth.users.id AND ur.role = 'subcontractor'::app_role

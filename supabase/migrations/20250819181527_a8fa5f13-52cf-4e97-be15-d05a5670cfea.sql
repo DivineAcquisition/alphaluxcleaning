@@ -14,15 +14,15 @@ DELETE FROM notification_templates WHERE name LIKE '%SMS' OR name LIKE '%In-App'
 INSERT INTO notification_templates (name, template_type, body_template, trigger_events, variables) VALUES
 ('Order Confirmed SMS', 'sms', 'Hi {{customer_name}}! Your cleaning service order #{{order_id}} has been confirmed for {{service_date}}. Amount: ${{amount}}. We''ll send updates as we assign your cleaner. Questions? Reply HELP', ARRAY['order_created'], '{"customer_name": "string", "order_id": "string", "service_date": "date", "amount": "number"}'),
 
-('Payment Successful SMS', 'sms', 'Payment confirmed! Your cleaning service for {{service_date}} is all set. We''ll notify you when your cleaner is assigned and on their way. Bay Area Cleaning - {{customer_name}}', ARRAY['order_status_changed'], '{"customer_name": "string", "service_date": "date"}'),
+('Payment Successful SMS', 'sms', 'Payment confirmed! Your cleaning service for {{service_date}} is all set. We''ll notify you when your cleaner is assigned and on their way. AlphaLux Clean - {{customer_name}}', ARRAY['order_status_changed'], '{"customer_name": "string", "service_date": "date"}'),
 
-('Service Started SMS', 'sms', 'Your cleaner {{cleaner_name}} has arrived and started your cleaning service. Estimated completion: {{estimated_completion}}. Enjoy your day! - Bay Area Cleaning', ARRAY['booking_status_changed'], '{"cleaner_name": "string", "estimated_completion": "string"}'),
+('Service Started SMS', 'sms', 'Your cleaner {{cleaner_name}} has arrived and started your cleaning service. Estimated completion: {{estimated_completion}}. Enjoy your day! - AlphaLux Clean', ARRAY['booking_status_changed'], '{"cleaner_name": "string", "estimated_completion": "string"}'),
 
-('Service Completed SMS', 'sms', 'Your cleaning is complete! How did we do? Rate your experience: {{feedback_link}}. Thank you for choosing Bay Area Cleaning, {{customer_name}}!', ARRAY['booking_status_changed'], '{"customer_name": "string", "feedback_link": "string"}'),
+('Service Completed SMS', 'sms', 'Your cleaning is complete! How did we do? Rate your experience: {{feedback_link}}. Thank you for choosing AlphaLux Clean, {{customer_name}}!', ARRAY['booking_status_changed'], '{"customer_name": "string", "feedback_link": "string"}'),
 
 ('Application Received SMS', 'sms', 'Hi {{applicant_name}}! We received your cleaning contractor application. We''ll review it within 24-48 hours and contact you with next steps. Thanks for your interest!', ARRAY['application_submitted'], '{"applicant_name": "string"}'),
 
-('Application Approved SMS', 'sms', 'Congratulations {{applicant_name}}! Your application has been approved. Click here to complete your onboarding: {{onboarding_link}}. Welcome to the Bay Area Cleaning team!', ARRAY['application_status_changed'], '{"applicant_name": "string", "onboarding_link": "string"}');
+('Application Approved SMS', 'sms', 'Congratulations {{applicant_name}}! Your application has been approved. Click here to complete your onboarding: {{onboarding_link}}. Welcome to the AlphaLux Clean team!', ARRAY['application_status_changed'], '{"applicant_name": "string", "onboarding_link": "string"}');
 
 -- Insert automated notification triggers
 INSERT INTO automated_notification_triggers (name, description, trigger_event, template_id, delivery_methods, delay_minutes, priority) VALUES

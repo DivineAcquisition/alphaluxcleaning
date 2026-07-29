@@ -20,6 +20,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Host routing lives in middleware.ts (rule: src/config/domains.ts).
+      // This entry stays as a backstop for the requests the middleware
+      // matcher skips — asset-looking paths with a file extension.
+      //
       // The legacy booking subdomain is retired — everything now lives on
       // try.alphaluxcleaning.com. Redirect at the edge (before React boots)
       // and preserve the path + query so ad links with ?promo=… survive.

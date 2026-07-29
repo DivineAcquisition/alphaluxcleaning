@@ -463,7 +463,7 @@ $function$;
 INSERT INTO public.notification_templates (name, template_type, delivery_method, subject_template, message_template, variables) VALUES
 ('Booking Confirmation Email', 'booking_confirmation', 'email', 
  'Booking Confirmed - {{service_type}} on {{service_date}}',
- 'Hello {{customer_name}},\n\nYour {{service_type}} service has been confirmed for {{service_date}} at {{service_time}}.\n\nService Details:\n- Address: {{service_address}}\n- Estimated Duration: {{duration}} hours\n- Total Cost: ${{total_amount}}\n\nWe''ll send you a reminder 24 hours before your service.\n\nThank you for choosing Bay Area Cleaning Professionals!',
+ 'Hello {{customer_name}},\n\nYour {{service_type}} service has been confirmed for {{service_date}} at {{service_time}}.\n\nService Details:\n- Address: {{service_address}}\n- Estimated Duration: {{duration}} hours\n- Total Cost: ${{total_amount}}\n\nWe''ll send you a reminder 24 hours before your service.\n\nThank you for choosing AlphaLux Clean!',
  '["customer_name", "service_type", "service_date", "service_time", "service_address", "duration", "total_amount"]'),
 
 ('Service Reminder SMS', 'service_reminder', 'sms',

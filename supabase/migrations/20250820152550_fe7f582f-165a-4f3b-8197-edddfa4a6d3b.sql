@@ -1,7 +1,7 @@
 -- Create webhook configuration table
 CREATE TABLE public.webhook_configurations (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  organization_name TEXT NOT NULL DEFAULT 'Bay Area Cleaning Pros',
+  organization_name TEXT NOT NULL DEFAULT 'AlphaLux Clean',
   webhook_url TEXT NOT NULL,
   is_active BOOLEAN NOT NULL DEFAULT true,
   webhook_events TEXT[] NOT NULL DEFAULT ARRAY['booking_created', 'booking_updated', 'payment_confirmed'],
@@ -51,4 +51,4 @@ WITH CHECK (true);
 
 -- Insert default webhook configuration
 INSERT INTO public.webhook_configurations (organization_name, webhook_url, webhook_events)
-VALUES ('Bay Area Cleaning Pros', 'https://webhook.site/unique-id', ARRAY['booking_created', 'booking_updated', 'payment_confirmed']);
+VALUES ('AlphaLux Clean', 'https://webhook.site/unique-id', ARRAY['booking_created', 'booking_updated', 'payment_confirmed']);

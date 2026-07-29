@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { useAdminMetrics, useRecentBookings } from '@/hooks/useAdminMetrics';
 import {
-  CalendarDays, Users, DollarSign, TrendingUp, AlertTriangle, RefreshCw,
+  Activity, CalendarDays, Users, DollarSign, TrendingUp, AlertTriangle, RefreshCw,
   MessageSquare, Mail, Plug, Zap, ArrowRight, UserPlus,
 } from 'lucide-react';
 
@@ -157,10 +157,17 @@ export default function AdminDashboard() {
             All figures are queried live. Field operations (crews, dispatch, payouts) live in
             Housecall Pro.
           </p>
-          <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isFetching ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm">
+              <Link to="/admin/activity">
+                <Activity className="h-4 w-4 mr-1" /> Booking activity
+              </Link>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${isFetching ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {alerts.length > 0 && (
@@ -325,6 +332,7 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
+                      <TableHead>Rail</TableHead>
                       <TableHead>Service date</TableHead>
                       <TableHead>Offer</TableHead>
                       <TableHead>Status</TableHead>
@@ -340,6 +348,11 @@ export default function AdminDashboard() {
                           <div className="text-xs text-muted-foreground">
                             {b.customer?.email || '—'}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={b.source === 'internal_booking' ? 'default' : 'secondary'}>
+                            {b.source === 'internal_booking' ? 'Internal' : 'Online'}
+                          </Badge>
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           {b.service_date || 'Not scheduled'}

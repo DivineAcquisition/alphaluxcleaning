@@ -148,7 +148,7 @@ serve(async (req) => {
       webhookPayload = {
         event_type: 'order_entry',
         timestamp: new Date().toISOString(),
-        source: 'bay_area_cleaning_pros',
+        source: 'alphalux_clean',
         
         // Traditional data structure
         order_data: orderData,
@@ -182,7 +182,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'BayAreaCleaning-OrderEntry-Webhook'
+        'User-Agent': 'AlphaLuxClean-OrderEntry-Webhook'
       },
       body: JSON.stringify(webhookPayload)
     });

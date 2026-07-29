@@ -1,4 +1,4 @@
--- Update the app_role enum to include the new roles for BayAreaCleaningPros
+-- Update the app_role enum to include the new roles for AlphaLuxClean
 ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'owner';
 ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'office_manager';
 ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'field_cleaner';

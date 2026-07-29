@@ -14,11 +14,12 @@
 //      (info@alphaluxcleaning.com + any INTERNAL_RECIPIENT_EMAILS)
 //      so a human can follow up while the lead is still warm.
 //
-// OpenPhone-only by design: this send goes through `openPhoneSend`
-// directly rather than the shared GHL-fallback sender, because the
-// whole point of the touch is the state-local number. Falling back to
-// a GHL number would send from the wrong area code and break the
-// reply routing.
+// OpenPhone-only by design, like every automated SMS on the public
+// booking rail: this send goes through `openPhoneSend` directly rather
+// than the shared sender, because the whole point of the touch is the
+// state-local number. Sending from a GoHighLevel number would use the
+// wrong area code and break the reply routing. (GHL still receives the
+// lead itself via `ghl-sync-lead` — it just doesn't send the text.)
 //
 // Idempotent: `lead_intro_notifications` is keyed on the normalized
 // email and the SMS slot is claimed atomically (UPDATE … WHERE
@@ -198,6 +199,7 @@ serve(async (req) => {
               status: res.ok ? "sent" : "failed",
               error: res.ok ? null : (res.error || "").slice(0, 500),
               context: "lead_intro",
+              channel: "public",
             });
           } catch (_) { /* ledger is best-effort */ }
         }

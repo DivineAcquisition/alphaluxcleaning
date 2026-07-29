@@ -17,7 +17,7 @@ SELECT
     'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/',
     true,
     ARRAY['booking_created', 'booking_updated', 'payment_confirmed', 'service_selection', 'service_details', 'confirmation']::text[],
-    'Bay Area Cleaning Pros Live Webhook'
+    'AlphaLux Clean Live Webhook'
 WHERE NOT EXISTS (
     SELECT 1 FROM public.webhook_configurations 
     WHERE webhook_url = 'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/'

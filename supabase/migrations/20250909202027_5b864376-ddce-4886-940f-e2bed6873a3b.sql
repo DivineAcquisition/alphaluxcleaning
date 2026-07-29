@@ -1,11 +1,11 @@
--- Create email infrastructure tables for Bay Area Cleaning Pros
+-- Create email infrastructure tables for AlphaLux Clean
 
 -- Email settings per company
 CREATE TABLE public.email_settings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   company_id UUID NOT NULL UNIQUE,
-  from_name TEXT DEFAULT 'Bay Area Cleaning Pros',
-  from_email TEXT DEFAULT 'notifications@bayareacleaningpros.com',
+  from_name TEXT DEFAULT 'AlphaLux Clean',
+  from_email TEXT DEFAULT 'notifications@alphaluxcleaning.com',
   reply_to TEXT,
   brand JSONB DEFAULT '{"logo_url": "", "color_hex": "#A58FFF"}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -120,7 +120,7 @@ INSERT INTO public.email_templates (company_id, template_key, subject, react_com
 ('550e8400-e29b-41d4-a716-446655440000', 'booking_reminder_24h', 'Reminder: Service Tomorrow - {{customer_name}}', 'BookingReminderEmail'),
 ('550e8400-e29b-41d4-a716-446655440000', 'booking_reminder_1h', 'Service Starting Soon - {{customer_name}}', 'BookingReminderEmail'),
 ('550e8400-e29b-41d4-a716-446655440000', 'receipt', 'Payment Receipt - {{customer_name}}', 'ReceiptEmail'),
-('550e8400-e29b-41d4-a716-446655440000', 'portal_magic_link', 'Access Your Account - Bay Area Cleaning Pros', 'CustomerPortalMagicLinkEmail'),
+('550e8400-e29b-41d4-a716-446655440000', 'portal_magic_link', 'Access Your Account - AlphaLux Clean', 'CustomerPortalMagicLinkEmail'),
 ('550e8400-e29b-41d4-a716-446655440000', 'otp', 'Your Verification Code - {{code}}', 'OtpEmail'),
 ('550e8400-e29b-41d4-a716-446655440000', 'sub_offer', 'New Job Offer - {{service_date}}', 'SubNewOfferEmail'),
 ('550e8400-e29b-41d4-a716-446655440000', 'sub_reminder', 'Job Reminder - {{service_date}}', 'SubReminderEmail'),

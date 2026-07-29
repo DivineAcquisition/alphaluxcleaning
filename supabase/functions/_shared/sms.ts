@@ -1,22 +1,38 @@
-// Unified SMS sender — OpenPhone is the core channel (state-routed
-// business numbers), GHL is the fallback.
+// Unified SMS sender. Provider order is decided by the BOOKING CHANNEL
+// the message belongs to — the two rails are deliberately different:
 //
-// Every outbound SMS in the system should go through `sendSms()` so the
-// routing is consistent:
+//   channel: 'public'   — the online booking interface
+//                         (try.alphaluxcleaning.com). OpenPhone ONLY.
+//                         Sends from the business number matching the
+//                         customer's state (NJ / TX / CA / NY, see
+//                         _shared/openphone.ts) so the caller ID is
+//                         local and the reply lands in the market's
+//                         OpenPhone inbox. There is no GHL fallback:
+//                         falling back would text the customer from an
+//                         unstaffed LeadConnector number and break
+//                         reply routing.
 //
-//   1. OpenPhone — PRIMARY. Sends from the business number matching the
-//      customer's state (NJ / TX / CA / NY — see _shared/openphone.ts),
-//      so replies land in the right OpenPhone inbox and the caller ID
-//      is local to the customer.
-//   2. GoHighLevel (PIT / LeadConnector conversations) — FALLBACK, only
-//      used when OpenPhone fails or isn't configured.
+//   channel: 'internal' — the internal/VA booking system. GoHighLevel
+//                         fires the automated comms so the booking
+//                         drives the same GHL workflows and lives in
+//                         one conversation thread with the rest of the
+//                         CRM. Support contact inside those messages is
+//                         still an OpenPhone number (see
+//                         resolveSupportNumber). OpenPhone is kept as a
+//                         failover so a GHL outage can't silently drop
+//                         a confirmation a VA promised on the phone;
+//                         set INTERNAL_SMS_OPENPHONE_FAILOVER=false to
+//                         make the rail strictly GHL-only.
+//
+//   channel omitted     — legacy behavior: OpenPhone, then GHL.
 //
 // Cross-cutting guarantees (applied here so every caller inherits them):
 //   * STOP means stop — numbers in `sms_opt_outs` are never messaged,
 //     on any channel path. Suppressed sends return success=true with
 //     `suppressed: true` so callers don't retry-loop.
 //   * Every attempt is recorded in `sms_logs` (best-effort — the ledger
-//     never blocks a send).
+//     never blocks a send), tagged with the channel so the admin
+//     activity dashboard can report each rail separately.
 //
 // Never throws — returns a structured result the caller can log.
 
@@ -24,6 +40,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { createGhlClient, ghlIsConfigured, type GHLClient } from './ghl-client.ts';
 import { toE164US, phoneDigits10 } from './phone-format.ts';
 import { openPhoneSend, resolveStateNumber, type StateNumber } from './openphone.ts';
+
+/** Which booking rail an outbound message belongs to. */
+export type SmsChannel = 'internal' | 'public';
+
+/** Booking rows carry `source`; map it to the comms rail. */
+export function channelFromBookingSource(source: string | null | undefined): SmsChannel {
+  return String(source || '').toLowerCase() === 'internal_booking' ? 'internal' : 'public';
+}
+
+function internalFailoverEnabled(): boolean {
+  return (Deno.env.get('INTERNAL_SMS_OPENPHONE_FAILOVER') || '').toLowerCase() !== 'false';
+}
 
 export interface SendSmsInput {
   /** Destination phone (any format — normalized to E.164). */
@@ -35,6 +63,11 @@ export interface SendSmsInput {
   zip?: string | null;
   /** Caller tag recorded in sms_logs (e.g. "booking_confirm"). */
   context?: string | null;
+  /**
+   * Booking rail this message belongs to — decides the provider order.
+   * Omit only for messages that belong to neither funnel.
+   */
+  channel?: SmsChannel;
   /** Known GHL contact id (skips the resolve/upsert step on fallback). */
   contactId?: string | null;
   /** Used to resolve/create the GHL contact when contactId is absent. */
@@ -202,13 +235,40 @@ export async function sendSmsViaOpenPhone(
 }
 
 /**
- * Send an SMS through OpenPhone first (state-routed number), falling back
- * to GHL. The single entry point every caller should use.
+ * Provider order for a send, derived from the booking channel. The
+ * first entry is the rail that owns the message; anything after it is
+ * failover. Exported so the rails can be asserted in sms.test.ts
+ * without touching a provider.
+ */
+export function providerOrder(input: SendSmsInput): Array<'openphone' | 'ghl'> {
+  const ghlPermitted = input.enableFallback !== false && input.enableGhl !== false;
+
+  if (input.channel === 'public') {
+    // Online booking interface: OpenPhone only, no exceptions.
+    return ['openphone'];
+  }
+
+  if (input.channel === 'internal') {
+    if (!ghlPermitted) return ['openphone'];
+    if (!ghlIsConfigured()) {
+      smsLog('internal channel: GHL not configured — using OpenPhone');
+      return ['openphone'];
+    }
+    return internalFailoverEnabled() ? ['ghl', 'openphone'] : ['ghl'];
+  }
+
+  // No channel declared — legacy order.
+  return ghlPermitted ? ['openphone', 'ghl'] : ['openphone'];
+}
+
+/**
+ * Send an SMS on the rail that owns it (see the channel table at the top
+ * of this file). The single entry point every caller should use.
  */
 export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   const attempts: SendSmsResult['attempts'] = [];
-  const enableGhlFallback = input.enableFallback !== false && input.enableGhl !== false;
   const db = serviceClient();
+  const channel = input.channel ?? null;
 
   // 0. Global opt-out guard — STOP means stop, on every path.
   if (input.to && (await isOptedOut(db, input.to))) {
@@ -219,27 +279,42 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
       provider: 'none',
       status: 'suppressed',
       context: input.context || null,
+      channel,
     });
     return { success: true, provider: 'none', fallback: false, suppressed: true, attempts };
   }
 
+  const order = providerOrder(input);
   let stateNumber: StateNumber | null = null;
 
-  // 1. OpenPhone (core) — needs a destination number.
-  if (input.to) {
-    stateNumber = await resolveStateNumber({ state: input.state, zip: input.zip, supabase: db });
-    const op = await openPhoneSend({
-      to: input.to,
-      message: input.message,
-      from: stateNumber.phoneE164,
-      phoneNumberId: stateNumber.phoneNumberId,
-    });
-    attempts.push({ provider: 'openphone', ok: op.ok, error: op.error });
-    if (op.ok) {
+  for (const provider of order) {
+    const isFailover = attempts.length > 0;
+
+    if (provider === 'openphone') {
+      // OpenPhone needs a destination number; GHL can thread by contact.
+      if (!input.to) continue;
+      stateNumber ??= await resolveStateNumber({
+        state: input.state,
+        zip: input.zip,
+        supabase: db,
+      });
+      const op = await openPhoneSend({
+        to: input.to,
+        message: input.message,
+        from: stateNumber.phoneE164,
+        phoneNumberId: stateNumber.phoneNumberId,
+      });
+      attempts.push({ provider: 'openphone', ok: op.ok, error: op.error });
+      if (!op.ok) {
+        smsLog('OpenPhone send failed', { error: op.error, channel });
+        continue;
+      }
       smsLog('sent via OpenPhone', {
         messageId: op.messageId,
         from: stateNumber.phoneE164,
         state: stateNumber.stateCode,
+        channel,
+        failover: isFailover,
       });
       await writeLedger(db, {
         to_phone: toE164US(input.to) || input.to,
@@ -250,45 +325,49 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
         provider_message_id: op.messageId || null,
         status: 'sent',
         context: input.context || null,
+        channel,
       });
       return {
         success: true,
         provider: 'openphone',
-        fallback: false,
+        fallback: isFailover,
         messageId: op.messageId,
         fromNumber: stateNumber.phoneE164,
         stateCode: stateNumber.stateCode,
         attempts,
       };
     }
-    smsLog('OpenPhone send failed — will try GHL fallback', { error: op.error });
-  }
 
-  // 2. GHL (fallback) — only attempt when configured.
-  if (enableGhlFallback && ghlIsConfigured()) {
     const ghl = await sendSmsViaGhl(input);
     attempts.push({ provider: 'ghl', ok: ghl.ok, error: ghl.error });
-    if (ghl.ok) {
-      smsLog('sent via GHL (fallback)', { contactId: ghl.contactId, messageId: ghl.messageId });
-      await writeLedger(db, {
-        to_phone: input.to ? toE164US(input.to) || input.to : null,
-        state_code: stateNumber?.stateCode || null,
-        message: input.message,
-        provider: 'ghl',
-        provider_message_id: ghl.messageId || null,
-        status: 'sent',
-        context: input.context || null,
-      });
-      return {
-        success: true,
-        provider: 'ghl',
-        fallback: attempts.some((a) => a.provider === 'openphone'),
-        ghlContactId: ghl.contactId,
-        messageId: ghl.messageId,
-        attempts,
-      };
+    if (!ghl.ok) {
+      smsLog('GHL send failed', { error: ghl.error, channel });
+      continue;
     }
-    smsLog('GHL send failed', { error: ghl.error });
+    smsLog('sent via GHL', {
+      contactId: ghl.contactId,
+      messageId: ghl.messageId,
+      channel,
+      failover: isFailover,
+    });
+    await writeLedger(db, {
+      to_phone: input.to ? toE164US(input.to) || input.to : null,
+      state_code: stateNumber?.stateCode || null,
+      message: input.message,
+      provider: 'ghl',
+      provider_message_id: ghl.messageId || null,
+      status: 'sent',
+      context: input.context || null,
+      channel,
+    });
+    return {
+      success: true,
+      provider: 'ghl',
+      fallback: isFailover,
+      ghlContactId: ghl.contactId,
+      messageId: ghl.messageId,
+      attempts,
+    };
   }
 
   const error = attempts.map((a) => `${a.provider}: ${a.error || 'failed'}`).join('; ') || 'no SMS provider available';
@@ -301,6 +380,7 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     status: 'failed',
     error,
     context: input.context || null,
+    channel,
   });
   return { success: false, provider: 'none', fallback: false, error, attempts };
 }
