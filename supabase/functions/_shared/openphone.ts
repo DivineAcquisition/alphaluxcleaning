@@ -200,22 +200,29 @@ export async function openPhoneSend(opts: {
     to: [to],
     // OpenPhone v1 requires `from` (E.164 or PNxxx). `phoneNumberId` is
     // deprecated and 400s if sent instead of `from`.
-    from,
+    from: String(from),
   };
 
   // OpenPhone's v1 API expects the raw API key in the Authorization header
   // (no "Bearer" prefix). The legacy code sent `Bearer <key>` which 401s —
   // we try the documented scheme first and fall back once for safety.
   const attempt = async (auth: string) => {
-    const res = await fetch('https://api.openphone.com/v1/messages', {
-      method: 'POST',
-      headers: { Authorization: auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const text = await res.text();
-    let json: any = null;
-    try { json = text ? JSON.parse(text) : null; } catch { json = null; }
-    return { res, json, text };
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort('openphone-timeout'), 15_000);
+    try {
+      const res = await fetch('https://api.openphone.com/v1/messages', {
+        method: 'POST',
+        headers: { Authorization: auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ac.signal,
+      });
+      const text = await res.text();
+      let json: any = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+      return { res, json, text };
+    } finally {
+      clearTimeout(timer);
+    }
   };
 
   /**
@@ -244,7 +251,7 @@ export async function openPhoneSend(opts: {
 
   let lastError = 'OpenPhone send failed';
   for (const { key, source } of keys) {
-    for (let round = 0; round < 3; round++) {
+    for (let round = 0; round < 2; round++) {
       try {
         let { res, json, text } = await attempt(key);
         if (res.status === 401) {
