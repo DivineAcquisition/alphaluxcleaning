@@ -13,7 +13,7 @@
 // inferred from the ZIP code.
 
 import { toE164US } from './phone-format.ts';
-import { getSecret } from './secrets.ts';
+import { getSecret, getSecretFromDb } from './secrets.ts';
 
 export type StateCode = 'NJ' | 'TX' | 'CA' | 'NY';
 
@@ -148,6 +148,31 @@ export interface OpenPhoneSendResult {
   error?: string;
 }
 
+/**
+ * OpenPhone API keys to try, in order.
+ *
+ * The live key lives in `app_secrets` (ops can rotate it without a
+ * dashboard deploy). A stale `OPENPHONE_API_KEY` in edge-function env
+ * has been 401ing intro SMS for weeks, so the DB copy is tried first
+ * and the env copy is only a fallback when it differs.
+ */
+async function resolveOpenPhoneApiKeys(): Promise<Array<{ key: string; source: 'app_secrets' | 'env' }>> {
+  const fromDb = await getSecretFromDb('OPENPHONE_API_KEY');
+  const fromEnv = (Deno.env.get('OPENPHONE_API_KEY') || '').trim() || undefined;
+  const keys: Array<{ key: string; source: 'app_secrets' | 'env' }> = [];
+  if (fromDb) keys.push({ key: fromDb, source: 'app_secrets' });
+  if (fromEnv && fromEnv !== fromDb) keys.push({ key: fromEnv, source: 'env' });
+  if (keys.length === 0) {
+    const fallback = await getSecret('OPENPHONE_API_KEY');
+    if (fallback) keys.push({ key: fallback, source: fromEnv ? 'env' : 'app_secrets' });
+  }
+  return keys;
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 /** Raw OpenPhone send. `from` should come from resolveStateNumber(). */
 export async function openPhoneSend(opts: {
   to: string;
@@ -155,13 +180,12 @@ export async function openPhoneSend(opts: {
   from?: string | null;
   phoneNumberId?: string | null;
 }): Promise<OpenPhoneSendResult> {
-  // Env var first, then the service-role app_secrets table.
-  const apiKey = await getSecret('OPENPHONE_API_KEY');
-  if (!apiKey) {
+  const keys = await resolveOpenPhoneApiKeys();
+  if (keys.length === 0) {
     return {
       ok: false,
       error:
-        'OPENPHONE_API_KEY not configured (checked edge-function secrets and app_secrets)',
+        'OPENPHONE_API_KEY not configured (checked app_secrets and edge-function secrets)',
     };
   }
 
@@ -217,24 +241,37 @@ export async function openPhoneSend(opts: {
     return (joined || JSON.stringify(json)).slice(0, 300);
   };
 
-  try {
-    let { res, json, text } = await attempt(apiKey);
-    if (res.status === 401) {
-      ({ res, json, text } = await attempt(`Bearer ${apiKey}`));
+  let lastError = 'OpenPhone send failed';
+  for (const { key, source } of keys) {
+    for (let round = 0; round < 3; round++) {
+      try {
+        let { res, json, text } = await attempt(key);
+        if (res.status === 401) {
+          ({ res, json, text } = await attempt(`Bearer ${key}`));
+        }
+        if (res.ok) {
+          console.log(`[openphone] sent via ${source} key`);
+          return { ok: true, messageId: json?.data?.id || json?.id };
+        }
+        lastError = `OpenPhone failed (status ${res.status}): ${describe(json, text)}`;
+        if (res.status === 401) {
+          lastError += ` (key source=${source}; check OPENPHONE_API_KEY in app_secrets)`;
+          break; // try the next key
+        }
+        if (res.status === 403) {
+          lastError += ` (does the OpenPhone workspace own ${body.from || body.phoneNumberId}?)`;
+          return { ok: false, error: lastError };
+        }
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+          await sleep(400 * Math.pow(3, round));
+          continue;
+        }
+        return { ok: false, error: lastError };
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+        await sleep(400 * Math.pow(3, round));
+      }
     }
-    if (!res.ok) {
-      const hint = res.status === 401
-        ? ' (check OPENPHONE_API_KEY in Supabase secrets)'
-        : res.status === 403
-        ? ` (does the OpenPhone workspace own ${body.from || body.phoneNumberId}?)`
-        : '';
-      return {
-        ok: false,
-        error: `OpenPhone failed (status ${res.status}): ${describe(json, text)}${hint}`,
-      };
-    }
-    return { ok: true, messageId: json?.data?.id || json?.id };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
+  return { ok: false, error: lastError };
 }

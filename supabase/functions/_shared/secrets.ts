@@ -87,6 +87,36 @@ export async function getSecret(
   return undefined;
 }
 
+/**
+ * Read a secret from `app_secrets` only, ignoring environment variables.
+ *
+ * Use this when a dashboard env var is known to go stale (OpenPhone
+ * 401s while ops rotates the live key in `app_secrets`). `getSecret`
+ * stays env-first for everything else.
+ */
+export async function getSecretFromDb(name: string): Promise<string | undefined> {
+  const cacheKey = `db:${name}`;
+  const hit = cache.get(cacheKey);
+  if (hit) return hit;
+
+  const db = serviceClient();
+  if (!db) return undefined;
+
+  try {
+    const { data } = await db
+      .from('app_secrets')
+      .select('value')
+      .eq('name', name)
+      .maybeSingle();
+    const value = data?.value ? String(data.value).trim() : '';
+    if (!value) return undefined;
+    cache.set(cacheKey, value);
+    return value;
+  } catch (_) {
+    return undefined;
+  }
+}
+
 /** Drop cached values so a rotation applies without a cold start. */
 export function clearSecretCache(): void {
   cache.clear();

@@ -15,11 +15,15 @@
 //      so a human can follow up while the lead is still warm.
 //
 // OpenPhone-only by design, like every automated SMS on the public
-// booking rail: this send goes through `openPhoneSend` directly rather
-// than the shared sender, because the whole point of the touch is the
-// state-local number. Sending from a GoHighLevel number would use the
-// wrong area code and break the reply routing. (GHL still receives the
-// lead itself via `ghl-sync-lead` — it just doesn't send the text.)
+// booking rail: this send goes through `sendSms({ channel: 'public' })`,
+// which is OpenPhone with no GHL fallback. Sending from a GoHighLevel
+// number would use the wrong area code and break the reply routing.
+// (GHL still receives the lead itself via `ghl-sync-lead` — it just
+// doesn't send the text.)
+//
+// The live OpenPhone key is read from `app_secrets` first. A stale
+// dashboard env var has been 401ing every intro SMS since this
+// function's v1 deploy (2026-07-26).
 //
 // Idempotent: `lead_intro_notifications` is keyed on the normalized
 // email and the SMS slot is claimed atomically (UPDATE … WHERE
@@ -37,7 +41,8 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { openPhoneSend, resolveStateNumber } from "../_shared/openphone.ts";
+import { resolveStateNumber } from "../_shared/openphone.ts";
+import { sendSms } from "../_shared/sms.ts";
 import { renderSMSTemplate } from "../_shared/sms-templates.ts";
 import { phoneDigits10, toE164US } from "../_shared/phone-format.ts";
 import { getInternalRecipients } from "../_shared/internal-recipients.ts";
@@ -157,24 +162,38 @@ serve(async (req) => {
             promo_code: body.promoCode || "",
           });
 
-          const res = await openPhoneSend({
-            to: body.phone as string,
+          const res = await sendSms({
+            to: toE164US(body.phone) || body.phone,
             message,
-            from: stateNumber.phoneE164,
-            phoneNumberId: stateNumber.phoneNumberId,
+            channel: "public",
+            state: stateNumber.stateCode,
+            zip: body.zipCode,
+            context: "lead_intro",
+            email,
+            firstName,
+            lastName: body.lastName || undefined,
           });
 
-          if (res.ok) {
+          if (res.success && !res.suppressed) {
             smsOutcome = "sent";
             messageId = res.messageId || null;
             await markSms({
               intro_sms_status: "sent",
-              from_number: stateNumber.phoneE164,
-              state_code: stateNumber.stateCode,
+              from_number: res.fromNumber || stateNumber.phoneE164,
+              state_code: res.stateCode || stateNumber.stateCode,
               intro_sms_error: null,
             });
             log("Intro SMS sent", {
-              email, state: stateNumber.stateCode, from: stateNumber.phoneE164,
+              email,
+              state: res.stateCode || stateNumber.stateCode,
+              from: res.fromNumber || stateNumber.phoneE164,
+              provider: res.provider,
+            });
+          } else if (res.suppressed) {
+            smsOutcome = "skipped_opted_out";
+            await markSms({
+              intro_sms_sent_at: null,
+              intro_sms_status: smsOutcome,
             });
           } else {
             // Release the claim so a retry can attempt the send again.
@@ -184,24 +203,12 @@ serve(async (req) => {
               intro_sms_status: "failed",
               intro_sms_error: (res.error || "").slice(0, 500),
             });
-            log("Intro SMS failed — claim released", { error: res.error });
-          }
-
-          // Ledger entry for the outbound SMS console.
-          try {
-            await supabase.from("sms_logs").insert({
-              to_phone: toE164US(body.phone) || body.phone,
-              from_number: stateNumber.phoneE164,
-              state_code: stateNumber.stateCode,
-              message,
-              provider: "openphone",
-              provider_message_id: messageId,
-              status: res.ok ? "sent" : "failed",
-              error: res.ok ? null : (res.error || "").slice(0, 500),
-              context: "lead_intro",
-              channel: "public",
+            log("Intro SMS failed — claim released", {
+              error: res.error,
+              provider: res.provider,
+              attempts: res.attempts,
             });
-          } catch (_) { /* ledger is best-effort */ }
+          }
         }
       }
     }
