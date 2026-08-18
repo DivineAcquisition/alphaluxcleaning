@@ -190,17 +190,18 @@ export async function openPhoneSend(opts: {
   }
 
   const to = toE164US(opts.to) || opts.to;
-  const body: Record<string, unknown> = { content: opts.message, to: [to] };
-  if (opts.phoneNumberId) body.phoneNumberId = opts.phoneNumberId;
-  else if (opts.from) body.from = opts.from;
-  else {
-    // Last-resort env fallbacks so a misconfigured caller still sends.
-    const envId = Deno.env.get('OPENPHONE_PHONE_NUMBER_ID');
-    const envFrom = Deno.env.get('OPENPHONE_PHONE_NUMBER');
-    if (envId) body.phoneNumberId = envId;
-    else if (envFrom) body.from = envFrom;
-    else body.from = STATE_NUMBER_DEFAULTS[defaultStateCode()].phoneE164;
-  }
+  const from =
+    opts.from ||
+    opts.phoneNumberId ||
+    Deno.env.get('OPENPHONE_PHONE_NUMBER') ||
+    STATE_NUMBER_DEFAULTS[defaultStateCode()].phoneE164;
+  const body: Record<string, unknown> = {
+    content: opts.message,
+    to: [to],
+    // OpenPhone v1 requires `from` (E.164 or PNxxx). `phoneNumberId` is
+    // deprecated and 400s if sent instead of `from`.
+    from,
+  };
 
   // OpenPhone's v1 API expects the raw API key in the Authorization header
   // (no "Bearer" prefix). The legacy code sent `Bearer <key>` which 401s —
@@ -259,7 +260,7 @@ export async function openPhoneSend(opts: {
           break; // try the next key
         }
         if (res.status === 403) {
-          lastError += ` (does the OpenPhone workspace own ${body.from || body.phoneNumberId}?)`;
+          lastError += ` (does the OpenPhone workspace own ${body.from}?)`;
           return { ok: false, error: lastError };
         }
         if (res.status === 502 || res.status === 503 || res.status === 504) {
