@@ -22,14 +22,76 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { createGhlClientFromSecrets } from "../_shared/ghl-client.ts";
-import { sendSmsViaGhl } from "../_shared/sms.ts";
 import {
   formatUsNumber,
   resolveStateNumber,
   type StateCode,
 } from "../_shared/openphone.ts";
 import { formatPhoneDisplayUS, phoneDigits10, toE164US } from "../_shared/phone-format.ts";
+
+const GHL_BASE = "https://services.leadconnectorhq.com";
+
+async function ghlRequest(
+  creds: { token: string; locationId: string },
+  path: string,
+  init: RequestInit & { query?: Record<string, string>; version?: string } = {},
+) {
+  const url = new URL(path.startsWith("http") ? path : `${GHL_BASE}${path}`);
+  for (const [k, v] of Object.entries(init.query || {})) url.searchParams.set(k, v);
+  const headers = new Headers(init.headers || {});
+  headers.set("Authorization", `Bearer ${creds.token}`);
+  headers.set("Version", init.version || "2021-07-28");
+  headers.set("Accept", "application/json");
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const res = await fetch(url.toString(), { method: init.method || "GET", headers, body: init.body });
+  const raw = await res.text();
+  let data: any = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+  return { ok: res.ok, status: res.status, data };
+}
+
+async function sendInboxSms(opts: {
+  creds: { token: string; locationId: string };
+  to: string;
+  message: string;
+  stateCode: string;
+}): Promise<{ ok: boolean; messageId?: string; error?: string }> {
+  const upsert = await ghlRequest(opts.creds, "/contacts/upsert", {
+    method: "POST",
+    body: JSON.stringify({
+      locationId: opts.creds.locationId,
+      phone: opts.to,
+      firstName: "AlphaLux",
+      lastName: `${opts.stateCode} Inbox`,
+      name: `AlphaLux ${opts.stateCode} Inbox`,
+      source: "AlphaLux SMS",
+      country: "US",
+    }),
+  });
+  const contactId =
+    upsert.data?.contact?.id || upsert.data?.id || upsert.data?.contactId;
+  if (!contactId) {
+    return {
+      ok: false,
+      error: `no GHL contact could be resolved (${upsert.status})`,
+    };
+  }
+  const sent = await ghlRequest(opts.creds, "/conversations/messages", {
+    method: "POST",
+    version: "2021-04-15",
+    body: JSON.stringify({ type: "SMS", contactId, message: opts.message }),
+  });
+  if (!sent.ok) {
+    return {
+      ok: false,
+      error: `GHL SMS failed (status ${sent.status}): ${JSON.stringify(sent.data)?.slice(0, 200)}`,
+    };
+  }
+  return {
+    ok: true,
+    messageId: sent.data?.messageId || sent.data?.id,
+  };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -322,19 +384,41 @@ serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
+    let ghlCreds: { token: string; locationId: string } | null = null;
+    try {
+      const { data: secretRows } = await supabase
+        .from("app_secrets")
+        .select("name, value")
+        .in("name", ["GHL_PIT_TOKEN", "GHL_LOCATION_ID"]);
+      const map = Object.fromEntries(
+        (secretRows || []).map((r: { name: string; value: string }) => [r.name, r.value]),
+      );
+      if (map.GHL_PIT_TOKEN && map.GHL_LOCATION_ID) {
+        ghlCreds = {
+          token: String(map.GHL_PIT_TOKEN).trim(),
+          locationId: String(map.GHL_LOCATION_ID).trim(),
+        };
+      }
+    } catch (err) {
+      log("app_secrets GHL lookup failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     // Enrich from GHL when the webhook only sent an id (common for FB).
     let lead = parsed;
     if (lead.contactId && (!lead.phone || !lead.zip || !lead.email || !lead.firstName)) {
       try {
-        const ghl = await createGhlClientFromSecrets();
-        const { contact } = await ghl.getContact(lead.contactId);
-        if (contact) {
-          lead = parseLead({ ...contact, ...body, contactId: lead.contactId, id: lead.contactId });
-          // Prefer webhook zip/source when present; fill holes from API.
-          lead.zip = parsed.zip || lead.zip;
-          lead.source = parsed.source || lead.source;
-          lead.fbLeadId = parsed.fbLeadId || lead.fbLeadId;
-          lead.tags = parsed.tags.length ? parsed.tags : lead.tags;
+        if (ghlCreds) {
+          const got = await ghlRequest(ghlCreds, `/contacts/${lead.contactId}`);
+          const contact = got.data?.contact || (got.ok ? got.data : null);
+          if (contact) {
+            lead = parseLead({ ...contact, ...body, contactId: lead.contactId, id: lead.contactId });
+            lead.zip = parsed.zip || lead.zip;
+            lead.source = parsed.source || lead.source;
+            lead.fbLeadId = parsed.fbLeadId || lead.fbLeadId;
+            lead.tags = parsed.tags.length ? parsed.tags : lead.tags;
+          }
         }
       } catch (err) {
         log("ghl getContact failed (continuing with payload)", {
@@ -401,12 +485,16 @@ serve(async (req) => {
       stateCode: stateNumber.stateCode,
     });
 
-    const sent = await sendSmsViaGhl({
+    if (!ghlCreds) {
+      await supabase.from("ghl_new_lead_notifications").delete().eq("ghl_contact_id", claimKey);
+      return json({ success: false, error: "GHL_PIT_TOKEN / GHL_LOCATION_ID missing from app_secrets" }, 200);
+    }
+
+    const sent = await sendInboxSms({
+      creds: ghlCreds,
       to: destE164,
       message,
-      firstName: "AlphaLux",
-      lastName: `${stateNumber.stateCode} Inbox`,
-      name: `AlphaLux ${stateNumber.stateCode} Inbox`,
+      stateCode: stateNumber.stateCode,
     });
 
     if (!sent.ok) {

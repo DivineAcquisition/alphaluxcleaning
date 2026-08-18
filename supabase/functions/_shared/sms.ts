@@ -38,6 +38,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import {
+  createGhlClient,
   createGhlClientFromSecrets,
   ghlIsConfiguredAsync,
   type GHLClient,
@@ -81,6 +82,9 @@ export interface SendSmsInput {
   name?: string | null;
   /** Override the GHL "from" number id / E.164 (optional). */
   fromNumber?: string | null;
+  /** Force a specific PIT + location instead of env/app_secrets lookup. */
+  ghlToken?: string | null;
+  ghlLocationId?: string | null;
   /** Set false to skip the GHL fallback (OpenPhone only). Default true. */
   enableFallback?: boolean;
   /** Set false to skip GHL entirely (kept for caller compatibility). */
@@ -159,13 +163,17 @@ export async function resolveGhlContactId(
     try {
       const byPhone = await client.findContactByPhone(phone);
       if (byPhone.contactId) return byPhone.contactId;
-    } catch (_) { /* fall through */ }
+    } catch (err) {
+      console.log('[sms] findContactByPhone failed', err instanceof Error ? err.message : String(err));
+    }
   }
   if (opts.email) {
     try {
       const byEmail = await client.findContactByEmail(opts.email);
       if (byEmail.contactId) return byEmail.contactId;
-    } catch (_) { /* fall through */ }
+    } catch (err) {
+      console.log('[sms] findContactByEmail failed', err instanceof Error ? err.message : String(err));
+    }
   }
   // Nothing matched — create the contact so we have a conversation target.
   if (phone || opts.email) {
@@ -179,7 +187,13 @@ export async function resolveGhlContactId(
         source: 'AlphaLux SMS',
       });
       if (upsert.contactId) return upsert.contactId;
-    } catch (_) { /* fall through */ }
+      console.log('[sms] upsertContact returned no id', {
+        ok: upsert.ok,
+        data: typeof upsert.data === 'string' ? upsert.data.slice(0, 200) : upsert.data,
+      });
+    } catch (err) {
+      console.log('[sms] upsertContact failed', err instanceof Error ? err.message : String(err));
+    }
   }
   return null;
 }
@@ -187,7 +201,9 @@ export async function resolveGhlContactId(
 /** Send via GHL conversations (PIT). Resolves/creates the contact first. */
 export async function sendSmsViaGhl(input: SendSmsInput): Promise<{ ok: boolean; contactId?: string; messageId?: string; error?: string }> {
   try {
-    const client = await createGhlClientFromSecrets();
+    const client = (input.ghlToken && input.ghlLocationId)
+      ? createGhlClient({ token: input.ghlToken, locationId: input.ghlLocationId })
+      : await createGhlClientFromSecrets();
     const contactId = await resolveGhlContactId(client, {
       contactId: input.contactId,
       phone: input.to,

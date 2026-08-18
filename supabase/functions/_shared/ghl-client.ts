@@ -178,9 +178,6 @@ export function readGhlCredentials(): { token: string; locationId: string } {
   return { token: token.trim(), locationId: locationId.trim() };
 }
 
-const TOKEN_ALIASES = ['GHL_PRIVATE_INTEGRATION_TOKEN', 'GOHIGHLEVEL_API_KEY'];
-const LOCATION_ALIASES = ['GOHIGHLEVEL_LOCATION_ID'];
-
 /**
  * Env-var-only check. Kept for synchronous callers; prefer the async
  * form below, which also sees credentials stored in `app_secrets`.
@@ -202,10 +199,17 @@ export function ghlIsConfigured(): boolean {
 export async function resolveGhlCredentials(): Promise<
   { token: string; locationId: string } | null
 > {
-  const [token, locationId] = await Promise.all([
-    getSecret('GHL_PIT_TOKEN', TOKEN_ALIASES),
-    getSecret('GHL_LOCATION_ID', LOCATION_ALIASES),
-  ]);
+  // Resolve each canonical name fully (env, then app_secrets) before
+  // falling back to legacy aliases. getSecret(name, aliases) checks
+  // every alias in env first, so a stale GOHIGHLEVEL_API_KEY in the
+  // dashboard would otherwise beat a valid GHL_PIT_TOKEN in app_secrets.
+  const token =
+    (await getSecret('GHL_PIT_TOKEN')) ||
+    (await getSecret('GHL_PRIVATE_INTEGRATION_TOKEN')) ||
+    (await getSecret('GOHIGHLEVEL_API_KEY'));
+  const locationId =
+    (await getSecret('GHL_LOCATION_ID')) ||
+    (await getSecret('GOHIGHLEVEL_LOCATION_ID'));
   if (!token || !locationId) return null;
   return { token, locationId };
 }
