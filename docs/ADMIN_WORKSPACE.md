@@ -112,12 +112,13 @@ authenticated request against each provider and reports the provider's own error
 text (never secret values). The dashboard also surfaces the most recent stored
 HCP and SMS failure reasons.
 
-State as of the last check:
+State as of 2026-08-18:
 
 | Integration | Result |
 |-------------|--------|
-| Housecall Pro | **Not connected.** The value stored in Supabase as `HCP_API_KEY` is a placeholder string (32 chars, matches `PLACEHOLDER…REPLACED`), not a real key. |
-| OpenPhone | **Not connected.** A real-looking key is stored but OpenPhone returns `401 Unauthorized`. |
+| Housecall Pro | **Not connected.** The value stored in Supabase as `HCP_API_KEY` is a placeholder string, not a real key. Last successful sync was 2026-05-02. |
+| OpenPhone | **Connected.** The live key lives in `app_secrets` (the dashboard env copy 401s). Intro SMS send from the four market `PNxxx` ids (NJ / TX / CA / NY). |
+| GoHighLevel | Live token + location id in `app_secrets`. Used for internal-booking SMS. |
 | Resend | Working — a restricted send-only key. It can't list domains, which is expected and harmless. |
 
 The Housecall Pro timeline matches the placeholder theory exactly: the last

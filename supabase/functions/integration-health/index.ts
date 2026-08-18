@@ -14,7 +14,8 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { getSecret } from "../_shared/secrets.ts";
+import { getSecret, getSecretFromDb } from "../_shared/secrets.ts";
+import { openPhoneHealthCheck } from "../_shared/openphone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,55 +72,39 @@ async function checkHcp() {
 }
 
 async function checkOpenPhone() {
-  const key = clean(await getSecret("OPENPHONE_API_KEY"));
-  if (!key) {
+  // Prefer the live key in app_secrets. The dashboard env copy has gone
+  // stale (401) while intro SMS already send with the DB key.
+  const health = await openPhoneHealthCheck();
+  if (health.ok) {
+    return {
+      ok: true,
+      configured: true,
+      host: health.host,
+      auth: health.auth,
+      ownedNumbers: (health.numbers || []).map((n) => ({
+        id: n.id,
+        last4: n.last4,
+      })),
+    };
+  }
+  const dbKey = clean(await getSecretFromDb("OPENPHONE_API_KEY"));
+  const envKey = clean(await getSecret("OPENPHONE_API_KEY"));
+  if (!dbKey && !envKey) {
     return {
       ok: false,
       configured: false,
-      reason: "No OPENPHONE_API_KEY found in edge-function secrets or app_secrets.",
+      reason: "No OPENPHONE_API_KEY found in app_secrets or edge-function secrets.",
     };
   }
-  if (looksPlaceholder(key)) {
+  if (looksPlaceholder(dbKey || envKey)) {
     return { ok: false, configured: true, placeholder: true, reason: "OPENPHONE_API_KEY is a placeholder string." };
   }
-  for (const auth of [key, `Bearer ${key}`]) {
-    try {
-      const res = await fetch("https://api.openphone.com/v1/phone-numbers", {
-        headers: { Authorization: auth, "Content-Type": "application/json" },
-      });
-      const text = await res.text();
-      if (res.ok) {
-        // Also report which numbers the workspace owns — the state-routed
-        // sender can only send from a number in this list.
-        let owned: Array<Record<string, unknown>> = [];
-        try {
-          const j = JSON.parse(text);
-          const arr = j?.data || j;
-          if (Array.isArray(arr)) {
-            owned = arr.map((n: any) => ({
-              id: n?.id,
-              number: n?.number || n?.phoneNumber || n?.formattedNumber,
-              name: n?.name,
-            }));
-          }
-        } catch { /* non-JSON */ }
-        return { ok: true, configured: true, ownedNumbers: owned };
-      }
-      if (auth.startsWith("Bearer ")) {
-        return {
-          ok: false,
-          configured: true,
-          status: res.status,
-          reason: res.status === 401
-            ? "OpenPhone rejected the key (401). Issue a fresh API key in OpenPhone (Settings → API) — note API access requires a Business plan."
-            : `OpenPhone returned ${res.status}: ${text.slice(0, 200)}`,
-        };
-      }
-    } catch (err) {
-      return { ok: false, configured: true, reason: String(err).slice(0, 200) };
-    }
-  }
-  return { ok: false, configured: true, reason: "unknown" };
+  return {
+    ok: false,
+    configured: true,
+    status: health.status,
+    reason: health.error || "OpenPhone health check failed.",
+  };
 }
 
 /**
@@ -137,10 +122,12 @@ async function checkOpenPhone() {
  */
 async function checkGhl() {
   const token = clean(
-    await getSecret("GHL_PIT_TOKEN", ["GHL_PRIVATE_INTEGRATION_TOKEN", "GOHIGHLEVEL_API_KEY"]),
+    (await getSecretFromDb("GHL_PIT_TOKEN")) ||
+      (await getSecret("GHL_PIT_TOKEN", ["GHL_PRIVATE_INTEGRATION_TOKEN", "GOHIGHLEVEL_API_KEY"])),
   );
   const locationId = clean(
-    await getSecret("GHL_LOCATION_ID", ["GOHIGHLEVEL_LOCATION_ID"]),
+    (await getSecretFromDb("GHL_LOCATION_ID")) ||
+      (await getSecret("GHL_LOCATION_ID", ["GOHIGHLEVEL_LOCATION_ID"])),
   );
 
   if (!token) {

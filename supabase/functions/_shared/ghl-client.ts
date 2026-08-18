@@ -38,7 +38,7 @@
 // All calls include Version: 2021-07-28 per the LeadConnector API spec.
 
 import { toE164US } from './phone-format.ts';
-import { getSecret } from './secrets.ts';
+import { getSecret, getSecretFromDb } from './secrets.ts';
 
 export const GHL_BASE = 'https://services.leadconnectorhq.com';
 export const GHL_API_VERSION = '2021-07-28';
@@ -199,15 +199,19 @@ export function ghlIsConfigured(): boolean {
 export async function resolveGhlCredentials(): Promise<
   { token: string; locationId: string } | null
 > {
-  // Resolve each canonical name fully (env, then app_secrets) before
-  // falling back to legacy aliases. getSecret(name, aliases) checks
-  // every alias in env first, so a stale GOHIGHLEVEL_API_KEY in the
-  // dashboard would otherwise beat a valid GHL_PIT_TOKEN in app_secrets.
+  // Prefer app_secrets for the canonical names so a stale dashboard
+  // env var cannot beat the live PIT / location id (same pattern as
+  // OPENPHONE_API_KEY). Aliases still fall through env-then-DB.
+  // Prefer app_secrets for the canonical names so a stale dashboard
+  // env var cannot beat the live PIT / location id (same pattern as
+  // OPENPHONE_API_KEY). Aliases still fall through env-then-DB.
   const token =
+    (await getSecretFromDb('GHL_PIT_TOKEN')) ||
     (await getSecret('GHL_PIT_TOKEN')) ||
     (await getSecret('GHL_PRIVATE_INTEGRATION_TOKEN')) ||
     (await getSecret('GOHIGHLEVEL_API_KEY'));
   const locationId =
+    (await getSecretFromDb('GHL_LOCATION_ID')) ||
     (await getSecret('GHL_LOCATION_ID')) ||
     (await getSecret('GOHIGHLEVEL_LOCATION_ID'));
   if (!token || !locationId) return null;

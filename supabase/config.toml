@@ -94,7 +94,8 @@ verify_jwt = false
 [functions.ghl-new-lead-notify]
 verify_jwt = false
 
-# Internal + public booking reminders: 24h / 2h SMS worker. Invoked by
-# pg_cron with the anon JWT (same pattern as process-scheduled-emails).
-[functions.process-scheduled-sms]
+# Canonical outbound SMS helper. Invoked with a session JWT from admin
+# tools and internally with the service-role / anon JWT.
+[functions.send-sms]
 verify_jwt = true
+

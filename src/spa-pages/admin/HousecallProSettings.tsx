@@ -79,16 +79,27 @@ export default function HousecallProSettings() {
       const { data, error } = await supabase.functions.invoke('integration-health');
       if (error) throw error;
 
-      const hcp = (data as any)?.integrations?.housecallPro;
+      const integrations = (data as any)?.integrations || {};
+      const hcp = integrations.housecallPro;
+      const openPhone = integrations.openPhone;
+      const ghl = integrations.goHighLevel;
+      const resend = integrations.resend;
+      const summary = [
+        `Housecall Pro: ${hcp?.ok ? 'connected' : (hcp?.reason || 'not connected')}`,
+        `OpenPhone: ${openPhone?.ok ? `connected (${(openPhone.ownedNumbers || []).length} numbers)` : (openPhone?.reason || 'not connected')}`,
+        `GoHighLevel: ${ghl?.ok ? 'connected' : (ghl?.reason || 'not connected')}`,
+        `Resend: ${resend?.ok ? 'connected' : (resend?.reason || 'not connected')}`,
+      ].join(' · ');
+
       if (hcp?.ok) {
         toast({
           title: 'Housecall Pro is connected',
-          description: `Authenticated successfully (${hcp.scheme} scheme).`,
+          description: summary,
         });
       } else {
         toast({
           title: 'Housecall Pro is not connected',
-          description: hcp?.reason || 'The API key was rejected.',
+          description: summary,
           variant: 'destructive',
         });
       }
@@ -211,12 +222,15 @@ export default function HousecallProSettings() {
           <CardContent>
             <Button 
               onClick={handleTest} 
-              disabled={!config.api_key || testing}
+              disabled={testing}
               variant="outline"
               className="w-full"
             >
               {testing ? 'Testing Connection...' : 'Test API Connection'}
             </Button>
+            <p className="text-sm text-muted-foreground mt-2">
+              Probes Housecall Pro, OpenPhone, GoHighLevel, and Resend with the live credentials.
+            </p>
           </CardContent>
         </Card>
 
