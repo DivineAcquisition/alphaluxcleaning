@@ -88,3 +88,8 @@ verify_jwt = false
 # referrer restriction on the key in Google Cloud Console.
 [functions.google-places-key]
 verify_jwt = false
+
+# GHL Contact Created / Facebook Lead Form webhook. GHL posts without a
+# Supabase JWT — optional GHL_LEAD_NOTIFY_SECRET query/header if set.
+[functions.ghl-new-lead-notify]
+verify_jwt = false
