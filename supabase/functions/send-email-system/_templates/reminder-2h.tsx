@@ -7,66 +7,68 @@ import * as React from "npm:react@18.3.1";
 import { EmailBase, ActionButton } from "./email-base.tsx";
 
 interface Reminder2hEmailProps {
-  first_name: string;
-  service_type: string;
-  time_window: string;
-  support_phone: string;
-  address_line1: string;
+  first_name?: string;
+  customer_name?: string;
+  service_type?: string;
+  time_window?: string;
+  support_phone?: string;
+  address_line1?: string;
+  address?: string;
 }
 
-export const Reminder2hEmail = ({
-  first_name,
-  service_type,
-  time_window,
-  support_phone,
-  address_line1,
-}: Reminder2hEmailProps) => (
-  <EmailBase preview={`We're on our way! Arriving ${time_window} today`}>
-    <Heading style={h1}>
-      We're on for today! 🚐
-    </Heading>
-    
-    <Text style={text}>
-      Hi {first_name}, our team is preparing for your {service_type} cleaning 
-      and will arrive at {address_line1} between {time_window}.
-    </Text>
+export const Reminder2hEmail = (props: Reminder2hEmailProps) => {
+  const firstName = props.first_name || props.customer_name || "there";
+  const service = props.service_type || "cleaning";
+  const window = props.time_window || "your arrival window";
+  const address = props.address_line1 || props.address || "your home";
+  const support = props.support_phone || "(551) 239-9444";
 
-    <Section style={statusSection}>
-      <Text style={statusTitle}>📍 Team Status: En Route</Text>
-      <Text style={statusText}>
-        Arriving between <strong>{time_window}</strong>
+  return (
+    <EmailBase
+      preview={`We're on our way — arriving ${window} today`}
+      title="We're on for today"
+      subtitle={`${firstName}, the crew is heading over.`}
+    >
+      <Text style={text}>
+        Our team is preparing for your {service} and will arrive at {address}{" "}
+        between {window}.
       </Text>
-    </Section>
 
-    <Section style={quickTipsSection}>
-      <Text style={tipsTitle}>Last-minute reminders:</Text>
-      <ul style={list}>
-        <li style={listItem}>🔑 Ensure someone is home or access is available</li>
-        <li style={listItem}>🐕 Secure pets in a safe area</li>
-        <li style={listItem}>💼 Put away any valuables or personal items</li>
-      </ul>
-    </Section>
+      <Section style={statusSection}>
+        <Text style={statusTitle}>Team status</Text>
+        <Text style={statusText}>
+          Arriving between <strong>{window}</strong>
+        </Text>
+      </Section>
 
-    <Section style={contactSection}>
-      <Text style={contactText}>
-        Need to reach our team directly?
+      <Section style={quickTipsSection}>
+        <Heading as="h3" style={h3}>Last-minute reminders</Heading>
+        <ul style={list}>
+          <li style={listItem}>Ensure someone is home or access is available</li>
+          <li style={listItem}>Secure pets in a safe area</li>
+          <li style={listItem}>Put away valuables or personal items</li>
+        </ul>
+      </Section>
+
+      <Section style={contactSection}>
+        <Text style={contactText}>Need to reach the team?</Text>
+        <ActionButton href={`tel:${support.replace(/[^\d+]/g, "")}`} style={phoneButton}>
+          Call {support}
+        </ActionButton>
+      </Section>
+
+      <Text style={footerText}>
+        Thanks for choosing AlphaLux Clean.
       </Text>
-      <ActionButton href={`tel:${support_phone}`} style={phoneButton}>
-        📞 Call {support_phone}
-      </ActionButton>
-    </Section>
+    </EmailBase>
+  );
+};
 
-    <Text style={footerText}>
-      Thanks for choosing AlphaLuxClean! ✨
-    </Text>
-  </EmailBase>
-);
-
-const h1 = {
+const h3 = {
   color: "#1B314B",
-  fontSize: "28px",
+  fontSize: "18px",
   fontWeight: "bold",
-  margin: "0 0 24px 0",
+  margin: "0 0 16px 0",
 };
 
 const text = {
@@ -77,18 +79,20 @@ const text = {
 };
 
 const statusSection = {
-  backgroundColor: "#e8f5e8",
+  backgroundColor: "#EFF7FE",
   padding: "24px",
   borderRadius: "8px",
   textAlign: "center" as const,
-  border: "2px solid #4caf50",
+  border: "2px solid #0F77CC",
   margin: "24px 0",
 };
 
 const statusTitle = {
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#1B314B",
+  fontSize: "13px",
+  fontWeight: "700",
+  letterSpacing: "0.08em",
+  textTransform: "uppercase" as const,
+  color: "#0F77CC",
   margin: "0 0 8px 0",
 };
 
@@ -100,13 +104,6 @@ const statusText = {
 
 const quickTipsSection = {
   margin: "24px 0",
-};
-
-const tipsTitle = {
-  fontSize: "18px",
-  fontWeight: "bold",
-  color: "#1B314B",
-  margin: "0 0 16px 0",
 };
 
 const list = {
@@ -137,7 +134,6 @@ const contactText = {
 };
 
 const phoneButton = {
-  backgroundColor: "#4caf50",
   fontSize: "18px",
   padding: "16px 32px",
 };

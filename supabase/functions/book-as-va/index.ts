@@ -25,8 +25,10 @@
 //   8. Send the invoice-aware confirmation SMS through GOHIGHLEVEL so
 //      it threads into the same CRM conversation as the workflow
 //      messages, with the OpenPhone number for the customer's market
-//      named in the copy as the support line
-//   9. Return everything the VA needs to copy/paste invoice URLs to the
+//      named in the copy as the support line. Lead-token bookings text
+//      the customer the pay link from OpenPhone instead.
+//   9. Queue 24h + 2h email AND SMS reminders via queue-booking-reminders
+//  10. Return everything the VA needs to copy/paste invoice URLs to the
 //      customer while still on the phone.
 //
 // Comms split (deliberate, see _shared/sms.ts):
@@ -580,6 +582,7 @@ serve(async (req) => {
     //    rail (GoHighLevel).
     let emailResult: unknown = null;
     let smsResult: unknown = null;
+    let reminderResult: unknown = null;
     if (bookingStatus === "confirmed") {
       const wantsSms = Boolean(phoneE164) && (
         leadTokenRow ? true : body.sendConfirmationSms !== false
@@ -659,6 +662,17 @@ serve(async (req) => {
           .update({ booking_id: bookingId, booked_at: new Date().toISOString() })
           .eq("token", leadTokenRow.token);
       }
+
+      try {
+        const r = await supabase.functions.invoke("queue-booking-reminders", {
+          body: { booking_id: bookingId },
+        });
+        reminderResult = r.data ?? { error: r.error?.message };
+        logStep("reminders queued", reminderResult);
+      } catch (err) {
+        reminderResult = { error: err instanceof Error ? err.message : String(err) };
+        logStep("queue-booking-reminders errored (non-blocking)", reminderResult);
+      }
     } else {
       logStep("invoiceMode=none → booking left pending, comms skipped");
     }
@@ -683,6 +697,7 @@ serve(async (req) => {
       invoiceError,
       smsResult,
       emailResult,
+      reminderResult,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -116,8 +116,9 @@ Rows written before the `channel` column existed report as
 | Lead sync to CRM | `ghl-sync-lead` | public | GHL contact only, no SMS |
 | Deposit paid | `confirm-booking-payment` | public | email + webhooks |
 | Details saved | `save-booking-details` → `booking-confirm-comms` | public | OpenPhone |
-| Internal booking taken | `book-as-va` | internal | `ghl-sync-booking` + GHL SMS |
+| Internal booking taken | `book-as-va` | internal | `ghl-sync-booking` + GHL SMS (OpenPhone for lead-token pay link) |
 | Internal booking email | `book-as-va` → `booking-confirm-comms` | internal | Resend (SMS slot pre-claimed) |
+| 24h / 2h reminders | `queue-booking-reminders` → `process-scheduled-emails` + `process-scheduled-sms` | matches booking rail | Resend email + SMS (OpenPhone public / lead-token, GHL internal) |
 | Reactivation / campaigns | `lifecycle-engine` | neither | legacy order |
 
 ## Required secrets

@@ -16,17 +16,24 @@ interface EmailBaseProps {
   preview: string;
   children: React.ReactNode;
   isMarketing?: boolean;
+  title?: string;
+  subtitle?: string;
 }
 
-export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseProps) => (
+export const EmailBase = ({
+  preview,
+  children,
+  isMarketing = false,
+  title,
+  subtitle,
+}: EmailBaseProps) => (
   <Html>
     <Head />
     <Preview>{preview}</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header — navy band with the official AlphaLux Clean logo */}
-        <Section style={header}>
-          <Link href="https://app.alphaluxclean.com">
+        <Section style={title ? logoBar : navyLogoBar}>
+          <Link href="https://alphaluxcleaning.com">
             <Img
               src="https://app.alphaluxclean.com/brand/alphalux-logo.png"
               width="180"
@@ -37,38 +44,40 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
           </Link>
         </Section>
 
-        {/* Main Content */}
+        {title && (
+          <Section style={header}>
+            <Text style={headerTitle}>{title}</Text>
+            {subtitle && <Text style={headerSubtitle}>{subtitle}</Text>}
+          </Section>
+        )}
+
         <Section style={content}>
           {children}
         </Section>
 
-        {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>
-            <Link href="https://app.alphaluxclean.com" style={footerLink}>
-              AlphaLuxClean
-            </Link>
-            <br />
-            Premium cleaning services in Texas and California
+            © {new Date().getFullYear()} AlphaLux Clean. All rights reserved.
           </Text>
-          
           <Text style={footerText}>
-            <Link href="tel:+15551234567" style={footerLink}>
-              (555) 123-4567
+            Premium cleaning · NJ · NY · TX · CA
+          </Text>
+          <Text style={footerText}>
+            <Link href="https://alphaluxcleaning.com" style={footerLink}>
+              Website
             </Link>
             {" • "}
-            <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>
-              support@alphaluxcleaning.com
+            <Link href="mailto:info@alphaluxcleaning.com" style={footerLink}>
+              Contact
             </Link>
           </Text>
-
           {isMarketing && (
             <Text style={footerText}>
               <Link href="{{UnsubscribeURL}}" style={footerLink}>
                 Unsubscribe
               </Link>
               {" • "}
-              <Link href="https://app.alphaluxclean.com/privacy" style={footerLink}>
+              <Link href="https://alphaluxcleaning.com/privacy" style={footerLink}>
                 Privacy Policy
               </Link>
             </Text>
@@ -183,16 +192,42 @@ const container = {
   boxShadow: '0 4px 16px -4px rgba(27, 49, 75, 0.12)',
 };
 
-const header = {
+const navyLogoBar = {
   backgroundColor: COLORS.navy,
-  padding: '24px 20px',
-  marginBottom: '0',
+  padding: "24px 20px",
+  textAlign: "center" as const,
+};
+
+const logoBar = {
+  backgroundColor: '#ffffff',
+  padding: '20px 20px 12px',
   textAlign: 'center' as const,
+};
+
+const header = {
+  background: `linear-gradient(135deg, ${COLORS.navyDeep} 0%, ${COLORS.navy} 55%, ${COLORS.blue} 100%)`,
+  padding: '26px 30px',
+  textAlign: 'center' as const,
+};
+
+const headerTitle = {
+  margin: '0',
+  fontSize: '26px',
+  fontWeight: 'bold',
+  color: '#ffffff',
+  fontFamily: 'Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+};
+
+const headerSubtitle = {
+  margin: '10px 0 0 0',
+  fontSize: '16px',
+  color: '#ffffff',
+  opacity: 0.95,
 };
 
 const logo = {
   margin: '0 auto',
-  filter: 'drop-shadow(0 2px 8px rgba(15, 119, 204, 0.35))',
+  display: 'block',
 };
 
 const content = {

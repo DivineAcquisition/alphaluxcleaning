@@ -93,3 +93,8 @@ verify_jwt = false
 # Supabase JWT — optional GHL_LEAD_NOTIFY_SECRET query/header if set.
 [functions.ghl-new-lead-notify]
 verify_jwt = false
+
+# Internal + public booking reminders: 24h / 2h SMS worker. Invoked by
+# pg_cron with the anon JWT (same pattern as process-scheduled-emails).
+[functions.process-scheduled-sms]
+verify_jwt = true

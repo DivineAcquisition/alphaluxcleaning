@@ -1,21 +1,30 @@
-// Internal Booking — the VA's phone-booking workspace.
+// Internal Booking — the VA's phone-booking workspace, including the
+// tokenized `/admin/internal-booking/l/:leadToken` path (same form,
+// prefilled, locked to deposit + pre-auth).
 //
-// Rebuilt to mirror the Novara internal booking flow: four numbered
-// sections down the left (customer, service, schedule, payment) and a
-// sticky live-quote rail on the right that the VA reads off while the
-// customer is still on the line. Colours are AlphaLux navy rather than
-// Novara's violet — same structure, our brand.
+// Layout mirrors Novara's VaBooking structure only: numbered sections
+// down the left, compact calendar + period-grouped slots, sticky quote
+// rail with the primary CTA. Colours stay AlphaLux navy — nothing is
+// copied from Novara's violet theme.
 //
-// The quote comes from `@/lib/pricing-internal`, which is mirrored in
-// the edge function, so the number quoted on the phone is the number
-// Stripe invoices. Nothing here computes a price of its own.
-//
-// Comms split: automated messages on this rail are sent by GoHighLevel,
-// and the OpenPhone line for the customer's market is quoted in the copy
-// as support, because a LeadConnector number is not a staffed inbox.
+// AdminLayout already wraps children in max-w-7xl, so this page does
+// not add a second max-width wrapper.
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+  addDays,
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  format,
+  getDay,
+  isBefore,
+  isSameDay,
+  isSameMonth,
+  startOfDay,
+  startOfMonth,
+} from 'date-fns';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,7 +53,6 @@ import {
   offerPrice,
   OFFERS,
   OFFER_ORDER,
-  requiresEstimate,
   splitTotal,
   TIME_SLOTS,
   type InvoiceMode,
@@ -53,14 +61,12 @@ import {
 } from '@/lib/pricing-internal';
 import {
   Loader2, Copy, CheckCircle2, Phone, DollarSign, RotateCcw, Home, CalendarDays,
-  Sparkles, AlertTriangle,
+  Sparkles, AlertTriangle, MapPin, ChevronLeft, ChevronRight, Clock,
+  Sun, CloudSun, Moon, Mail,
 } from 'lucide-react';
 
 const STATES = ['NJ', 'NY', 'TX', 'CA'];
 
-// Support lines quoted in the UI. The server resolves the live value from
-// `sms_state_numbers` (editable under Lifecycle → Numbers), so treat
-// these as the defaults ops sees, not the source of truth.
 const SUPPORT_NUMBERS: Record<string, string> = {
   NJ: '(551) 239-9444',
   TX: '(972) 559-0223',
@@ -68,12 +74,20 @@ const SUPPORT_NUMBERS: Record<string, string> = {
   NY: '(631) 366-8565',
 };
 
-/** Novara groups arrival windows by part of day rather than one long list. */
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 const SLOT_PERIODS = [
-  { label: 'Morning', slots: ['early_morning', 'morning'] },
-  { label: 'Midday', slots: ['late_morning', 'afternoon'] },
-  { label: 'Evening', slots: ['late_afternoon', 'evening'] },
+  { label: 'Morning', slots: ['early_morning', 'morning'], icon: Sun },
+  { label: 'Midday', slots: ['late_morning', 'afternoon'], icon: CloudSun },
+  { label: 'Evening', slots: ['late_afternoon', 'evening'], icon: Moon },
 ];
+
+function slotWindow(value: string) {
+  const slot = TIME_SLOTS.find((t) => t.value === value);
+  if (!slot) return value;
+  const m = slot.label.match(/\(([^)]+)\)/);
+  return m ? m[1] : slot.label;
+}
 
 const INITIAL = {
   firstName: '', lastName: '', email: '', phone: '',
@@ -147,7 +161,11 @@ function Field({
   );
 }
 
-/** Shape of the book-as-va response the result screen renders. */
+interface ReminderResult {
+  scheduled?: Array<{ kind: string; scheduled_for: string; channel?: string }>;
+  skipped?: Array<{ kind: string; reason: string }>;
+}
+
 interface BookingResult {
   bookingRef: string;
   stripeAccount: string;
@@ -159,6 +177,7 @@ interface BookingResult {
   payPageUrl?: string | null;
   smsResult?: { success?: boolean; provider?: string } | null;
   emailResult?: { email?: string; success?: boolean } | null;
+  reminderResult?: ReminderResult | null;
   depositInvoice?: { hostedInvoiceUrl?: string | null } | null;
   remainingInvoice?: { hostedInvoiceUrl?: string | null } | null;
   fullInvoice?: { hostedInvoiceUrl?: string | null } | null;
@@ -178,6 +197,183 @@ function CopyRow({ label, value }: { label: string; value: string }) {
       }}>
         <Copy className="h-3 w-3" />
       </Button>
+    </div>
+  );
+}
+
+function InlineSchedulePicker({
+  serviceDate,
+  timeSlot,
+  onDate,
+  onSlot,
+}: {
+  serviceDate: string;
+  timeSlot: string;
+  onDate: (iso: string) => void;
+  onSlot: (slot: string) => void;
+}) {
+  const today = startOfDay(new Date());
+  const minDate = today;
+  const recommendedDate = addDays(today, 3);
+  const endDate = addDays(today, 365);
+  const selected = serviceDate ? new Date(`${serviceDate}T12:00:00`) : undefined;
+  const [currentMonth, setCurrentMonth] = useState(
+    startOfMonth(selected && !isBefore(selected, minDate) ? selected : today),
+  );
+
+  const isDateDisabled = (d: Date) => isBefore(startOfDay(d), today);
+  const isShortNotice = (d: Date) =>
+    !isDateDisabled(d) && isBefore(startOfDay(d), recommendedDate);
+
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const pad = getDay(monthStart);
+    return [...Array(pad).fill(null), ...days];
+  }, [currentMonth]);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
+        <div className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Pick a date
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => {
+                  const prev = addMonths(currentMonth, -1);
+                  if (!isBefore(endOfMonth(prev), minDate)) setCurrentMonth(prev);
+                }}
+                disabled={isBefore(endOfMonth(addMonths(currentMonth, -1)), minDate)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[108px] text-center text-xs font-semibold">
+                {format(currentMonth, 'MMMM yyyy')}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => {
+                  const next = addMonths(currentMonth, 1);
+                  if (isBefore(startOfMonth(next), endDate)) setCurrentMonth(next);
+                }}
+                disabled={!isBefore(startOfMonth(addMonths(currentMonth, 1)), endDate)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="mb-1 grid grid-cols-7 gap-0.5">
+            {WEEKDAYS.map((d) => (
+              <div key={d} className="py-1 text-center text-[10px] font-bold text-muted-foreground">
+                {d}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((day, idx) => {
+              if (!day) return <div key={`pad-${idx}`} className="aspect-square" />;
+              const disabled = isDateDisabled(day);
+              const isSel = selected && isSameDay(day, selected);
+              const isToday = isSameDay(day, new Date());
+              const inMonth = isSameMonth(day, currentMonth);
+              const short = isShortNotice(day);
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => {
+                    if (disabled) return;
+                    onDate(format(day, 'yyyy-MM-dd'));
+                  }}
+                  disabled={disabled}
+                  title={short ? 'Short notice — under the standard 3-day lead time' : undefined}
+                  className={cn(
+                    'relative flex aspect-square items-center justify-center rounded-lg text-xs font-medium transition-colors',
+                    disabled && 'cursor-not-allowed text-muted-foreground/40',
+                    !disabled && !isSel && !short && 'text-foreground hover:bg-primary/10 hover:text-primary',
+                    !disabled && !isSel && short && 'bg-warning/10 text-warning-foreground ring-1 ring-warning/40 hover:bg-warning/20',
+                    isSel && 'bg-primary text-primary-foreground shadow-sm',
+                    !inMonth && !isSel && !short && 'text-muted-foreground/40',
+                    isToday && !isSel && !short && 'ring-1 ring-primary/40',
+                  )}
+                >
+                  {format(day, 'd')}
+                  {short && !isSel && (
+                    <span aria-hidden className="absolute bottom-1 h-1 w-1 rounded-full bg-warning" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 pl-1 text-[10px] text-muted-foreground">
+            Any upcoming date can be booked ·{' '}
+            <span className="font-semibold text-warning-foreground">amber = short notice</span>{' '}
+            (under the standard 3-day lead)
+          </p>
+          {selected && isShortNotice(selected) && (
+            <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-1.5">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+              <p className="text-[10px] leading-tight text-foreground">
+                <span className="font-semibold">Short notice.</span> Confirm a crew can cover this date before booking.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            {selected ? `Time on ${format(selected, 'EEE, MMM d')}` : 'Pick a time'}
+          </p>
+          {!selected ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <Clock className="mb-2 h-8 w-8 opacity-50" />
+              <p className="text-xs">Select a date first</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {SLOT_PERIODS.map(({ label, slots, icon: Icon }) => (
+                <div key={label} className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5 text-primary" />
+                    {label}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {slots.map((value) => {
+                      const active = timeSlot === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => onSlot(value)}
+                          className={cn(
+                            'h-9 rounded-md border text-xs font-semibold tabular-nums transition-colors',
+                            active
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-border bg-muted/40 text-foreground hover:border-primary/40 hover:bg-primary/10',
+                          )}
+                        >
+                          {slotWindow(value)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -242,7 +438,6 @@ export default function InternalBooking() {
   const depositPct = Math.max(0, Math.min(100, Number(form.depositPercent) || DEPOSIT_PERCENT * 100)) / 100;
   const { deposit, remaining } = splitTotal(total, form.invoiceMode, depositPct);
 
-  // What the VA still has to collect before the button does anything.
   const missing = useMemo(() => {
     const list: string[] = [];
     if (!form.firstName.trim()) list.push('First name');
@@ -308,11 +503,11 @@ export default function InternalBooking() {
     }
   };
 
-  // ─── Result screen ──────────────────────────────────────────────────
   if (result) {
     const smsOk = result.smsResult?.success;
     const emailOk = result.emailResult?.email === 'sent' || result.emailResult?.success;
     const payUrl = result.payPageUrl || result.depositInvoice?.hostedInvoiceUrl;
+    const reminders = result.reminderResult?.scheduled || [];
     return (
       <AdminLayout title="Internal Booking" description="Booking created">
         <div className="max-w-2xl space-y-4">
@@ -343,6 +538,11 @@ export default function InternalBooking() {
                 <Badge variant={emailOk ? 'default' : 'secondary'}>
                   {emailOk ? 'Confirmation email sent' : 'Email pending'}
                 </Badge>
+                <Badge variant={reminders.length ? 'default' : 'secondary'}>
+                  {reminders.length
+                    ? `${reminders.length} reminder${reminders.length === 1 ? '' : 's'} queued`
+                    : 'Reminders not queued'}
+                </Badge>
               </div>
 
               {payUrl && <CopyRow label="Secure pay link (deposit + card on file)" value={payUrl} />}
@@ -356,7 +556,23 @@ export default function InternalBooking() {
                 <p className="text-sm text-destructive">Invoice issue: {result.invoiceError}</p>
               )}
 
-              <Button onClick={() => { setResult(null); setForm(INITIAL); }}>
+              {reminders.length > 0 && (
+                <div className="rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <p className="mb-1 font-semibold text-foreground">Email + SMS reminders</p>
+                  <ul className="list-inside list-disc space-y-0.5">
+                    {reminders.map((r) => (
+                      <li key={`${r.channel || 'job'}:${r.kind}`}>
+                        {r.kind.replace('reminder_', '').replace('h', '-hour')}
+                        {r.channel ? ` · ${r.channel}` : ''}
+                        {' · '}
+                        {new Date(r.scheduled_for).toLocaleString()}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <Button onClick={() => { setResult(null); setForm(INITIAL); setLeadLocked(false); }}>
                 <RotateCcw className="mr-1 h-4 w-4" /> Book another
               </Button>
             </CardContent>
@@ -366,7 +582,6 @@ export default function InternalBooking() {
     );
   }
 
-  // ─── Form ───────────────────────────────────────────────────────────
   if (leadLoadError) {
     return (
       <AdminLayout title="Internal Booking" description="Lead booking link">
@@ -380,67 +595,66 @@ export default function InternalBooking() {
     );
   }
 
+  const canSubmit = missing.length === 0 && !submitting;
+
   return (
     <AdminLayout
       title="Internal Booking"
       description={leadLocked ? 'Book this Facebook / GHL lead' : 'Book while the customer is on the phone'}
     >
-      <div className="mx-auto max-w-[1240px]">
-        <header className="mb-7">
-          <div className="mb-1.5 flex items-center gap-2">
+      <header className="mb-7">
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+            Workspace · Internal
+          </span>
+          {leadLocked && (
             <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
-              Workspace · Internal
+              {leadSource || 'Lead'} · tokenized
             </span>
-            {leadLocked && (
-              <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
-                {leadSource || 'Lead'} · tokenized
-              </span>
-            )}
-            <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {form.state} · {SUPPORT_NUMBERS[form.state] || '—'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
-                {leadLocked ? 'Book this lead' : 'AlphaLux Internal Booking'}
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                {leadLocked
-                  ? 'Same internal booking form, prefilled for this lead. Payment is deposit + pre-auth only — OpenPhone texts the customer the pay link when you book them in. The job goes to Housecall Pro and GoHighLevel.'
-                  : 'Same rate card the website quotes. GoHighLevel fires the automated comms; the OpenPhone line for the customer\'s market is what they call.'}
-              </p>
-            </div>
-          </div>
-        </header>
-
-        <div className="mb-6 inline-flex rounded-xl border border-border bg-muted/50 p-1">
-          {([
-            { id: 'one_time' as const, label: 'One-time clean' },
-            { id: 'recurring' as const, label: 'Recurring plan' },
-          ]).map((tab) => {
-            const active = (form.offerId === 'recurring') === (tab.id === 'recurring');
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() =>
-                  set('offerId', tab.id === 'recurring' ? 'recurring' : 'deep')
-                }
-                className={cn(
-                  'rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors',
-                  active
-                    ? 'bg-card text-primary shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+          )}
+          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {form.state} · {SUPPORT_NUMBERS[form.state] || '—'}
+          </span>
         </div>
+        <div>
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
+            {leadLocked ? 'Book this lead' : 'AlphaLux Internal Booking'}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            {leadLocked
+              ? 'Same internal booking form, prefilled for this lead. Payment is deposit + pre-auth only — OpenPhone texts the customer the pay link when you book them in. Confirmation and 24h / 2h reminders go out by SMS and email.'
+              : 'Same rate card the website quotes. Confirmation and reminders go by SMS and email. The OpenPhone line for the customer\'s market is what they call.'}
+          </p>
+        </div>
+      </header>
 
-      <div className="grid gap-6 xl:grid-cols-12">
+      <div className="mb-6 inline-flex rounded-xl border border-border bg-muted/50 p-1">
+        {([
+          { id: 'one_time' as const, label: 'One-time clean' },
+          { id: 'recurring' as const, label: 'Recurring plan' },
+        ]).map((tab) => {
+          const active = (form.offerId === 'recurring') === (tab.id === 'recurring');
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() =>
+                set('offerId', tab.id === 'recurring' ? 'recurring' : 'deep')
+              }
+              className={cn(
+                'rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors',
+                active
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <div className="space-y-5 xl:col-span-8">
           <FormSection
             number={1}
@@ -448,7 +662,7 @@ export default function InternalBooking() {
             description="Who we're booking for and where to reach them."
             icon={<Phone className="h-4 w-4" />}
           >
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field label="First name" required>
                 <Input value={form.firstName} onChange={(e) => set('firstName', e.target.value)} />
               </Field>
@@ -459,41 +673,7 @@ export default function InternalBooking() {
                 <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
               </Field>
               <Field label="Phone" required>
-                <Input placeholder="(555) 123-4567" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
-              </Field>
-              <div className="sm:col-span-2">
-                <Field label="Street address" hint="Pick a Google suggestion to fill city, state and ZIP automatically.">
-                  <AddressAutocomplete
-                    value={form.addressLine1}
-                    onChange={(v) => set('addressLine1', v)}
-                    onResolved={(a) =>
-                      setForm((p) => ({
-                        ...p,
-                        addressLine1: a.line1 || p.addressLine1,
-                        city: a.city || p.city,
-                        state: a.state || p.state,
-                        zipCode: a.zipCode || p.zipCode,
-                      }))
-                    }
-                  />
-                </Field>
-              </div>
-              <Field label="Unit / Apt">
-                <Input value={form.addressLine2} onChange={(e) => set('addressLine2', e.target.value)} />
-              </Field>
-              <Field label="City">
-                <Input value={form.city} onChange={(e) => set('city', e.target.value)} />
-              </Field>
-              <Field label="State" hint="Routes the support number and the Stripe account.">
-                <Select value={form.state} onValueChange={(v) => set('state', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="ZIP" required>
-                <Input maxLength={5} value={form.zipCode} onChange={(e) => set('zipCode', e.target.value)} />
+                <Input type="tel" placeholder="(555) 123-4567" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
               </Field>
             </div>
           </FormSection>
@@ -501,7 +681,7 @@ export default function InternalBooking() {
           <FormSection
             number={2}
             title="Service"
-            description="Home size sets the base price; the service tier multiplies it."
+            description="Home size sets the base price; the service tier multiplies it. Pricing updates in the rail."
             icon={<Home className="h-4 w-4" />}
           >
             <Field label="Home size" required>
@@ -600,7 +780,56 @@ export default function InternalBooking() {
                 </Select>
               </Field>
             </div>
+          </FormSection>
 
+          <FormSection
+            number={3}
+            title="Property"
+            description="Where the crew goes. ZIP routes the support number and the Stripe account."
+            icon={<MapPin className="h-4 w-4" />}
+          >
+            <Field label="Street address" hint="Pick a Google suggestion to fill city, state and ZIP automatically.">
+              <AddressAutocomplete
+                value={form.addressLine1}
+                onChange={(v) => set('addressLine1', v)}
+                onResolved={(a) =>
+                  setForm((p) => ({
+                    ...p,
+                    addressLine1: a.line1 || p.addressLine1,
+                    city: a.city || p.city,
+                    state: a.state || p.state,
+                    zipCode: a.zipCode || p.zipCode,
+                  }))
+                }
+              />
+            </Field>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-4">
+                <Field label="Unit / Apt">
+                  <Input value={form.addressLine2} onChange={(e) => set('addressLine2', e.target.value)} />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field label="City">
+                  <Input value={form.city} onChange={(e) => set('city', e.target.value)} />
+                </Field>
+              </div>
+              <div className="col-span-6 md:col-span-2">
+                <Field label="State">
+                  <Select value={form.state} onValueChange={(v) => set('state', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              <div className="col-span-6 md:col-span-2">
+                <Field label="ZIP" required>
+                  <Input maxLength={5} value={form.zipCode} onChange={(e) => set('zipCode', e.target.value)} />
+                </Field>
+              </div>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Dwelling type">
                 <Select value={form.dwellingType} onValueChange={(v) => set('dwellingType', v)}>
@@ -626,71 +855,36 @@ export default function InternalBooking() {
                 </Select>
               </Field>
             </div>
-
             <Field label="Special instructions" hint="Shared with the customer on their confirmation.">
               <Textarea rows={2} value={form.specialInstructions}
                 onChange={(e) => set('specialInstructions', e.target.value)} />
             </Field>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Access & parking" hint="How the crew gets in and where they park.">
-                <Textarea rows={2} value={form.accessNotes}
-                  onChange={(e) => set('accessNotes', e.target.value)} />
-              </Field>
-              <Field label="Internal team notes" hint="Never shown to the customer.">
-                <Textarea rows={2} value={form.teamNotes}
-                  onChange={(e) => set('teamNotes', e.target.value)} />
-              </Field>
-            </div>
           </FormSection>
 
           <FormSection
-            number={3}
-            title="Schedule"
-            description="Lands in Housecall Pro as the job the crew works from."
+            number={4}
+            title={form.offerId === 'recurring' ? 'First clean & cadence' : 'Schedule'}
+            description="Pick a date and arrival window — lands in Housecall Pro as the job the crew works from."
             icon={<CalendarDays className="h-4 w-4" />}
           >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Service date" required>
-                <Input
-                  type="date"
-                  min={new Date().toISOString().slice(0, 10)}
-                  value={form.serviceDate}
-                  onChange={(e) => set('serviceDate', e.target.value)}
-                />
+            <InlineSchedulePicker
+              serviceDate={form.serviceDate}
+              timeSlot={form.timeSlot}
+              onDate={(iso) => {
+                set('serviceDate', iso);
+                set('timeSlot', '');
+              }}
+              onSlot={(slot) => set('timeSlot', slot)}
+            />
+            <div className="grid gap-4 pt-1 sm:grid-cols-2">
+              <Field label="Access & parking" hint="Shown to the cleaner.">
+                <Textarea rows={3} value={form.accessNotes}
+                  onChange={(e) => set('accessNotes', e.target.value)}
+                  placeholder="Gate code, parking, pet info…" />
               </Field>
-              <Field label="Arrival window" required>
-                <div className="space-y-2">
-                  {SLOT_PERIODS.map((period) => (
-                    <div key={period.label}>
-                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
-                        {period.label}
-                      </p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {period.slots.map((value) => {
-                          const slot = TIME_SLOTS.find((t) => t.value === value);
-                          if (!slot) return null;
-                          const active = form.timeSlot === value;
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={() => set('timeSlot', value)}
-                              className={cn(
-                                'rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors',
-                                active
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'hover:border-primary/40 hover:bg-muted',
-                              )}
-                            >
-                              {slot.label.replace(/^[^(]*\(|\)$/g, '')}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <Field label="Internal team notes" hint="Never shown to the customer.">
+                <Textarea rows={3} value={form.teamNotes}
+                  onChange={(e) => set('teamNotes', e.target.value)} />
               </Field>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -700,13 +894,13 @@ export default function InternalBooking() {
           </FormSection>
 
           <FormSection
-            number={4}
+            number={5}
             title="Payment"
-            description="How the customer pays, and who booked it."
+            description="How the customer pays, and who booked it. Confirmations and reminders go by SMS and email."
             icon={<DollarSign className="h-4 w-4" />}
           >
             <Field label="Invoice mode">
-              <div className="space-y-2">
+              <div className={cn('grid gap-2', leadLocked ? 'grid-cols-1' : 'md:grid-cols-2')}>
                 {(leadLocked
                   ? INVOICE_MODES.filter((m) => m.value === 'deposit_plus_preauth')
                   : INVOICE_MODES
@@ -718,14 +912,14 @@ export default function InternalBooking() {
                       type="button"
                       onClick={() => { if (!leadLocked) set('invoiceMode', mode.value); }}
                       className={cn(
-                        'w-full rounded-xl border p-3 text-left transition-colors',
+                        'rounded-xl border p-3 text-left transition-colors',
                         active
                           ? 'border-primary bg-primary/5 ring-1 ring-primary'
                           : 'hover:border-primary/40 hover:bg-muted/50',
                       )}
                     >
                       <div className="text-sm font-semibold">{mode.label}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] text-muted-foreground">
                         {leadLocked
                           ? 'Only option on a lead booking link. OpenPhone texts the customer the deposit + card-on-file page when you book them in. Balance is held before service and captured after the clean.'
                           : mode.description}
@@ -753,59 +947,56 @@ export default function InternalBooking() {
             </div>
 
             {!leadLocked && (
-            <div className="flex items-center gap-2">
-              <Switch checked={form.sendConfirmationSms}
-                onCheckedChange={(v) => set('sendConfirmationSms', v)} />
-              <Label className="text-xs">
-                Send confirmation SMS via GoHighLevel — support line{' '}
-                {SUPPORT_NUMBERS[form.state] || form.state}
-              </Label>
-            </div>
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3">
+                <Switch
+                  id="send-comms"
+                  checked={form.sendConfirmationSms}
+                  onCheckedChange={(v) => set('sendConfirmationSms', v)}
+                />
+                <Label htmlFor="send-comms" className="text-xs font-normal leading-snug">
+                  Send confirmation SMS (and queue 24h / 2h SMS + email reminders). Support line{' '}
+                  {SUPPORT_NUMBERS[form.state] || form.state}.
+                </Label>
+              </div>
             )}
             {leadLocked && (
-              <p className="text-xs text-muted-foreground">
-                OpenPhone will text the customer the pre-auth pay link from{' '}
-                {SUPPORT_NUMBERS[form.state] || form.state} when you create this booking.
+              <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                OpenPhone will text the pay link from {SUPPORT_NUMBERS[form.state] || form.state}.
+                Confirmation email plus 24h / 2h SMS and email reminders are queued automatically.
               </p>
             )}
           </FormSection>
         </div>
 
-        {/* ─── Sticky quote rail ─────────────────────────────────────── */}
         <aside className="xl:col-span-4">
-          <div className="xl:sticky xl:top-20">
-            <Card className="overflow-hidden rounded-2xl border-border shadow-sm">
-              <div className="bg-gradient-to-r from-alx-navy-deep via-primary to-alx-black-elev px-5 py-4 text-primary-foreground">
-                <p className="flex items-center gap-2 text-sm font-bold tracking-tight">
+          <div className="space-y-4 xl:sticky xl:top-20">
+            <Card className="overflow-hidden rounded-2xl border-border shadow-[0_4px_24px_-12px_rgba(15,23,42,0.12)]">
+              <div className="relative bg-gradient-to-br from-alx-navy-deep via-primary to-alx-black-elev px-5 py-5 text-primary-foreground">
+                <p className="relative flex items-center gap-2 text-sm font-bold tracking-tight">
                   <Sparkles className="h-4 w-4" /> Live quote
                 </p>
-                <p className="mt-0.5 text-xs text-primary-foreground/80">
-                  Matches the invoice exactly — read it out.
+                <p className="relative mt-0.5 text-[11px] text-primary-foreground/80">
+                  Updates as you adjust the booking. Matches the invoice exactly.
                 </p>
               </div>
-              <CardContent className="space-y-3 pt-4">
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{quote.offerLabel}</span>
-                    <span>{money(quote.total)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{quote.tierLabel}</span>
-                    <span>{form.state}</span>
-                  </div>
-                  {quote.visits > 1 && (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Visits included</span>
-                      <span>{quote.visits}</span>
-                    </div>
-                  )}
-                  {quote.isRecurring && quote.monthlyTotal != null && (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Per month ({CADENCE_LABELS[form.cadence]})</span>
-                      <span>{money(quote.monthlyTotal)}</span>
-                    </div>
-                  )}
+              <CardContent className="space-y-2.5 pb-5 pt-5">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{quote.offerLabel} · {quote.tierLabel}</span>
+                  <span>{form.state}</span>
                 </div>
+                {quote.visits > 1 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Visits included</span>
+                    <span>{quote.visits}</span>
+                  </div>
+                )}
+                {quote.isRecurring && quote.monthlyTotal != null && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Per month ({CADENCE_LABELS[form.cadence]})</span>
+                    <span>{money(quote.monthlyTotal)}</span>
+                  </div>
+                )}
 
                 {quote.requiresEstimate && (
                   <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs">
@@ -813,11 +1004,13 @@ export default function InternalBooking() {
                   </div>
                 )}
 
-                <Separator />
+                <Separator className="my-1.5" />
 
-                <div className="flex justify-between text-lg font-bold">
-                  <span>{quote.isRecurring ? 'Per visit' : 'Total'}</span>
-                  <span>{money(total)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {quote.isRecurring ? 'Per visit' : 'Total'}
+                  </span>
+                  <span className="text-2xl font-bold tabular-nums">{money(total)}</span>
                 </div>
                 {override > 0 && (
                   <p className="text-[11px] text-muted-foreground">
@@ -826,65 +1019,69 @@ export default function InternalBooking() {
                 )}
 
                 {form.invoiceMode !== 'none' && total > 0 && (
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="rounded-lg border border-border bg-muted/40 px-2.5 py-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Due today
-                        {form.invoiceMode !== 'full_now' && ` (${Math.round(depositPct * 100)}%)`}
-                      </span>
-                      <span>{money(deposit)}</span>
+                      </p>
+                      <p className="text-sm font-bold tabular-nums">{money(deposit)}</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span>
-                        {form.invoiceMode === 'deposit_plus_preauth'
-                          ? 'Held, charged after the clean'
-                          : 'Due on service date'}
-                      </span>
-                      <span>{money(remaining)}</span>
+                    <div className="rounded-lg border border-border bg-muted/40 px-2.5 py-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {form.invoiceMode === 'deposit_plus_preauth' ? 'Held' : 'Day-of'}
+                      </p>
+                      <p className="text-sm font-bold tabular-nums">{money(remaining)}</p>
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-start gap-2 rounded-lg bg-muted/60 p-3">
+                <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/[0.03] p-3 text-sm">
                   <Checkbox
-                    id="agreed"
                     checked={form.agreedOnPhone}
                     onCheckedChange={(v) => set('agreedOnPhone', v === true)}
                     className="mt-0.5"
                   />
-                  <Label htmlFor="agreed" className="text-xs font-normal leading-snug">
-                    The customer agreed to this price and the cancellation policy on the call.
-                  </Label>
-                </div>
+                  <span className="text-xs leading-snug">
+                    I confirm the customer <strong>verbally agreed</strong> to this price and the cancellation policy on the call.
+                    {form.invoiceMode === 'deposit_plus_preauth'
+                      ? ' They’ll review and e-sign on their payment link before the deposit.'
+                      : ''}
+                  </span>
+                </label>
 
-                <Button className="w-full" size="lg" disabled={submitting} onClick={book}>
+                <Button
+                  className="mt-3 w-full"
+                  size="lg"
+                  disabled={!canSubmit}
+                  onClick={book}
+                >
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {submitting ? 'Booking…' : 'Create booking'}
+                  {submitting ? 'Creating booking…' : 'Create booking'}
                 </Button>
 
                 {missing.length > 0 && (
-                  <div className="rounded-lg border border-warning/40 bg-warning/10 p-3">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-warning-foreground">
+                  <div className="mt-1 rounded-lg border border-warning/40 bg-warning/10 p-2.5">
+                    <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold">
                       <AlertTriangle className="h-3.5 w-3.5" /> Still needed
                     </p>
-                    <ul className="mt-1 list-inside list-disc text-[11px] text-muted-foreground">
+                    <ul className="list-inside list-disc space-y-0.5 text-[11px] text-muted-foreground">
                       {missing.map((m) => <li key={m}>{m}</li>)}
                     </ul>
                   </div>
                 )}
 
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  On book: customer and booking saved → job pushed to Housecall Pro →
+                  On book: customer and booking saved → Housecall Pro → GoHighLevel →
+                  confirmation email + SMS
                   {leadLocked || form.invoiceMode === 'deposit_plus_preauth'
-                    ? ' OpenPhone texts the customer the deposit + card-on-file pay link (balance held before service and charged after the clean)'
-                    : ' Stripe invoice(s) emailed'}
-                  {' '}→ booking synced to GoHighLevel.
+                    ? ' (OpenPhone texts the deposit + card-on-file pay link)'
+                    : ''}
+                  {' '}→ 24h and 2h email + SMS reminders queued.
                 </p>
               </CardContent>
             </Card>
           </div>
         </aside>
-        </div>
       </div>
     </AdminLayout>
   );

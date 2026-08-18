@@ -246,7 +246,7 @@ async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 
   const templateProps = {
     ...data,
     app_url: Deno.env.get("APP_URL") || "https://app.alphaluxclean.com",
-    support_phone: Deno.env.get("SUPPORT_PHONE") || "(555) 123-4567"
+    support_phone: Deno.env.get("SUPPORT_PHONE") || "(551) 239-9444"
   };
 
   let emailComponent;

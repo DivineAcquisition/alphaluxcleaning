@@ -4,12 +4,11 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
   Section,
-  Row,
-  Column,
 } from 'npm:@react-email/components@0.0.22';
 import * as React from 'npm:react@18.3.1';
 
@@ -51,12 +50,22 @@ export const BookingConfirmationEmail = ({
 }: BookingConfirmationEmailProps) => (
   <Html>
     <Head />
-    <Preview>Your AlphaLux Clean booking is confirmed! 🎉</Preview>
+    <Preview>Your AlphaLux Clean booking is confirmed</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header */}
+        <Section style={logoBar}>
+          <Link href="https://alphaluxcleaning.com">
+            <Img
+              src="https://app.alphaluxclean.com/brand/alphalux-logo.png"
+              width="180"
+              height="60"
+              alt="AlphaLux Clean"
+              style={logo}
+            />
+          </Link>
+        </Section>
         <Section style={header}>
-          <Heading style={h1}>🎉 Booking Confirmed!</Heading>
+          <Heading style={h1}>Booking confirmed</Heading>
           <Text style={orderNumber}>Order #{orderId}</Text>
         </Section>
 
@@ -74,8 +83,7 @@ export const BookingConfirmationEmail = ({
         <Section style={content}>
           <Text style={greeting}>Hi {customerName}!</Text>
           <Text style={text}>
-            Great news! Your AlphaLux Clean booking is confirmed and locked in. 
-            We can't wait to make your home sparkle! ✨
+            Great news — your AlphaLux Clean booking is confirmed and locked in.
           </Text>
 
           {/* Service Details Card */}
@@ -130,10 +138,11 @@ export const BookingConfirmationEmail = ({
 
           {/* What's Next */}
           <Section style={highlight}>
-            <Text style={highlightTitle}>📱 What's Next?</Text>
-            <Text style={listItem}>• We'll send a reminder 24 hours before your service</Text>
+            <Text style={highlightTitle}>What's next</Text>
+            <Text style={listItem}>• We'll text and email a reminder 24 hours before your service</Text>
+            <Text style={listItem}>• Another text and email ~2 hours before arrival</Text>
             <Text style={listItem}>• Our team will arrive within your scheduled time slot</Text>
-            <Text style={listItem}>• Remaining balance will be charged after completion</Text>
+            <Text style={listItem}>• Remaining balance is charged after completion</Text>
           </Section>
 
           {/* Call Button */}
@@ -154,13 +163,13 @@ export const BookingConfirmationEmail = ({
           <Text style={text}>
             Have questions? Just reply to this email or call us anytime!
           </Text>
-          <Text style={text}>Thanks for choosing AlphaLux Clean! 💎</Text>
+          <Text style={text}>Thanks for choosing AlphaLux Clean.</Text>
         </Section>
 
-        {/* Footer */}
         <Section style={footer}>
-          <Text style={footerText}>AlphaLux Clean | Professional Cleaning Services</Text>
-          <Text style={footerText}>(972) 559-0223 | info@alphaluxcleaning.com</Text>
+          <Text style={footerText}>© {new Date().getFullYear()} AlphaLux Clean. All rights reserved.</Text>
+          <Text style={footerText}>Premium cleaning · NJ · NY · TX · CA</Text>
+          <Text style={footerText}>info@alphaluxcleaning.com</Text>
         </Section>
       </Container>
     </Body>
@@ -179,13 +188,26 @@ const container = {
   margin: '0 auto',
   padding: '20px 0',
   maxWidth: '600px',
+  backgroundColor: '#ffffff',
+  borderRadius: '12px',
+  overflow: 'hidden' as const,
+};
+
+const logoBar = {
+  backgroundColor: '#ffffff',
+  padding: '20px 20px 12px',
+  textAlign: 'center' as const,
+};
+
+const logo = {
+  display: 'block' as const,
+  margin: '0 auto',
 };
 
 const header = {
-  background: 'linear-gradient(135deg, #0F77CC 0%, #1B314B 100%)',
-  padding: '30px 20px',
+  background: 'linear-gradient(135deg, #0E1C2E 0%, #1B314B 55%, #0F77CC 100%)',
+  padding: '26px 30px',
   textAlign: 'center' as const,
-  borderRadius: '8px 8px 0 0',
 };
 
 const h1 = {

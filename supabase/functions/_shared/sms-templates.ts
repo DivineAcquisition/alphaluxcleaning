@@ -24,6 +24,18 @@ export const SMS_TEMPLATES: Record<string, (vars: TemplateVariables) => string> 
     `Hi ${vars.first_name}! Your ${vars.service_type} cleaning is confirmed for ${vars.service_date} (arrival ${vars.time_window}).` +
     (vars.manage_link ? ` Manage: ${vars.manage_link}` : ' Questions? Just reply to this text.') +
     ' - AlphaLux Clean',
+
+  reminder_24h: (vars: TemplateVariables) =>
+    `Hi ${vars.first_name} — reminder: your ${vars.service_type} is tomorrow${vars.service_date ? ` (${vars.service_date})` : ''} between ${vars.time_window}.` +
+    (vars.support_phone ? ` Questions? ${vars.support_phone}.` : ' Reply to this text.') +
+    ' - AlphaLux Clean',
+
+  reminder_2h: (vars: TemplateVariables) =>
+    `Hi ${vars.first_name} — our team is on the way, arriving ${vars.time_window}` +
+    (vars.address ? ` at ${vars.address}` : '') +
+    `.` +
+    (vars.support_phone ? ` Questions? ${vars.support_phone}.` : '') +
+    ' - AlphaLux Clean',
   
   referral_reward_earned: (vars: TemplateVariables) =>
     `🎉 Great news ${vars.first_name}! ${vars.referred_name} just booked their first cleaning. You earned ${vars.amount} credit! - AlphaLuxClean`,
