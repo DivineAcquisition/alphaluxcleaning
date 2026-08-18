@@ -37,12 +37,7 @@
 // Never throws — returns a structured result the caller can log.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import {
-  createGhlClient,
-  createGhlClientFromSecrets,
-  ghlIsConfiguredAsync,
-  type GHLClient,
-} from './ghl-client.ts';
+import type { GHLClient } from './ghl-client.ts';
 import { toE164US, phoneDigits10 } from './phone-format.ts';
 import { openPhoneSend, resolveStateNumber, type StateNumber } from './openphone.ts';
 
@@ -201,6 +196,7 @@ export async function resolveGhlContactId(
 /** Send via GHL conversations (PIT). Resolves/creates the contact first. */
 export async function sendSmsViaGhl(input: SendSmsInput): Promise<{ ok: boolean; contactId?: string; messageId?: string; error?: string }> {
   try {
+    const { createGhlClient, createGhlClientFromSecrets } = await import('./ghl-client.ts');
     const client = (input.ghlToken && input.ghlLocationId)
       ? createGhlClient({ token: input.ghlToken, locationId: input.ghlLocationId })
       : await createGhlClientFromSecrets();
@@ -315,7 +311,9 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
   // slow app_secrets read can't stall intro SMS.
   const order = providerOrder(
     input,
-    input.channel === 'public' ? false : await ghlIsConfiguredAsync(),
+    input.channel === 'public'
+      ? false
+      : await (await import('./ghl-client.ts')).ghlIsConfiguredAsync(),
   );
   let stateNumber: StateNumber | null = null;
 
