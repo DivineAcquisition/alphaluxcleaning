@@ -26,10 +26,10 @@ export interface StateNumber {
 }
 
 export const STATE_NUMBER_DEFAULTS: Record<StateCode, StateNumber> = {
-  NJ: { stateCode: 'NJ', phoneE164: '+15512399444', timezone: 'America/New_York' },
-  TX: { stateCode: 'TX', phoneE164: '+19725590223', timezone: 'America/Chicago' },
-  CA: { stateCode: 'CA', phoneE164: '+13233005528', timezone: 'America/Los_Angeles' },
-  NY: { stateCode: 'NY', phoneE164: '+16313668565', timezone: 'America/New_York' },
+  NJ: { stateCode: 'NJ', phoneE164: '+15512399444', phoneNumberId: 'PNadeAhbSz', timezone: 'America/New_York' },
+  TX: { stateCode: 'TX', phoneE164: '+19725590223', phoneNumberId: 'PNcr6AQ0lI', timezone: 'America/Chicago' },
+  CA: { stateCode: 'CA', phoneE164: '+13233005528', phoneNumberId: 'PNixdsFI1a', timezone: 'America/Los_Angeles' },
+  NY: { stateCode: 'NY', phoneE164: '+16313668565', phoneNumberId: 'PNmbaQkeHE', timezone: 'America/New_York' },
 };
 
 const STATE_ALIASES: Record<string, StateCode> = {
@@ -173,6 +173,140 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const OPENPHONE_HOSTS = ['https://api.openphone.com', 'https://api.quo.com'] as const;
+const SEND_TIMEOUT_MS = 8_000;
+
+/**
+ * OpenPhone v1 `from` is either a phoneNumberId (PN…) or E.164.
+ * Prefer the id: sending by E.164 400s after a port/rename, and a
+ * complete E.164 payload has been hanging from this project's edge
+ * workers even after auth succeeded.
+ */
+export function pickOpenPhoneFrom(opts: {
+  from?: string | null;
+  phoneNumberId?: string | null;
+}): string[] {
+  const out: string[] = [];
+  const add = (raw: string | null | undefined) => {
+    const v = String(raw || '').trim();
+    if (v && !out.includes(v)) out.push(v);
+  };
+  add(opts.phoneNumberId);
+  add(opts.from);
+  add(Deno.env.get('OPENPHONE_PHONE_NUMBER'));
+  if (out.length === 0) add(STATE_NUMBER_DEFAULTS[defaultStateCode()].phoneE164);
+  return out;
+}
+
+function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const ac = new AbortController();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      try { ac.abort(); } catch { /* already aborted */ }
+      reject(new Error(`openphone-timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+    fetch(url, { ...init, signal: ac.signal })
+      .then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+async function readBody(res: Response, timeoutMs: number): Promise<{ json: any; text: string }> {
+  try {
+    const text = await Promise.race([
+      res.text(),
+      sleep(timeoutMs).then(() => ''),
+    ]);
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+    return { json, text };
+  } catch {
+    return { json: null, text: '' };
+  }
+}
+
+/**
+ * OpenPhone nests failures under `errors[]` / `error.message`, so a naive
+ * `json.message` renders "[object Object]" and hides the actual reason
+ * (bad key vs. a `from` number the workspace doesn't own). Flatten it.
+ */
+function describeOpenPhoneError(json: any, text: string): string {
+  if (!json) return (text || 'no response body').slice(0, 300);
+  const parts: string[] = [];
+  if (typeof json.message === 'string') parts.push(json.message);
+  else if (json.message) parts.push(JSON.stringify(json.message));
+  if (typeof json.error === 'string') parts.push(json.error);
+  else if (json.error?.message) parts.push(String(json.error.message));
+  if (Array.isArray(json.errors)) {
+    parts.push(
+      json.errors
+        .map((e: any) => e?.message || e?.detail || JSON.stringify(e))
+        .join('; '),
+    );
+  }
+  if (json.code) parts.push(`code=${json.code}`);
+  const joined = parts.filter(Boolean).join(' | ');
+  return (joined || JSON.stringify(json)).slice(0, 300);
+}
+
+export interface OpenPhoneHealth {
+  ok: boolean;
+  ms: number;
+  status?: number;
+  host?: string;
+  auth?: 'raw' | 'bearer';
+  numberCount?: number;
+  numbers?: Array<{ id?: string; last4?: string }>;
+  error?: string;
+}
+
+/** GET /v1/phone-numbers — used to confirm the live key + host without sending SMS. */
+export async function openPhoneHealthCheck(): Promise<OpenPhoneHealth> {
+  const keys = await resolveOpenPhoneApiKeys();
+  if (keys.length === 0) {
+    return { ok: false, ms: 0, error: 'OPENPHONE_API_KEY not configured' };
+  }
+  const started = Date.now();
+  const key = keys[0].key;
+  for (const host of OPENPHONE_HOSTS) {
+    for (const auth of ['raw', 'bearer'] as const) {
+      const header = auth === 'bearer' ? `Bearer ${key}` : key;
+      try {
+        const res = await fetchWithTimeout(`${host}/v1/phone-numbers`, {
+          method: 'GET',
+          headers: { Authorization: header, Accept: 'application/json' },
+        }, SEND_TIMEOUT_MS);
+        const { json, text } = await readBody(res, 2_000);
+        const ms = Date.now() - started;
+        if (res.ok) {
+          const arr = json?.data || json;
+          const numbers = Array.isArray(arr)
+            ? arr.slice(0, 8).map((n: any) => {
+              const num = String(n?.number || n?.phoneNumber || n?.formattedNumber || '');
+              return { id: n?.id, last4: num.replace(/\D/g, '').slice(-4) || undefined };
+            })
+            : [];
+          return { ok: true, ms, status: res.status, host, auth, numberCount: numbers.length, numbers };
+        }
+        if (res.status !== 401) {
+          return { ok: false, ms, status: res.status, host, auth, error: describeOpenPhoneError(json, text) };
+        }
+      } catch (err) {
+        const ms = Date.now() - started;
+        const error = err instanceof Error ? err.message : String(err);
+        console.log(`[openphone] health ${host} ${auth} failed`, { error, ms });
+      }
+    }
+  }
+  return { ok: false, ms: Date.now() - started, error: 'OpenPhone health check timed out on every host/auth pair' };
+}
+
 /** Raw OpenPhone send. `from` should come from resolveStateNumber(). */
 export async function openPhoneSend(opts: {
   to: string;
@@ -190,95 +324,88 @@ export async function openPhoneSend(opts: {
   }
 
   const to = toE164US(opts.to) || opts.to;
-  const from =
-    opts.from ||
-    opts.phoneNumberId ||
-    Deno.env.get('OPENPHONE_PHONE_NUMBER') ||
-    STATE_NUMBER_DEFAULTS[defaultStateCode()].phoneE164;
-  const body: Record<string, unknown> = {
-    content: opts.message,
-    to: [to],
-    // OpenPhone v1 requires `from` (E.164 or PNxxx). `phoneNumberId` is
-    // deprecated and 400s if sent instead of `from`.
-    from: String(from),
-  };
-
-  // OpenPhone's v1 API expects the raw API key in the Authorization header
-  // (no "Bearer" prefix). The legacy code sent `Bearer <key>` which 401s —
-  // we try the documented scheme first and fall back once for safety.
-  const attempt = async (auth: string) => {
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort('openphone-timeout'), 15_000);
-    try {
-      const res = await fetch('https://api.openphone.com/v1/messages', {
-        method: 'POST',
-        headers: { Authorization: auth, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: ac.signal,
-      });
-      const text = await res.text();
-      let json: any = null;
-      try { json = text ? JSON.parse(text) : null; } catch { json = null; }
-      return { res, json, text };
-    } finally {
-      clearTimeout(timer);
-    }
-  };
-
-  /**
-   * OpenPhone nests failures under `errors[]` / `error.message`, so a naive
-   * `json.message` renders "[object Object]" and hides the actual reason
-   * (bad key vs. a `from` number the workspace doesn't own). Flatten it.
-   */
-  const describe = (json: any, text: string): string => {
-    if (!json) return (text || 'no response body').slice(0, 300);
-    const parts: string[] = [];
-    if (typeof json.message === 'string') parts.push(json.message);
-    else if (json.message) parts.push(JSON.stringify(json.message));
-    if (typeof json.error === 'string') parts.push(json.error);
-    else if (json.error?.message) parts.push(String(json.error.message));
-    if (Array.isArray(json.errors)) {
-      parts.push(
-        json.errors
-          .map((e: any) => e?.message || e?.detail || JSON.stringify(e))
-          .join('; '),
-      );
-    }
-    if (json.code) parts.push(`code=${json.code}`);
-    const joined = parts.filter(Boolean).join(' | ');
-    return (joined || JSON.stringify(json)).slice(0, 300);
-  };
+  const fromValues = pickOpenPhoneFrom(opts);
+  const userId = (Deno.env.get('OPENPHONE_USER_ID') || '').trim() || undefined;
 
   let lastError = 'OpenPhone send failed';
   for (const { key, source } of keys) {
-    for (let round = 0; round < 2; round++) {
-      try {
-        let { res, json, text } = await attempt(key);
-        if (res.status === 401) {
-          ({ res, json, text } = await attempt(`Bearer ${key}`));
+    let keyRejected = false;
+    for (const from of fromValues) {
+      const body: Record<string, unknown> = {
+        content: opts.message,
+        to: [to],
+        // OpenPhone v1 requires `from` (E.164 or PNxxx). The dedicated
+        // `phoneNumberId` field is deprecated and 400s if sent instead.
+        from: String(from),
+      };
+      if (userId) body.userId = userId;
+
+      let fromRejected = false;
+      for (const host of OPENPHONE_HOSTS) {
+        const auths: Array<{ label: 'raw' | 'bearer'; header: string }> = [
+          { label: 'raw', header: key },
+        ];
+        for (let i = 0; i < auths.length; i++) {
+          const { label, header } = auths[i];
+          const started = Date.now();
+          try {
+            const res = await fetchWithTimeout(`${host}/v1/messages`, {
+              method: 'POST',
+              headers: {
+                Authorization: header,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify(body),
+            }, SEND_TIMEOUT_MS);
+            const ms = Date.now() - started;
+            console.log(`[openphone] POST ${host}/v1/messages status=${res.status} ms=${ms} from=${from} auth=${label} key=${source}`);
+
+            // 202 is the documented success. Don't block on a chunked
+            // body that never closes — that is how earlier sends hung
+            // past the edge idle timeout after auth had already worked.
+            if (res.status === 200 || res.status === 201 || res.status === 202) {
+              const { json } = await readBody(res, 2_000);
+              console.log(`[openphone] sent via ${source} key host=${host}`);
+              return { ok: true, messageId: json?.data?.id || json?.id };
+            }
+
+            const { json, text } = await readBody(res, 2_000);
+            lastError = `OpenPhone failed (status ${res.status}): ${describeOpenPhoneError(json, text)}`;
+            if (res.status === 401) {
+              lastError += ` (key source=${source}; check OPENPHONE_API_KEY in app_secrets)`;
+              if (label === 'raw') auths.push({ label: 'bearer', header: `Bearer ${key}` });
+              else keyRejected = true;
+              continue;
+            }
+            if (res.status === 403) {
+              lastError += ` (does the OpenPhone workspace own ${from}?)`;
+              fromRejected = true;
+              break;
+            }
+            if (res.status === 400 && /from/i.test(lastError)) {
+              fromRejected = true;
+              break;
+            }
+            if (res.status === 502 || res.status === 503 || res.status === 504) {
+              continue;
+            }
+            return { ok: false, error: lastError };
+          } catch (err) {
+            lastError = err instanceof Error ? err.message : String(err);
+            console.log(`[openphone] POST ${host}/v1/messages error from=${from} auth=${label}`, {
+              error: lastError,
+              ms: Date.now() - started,
+            });
+          }
         }
-        if (res.ok) {
-          console.log(`[openphone] sent via ${source} key`);
-          return { ok: true, messageId: json?.data?.id || json?.id };
-        }
-        lastError = `OpenPhone failed (status ${res.status}): ${describe(json, text)}`;
-        if (res.status === 401) {
-          lastError += ` (key source=${source}; check OPENPHONE_API_KEY in app_secrets)`;
-          break; // try the next key
-        }
-        if (res.status === 403) {
-          lastError += ` (does the OpenPhone workspace own ${body.from}?)`;
-          return { ok: false, error: lastError };
-        }
-        if (res.status === 502 || res.status === 503 || res.status === 504) {
-          await sleep(400 * Math.pow(3, round));
-          continue;
-        }
-        return { ok: false, error: lastError };
-      } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
-        await sleep(400 * Math.pow(3, round));
+        if (keyRejected || fromRejected) break;
       }
+      if (keyRejected) break;
+    }
+    if (!keyRejected) {
+      // Timeouts / 5xx on this key — don't burn another 8s on a stale env copy.
+      break;
     }
   }
   return { ok: false, error: lastError };

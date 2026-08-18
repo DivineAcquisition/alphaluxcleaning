@@ -41,7 +41,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { resolveStateNumber } from "../_shared/openphone.ts";
+import { openPhoneHealthCheck, resolveStateNumber } from "../_shared/openphone.ts";
 import { sendSms } from "../_shared/sms.ts";
 import { renderSMSTemplate } from "../_shared/sms-templates.ts";
 import { phoneDigits10, toE164US } from "../_shared/phone-format.ts";
@@ -79,6 +79,13 @@ serve(async (req) => {
     const body: LeadIntroBody = await req.json();
     const email = (body.email || "").trim().toLowerCase();
     if (!email) return json({ success: false, error: "email is required" }, 400);
+
+    // Internal connectivity probe — does not create a lead or send SMS.
+    if (email === "__openphone_probe__") {
+      const health = await openPhoneHealthCheck();
+      log("OpenPhone probe", health);
+      return json({ success: health.ok, probe: health });
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

@@ -112,7 +112,7 @@ Rows written before the `channel` column existed report as
 
 | Trigger | Function | Rail | Channel used |
 |---|---|---|---|
-| Lead submits ZIP form | `lead-intro-comms` | public | OpenPhone only (`sendSms` channel=public, state-routed). Live key from `app_secrets`. |
+| Lead submits ZIP form | `lead-intro-comms` | public | OpenPhone only (`sendSms` channel=public). Sends `from` as the market `PNxxx` id (fallback E.164) via `api.openphone.com` then `api.quo.com`. Live key from `app_secrets`. |
 | Lead sync to CRM | `ghl-sync-lead` | public | GHL contact only, no SMS |
 | Deposit paid | `confirm-booking-payment` | public | email + webhooks |
 | Details saved | `save-booking-details` → `booking-confirm-comms` | public | OpenPhone |

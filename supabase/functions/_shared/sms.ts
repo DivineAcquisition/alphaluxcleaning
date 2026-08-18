@@ -311,7 +311,12 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { success: true, provider: 'none', fallback: false, suppressed: true, attempts };
   }
 
-  const order = providerOrder(input, await ghlIsConfiguredAsync());
+  // Public rail is OpenPhone-only — skip the GHL credential lookup so a
+  // slow app_secrets read can't stall intro SMS.
+  const order = providerOrder(
+    input,
+    input.channel === 'public' ? false : await ghlIsConfiguredAsync(),
+  );
   let stateNumber: StateNumber | null = null;
 
   for (const provider of order) {
