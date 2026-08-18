@@ -204,12 +204,14 @@ interface InternalBookingBody {
   serviceDate: string;
   timeSlot: string;
   priceOverride?: { total?: number; deposit?: number };
-  invoiceMode?: "deposit_plus_remaining" | "full_now" | "none";
+  invoiceMode?: "deposit_plus_preauth" | "deposit_plus_remaining" | "full_now" | "none";
   depositPercent?: number;
   csrName?: string;
   specialInstructions?: string;
   promoCode?: string;
   sendConfirmationSms?: boolean;
+  /** Token from /admin/internal-booking/l/:token — locks payment to pre-auth. */
+  leadBookingToken?: string;
 }
 
 serve(async (req) => {
@@ -262,6 +264,18 @@ serve(async (req) => {
     const email = body.email.trim().toLowerCase();
     const phoneE164 = toE164US(body.phone) || null;
     const sizeIdResolved = resolveHomeSizeId(sizeId);
+    const leadToken = (body.leadBookingToken || "").trim();
+    let leadTokenRow: { token: string; ghl_contact_id: string; booked_at: string | null } | null = null;
+    if (leadToken) {
+      const { data: row, error: tokenErr } = await supabase
+        .from("lead_booking_tokens")
+        .select("token, ghl_contact_id, booked_at")
+        .eq("token", leadToken)
+        .maybeSingle();
+      if (tokenErr || !row) throw new Error("This lead booking link is invalid.");
+      if (row.booked_at) throw new Error("This lead has already been booked on this link.");
+      leadTokenRow = row;
+    }
     const offerId: OfferId = body.offerId ||
       (body.offerType === "tester" ? "deep"
         : body.offerType === "move_in_out" ? "move_in_out"
@@ -286,7 +300,9 @@ serve(async (req) => {
     const total = typeof body.priceOverride?.total === "number" && body.priceOverride.total > 0
       ? Math.round(body.priceOverride.total * 100) / 100
       : rateCardTotal;
-    const invoiceMode: InvoiceMode = body.invoiceMode || "deposit_plus_preauth";
+    const invoiceMode: InvoiceMode = leadTokenRow
+      ? "deposit_plus_preauth"
+      : (body.invoiceMode || "deposit_plus_preauth");
     const depositPercent = typeof body.depositPercent === "number"
       ? Math.max(0, Math.min(1, body.depositPercent))
       : 0.5;
@@ -565,7 +581,9 @@ serve(async (req) => {
     let emailResult: unknown = null;
     let smsResult: unknown = null;
     if (bookingStatus === "confirmed") {
-      const wantsSms = body.sendConfirmationSms !== false && Boolean(phoneE164);
+      const wantsSms = Boolean(phoneE164) && (
+        leadTokenRow ? true : body.sendConfirmationSms !== false
+      );
       if (wantsSms) {
         await supabase
           .from("bookings")
@@ -613,12 +631,13 @@ serve(async (req) => {
         const sms = await sendSms({
           to: phoneE164 as string,
           message: parts.join(""),
-          // Internal rail: GoHighLevel sends, OpenPhone is the failover.
-          channel: "internal",
-          contactId: ghlContactId || undefined,
+          // Lead-token bookings text the customer from OpenPhone (the
+          // staffed market number). Blank internal bookings stay on GHL.
+          channel: leadTokenRow ? "public" : "internal",
+          contactId: leadTokenRow ? undefined : (ghlContactId || undefined),
           state: body.state,
           zip: body.zipCode,
-          context: "internal_booking_confirm",
+          context: leadTokenRow ? "lead_preauth_pay_link" : "internal_booking_confirm",
           email,
           firstName: body.firstName,
           lastName: body.lastName || undefined,
@@ -632,6 +651,13 @@ serve(async (req) => {
             .update({ confirmation_sms_sent_at: null })
             .eq("id", bookingId);
         }
+      }
+
+      if (leadTokenRow) {
+        await supabase
+          .from("lead_booking_tokens")
+          .update({ booking_id: bookingId, booked_at: new Date().toISOString() })
+          .eq("token", leadTokenRow.token);
       }
     } else {
       logStep("invoiceMode=none → booking left pending, comms skipped");

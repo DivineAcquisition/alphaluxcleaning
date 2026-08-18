@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
@@ -9,6 +9,7 @@ interface AdminRouteProps {
 }
 
 export function AdminRoute({ children, requiredRole = 'viewer' }: AdminRouteProps) {
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -80,11 +81,13 @@ export function AdminRoute({ children, requiredRole = 'viewer' }: AdminRouteProp
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin-login" replace />;
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/admin-auth-login?next=${next}`} replace />;
   }
 
   if (!userRole || !hasRequiredRole(userRole, requiredRole)) {
-    return <Navigate to="/admin-login" replace />;
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/admin-auth-login?next=${next}`} replace />;
   }
 
   return <>{children}</>;

@@ -273,6 +273,13 @@ function App() {
               </Suspense>
             </AdminRoute>
           } />
+          <Route path="/admin/internal-booking/l/:leadToken" element={
+            <AdminRoute>
+              <Suspense fallback={<BrandedLoader />}>
+                {React.createElement(React.lazy(() => import('./spa-pages/admin/InternalBooking')))}
+              </Suspense>
+            </AdminRoute>
+          } />
           <Route path="/admin/internal-booking" element={
             <AdminRoute>
               <Suspense fallback={<BrandedLoader />}>

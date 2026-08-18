@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, AlertCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
+function safeAdminNext(raw: string | null | undefined): string {
+  const value = String(raw || '').trim();
+  if (!value.startsWith('/admin')) return '/admin';
+  if (value.startsWith('//') || /:\/\//.test(value)) return '/admin';
+  return value;
+}
+
 const AdminAuthLogin = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const afterLogin = safeAdminNext(searchParams.get('next'));
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +35,7 @@ const AdminAuthLogin = () => {
       if (session) {
         const { data: adminCheck } = await supabase.functions.invoke('admin-auth-guard');
         if (adminCheck && !adminCheck.error) {
-          navigate('/admin', { replace: true });
+          navigate(afterLogin, { replace: true });
           return;
         }
       }
@@ -99,7 +108,7 @@ const AdminAuthLogin = () => {
         description: `Welcome back, ${adminCheck.email}!`,
       });
 
-      navigate('/admin', { replace: true });
+      navigate(afterLogin, { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
@@ -177,7 +186,7 @@ const AdminAuthLogin = () => {
         description: 'Redirecting to admin panel...'
       });
 
-      navigate('/admin', { replace: true });
+      navigate(afterLogin, { replace: true });
     } catch (error: any) {
       console.error('Unexpected error:', error);
       toast({

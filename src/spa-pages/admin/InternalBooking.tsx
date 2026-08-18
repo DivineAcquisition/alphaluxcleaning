@@ -14,7 +14,8 @@
 // and the OpenPhone line for the customer's market is quoted in the copy
 // as support, because a LeadConnector number is not a staffed inbox.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -182,9 +183,51 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function InternalBooking() {
+  const { leadToken } = useParams<{ leadToken?: string }>();
   const [form, setForm] = useState(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<BookingResult | null>(null);
+  const [leadLocked, setLeadLocked] = useState(false);
+  const [leadSource, setLeadSource] = useState<string | null>(null);
+  const [leadLoadError, setLeadLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!leadToken) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('lead_booking_tokens')
+        .select('token, first_name, last_name, email, phone, zip_code, city, state_code, source, booked_at')
+        .eq('token', leadToken)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        setLeadLoadError('This lead booking link is invalid.');
+        return;
+      }
+      if (data.booked_at) {
+        setLeadLoadError('This lead has already been booked on this link.');
+        return;
+      }
+      const state = STATES.includes(String(data.state_code || '').toUpperCase())
+        ? String(data.state_code).toUpperCase()
+        : 'NJ';
+      setLeadLocked(true);
+      setLeadSource(data.source || 'GHL');
+      setForm((p) => ({
+        ...p,
+        firstName: data.first_name || p.firstName,
+        lastName: data.last_name || p.lastName,
+        email: data.email || p.email,
+        phone: data.phone || p.phone,
+        zipCode: data.zip_code || p.zipCode,
+        city: data.city || p.city,
+        state,
+        invoiceMode: 'deposit_plus_preauth',
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [leadToken]);
 
   const set = <K extends keyof typeof INITIAL>(field: K, value: (typeof INITIAL)[K]) =>
     setForm((p) => ({ ...p, [field]: value }));
@@ -251,6 +294,7 @@ export default function InternalBooking() {
           specialInstructions: form.specialInstructions || undefined,
           csrName: form.csrName || undefined,
           sendConfirmationSms: form.sendConfirmationSms,
+          leadBookingToken: leadToken || undefined,
         },
       });
       if (error) throw new Error(error.message);
@@ -293,7 +337,7 @@ export default function InternalBooking() {
                 </Badge>
                 <Badge variant={smsOk ? 'default' : 'secondary'}>
                   {smsOk
-                    ? `SMS via ${result.smsResult?.provider === 'ghl' ? 'GoHighLevel' : 'OpenPhone failover'}`
+                    ? `SMS via ${result.smsResult?.provider === 'openphone' ? 'OpenPhone' : result.smsResult?.provider === 'ghl' ? 'GoHighLevel' : result.smsResult?.provider || 'SMS'}`
                     : result.smsResult ? 'SMS failed' : 'SMS skipped'}
                 </Badge>
                 <Badge variant={emailOk ? 'default' : 'secondary'}>
@@ -323,10 +367,23 @@ export default function InternalBooking() {
   }
 
   // ─── Form ───────────────────────────────────────────────────────────
+  if (leadLoadError) {
+    return (
+      <AdminLayout title="Internal Booking" description="Lead booking link">
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>Can’t open this lead</CardTitle>
+            <CardDescription>{leadLoadError}</CardDescription>
+          </CardHeader>
+        </Card>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout
       title="Internal Booking"
-      description="Book while the customer is on the phone"
+      description={leadLocked ? 'Book this Facebook / GHL lead' : 'Book while the customer is on the phone'}
     >
       <div className="mx-auto max-w-[1240px]">
         <header className="mb-7">
@@ -334,6 +391,11 @@ export default function InternalBooking() {
             <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
               Workspace · Internal
             </span>
+            {leadLocked && (
+              <span className="rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+                {leadSource || 'Lead'} · tokenized
+              </span>
+            )}
             <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               {form.state} · {SUPPORT_NUMBERS[form.state] || '—'}
             </span>
@@ -341,11 +403,12 @@ export default function InternalBooking() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-[28px] font-bold leading-tight tracking-tight text-foreground">
-                AlphaLux Internal Booking
+                {leadLocked ? 'Book this lead' : 'AlphaLux Internal Booking'}
               </h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                Same rate card the website quotes. GoHighLevel fires the automated
-                comms; the OpenPhone line for the customer's market is what they call.
+                {leadLocked
+                  ? 'Same internal booking form, prefilled for this lead. Payment is deposit + pre-auth only — OpenPhone texts the customer the pay link when you book them in. The job goes to Housecall Pro and GoHighLevel.'
+                  : 'Same rate card the website quotes. GoHighLevel fires the automated comms; the OpenPhone line for the customer\'s market is what they call.'}
               </p>
             </div>
           </div>
@@ -644,13 +707,16 @@ export default function InternalBooking() {
           >
             <Field label="Invoice mode">
               <div className="space-y-2">
-                {INVOICE_MODES.map((mode) => {
+                {(leadLocked
+                  ? INVOICE_MODES.filter((m) => m.value === 'deposit_plus_preauth')
+                  : INVOICE_MODES
+                ).map((mode) => {
                   const active = form.invoiceMode === mode.value;
                   return (
                     <button
                       key={mode.value}
                       type="button"
-                      onClick={() => set('invoiceMode', mode.value)}
+                      onClick={() => { if (!leadLocked) set('invoiceMode', mode.value); }}
                       className={cn(
                         'w-full rounded-xl border p-3 text-left transition-colors',
                         active
@@ -659,7 +725,11 @@ export default function InternalBooking() {
                       )}
                     >
                       <div className="text-sm font-semibold">{mode.label}</div>
-                      <div className="text-xs text-muted-foreground">{mode.description}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {leadLocked
+                          ? 'Only option on a lead booking link. OpenPhone texts the customer the deposit + card-on-file page when you book them in. Balance is held before service and captured after the clean.'
+                          : mode.description}
+                      </div>
                     </button>
                   );
                 })}
@@ -682,6 +752,7 @@ export default function InternalBooking() {
               </Field>
             </div>
 
+            {!leadLocked && (
             <div className="flex items-center gap-2">
               <Switch checked={form.sendConfirmationSms}
                 onCheckedChange={(v) => set('sendConfirmationSms', v)} />
@@ -690,6 +761,13 @@ export default function InternalBooking() {
                 {SUPPORT_NUMBERS[form.state] || form.state}
               </Label>
             </div>
+            )}
+            {leadLocked && (
+              <p className="text-xs text-muted-foreground">
+                OpenPhone will text the customer the pre-auth pay link from{' '}
+                {SUPPORT_NUMBERS[form.state] || form.state} when you create this booking.
+              </p>
+            )}
           </FormSection>
         </div>
 
@@ -796,11 +874,11 @@ export default function InternalBooking() {
                 )}
 
                 <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  On book: customer and booking saved → job pushed to Housecall Pro → Stripe
-                  {form.invoiceMode === 'deposit_plus_preauth'
-                    ? ' pay link sent (deposit + card on file, balance held before service and charged after the clean)'
-                    : ' invoice(s) emailed'}
-                  {' '}→ booking synced to GoHighLevel, which fires the automated comms.
+                  On book: customer and booking saved → job pushed to Housecall Pro →
+                  {leadLocked || form.invoiceMode === 'deposit_plus_preauth'
+                    ? ' OpenPhone texts the customer the deposit + card-on-file pay link (balance held before service and charged after the clean)'
+                    : ' Stripe invoice(s) emailed'}
+                  {' '}→ booking synced to GoHighLevel.
                 </p>
               </CardContent>
             </Card>

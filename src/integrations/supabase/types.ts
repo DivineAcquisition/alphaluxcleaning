@@ -887,6 +887,54 @@ export type Database = {
           },
         ]
       }
+      lead_booking_tokens: {
+        Row: {
+          booked_at: string | null
+          booking_id: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          ghl_contact_id: string
+          last_name: string | null
+          phone: string | null
+          source: string | null
+          state_code: string | null
+          token: string
+          zip_code: string | null
+        }
+        Insert: {
+          booked_at?: string | null
+          booking_id?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          ghl_contact_id: string
+          last_name?: string | null
+          phone?: string | null
+          source?: string | null
+          state_code?: string | null
+          token: string
+          zip_code?: string | null
+        }
+        Update: {
+          booked_at?: string | null
+          booking_id?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          ghl_contact_id?: string
+          last_name?: string | null
+          phone?: string | null
+          source?: string | null
+          state_code?: string | null
+          token?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       membership_plans: {
         Row: {
           active: boolean

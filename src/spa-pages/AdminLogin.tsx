@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Redirect to new auth-based login
-    navigate('/admin-auth-login', { replace: true });
-  }, [navigate]);
+    navigate(`/admin-auth-login${location.search}`, { replace: true });
+  }, [navigate, location.search]);
 
   return null; // Component will redirect immediately
 };

@@ -321,8 +321,9 @@ function sourceLabel(lead: ReturnType<typeof parseLead>): string {
 function buildMessage(opts: {
   lead: ReturnType<typeof parseLead>;
   stateCode: StateCode;
+  bookUrl?: string;
 }): string {
-  const { lead, stateCode } = opts;
+  const { lead, stateCode, bookUrl } = opts;
   const lines = [
     `New GHL lead · ${sourceLabel(lead)}`,
     displayName(lead),
@@ -334,7 +335,58 @@ function buildMessage(opts: {
     .join(" · ");
   lines.push(loc || `Market: ${stateCode}`);
   if (lead.tags.length) lines.push(`Tags: ${lead.tags.slice(0, 4).join(", ")}`);
+  if (bookUrl) {
+    lines.push("");
+    lines.push(`Book this lead (pre-auth only): ${bookUrl}`);
+  }
   return lines.join("\n");
+}
+
+function mintToken(): string {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function ensureLeadBookingToken(
+  supabase: { from: (t: string) => any },
+  claimKey: string,
+  lead: ReturnType<typeof parseLead>,
+  stateCode: string,
+): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from("lead_booking_tokens")
+    .select("token")
+    .eq("ghl_contact_id", claimKey)
+    .maybeSingle();
+  if (existing?.token) return existing.token as string;
+
+  const token = mintToken();
+  const { error } = await supabase.from("lead_booking_tokens").insert({
+    token,
+    ghl_contact_id: claimKey,
+    first_name: lead.firstName || null,
+    last_name: lead.lastName || null,
+    email: lead.email || null,
+    phone: lead.phone || null,
+    zip_code: lead.zip || null,
+    city: lead.city || null,
+    state_code: stateCode,
+    source: sourceLabel(lead),
+  });
+  if (error) {
+    if (String(error.code) === "23505" || /duplicate/i.test(error.message || "")) {
+      const { data: again } = await supabase
+        .from("lead_booking_tokens")
+        .select("token")
+        .eq("ghl_contact_id", claimKey)
+        .maybeSingle();
+      return (again?.token as string) || null;
+    }
+    log("lead_booking_tokens insert failed", { error: error.message });
+    return null;
+  }
+  return token;
 }
 
 function authorize(req: Request): boolean {
@@ -480,9 +532,28 @@ serve(async (req) => {
       return json({ success: true, skipped: "already_sent", contactId: claimKey });
     }
 
+    const bookToken = await ensureLeadBookingToken(
+      supabase,
+      claimKey,
+      lead,
+      stateNumber.stateCode,
+    );
+    const adminOrigin =
+      Deno.env.get("ADMIN_ORIGIN") || "https://admin.alphaluxcleaning.com";
+    const bookUrl = bookToken
+      ? `${adminOrigin.replace(/\/$/, "")}/admin/internal-booking/l/${bookToken}`
+      : "";
+    if (bookToken) {
+      await supabase
+        .from("ghl_new_lead_notifications")
+        .update({ booking_token: bookToken })
+        .eq("ghl_contact_id", claimKey);
+    }
+
     const message = buildMessage({
       lead,
       stateCode: stateNumber.stateCode,
+      bookUrl,
     });
 
     if (!ghlCreds) {
@@ -518,6 +589,7 @@ serve(async (req) => {
       from: "ghl",
       source: sourceLabel(lead),
       messageId: sent.messageId,
+      bookUrl: bookUrl || null,
     });
 
     return json({
@@ -527,6 +599,7 @@ serve(async (req) => {
       notifiedNumber: formatUsNumber(destE164),
       source: sourceLabel(lead),
       messageId: sent.messageId,
+      bookUrl: bookUrl || null,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
