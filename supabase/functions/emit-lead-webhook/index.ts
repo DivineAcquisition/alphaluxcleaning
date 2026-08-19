@@ -87,6 +87,7 @@ serve(async (req) => {
 
     let ghlStatus = 0;
     let ghlResponseText = '';
+    let ghlOk = false;
     if (GHL_WEBHOOK_URL) {
       logStep('Sending to GoHighLevel', ghlPayload);
       const ghlResponse = await fetch(GHL_WEBHOOK_URL, {
@@ -97,6 +98,7 @@ serve(async (req) => {
         body: JSON.stringify(ghlPayload),
       });
       ghlStatus = ghlResponse.status;
+      ghlOk = ghlResponse.ok;
       try {
         ghlResponseText = await ghlResponse.text();
       } catch {
@@ -264,9 +266,9 @@ serve(async (req) => {
     // A failed webhook is an integration warning, not a customer-facing
     // failure — reporting it as one made the funnel show a scary error
     // toast on leads that actually saved fine.
-    if (!ghlResponse.ok) {
+    if (GHL_WEBHOOK_URL && !ghlOk) {
       logStep('GHL webhook failed (lead still captured)', { status: ghlStatus });
-    } else {
+    } else if (GHL_WEBHOOK_URL) {
       logStep('Lead webhook sent successfully to GHL');
     }
 
@@ -274,7 +276,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Lead captured',
-        ghlDelivered: ghlResponse.ok,
+        ghlDelivered: ghlOk,
         ghlStatus: ghlStatus,
         promo: assignedPromo,
         leadIntro,
