@@ -2,35 +2,27 @@
 //
 // AlphaLux operates one OpenPhone number per service state. Every outbound
 // SMS must go out from the number that matches the customer's state so
-// replies land in the right OpenPhone inbox and the caller ID is local:
+// replies land in the right OpenPhone inbox and the caller ID is local.
 //
-//   NJ → (551) 239-9444    TX → (972) 559-0223
-//   CA → (323) 300-5528    NY → (631) 366-8565
-//
-// The live registry is `public.sms_state_numbers` (admin-editable); the
-// hardcoded map below is the fallback when the DB is unreachable. The
-// customer's state is resolved from an explicit state value first, then
-// inferred from the ZIP code.
+// The live registry is `public.sms_state_numbers` (admin-editable). There
+// is no baked-in number map — a missing row fails the send rather than
+// texting from a stale hardcoded line. State is resolved from an explicit
+// value first, then inferred from the ZIP code.
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { toE164US } from './phone-format.ts';
 import { getSecret, getSecretFromDb } from './secrets.ts';
 
 export type StateCode = 'NJ' | 'TX' | 'CA' | 'NY';
 
 export interface StateNumber {
-  stateCode: StateCode;
+  stateCode: string;
   phoneE164: string;
   /** OpenPhone phoneNumberId (PN…) when known — preferred by the API. */
   phoneNumberId?: string | null;
   timezone: string;
+  isDefault?: boolean;
 }
-
-export const STATE_NUMBER_DEFAULTS: Record<StateCode, StateNumber> = {
-  NJ: { stateCode: 'NJ', phoneE164: '+15512399444', phoneNumberId: 'PNadeAhbSz', timezone: 'America/New_York' },
-  TX: { stateCode: 'TX', phoneE164: '+19725590223', phoneNumberId: 'PNcr6AQ0lI', timezone: 'America/Chicago' },
-  CA: { stateCode: 'CA', phoneE164: '+13233005528', phoneNumberId: 'PNixdsFI1a', timezone: 'America/Los_Angeles' },
-  NY: { stateCode: 'NY', phoneE164: '+16313668565', phoneNumberId: 'PNmbaQkeHE', timezone: 'America/New_York' },
-};
 
 const STATE_ALIASES: Record<string, StateCode> = {
   nj: 'NJ', 'new jersey': 'NJ',
@@ -40,10 +32,12 @@ const STATE_ALIASES: Record<string, StateCode> = {
 };
 
 /** Normalize free-form state input ("New Jersey", "N.J.", "nyc") to a code. */
-export function normalizeStateCode(raw: string | null | undefined): StateCode | null {
+export function normalizeStateCode(raw: string | null | undefined): string | null {
   const cleaned = String(raw || '').trim().toLowerCase().replace(/\./g, '');
   if (!cleaned) return null;
-  return STATE_ALIASES[cleaned] ?? null;
+  if (STATE_ALIASES[cleaned]) return STATE_ALIASES[cleaned];
+  if (/^[a-z]{2}$/.test(cleaned)) return cleaned.toUpperCase();
+  return null;
 }
 
 /** Infer a service state from a US ZIP code (our four markets only). */
@@ -59,54 +53,111 @@ export function stateFromZip(zip: string | null | undefined): StateCode | null {
   return null;
 }
 
-export function defaultStateCode(): StateCode {
-  return normalizeStateCode(Deno.env.get('OPENPHONE_DEFAULT_STATE')) ?? 'NJ';
+/** OPENPHONE_DEFAULT_STATE env, or null — never a baked-in market. */
+export function envDefaultStateCode(): string | null {
+  return normalizeStateCode(Deno.env.get('OPENPHONE_DEFAULT_STATE'));
+}
+
+function serviceDb(): { from: (t: string) => any } | null {
+  const url = Deno.env.get('SUPABASE_URL');
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) return null;
+  try {
+    return createClient(url, key, { auth: { persistSession: false } });
+  } catch {
+    return null;
+  }
+}
+
+type Registry = {
+  byCode: Map<string, StateNumber>;
+  defaultCode: string | null;
+};
+
+let registryCache: { loadedAt: number; data: Registry } | null = null;
+const REGISTRY_TTL_MS = 60_000;
+
+async function loadRegistry(
+  supabase?: { from: (t: string) => any } | null,
+): Promise<Registry> {
+  if (registryCache && Date.now() - registryCache.loadedAt < REGISTRY_TTL_MS) {
+    return registryCache.data;
+  }
+  const db = supabase || serviceDb();
+  if (!db) {
+    throw new Error('sms_state_numbers: no database client');
+  }
+  const { data, error } = await db
+    .from('sms_state_numbers')
+    .select('state_code, phone_e164, openphone_phone_id, timezone, is_default');
+  if (error) throw new Error(`sms_state_numbers: ${error.message}`);
+  const byCode = new Map<string, StateNumber>();
+  let defaultCode: string | null = null;
+  for (const row of data || []) {
+    if (!row?.state_code || !row?.phone_e164) continue;
+    const code = String(row.state_code).toUpperCase();
+    byCode.set(code, {
+      stateCode: code,
+      phoneE164: row.phone_e164,
+      phoneNumberId: row.openphone_phone_id || null,
+      timezone: row.timezone || '',
+      isDefault: Boolean(row.is_default),
+    });
+    if (row.is_default) defaultCode = code;
+  }
+  if (byCode.size === 0) {
+    throw new Error('sms_state_numbers is empty — configure market numbers in /admin/lifecycle');
+  }
+  if (!defaultCode) defaultCode = byCode.keys().next().value || null;
+  const registry = { byCode, defaultCode };
+  registryCache = { loadedAt: Date.now(), data: registry };
+  return registry;
 }
 
 /**
  * Resolve the outbound OpenPhone number for a customer. Precedence:
  *   1. Explicit state (customer.state / booking state)
  *   2. ZIP inference
- *   3. OPENPHONE_DEFAULT_STATE env (default NJ)
- * The DB registry (`sms_state_numbers`) overrides the hardcoded defaults
- * when a Supabase client is provided, so ops can rotate numbers or attach
- * OpenPhone phoneNumberIds without a deploy.
+ *   3. OPENPHONE_DEFAULT_STATE env
+ *   4. sms_state_numbers.is_default
+ * Always reads the live registry. Missing rows fail the send.
  */
 export async function resolveStateNumber(opts: {
   state?: string | null;
   zip?: string | null;
   supabase?: { from: (t: string) => any } | null;
 }): Promise<StateNumber> {
+  const registry = await loadRegistry(opts.supabase);
   const stateCode =
-    normalizeStateCode(opts.state) ?? stateFromZip(opts.zip) ?? defaultStateCode();
-
-  if (opts.supabase) {
-    try {
-      const { data } = await opts.supabase
-        .from('sms_state_numbers')
-        .select('state_code, phone_e164, openphone_phone_id, timezone')
-        .eq('state_code', stateCode)
-        .maybeSingle();
-      if (data?.phone_e164) {
-        return {
-          stateCode,
-          phoneE164: data.phone_e164,
-          phoneNumberId: data.openphone_phone_id || null,
-          timezone: data.timezone || STATE_NUMBER_DEFAULTS[stateCode].timezone,
-        };
-      }
-    } catch (_) { /* fall through to hardcoded defaults */ }
+    normalizeStateCode(opts.state) ??
+    stateFromZip(opts.zip) ??
+    envDefaultStateCode() ??
+    registry.defaultCode;
+  if (!stateCode) {
+    throw new Error('Cannot resolve a service state (no state, ZIP, or default market number)');
   }
-  return STATE_NUMBER_DEFAULTS[stateCode];
+  const row = registry.byCode.get(stateCode);
+  if (!row?.phoneE164) {
+    throw new Error(`No OpenPhone number configured for ${stateCode}`);
+  }
+  return row;
 }
 
-/** Customer-local timezone for quiet-hours checks. */
-export function timezoneForState(state: string | null | undefined, zip?: string | null): string {
-  const code = normalizeStateCode(state) ?? stateFromZip(zip) ?? defaultStateCode();
-  return STATE_NUMBER_DEFAULTS[code].timezone;
+/** Customer-local timezone for quiet-hours checks. Live registry only. */
+export async function timezoneForState(
+  state: string | null | undefined,
+  zip?: string | null,
+  supabase?: { from: (t: string) => any } | null,
+): Promise<string | null> {
+  try {
+    const num = await resolveStateNumber({ state, zip, supabase });
+    return num.timezone || null;
+  } catch {
+    return null;
+  }
 }
 
-/** "+15512399444" → "(551) 239-9444" for embedding in message copy. */
+/** E.164 → national US display form for embedding in message copy. */
 export function formatUsNumber(e164: string | null | undefined): string {
   const digits = String(e164 || '').replace(/\D/g, '');
   const core = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
@@ -115,9 +166,9 @@ export function formatUsNumber(e164: string | null | undefined): string {
 }
 
 export interface SupportNumber {
-  stateCode: StateCode;
+  stateCode: string;
   e164: string;
-  /** Human-readable form, e.g. "(551) 239-9444". */
+  /** Human-readable form from the live E.164 number. */
   display: string;
 }
 
@@ -194,7 +245,6 @@ export function pickOpenPhoneFrom(opts: {
   add(opts.phoneNumberId);
   add(opts.from);
   add(Deno.env.get('OPENPHONE_PHONE_NUMBER'));
-  if (out.length === 0) add(STATE_NUMBER_DEFAULTS[defaultStateCode()].phoneE164);
   return out;
 }
 
@@ -325,6 +375,12 @@ export async function openPhoneSend(opts: {
 
   const to = toE164US(opts.to) || opts.to;
   const fromValues = pickOpenPhoneFrom(opts);
+  if (fromValues.length === 0) {
+    return {
+      ok: false,
+      error: 'OpenPhone send missing from number — configure sms_state_numbers',
+    };
+  }
   const userId = (Deno.env.get('OPENPHONE_USER_ID') || '').trim() || undefined;
 
   let lastError = 'OpenPhone send failed';

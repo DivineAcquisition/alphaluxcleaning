@@ -24,7 +24,7 @@ export default function SubcontractorSettings() {
   const [profile, setProfile] = useState({
     full_name: 'John Doe',
     email: 'john.doe@email.com',
-    phone: '(857) 754-4557',
+    phone: '(555) 123-4567',
     avatar_url: ''
   });
 

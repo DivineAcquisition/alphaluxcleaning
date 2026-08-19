@@ -34,6 +34,7 @@ interface BookingConfirmationEmailProps {
   };
   specialInstructions?: string;
   isOneTime: boolean;
+  supportPhone?: string;
 }
 
 export const BookingConfirmationEmail = ({
@@ -47,7 +48,9 @@ export const BookingConfirmationEmail = ({
   pricing,
   specialInstructions,
   isOneTime,
+  supportPhone,
 }: BookingConfirmationEmailProps) => (
+
   <Html>
     <Head />
     <Preview>Your AlphaLux Clean booking is confirmed</Preview>
@@ -145,12 +148,13 @@ export const BookingConfirmationEmail = ({
             <Text style={listItem}>• Remaining balance is charged after completion</Text>
           </Section>
 
-          {/* Call Button */}
-          <Section style={buttonContainer}>
-            <Link href="tel:9725590223" style={button}>
-              📞 Call Us: (972) 559-0223
-            </Link>
-          </Section>
+          {supportPhone ? (
+            <Section style={buttonContainer}>
+              <Link href={`tel:${supportPhone.replace(/[^\d+]/g, '')}`} style={button}>
+                Call Us: {supportPhone}
+              </Link>
+            </Section>
+          ) : null}
 
           {/* Special Instructions */}
           {specialInstructions && (

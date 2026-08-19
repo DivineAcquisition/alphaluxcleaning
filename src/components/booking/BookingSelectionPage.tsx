@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Home, Sparkles, RefreshCw, ArrowRight, Star, Zap, MapPin, CheckCircle, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 interface BookingData {
   serviceZipCode: string;
@@ -259,6 +260,7 @@ const addOns = [
 ];
 
 export function BookingSelectionPage({ bookingData, updateBookingData, onNext }: Props) {
+  const support = useSupportContact();
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>(bookingData.addOns || []);
   const [zipCodeValid, setZipCodeValid] = useState(false);
 
@@ -375,7 +377,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
               </div>
               {bookingData.serviceZipCode && bookingData.serviceZipCode.length === 5 && !zipCodeValid && (
                 <p className="text-destructive text-sm">
-                  Sorry, we currently only service New York. Please contact us at (281) 809-9901 for other locations.
+                  Sorry, we currently only service New York.{support.display ? ` Please contact us at ${support.display} for other locations.` : ''}
                 </p>
               )}
               {zipCodeValid && (
@@ -428,7 +430,7 @@ export function BookingSelectionPage({ bookingData, updateBookingData, onNext }:
                         {tier.requiresQuote ? (
                           <div>
                             <p className="text-lg font-bold text-primary">Call for Quote</p>
-                            <p className="text-xs text-muted-foreground">(281) 809-9901</p>
+                            <p className="text-xs text-muted-foreground">{support.display || 'Call for quote'}</p>
                           </div>
                         ) : (
                           <div>

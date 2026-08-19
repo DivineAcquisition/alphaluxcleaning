@@ -76,7 +76,8 @@ export const promoAppliedTemplate = {
       </div>
       
       <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
-        Questions? Reply to this email or call us at (857) 754-4557
+        Questions? Reply to this email or call us
+
       </p>
     </div>
     
@@ -111,7 +112,7 @@ Your savings have been applied to your booking. We can't wait to provide you wit
 
 View your booking: https://app.alphaluxclean.com/order-status
 
-Questions? Reply to this email or call us at (857) 754-4557
+Questions? Reply to this email or call us
 
 ---
 AlphaLux Cleaning - Premium Cleaning Services

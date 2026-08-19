@@ -3,6 +3,7 @@ import { Resend } from "npm:resend@2.0.0";
 import { renderAsync } from "npm:@react-email/components@0.0.22";
 import React from "npm:react@18.3.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 // Import email templates
 import { LeadWelcomeEmail } from "./_templates/lead-welcome.tsx";
@@ -243,10 +244,24 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 async function renderEmailTemplate(template: string, data: any, variant?: 'A' | 'B') {
+  let support_phone = String(data.support_phone || Deno.env.get("SUPPORT_PHONE") || "").trim();
+  if (!support_phone) {
+    try {
+      const support = await resolveSupportNumber({
+        state: data.state || data.customer_state,
+        zip: data.zip || data.zip_code || data.postal_code,
+        supabase,
+      });
+      support_phone = support.display;
+    } catch (err) {
+      console.warn("[send-email-system] support phone lookup failed", err);
+    }
+  }
+
   const templateProps = {
     ...data,
-    app_url: Deno.env.get("APP_URL") || "https://app.alphaluxclean.com",
-    support_phone: Deno.env.get("SUPPORT_PHONE") || "(551) 239-9444"
+    app_url: Deno.env.get("APP_URL") || Deno.env.get("BOOKING_ORIGIN") || "",
+    support_phone,
   };
 
   let emailComponent;

@@ -3,6 +3,7 @@ import { Resend } from "npm:resend@4.0.0";
 import React from 'npm:react@18.3.1';
 import { renderAsync } from 'npm:@react-email/components@0.0.22';
 import { AdminInviteEmail } from '../_shared/email-templates/admin-invite.tsx';
+import { resolveSupportNumber } from '../_shared/openphone.ts';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string);
 
@@ -47,6 +48,14 @@ const handler = async (req: Request): Promise<Response> => {
     let subject: string;
     let html: string;
     let fromAddress = "AlphaLux Clean <info@alphaluxcleaning.com>";
+
+    let supportPhone = '';
+    try {
+      const support = await resolveSupportNumber({});
+      supportPhone = support.display || '';
+    } catch {
+      supportPhone = '';
+    }
 
     switch (templateKey) {
       case 'booking_confirmation':
@@ -234,7 +243,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
-                Questions? Reply to this email or call us at (555) 123-4567
+                Questions? Reply to this email${supportPhone ? ` or call us at ${supportPhone}` : ''}
               </p>
             </div>
             

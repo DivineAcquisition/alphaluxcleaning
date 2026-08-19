@@ -17,6 +17,7 @@ import {
   Timer,
   RefreshCw
 } from 'lucide-react';
+import { useSupportContact } from '@/hooks/useSupportContact';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -62,6 +63,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState<'checking' | 'available' | 'limited' | 'unavailable'>('available');
   const [isSuccess, setIsSuccess] = useState(false);
+  const support = useSupportContact();
   const [successData, setSuccessData] = useState<{ scheduled_date: string; scheduled_time: string } | null>(null);
 
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
@@ -432,9 +434,11 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Need same-day or next-day service? 
+                {support.e164 ? (
                 <Button variant="link" className="p-0 ml-1 h-auto text-sm" asChild>
-                  <a href="tel:+12818099901">Call (281) 809-9901</a>
+                  <a href={support.tel}>Call {support.display}</a>
                 </Button>
+                ) : null}
               </p>
             </div>
           </CardContent>
@@ -633,7 +637,7 @@ const ModernSchedulerInterface: React.FC<ModernSchedulerProps> = ({
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4" />
-                <span>Questions? Call (281) 809-9901</span>
+                <span>Questions?{support.display ? ` Call ${support.display}` : ''}</span>
               </div>
             </div>
           </CardContent>

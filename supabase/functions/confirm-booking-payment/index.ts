@@ -5,6 +5,7 @@ import {
   requireStripeSecretKey,
   slugFromBookingColumn,
 } from "../_shared/stripe-env.ts";
+import { timezoneForState } from "../_shared/openphone.ts";
 
 // Bumped whenever a behavior change ships so Lovable's edge
 // function cache is forced to redeploy. Mirrors the same trick
@@ -36,34 +37,11 @@ const TIME_SLOT_WINDOWS: Record<string, string> = {
 };
 
 /**
- * Map a US-state two-letter code to the IANA timezone customers
- * across that state most commonly land in. Used as a fallback
- * when `bookings.timezone` is missing — the booking flow doesn't
- * currently capture the customer's timezone reliably, so older
- * rows have either UTC or `America/Chicago` regardless of the
- * actual service address. Routing on state is the next-best
- * heuristic for a single-state-per-customer service like
- * residential cleaning.
- */
-function timezoneForState(state: string | null | undefined): string {
-  switch ((state || "").toUpperCase()) {
-    case "NY":
-      return "America/New_York";
-    case "CA":
-      return "America/Los_Angeles";
-    case "TX":
-      return "America/Chicago";
-    default:
-      return "America/New_York";
-  }
-}
-
-/**
  * Build the payload `sync-booking-to-hcp` expects from a joined
- * booking + customer row. Centralised here so this function and any
- * future backfill / retry tooling produce identical shapes.
+ * booking + customer row. Timezone comes from the live
+ * `sms_state_numbers` registry when the booking row doesn't have one.
  */
-function buildHcpPayload(booking: any, customer: any) {
+async function buildHcpPayload(booking: any, customer: any, supabase: { from: (t: string) => any }) {
   // Time window — prefer the canonical `time_slot` id, fall back to
   // the legacy `service_time_window` text column, then to a safe
   // morning default if both are missing.
@@ -74,10 +52,10 @@ function buildHcpPayload(booking: any, customer: any) {
     (typeof booking?.service_time_window === "string" && booking.service_time_window) ||
     "09:00-11:00";
 
-  const state = customer?.state || booking?.state || "NY";
+  const state = customer?.state || booking?.state || null;
   const timezone = booking?.timezone && /[A-Za-z]+\/[A-Za-z_]+/.test(booking.timezone)
     ? booking.timezone
-    : timezoneForState(state);
+    : (await timezoneForState(state, customer?.postal_code || booking?.zip_code, supabase)) || booking?.timezone || null;
 
   // Service date — prefer the explicit column, fall back to the
   // legacy `preferred_date`. Without a date HCP can't schedule.
@@ -344,7 +322,7 @@ serve(async (req) => {
     //    confirmation — `retry-failed-hcp-syncs` picks them up.
     let hcpResult: { customerId?: string; jobId?: string; error?: string } | null = null;
     try {
-      const hcpPayload = buildHcpPayload(booking, customer);
+      const hcpPayload = await buildHcpPayload(booking, customer, supabase);
       const { data, error } = await supabase.functions.invoke(
         "sync-booking-to-hcp",
         { body: hcpPayload },

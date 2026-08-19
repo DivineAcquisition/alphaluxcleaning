@@ -8,6 +8,7 @@ import {
   BookingAdminNotification,
   type BookingAdminNotificationProps,
 } from "./_templates/booking-admin-notification.tsx";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 import {
   getInternalFromAddress,
   getInternalRecipients,
@@ -191,6 +192,18 @@ serve(async (req) => {
 
     const isOneTime = booking.frequency === "one_time";
 
+    let supportPhone = "";
+    try {
+      const support = await resolveSupportNumber({
+        state: customer.state || booking.state,
+        zip: booking.zip_code || customer.postal_code,
+        supabase,
+      });
+      supportPhone = support.display;
+    } catch (err) {
+      logStep("support phone lookup failed", { error: String(err) });
+    }
+
     // ===================== Customer confirmation =====================
 
     const customerEmailHtml = await renderAsync(
@@ -217,6 +230,7 @@ serve(async (req) => {
         },
         specialInstructions: booking.special_instructions || undefined,
         isOneTime,
+        supportPhone,
       }),
     );
 

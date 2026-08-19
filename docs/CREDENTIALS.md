@@ -125,7 +125,7 @@ that location and matches what the code expects:
 |---|---|---|
 | Sales pipeline | `AGP - Sales & Growth Pipeline` (`N0lXiyx68MYygHNvd8ZZ`) | `pickBookedPipelineStage` |
 | Booked stage | `bad281f3-36e0-42df-bee1-b30f35ad2601` | Opportunity creation |
-| Calendar | `AlphaLuxCleaning` (`L5BDUEPT1Kiq8NGbvPeP`) | `ghl-sync-booking` step 4 |
+| Calendar | AlphaLuxCleaning calendar id from `GHL_ALPHALUX_CALENDAR_ID` | `ghl-sync-booking` step 4 |
 | Custom fields | 40, all resolving | `KNOWN_GHL_FIELD_IDS` |
 
 Two caveats found while verifying:
@@ -166,23 +166,14 @@ deliberate.
 ## OpenPhone numbers
 
 One number per market, held in `public.sms_state_numbers` and editable at
-**Admin → Lifecycle → Numbers & Opt-outs**:
-
-| State | Number | `openphone_phone_id` |
-|---|---|---|
-| NJ | (551) 239-9444 | `PNadeAhbSz` |
-| TX | (972) 559-0223 | `PNcr6AQ0lI` |
-| CA | (323) 300-5528 | `PNixdsFI1a` |
-| NY | (631) 366-8565 | `PNmbaQkeHE` |
-
-These ids are already applied to the AlphaLuxClean database (migration
-`20260729140000_openphone_phone_ids`), and were read from the live
-workspace, so all four match. `openPhoneSend()` prefers the id over the
-raw number because sending by E.164 breaks with a 403 the moment a number
-is ported, renamed or moved between workspaces.
+**Admin → Lifecycle → Numbers & Opt-outs**. Do not copy numbers or OpenPhone
+ids into source — the live registry is the only source of truth.
+`openPhoneSend()` prefers the OpenPhone phoneNumberId over E.164 because
+sending by E.164 breaks with a 403 the moment a number is ported, renamed
+or moved between workspaces.
 
 If OpenPhone returns **403** rather than 401, the key is valid but the
-workspace does not own the number being sent from — check this table
+workspace does not own the number being sent from — check `sms_state_numbers`
 against `GET https://api.openphone.com/v1/phone-numbers`.
 
 ## Rotating a credential

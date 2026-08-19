@@ -22,6 +22,7 @@ import {
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
 } from "@/lib/promo";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 // Use the same square brand mark that the BrandedLoader full-page
 // loader displays. Keeps the loading-screen identity continuous with
@@ -65,11 +66,9 @@ function PromoBar() {
 }
 
 export function Navigation({ minimal = false }: NavigationProps) {
+  const support = useSupportContact();
   const handleTroubleBooking = () => {
-    window.open(
-      "https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true",
-      "_blank",
-    );
+    window.location.href = "/call";
   };
 
   return (
@@ -174,13 +173,15 @@ export function Navigation({ minimal = false }: NavigationProps) {
                     <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-alx-gold border-b border-alx-gold/20">
                       Get in touch
                     </div>
+                    {support.e164 && (
                     <DropdownMenuItem
                       className="flex items-center gap-3 py-2 cursor-pointer focus:bg-alx-gold/10 focus:text-alx-gold-light"
-                      onClick={() => window.open("tel:+18577544557", "_self")}
+                      onClick={() => window.open(support.tel, "_self")}
                     >
                       <Phone className="h-4 w-4" />
-                      +1 857-754-4557
+                      {support.display}
                     </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       className="flex items-center gap-3 py-2 cursor-pointer focus:bg-alx-gold/10 focus:text-alx-gold-light"
                       onClick={() =>
@@ -261,15 +262,17 @@ export function Navigation({ minimal = false }: NavigationProps) {
                       <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-alx-gold border-b border-alx-gold/20">
                         Contact Us
                       </div>
+                      {support.e164 && (
                       <DropdownMenuItem
                         className="flex items-center gap-3 py-2 cursor-pointer focus:bg-alx-gold/10 focus:text-alx-gold-light"
                         onClick={() =>
-                          window.open("tel:+18577544557", "_self")
+                          window.open(support.tel, "_self")
                         }
                       >
                         <Phone className="h-4 w-4" />
-                        +1 857-754-4557
+                        {support.display}
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="flex items-center gap-3 py-2 cursor-pointer focus:bg-alx-gold/10 focus:text-alx-gold-light"
                         onClick={() =>

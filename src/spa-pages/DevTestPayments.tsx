@@ -128,7 +128,7 @@ export function DevTestPayments() {
         totalPrice: testData.amount,
         customerName: 'Test Customer',
         customerEmail: 'test@example.com',
-        contactNumber: '(857) 754-4557',
+        contactNumber: '(555) 123-4567',
         address: {
           street: '123 Test St',
           city: 'Test City',

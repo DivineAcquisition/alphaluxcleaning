@@ -13,6 +13,7 @@ import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseC
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
 import { RotatingSubheadline } from '@/components/booking/RotatingSubheadline';
+import { useSupportContact } from '@/hooks/useSupportContact';
 import {
   NEW_CUSTOMER_PROMO_ACTIVE,
   NEW_CUSTOMER_PROMO_CODE,
@@ -37,6 +38,7 @@ export default function BookingZip() {
   const { updateBookingData } = useBooking();
   const { getTrackingData } = useUTMTracking();
   const { trackLead } = useFacebookPixel();
+  const support = useSupportContact();
   
   // ZIP state
   const [zipCode, setZipCode] = useState('');
@@ -369,10 +371,10 @@ export default function BookingZip() {
                   <Alert variant="destructive">
                     <AlertDescription className="text-center">
                       {zipError}
-                      {zipError.includes("don't service") && (
+                      {zipError.includes("don't service") && support.e164 && (
                         <div className="mt-2">
-                          <a href="tel:8577544557" className="font-medium underline">
-                            Call (857) 754-4557
+                          <a href={support.tel} className="font-medium underline">
+                            Call {support.display}
                           </a>
                           {' '}for options
                         </div>

@@ -352,7 +352,15 @@ serve(async (req) => {
 
     // Send to Zapier webhook
     try {
-      const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v07y3/', {
+      const zapierUrl = (
+        Deno.env.get('ZAPIER_SUBCONTRACTOR_UPDATES_WEBHOOK_URL') ||
+        Deno.env.get('ZAPIER_WEBHOOK_URL') ||
+        ''
+      ).trim();
+      if (!zapierUrl) {
+        logStep("Zapier webhook skipped — ZAPIER_SUBCONTRACTOR_UPDATES_WEBHOOK_URL is not configured");
+      } else {
+      const webhookResponse = await fetch(zapierUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -364,6 +372,7 @@ serve(async (req) => {
         logStep("Subcontractor update sent to Zapier successfully", { update_type: updateData.update_type });
       } else {
         logStep("Failed to send update to Zapier", { status: webhookResponse.status, update_type: updateData.update_type });
+      }
       }
     } catch (webhookError) {
       logStep("Error sending update to Zapier", webhookError);

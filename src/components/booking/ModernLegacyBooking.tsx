@@ -1061,7 +1061,7 @@ export function ModernLegacyBooking() {
                   </div>
                   <div>
                     <Label htmlFor="contactNumber">Phone Number *</Label>
-                    <Input id="contactNumber" value={bookingData.contactNumber} onChange={e => updateField('contactNumber', e.target.value)} placeholder="(857) 754-4557" />
+                    <Input id="contactNumber" value={bookingData.contactNumber} onChange={e => updateField('contactNumber', e.target.value)} placeholder="(555) 123-4567" />
                   </div>
                 </div>
               </CardContent>

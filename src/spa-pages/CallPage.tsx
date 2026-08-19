@@ -1,11 +1,13 @@
 import { Phone, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEOHead } from "@/components/SEOHead";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 export default function CallPage() {
-  const phoneNumber = "(857) 754-4557";
-  const phoneLink = "tel:+18577544557";
-  const smsLink = "sms:+18577544557";
+  const support = useSupportContact();
+  const phoneNumber = support.display;
+  const phoneLink = support.tel;
+  const smsLink = support.sms;
 
   return (
     <>
@@ -41,7 +43,7 @@ export default function CallPage() {
                 Call us now to schedule your cleaning service or get answers to any questions
               </p>
 
-              {/* Phone Number Display */}
+              {phoneNumber && (
               <div className="py-6">
                 <a 
                   href={phoneLink}
@@ -50,8 +52,10 @@ export default function CallPage() {
                   {phoneNumber}
                 </a>
               </div>
+              )}
 
               {/* Action Buttons */}
+              {phoneLink && (
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   size="lg"
@@ -72,6 +76,7 @@ export default function CallPage() {
                   Text Us
                 </Button>
               </div>
+              )}
             </div>
           </div>
 

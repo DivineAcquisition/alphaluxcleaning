@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Home, Building, Star, Clock } from "lucide-react";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 // AlphaLux Cleaning original pricing structure
 const originalPricingTiers = [
@@ -229,6 +230,7 @@ const addOnServices = [
 ];
 
 export function ServicePricing() {
+  const support = useSupportContact();
   return (
     <div className="space-y-6">
       {/* Pricing by Square Footage */}
@@ -443,9 +445,11 @@ export function ServicePricing() {
             Contact us for a personalized in-person estimate
           </p>
           <div className="flex flex-wrap justify-center gap-2">
+            {support.display && (
             <Badge variant="outline" className="text-lg px-4 py-2">
-              📞 (281) 809-9901
+              📞 {support.display}
             </Badge>
+            )}
             <Badge variant="outline" className="text-lg px-4 py-2">
               📞 (281) 932-0616
             </Badge>

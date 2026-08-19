@@ -365,7 +365,7 @@ serve(async (req) => {
     //    "none" leaves it pending like Novara's pending_payment.
     const bookingStatus = invoiceMode === "none" ? "pending" : "confirmed";
     const stripeSlug = slugFromCustomerLocation(body.state, body.zipCode) ?? "try";
-    const timezone = timezoneForState(body.state, body.zipCode);
+    const timezone = await timezoneForState(body.state, body.zipCode, supabase);
 
     const { data: booking, error: bookErr } = await supabase
       .from("bookings")

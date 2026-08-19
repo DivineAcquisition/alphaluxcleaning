@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Phone, Mail, HelpCircle, Menu } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 interface ProgressIndicatorProps {
   steps?: any[];
@@ -11,9 +12,10 @@ interface ProgressIndicatorProps {
 
 export default function ProgressIndicator({ className = "" }: ProgressIndicatorProps) {
   const navigate = useNavigate();
+  const support = useSupportContact();
   
   const handleTroubleBooking = () => {
-    window.open('https://book.housecallpro.com/book/AlphauLux-Clean/caa37e7c0f5840c688df5b158fa41ddb?v2=true', '_blank');
+    navigate('/call');
   };
 
   return (
@@ -60,12 +62,14 @@ export default function ProgressIndicator({ className = "" }: ProgressIndicatorP
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 bg-background border shadow-lg z-[100]">
+              {support.e164 && (
               <DropdownMenuItem asChild>
-                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
+                <a href={support.tel} className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (857) 754-4557
+                  Call {support.display}
                 </a>
               </DropdownMenuItem>
+              )}
               
               <DropdownMenuSeparator />
               
@@ -105,12 +109,14 @@ export default function ProgressIndicator({ className = "" }: ProgressIndicatorP
               <DropdownMenuSeparator />
               
               {/* Contact Options for Mobile */}
+              {support.e164 && (
               <DropdownMenuItem asChild>
-                <a href="tel:+18577544557" className="flex items-center gap-3 w-full py-2">
+                <a href={support.tel} className="flex items-center gap-3 w-full py-2">
                   <Phone className="h-4 w-4" />
-                  Call (857) 754-4557
+                  Call {support.display}
                 </a>
               </DropdownMenuItem>
+              )}
               
               <DropdownMenuItem asChild>
                 <a href="mailto:info@alphaluxcleaning.com" className="flex items-center gap-3 w-full py-2">

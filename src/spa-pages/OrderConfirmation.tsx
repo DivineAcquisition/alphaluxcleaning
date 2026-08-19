@@ -11,6 +11,7 @@ import { useFacebookPixel } from "@/hooks/useFacebookPixel";
 import { scrollToConfirmation } from "@/lib/scroll-utils";
 import { AddToGoogleCalendarButton } from "@/components/booking/AddToGoogleCalendarButton";
 import { BrandedLoader } from "@/components/BrandedLoader";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 export default function OrderConfirmation() {
   const [searchParams] = useSearchParams();
@@ -30,6 +31,7 @@ export default function OrderConfirmation() {
     trackViewContent,
     trackLead 
   } = useFacebookPixel();
+  const support = useSupportContact();
 
   useEffect(() => {
     // Check if admin preview mode
@@ -73,7 +75,7 @@ export default function OrderConfirmation() {
             customers: {
               name: 'Admin Preview User',
               email: 'admin@alphaluxclean.com',
-              phone: '(857) 754-4557'
+              phone: '(555) 123-4567'
             },
             service_details: {
               serviceAddress: {
@@ -398,7 +400,7 @@ Customer: ${orderDetails.customers?.name || orderDetails.name || 'N/A'}
 Email: ${orderDetails.customers?.email || orderDetails.email || 'N/A'}
 ${(orderDetails.customers?.phone || orderDetails.phone) ? `Phone: ${orderDetails.customers?.phone || orderDetails.phone}` : ''}
 
-Questions? Call (857) 754-4557
+Questions?${support.display ? ` Call ${support.display}` : ''}
     `.trim();
 
     try {
@@ -904,26 +906,30 @@ Questions? Call (857) 754-4557
                   Email Us
                 </a>
               </Button>
+              {support.e164 && (
               <Button 
                 asChild
                 variant="outline" 
                 size="sm"
               >
-                <a href="tel:8577544557">
+                <a href={support.tel}>
                   <Phone className="h-4 w-4 mr-2" />
-                  Call (857) 754-4557
+                  Call {support.display}
                 </a>
               </Button>
+              )}
+              {support.e164 && (
               <Button 
                 asChild
                 variant="outline" 
                 size="sm"
               >
-                <a href="sms:2818099901?body=Hi, I need live support for my cleaning service booking.">
+                <a href={`${support.sms}?body=Hi, I need live support for my cleaning service booking.`}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Text Support
                 </a>
               </Button>
+              )}
             </div>
             <Button 
               onClick={() => navigate('/')}

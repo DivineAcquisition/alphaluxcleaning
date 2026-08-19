@@ -4,9 +4,8 @@
 // /book/zip (invoked by `emit-lead-webhook`, the single server-side
 // choke point for funnel leads):
 //
-//   1. Intro SMS to the lead, sent through OpenPhone from the business
-//      number that matches their state — NJ (551) 239-9444,
-//      TX (972) 559-0223, CA (323) 300-5528, NY/NYC (631) 366-8565.
+//   1. Intro SMS to the lead, sent through OpenPhone from the live
+//      market number in `sms_state_numbers` that matches their state.
 //      The state comes from the validated ZIP lookup, falling back to
 //      ZIP-range inference, so the reply lands in the right market's
 //      OpenPhone inbox with a local caller ID.
@@ -97,8 +96,9 @@ serve(async (req) => {
     const digits = body.phone ? phoneDigits10(body.phone) : "";
     const submittedAt = body.submittedAt || new Date().toISOString();
 
-    // Resolve the market + outbound number once (DB registry first, then
-    // the hardcoded per-state defaults).
+    // Resolve the market + outbound number from the live sms_state_numbers
+    // registry. A missing row fails the send rather than using a stale
+    // hardcoded line.
     const stateNumber = await resolveStateNumber({
       state: body.state,
       zip: body.zipCode,

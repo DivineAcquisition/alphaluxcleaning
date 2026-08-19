@@ -55,7 +55,7 @@ const demoJobs: Job[] = [
       first_name: 'John',
       last_name: 'Doe',
       email: 'john@example.com',
-      phone: '(857) 754-4557'
+      phone: '(555) 123-4567'
     }
   },
   {

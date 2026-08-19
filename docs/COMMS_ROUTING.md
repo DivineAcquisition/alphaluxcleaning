@@ -19,8 +19,7 @@ obvious-looking change that would break both.
 ## Why the rails differ
 
 **The online funnel is OpenPhone-only.** AlphaLux runs one OpenPhone
-number per market — NJ (551) 239-9444, TX (972) 559-0223, CA
-(323) 300-5528, NY (631) 366-8565 — and the automated texts are the
+number per market (live in `sms_state_numbers`) and the automated texts are the
 first thing a lead receives. Sending from a local number is what makes
 them answer, and the reply has to land in that market's OpenPhone inbox
 where someone is watching. A GoHighLevel fallback would send from a
@@ -40,9 +39,10 @@ and sends the confirmation through GHL Conversations.
 **Support is OpenPhone on both rails.** The GHL sending number is not a
 staffed inbox. Any message GHL sends therefore names the OpenPhone line
 for the customer's market explicitly — "Questions? Call or text us at
-(551) 239-9444" — resolved at send time by `resolveSupportNumber()`,
+…" — resolved at send time by `resolveSupportNumber()`,
 which reads the live `sms_state_numbers` registry (editable under
-Lifecycle → Numbers) before falling back to the hardcoded defaults.
+Lifecycle → Numbers). There is no baked-in number fallback — a missing
+row fails the send rather than texting from a stale line.
 
 ## Implementation
 

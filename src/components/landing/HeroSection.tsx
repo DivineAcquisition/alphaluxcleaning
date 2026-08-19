@@ -8,8 +8,10 @@ import {
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
 } from '@/lib/promo';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?: string }) {
+  const support = useSupportContact();
   const [copied, setCopied] = React.useState(false);
   const copyPromo = () => {
     if (typeof window === 'undefined') return;
@@ -142,14 +144,16 @@ export function HeroSection({ bookingFlowUrl = '/book/zip' }: { bookingFlowUrl?:
                 Book Now
               </Link>
             </Button>
+            {support.e164 && (
             <Button
               size="lg"
               variant="outline"
               className="w-full sm:w-auto text-base lg:text-lg px-8 py-6 rounded-full btn-alx-outline-gold font-semibold uppercase tracking-wider"
               asChild
             >
-              <a href="tel:+18577544557">Call Us</a>
+              <a href={support.tel}>Call Us</a>
             </Button>
+            )}
           </div>
 
           {/* Trust Indicators Grid */}

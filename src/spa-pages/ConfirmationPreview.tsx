@@ -6,9 +6,11 @@ import { Navigation } from "@/components/Navigation";
 import { CheckCircle, Calendar, Clock, MapPin, Home, User, FileText, Mail, Phone, MessageSquare, Copy, Share2, CheckCheck, ExternalLink, Eye } from "lucide-react";
 import { PostPaymentReferralSection } from "@/components/PostPaymentReferralSection";
 import { toast } from "sonner";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 export default function ConfirmationPreview() {
   const navigate = useNavigate();
+  const support = useSupportContact();
   const [isCopied, setIsCopied] = useState(false);
 
   // Sample data for preview
@@ -22,7 +24,7 @@ export default function ConfirmationPreview() {
     balance_due: 16250, // $162.50 in cents
     customer_name: 'Sarah Johnson',
     customer_email: 'sarah.johnson@example.com',
-    customer_phone: '(857) 754-4557',
+    customer_phone: '(555) 123-4567',
     scheduled_date: '2024-01-15',
     scheduled_time: '10:00 AM - 12:00 PM',
     service_details: {
@@ -68,7 +70,7 @@ Phone: ${orderDetails.customer_phone}
 🎯 This is a preview of our confirmation experience!
 Book your real service at: ${window.location.origin}
 
-Questions? Call (281) 809-9901
+Questions?${support.display ? ` Call ${support.display}` : ''}
     `.trim();
 
     try {
@@ -316,14 +318,16 @@ Questions? Call (281) 809-9901
                   Book Real Service
                 </Button>
                 
+                {support.e164 && (
                 <Button 
-                  onClick={() => window.open('tel:(281) 809-9901')} 
+                  onClick={() => window.open(support.tel)} 
                   variant="outline" 
                   className="w-full"
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   Call Us
                 </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -340,9 +344,11 @@ Questions? Call (281) 809-9901
                 <Button size="lg" onClick={() => navigate('/')}>
                   Book Your Cleaning Service
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => window.open('tel:(281) 809-9901')}>
-                  Call (281) 809-9901
+                {support.e164 && (
+                <Button size="lg" variant="outline" onClick={() => window.open(support.tel)}>
+                  Call {support.display}
                 </Button>
+                )}
               </div>
             </CardContent>
           </Card>

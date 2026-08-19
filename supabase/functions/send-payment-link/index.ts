@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +41,7 @@ serve(async (req) => {
 
     const { data: existing } = await supabaseAdmin
       .from('bookings')
-      .select('pay_page_token')
+      .select('pay_page_token, zip_code, state, customer_id')
       .eq('id', bookingId)
       .maybeSingle();
 
@@ -56,9 +57,29 @@ serve(async (req) => {
       if (tokenError) throw new Error(`Could not mint pay token: ${tokenError.message}`);
     }
 
-    // book.alphaluxclean.com is retired and 301s to the booking host.
-    const appUrl = Deno.env.get('BOOKING_ORIGIN') || 'https://try.alphaluxcleaning.com';
+    const appUrl = Deno.env.get('BOOKING_ORIGIN') || Deno.env.get('APP_URL') || '';
     const paymentUrl = `${appUrl}/pay/${payToken}`;
+
+    let supportPhone = '';
+    let supportTel = '';
+    try {
+      const { data: customer } = existing?.customer_id
+        ? await supabaseAdmin.from('customers').select('state, postal_code').eq('id', existing.customer_id).maybeSingle()
+        : { data: null };
+      const support = await resolveSupportNumber({
+        state: existing?.state || customer?.state,
+        zip: existing?.zip_code || customer?.postal_code,
+        supabase: supabaseAdmin,
+      });
+      supportPhone = support.display;
+      supportTel = support.e164.replace(/\D/g, '');
+    } catch (err) {
+      console.warn('[send-payment-link] support phone lookup failed', err);
+    }
+
+    const supportHtml = supportPhone
+      ? `Call us at <a href="tel:${supportTel}" style="color: hsl(211 41% 24%); text-decoration: none;">${supportPhone}</a><br>`
+      : '';
 
     // Send email with payment link
     const { data, error } = await resend.emails.send({
@@ -109,7 +130,7 @@ serve(async (req) => {
               
               <p style="font-size: 14px; color: #666; margin-top: 30px;">
                 <strong>Need help?</strong><br>
-                Call us at <a href="tel:9725590223" style="color: hsl(211 41% 24%); text-decoration: none;">(972) 559-0223</a><br>
+                ${supportHtml}
                 Email us at <a href="mailto:support@alphaluxcleaning.com" style="color: hsl(211 41% 24%); text-decoration: none;">support@alphaluxcleaning.com</a>
               </p>
               

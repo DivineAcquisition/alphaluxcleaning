@@ -90,7 +90,7 @@ export const WaitlistConfirmationEmail = ({
         </Section>
 
           <Text style={text}>
-            Questions? Just reply to this email or call us at <strong>(972) 559-0223</strong>
+            Questions? Just reply to this email.
           </Text>
 
           <Text style={footer}>

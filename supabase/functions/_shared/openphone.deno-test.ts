@@ -3,21 +3,18 @@ import { pickOpenPhoneFrom } from './openphone.ts';
 
 Deno.test('prefers the OpenPhone phoneNumberId over E.164', () => {
   assertEquals(
-    pickOpenPhoneFrom({ from: '+16313668565', phoneNumberId: 'PNmbaQkeHE' }),
-    ['PNmbaQkeHE', '+16313668565'],
+    pickOpenPhoneFrom({ from: '+15551239999', phoneNumberId: 'PNtestPhoneId' }),
+    ['PNtestPhoneId', '+15551239999'],
   );
 });
 
 Deno.test('skips a blank phoneNumberId and keeps E.164', () => {
   assertEquals(
-    pickOpenPhoneFrom({ from: '+15512399444', phoneNumberId: '  ' }),
-    ['+15512399444'],
+    pickOpenPhoneFrom({ from: '+15551234444', phoneNumberId: '  ' }),
+    ['+15551234444'],
   );
 });
 
-Deno.test('dedupes identical from values', () => {
-  assertEquals(
-    pickOpenPhoneFrom({ from: 'PNadeAhbSz', phoneNumberId: 'PNadeAhbSz' }),
-    ['PNadeAhbSz'],
-  );
+Deno.test('does not invent a from number when none is provided', () => {
+  assertEquals(pickOpenPhoneFrom({}), []);
 });

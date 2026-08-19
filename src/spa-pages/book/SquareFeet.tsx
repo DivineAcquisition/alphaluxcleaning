@@ -11,12 +11,14 @@ import { Home, ArrowRight, CheckCircle } from 'lucide-react';
 import { CleaningShowcaseCarousel } from '@/components/booking/CleaningShowcaseCarousel';
 import { ReviewsWidget } from '@/components/booking/ReviewsWidget';
 import { GoogleGuaranteedBadge } from '@/components/trust/GoogleGuaranteedBadge';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 export default function BookingSquareFeet() {
   const navigate = useNavigate();
   const { bookingData, updateBookingData, pricing } = useBooking();
   const { trackStep } = useBookingProgress();
   const [selectedId, setSelectedId] = useState(bookingData.homeSizeId);
+  const support = useSupportContact();
 
   useEffect(() => {
     if (!bookingData.zipCode) {
@@ -95,12 +97,14 @@ export default function BookingSquareFeet() {
           <p className="text-muted-foreground mb-3">
             Home larger than 5,000 sq ft?
           </p>
+          {support.e164 && (
           <Button variant="outline" asChild>
-            <a href="tel:+18577544557" className="flex items-center gap-2">
+            <a href={support.tel} className="flex items-center gap-2">
               Call for Custom Quote
               <ArrowRight className="h-4 w-4" />
             </a>
           </Button>
+          )}
         </Card>
         
         <CleaningShowcaseCarousel />

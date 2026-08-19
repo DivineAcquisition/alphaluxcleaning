@@ -417,8 +417,7 @@ export function EnhancedWebhookTester() {
           )}
 
           <div className="text-xs text-muted-foreground mt-6 p-4 bg-muted/50 rounded-lg">
-            <p><strong>Current Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/24603039/um6me4v/</p>
-            <p className="mt-1">These tests send webhooks to Zapier with the complete booking payload structure including customer info, job details, payment data, marketing attribution, and LTV metrics.</p>
+            <p>These tests send webhooks to the destinations configured in <code>webhook_configurations</code>.</p>
           </div>
         </CardContent>
       </Card>

@@ -36,6 +36,7 @@ import { UpdateAddressDialog } from "@/components/UpdateAddressDialog";
 import { UpdateContactDialog } from "@/components/UpdateContactDialog";
 import { ServiceRequestsDisplay } from "@/components/ServiceRequestsDisplay";
 import { PaymentBreakdown } from "@/components/PaymentBreakdown";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 interface Order {
   id: string;
@@ -59,6 +60,7 @@ interface Order {
 export default function OrderStatus() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const support = useSupportContact();
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
   
@@ -486,14 +488,16 @@ export default function OrderStatus() {
                           <Phone className="h-4 w-4 mr-2" />
                           Update Contact
                         </Button>
+                        {support.e164 && (
                         <Button 
-                          onClick={() => window.location.href = 'tel:2818099901'}
+                          onClick={() => window.location.href = support.tel}
                           variant="outline"
                           className="w-full border-accent/50 text-accent hover:bg-accent/10"
                         >
                           <Phone className="h-4 w-4 mr-2" />
                           Call Support
                         </Button>
+                        )}
                       </div>
 
                       <div className="space-y-3">

@@ -61,9 +61,13 @@ export const BookingConfirmedEmail = (props: BookingConfirmedEmailProps) => (
       </Section>
     )}
 
-    <Text style={supportText}>
-      Questions? Call us at <strong>{props.support_phone}</strong> or reply to this email.
-    </Text>
+    {props.support_phone ? (
+      <Text style={supportText}>
+        Questions? Call us at <strong>{props.support_phone}</strong> or reply to this email.
+      </Text>
+    ) : (
+      <Text style={supportText}>Questions? Reply to this email.</Text>
+    )}
   </EmailBase>
 );
 

@@ -13,7 +13,8 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { validateServiceAreaZipCode, getNearestServiceableZipCodes, SERVICE_AREA_INFO } from '@/lib/service-area-validation';
+import { useSupportContact } from '@/hooks/useSupportContact';
+import { validateServiceAreaZipCode, getNearestServiceableZipCodes } from '@/lib/service-area-validation';
 import { hasUsedPromoOffer, CustomerData, markPromoOfferUsed } from '@/lib/offer-tracking';
 // BookingCheckoutPage removed - keeping simplified booking flow
 import { toLocalDate } from '@/lib/date-helpers';
@@ -337,6 +338,7 @@ const addOns = [
 
 export function LegacyBookingFlow() {
   const navigate = useNavigate();
+  const support = useSupportContact();
   
   // Scroll refs for auto-scroll functionality
   const serviceTypeRef = useRef<HTMLDivElement>(null);
@@ -1051,7 +1053,7 @@ export function LegacyBookingFlow() {
                               {tier.requiresQuote ? (
                                 <div>
                                   <p className="text-lg font-bold text-primary">Call for Quote</p>
-                                  <p className="text-xs text-muted-foreground">(281) 809-9901</p>
+                                  <p className="text-xs text-muted-foreground">{support.display || 'Call for quote'}</p>
                                 </div>
                               ) : (
                                 <div>
@@ -1438,7 +1440,7 @@ export function LegacyBookingFlow() {
                       <Input
                         id="contactNumber"
                         type="tel"
-                        placeholder="(857) 754-4557"
+                        placeholder="(555) 123-4567"
                         value={bookingData.contactNumber || ''}
                         onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
                       />

@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Check, Info } from "lucide-react";
+import { useSupportContact } from "@/hooks/useSupportContact";
 interface ServiceDetailsDialogProps {
   cleaningType: string;
   serviceType: string;
@@ -9,6 +10,7 @@ export const ServiceDetailsDialog = ({
   cleaningType,
   serviceType
 }: ServiceDetailsDialogProps) => {
+  const support = useSupportContact();
   const getServiceDetails = () => {
     if (cleaningType === "deep") {
       return {
@@ -97,7 +99,7 @@ export const ServiceDetailsDialog = ({
             </div>}
 
           <div className="pt-4 border-t text-center">
-            <p className="text-sm text-muted-foreground">alphaluxclean | (281) 809-9901</p>
+            <p className="text-sm text-muted-foreground">alphaluxclean{support.display ? ` | ${support.display}` : ''}</p>
             <p className="text-sm text-muted-foreground">New York State | support@alphaluxcleaning.com</p>
           </div>
         </div>

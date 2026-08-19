@@ -129,7 +129,15 @@ serve(async (req) => {
         payment_status: 'completed'
       };
 
-      const zapierResponse = await fetch("https://hooks.zapier.com/hooks/catch/5011258/uusrlmn/", {
+      const zapierUrl = (
+        Deno.env.get("ZAPIER_SUBCONTRACTOR_PAYMENT_WEBHOOK_URL") ||
+        Deno.env.get("ZAPIER_WEBHOOK_URL") ||
+        ""
+      ).trim();
+      if (!zapierUrl) {
+        console.log("Zapier webhook skipped — ZAPIER_SUBCONTRACTOR_PAYMENT_WEBHOOK_URL is not configured");
+      } else {
+      const zapierResponse = await fetch(zapierUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -146,6 +154,7 @@ serve(async (req) => {
         logStep('Subscription transaction sent to Zapier successfully');
       } else {
         logStep('Warning: Failed to send subscription transaction to Zapier', { status: zapierResponse.status });
+      }
       }
     } catch (zapierError) {
       logStep('Warning: Zapier webhook error for subscription', { error: zapierError });

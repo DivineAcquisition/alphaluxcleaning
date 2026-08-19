@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/24603039/um6me4v/";
+const ZAPIER_WEBHOOK_URL = (Deno.env.get("ZAPIER_WEBHOOK_URL") || "").trim();
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -35,7 +35,11 @@ serve(async (req) => {
       source: 'alphalux_clean'
     };
 
-    logStep("Sending to Zapier webhook", { url: ZAPIER_WEBHOOK_URL });
+    if (!ZAPIER_WEBHOOK_URL) {
+      throw new Error("ZAPIER_WEBHOOK_URL is not configured");
+    }
+
+    logStep("Sending to Zapier webhook");
 
     // Send to Zapier webhook
     const response = await fetch(ZAPIER_WEBHOOK_URL, {

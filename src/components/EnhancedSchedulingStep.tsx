@@ -200,7 +200,7 @@ export function EnhancedSchedulingStep({ bookingData, updateBookingData, onNext,
             <Input
               id="contactNumber"
               type="tel"
-              placeholder="(857) 754-4557"
+              placeholder="(555) 123-4567"
               value={bookingData.contactNumber}
               onChange={(e) => updateBookingData({ contactNumber: e.target.value })}
               className="border-border focus:border-primary"

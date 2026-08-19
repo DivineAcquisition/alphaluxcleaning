@@ -6,7 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/dc258af1-b167-4439-9616-c6b853925f29'
+const WEBHOOK_URL = (
+  Deno.env.get('GHL_CUSTOMER_PAYMENT_WEBHOOK_URL') ||
+  Deno.env.get('GHL_LEAD_WEBHOOK_URL') ||
+  ''
+).trim()
 
 const logStep = (step: string, data?: any) => {
   console.log(`[customer-payment-webhook] ${step}`, data ? JSON.stringify(data) : '');
@@ -83,6 +87,14 @@ serve(async (req) => {
         environment: Deno.env.get('SUPABASE_URL')?.includes('localhost') ? 'development' : 'production'
       }
     };
+
+    if (!WEBHOOK_URL) {
+      logStep('GHL webhook skipped — GHL_CUSTOMER_PAYMENT_WEBHOOK_URL is not configured');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Payment recorded; GHL webhook not configured' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     logStep('Sending webhook to GHL', { webhookUrl: WEBHOOK_URL });
 

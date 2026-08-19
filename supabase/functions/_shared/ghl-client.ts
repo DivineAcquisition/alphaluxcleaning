@@ -6,8 +6,8 @@
 //              GOHIGHLEVEL_API_KEY
 //   location : GHL_LOCATION_ID  →  GOHIGHLEVEL_LOCATION_ID
 //
-// Both are required and both must belong to the SAME subaccount — see
-// the note above `DEFAULT_OWNER_EMAIL`. `/admin/integrations/housecall-pro`
+// Opportunity owner is resolved from GHL_OWNER_USER_ID or
+// GHL_OWNER_EMAIL — never a baked-in inbox. `/admin/integrations/housecall-pro`
 // → Test Connection reports which of the two is wrong.
 //
 // Private Integration tokens are *location-scoped*, so every call must
@@ -61,11 +61,6 @@ export const GHL_CONVERSATIONS_API_VERSION = '2021-04-15';
 //
 // Missing configuration therefore fails loudly, and `ghlIsConfigured()`
 // lets callers skip GHL work rather than hammer a broken client.
-
-// Default opportunity owner — matched against the location's user list
-// when neither GHL_OWNER_USER_ID nor GHL_OWNER_EMAIL is set. Not a
-// credential.
-const DEFAULT_OWNER_EMAIL = 'info@alphaluxcleaning.com';
 
 export interface GHLCustomFieldValue {
   /** Custom field id (preferred) or key. LeadConnector accepts either. */
@@ -461,7 +456,7 @@ export function createGhlClient(overrides?: { token?: string; locationId?: strin
       ownerIdCache = explicit;
       return explicit;
     }
-    const ownerEmail = (Deno.env.get('GHL_OWNER_EMAIL') || DEFAULT_OWNER_EMAIL)
+    const ownerEmail = (Deno.env.get('GHL_OWNER_EMAIL') || '')
       .trim()
       .toLowerCase();
     if (!ownerEmail) {

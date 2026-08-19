@@ -138,7 +138,7 @@ export function ServiceCompletionTest() {
       id: "test_order_123",
       customer_name: "Sarah Johnson",
       customer_email: "sarah.johnson@example.com",
-      customer_phone: "(281) 809-9901",
+      customer_phone: "(555) 123-4567",
       street_address: "123 Oak Street",
       city: "New York",
       state: "CA",
@@ -290,7 +290,7 @@ export function ServiceCompletionTest() {
         )}
 
         <div className="text-xs text-muted-foreground space-y-2">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/</p>
+          <p>Sends to the live Zapier URL in edge-function secrets.</p>
           <p>This webhook sends comprehensive service completion data including:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Order and customer details with split addresses</li>

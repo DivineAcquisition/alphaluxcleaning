@@ -21,19 +21,11 @@ import { toast } from 'sonner';
  * Most call sites don't hit `get-stripe-config` —
  * `create-payment-intent` returns the publishable key inline next
  * to the client secret, and the embedded form boots Stripe via
- * `getStripeForKey(publishableKey)`. The fallbacks below are a UI
- * safety net for paths that need Stripe.js before a booking exists.
+ * `getStripeForKey(publishableKey)`. Keys come from live
+ * `get-stripe-config` / env — never a baked-in pk_live_ fallback.
  */
 
 export type StripeAccountSlug = 'try' | 'book';
-
-/**
- * Bundled fallback publishable key for the BOOK account
- * (`acct_1S6xTvEFKFvC92D7` — handles all CA + TX payments).
- * Publishable keys are public, so bundling is safe.
- */
-const FALLBACK_PUBLISHABLE_KEY_BOOK =
-  'pk_live_51S6xTvEFKFvC92D7wCSKXNX71yE6nc4Kwv2ilwuq2PD7ZDDhdfxvK4OLaJpLNAB8CiKjiLSpNWpw9fugWOdP8Q2300jcYkIDjd';
 
 /** Two-letter US state codes that route to the BOOK Stripe account.
  *  NY (and any unknown / blank state) routes to the legacy TRY. */
@@ -111,9 +103,6 @@ export const getStripeAccountSlug = (
   if (fromLocation) return fromLocation;
   return slugFromHost();
 };
-
-const FALLBACK_PUBLISHABLE_KEY =
-  'pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat';
 
 declare global {
   interface Window {
@@ -198,16 +187,6 @@ const createStripePromise = (): Promise<Stripe | null> => {
           } catch (err) {
             console.warn('⚠️ fetchStripeKey threw', err);
           }
-        }
-
-        if (!publishableKey || !isValidKey(publishableKey)) {
-          console.warn(
-            `⚠️ No remote Stripe key available, using bundled ${accountSlug}-account fallback publishable key`,
-          );
-          publishableKey =
-            accountSlug === 'book'
-              ? FALLBACK_PUBLISHABLE_KEY_BOOK
-              : FALLBACK_PUBLISHABLE_KEY;
         }
 
         if (!publishableKey || !isValidKey(publishableKey)) {

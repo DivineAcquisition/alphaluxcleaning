@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 const formatPrice = (price: number, multiplier: number = 1): string => {
   if (price === 0) return "Custom Quote";
@@ -30,6 +31,7 @@ const formatMonthlyTotal = (basePrice: number, discount: number, cleansPerMonth:
 };
 
 const PricingSheet = () => {
+  const support = useSupportContact();
   const handlePrint = () => {
     window.print();
   };
@@ -58,7 +60,7 @@ const PricingSheet = () => {
           <div className="text-center mb-8 pb-6 border-b-2 border-primary">
             <h1 className="text-4xl font-bold text-primary mb-2">ALPHA LUX CLEAN</h1>
             <p className="text-xl text-muted-foreground">Professional Cleaning Services — Pricing Guide</p>
-            <p className="text-sm text-muted-foreground mt-2">📞 (857) 754-4557 | 🌐 alphaluxclean.com | ✉️ support@alphaluxcleaning.com</p>
+            <p className="text-sm text-muted-foreground mt-2">{support.display ? `📞 ${support.display} | ` : ''}🌐 alphaluxclean.com | ✉️ support@alphaluxcleaning.com</p>
           </div>
 
           {/* State Pricing Tables - One-Time Services */}
@@ -103,7 +105,7 @@ const PricingSheet = () => {
                           <div className="text-xs text-muted-foreground">{customTier.bedroomRange}</div>
                         </TableCell>
                         <TableCell className="text-center font-semibold text-muted-foreground" colSpan={3}>
-                          Call for Custom Quote — (857) 754-4557
+                          Call for Custom Quote{support.display ? ` — ${support.display}` : ''}
                         </TableCell>
                       </TableRow>
                     )}
@@ -186,7 +188,7 @@ const PricingSheet = () => {
                             <div>{customTier.label}</div>
                           </TableCell>
                           <TableCell className="text-center font-semibold text-muted-foreground" colSpan={3}>
-                            Call for Custom Quote — (857) 754-4557
+                            Call for Custom Quote{support.display ? ` — ${support.display}` : ''}
                           </TableCell>
                         </TableRow>
                       )}
@@ -324,7 +326,7 @@ const PricingSheet = () => {
           {/* Footer */}
           <div className="text-center pt-6 border-t-2 border-primary">
             <p className="text-sm text-muted-foreground mb-2">For questions or custom quotes, contact us:</p>
-            <p className="text-lg font-bold text-primary">📞 (857) 754-4557 | ✉️ support@alphaluxcleaning.com</p>
+            <p className="text-lg font-bold text-primary">{support.display ? `📞 ${support.display} | ` : ''}✉️ support@alphaluxcleaning.com</p>
             <p className="text-xs text-muted-foreground mt-3">
               Prices effective as of {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. 
               Subject to change. All services include a professional 2-person cleaning crew.

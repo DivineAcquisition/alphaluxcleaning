@@ -189,8 +189,15 @@ serve(async (req) => {
     logStep("Application submitted successfully", { applicationId: application.id });
 
     // Send data to Zapier webhook
-    const zapierWebhookUrl = "https://hooks.zapier.com/hooks/catch/5011258/u6vy7q9/";
-    
+    const zapierWebhookUrl = (
+      Deno.env.get("ZAPIER_SUBCONTRACTOR_APPLICATION_WEBHOOK_URL") ||
+      Deno.env.get("ZAPIER_WEBHOOK_URL") ||
+      ""
+    ).trim();
+
+    if (!zapierWebhookUrl) {
+      logStep("Zapier webhook skipped — ZAPIER_SUBCONTRACTOR_APPLICATION_WEBHOOK_URL is not configured");
+    } else {
     try {
       const zapierPayload = {
         timestamp: new Date().toISOString(),
@@ -236,6 +243,7 @@ serve(async (req) => {
     } catch (zapierError) {
       logStep("Error sending to Zapier", { error: zapierError });
       // Don't fail the entire request if Zapier fails
+    }
     }
 
     return new Response(

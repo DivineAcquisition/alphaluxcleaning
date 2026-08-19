@@ -212,7 +212,7 @@ const NotificationPreferences: React.FC = () => {
               <Input
                 id="phone-number"
                 type="tel"
-                placeholder="+1 (857) 754-4557"
+                placeholder="+1 (555) 123-4567"
                 value={preferences.phone_number || ''}
                 onChange={(e) => updatePreference('phone_number', e.target.value)}
               />
