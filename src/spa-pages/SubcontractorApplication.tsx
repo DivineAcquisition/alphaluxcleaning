@@ -309,7 +309,7 @@ export default function SubcontractorApplication() {
                       const formatted = formatPhoneNumber(e.target.value);
                       handleInputChange('phone', formatted);
                     }}
-                    placeholder="(857) 754-4557"
+                    placeholder="(555) 123-4567"
                     className={hasError('phone') ? 'border-destructive' : ''}
                   />
                   <FormFieldError error={getError('phone')} />
@@ -474,7 +474,7 @@ export default function SubcontractorApplication() {
                       const formatted = formatPhoneNumber(e.target.value);
                       handleInputChange('emergency_contact_phone', formatted);
                     }}
-                    placeholder="(857) 754-4557"
+                    placeholder="(555) 123-4567"
                     className={hasError('emergency_contact_phone') ? 'border-destructive' : ''}
                   />
                   <FormFieldError error={getError('emergency_contact_phone')} />

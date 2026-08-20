@@ -45,33 +45,6 @@ export const TRY_ACCOUNT_SLUG_LEGACY = "alphalux_ny";
 export const BOOK_ACCOUNT_SLUG = "book";
 
 /**
- * Hard-coded fallback for the TRY account's publishable key.
- * Publishable keys are public by design (they ship to the browser
- * already), so bundling them as a fallback is safe and means a
- * missing Supabase secret can't blank the payment form.
- *
- * `acct_1TONej6CLM640Ljs` — original AlphaLux Cleaning Stripe account
- * (NY operations).
- */
-export const FALLBACK_PUBLISHABLE_KEY_TRY =
-  "pk_live_51TONej6CLM640LjskzQLH22Fnnw3c1fYFzJ8zodmoCDYSkKAAuFZfpDYFQEQMvMxWXaoiAfDbT0FSlJuFjjqqdoT00PzmRxxat";
-
-/**
- * Hard-coded fallback for the BOOK account's publishable key.
- *
- * `acct_1S6xTvEFKFvC92D7` — new Stripe account that handles every
- * payment from CA + TX customers. The publishable key is public so
- * bundling it is safe; the matching secret + webhook secret live in
- * Supabase env (`STRIPE_SECRET_KEY_BOOK`, `STRIPE_WEBHOOK_SECRET_BOOK`).
- */
-export const FALLBACK_PUBLISHABLE_KEY_BOOK =
-  "pk_live_51S6xTvEFKFvC92D7wCSKXNX71yE6nc4Kwv2ilwuq2PD7ZDDhdfxvK4OLaJpLNAB8CiKjiLSpNWpw9fugWOdP8Q2300jcYkIDjd";
-
-/** @deprecated Use FALLBACK_PUBLISHABLE_KEY_TRY. Preserved as an
- *  alias so any out-of-tree imports keep compiling. */
-export const FALLBACK_PUBLISHABLE_KEY = FALLBACK_PUBLISHABLE_KEY_TRY;
-
-/**
  * Two-letter US state codes that route to the BOOK Stripe account.
  * Anything outside this set (currently NY, plus any unknown / blank
  * state) routes to the legacy TRY account.
@@ -249,31 +222,22 @@ export function getStripeSecretKey(
 }
 
 /**
- * Resolve the Stripe publishable key for the given account.
+ * Resolve the Stripe publishable key for the given account from live
+ * env only. Never bake a pk_live_ fallback into the bundle — a rotated
+ * key in source would keep charging the wrong account.
  *
- * Both accounts ship with a bundled fallback so a missing Supabase
- * secret can't blank the payment form. Publishable keys are public
- * by design, so this is safe.
- *
- *   * try  → STRIPE_PUBLISHABLE_KEY_OVERRIDE → bundled try fallback
- *   * book → STRIPE_PUBLISHABLE_KEY_BOOK    → bundled book fallback
- *
- * Returns the bundled fallback when no env override is set so this
- * function never returns null. (Earlier behavior returned null for
- * book when the env var was missing; with the BOOK pk now bundled
- * that failure mode is gone.)
+ *   * book → STRIPE_PUBLISHABLE_KEY_BOOK
+ *   * try  → STRIPE_PUBLISHABLE_KEY_OVERRIDE, then STRIPE_PUBLISHABLE_KEY
  */
 export function getStripePublishableKey(
   slug: StripeAccountSlug = "try",
-): string {
+): string | null {
   if (slug === "book") {
     const k = firstEnv("STRIPE_PUBLISHABLE_KEY_BOOK");
-    if (k && isValidPublishableKey(k)) return k;
-    return FALLBACK_PUBLISHABLE_KEY_BOOK;
+    return k && isValidPublishableKey(k) ? k : null;
   }
-  const override = firstEnv("STRIPE_PUBLISHABLE_KEY_OVERRIDE");
-  if (override && isValidPublishableKey(override)) return override;
-  return FALLBACK_PUBLISHABLE_KEY_TRY;
+  const override = firstEnv("STRIPE_PUBLISHABLE_KEY_OVERRIDE", "STRIPE_PUBLISHABLE_KEY");
+  return override && isValidPublishableKey(override) ? override : null;
 }
 
 /**

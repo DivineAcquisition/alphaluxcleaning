@@ -1,5 +1,6 @@
 import { Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSupportContact } from '@/hooks/useSupportContact';
 // Use the same square brand mark that the BrandedLoader full-page
 // loader and the top navbar display, so the booking flow's
 // progress-bar header keeps the same visual identity.
@@ -12,6 +13,7 @@ interface BookingProgressBarProps {
 
 export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressBarProps) {
   const progress = (currentStep / totalSteps) * 100;
+  const support = useSupportContact();
 
   return (
     <div className="sticky top-0 z-50 bg-muted text-foreground border-b border-border shadow-sm bg-slate-100">
@@ -47,19 +49,21 @@ export function BookingProgressBar({ currentStep, totalSteps }: BookingProgressB
                 <span className="hidden sm:inline">Visit Website</span>
               </a>
             </Button>
+            {support.e164 && (
             <Button
               size="sm"
               className="rounded-full"
               asChild
             >
               <a
-                href="tel:+18577544557"
+                href={support.tel}
                 className="flex items-center gap-2"
               >
                 <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">(857) 754-4557</span>
+                <span className="hidden sm:inline">{support.display}</span>
               </a>
             </Button>
+            )}
           </div>
         </div>
 

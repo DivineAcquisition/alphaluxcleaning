@@ -41,6 +41,7 @@ import {
   NEW_CUSTOMER_PROMO_PERCENT,
   previewPromoDiscount,
 } from '@/lib/promo';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 /**
  * Public `/pricing` rate card.
@@ -60,6 +61,7 @@ import {
  */
 export default function Pricing() {
   const navigate = useNavigate();
+  const support = useSupportContact();
   const selectedState: StateCode = 'NY';
   const stateConfig = STATE_CONFIGS.find((s) => s.code === selectedState);
   if (!stateConfig) return null;
@@ -144,15 +146,17 @@ export default function Pricing() {
                 Get your free quote
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              {support.e164 && (
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => window.open('tel:+18577544557', '_self')}
+                onClick={() => window.open(support.tel, '_self')}
                 className="gap-2"
               >
                 <Phone className="h-4 w-4" />
-                (857) 754-4557
+                {support.display}
               </Button>
+              )}
             </div>
 
             <p className="text-xs text-muted-foreground mt-6 inline-flex items-center gap-2">
@@ -260,13 +264,17 @@ export default function Pricing() {
                         </TableCell>
                         <TableCell colSpan={3}>
                           <span className="text-sm">
-                            Custom quote — call{' '}
-                            <a
-                              href="tel:+18577544557"
-                              className="font-semibold text-primary"
-                            >
-                              (857) 754-4557
-                            </a>
+                            Custom quote{support.e164 ? (
+                              <>
+                                {' '}— call{' '}
+                                <a
+                                  href={support.tel}
+                                  className="font-semibold text-primary"
+                                >
+                                  {support.display}
+                                </a>
+                              </>
+                            ) : null}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -562,15 +570,17 @@ export default function Pricing() {
                 Book now
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              {support.e164 && (
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => window.open('tel:+18577544557', '_self')}
+                onClick={() => window.open(support.tel, '_self')}
                 className="gap-2 bg-white/10 hover:bg-white/20 border-white/30 text-white"
               >
                 <Phone className="h-4 w-4" />
-                (857) 754-4557
+                {support.display}
               </Button>
+              )}
             </div>
 
             <p className="text-xs mt-6 opacity-75 inline-flex items-center gap-2">

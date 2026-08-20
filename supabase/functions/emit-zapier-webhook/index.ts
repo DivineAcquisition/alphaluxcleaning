@@ -148,7 +148,10 @@ serve(async (req) => {
   try {
     logStep("Webhook emitter started");
 
-    const zapierUrl = "https://hooks.zapier.com/hooks/catch/24603039/um6me4v/";
+    const zapierUrl = (Deno.env.get("ZAPIER_WEBHOOK_URL") || "").trim();
+    if (!zapierUrl) {
+      throw new Error("ZAPIER_WEBHOOK_URL is not configured");
+    }
     const payload: WebhookPayload = await req.json();
 
     logStep("Payload received", { 

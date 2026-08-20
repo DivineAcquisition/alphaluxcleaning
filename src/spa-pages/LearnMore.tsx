@@ -375,7 +375,7 @@ export default function LearnMore() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="(857) 754-4557"
+                  placeholder="(555) 123-4567"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required

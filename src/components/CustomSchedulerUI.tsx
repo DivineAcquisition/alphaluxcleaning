@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toLocalDate, getTomorrowLocal } from '@/lib/date-helpers';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 interface ComprehensiveBookingData {
   bookingStep: string;
@@ -60,6 +61,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
   serviceType = 'general',
   onComplete
 }) => {
+  const support = useSupportContact();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [nextDayUpsell, setNextDayUpsell] = useState(false);
@@ -301,7 +303,7 @@ const CustomSchedulerUI: React.FC<CustomSchedulerUIProps> = ({
               5+ Days Advance Booking Required
             </p>
             <p className="text-sm text-blue-700">
-              For urgent needs, call <strong>(281) 809-9901</strong>
+              For urgent needs, call{support.display ? <> <strong>{support.display}</strong></> : ' us'}
             </p>
           </div>
         </div>

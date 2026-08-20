@@ -46,7 +46,7 @@ export default function CustomerPortalBookings() {
           total_amount: 180,
           payment_status: 'paid',
           cleaner_name: 'Maria Rodriguez',
-          cleaner_phone: '(857) 754-4557',
+          cleaner_phone: '(555) 123-4567',
           special_instructions: 'Please focus on the kitchen and bathrooms',
           receipts: [
             {

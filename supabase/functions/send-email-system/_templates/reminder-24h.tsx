@@ -28,7 +28,7 @@ export const Reminder24hEmail = (props: Reminder24hEmailProps) => {
   const window = props.time_window || "your arrival window";
   const street = props.address_line1 || props.address || "";
   const loc = [street, props.city, props.state].filter(Boolean).join(", ");
-  const support = props.support_phone || "(551) 239-9444";
+  const support = props.support_phone || "";
   const manage = props.manage_link || "https://alphaluxcleaning.com";
 
   return (
@@ -71,9 +71,11 @@ export const Reminder24hEmail = (props: Reminder24hEmailProps) => {
         <ActionButton href={manage} style={primaryButton}>
           Manage your booking
         </ActionButton>
-        <ActionButton href={`tel:${support.replace(/[^\d+]/g, "")}`} style={secondaryButton}>
-          Call {support}
-        </ActionButton>
+        {support ? (
+          <ActionButton href={`tel:${support.replace(/[^\d+]/g, "")}`} style={secondaryButton}>
+            Call {support}
+          </ActionButton>
+        ) : null}
       </Section>
 
       <Text style={footerText}>

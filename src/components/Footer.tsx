@@ -4,9 +4,11 @@ import {
   NEW_CUSTOMER_PROMO_CODE,
   NEW_CUSTOMER_PROMO_PERCENT,
 } from "@/lib/promo";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const support = useSupportContact();
   return (
     <footer className="section-alx-black mt-auto border-t border-alx-gold/15">
       <div className="container mx-auto px-4 py-12 lg:py-16">
@@ -134,15 +136,17 @@ export function Footer() {
               Contact
             </h3>
             <ul className="space-y-3 text-sm text-alx-gold-pale/80">
+              {support.e164 && (
               <li className="flex items-start gap-3">
                 <Phone className="h-4 w-4 text-alx-gold-light mt-0.5 flex-shrink-0" />
                 <a
-                  href="tel:+18577544557"
+                  href={support.tel}
                   className="hover:text-alx-gold-light transition-colors"
                 >
-                  +1 (857) 754-4557
+                  {support.display}
                 </a>
               </li>
+              )}
               <li className="flex items-start gap-3">
                 <Mail className="h-4 w-4 text-alx-gold-light mt-0.5 flex-shrink-0" />
                 <a

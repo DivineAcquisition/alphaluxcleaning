@@ -6,6 +6,8 @@
 // module wraps them in the AlphaLux shell so every lifecycle email looks
 // branded without React Email templates per step.
 
+import { getSecret } from './secrets.ts';
+
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 function fromAddress(): string {
@@ -106,7 +108,7 @@ export async function sendLifecycleEmail(opts: {
   ctaUrl?: string | null;
   ctaLabel?: string | null;
 }): Promise<LifecycleEmailResult> {
-  const apiKey = Deno.env.get('RESEND_API_KEY');
+  const apiKey = await getSecret('RESEND_API_KEY');
   if (!apiKey) return { ok: false, error: 'RESEND_API_KEY not configured' };
 
   const unsubscribeUrl = await buildUnsubscribeUrl(opts.to);

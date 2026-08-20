@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { useSupportContact } from "@/hooks/useSupportContact";
 interface ServiceIncludedProps {
   cleaningType: string;
   serviceType: string;
@@ -8,6 +9,7 @@ export const ServiceIncluded = ({
   cleaningType,
   serviceType
 }: ServiceIncludedProps) => {
+  const support = useSupportContact();
   const getServiceDetails = () => {
     if (cleaningType === "deep") {
       return {
@@ -86,7 +88,7 @@ export const ServiceIncluded = ({
           </div>}
 
         <div className="pt-4 border-t text-center">
-          <p className="text-sm text-muted-foreground">alphaluxclean | (281) 809-9901</p>
+          <p className="text-sm text-muted-foreground">alphaluxclean{support.display ? ` | ${support.display}` : ''}</p>
           <p className="text-sm text-muted-foreground">New York State | support@alphaluxcleaning.com</p>
         </div>
       </CardContent>

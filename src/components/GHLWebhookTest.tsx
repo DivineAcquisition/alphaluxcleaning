@@ -28,7 +28,7 @@ export const GHLWebhookTest = () => {
         customer: {
           name: 'Test Customer',
           email: 'test@example.com',
-          phone: '(857) 754-4557',
+          phone: '(555) 123-4567',
           address: {
             street: '123 Test Street',
             city: 'New York',
@@ -155,9 +155,6 @@ export const GHLWebhookTest = () => {
           <div className="flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">
               Test your GoHighLevel inbound webhook with sample payment data
-            </p>
-            <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
-              Webhook URL: https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/94998e4d-5fcc-45ea-a91f-2585e8f88600
             </p>
           </div>
           

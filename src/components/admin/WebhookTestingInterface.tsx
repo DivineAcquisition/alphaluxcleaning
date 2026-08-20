@@ -45,7 +45,7 @@ export function WebhookTestingInterface() {
     customerInfo: {
       name: 'Test Customer',
       email: 'test@example.com',
-      phone: '(857) 754-4557',
+      phone: '(555) 123-4567',
       address: '123 Test Street',
       city: 'New York',
       state: 'CA',

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, Loader2 } from 'lucide-react';
 import { BrandedLoader } from '@/components/BrandedLoader';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 export default function BookingConfirmation() {
   const params = useParams();
@@ -17,6 +18,7 @@ export default function BookingConfirmation() {
   const [booking, setBooking] = useState<any>(null);
   const [customer, setCustomer] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const support = useSupportContact();
 
   useEffect(() => {
     if (bookingId) {
@@ -337,7 +339,10 @@ export default function BookingConfirmation() {
           </div>
           
           <p className="text-sm text-center text-muted-foreground mt-6">
-            Need help? Call <strong>(857) 754-4557</strong> or reply to your confirmation email
+            Need help?{support.e164 ? (
+              <> Call <strong>{support.display}</strong> or</>
+            ) : null}{' '}
+            reply to your confirmation email
           </p>
           
           <div className="mt-6 text-center">

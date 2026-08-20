@@ -11,6 +11,7 @@
 // not add a second max-width wrapper.
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   addDays,
@@ -60,19 +61,16 @@ import {
   type OfferId,
 } from '@/lib/pricing-internal';
 import {
+  defaultStateCode,
+  displayNumberForState,
+  fetchSmsStateNumbers,
+  stateFromZip,
+} from '@/lib/sms-state-numbers';
+import {
   Loader2, Copy, CheckCircle2, Phone, DollarSign, RotateCcw, Home, CalendarDays,
   Sparkles, AlertTriangle, MapPin, ChevronLeft, ChevronRight, Clock,
   Sun, CloudSun, Moon, Mail,
 } from 'lucide-react';
-
-const STATES = ['NJ', 'NY', 'TX', 'CA'];
-
-const SUPPORT_NUMBERS: Record<string, string> = {
-  NJ: '(551) 239-9444',
-  TX: '(972) 559-0223',
-  CA: '(323) 300-5528',
-  NY: '(631) 366-8565',
-};
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -91,7 +89,7 @@ function slotWindow(value: string) {
 
 const INITIAL = {
   firstName: '', lastName: '', email: '', phone: '',
-  addressLine1: '', addressLine2: '', city: '', state: 'NJ', zipCode: '',
+  addressLine1: '', addressLine2: '', city: '', state: '', zipCode: '',
   homeSizeId: '1501_2000', offerId: 'deep' as OfferId,
   cadence: 'biweekly' as Cadence,
   bedrooms: '', bathrooms: '',
@@ -387,6 +385,25 @@ export default function InternalBooking() {
   const [leadSource, setLeadSource] = useState<string | null>(null);
   const [leadLoadError, setLeadLoadError] = useState<string | null>(null);
 
+  const { data: stateNumbers = [] } = useQuery({
+    queryKey: ['sms-state-numbers'],
+    queryFn: fetchSmsStateNumbers,
+  });
+  const states = stateNumbers.map((r) => r.state_code);
+  const fallbackState = defaultStateCode(stateNumbers);
+  const supportDisplay = displayNumberForState(stateNumbers, form.state);
+
+  useEffect(() => {
+    if (!stateNumbers.length) return;
+    setForm((p) => {
+      if (p.state && states.includes(p.state)) return p;
+      const fromZip = stateFromZip(p.zipCode);
+      const next = (fromZip && states.includes(fromZip) ? fromZip : fallbackState) || p.state;
+      if (next === p.state) return p;
+      return { ...p, state: next };
+    });
+  }, [stateNumbers, fallbackState]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!leadToken) return;
     let cancelled = false;
@@ -405,9 +422,9 @@ export default function InternalBooking() {
         setLeadLoadError('This lead has already been booked on this link.');
         return;
       }
-      const state = STATES.includes(String(data.state_code || '').toUpperCase())
-        ? String(data.state_code).toUpperCase()
-        : 'NJ';
+      const rawState = String(data.state_code || '').toUpperCase();
+      const fromZip = stateFromZip(data.zip_code);
+      const state = rawState || fromZip || '';
       setLeadLocked(true);
       setLeadSource(data.source || 'GHL');
       setForm((p) => ({
@@ -418,7 +435,7 @@ export default function InternalBooking() {
         phone: data.phone || p.phone,
         zipCode: data.zip_code || p.zipCode,
         city: data.city || p.city,
-        state,
+        state: state || p.state,
         invoiceMode: 'deposit_plus_preauth',
       }));
     })();
@@ -613,7 +630,7 @@ export default function InternalBooking() {
             </span>
           )}
           <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {form.state} · {SUPPORT_NUMBERS[form.state] || '—'}
+            {form.state}{supportDisplay ? ` · ${supportDisplay}` : ''}
           </span>
         </div>
         <div>
@@ -816,17 +833,25 @@ export default function InternalBooking() {
               </div>
               <div className="col-span-6 md:col-span-2">
                 <Field label="State">
-                  <Select value={form.state} onValueChange={(v) => set('state', v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select value={form.state || undefined} onValueChange={(v) => set('state', v)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>
-                      {STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      {states.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </Field>
               </div>
               <div className="col-span-6 md:col-span-2">
                 <Field label="ZIP" required>
-                  <Input maxLength={5} value={form.zipCode} onChange={(e) => set('zipCode', e.target.value)} />
+                  <Input maxLength={5} value={form.zipCode} onChange={(e) => {
+                    const zip = e.target.value;
+                    const inferred = stateFromZip(zip);
+                    setForm((p) => ({
+                      ...p,
+                      zipCode: zip,
+                      state: inferred && states.includes(inferred) ? inferred : p.state,
+                    }));
+                  }} />
                 </Field>
               </div>
             </div>
@@ -955,14 +980,14 @@ export default function InternalBooking() {
                 />
                 <Label htmlFor="send-comms" className="text-xs font-normal leading-snug">
                   Send confirmation SMS (and queue 24h / 2h SMS + email reminders). Support line{' '}
-                  {SUPPORT_NUMBERS[form.state] || form.state}.
+                  {supportDisplay || form.state || 'the customer\'s market'}.
                 </Label>
               </div>
             )}
             {leadLocked && (
               <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                OpenPhone will text the pay link from {SUPPORT_NUMBERS[form.state] || form.state}.
+                OpenPhone will text the pay link from {supportDisplay || form.state || 'the customer\'s market number'}.
                 Confirmation email plus 24h / 2h SMS and email reminders are queued automatically.
               </p>
             )}

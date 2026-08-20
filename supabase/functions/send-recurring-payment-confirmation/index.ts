@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { resolveSupportNumber } from '../_shared/openphone.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,6 +57,26 @@ serve(async (req) => {
       subject = `✅ Monthly Payment ${paymentNumber} of ${totalPayments} Received`;
       const paymentsRemaining = totalPayments - paymentNumber;
       statusMessage = `Payment ${paymentNumber} of ${totalPayments} has been processed. You have ${paymentsRemaining} payment${paymentsRemaining > 1 ? 's' : ''} remaining.`;
+    }
+
+    let supportLine = 'Questions? Reply to this email.';
+    try {
+      const { data: booking } = await supabaseClient
+        .from('bookings')
+        .select('zip_code, state, customer_id')
+        .eq('id', bookingId)
+        .maybeSingle();
+      const { data: customer } = booking?.customer_id
+        ? await supabaseClient.from('customers').select('state, postal_code').eq('id', booking.customer_id).maybeSingle()
+        : { data: null };
+      const support = await resolveSupportNumber({
+        state: booking?.state || customer?.state,
+        zip: booking?.zip_code || customer?.postal_code,
+        supabase: supabaseClient,
+      });
+      supportLine = `Questions? Reply to this email or call us at ${support.display}`;
+    } catch (err) {
+      logStep('support phone lookup failed', { error: String(err) });
     }
 
     // Build the email HTML
@@ -116,7 +137,7 @@ serve(async (req) => {
           `}
           
           <p style="font-size: 14px; color: #64748b; margin-top: 30px;">
-            Questions? Reply to this email or call us at (972) 559-0223
+            ${supportLine}
           </p>
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">

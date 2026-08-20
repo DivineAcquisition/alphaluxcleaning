@@ -128,7 +128,7 @@ export const PromoAppliedEmail = ({
             </Section>
 
             <Text style={helpText}>
-              Questions? Reply to this email or call us at <strong>(972) 559-0223</strong>
+              Questions? Reply to this email.
             </Text>
           </Section>
 
@@ -136,8 +136,6 @@ export const PromoAppliedEmail = ({
             <Text style={footerText}>
               AlphaLux Clean - Premium Cleaning Services
               <br />
-              <Link href="tel:9725590223" style={footerLink}>(972) 559-0223</Link>
-              {" • "}
               <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>support@alphaluxcleaning.com</Link>
             </Text>
           </Section>

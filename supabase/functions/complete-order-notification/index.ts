@@ -236,7 +236,15 @@ serve(async (req) => {
 
       // Send test data to Zapier webhook
       try {
-        const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/', {
+        const completionWebhookUrl = (
+          Deno.env.get('ZAPIER_SERVICE_COMPLETION_WEBHOOK_URL') ||
+          Deno.env.get('ZAPIER_WEBHOOK_URL') ||
+          ''
+        ).trim();
+        if (!completionWebhookUrl) {
+          logStep('Zapier webhook skipped — ZAPIER_SERVICE_COMPLETION_WEBHOOK_URL is not configured');
+        } else {
+        const webhookResponse = await fetch(completionWebhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -256,6 +264,7 @@ serve(async (req) => {
           status: webhookStatus,
           correlationId 
         });
+        }
       } catch (webhookError) {
         logStep("Error sending test completion data to Zapier", { 
           error: webhookError.message,
@@ -546,7 +555,15 @@ serve(async (req) => {
         }
       };
 
-      const webhookResponse = await fetch('https://hooks.zapier.com/hooks/catch/5011258/u6v0pgk/', {
+      const completionWebhookUrl = (
+        Deno.env.get('ZAPIER_SERVICE_COMPLETION_WEBHOOK_URL') ||
+        Deno.env.get('ZAPIER_WEBHOOK_URL') ||
+        ''
+      ).trim();
+      if (!completionWebhookUrl) {
+        logStep('Zapier webhook skipped — ZAPIER_SERVICE_COMPLETION_WEBHOOK_URL is not configured');
+      } else {
+      const webhookResponse = await fetch(completionWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -558,6 +575,7 @@ serve(async (req) => {
         logStep("Service completion data sent to Zapier successfully");
       } else {
         logStep("Failed to send completion data to Zapier", { status: webhookResponse.status });
+      }
       }
     } catch (webhookError) {
       logStep("Error sending completion data to Zapier", webhookError);

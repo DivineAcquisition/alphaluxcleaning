@@ -15,7 +15,7 @@
 // input instead of breaking the booking form.
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { getSecret } from "../_shared/secrets.ts";
+import { getSecret, getSecretFromDb } from "../_shared/secrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +38,11 @@ serve(async (req) => {
     });
 
   try {
-    const apiKey = await getSecret("GOOGLE_PLACES_API_KEY", ["GOOGLE_MAPS_API_KEY"]);
+    // Prefer app_secrets so a stale dashboard env var cannot blank the
+    // Internal Booking address autocomplete.
+    const apiKey =
+      (await getSecretFromDb("GOOGLE_PLACES_API_KEY")) ||
+      (await getSecret("GOOGLE_PLACES_API_KEY", ["GOOGLE_MAPS_API_KEY"]));
     return respond(apiKey || "");
   } catch (error) {
     console.error("[google-places-key]", error);

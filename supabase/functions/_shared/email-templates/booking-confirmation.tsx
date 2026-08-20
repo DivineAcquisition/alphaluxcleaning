@@ -39,6 +39,7 @@ interface BookingConfirmationEmailProps {
   address: string;
   totalAmount: string;
   manageUrl: string;
+  supportPhone?: string;
 }
 
 export const BookingConfirmationEmail = ({
@@ -50,6 +51,7 @@ export const BookingConfirmationEmail = ({
   address,
   totalAmount,
   manageUrl,
+  supportPhone,
 }: BookingConfirmationEmailProps) => {
   const manageUrlWithBooking = `${manageUrl}?booking=${bookingId}`;
   
@@ -118,7 +120,7 @@ export const BookingConfirmationEmail = ({
             </Section>
 
             <Text style={text}>
-              You'll receive a reminder 24 hours before your scheduled service. If you need to make any changes, just click the button above or call us at <strong>(972) 559-0223</strong>.
+              You'll receive a reminder 24 hours before your scheduled service. If you need to make any changes, just click the button above{supportPhone ? <> or call us at <strong>{supportPhone}</strong></> : null}.
             </Text>
           </Section>
 
@@ -126,8 +128,12 @@ export const BookingConfirmationEmail = ({
             <Text style={footerText}>
               AlphaLux Clean - Premium Cleaning Services
               <br />
-              <Link href="tel:9725590223" style={footerLink}>(972) 559-0223</Link>
-              {" • "}
+              {supportPhone ? (
+                <>
+                  <Link href={`tel:${supportPhone.replace(/[^\d+]/g, '')}`} style={footerLink}>{supportPhone}</Link>
+                  {" • "}
+                </>
+              ) : null}
               <Link href="mailto:support@alphaluxcleaning.com" style={footerLink}>support@alphaluxcleaning.com</Link>
             </Text>
           </Section>

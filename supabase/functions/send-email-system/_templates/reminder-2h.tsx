@@ -21,7 +21,7 @@ export const Reminder2hEmail = (props: Reminder2hEmailProps) => {
   const service = props.service_type || "cleaning";
   const window = props.time_window || "your arrival window";
   const address = props.address_line1 || props.address || "your home";
-  const support = props.support_phone || "(551) 239-9444";
+  const support = props.support_phone || "";
 
   return (
     <EmailBase
@@ -50,12 +50,14 @@ export const Reminder2hEmail = (props: Reminder2hEmailProps) => {
         </ul>
       </Section>
 
-      <Section style={contactSection}>
-        <Text style={contactText}>Need to reach the team?</Text>
-        <ActionButton href={`tel:${support.replace(/[^\d+]/g, "")}`} style={phoneButton}>
-          Call {support}
-        </ActionButton>
-      </Section>
+      {support ? (
+        <Section style={contactSection}>
+          <Text style={contactText}>Need to reach the team?</Text>
+          <ActionButton href={`tel:${support.replace(/[^\d+]/g, "")}`} style={phoneButton}>
+            Call {support}
+          </ActionButton>
+        </Section>
+      ) : null}
 
       <Text style={footerText}>
         Thanks for choosing AlphaLux Clean.

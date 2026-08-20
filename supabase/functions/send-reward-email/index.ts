@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { Resend } from 'npm:resend@2.0.0';
+import { resolveSupportNumber } from '../_shared/openphone.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +29,14 @@ serve(async (req) => {
     } = await req.json();
 
     console.log('Sending reward email to:', customerEmail);
+
+    let supportLine = '';
+    try {
+      const support = await resolveSupportNumber({});
+      if (support.display) supportLine = ` or call us at ${support.display}`;
+    } catch {
+      // omit rather than quote a stale number
+    }
 
     const formattedExpiryDate = new Date(expiryDate).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -101,7 +110,7 @@ serve(async (req) => {
               <!-- Footer Note -->
               <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px;">
                 <p style="font-size: 14px; color: #666;">
-                  <strong>Need help?</strong> Reply to this email or call us at (857) 754-4557
+                  <strong>Need help?</strong> Reply to this email${supportLine}
                 </p>
                 <p style="font-size: 12px; color: #999; margin-top: 20px;">
                   This code is unique to your account and expires on ${formattedExpiryDate}. 

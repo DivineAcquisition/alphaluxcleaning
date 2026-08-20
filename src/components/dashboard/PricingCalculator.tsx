@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, Home, Building, Star, Clock } from "lucide-react";
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 interface PricingData {
   squareFootage: number;
@@ -59,6 +60,7 @@ const carpetCleaningPrices = {
 };
 
 export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}) {
+  const support = useSupportContact();
   const [pricingData, setPricingData] = useState<PricingData>({
     squareFootage: 1000,
     serviceType: "residential",
@@ -523,8 +525,12 @@ export function PricingCalculator({ onPriceUpdate }: PricingCalculatorProps = {}
                   : 'Homes greater than 5,100 sq ft require an in-person estimate.'
                 }
               </p>
-              <Button className="w-full" size="lg">
-                Call for Estimate: (281) 809-9901
+              <Button className="w-full" size="lg" asChild={!!support.tel}>
+                {support.tel ? (
+                  <a href={support.tel}>Call for Estimate{support.display ? `: ${support.display}` : ''}</a>
+                ) : (
+                  <>Call for Estimate</>
+                )}
               </Button>
             </div>
           ) : calculatedPrice > 0 ? (

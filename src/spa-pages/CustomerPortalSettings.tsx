@@ -73,7 +73,7 @@ export default function CustomerPortalSettings() {
         setProfile({
           name: 'John Smith',
           email: 'john.smith@example.com',
-          phone: '(857) 754-4557',
+          phone: '(555) 123-4567',
           address: '123 Main Street',
           city: 'New York',
           state: 'CA',

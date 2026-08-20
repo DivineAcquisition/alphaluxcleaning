@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Phone, Clock } from "lucide-react";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 interface RescheduleRequestDialogProps {
   open: boolean;
@@ -22,10 +23,10 @@ export const RescheduleRequestDialog = ({
   order, 
   onSuccess 
 }: RescheduleRequestDialogProps) => {
-  const phoneNumber = "(281) 809-9901";
+  const support = useSupportContact();
 
   const handleCallNow = () => {
-    window.open(`tel:${phoneNumber.replace(/[^\d]/g, '')}`, '_self');
+    if (support.tel) window.open(support.tel, '_self');
   };
 
   return (
@@ -59,7 +60,7 @@ export const RescheduleRequestDialog = ({
               <div className="space-y-2">
                 <div className="font-medium text-lg">Call us to reschedule:</div>
                 <div className="text-2xl font-bold text-primary">
-                  {phoneNumber}
+                  {support.display || 'Call support'}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />

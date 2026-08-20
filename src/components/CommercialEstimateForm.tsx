@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 const sb = supabase as any;
 import { useFacebookPixel } from "@/hooks/useFacebookPixel";
+import { useSupportContact } from "@/hooks/useSupportContact";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   validatePhoneNumber, 
@@ -66,6 +67,7 @@ interface CommercialEstimateFormProps {
 }
 
 export function CommercialEstimateForm({ serviceType, cleaningType = '', frequency = '', squareFootage = '' }: CommercialEstimateFormProps) {
+  const support = useSupportContact();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
@@ -429,7 +431,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
                     const formatted = formatPhoneNumber(e.target.value);
                     setFormData(prev => ({ ...prev, phone: formatted }));
                   }}
-                  placeholder="(857) 754-4557"
+                  placeholder="(555) 123-4567"
                   required
                 />
               </div>
@@ -715,7 +717,7 @@ export function CommercialEstimateForm({ serviceType, cleaningType = '', frequen
             <p>We'll contact you within 24 hours to confirm your walkthrough appointment.</p>
             <p className="mt-1">
               <Phone className="inline h-4 w-4 mr-1" />
-              Have questions? Call us: (281) 809-9901
+              Have questions?{support.display ? ` Call us: ${support.display}` : ' Contact support.'}
             </p>
           </div>
         </form>

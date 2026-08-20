@@ -891,8 +891,12 @@ serve(async (req) => {
 
     // Determine which webhook URL to use
     const targetWebhookUrl = webhook_url || 
-      Deno.env.get('ZAPIER_BOOKING_WEBHOOK_URL') || 
-      'https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/';
+      Deno.env.get('ZAPIER_BOOKING_WEBHOOK_URL') ||
+      Deno.env.get('ZAPIER_WEBHOOK_URL') ||
+      '';
+    if (!targetWebhookUrl) {
+      throw new Error('ZAPIER_BOOKING_WEBHOOK_URL is not configured');
+    }
 
     console.log('Sending to Zapier webhook:', targetWebhookUrl);
 

@@ -14,6 +14,7 @@ import {
   NEW_CUSTOMER_PROMO_PERCENT,
   previewPromoDiscount,
 } from '@/lib/promo';
+import { useSupportContact } from '@/hooks/useSupportContact';
 import {
   Check,
   Sparkles,
@@ -38,6 +39,7 @@ export default function BookingOffer() {
   const { bookingData, updateBookingData } = useBooking();
   const { trackStep } = useBookingProgress();
   const { trackViewContent, trackAddToCart } = useFacebookPixel();
+  const support = useSupportContact();
   const [selectedOffer, setSelectedOffer] = useState<OfferType | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsServiceType, setDetailsServiceType] =
@@ -142,18 +144,24 @@ export default function BookingOffer() {
             </div>
 
             <p className="mb-6 text-lg">
-              Call us at{' '}
-              <strong className="text-primary">(857) 754-4557</strong> for a
-              personalized quote.
+              Call us{support.e164 ? (
+                <>
+                  {' '}at{' '}
+                  <strong className="text-primary">{support.display}</strong>
+                </>
+              ) : null}{' '}
+              for a personalized quote.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {support.e164 && (
               <Button
                 size="lg"
-                onClick={() => (window.location.href = 'tel:8577544557')}
+                onClick={() => (window.location.href = support.tel)}
               >
                 📞 Call Now
               </Button>
+              )}
               <Button
                 size="lg"
                 variant="outline"

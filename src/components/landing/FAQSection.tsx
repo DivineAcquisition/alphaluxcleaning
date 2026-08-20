@@ -6,6 +6,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { HelpCircle } from 'lucide-react';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 const faqs = [
   {
@@ -43,6 +44,7 @@ const faqs = [
 ];
 
 export function FAQSection() {
+  const support = useSupportContact();
   return (
     <div className="py-16 lg:py-24">
       <div className="container mx-auto px-4">
@@ -91,13 +93,17 @@ export function FAQSection() {
               Still have questions?
             </p>
             <p className="text-sm text-alx-gold-pale/80 mb-4">
-              Our team is here to help! Call us at{' '}
-              <a
-                href="tel:+18577544557"
-                className="text-alx-gold-light font-semibold hover:underline"
-              >
-                (857) 754-4557
-              </a>
+              Our team is here to help!{support.e164 ? (
+                <>
+                  {' '}Call us at{' '}
+                  <a
+                    href={support.tel}
+                    className="text-alx-gold-light font-semibold hover:underline"
+                  >
+                    {support.display}
+                  </a>
+                </>
+              ) : null}
             </p>
           </div>
         </div>

@@ -77,10 +77,7 @@ export const GHLOrderSync = () => {
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">
-              Send recent orders to the updated GoHighLevel webhook for processing
-            </p>
-            <p className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
-              Webhook URL: https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/94998e4d-5fcc-45ea-a91f-2585e8f88600
+              Send recent orders to the GoHighLevel webhook configured in edge-function secrets.
             </p>
           </div>
           

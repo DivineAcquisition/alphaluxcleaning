@@ -16,6 +16,8 @@ import { PropertyDetailsSelector } from '../booking/PropertyDetailsSelector';
 import { PriceRangeIndicator } from '../pricing/PriceRangeIndicator';
 import { DEFAULT_PRICING_CONFIG, HOME_SIZE_RANGES } from '@/lib/new-pricing-system';
 import { getPriceQuote } from '@/lib/pricing-adapter';
+import { toast } from 'sonner';
+import { useSupportContact } from '@/hooks/useSupportContact';
 import { applyGlobalDiscount } from '@/lib/pricing-utils';
 import { PaymentForm } from '../PaymentForm';
 import { PromotionalBanner } from '../booking/PromotionalBanner';
@@ -25,7 +27,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useNavigate } from 'react-router-dom';
 import { validateServiceAreaZipCode, ServiceAreaValidation } from '@/lib/service-area-validation';
@@ -41,6 +42,7 @@ export function TypeformBookingFlow({
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = 13; // Added warm-up step
   const navigate = useNavigate();
+  const support = useSupportContact();
 
   // Use form persistence hook
   const {
@@ -467,7 +469,12 @@ export function TypeformBookingFlow({
       
     } catch (error) {
       console.error('❌ Final submission error:', error);
-      toast.error('Failed to complete booking. Please contact support at (857) 754-4557', { duration: 10000 });
+      toast.error(
+        support.display
+          ? `Failed to complete booking. Please contact support at ${support.display}`
+          : 'Failed to complete booking. Please contact support.',
+        { duration: 10000 },
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -695,7 +702,7 @@ export function TypeformBookingFlow({
                 type="tel" 
                 value={bookingData.contactInfo.phone} 
                 onChange={e => updateField('contactInfo', { ...bookingData.contactInfo, phone: e.target.value })} 
-                placeholder="(857) 754-4557" 
+                placeholder="(555) 123-4567" 
                 className="mt-2" 
               />
             </div>

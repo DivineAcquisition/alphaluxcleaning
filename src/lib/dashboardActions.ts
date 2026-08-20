@@ -234,7 +234,7 @@ export const seedDemoData = async () => {
         id: '550e8400-e29b-41d4-a716-446655440001',
         full_name: 'Alice Johnson',
         email: 'alice.johnson@example.com',
-        phone: '(857) 754-4557',
+        phone: '(555) 123-4567',
         is_available: true,
         reliability_score: 4.8
       },

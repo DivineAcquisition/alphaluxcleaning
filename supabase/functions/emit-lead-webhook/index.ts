@@ -6,11 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// GoHighLevel webhook URL (primary)
-const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/Lvvq87zxxbYFnaTEklYX/webhook-trigger/a265536b-eeaf-48ff-b967-6d3aa1d82643';
-
-// Zapier webhook URL (backup/logging)
-const ZAPIER_WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/24603039/uaji3ls/';
+const GHL_WEBHOOK_URL = (Deno.env.get('GHL_LEAD_WEBHOOK_URL') || '').trim();
+const ZAPIER_WEBHOOK_URL = (Deno.env.get('ZAPIER_LEAD_WEBHOOK_URL') || Deno.env.get('ZAPIER_WEBHOOK_URL') || '').trim();
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -88,26 +85,29 @@ serve(async (req) => {
       referrer: payload.referrer || '',
     };
 
-    logStep('Sending to GoHighLevel', ghlPayload);
-
-    // Send to GoHighLevel (primary)
-    const ghlResponse = await fetch(GHL_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(ghlPayload),
-    });
-
-    const ghlStatus = ghlResponse.status;
+    let ghlStatus = 0;
     let ghlResponseText = '';
-    try {
-      ghlResponseText = await ghlResponse.text();
-    } catch (e) {
-      ghlResponseText = 'Could not read response';
+    let ghlOk = false;
+    if (GHL_WEBHOOK_URL) {
+      logStep('Sending to GoHighLevel', ghlPayload);
+      const ghlResponse = await fetch(GHL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ghlPayload),
+      });
+      ghlStatus = ghlResponse.status;
+      ghlOk = ghlResponse.ok;
+      try {
+        ghlResponseText = await ghlResponse.text();
+      } catch {
+        ghlResponseText = 'Could not read response';
+      }
+      logStep('GHL response', { status: ghlStatus, body: ghlResponseText });
+    } else {
+      logStep('GHL_LEAD_WEBHOOK_URL not configured — skipping GHL webhook');
     }
-
-    logStep('GHL response', { status: ghlStatus, body: ghlResponseText });
 
     // Also send to Zapier for backup/logging (non-blocking)
     const zapierPayload = {
@@ -131,16 +131,17 @@ serve(async (req) => {
       utm_term: payload.utmTerm || '',
     };
 
-    // Fire and forget to Zapier
-    fetch(ZAPIER_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(zapierPayload),
-    }).then(res => {
-      logStep('Zapier backup sent', { status: res.status });
-    }).catch(err => {
-      logStep('Zapier backup failed (non-critical)', { error: err.message });
-    });
+    if (ZAPIER_WEBHOOK_URL) {
+      fetch(ZAPIER_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(zapierPayload),
+      }).then(res => {
+        logStep('Zapier backup sent', { status: res.status });
+      }).catch(err => {
+        logStep('Zapier backup failed (non-critical)', { error: err.message });
+      });
+    }
 
     // Send lead welcome email via send-email-system (non-blocking)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -265,9 +266,9 @@ serve(async (req) => {
     // A failed webhook is an integration warning, not a customer-facing
     // failure — reporting it as one made the funnel show a scary error
     // toast on leads that actually saved fine.
-    if (!ghlResponse.ok) {
+    if (GHL_WEBHOOK_URL && !ghlOk) {
       logStep('GHL webhook failed (lead still captured)', { status: ghlStatus });
-    } else {
+    } else if (GHL_WEBHOOK_URL) {
       logStep('Lead webhook sent successfully to GHL');
     }
 
@@ -275,7 +276,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Lead captured',
-        ghlDelivered: ghlResponse.ok,
+        ghlDelivered: ghlOk,
         ghlStatus: ghlStatus,
         promo: assignedPromo,
         leadIntro,

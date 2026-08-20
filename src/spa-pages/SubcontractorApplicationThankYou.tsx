@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, Mail, Phone, Home, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 export default function SubcontractorApplicationThankYou() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const support = useSupportContact();
   const applicationId = searchParams.get('applicationId');
   const [countdown, setCountdown] = useState(15);
 
@@ -98,9 +100,11 @@ export default function SubcontractorApplicationThankYou() {
                   <Badge variant="outline" className="px-4 py-2">
                     Email: careers@alphaluxcleaning.com
                   </Badge>
+                  {support.display && (
                   <Badge variant="outline" className="px-4 py-2">
-                    Phone: (857) 754-4557
+                    Phone: {support.display}
                   </Badge>
+                  )}
                 </div>
               </div>
             </div>

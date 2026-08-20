@@ -61,7 +61,14 @@ serve(async (req) => {
 
     logStep("Found orders to send", { count: orders.length });
 
-    const ghlWebhookUrl = "https://services.leadconnectorhq.com/hooks/jWh1TtlCjUDeZZ27RkkI/webhook-trigger/94998e4d-5fcc-45ea-a91f-2585e8f88600";
+    const ghlWebhookUrl = (
+      Deno.env.get('GHL_ORDERS_WEBHOOK_URL') ||
+      Deno.env.get('GHL_LEAD_WEBHOOK_URL') ||
+      ''
+    ).trim();
+    if (!ghlWebhookUrl) {
+      throw new Error('GHL_ORDERS_WEBHOOK_URL is not configured');
+    }
     
     let successCount = 0;
     let errorCount = 0;

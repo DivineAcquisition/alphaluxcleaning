@@ -26,7 +26,7 @@ const TestBooking = () => {
           first_name: 'Test',
           last_name: 'Customer',
           email: 'test@example.com',
-          phone: '(857) 754-4557',
+          phone: '(555) 123-4567',
           address: '123 Test Street',
           address_line1: '123 Test Street',
           city: 'New York',

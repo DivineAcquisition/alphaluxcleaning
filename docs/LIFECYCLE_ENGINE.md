@@ -16,18 +16,12 @@ customers toward a recurring plan; existing members get a lighter loyalty track.
 Every outbound SMS goes out from the business number matching the customer's state, so
 caller ID is local and replies land in the right OpenPhone inbox:
 
-| State | Number | Timezone |
-|-------|--------|----------|
-| NJ | (551) 239-9444 · `+15512399444` | America/New_York |
-| TX | (972) 559-0223 · `+19725590223` | America/Chicago |
-| CA | (323) 300-5528 · `+13233005528` | America/Los_Angeles |
-| NY / NYC | (631) 366-8565 · `+16313668565` | America/New_York |
+Live numbers, OpenPhone ids, and timezones live in `public.sms_state_numbers`
+(admin-editable at **/admin/lifecycle → Numbers & Opt-outs**). There is no
+hardcoded fallback in `_shared/openphone.ts` — a missing row fails the send.
 
-- Registry table: `public.sms_state_numbers` (admin-editable at **/admin/lifecycle →
-  Numbers & Opt-outs**). Hardcoded fallbacks live in
-  `supabase/functions/_shared/openphone.ts`.
-- State resolution order: explicit customer/booking state → ZIP inference → the
-  `OPENPHONE_DEFAULT_STATE` env (default `NJ`).
+- State resolution order: explicit customer/booking state → ZIP inference →
+  `sms_state_numbers.is_default` (optional `OPENPHONE_DEFAULT_STATE` env).
 - Routing happens inside `_shared/sms.ts` → `sendSms()`, which picks the provider
   from the message's booking rail: the **public** online booking funnel is
   OpenPhone-only, the **internal** (VA) booking rail sends through GoHighLevel and
@@ -189,7 +183,7 @@ automatically (and their upcoming clean suppresses reactivation touches).
 2. **Secrets** (Supabase dashboard → Edge Functions → Secrets):
    - `OPENPHONE_API_KEY` — required for SMS on the public rail and for support numbers
    - `OPENPHONE_WEBHOOK_SECRET` — recommended (webhook signature enforcement)
-   - `OPENPHONE_DEFAULT_STATE` — optional, default `NJ`
+   - `OPENPHONE_DEFAULT_STATE` — optional override; otherwise the `is_default` registry row
    - `GHL_PIT_TOKEN` + `GHL_LOCATION_ID` — required for SMS on the internal rail
    - `INTERNAL_SMS_OPENPHONE_FAILOVER` — optional, set `false` for GHL-only internal SMS
    - `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO` — email rail (already set)

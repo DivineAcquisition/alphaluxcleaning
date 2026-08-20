@@ -22,7 +22,7 @@ export function SubcontractorUpdatesTest() {
       id: `test_subcontractor_${newCorrelationId}`,
       full_name: "Sarah Johnson",
       email: "sarah.johnson@example.com",
-      phone: "(857) 754-4557"
+      phone: "(555) 123-4567"
     };
 
     const baseIds = {
@@ -315,7 +315,7 @@ export function SubcontractorUpdatesTest() {
         {renderTestResults()}
 
         <div className="text-xs text-muted-foreground space-y-2">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u6v07y3/</p>
+          <p>Sends to the live Zapier URL in edge-function secrets.</p>
           <p>Each webhook payload includes:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li><strong>Subcontractor Details:</strong> Full name, email, phone number</li>
@@ -340,7 +340,7 @@ export function SubcontractorUpdatesTest() {
     "id": "uuid",
     "name": "Sarah Johnson",
     "email": "sarah.johnson@example.com",
-    "phone": "(857) 754-4557"
+    "phone": "(555) 123-4567"
   },
   "order": {
     "id": "uuid",

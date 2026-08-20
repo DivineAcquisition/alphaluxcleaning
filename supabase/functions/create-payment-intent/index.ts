@@ -178,12 +178,7 @@ serve(async (req) => {
       );
     }
 
-    // Publishable key for THIS account. Returning it inline alongside
-    // the client secret means the client can boot Stripe.js against
-    // the correct account in a single round-trip, and we can never
-    // mismatch it with the secret key resolved above. Both accounts
-    // bundle a fallback pk in `_shared/stripe-env.ts` so this is
-    // always non-null.
+    // Publishable key for THIS account from live env only.
     const publishableKey = getStripePublishableKey(accountSlug);
 
     const stripe = new Stripe(secretKey, { apiVersion: "2023-10-16" });

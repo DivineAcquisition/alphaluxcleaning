@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,11 +134,20 @@ serve(async (req) => {
 
     const state = stateForZip(zipNum);
     if (!state) {
+      let callHint = "";
+      try {
+        const support = await resolveSupportNumber({});
+        if (support.display) {
+          callHint = ` Call ${support.display} if you think this is a mistake.`;
+        }
+      } catch {
+        // omit the number rather than quote a stale line
+      }
       return new Response(
         JSON.stringify({
           isValid: false,
           message:
-            `Sorry, AlphaLux Cleaning is currently servicing New York, California, and Texas. ZIP ${zipCode} is outside our service area. Call (857) 754-4557 if you think this is a mistake.`,
+            `Sorry, AlphaLux Cleaning is currently servicing New York, California, and Texas. ZIP ${zipCode} is outside our service area.${callHint}`,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );

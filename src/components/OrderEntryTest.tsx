@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Loader2, AlertCircle, ClipboardList } from "lucide-react";
 
 export function OrderEntryTest() {
@@ -23,27 +24,25 @@ export function OrderEntryTest() {
       
       console.log("Sending test data:", testData);
       
-      const response = await fetch("https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const { data, error } = await supabase.functions.invoke('send-booking-transaction-to-zapier', {
+        body: {
+          transactionData: {
+            ...testData,
+            correlationId,
+            timestamp: new Date().toISOString(),
+            test_mode: true,
+          },
+          type: 'order_entry_test',
         },
-        mode: "no-cors",
-        body: JSON.stringify({
-          ...testData,
-          correlationId,
-          timestamp: new Date().toISOString(),
-          test_mode: true
-        }),
       });
+      if (error) throw error;
 
-      // Since we use no-cors, we can't read the response
       const result = {
         success: true,
         message: "Order entry data sent successfully",
-        webhook_status: "Request sent to Zapier",
+        webhook_status: "Request sent via send-booking-transaction-to-zapier",
         correlationId,
-        test_mode: true
+        response: data,
       };
 
       console.log("Order entry webhook response:", result);
@@ -77,7 +76,7 @@ export function OrderEntryTest() {
     const baseCustomer = {
       name: "Sarah Johnson",
       email: "sarah.johnson@example.com",
-      phone: "(281) 809-9901"
+      phone: "(555) 123-4567"
     };
 
     const baseAddress = {
@@ -219,7 +218,7 @@ export function OrderEntryTest() {
         id: "sub_001", 
         name: "Maria Garcia", 
         email: "maria.garcia@alphaluxclean.com",
-        phone: "(281) 809-9901",
+        phone: "(555) 123-4567",
         hourly_rate: 18.00, 
         tier_level: 2, 
         tier_name: "Professional" 
@@ -242,7 +241,7 @@ export function OrderEntryTest() {
         id: "sub_007", 
         name: "Jennifer Chen", 
         email: "jennifer.chen@alphaluxclean.com",
-        phone: "(281) 809-9901",
+        phone: "(555) 123-4567",
         hourly_rate: 21.00, 
         tier_level: 3, 
         tier_name: "Elite" 
@@ -450,7 +449,7 @@ export function OrderEntryTest() {
       id: "test_order_123",
       customer_name: "Sarah Johnson", 
       customer_email: "sarah.johnson@example.com",
-      customer_phone: "(281) 809-9901",
+      customer_phone: "(555) 123-4567",
       street_address: "123 Oak Street",
       city: "New York",
       state: "NY",
@@ -578,7 +577,7 @@ export function OrderEntryTest() {
         )}
 
         <div className="text-xs text-muted-foreground space-y-2">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/</p>
+          <p>Sends to the live Zapier URL in edge-function secrets (<code>ZAPIER_BOOKING_WEBHOOK_URL</code>).</p>
           <p>This webhook sends comprehensive order entry data including:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Complete customer and order details</li>

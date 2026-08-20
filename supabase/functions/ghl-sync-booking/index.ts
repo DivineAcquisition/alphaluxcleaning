@@ -34,7 +34,7 @@ import {
 // location the integration actually uses. This id was read from
 // GET /calendars/?locationId=ESaf0wtNvMhNtUYQ4rzz.
 const ALPHALUX_CALENDAR_ID =
-  Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || 'L5BDUEPT1Kiq8NGbvPeP';
+  (Deno.env.get('GHL_ALPHALUX_CALENDAR_ID') || '').trim();
 
 /**
  * Customer-facing arrival windows the booking flow offers — keeps
@@ -610,7 +610,10 @@ serve(async (req) => {
     //    Uses the booking's service_date + time_slot. Skipped silently
     //    if either is missing (e.g. partial booking, in-flight rebook).
     let appointmentId: string | null = null;
-    if (ghlContactId && booking.service_date) {
+    if (ghlContactId && booking.service_date && !ALPHALUX_CALENDAR_ID) {
+      log('calendar skipped — GHL_ALPHALUX_CALENDAR_ID is not set');
+    }
+    if (ghlContactId && booking.service_date && ALPHALUX_CALENDAR_ID) {
       const slot = slotToIso(booking.service_date, booking.time_slot);
       if (slot) {
         try {

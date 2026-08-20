@@ -17,9 +17,10 @@ interface EmailBaseProps {
   preview: string;
   children: React.ReactNode;
   isMarketing?: boolean;
+  supportPhone?: string;
 }
 
-export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseProps) => (
+export const EmailBase = ({ preview, children, isMarketing = false, supportPhone }: EmailBaseProps) => (
   <Html>
     <Head />
     <Preview>{preview}</Preview>
@@ -47,9 +48,8 @@ export const EmailBase = ({ preview, children, isMarketing = false }: EmailBaseP
         <Section style={footer}>
           <Text style={footerText}>
             AlphaLux Clean<br />
-            Premium Cleaning Services<br />
-            Texas & California<br />
-            Phone: (972) 559-0223
+            Premium Cleaning Services
+            {supportPhone ? <><br />Phone: {supportPhone}</> : null}
           </Text>
           
           <Text style={footerLinks}>

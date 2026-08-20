@@ -14,6 +14,7 @@ import {
   Copy,
   CheckCheck
 } from 'lucide-react';
+import { useSupportContact } from '@/hooks/useSupportContact';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,7 @@ const SchedulingSuccessFlow: React.FC<SchedulingSuccessFlowProps> = ({
   sessionId,
   onContinue
 }) => {
+  const support = useSupportContact();
   const [currentStep, setCurrentStep] = useState(1);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -65,7 +67,7 @@ AlphaLux Cleaning - Service Scheduled
 
 We'll contact you within 2 hours to confirm availability.
 
-Questions? Call (281) 809-9901
+Questions?${support.display ? ` Call ${support.display}` : ''}
     `.trim();
 
     try {
@@ -209,10 +211,12 @@ Questions? Call (281) 809-9901
                 asChild
                 className="flex items-center gap-2"
               >
-                <a href="tel:+12818099901">
+                {support.e164 && (
+                <a href={support.tel}>
                   <Phone className="h-4 w-4" />
                   Call Us
                 </a>
+                )}
               </Button>
               
               <Button
@@ -221,10 +225,12 @@ Questions? Call (281) 809-9901
                 asChild
                 className="flex items-center gap-2"
               >
-                <a href="sms:+12818099901">
+                {support.e164 && (
+                <a href={support.sms}>
                   <MessageSquare className="h-4 w-4" />
                   Text Us
                 </a>
+                )}
               </Button>
               
               <Button
@@ -260,10 +266,12 @@ Questions? Call (281) 809-9901
             <p className="text-amber-800 text-sm">
               <span className="font-semibold">Need immediate assistance?</span>
               <br />
-              Call our 24/7 hotline: 
+              Call our 24/7 hotline:
+              {support.e164 ? (
               <Button variant="link" className="p-0 ml-1 h-auto text-sm font-bold text-amber-900" asChild>
-                <a href="tel:+12818099901">(281) 809-9901</a>
+                <a href={support.tel}>{support.display}</a>
               </Button>
+              ) : null}
             </p>
           </div>
         </CardContent>

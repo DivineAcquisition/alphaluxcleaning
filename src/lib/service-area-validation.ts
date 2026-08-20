@@ -84,6 +84,5 @@ export function getNearestServiceableZipCodes(_zipCode: string): string[] {
 export const SERVICE_AREA_INFO = {
   centerCity: 'New York State',
   radiusMiles: 0,
-  contactPhone: '(857) 754-4557',
   contactEmail: 'support@alphaluxcleaning.com',
 };

@@ -1,8 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
+import { useSupportContact } from "@/hooks/useSupportContact";
 const logo = "/brand/alphalux-logo.png";
 export function DashboardHeader() {
+  const support = useSupportContact();
   return <div className="space-y-6">
       {/* Main Header */}
       <div className="text-center space-y-4">
@@ -20,9 +22,11 @@ export function DashboardHeader() {
             <Sparkles className="h-3 w-3 mr-1" />
             Baytown, TX 77521
           </Badge>
+          {support.display && (
           <Badge variant="outline" className="text-sm">
-            📞 (281) 809-9901
+            📞 {support.display}
           </Badge>
+          )}
           
         </div>
         <p className="text-sm text-muted-foreground">alphaluxclean.com • support@alphaluxcleaning.com</p>

@@ -37,12 +37,7 @@
 // Never throws — returns a structured result the caller can log.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import {
-  createGhlClient,
-  createGhlClientFromSecrets,
-  ghlIsConfiguredAsync,
-  type GHLClient,
-} from './ghl-client.ts';
+import type { GHLClient } from './ghl-client.ts';
 import { toE164US, phoneDigits10 } from './phone-format.ts';
 import { openPhoneSend, resolveStateNumber, type StateNumber } from './openphone.ts';
 
@@ -201,6 +196,7 @@ export async function resolveGhlContactId(
 /** Send via GHL conversations (PIT). Resolves/creates the contact first. */
 export async function sendSmsViaGhl(input: SendSmsInput): Promise<{ ok: boolean; contactId?: string; messageId?: string; error?: string }> {
   try {
+    const { createGhlClient, createGhlClientFromSecrets } = await import('./ghl-client.ts');
     const client = (input.ghlToken && input.ghlLocationId)
       ? createGhlClient({ token: input.ghlToken, locationId: input.ghlLocationId })
       : await createGhlClientFromSecrets();
@@ -241,17 +237,21 @@ export async function sendSmsViaOpenPhone(
   message: string,
   opts?: { state?: string | null; zip?: string | null; stateNumber?: StateNumber },
 ): Promise<{ ok: boolean; messageId?: string; error?: string; from?: string; stateCode?: string }> {
-  const db = serviceClient();
-  const num =
-    opts?.stateNumber ??
-    (await resolveStateNumber({ state: opts?.state, zip: opts?.zip, supabase: db }));
-  const res = await openPhoneSend({
-    to,
-    message,
-    from: num.phoneE164,
-    phoneNumberId: num.phoneNumberId,
-  });
-  return { ...res, from: num.phoneE164, stateCode: num.stateCode };
+  try {
+    const db = serviceClient();
+    const num =
+      opts?.stateNumber ??
+      (await resolveStateNumber({ state: opts?.state, zip: opts?.zip, supabase: db }));
+    const res = await openPhoneSend({
+      to,
+      message,
+      from: num.phoneE164,
+      phoneNumberId: num.phoneNumberId,
+    });
+    return { ...res, from: num.phoneE164, stateCode: num.stateCode };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 /**
@@ -311,7 +311,14 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     return { success: true, provider: 'none', fallback: false, suppressed: true, attempts };
   }
 
-  const order = providerOrder(input, await ghlIsConfiguredAsync());
+  // Public rail is OpenPhone-only — skip the GHL credential lookup so a
+  // slow app_secrets read can't stall intro SMS.
+  const order = providerOrder(
+    input,
+    input.channel === 'public'
+      ? false
+      : await (await import('./ghl-client.ts')).ghlIsConfiguredAsync(),
+  );
   let stateNumber: StateNumber | null = null;
 
   for (const provider of order) {
@@ -320,11 +327,18 @@ export async function sendSms(input: SendSmsInput): Promise<SendSmsResult> {
     if (provider === 'openphone') {
       // OpenPhone needs a destination number; GHL can thread by contact.
       if (!input.to) continue;
-      stateNumber ??= await resolveStateNumber({
-        state: input.state,
-        zip: input.zip,
-        supabase: db,
-      });
+      try {
+        stateNumber ??= await resolveStateNumber({
+          state: input.state,
+          zip: input.zip,
+          supabase: db,
+        });
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        attempts.push({ provider: 'openphone', ok: false, error });
+        smsLog('OpenPhone state number missing', { error, channel });
+        continue;
+      }
       const op = await openPhoneSend({
         to: input.to,
         message: input.message,

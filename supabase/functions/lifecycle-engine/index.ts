@@ -161,12 +161,14 @@ function localHour(tz: string): number {
   }
 }
 
-function customerTimezone(c: Customer, settings: Settings): string {
-  return c.timezone || timezoneForState(c.state, c.postal_code) || settings.default_timezone;
+async function customerTimezone(c: Customer, settings: Settings, supabase: SupabaseClient): Promise<string> {
+  if (c.timezone) return c.timezone;
+  const fromRegistry = await timezoneForState(c.state, c.postal_code, supabase);
+  return fromRegistry || settings.default_timezone;
 }
 
-function withinSendWindow(c: Customer, settings: Settings): boolean {
-  const hour = localHour(customerTimezone(c, settings));
+async function withinSendWindow(c: Customer, settings: Settings, supabase: SupabaseClient): Promise<boolean> {
+  const hour = localHour(await customerTimezone(c, settings, supabase));
   return hour >= settings.quiet_hours_start && hour < settings.quiet_hours_end;
 }
 
@@ -450,7 +452,7 @@ async function dispatchTouch(ctx: EngineContext, c: Customer, touch: Touch): Pro
   if (pending.length === 0) return false;
 
   // Quiet hours — defer the whole touch to a later run.
-  if (!withinSendWindow(c, settings)) {
+  if (!(await withinSendWindow(c, settings, supabase))) {
     stats.deferred++;
     return "deferred";
   }

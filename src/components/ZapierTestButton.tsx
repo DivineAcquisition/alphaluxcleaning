@@ -21,7 +21,7 @@ export function ZapierTestButton() {
         transaction_id: `test_${Date.now()}`,
         customer_name: "John Smith",
         customer_email: "john.smith@example.com",
-        customer_phone: "(857) 754-4557",
+        customer_phone: "(555) 123-4567",
         service_date: "2024-08-15",
         service_time: "10:00 AM",
         cleaning_type: "complete_clean",
@@ -214,7 +214,7 @@ export function ZapierTestButton() {
         )}
         
         <div className="text-xs text-muted-foreground">
-          <p><strong>Webhook URL:</strong> https://hooks.zapier.com/hooks/catch/5011258/u4jui7k/</p>
+          <p>Sends to the live Zapier URL in edge-function secrets (<code>ZAPIER_BOOKING_WEBHOOK_URL</code>).</p>
           <p>This sends comprehensive booking data including membership benefits, addon discounts, new client specials, pricing breakdowns, and complete transaction analytics.</p>
         </div>
       </CardContent>

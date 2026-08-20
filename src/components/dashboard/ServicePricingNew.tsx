@@ -2,8 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Home, Star, Phone } from "lucide-react";
 import { HOME_SIZE_RANGES, DEFAULT_PRICING_CONFIG } from "@/lib/new-pricing-system";
+import { useSupportContact } from "@/hooks/useSupportContact";
 
 const ServicePricingNew = () => {
+  const support = useSupportContact();
   // Filter out the custom quote tier for the main pricing table
   const displayTiers = HOME_SIZE_RANGES.filter(tier => !tier.requiresEstimate);
   const customTier = HOME_SIZE_RANGES.find(tier => tier.requiresEstimate);
@@ -118,12 +120,14 @@ const ServicePricingNew = () => {
             <p className="text-muted-foreground mb-4">
               Contact us for a personalized quote
             </p>
-            <a href="tel:8577544557" className="inline-flex items-center gap-2">
+            {support.e164 && (
+            <a href={support.tel} className="inline-flex items-center gap-2">
               <Badge variant="outline" className="text-lg px-6 py-2 cursor-pointer hover:bg-primary/10">
                 <Phone className="h-4 w-4" />
-                (857) 754-4557
+                {support.display}
               </Badge>
             </a>
+            )}
           </CardContent>
         </Card>
       )}
