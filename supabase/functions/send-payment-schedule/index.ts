@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "npm:@supabase/supabase-js@2.39.3";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -28,6 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const {
+      bookingId,
       customerEmail,
       customerName,
       offerType,
@@ -38,6 +40,44 @@ const handler = async (req: Request): Promise<Response> => {
     }: PaymentScheduleRequest = await req.json();
 
     console.log("Sending payment schedule email to:", customerEmail);
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } },
+    );
+
+    let supportPhone = "";
+    try {
+      let state: string | null = null;
+      let zip: string | null = null;
+      if (bookingId) {
+        const { data: booking } = await supabase
+          .from("bookings")
+          .select("state, zip_code, customer_id")
+          .eq("id", bookingId)
+          .maybeSingle();
+        state = booking?.state || null;
+        zip = booking?.zip_code || null;
+        if (booking?.customer_id && (!state || !zip)) {
+          const { data: customer } = await supabase
+            .from("customers")
+            .select("state, postal_code")
+            .eq("id", booking.customer_id)
+            .maybeSingle();
+          state = state || customer?.state || null;
+          zip = zip || customer?.postal_code || null;
+        }
+      }
+      const support = await resolveSupportNumber({ state, zip, supabase });
+      supportPhone = support.display;
+    } catch (err) {
+      console.warn("[send-payment-schedule] support phone lookup failed", err);
+    }
+
+    const supportLine = supportPhone
+      ? `<li>📞 Call or Text: <strong>${supportPhone}</strong></li>`
+      : "";
 
     let emailHtml = "";
     let subject = "";
@@ -147,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h2>Questions?</h2>
               <p>We're here to help! Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
-                <li>📞 Call or Text: <strong>972-559-0223</strong></li>
+                ${supportLine}
                 <li>📧 Email: <strong>support@alphaluxcleaning.com</strong></li>
               </ul>
             </div>
@@ -217,7 +257,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h2 style="color: #1e3a8a;">Questions?</h2>
               <p>Contact us anytime:</p>
               <ul style="list-style: none; padding: 0;">
-                <li>📞 <strong>972-559-0223</strong></li>
+                ${supportLine}
                 <li>📧 <strong>support@alphaluxcleaning.com</strong></li>
               </ul>
             </div>
@@ -232,8 +272,12 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
+    const fromAddress =
+      Deno.env.get("EMAIL_FROM") ||
+      Deno.env.get("EMAIL_FROM_CUSTOMER") ||
+      "AlphaLux Clean <noreply@info.alphaluxcleaning.com>";
     const emailResponse = await resend.emails.send({
-      from: "AlphaLux Clean <onboarding@resend.dev>",
+      from: fromAddress,
       to: [customerEmail],
       subject: subject,
       html: emailHtml,

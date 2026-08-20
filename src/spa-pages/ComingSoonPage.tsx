@@ -2,8 +2,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, Calendar } from 'lucide-react';
 import { SEOHead } from '@/components/SEOHead';
+import { useSupportContact } from '@/hooks/useSupportContact';
 
 export default function ComingSoonPage() {
+  const support = useSupportContact();
+
   return (
     <>
       <SEOHead 
@@ -48,14 +51,16 @@ export default function ComingSoonPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {support.tel ? (
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = 'tel:+1-555-123-4567'}
+                onClick={() => window.location.href = support.tel}
               >
                 <Phone className="w-4 h-4" />
-                Call Us
+                {support.display ? `Call ${support.display}` : 'Call Us'}
               </Button>
+              ) : null}
               
               <Button 
                 variant="outline"

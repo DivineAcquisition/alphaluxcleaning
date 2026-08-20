@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,7 @@ function calculateChatPricing(params: {
   serviceType: string;
   frequency: string;
   stateCode: string;
+  supportPhone?: string;
 }): string {
   try {
     // Map service type from natural language
@@ -80,7 +82,10 @@ function calculateChatPricing(params: {
     
     // Check for custom quote (5000+)
     if (homeSize.id === '5000_plus') {
-      return 'For homes 5,000+ sq ft, we provide custom quotes. Please call us at (555) 123-4567 or email hello@alphaluxcleaning.com';
+      const call = params.supportPhone
+        ? `call us at ${params.supportPhone}`
+        : 'call us';
+      return `For homes 5,000+ sq ft, we provide custom quotes. Please ${call} or email hello@alphaluxcleaning.com`;
     }
     
     // Get base price
@@ -168,6 +173,14 @@ serve(async (req) => {
     
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    let supportPhone = '';
+    try {
+      const support = await resolveSupportNumber({});
+      supportPhone = support.display;
+    } catch (err) {
+      console.warn('[chat-booking-assistant] support phone lookup failed', err);
     }
 
     // Concise system prompt
@@ -477,7 +490,7 @@ Ask for FIRST missing field in order. After general questions, redirect to booki
                 let result = '';
                 
                 if (functionName === 'calculate_price') {
-                  result = calculateChatPricing(args);
+                  result = calculateChatPricing({ ...args, supportPhone });
                 } else if (functionName === 'check_availability') {
                   result = await checkAvailability(args.zipCode);
                 } else if (functionName === 'create_booking') {

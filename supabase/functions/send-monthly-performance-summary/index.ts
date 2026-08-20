@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.1';
 import { Resend } from "npm:resend@2.0.0";
+import { resolveSupportNumber } from "../_shared/openphone.ts";
 
 // Simple HTML email template function
 const generateMonthlyPerformanceSummaryHtml = ({
@@ -9,7 +10,9 @@ const generateMonthlyPerformanceSummaryHtml = ({
   year,
   stats,
   achievements,
-  dashboardUrl
+  dashboardUrl,
+  supportPhone,
+  supportTel,
 }: {
   subcontractorName: string;
   month: string;
@@ -24,6 +27,8 @@ const generateMonthlyPerformanceSummaryHtml = ({
   achievements: string[];
   improvementAreas?: string[];
   dashboardUrl: string;
+  supportPhone?: string;
+  supportTel?: string;
 }) => {
   return `
     <!DOCTYPE html>
@@ -144,10 +149,9 @@ const generateMonthlyPerformanceSummaryHtml = ({
               Premium cleaning services in Texas and California
             </p>
             <p style="color: #666666; font-size: 12px; line-height: 16px; margin: 4px 0;">
-              <a href="tel:+15551234567" style="color: #666666; text-decoration: underline;">
-                (555) 123-4567
-              </a> • 
-              <a href="mailto:support@alphaluxcleaning.com" style="color: #666666; text-decoration: underline;">
+              ${supportPhone && supportTel ? `<a href="tel:${supportTel}" style="color: #666666; text-decoration: underline;">
+                ${supportPhone}
+              </a> • ` : ""}<a href="mailto:support@alphaluxcleaning.com" style="color: #666666; text-decoration: underline;">
                 support@alphaluxcleaning.com
               </a>
             </p>
@@ -221,6 +225,16 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No subcontractors found');
     }
 
+    let supportPhone = '';
+    let supportTel = '';
+    try {
+      const support = await resolveSupportNumber({ supabase });
+      supportPhone = support.display;
+      supportTel = support.e164.replace(/\D/g, '');
+    } catch (err) {
+      console.warn('[send-monthly-performance-summary] support phone lookup failed', err);
+    }
+
     const results = [];
 
     for (const subcontractor of subcontractors) {
@@ -288,6 +302,8 @@ const handler = async (req: Request): Promise<Response> => {
           achievements: achievements,
           improvementAreas: improvementAreas.length > 0 ? improvementAreas : undefined,
           dashboardUrl: `${supabaseUrl.replace('.supabase.co', '')}.com/subcontractor-portal`,
+          supportPhone,
+          supportTel,
         });
 
         // Send email
