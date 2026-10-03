@@ -724,7 +724,7 @@ function OfferCard({
           <p className="text-xs text-alx-gold font-semibold mt-1">{savingsLabel}</p>
         )}
         <p className="text-xs text-muted-foreground mt-1">
-          Pay in full at checkout — no deposit, no balance invoice.
+          50% deposit due today. The balance is billed after your clean.
         </p>
       </div>
 

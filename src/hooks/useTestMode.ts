@@ -4,13 +4,21 @@ import { useState, useEffect } from 'react';
  * Hook to check if the application is in test/demo mode
  * Test mode bypasses payment processing while maintaining full booking flow
  */
+function readTestMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('booking_test_mode') === 'true';
+}
+
 export function useTestMode() {
-  const [isTestMode, setIsTestMode] = useState(false);
+  // Read synchronously. Checkout decides whether to create a live
+  // Stripe PaymentIntent on the first effect, and the default `false`
+  // raced ahead of a post-mount localStorage read — test mode then
+  // opened a real payment before the flag flipped on.
+  const [isTestMode, setIsTestMode] = useState(readTestMode);
 
   useEffect(() => {
     const checkTestMode = () => {
-      const testMode = localStorage.getItem('booking_test_mode') === 'true';
-      setIsTestMode(testMode);
+      setIsTestMode(readTestMode());
     };
 
     checkTestMode();

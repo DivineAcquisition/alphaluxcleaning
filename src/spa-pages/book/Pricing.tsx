@@ -514,11 +514,8 @@ export default function BookingPricing() {
                   )}
 
                   <div className="text-xs text-muted-foreground">
-                    Pay in full at checkout —{' '}
-                    <strong className="text-foreground">
-                      ${promoTotal.toFixed(0)}
-                    </strong>{' '}
-                    total, no deposit and no balance invoice.
+                    50% (${Math.round(promoTotal / 2)}) is due today to reserve
+                    the visit. The rest is billed after the clean.
                   </div>
 
                   <Button

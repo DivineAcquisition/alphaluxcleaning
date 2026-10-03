@@ -5,8 +5,56 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Loader2 } from 'lucide-react';
+import { Calendar, Check } from 'lucide-react';
 import { BrandedLoader } from '@/components/BrandedLoader';
+import { TIME_SLOTS, type TimeSlotId } from '@/components/booking/OfferDateTimePicker';
+
+/** Date-only strings (`YYYY-MM-DD`) parse as UTC midnight, which renders
+ *  as the previous evening in US timezones. Format them in UTC so the
+ *  calendar day the customer picked is the day we show. */
+function formatServiceDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const [y, m, d] = String(value).slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return String(value);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function formatTimeWindow(slot: string | null | undefined): string | null {
+  if (!slot) return null;
+  const def = TIME_SLOTS.find((s) => s.id === slot);
+  return def ? `${def.label} (${def.window})` : slot;
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function googleCalendarHref(opts: {
+  serviceDate: string;
+  timeSlot: string;
+  title: string;
+  location: string;
+}) {
+  const ymd = opts.serviceDate.slice(0, 10).replace(/-/g, '');
+  const def =
+    TIME_SLOTS.find((s) => s.id === (opts.timeSlot as TimeSlotId)) ??
+    TIME_SLOTS[1];
+  const start = `${ymd}T${pad2(def.startHour)}${pad2(def.startMinute ?? 0)}00`;
+  const end = `${ymd}T${pad2(def.endHour)}${pad2(def.endMinute ?? 0)}00`;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: opts.title,
+    dates: `${start}/${end}`,
+    details: 'AlphaLux Cleaning appointment',
+    location: opts.location,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
 
 export default function BookingConfirmation() {
   const params = useParams();
@@ -27,87 +75,30 @@ export default function BookingConfirmation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
-  // Fire the confirmation/receipt email exactly once when both booking
-  // and customer are loaded. The edge function is idempotent via event_id.
-  useEffect(() => {
-    if (!booking || !customer?.email) return;
-    const storageKey = `alx:confirmation-email:${booking.id}`;
-    if (typeof window !== 'undefined' && window.sessionStorage?.getItem(storageKey)) {
-      return;
-    }
-
-    const servicePretty =
-      serviceTypeLabels[booking.service_type] ||
-      booking.offer_name ||
-      'Cleaning Service';
-
-    const servicePrice = Number(booking.est_price || 0);
-    const depositPaid = Number(booking.deposit_amount || 0);
-    const balance = Math.max(0, servicePrice - depositPaid);
-
-    const payload = {
-      template: 'booking_confirmed',
-      to: customer.email,
-      category: 'transactional' as const,
-      event_id: `booking_confirmed_${booking.id}`,
-      data: {
-        first_name: customer.first_name || '',
-        customer_name:
-          [customer.first_name, customer.last_name].filter(Boolean).join(' ') ||
-          customer.email,
-        booking_id: booking.id,
-        booking_short_id: booking.id.slice(0, 8).toUpperCase(),
-        service_type: servicePretty,
-        service_date: booking.service_date
-          ? new Date(booking.service_date).toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })
-          : 'To be scheduled',
-        time_window: booking.time_slot || 'To be scheduled',
-        address: [
-          customer.address_line1,
-          customer.address_line2,
-          [customer.city, customer.state, booking.zip_code]
-            .filter(Boolean)
-            .join(', '),
-        ]
-          .filter(Boolean)
-          .join(', '),
-        total_amount: servicePrice.toFixed(2),
-        deposit_paid: depositPaid.toFixed(2),
-        balance_due: balance.toFixed(2),
-        manage_url: `${window.location.origin}/order-status?booking=${booking.id}`,
-      },
-    };
-
-    supabase.functions
-      .invoke('send-email-system', { body: payload })
-      .then(({ error }) => {
-        if (error) {
-          console.warn('Confirmation email dispatch failed', error);
-          return;
-        }
-        try {
-          window.sessionStorage?.setItem(storageKey, '1');
-        } catch {
-          /* ignore storage errors */
-        }
-      })
-      .catch((err) => console.warn('Confirmation email dispatch error', err));
-  }, [booking, customer]);
-
   const fetchBookingDetails = async () => {
     try {
-      const { data: bookingData, error: bookingError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('id', bookingId)
-        .single();
+      // Guests have no Supabase session. `customers` SELECT is denied
+      // by RLS (anon gets 0 rows / 406), so a direct read leaves the
+      // receipt with a blank email and address even though both were
+      // saved. The service-role edge function is the same path
+      // /book/details already uses.
+      const edge = await supabase.functions.invoke('get-booking-details', {
+        body: { booking_id: bookingId },
+      });
 
-      if (bookingError) throw bookingError;
+      let bookingData = edge.data?.booking;
+      let customerData = edge.data?.customer || bookingData?.customers || null;
+
+      if (edge.error || !edge.data?.success || !bookingData) {
+        const { data, error: bookingError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('id', bookingId)
+          .single();
+        if (bookingError) throw bookingError;
+        bookingData = data;
+        customerData = null;
+      }
 
       // Routing guard: if deposit was paid but address/schedule are missing,
       // send the user back to /book/details to complete their booking.
@@ -124,16 +115,7 @@ export default function BookingConfirmation() {
       }
 
       setBooking(bookingData);
-
-      if (bookingData.customer_id) {
-        const { data: customerData } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('id', bookingData.customer_id)
-          .single();
-
-        setCustomer(customerData);
-      }
+      setCustomer(customerData);
     } catch (error) {
       console.error('Failed to fetch booking:', error);
     } finally {
@@ -174,6 +156,23 @@ export default function BookingConfirmation() {
   }
 
   const balanceDue = (booking.est_price || 0) - (booking.deposit_amount || 0);
+  const serviceDateLabel = formatServiceDate(booking.service_date);
+  const timeWindowLabel = formatTimeWindow(booking.time_slot);
+  const addressLine1 = booking.address_line1 || customer?.address_line1 || '';
+  const addressLine2 = booking.address_line2 || customer?.address_line2 || '';
+  const cityLine = [customer?.city, customer?.state].filter(Boolean).join(', ');
+  const zip = booking.zip_code || customer?.postal_code || '';
+  const cityZip = [cityLine, zip].filter(Boolean).join(' ');
+  const addressSingle = [addressLine1, addressLine2, cityZip].filter(Boolean).join(', ');
+  const calendarHref =
+    booking.service_date && booking.time_slot
+      ? googleCalendarHref({
+          serviceDate: String(booking.service_date),
+          timeSlot: String(booking.time_slot),
+          title: `AlphaLux ${booking.offer_name || 'Cleaning'}`,
+          location: addressSingle,
+        })
+      : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-background">
@@ -190,7 +189,9 @@ export default function BookingConfirmation() {
             <p className="text-muted-foreground">
               We've received your ${booking.deposit_amount?.toFixed(2)} deposit for your{' '}
               <strong>{booking.offer_name || 'cleaning service'}</strong>.
-              A confirmation has been sent to {customer?.email}.
+              {customer?.email
+                ? ` A confirmation has been sent to ${customer.email}.`
+                : ' A confirmation is on its way.'}
             </p>
           </div>
           
@@ -231,35 +232,32 @@ export default function BookingConfirmation() {
                   </span>
                 </div>
                 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Service Date:</span>
-                  <span className="font-medium">
-                    {booking.service_date ? (
-                      new Date(booking.service_date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                      })
-                    ) : (
+                  <span className="font-medium text-right">
+                    {serviceDateLabel || (
                       <span className="text-muted-foreground">To be scheduled</span>
                     )}
                   </span>
                 </div>
                 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Time Window:</span>
-                  <span className="font-medium">
-                    {booking.time_slot || <span className="text-muted-foreground">To be scheduled</span>}
+                  <span className="font-medium text-right">
+                    {timeWindowLabel || (
+                      <span className="text-muted-foreground">To be scheduled</span>
+                    )}
                   </span>
                 </div>
                 
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Address:</span>
                   <span className="font-medium text-right">
-                    {customer?.address_line1}
-                    {customer?.address_line2 && `, ${customer.address_line2}`}
-                    <br />
-                    {customer?.city}, {customer?.state} {booking.zip_code}
+                    {addressLine1 || (
+                      <span className="text-muted-foreground">Address on file</span>
+                    )}
+                    {addressLine2 ? <><br />{addressLine2}</> : null}
+                    {cityZip ? <><br />{cityZip}</> : null}
                   </span>
                 </div>
                 
@@ -291,11 +289,16 @@ export default function BookingConfirmation() {
             </CardContent>
           </Card>
           
-          <div className="space-y-3 mb-6">
-            <Button size="lg" className="w-full" variant="outline">
-              Add to Calendar
-            </Button>
-          </div>
+          {calendarHref && (
+            <div className="space-y-3 mb-6">
+              <Button size="lg" className="w-full" variant="outline" asChild>
+                <a href={calendarHref} target="_blank" rel="noreferrer">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Add to Calendar
+                </a>
+              </Button>
+            </div>
+          )}
           
           <Separator className="my-6" />
           

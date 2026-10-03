@@ -185,11 +185,11 @@ export default function BookingCheckout() {
   const totalIndividualCost = individualServicePrice * 4;
   const savings = Math.round(totalIndividualCost - finalPrice);
 
-  const initializePayment = useCallback(async () => {
-    if (isInitializing || clientSecret) return;
+  const initializePayment = useCallback(async (): Promise<string | null> => {
+    if (isInitializing || clientSecret) return bookingId;
     if (!hasContact) {
       setInitError('Please enter your contact details to continue.');
-      return;
+      return null;
     }
     setIsInitializing(true);
     setInitError(null);
@@ -302,9 +302,10 @@ export default function BookingCheckout() {
           },
         );
         if (error) throw new Error(error.message);
+        const id = data?.bookingId ?? null;
         setCustomerId(data?.customerId ?? null);
-        setBookingId(data?.bookingId ?? null);
-        return;
+        setBookingId(id);
+        return id;
       }
 
       if (is90DayPlan) {
@@ -447,11 +448,13 @@ export default function BookingCheckout() {
       });
 
       console.log('✅ Payment initialized');
+      return null;
     } catch (error: any) {
       console.error('Failed to initialize payment:', error);
       const msg = error?.message || 'Failed to initialize payment';
       setInitError(msg);
       toast.error(msg);
+      return null;
     } finally {
       clearTimers();
       setInitSlow(false);
@@ -714,18 +717,19 @@ export default function BookingCheckout() {
   };
 
   const handleTestPayment = async () => {
-    if (!bookingId) {
-      await initializePayment();
-      return;
-    }
-
     setIsProcessing(true);
     try {
+      // Creating the booking and confirming it used to be two clicks:
+      // the first call returned before setBookingId flushed, so the
+      // button looked like it did nothing until the customer tried again.
+      const id = bookingId || (await initializePayment());
+      if (!id) return;
+
       const { error } = await supabase.functions.invoke(
         'confirm-booking-payment',
         {
           body: {
-            bookingId,
+            bookingId: id,
             paymentIntentId: 'test_' + Date.now(),
             paymentStatus: 'deposit_paid',
           },
@@ -733,9 +737,9 @@ export default function BookingCheckout() {
       );
 
       if (error) throw new Error(error.message);
-      markCompleted(bookingId);
+      markCompleted(id);
       toast.success('Test payment successful!');
-      navigate(`/book/details?booking_id=${bookingId}`);
+      navigate(`/book/details?booking_id=${id}`);
     } catch (error: any) {
       toast.error(error.message || 'Test payment failed');
     } finally {
@@ -1365,7 +1369,7 @@ export default function BookingCheckout() {
                   </Alert>
                   <Button
                     onClick={handleTestPayment}
-                    disabled={isProcessing}
+                    disabled={isProcessing || isInitializing}
                     size="lg"
                     className="w-full"
                   >

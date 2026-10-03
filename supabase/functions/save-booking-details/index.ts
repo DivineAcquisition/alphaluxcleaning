@@ -38,7 +38,12 @@ serve(async (req) => {
       throw new Error("Missing required scheduling fields");
     }
 
-    log("Saving booking details", { bookingId, serviceDate, timeSlot });
+    log("Saving booking details", {
+      bookingId,
+      serviceDate,
+      timeSlot,
+      hasPropertyDetails: Boolean(propertyDetails && typeof propertyDetails === "object"),
+    });
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
